@@ -1,0 +1,221 @@
+// Builds the ONLY text that may leave the device: the partner's question with EVERY About-me term replaced by a
+// neutral placeholder. People (names, and relation words that point at one person) -> "Person A"; foods ->
+// "Food A"; places -> "Place A"; TV -> "Show A"; music -> "Music A"; other About-me entries -> "Thing A".
+// The placeholder map stays on the device and is used to put the real words back into the cloud's answer.
+// The profile itself is never part of a cloud payload; findLeaks() is the last check before anything is sent.
+
+import type { Profile } from './types';
+
+export interface Stripped {
+  text: string;
+  /** "Place A" -> the words it replaced. Stays on the device; used to restore the cloud's answer. */
+  map: Record<string, string>;
+}
+
+type Kind = 'Person' | 'Food' | 'Place' | 'Show' | 'Music' | 'Thing';
+
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const lc = (s: string) => s.toLowerCase();
+const norm = (w: string) => lc(w).replace(/[’]/g, "'").replace(/'s$/, '').replace(/'$/, '');
+
+/** Words that carry no personal information on their own: they join an entry's words, or name a whole category. */
+const LINK = new Set(['the', 'a', 'an', 'by', 'at', 'on', 'in', 'of', 'with', 'and', 'to', 'no', 'near', 'from', 'for', 'my', 'our', 'your', 'his', 'her']);
+const GENERIC = new Set([
+  ...LINK,
+  'music', 'food', 'tv', 'telly', 'show', 'shows', 'programme', 'programmes', 'film', 'films', 'place', 'places', 'thing', 'things',
+  'tea', 'dinner', 'lunch', 'breakfast', 'supper', 'meal', 'drink', 'old', 'new', 'big', 'little', 'small', 'good', 'nice', 'best',
+  'one', 'ones', 'some', 'any', 'bit', 'day', 'days', 'time', 'week', 'weekend', 'today', 'tonight', 'sunday', 'saturday',
+  // function words: never a key on their own ("is" in "The Price Is Right", "up" in "the cottage up at the lake")
+  'is', 'are', 'was', 'were', 'be', 'been', 'am', 'do', 'does', 'did', 'have', 'has', 'had', 'will', 'would', 'can', 'could',
+  'it', 'its', 'he', 'she', 'we', 'they', 'i', 'me', 'you', 'him', 'them', 'us', 'their', 'this', 'that', 'these', 'those',
+  'up', 'down', 'out', 'off', 'over', 'under', 'into', 'onto', 'round', 'around', 'about', 'after', 'before', 'back', 'away',
+  'right', 'left', 'just', 'all', 'more', 'most', 'very', 'so', 'too', 'not', 'or', 'but', 'if', 'as', 'than', 'then', 'there', 'here',
+  'what', 'who', 'where', 'when', 'how', 'why', 'which', 'called', 'every', 'each', 'other', 'own', 'same', 'first', 'last',
+]);
+
+interface Term {
+  kind: Kind;
+  /** the About-me entry as written */
+  entry: string;
+  /** distinctive words: any of these in the question is a profile term */
+  keys: Set<string>;
+  /** all content words of the entry (keys + generic ones), used to extend a matched span */
+  words: Set<string>;
+  /** for people: the name restored in place of the placeholder */
+  restoreAs?: string;
+}
+
+const WORD = /[\p{L}\p{N}'’]+/gu;
+function contentWords(entry: string): string[] {
+  return (entry.match(WORD) ?? []).map(norm).filter((w) => w && !LINK.has(w));
+}
+
+/** Every About-me entry, as a term the stripper looks for. Exported for the leak check and the tests. */
+export function profileTerms(p: Profile): Term[] {
+  const terms: Term[] = [];
+  const add = (kind: Kind, entry: string, restoreAs?: string) => {
+    const e = entry.trim();
+    if (!e) return;
+    const ws = contentWords(e);
+    // an entry made only of generic words ("tea") still counts: then all its words are keys
+    const keys = ws.filter((w) => !GENERIC.has(w));
+    terms.push({ kind, entry: e, keys: new Set(keys.length ? keys : ws), words: new Set(ws), restoreAs });
+  };
+  const names = [p.personName, p.partnerName, ...p.people.map((x) => x.name)].filter(Boolean);
+  for (const n of Array.from(new Set(names))) add('Person', n, n);
+  for (const f of p.foods) add('Food', f);
+  for (const f of p.places) add('Place', f);
+  for (const f of p.tv) add('Show', f);
+  for (const f of p.music) add('Music', f);
+  for (const f of p.other ?? []) add('Thing', f);
+  return terms;
+}
+
+interface Tok { w: string; start: number; end: number }
+// Whole words only: a contraction ("isn't", "Pat'll") is one token and never split; a possessive "'s" stays outside.
+const tokens = (s: string): Tok[] => [...s.matchAll(WORD)].map((m) => {
+  const raw = m[0].replace(/['’]s$/i, '').replace(/['’]$/, '');
+  return { w: norm(m[0]), start: m.index!, end: m.index! + raw.length };
+});
+
+/**
+ * Spans in `text` that belong to `term`, boundary-aware:
+ *  1. the whole entry as written (without a leading "the"), on word boundaries;
+ *  2. otherwise runs that START and END on a key word of the entry, joined only by the entry's own words or small
+ *     linking words ("park by the canal"), so no dangling function word ("cottage up") is ever swapped.
+ */
+function spans(text: string, term: Term): [number, number][] {
+  const out: [number, number][] = [];
+  const whole = term.entry.replace(/^the\s+/i, '');
+  const re = new RegExp(`(?<![\\p{L}\\p{N}'’])${esc(whole)}(?![\\p{L}\\p{N}])(?!['’](?!s\\b)\\p{L})`, 'giu');
+  for (const m of text.matchAll(re)) out.push([m.index!, m.index! + m[0].length]);
+  const taken = (a: number, b: number) => out.some(([x, y]) => a < y && b > x);
+  const ts = tokens(text);
+  // two tokens belong to one phrase only when just spaces (or a possessive/plural apostrophe) sit between them:
+  // never across a comma, a dash or a placeholder already written
+  const joined = (x: number) => /^(?:['’]s?)?\s+$/.test(text.slice(ts[x - 1].end, ts[x].start));
+  let i = 0;
+  while (i < ts.length) {
+    if (!term.keys.has(ts[i].w) || taken(ts[i].start, ts[i].end)) { i++; continue; }
+    let j = i;
+    for (;;) {
+      let k = j + 1;
+      while (k < ts.length && k - j <= 3 && joined(k) && !term.keys.has(ts[k].w) && (term.words.has(ts[k].w) || LINK.has(ts[k].w))) k++;
+      if (k < ts.length && joined(k) && term.keys.has(ts[k].w) && !taken(ts[k].start, ts[k].end)) { j = k; continue; }
+      break;
+    }
+    out.push([ts[i].start, ts[j].end]);
+    i = j + 1;
+  }
+  return out.sort((a, b) => a[0] - b[0]);
+}
+
+const PLACEHOLDER = /\b(?:Person|Food|Place|Show|Music|Thing) [A-Z]\b/g;
+const ARTICLE = '(?:(?:your|my|our|his|her|their|the)\\s+)?';
+
+export function stripQuestion(q: string, profile: Profile): Stripped {
+  const map: Record<string, string> = {};
+  const next: Record<Kind, number> = { Person: 0, Food: 0, Place: 0, Show: 0, Music: 0, Thing: 0 };
+  const labelFor = new Map<string, string>();
+  // one label per exact wording found, so the person's card gets back exactly the words the partner typed
+  const label = (t: Term, found: string, restoreAs?: string) => {
+    const back = restoreAs ?? found;
+    const id = `${t.kind}:${back}`;
+    let l = labelFor.get(id);
+    if (!l) {
+      l = `${t.kind} ${String.fromCharCode(65 + next[t.kind]++)}`;
+      labelFor.set(id, l);
+      map[l] = back;
+    }
+    return l;
+  };
+
+  let text = q;
+  // long digit runs (phone numbers, door codes) never leave either
+  text = text.replace(/\d[\d\s-]{4,}\d/g, '[number]');
+
+  // people first: names, then relation words that point at exactly one known person ("your granddaughter")
+  const terms = profileTerms(profile);
+  const people = terms.filter((t) => t.kind === 'Person');
+  for (const t of people.sort((a, b) => b.entry.length - a.entry.length)) {
+    const re = new RegExp(`(?<![\\p{L}\\p{N}'’])${esc(t.entry)}(?![\\p{L}\\p{N}])(?!['’](?!s\\b)\\p{L})`, 'giu');
+    text = text.replace(re, (found) => label(t, found));
+  }
+  const rels = new Map<string, string[]>();
+  for (const p of profile.people) {
+    const r = lc(p.relation ?? '').trim();
+    if (r && p.name) rels.set(r, [...(rels.get(r) ?? []), p.name]);
+  }
+  for (const [rel, who] of [...rels.entries()].sort((a, b) => b[0].length - a[0].length)) {
+    const re = new RegExp(`\\b${ARTICLE}${esc(rel)}\\b`, 'gi');
+    if (who.length === 1) {
+      const t = people.find((x) => x.entry === who[0]) ?? { kind: 'Person' as const, entry: who[0], keys: new Set<string>(), words: new Set<string>(), restoreAs: who[0] };
+      text = text.replace(re, () => label(t, who[0], who[0]));
+    } else {
+      text = text.replace(re, 'someone');
+    }
+  }
+
+  // then every other About-me entry, longest first so "the park by the canal" wins over a shorter overlap.
+  // Placeholders already written are masked so their words ("Place", "A") can't join a later match.
+  const masked: string[] = [];
+  const mask = (s: string) => s.replace(PLACEHOLDER, (m) => String.fromCharCode(0xe100 + masked.push(m) - 1));
+  const things = terms.filter((t) => t.kind !== 'Person').sort((a, b) => b.entry.length - a.entry.length);
+  text = mask(text);
+  for (const t of things) {
+    const sp = spans(text, t);
+    for (const [s, e] of [...sp].reverse()) {
+      const found = text.slice(s, e);
+      text = text.slice(0, s) + mask(label(t, found)) + text.slice(e);
+    }
+  }
+  text = text.replace(/[\ue100-\uefff]/g, (c) => masked[c.charCodeAt(0) - 0xe100]);
+  return { text, map };
+}
+
+export function restoreNames(s: string, map: Record<string, string>): string {
+  let out = s;
+  for (const [label, name] of Object.entries(map)) out = out.replace(new RegExp(`\\b${esc(label)}\\b`, 'gi'), name);
+  return out;
+}
+
+/** A placeholder the cloud made up (not in the map, so nothing can be restored). */
+export function hasPlaceholder(s: string): boolean {
+  return new RegExp(PLACEHOLDER.source).test(s);
+}
+
+/**
+ * Every About-me string found in `text`: full entries, names, relation words and each entry's distinctive words.
+ * Empty means the text is safe to send. Used in tests and as the last gate before a cloud call.
+ */
+export function findLeaks(text: string, profile: Profile): string[] {
+  const hits = new Set<string>();
+  const low = lc(text);
+  const ws = new Set(tokens(text).map((t) => t.w));
+  for (const t of profileTerms(profile)) {
+    if (new RegExp(`\\b${esc(lc(t.entry))}\\b`).test(low)) hits.add(t.entry);
+    for (const k of t.keys) if (ws.has(k)) hits.add(k);
+  }
+  for (const p of profile.people) {
+    const r = lc(p.relation ?? '').trim();
+    if (r && new RegExp(`\\b${esc(r)}\\b`).test(low)) hits.add(r);
+  }
+  return [...hits];
+}
+
+/** A picture word may go to the cloud only when it holds no About-me term and no digits. */
+export function isGenericWord(word: string, profile: Profile): boolean {
+  return !findLeaks(word, profile).length && !/\d/.test(word) && !hasPlaceholder(word);
+}
+
+/**
+ * The word sent for a picture. A generic word goes as it is. An About-me item goes as its neutral category
+ * ("food", "a place", "a TV show", "music"), so the picture still shows the kind of thing; a name never goes.
+ */
+export function pictureWord(label: string, profile: Profile): string | null {
+  if (isGenericWord(label, profile)) return label;
+  const ws = new Set(tokens(label).map((t) => t.w));
+  const t = profileTerms(profile).find((x) => x.kind !== 'Person' && [...x.keys].some((k) => ws.has(k)));
+  const CATEGORY: Record<Kind, string | null> = { Person: null, Food: 'food', Place: 'a place', Show: 'a TV show', Music: 'music', Thing: null };
+  return t ? CATEGORY[t.kind] : null;
+}
