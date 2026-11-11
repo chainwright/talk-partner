@@ -9,6 +9,8 @@ const BUILTIN = new Set([
   'yes', 'no', 'not sure', 'something else', 'someone else', 'somewhere else',
   'good', 'okay', 'bad', 'tasty', 'plain', 'too salty', 'good idea', 'leave it', 'like them', 'unhappy',
   'a little', 'some', 'a lot', 'this one', 'that one',
+  // added 11 Nov 2026
+  'listen', 'tea', 'coffee',
 ]);
 
 export function pictureFor(label: string, profile: Profile): PictureRef {

@@ -2,13 +2,13 @@
 // "X, or Y?" pairs and label cutting, fit / made-up / negative choices. All examples are new: none come from
 // the tuning set or either held-out set.
 import { describe, expect, it } from 'vitest';
-import type { DeviceStatus, Engine, ModelResult } from '../../src/ai/engine';
-import { cloudTextRequest, pictureRequestBody } from '../../src/ai/requests';
-import { makeCard } from '../../src/pipeline/pipeline';
-import { pictureFor } from '../../src/pipeline/pictures';
-import { commaOrPair, fitFilter, hasNegative, isOrNot, madeUpVariants, orPair, snapToProfile } from '../../src/pipeline/rules';
-import { findLeaks, stripQuestion } from '../../src/pipeline/strip';
-import type { ModelOutput, Profile, SupportLevel } from '../../src/pipeline/types';
+import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
+import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { makeCard } from '../../core/pipeline';
+import { pictureFor } from '../../core/pictures';
+import { commaOrPair, fitFilter, hasNegative, isOrNot, madeUpVariants, orPair, snapToProfile } from '../../core/rules';
+import { findLeaks, stripQuestion } from '../../core/strip';
+import type { ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
 // A second household with multi-word entries, possessives and proper nouns.

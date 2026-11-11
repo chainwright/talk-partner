@@ -2,7 +2,7 @@
 // Privacy boundary: devicePrompt() (with the profile) only goes to engine.runDevice (ONLY_ON_DEVICE).
 // engine.runCloud only ever receives stripQuestion(...).text.
 
-import type { Engine } from '../ai/engine';
+import type { Engine } from './engine';
 import { pictureFor } from './pictures';
 import { cloudPrompt, devicePrompt } from './prompt';
 import {
@@ -208,13 +208,25 @@ async function makeCardInner(input: string, env: PipelineEnv): Promise<Card> {
       notes.push(`On-device model failed: ${(e as Error).message}`);
     }
   }
-  // Either-or: the one on-device call also copied the options out of the question; code validates them.
-  // If they fail, the card goes to the cloud (the rules parser is used only when no model ran at all).
+  // Either-or: two independent candidates, the model's copied options and the code parser's pair. The first one that
+  // passes the label check wins (model first). A valid code pair is never thrown away because a model ran
+  // (REBUILD_SPEC §1.4 step 3: the "coffee or tea" bug). Only when neither passes does the card go to the cloud.
   let devicePair: [string, string] | null = null;
   let useRules = !o;
   if (o && offersOptions(asked)) {
     devicePair = validateOptions(o.options ?? [], asked, profile);
-    notes.push(devicePair ? 'Options copied from the question by the on-device model.' : 'The on-device options did not pass the check.');
+    if (devicePair) {
+      notes.push('Options copied from the question by the on-device model.');
+    } else {
+      // the same pair the no-model path uses, so the card is identical in every engine state
+      const rx = orPair(asked);
+      if (rx) {
+        devicePair = [snapToQuestionItem(rx[0], asked, profile), snapToQuestionItem(rx[1], asked, profile)];
+        notes.push("The on-device options did not pass the check; the options were read from the question in code.");
+      } else {
+        notes.push('The on-device options did not pass the check.');
+      }
+    }
   } else if (o) {
     useRules = true;
   }
@@ -285,10 +297,18 @@ async function cloudCard(
       }
     }
     // keep the routing reasons; the cloud's own answer is not re-routed
-    return { ...card, route: { to: 'cloud', reasons }, cloudPayload: preview, cloudSwaps: swaps(stripped.map), notes: [...notes, ...card.notes, ...cloudNotes] };
+    // "Sent" only when inferenceSource says the cloud answered. PREFER_IN_CLOUD runs on the device when offline:
+    // then nothing left this computer and the card says so (REBUILD_SPEC §1.3 item 3).
+    const sent = r.source === 'in-cloud';
+    if (!sent) cloudNotes.push('Ran on this computer (offline). Nothing was sent.');
+    return {
+      ...card, route: { to: 'cloud', reasons }, cloudPayload: sent ? preview : null, unsentPayload: sent ? null : preview,
+      ranOffline: !sent, cloudSwaps: swaps(stripped.map), notes: [...notes, ...card.notes, ...cloudNotes],
+    };
   } catch (e) {
     const base = fallback ?? assemble(asked, pending, null, env.profile, env.support, 'code');
-    return { ...base, cloudPayload: preview, notes: [...notes, `Cloud step failed (${(e as Error).message}); device card kept.`] };
+    // no answer came back, so nothing is claimed as sent; the payload is shown as what cloud help would get
+    return { ...base, cloudPayload: null, unsentPayload: preview, cloudSwaps: swaps(stripped.map), notes: [...notes, `Cloud step failed (${(e as Error).message}); device card kept.`] };
   }
 }
 

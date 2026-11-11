@@ -1,7 +1,6 @@
-// One interface for both model back ends:
-//  - FirebaseEngine: Firebase AI Logic hybrid inference (firebase/ai). Used when a real web config is present.
-//  - ChromeDirectEngine: Chrome's built-in LanguageModel (Gemini Nano) called directly. Used while the
-//    Firebase config is still the placeholder; it is the same on-device engine Firebase uses on desktop Chrome.
+// The one seam between the shared core and a platform client. Every implementation runs ALL model calls
+// through Firebase AI Logic (web: firebase/ai; Android: firebase-ai + firebase-ai-ondevice; iOS: FirebaseAILogic).
+// There is no direct model engine: tests/unit/no-direct-model-calls.test.ts fails the build if one appears.
 
 export type DeviceStatus = 'available' | 'downloadable' | 'downloading' | 'unavailable';
 

@@ -1,8 +1,8 @@
 // Fix round 4 after held-out run 4: options in the one on-device call, memory questions by structure, and the
 // "today" line only for questions about now. All examples are new: none come from any held-out set.
 import { describe, expect, it } from 'vitest';
-import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, SYSTEM_PROMPT } from '../../src/pipeline/prompt';
-import { isQuiz, quizKind, quizRephrase } from '../../src/pipeline/rules';
+import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, SYSTEM_PROMPT } from '../../core/prompt';
+import { isQuiz, quizKind, quizRephrase } from '../../core/rules';
 
 const NOW = new Date(2026, 10, 12, 15, 40);
 const TELL = /^If you know it, say it/;

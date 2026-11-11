@@ -1,11 +1,11 @@
 // Fix round 2 after held-out run 2: long either-or questions, speaker prefixes, label cuts, weak device options,
 // single-part body map, and no quiz questions (KB §7 rule 9). All examples are new: none come from any held-out set.
 import { describe, expect, it } from 'vitest';
-import type { DeviceStatus, Engine, ModelResult } from '../../src/ai/engine';
-import { cloudTextRequest, pictureRequestBody } from '../../src/ai/requests';
-import { makeCard } from '../../src/pipeline/pipeline';
-import { BODY_DETAIL, BODY_REGIONS, fitFilter, isQuiz, normalizeQuestion, orPair, quizRephrase } from '../../src/pipeline/rules';
-import type { ModelOutput, SupportLevel } from '../../src/pipeline/types';
+import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
+import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { makeCard } from '../../core/pipeline';
+import { BODY_DETAIL, BODY_REGIONS, fitFilter, isQuiz, normalizeQuestion, orPair, quizRephrase } from '../../core/rules';
+import type { ModelOutput, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
 class Fake implements Engine {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   dropBoth, escapeFor, inventedNameFilter, feelingSubtype, householdFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isPainLevel, orPair,
   overlapFilter, route, spokenLine, splitQuestion, timeScaleFilter,
-} from '../../src/pipeline/rules';
+} from '../../core/rules';
 import { PROFILE } from './fixtures';
 
 describe('rule 1: split two-part questions', () => {

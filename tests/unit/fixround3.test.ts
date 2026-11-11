@@ -1,13 +1,13 @@
 // Fix round 3 after held-out run 3: on-device option extraction validated in code, the person's own name,
 // wider memory/quiz detection, and no escape-only cards. All examples are new: none come from any held-out set.
 import { describe, expect, it } from 'vitest';
-import type { DeviceStatus, Engine, ModelResult } from '../../src/ai/engine';
-import { cloudTextRequest, pictureRequestBody } from '../../src/ai/requests';
-import { makeCard } from '../../src/pipeline/pipeline';
-import { aboutBlock } from '../../src/pipeline/prompt';
-import { isQuiz, snapToQuestionItem, validateOptions } from '../../src/pipeline/rules';
-import { findLeaks, stripQuestion } from '../../src/pipeline/strip';
-import type { ModelOutput, Profile } from '../../src/pipeline/types';
+import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
+import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { makeCard } from '../../core/pipeline';
+import { aboutBlock } from '../../core/prompt';
+import { isQuiz, snapToQuestionItem, validateOptions } from '../../core/rules';
+import { findLeaks, stripQuestion } from '../../core/strip';
+import type { ModelOutput, Profile } from '../../core/types';
 import { PROFILE } from './fixtures';
 
 const TV: Profile = { ...PROFILE, tv: ['Antiques Roadshow', 'Countryfile'], music: ['Nina Simone', 'brass bands'] };
@@ -71,12 +71,21 @@ describe('either-or cards: one on-device call with options; validated, else the 
     expect(e.cloudCalls).toHaveLength(0);
   });
 
-  it('device options fail the check: the card goes to the cloud, not to the rough rules labels', async () => {
+  // Changed 11 Nov 2026 (REBUILD_SPEC §1.4 step 3, the coffee/tea bug): the pre-period behaviour sent this card to the
+  // cloud. A valid code pair is now never thrown away because a model ran, so the card is the same in every engine state.
+  it('device options fail the check: the code pair from the question is used, no cloud call', async () => {
     const e = new Fake(yesno, ['want to walk', 'stay'], { topic: 'out', kind: 'choice', choices: ['shops', 'stay in'], options: ['walk to the shops', 'stay in the warm'] });
     const c = await makeCard('Do you want to walk to the shops or stay in the warm?', env(e));
+    expect(e.cloudCalls).toHaveLength(0);
+    expect(c.notes.join(' ')).toMatch(/did not pass the check; the options were read from the question in code/);
+    expect(labels(c)).toEqual(['walk to the shops', 'stay in the warm', 'something else']);
+  });
+
+  it('device options fail and the code parser finds no pair either: the card goes to the cloud', async () => {
+    const e = new Fake(yesno, ['want to', 'it'], { topic: 'out', kind: 'choice', choices: ['shops', 'home'], options: ['the shops', 'home'] });
+    const c = await makeCard('Is it the shops, or are we going home, or what?', env(e));
+    expect(c.notes.join(' ')).toMatch(/did not pass the check\./);
     expect(e.cloudCalls).toHaveLength(1);
-    expect(c.notes.join(' ')).toMatch(/did not pass the check/);
-    expect(labels(c)).toEqual(['walk to the shops', 'stay in the warm', 'something else']); // the cloud's options, checked
   });
 
   it('no model at all: the rules parser still makes the card on the device', async () => {

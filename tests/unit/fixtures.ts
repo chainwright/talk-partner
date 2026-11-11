@@ -1,4 +1,4 @@
-import type { Profile } from '../../src/pipeline/types';
+import type { Profile } from '../../core/types';
 
 // A different household from the validation fixture, so the tests don't echo the tuning set.
 export const PROFILE: Profile = {

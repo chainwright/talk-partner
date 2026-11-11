@@ -1,8 +1,8 @@
 // The exact cloud request bodies, built in one place so the "what was sent" panel shows precisely what the
 // engine passes to the SDK. Nothing here takes the profile as input: only the stripped question or one word.
 
-import { CLOUD_IMAGE_MODEL, CLOUD_TEXT_MODEL } from '../config';
-import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, cloudPrompt } from '../pipeline/prompt';
+import { CLOUD_IMAGE_MODEL, CLOUD_TEXT_MODEL } from './models';
+import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, cloudPrompt } from './prompt';
 
 export function cloudTextRequest(strippedQuestion: string) {
   return {

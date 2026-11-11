@@ -88,6 +88,8 @@ export interface Card {
   /** Notes for the partner screen (e.g. "cloud not configured: card kept from device"). */
   notes: string[];
   ms: number;
+  /** The stripped leg (PREFER_IN_CLOUD) fell back to the device because the cloud was unreachable. */
+  ranOffline?: boolean;
 }
 
 export type SupportLevel = 'mild' | 'more' | 'most';

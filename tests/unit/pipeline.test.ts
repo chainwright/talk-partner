@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { DeviceStatus, Engine, ModelResult } from '../../src/ai/engine';
-import { cloudTextRequest, pictureRequestBody } from '../../src/ai/requests';
-import { assemble, bodyDetailCard, makeCard, parseModelOutput } from '../../src/pipeline/pipeline';
-import { aboutBlock, devicePrompt } from '../../src/pipeline/prompt';
-import { isGenericWord, restoreNames, stripQuestion } from '../../src/pipeline/strip';
-import type { ModelOutput } from '../../src/pipeline/types';
+import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
+import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { assemble, bodyDetailCard, makeCard, parseModelOutput } from '../../core/pipeline';
+import { aboutBlock, devicePrompt } from '../../core/prompt';
+import { isGenericWord, restoreNames, stripQuestion } from '../../core/strip';
+import type { ModelOutput } from '../../core/types';
 import { PROFILE } from './fixtures';
 
 class FakeEngine implements Engine {

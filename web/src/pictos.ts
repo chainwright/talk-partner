@@ -58,6 +58,10 @@ const P: Record<string, string> = {
   unhappy: `${personShape}<path d="M70 44c4-4 12-4 16 0" stroke-width="4"/>`,
   'this one': '<rect x="10" y="40" width="34" height="40" rx="6"/><path d="M84 30L54 56M54 56h14M54 56V42" stroke-width="6"/>',
   'that one': '<rect x="52" y="40" width="34" height="40" rx="6"/><path d="M12 30l30 26M42 56H28M42 56V42" stroke-width="6"/>',
+  // drawn 11 Nov 2026 (in the submission period)
+  listen: '<path d="M30 40a20 20 0 0140 0c0 12-8 16-12 22-3 5-3 12-10 14-6 2-11-2-11-7"/><path d="M40 42a10 10 0 0120 0c0 6-6 8-6 14" stroke-width="4"/>',
+  tea: '<path d="M18 40h48v16c0 14-11 24-24 24S18 70 18 56z"/><path d="M66 46h6a8 8 0 010 16h-8"/><path d="M14 86h60"/><path d="M42 40V22h10v10h-10" stroke-width="3"/>',
+  coffee: '<path d="M22 36h44l-5 44H27z"/><path d="M66 46h5a8 8 0 010 16h-7"/><path d="M36 26c-3-5 3-8 0-13M48 26c-3-5 3-8 0-13" stroke-width="4"/>',
   'a little': bars(1),
   some: bars(2),
   'a lot': bars(4),

@@ -2,8 +2,8 @@
 // For every sentence: nothing from About me is left in what would be sent, the swap never cuts inside a word or a
 // contraction, every non-profile word survives unchanged, and the words come back exactly as typed on the card.
 import { describe, expect, it } from 'vitest';
-import { findLeaks, restoreNames, stripQuestion } from '../../src/pipeline/strip';
-import type { Profile } from '../../src/pipeline/types';
+import { findLeaks, restoreNames, stripQuestion } from '../../core/strip';
+import type { Profile } from '../../core/types';
 
 function rng(seed: number) {
   return () => {
