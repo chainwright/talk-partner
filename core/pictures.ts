@@ -20,8 +20,11 @@ export function pictureFor(label: string, profile: Profile): PictureRef {
   if (l === 'you' || isPartnerName(label, profile)) return { type: 'person', personId: null, initial: (profile.partnerName || 'Y').charAt(0).toUpperCase() };
   const p = findPerson(label, profile);
   if (p) return { type: 'person', personId: p.id, initial: p.name.charAt(0).toUpperCase() };
-  // A picture request carries one generic word. An About-me item goes as its category ("food", "a place");
-  // anything else that can't be made generic gets no cloud picture at all (the word still shows).
+  // A picture request carries one generic word (§2.20 gate): the label is lower-case as typed, has no digits and
+  // holds no About-me term. An About-me item goes as its category ("food", "a place"); a capitalised word (a name
+  // the profile doesn't know, a brand, a place) and anything else gets no cloud picture at all: the word alone shows.
   const w = pictureWord(l, profile);
-  return w ? { type: 'cloud', word: w } : { type: 'builtin', id: 'something else' };
+  if (!w) return { type: 'word' };
+  if (w === l && (/\p{Lu}/u.test(label) || /\d/.test(label))) return { type: 'word' };
+  return { type: 'cloud', word: w };
 }

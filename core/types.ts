@@ -42,7 +42,9 @@ export type BodyRegion = 'head' | 'chest' | 'stomach' | 'back' | 'arms' | 'legs'
 export type PictureRef =
   | { type: 'builtin'; id: string }
   | { type: 'person'; personId: string | null; initial: string }
-  | { type: 'cloud'; word: string };
+  | { type: 'cloud'; word: string }
+  /** No picture: the word alone on the tile (never an empty frame, never the escape icon). */
+  | { type: 'word' };
 
 export interface Choice {
   /** Text on the person's card. */

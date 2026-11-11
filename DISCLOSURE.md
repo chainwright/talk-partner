@@ -40,5 +40,12 @@ See `git log` for dates. Day by day: `devlog/`.
 - The one-screen web client (`web/src/main.ts`, `styles.css`), three new pictograms (listen, tea, coffee).
 - Tests: the guard against direct model calls, the coffee/tea engine-state matrix, the real end-to-end check against
   Firebase (`scripts/e2e-cloud.mjs`), and the production-bundle check (`scripts/check-dist.mjs`).
+- Day 2 (11 Nov), in `core/rules.ts`, `core/pipeline.ts`, `core/strip.ts`, `core/pictures.ts`: the or-pair headline
+  (the shared topic, never an option), the either-or label check applied to both the model's options and the code
+  parser, subject-less offers as yes/no, completing an open card from the About-me list of the same kind or a small
+  fixed set, numbers as figures, a line per kind of memory question, plural forms and unknown capitalised words
+  ("Name A") in the privacy swap, the picture gate, blocked cards without choices. Tests: `headline`, `label-check`,
+  `open-sources`, `strip-gate`, `card.property`, and the engine-state matrix extended to seven card shapes.
+  Three pre-period tests were updated to the new behaviour, each with a dated comment saying why.
 
 Tools: AI coding assistants were used during development, as the rules allow.

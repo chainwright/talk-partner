@@ -6,12 +6,14 @@ import type { Engine } from './engine';
 import { pictureFor } from './pictures';
 import { cloudPrompt, devicePrompt } from './prompt';
 import {
-  BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, cleanTopic, dropBoth, escapeFor, feelingSubtype, fitFilter, hasNegative,
-  heuristicTopic, householdFilter, isQuiz, offersOptions, quizRephrase, snapToQuestionItem, validateOptions, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
-  madeUpVariants, orPair, overlapFilter, route, scaleLevel, snapToProfile, spokenLine, splitQuestion, timeScaleFilter,
+  BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
+  heuristicTopic, householdFilter, isQuiz, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
+  madeUpVariants, orPair, overlapFilter, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
 import type { BodyRegion, Card, Choice, ModelOutput, Profile, Source, SupportLevel } from './types';
+
+const WH_START = /^\s*(?:what|where|who|whom|when|which|why|how)\b/i;
 
 export function parseModelOutput(text: string): ModelOutput | null {
   try {
@@ -28,8 +30,8 @@ export function parseModelOutput(text: string): ModelOutput | null {
 }
 
 /** Questions where code alone fixes the choices (the model only adds a topic). */
-export function codeDetermined(q: string): boolean {
-  return isQuiz(q) || isPainLevel(q) || isBodyWhere(q) || !!orPair(q) || isAuxYesNo(q) || isOrNot(q) || isFeelingQuestion(q);
+export function codeDetermined(q: string, profile?: Profile): boolean {
+  return isQuiz(q) || isPainLevel(q) || isBodyWhere(q) || !!codePair(q, profile) || isAuxYesNo(q) || isOrNot(q) || isFeelingQuestion(q);
 }
 
 function toChoices(answers: string[], escapes: string[], profile: Profile): Choice[] {
@@ -43,9 +45,10 @@ function toChoices(answers: string[], escapes: string[], profile: Profile): Choi
   return [...answers.map((a) => mk(a, 'answer')), ...escapes.map((e) => mk(e, 'escape'))];
 }
 
-/** KB §7 rule 5: up to 3 choices at "mild", 2 at "more" and "most"; always exactly one escape. */
+/** KB §7 rule 5: up to 3 choices at "mild", 2 at "more" and "most"; always exactly one escape. Numbers as figures (§2.9). */
 function finish(base: Omit<Card, 'choices' | 'say'>, answers: string[], escapes: string[], profile: Profile, support: SupportLevel): Card {
-  const choices = toChoices(answers.slice(0, choiceCap(support)), escapes.slice(0, 1), profile);
+  const when = questionType(base.asked) === 'when';
+  const choices = toChoices(answers.slice(0, choiceCap(support)).map((a) => figures(a, when)), escapes.slice(0, 1), profile);
   return { ...base, choices, say: spokenLine(base.asked, choices.map((c) => c.spoken)) };
 }
 
@@ -66,8 +69,8 @@ function paged(base: Omit<Card, 'choices' | 'say'>, list: string[], escape: stri
   return next!;
 }
 
-/** Model or cloud choices -> clean answer list, plus why any were rejected (rules 3, 4, 9, 10 and fit). */
-function cleanChoices(asked: string, topic: string, raw: string[], profile: Profile): { answers: string[]; rejected: string[] } {
+/** Model or cloud choices -> clean answer list, plus why any were rejected (rules 3, 4, 9, 10 and fit), plus the §2.6 fill. */
+function cleanChoices(asked: string, topic: string, raw: string[], profile: Profile, support: SupportLevel): { answers: string[]; rejected: string[]; filled: string | null } {
   const seen = new Set<string>();
   const rejected: string[] = [];
   let answers = raw
@@ -94,8 +97,22 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
     answers = [];
   }
   answers = overlapFilter(answers, profile).slice(0, 3);
+  // §2.6: a generic "stay home / go out" is not a place when About me has places to offer instead
+  const placed = dropGenericWhere(answers, asked, profile);
+  const droppedGeneric = placed.length < answers.length;
+  answers = placed;
   if (negs.length && answers.length < 2) rejected.push('negative wording');
-  return { answers, rejected: [...new Set(rejected)] };
+  // §2.6: fewer than two answers -> fill from the About-me list of the same kind, or the fixed set for the question type
+  let filled: string | null = null;
+  if (answers.length < 2) {
+    const f = sourceFill(answers, asked, profile, choiceCap(support));
+    if (f) { answers = f.answers; filled = f.source; }
+  } else if (droppedGeneric) {
+    const f = sourceFill(answers, asked, profile, choiceCap(support));
+    if (f) { answers = f.answers; filled = f.source; }
+  }
+  if (droppedGeneric && !filled) rejected.push("a choice didn't fit the question");
+  return { answers, rejected: [...new Set(rejected)], filled };
 }
 
 /**
@@ -106,53 +123,74 @@ export function assemble(
   asked: string, pending: string | null, o: ModelOutput | null, profile: Profile, support: SupportLevel,
   source: Source, ms = 0, pairIn: [string, string] | null = null, useRules = true,
 ): Card {
-  const topic = cleanTopic(o?.topic ?? '') || heuristicTopic(asked);
+  // §2.16: the model's topic is a headline only when it names an idea (not one function word, not a placeholder,
+  // not one of its own choices: then the topic is wrong, not the choice)
+  let topic = validTopic(o?.topic);
+  if (topic && (o?.choices ?? []).some((c) => c.toLowerCase() === topic.toLowerCase())) topic = '';
+  topic ||= heuristicTopic(asked, profile);
   const base = { asked, pending, topic, source, ms, cloudPayload: null, notes: [] as string[], route: { to: 'device' as const, reasons: [] as string[] } };
 
   if (isQuiz(asked)) {
-    // KB §7 rule 9: never a quiz. No card; the partner gets a statement to say instead.
+    // KB §7 rule 9: never a quiz. No card; the partner gets a statement to say instead. No rule number on screen (§2.10).
     return {
-      ...base, source: 'code', topic: cleanTopic(o?.topic ?? '') || heuristicTopic(asked), kind: 'no-quiz', choices: [],
-      say: `Tell, don't test: ${quizRephrase(asked, profile.partnerName)}`,
-      blocked: "This question would test memory (KB §7 rule 9), so there is no card. Say the answer as a statement, or just chat about it.",
+      ...base, source: 'code', kind: 'no-quiz', choices: [],
+      say: `Tell, don't test: ${quizRephrase(asked, profile.partnerName, new Date(), profile)}`,
+      blocked: 'This one asks them to remember, so there is no card. Try saying it instead.',
     };
   }
   if (isPainLevel(asked)) {
-    return finish({ ...base, topic: cleanTopic(o?.topic ?? '') || 'pain', kind: 'pain' }, [...PAIN_LEVELS[scaleLevel(support)]], [escapeFor(asked)], profile, support);
+    return finish({ ...base, topic: validTopic(o?.topic) || 'pain', kind: 'pain' }, [...PAIN_LEVELS[scaleLevel(support)]], [escapeFor(asked)], profile, support);
   }
   if (isBodyWhere(asked)) {
     return paged({ ...base, topic: 'where it hurts', kind: 'body', bodyStep: 1 }, [...BODY_REGIONS], 'somewhere else', profile, support);
   }
 
-  // either-or options: from the on-device model when it passed validation, else the regex parser
-  const rx = useRules ? orPair(asked) : null;
-  const pair: [string, string] | null = pairIn ?? (rx ? [snapToQuestionItem(rx[0], asked, profile), snapToQuestionItem(rx[1], asked, profile)] : null);
+  // either-or options: from the on-device model when it passed validation, else the code parser (same label check)
+  const pair: [string, string] | null = pairIn ?? (useRules ? codePair(asked, profile) : null);
   let kind: Card['kind'] = o?.kind ?? 'choice';
   if (isAuxYesNo(asked) || isOrNot(asked)) kind = 'yesno';
   // a question that offers options ("..., or would you rather ...?") is never a plain yes / no card
   if (kind === 'yesno' && offersOptions(asked) && !isOrNot(asked)) kind = 'choice';
+  // §2.4: yes / no is for a single proposal only; a wh-question is never yes / no whatever the model says
+  if (kind === 'yesno' && WH_START.test(stripVocative(asked))) kind = 'choice';
   if (isFeelingQuestion(asked)) kind = 'feeling';
   else if (kind === 'feeling') kind = 'choice';
   if (pair) kind = 'choice';
 
-  if (kind === 'yesno') return finish({ ...base, kind }, ['yes', 'no'], ['not sure'], profile, support);
+  // §2.18: a code-determined card is identical in every engine state, so its headline comes from the question, not the model
+  if (kind === 'yesno') return finish({ ...base, topic: heuristicTopic(asked, profile), kind }, ['yes', 'no'], ['not sure'], profile, support);
   if (kind === 'feeling') {
     const subtype = feelingSubtype(asked, profile);
-    return finish({ ...base, kind, subtype }, [...FEELING_SCALES[subtype][scaleLevel(support)]], ['something else'], profile, support);
+    return finish({ ...base, topic: heuristicTopic(asked, profile), kind, subtype }, [...FEELING_SCALES[subtype][scaleLevel(support)]], ['something else'], profile, support);
   }
 
   let answers: string[];
   let rejected: string[] = [];
+  let filled: string | null = null;
+  let headline = topic;
   if (pair) {
     answers = [...pair]; // rule 3: exactly the two options the partner offered
+    headline = orHeadline(asked, pair, profile, o?.topic); // §2.5: the shared topic, never one of the options
   } else {
-    ({ answers, rejected } = cleanChoices(asked, topic, o?.choices ?? [], profile));
+    ({ answers, rejected, filled } = cleanChoices(asked, topic, o?.choices ?? [], profile, support));
+    // §2.16: the headline is never one of the options (a filled answer may coincide with the model's topic)
+    if (answers.some((a) => a.toLowerCase() === headline.toLowerCase())) {
+      headline = heuristicTopic(asked, profile);
+      if (answers.some((a) => a.toLowerCase() === headline.toLowerCase())) headline = 'choices';
+    }
   }
   const r = route('choice', asked, answers, !!pair);
   if (!pair && offersOptions(asked)) rejected.push('either-or options not found');
   if (!pair) for (const why of rejected) if (!r.reasons.includes(why)) r.reasons.push(why);
   if (r.reasons.length) r.to = 'cloud';
-  return finish({ ...base, kind: 'choice', route: r }, answers, [escapeFor(asked, answers, profile)], profile, support);
+  const notes = [...base.notes];
+  if (filled && answers.length >= 2) {
+    // §2.6: the card was completed from About me or the fixed set; the cloud (which has neither) can't do better
+    notes.push(`Choices completed from ${filled}.`);
+    r.to = 'device';
+    r.reasons = [];
+  }
+  return finish({ ...base, notes, topic: headline, kind: 'choice', route: r }, answers, [escapeFor(asked, answers, profile)], profile, support);
 }
 
 /** Step 2 of the body map: narrow the region the person pointed at. */
@@ -174,7 +212,9 @@ export interface PipelineEnv {
 
 /** Full flow for one partner question. */
 export async function makeCard(input: string, env: PipelineEnv): Promise<Card> {
-  return noEscapeOnly(await makeCardInner(input, env));
+  const card = noEscapeOnly(await makeCardInner(input, env));
+  // §2.13: a blocked card is never shown to the person, so it carries no choices (not even an escape)
+  return card.blocked ? { ...card, choices: [] } : card;
 }
 
 /** A choice card left with fewer than two answers is not shown (an escape alone can't be answered): just ask normally. */
@@ -189,7 +229,7 @@ function noEscapeOnly(card: Card): Card {
 async function makeCardInner(input: string, env: PipelineEnv): Promise<Card> {
   const [asked, pending] = splitQuestion(input);
   const { profile, support, engine } = env;
-  const fixed = codeDetermined(asked);
+  const fixed = codeDetermined(asked, profile);
 
   let o: ModelOutput | null = null;
   let source: Source = 'code';
@@ -219,12 +259,11 @@ async function makeCardInner(input: string, env: PipelineEnv): Promise<Card> {
       notes.push('Options copied from the question by the on-device model.');
     } else {
       // the same pair the no-model path uses, so the card is identical in every engine state
-      const rx = orPair(asked);
-      if (rx) {
-        devicePair = [snapToQuestionItem(rx[0], asked, profile), snapToQuestionItem(rx[1], asked, profile)];
+      devicePair = codePair(asked, profile);
+      if (devicePair) {
         notes.push("The on-device options did not pass the check; the options were read from the question in code.");
       } else {
-        notes.push('The on-device options did not pass the check.');
+        notes.push(orPair(asked) ? 'The on-device options did not pass the check, and the pair read from the question did not either.' : 'The on-device options did not pass the check.');
       }
     }
   } else if (o) {
@@ -278,7 +317,7 @@ async function cloudCard(
     const r = await env.engine.runCloud(stripped.text);
     const o = parseModelOutput(r.text);
     if (!o) throw new Error('cloud answer was not valid JSON');
-    o.topic = restoreNames(o.topic, stripped.map).replace(/\b(?:Person|Food|Place|Show|Music|Thing) [A-Z]\b/g, '').trim();
+    o.topic = restoreNames(o.topic, stripped.map).replace(/\b(?:Person|Food|Place|Show|Music|Thing|Name) [A-Z]\b/g, '').trim();
     o.choices = o.choices.map((c) => restoreNames(c, stripped.map));
     o.options = (o.options ?? []).map((c) => restoreNames(c, stripped.map));
     // either-or: the cloud's copied options pass the same check as the device's; the rules parser is not used here

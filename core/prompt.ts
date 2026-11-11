@@ -45,7 +45,7 @@ Partner asks: Where would you like to go on holiday next year?
 
 /** The cloud gets no ABOUT block at all, so its instructions do not mention one. */
 // (The fixed example name "Emma" is swapped for "Person A" so no real-looking name appears in a cloud request.)
-export const CLOUD_SYSTEM_PROMPT = SYSTEM_PROMPT.replace('  Use the ABOUT lists when they fit; never invent names.', '  Never invent names or details. "Person A", "Place A", "Food A", "Show A", "Music A", "Thing A" stand for real people and things; keep those labels exactly, and never make up new ones.')
+export const CLOUD_SYSTEM_PROMPT = SYSTEM_PROMPT.replace('  Use the ABOUT lists when they fit; never invent names.', '  Never invent names or details. "Person A", "Place A", "Food A", "Show A", "Music A", "Thing A", "Name A" stand for real people and things; keep those labels exactly, and never make up new ones.')
   .replace(/Emma's birthday/g, "Person A's birthday")
   +`\nOptions must not overlap in meaning, and each must be something a person could point at.`
   +`\nNo negative words in options ("not", "don't"). If the real options can't be known from the question (which of their own clothes, which photo), return fewer options rather than inventing details like colours.`;

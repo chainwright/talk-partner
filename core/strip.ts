@@ -12,7 +12,26 @@ export interface Stripped {
   map: Record<string, string>;
 }
 
-type Kind = 'Person' | 'Food' | 'Place' | 'Show' | 'Music' | 'Thing';
+type Kind = 'Person' | 'Food' | 'Place' | 'Show' | 'Music' | 'Thing' | 'Name';
+
+/**
+ * Capitalised words that are ordinary English, not someone's name: these stay in the cloud text. Any other
+ * capitalised word that is not sentence-initial and not in About me becomes "Name A" (§2.19, a heuristic).
+ */
+const COMMON_CAPS = new Set([
+  'i', "i'm", "i'll", "i'd", "i've", 'a', 'ok', 'okay', 'tv', 'gp', 'nhs', 'bbc', 'itv', 'pc', 'dvd', 'cd', 'id', 'ps',
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december',
+  'christmas', 'xmas', 'easter', 'halloween', 'thanksgiving', 'hogmanay', 'boxing', 'new', 'year', 'eve', 'god', 'lent', 'advent', 'remembrance',
+  'mum', 'mummy', 'mom', 'mam', 'ma', 'dad', 'daddy', 'pa', 'nan', 'nana', 'nanna', 'gran', 'granny', 'grandma', 'grandad', 'granddad', 'grandpa', 'auntie', 'aunt', 'uncle',
+  'mr', 'mrs', 'ms', 'miss', 'dr', 'doctor', 'nurse', 'sir', 'madam', 'love', 'father', 'reverend', 'vicar',
+  'english', 'french', 'spanish', 'italian', 'german', 'chinese', 'indian', 'thai', 'greek', 'turkish', 'polish', 'british', 'american', 'scottish', 'welsh', 'irish', 'australian',
+  'covid', 'wifi', 'wi-fi', 'ipad', 'iphone', 'facebook', 'youtube', 'netflix', 'zoom', 'skype', 'whatsapp', 'amazon', 'google', 'spotify', 'radio', 'tesco', 'asda', 'aldi', 'lidl', 'sainsbury',
+  'yes', 'no', 'oh', 'ah', 'hi', 'hello', 'thanks', 'sorry', 'please', 'right', 'well', 'so', 'then', 'also', 'and', 'or', 'but', 'if', 'the', 'what', 'who', 'where', 'when', 'how', 'why', 'which',
+  'do', 'does', 'did', 'is', 'are', 'was', 'were', 'can', 'could', 'should', 'shall', 'will', 'would', 'have', 'has', 'had', 'you', 'we', 'it', 'he', 'she', 'they', 'your', 'my', 'our', 'his', 'her',
+]);
+/** Where a word starts a sentence: at the start, or after a sentence end (or an opening quote / dash after one). */
+const SENTENCE_START = /(?:^|[.?!:;]|\n)\s*["'“‘(-]*\s*$/;
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const lc = (s: string) => s.toLowerCase();
@@ -50,6 +69,19 @@ function contentWords(entry: string): string[] {
   return (entry.match(WORD) ?? []).map(norm).filter((w) => w && !LINK.has(w));
 }
 
+/** A word and its plural / singular forms: "scone" also matches "scones", "darts" also "dart" (§2.19). */
+function plurals(w: string): string[] {
+  if (w.length < 3 || /\d/.test(w)) return [w];
+  const out = new Set([w]);
+  if (/(?:s|x|z|ch|sh)$/.test(w)) out.add(`${w}es`);
+  if (/[^s]y$/.test(w) && !/[aeiou]y$/.test(w)) out.add(`${w.slice(0, -1)}ies`);
+  out.add(`${w}s`);
+  if (w.length >= 4 && /[^s]s$/.test(w)) out.add(w.slice(0, -1));
+  if (w.length >= 5 && /(?:ses|xes|zes|ches|shes)$/.test(w)) out.add(w.slice(0, -2));
+  if (w.length >= 5 && /ies$/.test(w)) out.add(`${w.slice(0, -3)}y`);
+  return [...out];
+}
+
 /** Every About-me entry, as a term the stripper looks for. Exported for the leak check and the tests. */
 export function profileTerms(p: Profile): Term[] {
   const terms: Term[] = [];
@@ -59,7 +91,8 @@ export function profileTerms(p: Profile): Term[] {
     const ws = contentWords(e);
     // an entry made only of generic words ("tea") still counts: then all its words are keys
     const keys = ws.filter((w) => !GENERIC.has(w));
-    terms.push({ kind, entry: e, keys: new Set(keys.length ? keys : ws), words: new Set(ws), restoreAs });
+    const base = keys.length ? keys : ws;
+    terms.push({ kind, entry: e, keys: new Set(base.flatMap(plurals)), words: new Set(ws.flatMap(plurals)), restoreAs });
   };
   const names = [p.personName, p.partnerName, ...p.people.map((x) => x.name)].filter(Boolean);
   for (const n of Array.from(new Set(names))) add('Person', n, n);
@@ -110,12 +143,12 @@ function spans(text: string, term: Term): [number, number][] {
   return out.sort((a, b) => a[0] - b[0]);
 }
 
-const PLACEHOLDER = /\b(?:Person|Food|Place|Show|Music|Thing) [A-Z]\b/g;
+const PLACEHOLDER = /\b(?:Person|Food|Place|Show|Music|Thing|Name) [A-Z]\b/g;
 const ARTICLE = '(?:(?:your|my|our|his|her|their|the)\\s+)?';
 
 export function stripQuestion(q: string, profile: Profile): Stripped {
   const map: Record<string, string> = {};
-  const next: Record<Kind, number> = { Person: 0, Food: 0, Place: 0, Show: 0, Music: 0, Thing: 0 };
+  const next: Record<Kind, number> = { Person: 0, Food: 0, Place: 0, Show: 0, Music: 0, Thing: 0, Name: 0 };
   const labelFor = new Map<string, string>();
   // one label per exact wording found, so the person's card gets back exactly the words the partner typed
   const label = (t: Term, found: string, restoreAs?: string) => {
@@ -169,6 +202,20 @@ export function stripQuestion(q: string, profile: Profile): Stripped {
       text = text.slice(0, s) + mask(label(t, found)) + text.slice(e);
     }
   }
+  // last: a capitalised word that is not sentence-initial, not ordinary English and not in About me is probably a
+  // name the partner didn't list ("a trip to Whitby", "ring Pauline"). It goes as "Name A" and comes back on the device.
+  const nameTerm: Term = { kind: 'Name', entry: '', keys: new Set(), words: new Set() };
+  const names = tokens(text).filter((tk) => {
+    const raw = text.slice(tk.start, tk.end);
+    if (!/^\p{Lu}/u.test(raw) || /\p{N}/u.test(raw)) return false;
+    if (COMMON_CAPS.has(lc(raw)) || COMMON_CAPS.has(norm(raw))) return false;
+    if (/^\p{Lu}+$/u.test(raw) && raw.length <= 4) return false; // an acronym (TV, GP, NHS) stays
+    return !SENTENCE_START.test(text.slice(0, tk.start));
+  });
+  // labels in reading order (the first unknown name is "Name A"), replaced from the end so offsets stay valid
+  const lbls = names.map((tk) => mask(label(nameTerm, text.slice(tk.start, tk.end))));
+  for (let i = names.length - 1; i >= 0; i--) text = text.slice(0, names[i].start) + lbls[i] + text.slice(names[i].end);
+
   text = text.replace(/[\ue100-\uefff]/g, (c) => masked[c.charCodeAt(0) - 0xe100]);
   return { text, map };
 }
@@ -216,6 +263,6 @@ export function pictureWord(label: string, profile: Profile): string | null {
   if (isGenericWord(label, profile)) return label;
   const ws = new Set(tokens(label).map((t) => t.w));
   const t = profileTerms(profile).find((x) => x.kind !== 'Person' && [...x.keys].some((k) => ws.has(k)));
-  const CATEGORY: Record<Kind, string | null> = { Person: null, Food: 'food', Place: 'a place', Show: 'a TV show', Music: 'music', Thing: null };
+  const CATEGORY: Record<Kind, string | null> = { Person: null, Food: 'food', Place: 'a place', Show: 'a TV show', Music: 'music', Thing: null, Name: null };
   return t ? CATEGORY[t.kind] : null;
 }
