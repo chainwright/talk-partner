@@ -84,6 +84,16 @@ const P: Record<string, string> = {
   'write it': '<path d="M18 78l6-20 36-36 14 14-36 36z"/><path d="M60 22l14 14"/><path d="M24 58l14 14"/><path d="M18 88h60"/>',
   more: '<circle cx="48" cy="48" r="34"/><path d="M48 30v36M30 48h36" stroke-width="7"/>',
 
+  // day 5, drawn 11 Nov 2026 (late): the "we're stuck" repair card
+  // show me: a hand pointing at a small object
+  'show me': '<path d="M28 86V54a6 6 0 0112 0v8"/><path d="M40 60V30a6 6 0 0112 0v30"/><path d="M52 62V44a6 6 0 0112 0v22"/><path d="M64 66v-8a6 6 0 0112 0v16c0 10-8 18-18 18H46c-8 0-14-5-18-12l-8-14" stroke-width="5"/><rect x="10" y="14" width="22" height="16" rx="3" stroke="var(--accent)"/>',
+  // draw: a pencil leaving a wavy line
+  draw: '<path d="M62 14l20 20-36 36H26V50z"/><path d="M56 20l20 20"/><path d="M14 86c8-10 14-10 22 0s14 10 22 0 14-10 22 0" stroke="var(--accent)" stroke-width="4"/>',
+  // later: a clock face with an arrow coming back round
+  later: '<circle cx="48" cy="52" r="30"/><path d="M48 34v18l10 7"/><path d="M78 30a34 34 0 00-10-10" stroke="var(--accent)" stroke-width="6"/><path d="M66 12l4 10-10 2" stroke="var(--accent)" stroke-width="5"/>',
+  // change topic: two speech bubbles, the second one taking over
+  'change topic': '<path d="M12 18h40a6 6 0 016 6v20a6 6 0 01-6 6H32l-10 8v-8h-10a6 6 0 01-6-6V24a6 6 0 016-6z"/><path d="M44 48h34a6 6 0 016 6v18a6 6 0 01-6 6h-8v8l-10-8H44a6 6 0 01-6-6V54a6 6 0 016-6z" stroke="var(--accent)"/>',
+
   // batch 1: feelings (faces only on the feelings scale; no gender, no skin tone)
   tired: face('<path d="M36 64h24"/>', '<path d="M28 42c4-5 10-5 14 0M54 42c4-5 10-5 14 0" stroke-width="4"/>'),
   worried: face('<path d="M33 66c5-5 10 5 15 0s10 5 15 0"/>', '<circle cx="35" cy="44" r="3" fill="currentColor"/><circle cx="61" cy="44" r="3" fill="currentColor"/><path d="M27 32l12 5M69 32l-12 5" stroke-width="4"/>'),

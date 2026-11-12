@@ -20,7 +20,7 @@ export const SAMPLE_PROFILE: Profile = {
 export const SAMPLE_QUESTIONS: { q: string; shows: string }[] = [
   { q: 'Do you want coffee or tea?', shows: 'either-or, read in code' },
   { q: 'Do you need the toilet?', shows: 'yes / no, no AI needed' },
-  { q: 'How was therapy today?', shows: 'feeling scale' },
+  { q: 'How was therapy today, and did you eat?', shows: 'two questions: one thing at a time, then Next; the first is a feeling scale' },
   { q: 'Where does it hurt?', shows: 'body map, never AI' },
   { q: 'What year did we get married?', shows: "tell, don't test" },
   { q: 'What do you want to do this weekend?', shows: 'open question: the model proposes' },

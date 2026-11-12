@@ -48,8 +48,37 @@ const COPY = {
     recap: 'Recap',
     chose: (label: string) => `Chose "${label}" and confirmed it.`,
     choseEscape: (label: string) => `They chose "${label}". Ask them to show you, or write it down together.`,
+    choseRepair: (label: string) => `They chose "${label}".`,
     changed: 'They want to change. The choices are back.',
     justAsk: 'Just ask it normally and give time.',
+    stuck: "We're stuck",
+    unstuck: 'Back to the choices',
+  },
+
+  // A quiet coaching line for the partner. Only where a rule detected it; never a judgement of the person.
+  coach: {
+    twoQuestions: 'One thing at a time: showing the first.',
+    test: "You know this one: tell, don't test.",
+    holdUp: 'The real options are not on the screen: hold two up and point to each as you ask.',
+  },
+
+  // The "we're stuck" card. Wording from the Aphasia Institute SCA tip sheet (devlog/DAY2_sources.md): "Ask the person
+  // to give clues by gesturing, or pointing to objects, pictures and written key words"; "Encourage the person with
+  // aphasia to write down a word or draw if they can"; "give a time when you will return to finish your conversation.
+  // Make sure you do return." "Change topic" is ours (the sheet: "Establish a clear general topic first").
+  repair: {
+    ask: "Let's try another way.",
+    headline: 'another way',
+    tiles: { showMe: 'show me', writeIt: 'write it', draw: 'draw', later: 'later', changeTopic: 'change topic' },
+    note: 'A fixed card for a stuck moment. Three ways to get the message out, and two ways to leave it for now.',
+    tip: 'Read the five aloud, pointing to each. Then wait.',
+    lines: {
+      'show me': 'Say: "Show me." Let them point, gesture, or take you to it.',
+      'write it': 'Give them the pad: "Write it, any letters you can."',
+      draw: 'Give them the pad: "Draw it."',
+      later: 'Say: "Later, then. We will come back to it." And come back.',
+      'change topic': 'Say: "Let\'s leave it." Start a new topic, one idea at a time.',
+    } as Record<string, string>,
   },
 
   badge: {
@@ -181,11 +210,82 @@ const COPY = {
     steps: { private: 'Private step (on this computer)', stripped: 'Cloud step (question only)', code: 'Rules in code' },
     ran: { 'on-device': 'ran on this computer', 'in-cloud': 'ran in the cloud', skipped: 'did not run', failed: 'failed' },
     used: 'used for this card',
+    // "Why this card": built from the values the pipeline worked on, one line in judge mode, collapsed for the partner.
+    why: {
+      heading: 'Why this card',
+      proposed: { private: 'The private step proposed', stripped: 'The cloud step proposed' },
+      noProposal: 'No model answer reached the rules',
+      kept: 'Kept', added: 'Added by code', dropped: 'Dropped', decided: 'Decided by', headline: 'Headline',
+      options: 'either-or options',
+      decidedBy: {
+        pairModel: 'either-or: the two options the model copied out of the question, passed the label check',
+        pairCode: 'either-or: the two options read from the question in code',
+        yesno: 'a yes / no question: a fixed card, whatever the model said',
+        feeling: 'a feeling question: a fixed scale, whatever the model said',
+        pain: 'a pain level: a fixed scale, never a model',
+        body: 'a body question: the fixed body map, never a model',
+        quiz: 'a memory question: no card, a line to say instead',
+        open: 'the model proposed; code checked every choice',
+        blocked: 'no card: fewer than two choices survived',
+        repair: 'a fixed card for a stuck moment, never a model',
+        recognition: 'a recognition card from About me only, nothing made up',
+      },
+      headlineFrom: {
+        model: "the model's topic",
+        pair: 'the shared topic of the two options',
+        question: "the question's own words",
+        fixed: 'fixed for this kind of card',
+      },
+      rules: {
+        sameAsTopic: 'the same as the headline',
+        repeat: 'repeated',
+        negative: 'negative wording',
+        madeUpLabel: 'a label the cloud made up',
+        both: '"both" is not a choice',
+        timeScale: 'a time on another scale than the rest',
+        household: 'lives here: never offered for a call or a visit',
+        inventedName: 'a name that is not in About me',
+        fit: 'does not answer this kind of question',
+        madeUpVariant: 'an invented detail of their own things',
+        overlap: 'overlaps another choice',
+        overThree: 'more than three',
+        genericWhere: 'a generic place when About me has real ones',
+        overCap: 'over the limit at this support level',
+        fixed: 'a fixed card: the model\'s choices are not used',
+        orOnly: 'either-or: only the two options the question names',
+        optionsFailed: 'failed the label check',
+        cloudUnfit: "the cloud's choices did not hold up; device card kept",
+      },
+    },
+    lookalikesHeading: 'Look-alikes, named',
+    lookalikesIntro: 'What is closest to Talk Partner, checked on the primary pages on 11 Nov 2026, and where it differs.',
+    lookalikes: [
+      {
+        name: 'Lingraphica Conversations (24 Jun 2026)', url: 'https://lingraphica.com/resources/introducing-conversations/',
+        does: "Transcribes the conversation partner's speech and suggests keywords and replies to the device user. Lingraphica Hub devices, adults over 18, English, internet needed.",
+        ours: "The other side of the table: the partner's question becomes a choice card; the person's reply is never drafted.",
+      },
+      {
+        name: 'Lingraphica Smart Folders (10 Nov 2026)', url: 'https://lingraphica.com/resources/new-smart-folders-tool/',
+        does: 'A folder title and a description become dozens of suggested pictured cards in seconds, for building folders in the Talk tool.',
+        ours: 'One card per question, in the conversation, ending in a tick and a recap; any browser; the private step on this computer.',
+      },
+      {
+        name: 'AACessTalk (CHI 2025)', url: 'https://arxiv.org/abs/2409.09641',
+        does: 'Real-time guides to the parent of a minimally verbal autistic child, and recommended vocabulary cards to the child; 11 pairs over two weeks.',
+        ours: "Adults with aphasia; the partner's own question is rewritten (split, de-quizzed) and shown as choices; the answer is never written for the person.",
+      },
+      {
+        name: 'Tobii Dynavox TD Snap Aphasia', url: 'https://us.tobiidynavox.com/pages/td-snap-aphasia',
+        does: 'A Whiteboard, "a shared space for people with aphasia and their communication partners", rating scales, word lists, scripts and a "Communication Breakdown Repair" activity; no AI on that page. Its RESNA session on AI in AAC (22 Sep 2026) asks for "clearly defined, user-centered use cases".',
+        ours: 'The same shared screen, written for each question as it is asked; the model only ever touches the partner\'s question, and a fixed repair card sits on every card.',
+      },
+    ] as readonly { name: string; url: string; does: string; ours: string }[],
   },
 
   judge: {
     label: 'Judge mode',
-    intro: 'A made-up family, one-tap questions of each kind, and a line per card saying where each step ran.',
+    intro: 'A made-up family, one-tap questions of each kind, and per card: where each step ran, and why this card.',
     noDevice: "This browser has no private helper, so the private step shows as \"did not run\" on every card. Cloud help can make the open cards: it gets the question only, and the sample family is made up.",
     exit: 'Leave judge mode',
     receipt: {

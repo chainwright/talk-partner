@@ -15,6 +15,8 @@ export const BUILTIN = new Set([
   // batch 1, 11 Nov 2026: fixed / meta, feelings, people roles (REBUILD_SPEC §3.1)
   'change', 'wait', 'stop', 'write it', 'more',
   'tired', 'worried', 'pain',
+  // day 5, 11 Nov 2026: the "we're stuck" repair card ('write it' and 'change' are above)
+  'show me', 'draw', 'later', 'change topic',
   'spouse', 'child', 'sibling', 'grandchild', 'friend', 'neighbour', 'carer', 'nurse', 'doctor', 'speech therapist', 'physio', 'priest', 'family', 'visitor',
 ]);
 

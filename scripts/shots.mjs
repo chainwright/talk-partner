@@ -121,6 +121,19 @@ try {
     await chip('Do you need the toilet?');
     await click('[data-act="less"]');
     await shot('13-less-support');
+    // day 5: the coaching line on a double question, "why this card" (open in judge mode), the repair card
+    await chip('How was therapy today, and did you eat?');
+    await shot('18-double-question-coach');
+    await chip('Should we ring Jen or Tyler?');
+    await shot('19-why-this-card');
+    await click('[data-act="stuck"]');
+    await waitFor('!!document.querySelector(".tiles.repair")');
+    await shot('20-stuck-partner');
+    await click('[data-act="show"]');
+    await waitFor('!!document.querySelector(".person.full .tiles.repair")');
+    await shot('21-repair-person');
+    await nav('#/demo');
+    await click('[data-act="unstuck"]');
     // About me with the sample family, cloud help consent, how this works
     await nav('#/about');
     await shot('14-about-sample');

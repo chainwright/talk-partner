@@ -39,7 +39,8 @@ export interface ModelOutput {
   options?: string[];
 }
 
-export type CardKind = 'choice' | 'yesno' | 'feeling' | 'body' | 'pain' | 'no-quiz';
+/** 'repair' is the fixed "we're stuck" card (show me / write it / draw / later / change topic): never a model, never an answer. */
+export type CardKind = 'choice' | 'yesno' | 'feeling' | 'body' | 'pain' | 'no-quiz' | 'repair';
 export type FeelingSubtype = 'general' | 'taste' | 'idea' | 'result' | 'person';
 export type BodyRegion = 'head' | 'chest' | 'stomach' | 'back' | 'arms' | 'legs';
 
@@ -55,7 +56,8 @@ export interface Choice {
   label: string;
   /** Text in the partner's spoken line (differs only for the partner's own name: card "you", spoken "me"). */
   spoken: string;
-  role: 'answer' | 'escape';
+  /** 'repair' marks a tile on the "we're stuck" card: a way to try, not an answer, so it never enters the recap. */
+  role: 'answer' | 'escape' | 'repair';
   picture: PictureRef;
 }
 
@@ -79,6 +81,26 @@ export interface StepTrace {
   ms?: number;
   /** True when the card the person sees came from this step. */
   used: boolean;
+}
+
+/**
+ * "Why this card": what the model proposed, what code kept, what it added, what it dropped and by which rule.
+ * Built by the pipeline while the card is assembled, from the values it actually worked on; nothing here is
+ * inferred afterwards. Shown as one line in judge mode and collapsed on the partner screen.
+ */
+export interface CardWhy {
+  /** The parsed proposal the rules worked from, and which step produced it; null when no model answer reached the rules. */
+  proposed: { step: 'private' | 'stripped'; topic: string; kind: string; choices: string[]; options: string[] } | null;
+  /** One line: how the choices were decided (plain words from the copy module). */
+  decided: string;
+  /** Labels on the card that came from the proposal, as shown. */
+  kept: string[];
+  /** Labels code added, each with where it came from. */
+  added: { label: string; from: string }[];
+  /** Proposed choices that are not on the card, each with the rule that removed it. */
+  dropped: { label: string; rule: string }[];
+  /** Where the headline came from. */
+  headline: string;
 }
 
 export interface Card {
@@ -113,6 +135,13 @@ export interface Card {
   ranOffline?: boolean;
   /** Where each step ran for this card (judge mode, "How this works"). Built by makeCard from engine reports only. */
   trace?: StepTrace[];
+  /**
+   * A quiet coaching line for the partner, only where a rule detected something about the way the question was
+   * asked: two questions in one, a memory test, options the screen cannot know. Never about the person.
+   */
+  coach?: string;
+  /** "Why this card": model proposed, code decided, made visible. */
+  why?: CardWhy;
 }
 
 export type SupportLevel = 'mild' | 'more' | 'most';

@@ -9,13 +9,13 @@ import { applyPreviewTheme } from './theme';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
 import { LEGS } from '../../core/models';
-import { bodyDetailCard, makeCard, quizOverrideCard } from '../../core/pipeline';
+import { bodyDetailCard, makeCard, quizOverrideCard, repairCard } from '../../core/pipeline';
 import { sessionReceipt } from '../../core/receipt';
 import { cloudTextRequest } from '../../core/requests';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_PROFILE, SAMPLE_QUESTIONS } from '../../core/sample';
 import { stripQuestion } from '../../core/strip';
-import { EMPTY_PROFILE, type BodyRegion, type Card, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
+import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
 import { LazyFirebaseEngine } from './ai/firebaseEngine';
 import { CROSS, TICK, builtinPicto, monogram, photoTile } from './pictos';
@@ -46,6 +46,8 @@ interface State {
   demo: boolean;
   busy: boolean;
   card: Card | null;
+  /** The card "We're stuck" replaced with the repair card; "Back to the choices" restores it. */
+  before: Card | null;
   picked: Choice | null;
   confirmed: boolean;
   /** "Less support": the person sees only the headline. */
@@ -74,6 +76,7 @@ const state: State = {
   demo: false,
   busy: false,
   card: null,
+  before: null,
   picked: null,
   confirmed: false,
   less: false,
@@ -118,7 +121,7 @@ async function leaveDemo() {
   resetCard();
   go('');
 }
-function resetCard() { state.card = null; state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.recapDone = false; state.waitStart = null; }
+function resetCard() { state.card = null; state.before = null; state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.recapDone = false; state.waitStart = null; }
 /**
  * Every new card the person is shown (a made card, a body-map step, the next page, the override) bumps this counter.
  * The render keys the entrance animation on it and on the route, so an animation plays once per real event and never
@@ -188,6 +191,32 @@ function sentPanel(c: Card): string {
 function traceList(t: StepTrace[] | undefined): string {
   if (!t) return '';
   return `<ul class="trace">${t.map((s) => `<li class="${s.ran}${s.used ? ' used' : ''}" data-step="${s.step}"><b>${C.how.steps[s.step]}</b>: ${C.how.ran[s.ran]}${s.ms ? ` (${s.ms} ms)` : ''}${s.used ? ` · ${C.how.used}` : ''}<br><span>${esc(s.why)}</span></li>`).join('')}</ul>`;
+}
+
+/**
+ * "Why this card" as one line: what the model proposed, what code kept, added and dropped (each with its rule), who
+ * decided, where the headline came from. Every value is read from `Card.why`, which the pipeline wrote while it worked.
+ */
+function whyLine(w: CardWhy): string {
+  const Y = C.how.why;
+  const parts: string[] = [];
+  if (w.proposed) {
+    const p = w.proposed;
+    const opts = p.options.length ? ` · ${Y.options}: ${p.options.join(' / ')}` : '';
+    parts.push(`<b>${Y.proposed[p.step]}</b>: ${esc(p.topic || '—')} · ${esc(p.kind)} · ${esc(p.choices.join(', ') || '—')}${esc(opts)}`);
+  } else parts.push(`<b>${Y.noProposal}</b>`);
+  if (w.kept.length) parts.push(`<b>${Y.kept}</b>: ${esc(w.kept.join(', '))}`);
+  if (w.added.length) parts.push(`<b>${Y.added}</b>: ${esc(w.added.map((a) => `${a.label} (${a.from})`).join(', '))}`);
+  if (w.dropped.length) parts.push(`<b>${Y.dropped}</b>: ${esc(w.dropped.map((d) => `${d.label} (${d.rule})`).join(', '))}`);
+  parts.push(`<b>${Y.decided}</b>: ${esc(w.decided)}`);
+  parts.push(`<b>${Y.headline}</b>: ${esc(w.headline)}`);
+  return parts.join(' · ');
+}
+
+/** The panel: one line, open in judge mode and on "How this works", collapsed on the partner screen. */
+function whyPanel(c: Card, open: boolean): string {
+  if (!c.why) return '';
+  return `<details class="why" ${open ? 'open' : ''}><summary>${C.how.why.heading}</summary><p>${whyLine(c.why)}</p></details>`;
 }
 
 function tally(): { device: number; cloud: number; code: number; failed: number } {
@@ -262,11 +291,18 @@ function partnerScreen(): string {
 function cardPanel(c: Card): string {
   const notes = c.notes.length ? `<ul class="notes">${c.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '';
   const safety = c.kind === 'body' || c.kind === 'pain' ? `<p class="safety">${C.safety}</p>` : '';
+  // the coaching line: only when a rule found something about the question itself (Card.coach), never otherwise
+  const coach = c.coach ? `<p class="coach">${esc(c.coach)}</p>` : '';
+  // "We're stuck" sits on every card the person can see; the repair card itself offers the way back
+  const stuck = c.kind === 'repair' ? `<button data-act="unstuck">${C.card.unstuck}</button>` : !c.blocked ? `<button data-act="stuck">${C.card.stuck}</button>` : '';
   let main: string;
   let actions = '';
   if (c.kind === 'no-quiz') {
-    main = `<p class="warn">${C.memory.line}</p><p class="say">${esc(c.say.replace(C.notes.tellPrefix, ''))}</p>`;
+    main = `<p class="label">${C.memory.line}</p><p class="say">${esc(c.say.replace(C.notes.tellPrefix, ''))}</p>`;
     actions = `<button data-act="override">${C.memory.override}</button>`;
+  } else if (c.kind === 'repair') {
+    main = `<p class="label">${C.card.sayThis}</p><p class="say">${esc(c.say)}</p><p class="tip">${C.repair.tip} <span id="wait" class="wait"></span></p>`;
+    actions = `<button class="primary" data-act="show">${C.card.show}</button>${stuck}`;
   } else if (c.blocked) {
     const offer = !state.settings.cloudHelp && state.engine?.cloudConfigured && c.unsentPayload
       ? `<p class="offer">${C.blocked.cloudCouldTry} <button class="link" data-act="show-sent">${C.blocked.showWouldSend}</button> <a href="#/cloud">${C.blocked.turnOn}</a></p>` : '';
@@ -277,12 +313,19 @@ function cardPanel(c: Card): string {
   } else {
     main = `<p class="label">${C.card.sayThis}</p><p class="say">${esc(c.say)}</p><p class="tip">${C.card.tip} <span id="wait" class="wait"></span></p>`;
     const next = c.pending ? C.card.nextSecond : c.nextPage ? C.card.nextWhere : '';
-    actions = `<button class="primary" data-act="show">${C.card.show}</button><button data-act="less">${C.card.less}</button>${next ? `<button data-act="next">${next}</button>` : ''}${state.answers.length ? `<button data-act="recap">${C.card.recap}</button>` : ''}`;
+    actions = `<button class="primary" data-act="show">${C.card.show}</button><button data-act="less">${C.card.less}</button>${next ? `<button data-act="next">${next}</button>` : ''}${state.answers.length ? `<button data-act="recap">${C.card.recap}</button>` : ''}${stuck}`;
   }
   let answered = '';
   if (state.recapDone) answered = `<p class="done">${C.person.recapLine} ${esc(recapText())}</p>`;
-  else if (state.confirmed && state.picked) answered = `<p class="done">${state.picked.role === 'escape' ? esc(C.card.choseEscape(state.picked.label)) : esc(C.card.chose(state.picked.label))}</p>`;
-  return `${badge(c)}${main}${answered}${actions ? `<div class="actions">${actions}</div>` : ''}${safety}${notes}
+  else if (state.confirmed && state.picked) {
+    const p = state.picked;
+    // a repair tile is a way to try, not an answer: the partner gets the next move for that way
+    answered = p.role === 'repair'
+      ? `<p class="done">${esc(C.card.choseRepair(p.label))}</p><p class="say">${esc(C.repair.lines[p.label] ?? '')}</p>`
+      : `<p class="done">${p.role === 'escape' ? esc(C.card.choseEscape(p.label)) : esc(C.card.chose(p.label))}</p>`;
+  }
+  return `${badge(c)}${coach}${main}${answered}${actions ? `<div class="actions">${actions}</div>` : ''}${safety}${notes}
+    ${whyPanel(c, state.demo)}
     <details class="sent" id="sent"><summary>${C.sent.heading}</summary>${sentPanel(c)}</details>
     <details class="sent" ${state.demo ? 'open' : ''}><summary>${C.how.traceHeading}</summary>${traceList(c.trace)}</details>`;
 }
@@ -320,6 +363,13 @@ function personView(full: boolean): string {
       <div class="confirm-pic ${state.picked.label === 'no' || state.picked.label === 'not sure' ? 'neutral' : ''}">${picture(state.picked)}<p>${esc(state.picked.label)}</p></div>
       <div class="tiles two"><button class="tile yes" data-confirm="yes">${TICK}<span>${C.person.yes}</span></button>
       <button class="tile" data-confirm="change">${CROSS}<span>${C.person.change}</span></button></div>`;
+  }
+  if (c.kind === 'repair') {
+    // three ways to get the message out in one row, then the two ways to leave it for now (quieter tiles)
+    const tile = (ch: Choice, i: number, extra: string) => `<button class="tile ${extra} ${picture(ch) ? '' : 'wordonly'}" data-i="${i}">${picture(ch)}<span>${esc(ch.label)}</span></button>`;
+    return `${exit}<h2 class="headline">${esc(c.topic)}</h2>
+      <div class="tiles repair">${c.choices.slice(0, 3).map((ch, i) => tile(ch, i, '')).join('')}</div>
+      <div class="tiles two">${c.choices.slice(3).map((ch, i) => tile(ch, i + 3, 'out')).join('')}</div>`;
   }
   const answers = c.choices.filter((x) => x.role === 'answer');
   const cls = state.settings.support === 'most' ? 'tiles stacked' : answers.length >= 3 ? 'tiles three' : 'tiles two';
@@ -423,8 +473,10 @@ function howScreen(): string {
     <h2>${H.legs}</h2>${legsTable()}
     <h2>${H.tallyHeading}</h2><p>${H.tally(tally())}</p>
     ${receiptPanel(true)}
-    ${last ? `<h2>${H.traceHeading}</h2><p class="muted">${esc(last.asked)}</p>${traceList(last.trace)}` : ''}
+    ${last ? `<h2>${H.traceHeading}</h2><p class="muted">${esc(last.asked)}</p>${traceList(last.trace)}${whyPanel(last, true)}` : ''}
     <h2>${H.scoresHeading}</h2><p>${H.scoresNone}</p>
+    <h2>${H.lookalikesHeading}</h2><p>${H.lookalikesIntro}</p>
+    <ul class="lookalikes">${H.lookalikes.map((l) => `<li><b><a href="${l.url}" target="_blank" rel="noopener">${esc(l.name)}</a></b><br>${esc(l.does)}<br><span class="ours">${esc(l.ours)}</span></li>`).join('')}</ul>
     <p><a href="#/">${C.app.nav.home}</a></p></main>${footer()}`;
 }
 
@@ -531,6 +583,13 @@ function act(el: HTMLElement) {
       else if (state.card?.nextPage) { setCard(state.card.nextPage); state.picked = null; state.confirmed = false; render(); }
       break;
     case 'recap': state.recap = true; state.recapDone = false; render(); break;
+    case 'stuck':
+      // the repair card takes the person's screen; the question card waits behind it
+      if (state.card && state.card.kind !== 'repair') { state.before = state.card; setCard(repairCard(state.profile)); state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.waitStart = Date.now(); render(); }
+      break;
+    case 'unstuck':
+      if (state.card?.kind === 'repair') { setCard(state.before); state.before = null; state.picked = null; state.confirmed = false; state.waitStart = Date.now(); render(); }
+      break;
     case 'override':
       if (state.card) { const c = quizOverrideCard(state.card.asked, state.profile, state.settings.support); setCard(c); state.made.push(c); state.waitStart = Date.now(); render(); }
       break;

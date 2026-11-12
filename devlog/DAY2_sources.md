@@ -22,6 +22,21 @@ Read all three pages on 11 Nov 2026. It is organised as "Get the message in / Ge
 | §2.14 confirm and recap | "Use Yes/No questions to verify information." · "Summarize ... 'So let me make sure I understand…'" (our recap line is this sentence) |
 | §4 adult tone | "Speak in a tone of voice appropriate for communicating with an adult. Do not sound condescending." |
 | the person is competent | "People with aphasia are competent adults who know more than they can say." |
+Added 11 Nov 2026 (late), for the repair card: the same sheet, text extracted from the PDF again and read in full. Its
+"Getting the message out" section says, in order: "Establish a clear general topic first; and then move on to
+understanding the details." · "Ask Yes/No questions and make sure the person has a way to respond. Use a written YES / NO
+if needed." · "Ask one thing at a time." · "Encourage the person with aphasia to write down a word or draw if they can." ·
+"Ask the person to give clues by gesturing, or pointing to objects, pictures and written key words." · "Give the person
+time to respond." And on page 1: "If you do not have the time to communicate, explain this, and give a time when you will
+return to finish your conversation. Make sure you do return." Rules these back:
+| Repair tile | The sheet says |
+|---|---|
+| show me | "give clues by gesturing, or pointing to objects, pictures and written key words" |
+| write it · draw | "Encourage the person with aphasia to write down a word or draw if they can" |
+| later (and the partner line "And come back") | "give a time when you will return to finish your conversation. Make sure you do return" |
+| change topic | not on the sheet as a repair step; our reading of "Establish a clear general topic first" plus PrAACtical AAC's standing "offer some others" |
+| the partner line "Let's try another way" | ours; the sheet frames it as "use a hierarchy of techniques" |
+
 Not on the sheet: any "don't test / don't quiz" wording (§2.10). The sheet's "Verify" section is about checking what the
 person meant, not about quizzing them. So §2.10 ("tell, don't test") is our inference from "Acknowledge that the person
 with aphasia knows what they want to say but cannot say it" plus the competence framing, not a quoted rule. The write-up

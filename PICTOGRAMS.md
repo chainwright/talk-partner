@@ -41,6 +41,10 @@ else was drawn in the submission period.
 | stop | octagon with a bar | 11 Nov 2026 | Apache-2.0 |
 | write it | pencil over a line | 11 Nov 2026 | Apache-2.0 |
 | more | plus in a circle | 11 Nov 2026 | Apache-2.0 |
+| show me | a hand pointing at a small object | 11 Nov 2026 | Apache-2.0 |
+| draw | pencil leaving a wavy line | 11 Nov 2026 | Apache-2.0 |
+| later | clock with an arrow coming back round | 11 Nov 2026 | Apache-2.0 |
+| change topic | two speech bubbles, the second taking over | 11 Nov 2026 | Apache-2.0 |
 | tired | line face, closed eyes | 11 Nov 2026 | Apache-2.0 |
 | worried | line face, raised brows, wavy mouth | 11 Nov 2026 | Apache-2.0 |
 | pain | lightning bolt | 11 Nov 2026 | Apache-2.0 |

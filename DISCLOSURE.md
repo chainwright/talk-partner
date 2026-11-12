@@ -61,6 +61,11 @@ See `git log` for dates. Day by day: `devlog/`.
   design previews (`web/public/fonts/`, OFL licences alongside; `scripts/fonts-check.mjs`), once-per-event entrance animations,
   the route-class fix, the "For judges" section of the README with the call table (`tests/unit/judge-path.test.ts`).
 
+- Day 5 (11 Nov, late CST): `Card.why` ("why this card", written in `core/pipeline.ts` while the rules run) and `Card.coach` (the
+  coaching line for the partner), the fixed repair card `repairCard()` with four new pictograms (show me, draw, later, change topic),
+  the double-question chip in judge mode, the "why" panel, "We're stuck" and the look-alikes list on `#/how` (`web/src/main.ts`,
+  `styles.css`), `tests/unit/day5.test.ts`, the README sections "One documented cut" and "Look-alikes, named", `devlog/SUBMISSION_NOTES.md`.
+
 Fonts in `web/public/fonts/` are third-party, each under the SIL Open Font License 1.1 (licence text in each folder): Overpass,
 Atkinson Hyperlegible Next, Lexend, Public Sans, Instrument Sans, IBM Plex Mono (fontsource 5.3.0 packages, latin subset).
 
