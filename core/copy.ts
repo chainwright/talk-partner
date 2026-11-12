@@ -188,6 +188,54 @@ const COPY = {
     intro: 'A made-up family, one-tap questions of each kind, and a line per card saying where each step ran.',
     noDevice: "This browser has no private helper, so the private step shows as \"did not run\" on every card. Cloud help can make the open cards: it gets the question only, and the sample family is made up.",
     exit: 'Leave judge mode',
+    receipt: {
+      heading: 'Privacy receipt',
+      summary: (n: { cards: number; cardsLeft: number; bodyBytes: number; questionBytes: number; namesWithheld: number; otherWithheld: number; leaksFound: number; photosFound: number; offlineRuns: number }) =>
+        `${n.cards} card${n.cards === 1 ? '' : 's'} this session. Left this computer: ${n.bodyBytes} bytes in ${n.cardsLeft} request${n.cardsLeft === 1 ? '' : 's'} (${n.questionBytes} bytes of question text). ` +
+        `Withheld before sending: ${n.namesWithheld} name${n.namesWithheld === 1 ? '' : 's'}, ${n.otherWithheld} other About me word${n.otherWithheld === 1 ? '' : 's'}. ` +
+        `Checked after sending: ${n.leaksFound} About me word${n.leaksFound === 1 ? '' : 's'} and ${n.photosFound} photo${n.photosFound === 1 ? '' : 's'} in the sent text.` +
+        (n.offlineRuns ? ` ${n.offlineRuns} cloud step${n.offlineRuns === 1 ? '' : 's'} ran on this computer instead (cloud unreachable): nothing left.` : ''),
+      columns: { card: 'card', left: 'left this computer', bytes: 'bytes (question)', withheld: 'withheld', check: 'checked after' },
+      leftYes: 'yes, cloud answered',
+      leftNo: 'nothing',
+      leftOffline: 'nothing (ran here, offline)',
+      withheld: (names: number, other: number) => `${names} name${names === 1 ? '' : 's'}, ${other} other`,
+      kept: 'whole question kept here',
+      checkOk: '0 About me words, no photo',
+      checkBad: (leaks: number, photo: boolean) => `${leaks} About me word${leaks === 1 ? '' : 's'}${photo ? ', photo bytes' : ''}`,
+      how: 'How this is counted: the bytes are the UTF-8 length of the request body this app built for the cloud step (fixed instructions, the schema and the swapped question), kept only when the SDK reported that the cloud answered; a card where nothing left counts 0. The body is in the export, so the count can be checked by hand. Not counted: the SDK\'s transport around it (headers, the App Check token), which carries no family data. "Withheld" counts the About me words swapped for labels such as "Person A". "Checked after" searches the sent text for About me words and photo bytes once more, after the fact.',
+      exportButton: 'Export receipt',
+      exportName: 'talk-partner-privacy-receipt.json',
+    },
+  },
+
+  // Hidden trial timer (#/trial) for the pad-vs-card trial in devlog/TRIAL_PROTOCOL.md. Plain words, nothing sent.
+  trial: {
+    heading: 'Trial timer',
+    intro: 'For the timed pad-versus-card trial. Times are kept only in this browser and exported as a file by hand; nothing is sent anywhere. Run it on a second device so the partner screen is not touched.',
+    pair: 'Pair',
+    condition: 'Condition',
+    pad: 'pad and marker',
+    card: 'Talk Partner card',
+    set: 'Question set',
+    question: 'Question number',
+    note: 'Note for the next entry (optional)',
+    asked: 'Asked (start)',
+    confirmed: 'Confirmed (stop)',
+    viaEscape: 'Confirmed via the way out (stop)',
+    guessed: 'Partner guessed (stop)',
+    gaveUp: 'Gave up (stop)',
+    running: (clock: string) => `Running ${clock}`,
+    idle: 'Not running. Press Asked the moment the question has been asked.',
+    undo: 'Remove last entry',
+    exportCsv: 'Export CSV',
+    clear: 'Clear all entries',
+    clearConfirm: 'Delete every trial entry from this browser?',
+    logHeading: 'Entries',
+    columns: { pair: 'pair', condition: 'condition', set: 'set', q: 'q', seconds: 'seconds', outcome: 'outcome', note: 'note' },
+    outcomes: { confirmed: 'confirmed', escape: 'via way out', guess: 'guessed', abandoned: 'gave up' },
+    empty: 'No entries yet.',
+    exportName: 'talk-partner-trial.csv',
   },
 
   // Partner-screen notes and blocked lines written by the card pipeline.

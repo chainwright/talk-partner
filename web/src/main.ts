@@ -3,12 +3,14 @@
 // Every string a person reads comes from core/copy.ts.
 
 import './styles.css';
+import './fonts.css';
 import './themes.css';
 import { applyPreviewTheme } from './theme';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
 import { LEGS } from '../../core/models';
 import { bodyDetailCard, makeCard, quizOverrideCard } from '../../core/pipeline';
+import { sessionReceipt } from '../../core/receipt';
 import { cloudTextRequest } from '../../core/requests';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_PROFILE, SAMPLE_QUESTIONS } from '../../core/sample';
@@ -18,12 +20,14 @@ import { webConfig } from './ai/config';
 import { LazyFirebaseEngine } from './ai/firebaseEngine';
 import { CROSS, TICK, builtinPicto, monogram, photoTile } from './pictos';
 import { kvClear, kvGet, kvSet } from './store';
+import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const C = COPY;
 
-type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how';
+/** 'trial' is the hidden stopwatch for devlog/TRIAL_PROTOCOL.md: reachable only by typing #/trial, never linked. */
+type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'trial';
 
 interface Settings {
   cloudHelp: boolean;
@@ -92,10 +96,15 @@ function route(): Route {
   if (h === 'cloud') return 'cloud';
   if (h === 'person') return 'person';
   if (h === 'how') return 'how';
+  if (h === 'trial') return 'trial';
   if (h === 'welcome' || (!state.settings.welcomed && !state.demo)) return 'welcome';
   return 'partner';
 }
-function go(r: Route | 'demo' | '') { location.hash = r ? `#/${r}` : ''; }
+/** Changes the hash (the hashchange event draws the screen); draws directly when the hash is already there. */
+function go(r: Route | 'demo' | '') {
+  const h = r ? `#/${r}` : '';
+  if (location.hash.replace(/^#\/?$/, '') === h) render(); else location.hash = h;
+}
 
 function enterDemo() {
   if (state.demo) return;
@@ -110,6 +119,13 @@ async function leaveDemo() {
   go('');
 }
 function resetCard() { state.card = null; state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.recapDone = false; state.waitStart = null; }
+/**
+ * Every new card the person is shown (a made card, a body-map step, the next page, the override) bumps this counter.
+ * The render keys the entrance animation on it and on the route, so an animation plays once per real event and never
+ * again on a redraw caused by a tap, a toggle or a status update.
+ */
+let cardSeq = 0;
+function setCard(c: Card | null) { state.card = c; if (c) cardSeq++; }
 
 // ---------------------------------------------------------------- persistence
 async function load() {
@@ -189,6 +205,26 @@ function legsTable(): string {
   return `<table><tr><th>${C.how.columns.step}</th><th>${C.how.columns.mode}</th><th>${C.how.columns.gets}</th><th>${C.how.columns.why}</th></tr>${(Object.keys(LEGS) as (keyof typeof LEGS)[]).map((k) => `<tr><td>${names[k]}</td><td><code>${LEGS[k].mode}</code></td><td>${esc(LEGS[k].gets)}</td><td>${esc(LEGS[k].why)}</td></tr>`).join('')}</table>`;
 }
 
+/** The privacy receipt for this session: counted on the payloads the cards recorded (core/receipt.ts), never estimated. */
+function receiptPanel(open: boolean): string {
+  const R = C.judge.receipt;
+  const r = sessionReceipt(state.made, state.profile);
+  const K = R.columns; // on a phone the cells stack, each labelled by its column name (styles.css)
+  const rows = r.perCard.map((x, i) => `<tr><td data-l="${K.card}">${i + 1}. ${esc(x.asked)}</td><td data-l="${K.left}">${x.left ? R.leftYes : x.offline ? R.leftOffline : R.leftNo}</td><td data-l="${K.bytes}">${x.left ? `${x.bodyBytes} (${x.questionBytes})` : '0'}</td><td data-l="${K.withheld}">${x.left ? esc(R.withheld(x.namesWithheld, x.otherWithheld)) : R.kept}</td><td data-l="${K.check}">${x.left ? (x.leaksFound || x.photoFound ? esc(R.checkBad(x.leaksFound, x.photoFound)) : R.checkOk) : '—'}</td></tr>`).join('');
+  const table = r.cards ? `<table><tr><th>${R.columns.card}</th><th>${R.columns.left}</th><th>${R.columns.bytes}</th><th>${R.columns.withheld}</th><th>${R.columns.check}</th></tr>${rows}</table>` : '';
+  return `<details class="receipt" ${open ? 'open' : ''}><summary><b>${R.heading}</b></summary><p>${esc(R.summary(r))}</p>${table}<p class="muted">${esc(R.how)}</p>
+    <div class="actions"><button data-act="export-receipt" ${r.cards ? '' : 'disabled'}>${R.exportButton}</button></div></details>`;
+}
+
+/** Hands the person a file to save (the receipt, the trial CSV); nothing is uploaded anywhere. */
+function downloadFile(name: string, text: string, type: string) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 function diagram(): string {
   // three boxes: the question; the private step on this computer (About me stays here); the cloud step (question only)
   return `<svg class="diagram" viewBox="0 0 640 170" role="img" aria-label="The question stays on this computer with About me; only a stripped question may go to the cloud">
@@ -203,7 +239,7 @@ function diagram(): string {
 function partnerScreen(): string {
   const c = state.card;
   const chips = state.demo ? `<div class="chips">${SAMPLE_QUESTIONS.map((s) => `<button class="chip" data-q="${esc(s.q)}" title="${esc(s.shows)}">${esc(s.q)}</button>`).join('')}</div>` : '';
-  const judgeIntro = state.demo ? `<details class="judge" open><summary><b>${C.judge.label}</b> · ${C.how.tallyHeading}: ${C.how.tally(tally())}</summary><p>${C.judge.intro}</p>${state.device !== 'available' ? `<p>${C.judge.noDevice}</p>` : ''}</details>` : '';
+  const judgeIntro = state.demo ? `<details class="judge" open><summary><b>${C.judge.label}</b> · ${C.how.tallyHeading}: ${C.how.tally(tally())}</summary><p>${C.judge.intro}</p><p id="nodevice" ${state.device === 'available' ? 'hidden' : ''}>${C.judge.noDevice}</p></details>${receiptPanel(true)}` : '';
   return `${nav()}
 <main class="layout">
   <section class="partner" aria-label="Partner">
@@ -353,19 +389,23 @@ function cloudScreen(): string {
 }
 
 // ---------------------------------------------------------------- first run
+/** The private helper's state on the first screen, as the SDK reports it. Patched in place when the check finishes. */
+function welcomeDevice(): string {
+  const W = C.welcome;
+  if (!state.engine) return `<p class="warn">${esc(state.error ?? '')}</p>`;
+  if (state.device === 'available') return `<p><span class="dot ok"></span>${C.status.ready}</p>`;
+  if (state.device === 'downloadable' || state.device === 'downloading') return `<p><span class="dot wait"></span>${statusLine().replace(/<span class="dot[^>]*><\/span>/, '')}</p>`;
+  return `<p><span class="dot off"></span>${W.cantRun} ${C.status.deviceReason}</p>`;
+}
+
 function welcomeScreen(): string {
   const W = C.welcome;
-  let device: string;
-  if (!state.engine) device = `<p class="warn">${esc(state.error ?? '')}</p>`;
-  else if (state.device === 'available') device = `<p><span class="dot ok"></span>${C.status.ready}</p>`;
-  else if (state.device === 'downloadable' || state.device === 'downloading') device = `<p id="status"><span class="dot wait"></span>${statusLine().replace(/<span class="dot[^>]*><\/span>/, '')}</p>`;
-  else device = `<p><span class="dot off"></span>${W.cantRun} ${C.status.deviceReason}</p>`;
   return `<main class="screen welcome">
     <h1>${W.heading}</h1>
     <p class="lead">${W.what}</p>
     <ol class="points">
       <li>${W.local}</li>
-      <li>${device}</li>
+      <li id="device">${welcomeDevice()}</li>
       <li>${W.cloudOff}</li>
     </ol>
     <div class="actions"><button class="primary" data-act="welcome-setup">${W.setup}</button><button data-act="welcome-sample">${W.sample}</button></div>
@@ -382,6 +422,7 @@ function howScreen(): string {
     ${diagram()}
     <h2>${H.legs}</h2>${legsTable()}
     <h2>${H.tallyHeading}</h2><p>${H.tally(tally())}</p>
+    ${receiptPanel(true)}
     ${last ? `<h2>${H.traceHeading}</h2><p class="muted">${esc(last.asked)}</p>${traceList(last.trace)}` : ''}
     <h2>${H.scoresHeading}</h2><p>${H.scoresNone}</p>
     <p><a href="#/">${C.app.nav.home}</a></p></main>${footer()}`;
@@ -389,12 +430,21 @@ function howScreen(): string {
 
 // ---------------------------------------------------------------- render
 let timer: ReturnType<typeof setInterval> | null = null;
+let lastKey = '';
 function render() {
   const r = route();
   const app = $('#app');
-  app.className = r;
-  app.innerHTML = r === 'partner' ? partnerScreen() : r === 'person' ? personScreen() : r === 'about' ? aboutScreen() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : welcomeScreen();
+  // the route goes on #app with a prefix: a bare "person" or "welcome" class made #app pick up the card pane's frame
+  // and the welcome padding (the thin frame around the full-screen card, DESIGN_DIRECTIONS "must fix")
+  app.className = `route-${r}`;
+  // entrance animations play once per real event (a new route or a new card), not on every redraw
+  const key = `${r}|${cardSeq}`;
+  if (key !== lastKey) { lastKey = key; app.classList.add('enter'); }
+  app.innerHTML = r === 'partner' ? partnerScreen() : r === 'person' ? personScreen() : r === 'about' ? aboutScreen() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
+  if (r === 'trial') {
+    timer = setInterval(() => { const el = document.querySelector('#elapsed'); const c = trialClock(); if (el && c) el.textContent = c; }, 100);
+  }
   if (r === 'partner' && state.card && !state.card.blocked && !state.picked) {
     state.waitStart ??= Date.now();
     const tick = () => { const el = document.querySelector('#wait'); if (!el || !state.waitStart) return; const s = Math.floor((Date.now() - state.waitStart) / 1000); el.textContent = C.card.waiting(`${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`); };
@@ -404,20 +454,31 @@ function render() {
 }
 
 // ---------------------------------------------------------------- actions
+/**
+ * A device-status change (the check finishing, a download tick) updates the status elements in place instead of
+ * redrawing the screen: nothing else on screen depends on it, and a redraw would cut the entrance animation short
+ * (the device check finishes within the first second of the welcome screen) and reset the question field.
+ */
+function patchDevice() {
+  const s = document.querySelector('#status'); if (s) s.innerHTML = statusLine();
+  const d = document.querySelector('#device'); if (d) d.innerHTML = welcomeDevice();
+  const n = document.querySelector<HTMLElement>('#nodevice'); if (n) n.hidden = state.device === 'available';
+}
 async function refreshDevice() {
   if (state.engine) state.device = await state.engine.deviceStatus();
-  render();
+  patchDevice();
 }
 
 async function make(q: string) {
   if (!state.engine || !q.trim()) return;
   state.busy = true; state.lastQuestion = q; resetCard(); render();
   try {
-    state.card = await makeCard(q, {
+    const card = await makeCard(q, {
       profile: state.profile, support: state.settings.support, engine: state.engine,
       allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available',
     });
-    state.made.push(state.card);
+    setCard(card);
+    state.made.push(card);
   } catch (e) {
     state.card = null; state.error = (e as Error).message;
   }
@@ -437,9 +498,9 @@ function onPersonTap(t: HTMLElement) {
   if (t.dataset.confirm === 'change') { state.picked = null; state.waitStart = Date.now(); render(); return; }
   const ch = c.choices[Number(t.dataset.i)];
   if (!ch) return;
-  if (ch.role === 'escape' && c.nextPage) { state.card = c.nextPage; render(); return; }
+  if (ch.role === 'escape' && c.nextPage) { setCard(c.nextPage); render(); return; }
   if (c.kind === 'body' && c.bodyStep === 1 && (BODY_REGIONS as string[]).includes(ch.label)) {
-    state.card = bodyDetailCard(ch.label as BodyRegion, state.profile, state.settings.support); render(); return;
+    setCard(bodyDetailCard(ch.label as BodyRegion, state.profile, state.settings.support)); render(); return;
   }
   t.classList.add('pressed');
   setTimeout(() => { state.picked = ch; render(); }, 180);
@@ -467,12 +528,17 @@ function act(el: HTMLElement) {
     case 'less': state.less = !state.less; render(); break;
     case 'next':
       if (state.card?.pending) void make(state.card.pending);
-      else if (state.card?.nextPage) { state.card = state.card.nextPage; state.picked = null; state.confirmed = false; render(); }
+      else if (state.card?.nextPage) { setCard(state.card.nextPage); state.picked = null; state.confirmed = false; render(); }
       break;
     case 'recap': state.recap = true; state.recapDone = false; render(); break;
     case 'override':
-      if (state.card) { state.card = quizOverrideCard(state.card.asked, state.profile, state.settings.support); state.made.push(state.card); state.waitStart = Date.now(); render(); }
+      if (state.card) { const c = quizOverrideCard(state.card.asked, state.profile, state.settings.support); setCard(c); state.made.push(c); state.waitStart = Date.now(); render(); }
       break;
+    case 'export-receipt': {
+      const r = sessionReceipt(state.made, state.profile);
+      downloadFile(C.judge.receipt.exportName, JSON.stringify({ app: C.app.name, exportedAt: new Date().toISOString(), page: location.origin, sampleFamily: state.demo, receipt: r }, null, 2), 'application/json');
+      break;
+    }
     case 'show-sent': { const d = document.querySelector<HTMLDetailsElement>('#sent'); if (d) { d.open = true; d.scrollIntoView({ block: 'nearest' }); } break; }
     case 'download': void download(); break;
     case 'leave-demo': void leaveDemo(); break;
@@ -486,17 +552,19 @@ function act(el: HTMLElement) {
     case 'photo-remove': delete state.profile.people[i].photo; saveProfile(); render(); break;
     case 'delete-all':
       if (confirm(C.about.deleteConfirm)) {
-        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.made = []; resetCard(); go('welcome'); render(); });
+        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.made = []; resetCard(); go('welcome'); });
       }
       break;
+    default:
+      if (a?.startsWith('trial-') && trialAct(el, downloadFile)) render();
   }
 }
 
 async function download() {
   if (!state.engine) return;
-  state.device = 'downloading'; render();
+  state.device = 'downloading'; patchDevice();
   try {
-    await state.engine.prepareDevice((p) => { state.downloading = p; if (p >= 1) state.warming = true; render(); });
+    await state.engine.prepareDevice((p) => { state.downloading = p; if (p >= 1) state.warming = true; patchDevice(); });
   } catch (err) { state.error = (err as Error).message; }
   state.downloading = null; state.warming = false; await refreshDevice();
 }
@@ -516,6 +584,7 @@ app.addEventListener('submit', (ev) => {
 });
 app.addEventListener('change', (ev) => {
   const t = ev.target as HTMLInputElement | HTMLSelectElement;
+  if (t.id.startsWith('trial-')) { trialInput(t); return; }
   if (t.id === 'support') { state.settings.support = (t as HTMLSelectElement).value as SupportLevel; saveSettings(); if (state.lastQuestion) void make(state.lastQuestion); return; }
   if (t.id === 'consent') { state.consentChecked = (t as HTMLInputElement).checked; render(); return; }
   if (t instanceof HTMLInputElement && t.dataset.photo !== undefined && t.files?.[0]) { void addPhoto(Number(t.dataset.photo), t.files[0]); return; }
@@ -524,6 +593,7 @@ app.addEventListener('change', (ev) => {
 app.addEventListener('input', (ev) => {
   const t = ev.target as HTMLInputElement | HTMLTextAreaElement;
   if (t.id === 'q') { state.lastQuestion = t.value; return; }
+  if (t.id.startsWith('trial-') && t instanceof HTMLInputElement) { trialInput(t); return; }
   if (t instanceof HTMLTextAreaElement && t.dataset.list) { state.profile[t.dataset.list as 'foods'] = t.value.split('\n').map((x) => x.trim()).filter(Boolean); saveProfile(); return; }
   if (t instanceof HTMLInputElement && t.dataset.field && t.dataset.field !== 'household') {
     if (t.dataset.person !== undefined) {
@@ -548,4 +618,4 @@ app.addEventListener('pointerleave', cancelHold, true);
 window.addEventListener('hashchange', render);
 
 applyPreviewTheme();
-void load().then(() => { render(); void refreshDevice(); });
+void Promise.all([load(), loadTrial()]).then(() => { render(); void refreshDevice(); });

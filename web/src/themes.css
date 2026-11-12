@@ -181,13 +181,12 @@
 [data-theme="twosides"] .exit { background: #fff; color: var(--muted); border-color: var(--line); }
 [data-theme="twosides"] footer { border-top-color: var(--line); }
 
-/* #app also carries the route name as its class ("person", "welcome"), so it picked up the pane frame; welcome rules target main.welcome.
-   The themes reset it; the default theme has the same thin frame (noted in DESIGN_DIRECTIONS.md, left as is). */
-[data-theme] #app.person { border: 0; border-radius: 0; padding: 0; min-height: 0; box-shadow: none; background: none; display: block; }
-
 /* ================================================================== MOTION — one signature moment per direction
-   Plays when a screen or a card is drawn. The person's full-screen card only gets a short, quiet fade:
-   motion there must never compete with reading. prefers-reduced-motion switches every animation off. */
+   Plays once per real event: a new card or a new route (main.ts puts `enter` on #app for the first draw after such an
+   event and takes it off for every other redraw, so a status update or a tap never replays an entrance). The person's
+   full-screen card only gets a short, quiet fade: motion there must never compete with reading.
+   prefers-reduced-motion switches every animation off. */
+[data-theme] #app:not(.enter) *, [data-theme] #app:not(.enter) *::before, [data-theme] #app:not(.enter) *::after { animation-duration: 0s !important; animation-delay: 0s !important; }
 @keyframes tp-fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes tp-fade { from { opacity: 0; } to { opacity: 1; } }
 [data-theme] .person.full .headline, [data-theme] .person.full .tile, [data-theme] .person.full .confirm-pic,
@@ -254,7 +253,7 @@
 @media (prefers-reduced-motion: reduce) {
   [data-theme] *, [data-theme] *::before, [data-theme] *::after { animation: none !important; transition: none !important; }
 }
-[data-theme="twosides"] #app.person { background: #fff; min-height: 100dvh; } /* the card fades in on white, not out of the dark desk */
+[data-theme="twosides"] #app.route-person { background: #fff; min-height: 100dvh; } /* the card fades in on white, not out of the dark desk */
 
 /* First screen (welcome): a drawn card beside the three points — shapes only, no text from CSS.
    Headline bar + two choice tiles + the way-out tile, in each direction's material. Desktop only. */

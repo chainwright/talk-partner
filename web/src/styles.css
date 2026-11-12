@@ -134,3 +134,20 @@ details td, details th, .screen td, .screen th { border-top: 1px solid var(--lin
 .consent-box { border: 2px solid var(--accent); border-radius: var(--radius); padding: 12px 16px; margin: 16px 0 8px; display: grid; gap: 10px; }
 .diagram { width: 100%; height: auto; max-width: 640px; stroke: var(--ink); fill: none; stroke-width: 2; font-size: 14px; font-family: inherit; }
 .diagram text { fill: var(--ink); stroke: none; } .diagram .mode { fill: var(--accent); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+
+/* judge mode and "how this works": the privacy receipt */
+.receipt table { margin: 6px 0; }
+@media (max-width: 640px) {
+  .receipt tr:first-child { display: none; }
+  .receipt tr { display: block; border-top: 1px solid var(--line); padding: 6px 0; }
+  .receipt td { display: block; border: 0; padding: 1px 0; }
+  .receipt td::before { content: attr(data-l) ": "; color: var(--muted); }
+}
+
+/* hidden trial timer (#/trial) */
+.trial-setup { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+@media (max-width: 520px) { .trial-setup { grid-template-columns: 1fr; } }
+.trial-setup label { display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+.trial-setup input, .trial-setup select { min-height: 44px; padding: 8px 10px; border: 1px solid var(--muted); border-radius: 10px; background: var(--bg); color: var(--ink); font-size: 16px; }
+.elapsed { font-size: 28px; font-variant-numeric: tabular-nums; margin: 8px 0; }
+.trial .actions button { min-height: 56px; }

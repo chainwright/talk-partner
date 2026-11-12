@@ -7,7 +7,8 @@ with any pre-existing code or work disclosed. This file lists exactly what exist
 ## What existed before 11 Nov 2026
 On 9–10 Nov 2026 we built a throwaway prototype of Talk Partner in a separate local repository (never published).
 It called Chrome's built-in model directly, had no Firebase project, and its cloud step never ran.
-We took these files from it **verbatim**, in this repository's first commit (`949e8ec`), so the history shows exactly what was carried over:
+We took these files from it **verbatim**, in this repository's first commit (`949e8ec`, tagged **`pre-contest`**), so the
+history shows exactly what was carried over: `git diff pre-contest..HEAD` is the work of the submission period.
 
 | File | What it is |
 |---|---|
@@ -54,5 +55,13 @@ See `git log` for dates. Day by day: `devlog/`.
   `PICTOGRAMS.md`), and the web screens: partner, person, About me (IndexedDB, photos), cloud help consent, first run,
   judge mode and "How this works" (`web/src/main.ts`, `store.ts`, `styles.css`). One pre-period test changed with a
   dated comment (body step-2 labels). Screenshots: `devlog/shots_day3/`.
+
+- Day 4 (11 Nov, evening CST; 12 Nov UTC): `core/receipt.ts` (the privacy receipt, counted on recorded payloads), the receipt panel in judge mode and
+  `#/how`, the hidden trial timer `#/trial` (`web/src/trial.ts`, protocol in `devlog/TRIAL_PROTOCOL.md`), self-hosted fonts for the
+  design previews (`web/public/fonts/`, OFL licences alongside; `scripts/fonts-check.mjs`), once-per-event entrance animations,
+  the route-class fix, the "For judges" section of the README with the call table (`tests/unit/judge-path.test.ts`).
+
+Fonts in `web/public/fonts/` are third-party, each under the SIL Open Font License 1.1 (licence text in each folder): Overpass,
+Atkinson Hyperlegible Next, Lexend, Public Sans, Instrument Sans, IBM Plex Mono (fontsource 5.3.0 packages, latin subset).
 
 Tools: AI coding assistants were used during development, as the rules allow.
