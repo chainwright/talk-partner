@@ -3,6 +3,7 @@
 // Uses its own headless Chrome with a throwaway profile; makes only code cards (no model, no cloud call).
 //
 // Usage: npm run dev (in another shell), then  node scripts/shots.mjs [--url http://localhost:5179/] [--out devlog/shots_day3]
+// Design previews: --url 'http://localhost:5179/?theme=signal' --out devlog/design_dirs/signal --only 03,04,05
 import { spawn, execSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -11,6 +12,7 @@ import { join } from 'node:path';
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const URL_ = arg('--url', 'http://localhost:5179/');
 const OUT = arg('--out', 'devlog/shots_day3');
+const ONLY = arg('--only', '') ? arg('--only', '').split(',') : null; // keep only these shot numbers (the flow still runs in full)
 const PORT = 9342;
 const CHROME = process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -50,6 +52,10 @@ try {
   let size = 'desktop';
   const setSize = async (s) => { size = s; await send('Emulation.setDeviceMetricsOverride', SIZES[s]); await sleep(150); };
   const shot = async (name) => {
+    if (ONLY && !ONLY.includes(name.slice(0, 2))) return;
+    await js('document.fonts.ready.then(() => true)');
+    // design previews animate in; stills show the settled state (motion is recorded by scripts/motion.mjs)
+    await js(`(() => { if (!document.querySelector('#tp-still')) { const st = document.createElement('style'); st.id = 'tp-still'; st.textContent = '*, *::before, *::after { animation: none !important; transition: none !important; }'; document.head.append(st); } return true; })()`);
     await sleep(250);
     const r = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
     writeFileSync(join(OUT, `${size}_${name}.png`), Buffer.from(r.result.data, 'base64'));

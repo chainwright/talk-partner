@@ -3,6 +3,8 @@
 // Every string a person reads comes from core/copy.ts.
 
 import './styles.css';
+import './themes.css';
+import { applyPreviewTheme } from './theme';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
 import { LEGS } from '../../core/models';
@@ -169,7 +171,7 @@ function sentPanel(c: Card): string {
 
 function traceList(t: StepTrace[] | undefined): string {
   if (!t) return '';
-  return `<ul class="trace">${t.map((s) => `<li class="${s.ran}"><b>${C.how.steps[s.step]}</b>: ${C.how.ran[s.ran]}${s.ms ? ` (${s.ms} ms)` : ''}${s.used ? ` · ${C.how.used}` : ''}<br><span>${esc(s.why)}</span></li>`).join('')}</ul>`;
+  return `<ul class="trace">${t.map((s) => `<li class="${s.ran}${s.used ? ' used' : ''}" data-step="${s.step}"><b>${C.how.steps[s.step]}</b>: ${C.how.ran[s.ran]}${s.ms ? ` (${s.ms} ms)` : ''}${s.used ? ` · ${C.how.used}` : ''}<br><span>${esc(s.why)}</span></li>`).join('')}</ul>`;
 }
 
 function tally(): { device: number; cloud: number; code: number; failed: number } {
@@ -545,4 +547,5 @@ app.addEventListener('pointercancel', cancelHold);
 app.addEventListener('pointerleave', cancelHold, true);
 window.addEventListener('hashchange', render);
 
+applyPreviewTheme();
 void load().then(() => { render(); void refreshDevice(); });
