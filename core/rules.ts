@@ -553,7 +553,7 @@ const GENERIC_PERSON = /\b(another person|someone|somebody|other person|a friend
 
 export function findPerson(label: string, profile: Profile): Person | undefined {
   const w = new Set(words(label).map((x) => x.replace(/'s$/, '')));
-  return profile.people.find((p) => p.name && w.has(lc(p.name)));
+  return profile.people.find((p) => (p.name && w.has(lc(p.name))) || (p.nickname && w.has(lc(p.nickname))));
 }
 export function isPartnerName(label: string, profile: Profile): boolean {
   return !!profile.partnerName && words(label).map((x) => x.replace(/'s$/, '')).includes(lc(profile.partnerName));
@@ -587,7 +587,7 @@ export function householdFilter(choices: string[], q: string, profile: Profile):
 export function inventedNameFilter(choices: string[], q: string, profile: Profile): string[] {
   if (!/^\s*(who|whom)\b/i.test(q) && !CONTACT.test(q)) return choices;
   const known = new Set(
-    [profile.partnerName, ...profile.people.map((p) => p.name), ...profile.places, ...profile.tv, ...profile.music, ...profile.foods]
+    [profile.partnerName, ...profile.people.map((p) => p.name), ...profile.people.map((p) => p.nickname ?? ''), ...profile.places, ...profile.tv, ...profile.music, ...profile.foods]
       .filter(Boolean).map(lc),
   );
   return choices.filter((c) => {
@@ -876,7 +876,7 @@ export function route(kind: string, q: string, answers: string[], isOrPair: bool
 
 // ---------------------------------------------------------------- topic
 const STOP = new Set(('a an the you your yours we our us me my i it its is are am was were do does did would will can could should shall have has had ' +
-  'what where who whom when which why how want like to for of on in at about with go going get got some any this that these those ' +
+  'what where who whom when which why how want need like to for of on in at about with go going get got some any this that these those ' +
   'there here think feel find make made please right now so if and or but be been being he she him her his hers they them their its').split(' '));
 /** Fallback topic when no model ran: up to three content words of the question, address words and the person's name left out (§2.2). */
 export function heuristicTopic(q: string, profile?: Profile): string {
@@ -925,6 +925,27 @@ export function sourceFill(answers: string[], q: string, profile: Profile, cap: 
     if (!have.has(lc(item)) && !have.has(lc(p))) { out.push(item); have.add(lc(item)); }
   }
   return out.length >= 2 ? { answers: out, source } : null;
+}
+
+const PLACE_NOUN = /\b(?:where|hotel|street|road|house|town|village|city|shop|pub|church|chapel|beach|school|place|cottage|caravan|park|hospital|club|café|cafe|restaurant)\b/i;
+const PET_NOUN = /\b(?:dog|cat|pet|puppy|kitten|horse|pony|bird|budgie|rabbit|hamster|team|club)\b/i;
+const IDENTITY_Q_LOOSE = /\bwho(?:'s|\s+is)\s+(?:this|that)\b|\bwho\s+am\s+i\b|\bmy\s+name\b/i;
+
+/**
+ * §2.10 override ("I really don't know the answer: make a card"): a recognition card for a memory question may hold
+ * only About-me items of the right kind, never invented distractors. People for a who / name question, places for a
+ * place question, "other" entries for a pet or a team. A year, a date, an age or a time has no safe pool: null.
+ */
+export function recognitionPool(q: string, profile: Profile): { items: string[]; source: string } | null {
+  const s = stripVocative(q);
+  if (/\b(?:year|date|month|day|time|how\s+old|how\s+long|how\s+many|birthday|anniversary)\b/i.test(s)) return null;
+  if (/^\s*(?:who|whom)\b/i.test(s) || /\bwho\s+(?:was|were|is|are|came|rang|phoned|visited)\b/i.test(s) || IDENTITY_Q_LOOSE.test(s)) {
+    return { items: profile.people.map((p) => p.name).filter(Boolean), source: 'people from About me' };
+  }
+  if (PET_NOUN.test(s) && (profile.other ?? []).length) return { items: profile.other, source: 'other things from About me' };
+  if (PLACE_NOUN.test(s)) return { items: profile.places, source: 'places from About me' };
+  if (/\b(?:name|called)\b/i.test(s)) return { items: profile.people.map((p) => p.name).filter(Boolean), source: 'people from About me' };
+  return null;
 }
 
 /** On a "where" question with places in About me, a generic "stay home / go out" is not a place (§2.6, held-out 4 #20). */

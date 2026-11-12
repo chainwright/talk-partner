@@ -7,7 +7,7 @@ partner the exact line to say. It never guesses the person's answer.
 
 Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a therapy, not a diagnosis.
 
-Built for #BuildHybridAI 2026. Status: early (day 2: the card rules and their tests; no deploy yet). See `devlog/`.
+Built for #BuildHybridAI 2026. Status: early (day 3: card rules, the five screens, consent flow and judge mode; no deploy yet). See `devlog/`.
 
 ## Where the AI runs (Firebase AI Logic hybrid inference)
 All AI inference goes through Firebase AI Logic. The code is in **`web/src/ai/firebaseEngine.ts`**.
@@ -22,10 +22,24 @@ All AI inference goes through Firebase AI Logic. The code is in **`web/src/ai/fi
 answer that didn't run on the device. Questions that code can answer alone (yes/no, either-or, pain, body map,
 memory questions) use no AI at all. The model only proposes; code decides.
 
+## Screens
+- **Partner screen** (`#/`): the question, the line to say, "Show to person", "Less support", "Next", "Recap", the badge,
+  "What was sent" (the exact request, or what would have been sent) and "Where each step ran".
+- **Person screen** (`#/person`): only the keyword, two or three big tiles with pictures, one way out, then "So: lake. Right?"
+  with yes / change. The exit is top-right and needs a press-and-hold.
+- **About me** (`#/about`): names, people (name, relation, lives here, photo, nickname), foods, places, TV, music, other.
+  Saved only in this browser (IndexedDB). "Delete everything on this computer" also resets cloud help consent.
+- **Cloud help** (`#/cloud`): off by default. The consent screen shows what is sent (the last question in the exact
+  payload form), who receives it, what is never sent, and the data-use terms; one checkbox turns it on, one tap turns it off.
+- **Judge mode** (`#/demo`): a made-up family, one-tap questions of each kind, and per card a "where each step ran" line
+  built only from what the SDK reported (`inferenceSource`). A step that did not run says so and why. Nothing claims
+  on-device unless the device answered. **How this works** (`#/how`): the three steps, a diagram, the session tally.
+
 ## Layout
-- `core/`: the shared card logic (rules, privacy swap, prompts, schema, sample family). Pure TypeScript, no DOM,
-  no Firebase, so every client reuses it unchanged.
-- `web/`: the web client (one screen). `web/src/ai/` is the only place that imports `firebase/ai`.
+- `core/`: the shared card logic (rules, privacy swap, prompts, schema, sample family, **`copy.ts`: every string a
+  person reads**). Pure TypeScript, no DOM, no Firebase, so every client reuses it unchanged.
+- `web/`: the web client. `web/src/ai/` is the only place that imports `firebase/ai`. `pictos.ts` holds the hand-drawn
+  pictograms (provenance and licence per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper.
 - `tests/unit/`: unit, property and matrix tests, plus a guard that fails on any direct model API call.
   `engine-matrix.test.ts` runs seven card shapes through every combination of on-device model state and cloud
   state; `card.property.test.ts` and `strip.property.test.ts` are seeded property tests over random questions,
@@ -40,6 +54,7 @@ npm run dev                  # http://localhost:5179
 npm run check                # lint + typecheck + unit tests
 npm run build                # production build + check that no debug token is bundled
 node scripts/e2e-cloud.mjs   # with the dev server running: real Firebase AI Logic end-to-end
+node scripts/shots.mjs       # with the dev server running: screenshots of every screen at 390 and 1280 px + layout checks
 ```
 On-device inference needs desktop Chrome with Gemini Nano (Chrome's hardware and disk requirements apply).
 Without it, yes/no, either-or and pain cards still work, and open questions use cloud help only if the partner turns it on.

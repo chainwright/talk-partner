@@ -46,6 +46,7 @@ Partner asks: Where would you like to go on holiday next year?
 /** The cloud gets no ABOUT block at all, so its instructions do not mention one. */
 // (The fixed example name "Emma" is swapped for "Person A" so no real-looking name appears in a cloud request.)
 export const CLOUD_SYSTEM_PROMPT = SYSTEM_PROMPT.replace('  Use the ABOUT lists when they fit; never invent names.', '  Never invent names or details. "Person A", "Place A", "Food A", "Show A", "Music A", "Thing A", "Name A" stand for real people and things; keep those labels exactly, and never make up new ones.')
+  .replace('Use an ABOUT list only when it is the same kind of thing as the question asks for.', 'Offer only the same kind of thing as the question asks for.')
   .replace(/Emma's birthday/g, "Person A's birthday")
   +`\nOptions must not overlap in meaning, and each must be something a person could point at.`
   +`\nNo negative words in options ("not", "don't"). If the real options can't be known from the question (which of their own clothes, which photo), return fewer options rather than inventing details like colours.`;
@@ -66,7 +67,10 @@ export function aboutBlock(p: Profile): string {
   const me = p.personName ? ` The person is ${p.personName}.` : '';
   const home = p.people.filter((x) => x.household).map((x) => x.name);
   if (p.partnerName && !home.includes(p.partnerName)) home.unshift(p.partnerName);
-  const people = p.people.map((x) => (x.relation ? `${x.name} (${x.relation})` : x.name));
+  const people = p.people.map((x) => {
+    const detail = [x.relation, x.nickname ? `also called ${x.nickname}` : ''].filter(Boolean).join(', ');
+    return detail ? `${x.name} (${detail})` : x.name;
+  });
   const parts: string[] = [];
   if (people.length) parts.push(`PEOPLE: ${people.join(', ')}.`);
   if (p.foods.length) parts.push(`FOODS: ${p.foods.join(', ')}.`);

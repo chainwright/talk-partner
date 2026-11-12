@@ -94,7 +94,8 @@ export function profileTerms(p: Profile): Term[] {
     const base = keys.length ? keys : ws;
     terms.push({ kind, entry: e, keys: new Set(base.flatMap(plurals)), words: new Set(ws.flatMap(plurals)), restoreAs });
   };
-  const names = [p.personName, p.partnerName, ...p.people.map((x) => x.name)].filter(Boolean);
+  // names and nicknames ("Jen" for Jenny): each is swapped and restored as the exact word typed (§2.19)
+  const names = [p.personName, p.partnerName, ...p.people.map((x) => x.name), ...p.people.map((x) => x.nickname ?? '')].filter(Boolean);
   for (const n of Array.from(new Set(names))) add('Person', n, n);
   for (const f of p.foods) add('Food', f);
   for (const f of p.places) add('Place', f);

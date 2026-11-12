@@ -5,21 +5,50 @@ import { BODY_DETAIL, BODY_REGIONS, findPerson, isPartnerName } from './rules';
 import { pictureWord } from './strip';
 import type { PictureRef, Profile } from './types';
 
-const BUILTIN = new Set([
+/** Ids of the bundled pictograms (drawn by us; register with dates and licence in PICTOGRAMS.md). */
+export const BUILTIN = new Set([
   'yes', 'no', 'not sure', 'something else', 'someone else', 'somewhere else',
   'good', 'okay', 'bad', 'tasty', 'plain', 'too salty', 'good idea', 'leave it', 'like them', 'unhappy',
   'a little', 'some', 'a lot', 'this one', 'that one',
   // added 11 Nov 2026
   'listen', 'tea', 'coffee',
+  // batch 1, 11 Nov 2026: fixed / meta, feelings, people roles (REBUILD_SPEC §3.1)
+  'change', 'wait', 'stop', 'write it', 'more',
+  'tired', 'worried', 'pain',
+  'spouse', 'child', 'sibling', 'grandchild', 'friend', 'neighbour', 'carer', 'nurse', 'doctor', 'speech therapist', 'physio', 'priest', 'family', 'visitor',
 ]);
+
+/** Words that share a pictogram (§2.20: jumper -> sweater, telly -> TV; here the people roles and feelings). */
+export const SYNONYM: Record<string, string> = {
+  wife: 'spouse', husband: 'spouse', partner: 'spouse', spouse: 'spouse',
+  son: 'child', daughter: 'child', child: 'child',
+  sister: 'sibling', brother: 'sibling', sibling: 'sibling',
+  grandson: 'grandchild', granddaughter: 'grandchild', grandchild: 'grandchild', grandchildren: 'grandchild', grandkids: 'grandchild',
+  friend: 'friend', mate: 'friend', pal: 'friend', friends: 'friend',
+  neighbour: 'neighbour', neighbor: 'neighbour', neighbours: 'neighbour', neighbors: 'neighbour',
+  carer: 'carer', caregiver: 'carer', 'support worker': 'carer', 'home help': 'carer', aide: 'carer',
+  nurse: 'nurse', doctor: 'doctor', gp: 'doctor',
+  'speech therapist': 'speech therapist', therapist: 'speech therapist', slp: 'speech therapist',
+  physio: 'physio', physiotherapist: 'physio',
+  priest: 'priest', minister: 'priest', vicar: 'priest', reverend: 'priest', pastor: 'priest',
+  family: 'family', visitor: 'visitor', visitors: 'visitor',
+  sleepy: 'tired', exhausted: 'tired', 'worn out': 'tired', worried: 'worried', anxious: 'worried', hurts: 'pain', hurting: 'pain', sore: 'pain',
+  fine: 'okay', ok: 'okay', alright: 'okay', 'all right': 'okay',
+};
 
 export function pictureFor(label: string, profile: Profile): PictureRef {
   const l = label.toLowerCase().trim();
   if (BUILTIN.has(l)) return { type: 'builtin', id: l };
-  if ((BODY_REGIONS as string[]).includes(l) || Object.values(BODY_DETAIL).some((d) => d.includes(l))) return { type: 'builtin', id: `body:${l}` };
+  // "your left arm" on the person's card (§2.11) is the "left arm" body picture
+  const part = l.replace(/^your\s+/, '');
+  if ((BODY_REGIONS as string[]).includes(part) || Object.values(BODY_DETAIL).some((d) => d.includes(part))) return { type: 'builtin', id: `body:${part}` };
   if (l === 'you' || isPartnerName(label, profile)) return { type: 'person', personId: null, initial: (profile.partnerName || 'Y').charAt(0).toUpperCase() };
   const p = findPerson(label, profile);
   if (p) return { type: 'person', personId: p.id, initial: p.name.charAt(0).toUpperCase() };
+  // a role word ("the carer", "a neighbour", "your daughter") shares its pictogram with its synonyms
+  const bare = l.replace(/^(?:the|a|an|my|your|our|his|her|their)\s+/, '');
+  const syn = SYNONYM[bare];
+  if (syn && BUILTIN.has(syn)) return { type: 'builtin', id: syn };
   // A picture request carries one generic word (§2.20 gate): the label is lower-case as typed, has no digits and
   // holds no About-me term. An About-me item goes as its category ("food", "a place"); a capitalised word (a name
   // the profile doesn't know, a brand, a place) and anything else gets no cloud picture at all: the word alone shows.

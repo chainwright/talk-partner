@@ -6,7 +6,7 @@ export const SAMPLE_PROFILE: Profile = {
   partnerName: 'Carol',
   people: [
     { id: 's1', name: 'Carol', relation: 'wife', household: true },
-    { id: 's2', name: 'Jenny', relation: 'daughter', household: false },
+    { id: 's2', name: 'Jenny', relation: 'daughter', household: false, nickname: 'Jen' },
     { id: 's3', name: 'Tyler', relation: 'grandson', household: false },
   ],
   foods: ['pot roast', 'chili'],
@@ -25,4 +25,6 @@ export const SAMPLE_QUESTIONS: { q: string; shows: string }[] = [
   { q: 'What year did we get married?', shows: "tell, don't test" },
   { q: 'What do you want to do this weekend?', shows: 'open question: the model proposes' },
   { q: 'Who should we call tonight?', shows: 'household left out' },
+  { q: 'Should we ring Jen or Tyler?', shows: 'nickname swapped like a name' },
+  { q: 'Which shirt for the doctor?', shows: 'weak card: cloud help, or hold two up' },
 ];

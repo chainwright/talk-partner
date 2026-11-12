@@ -147,8 +147,11 @@ describe('split, body map, pain', () => {
   it('step 2 narrows the region', () => {
     const c = bodyDetailCard('legs', PROFILE, 'more');
     expect(c.bodyStep).toBe(2);
-    expect(labels(c)).toEqual(['left leg', 'right leg', 'somewhere else']);
+    // Changed 11 Nov 2026 (REBUILD_SPEC §2.11): "left" is the person's own left, so the card says "your left leg".
+    expect(labels(c)).toEqual(['your left leg', 'your right leg', 'somewhere else']);
     expect(labels(c.nextPage!)).toEqual(['feet', 'somewhere else']);
+    expect(c.choices.map((x) => x.picture)).toEqual([{ type: 'builtin', id: 'body:left leg' }, { type: 'builtin', id: 'body:right leg' }, { type: 'builtin', id: 'somewhere else' }]);
+    expect(c.say).toBe('Where in the legs? Your left leg, your right leg, or somewhere else?');
   });
 
   it('pain amount: a little / a lot at "more", three steps at "mild"', async () => {

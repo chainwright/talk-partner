@@ -48,4 +48,11 @@ See `git log` for dates. Day by day: `devlog/`.
   `open-sources`, `strip-gate`, `card.property`, and the engine-state matrix extended to seven card shapes.
   Three pre-period tests were updated to the new behaviour, each with a dated comment saying why.
 
+- Day 3 (11 Nov, late): `core/copy.ts` (every user-facing string, with the copy-truth tests in `tests/unit/copy.test.ts`),
+  the step trace (`Card.trace`, from the engine's reports only), the §2.10 override card, "your left arm" labels,
+  nicknames in the privacy swap, role pictograms and the fixed / feeling batch in `web/src/pictos.ts` (register:
+  `PICTOGRAMS.md`), and the web screens: partner, person, About me (IndexedDB, photos), cloud help consent, first run,
+  judge mode and "How this works" (`web/src/main.ts`, `store.ts`, `styles.css`). One pre-period test changed with a
+  dated comment (body step-2 labels). Screenshots: `devlog/shots_day3/`.
+
 Tools: AI coding assistants were used during development, as the rules allow.

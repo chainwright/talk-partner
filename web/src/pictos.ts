@@ -1,15 +1,25 @@
 // Built-in pictographs: simple, concrete line drawings (KB §7 rule 13: no emoji, no decorative clip art).
+// Hand-drawn SVG on a 96 × 96 grid, stroke 5, round caps and joins, `currentColor` plus one accent (REBUILD_SPEC §3.2).
 // Each returns an inline SVG string; colour comes from CSS (currentColor + --accent).
+// Provenance and licence per pictogram: PICTOGRAMS.md (all drawn by us, Apache-2.0, dated).
 
 const svg = (body: string, label: string) =>
   `<svg viewBox="0 0 96 96" role="img" aria-label="${label}" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 
-const face = (mouth: string) => `<circle cx="48" cy="48" r="36"/><circle cx="35" cy="40" r="3" fill="currentColor"/><circle cx="61" cy="40" r="3" fill="currentColor"/>${mouth}`;
+const face = (mouth: string, eyes = '<circle cx="35" cy="40" r="3" fill="currentColor"/><circle cx="61" cy="40" r="3" fill="currentColor"/>') =>
+  `<circle cx="48" cy="48" r="36"/>${eyes}${mouth}`;
 const personShape = `<circle cx="40" cy="30" r="13"/><path d="M16 84c0-16 11-27 24-27s24 11 24 27"/>`;
 const bars = (n: number) =>
   [0, 1, 2, 3].map((i) => `<rect x="${14 + i * 18}" y="${70 - i * 14}" width="12" height="${14 + i * 14}" rx="2" ${i < n ? 'fill="currentColor"' : ''}/>`).join('');
 
+// Neutral figures (rule 6: roles differ by one attribute, never by stereotype). Head + shoulders, three sizes.
+const big = (cx: number) => `<circle cx="${cx}" cy="30" r="12"/><path d="M${cx - 26} 84c0-16 12-28 26-28s26 12 26 28"/>`;
+const mid = (cx: number) => `<circle cx="${cx}" cy="36" r="10"/><path d="M${cx - 19} 82c0-13 8-22 19-22s19 9 19 22"/>`;
+const small = (cx: number) => `<circle cx="${cx}" cy="54" r="8"/><path d="M${cx - 14} 84c0-9 6-16 14-16s14 7 14 16"/>`;
+const low = (cx: number) => `<circle cx="${cx}" cy="40" r="9"/><path d="M${cx - 15} 84c0-11 7-19 15-19s15 8 15 19"/>`;
+
 const BODY_OUTLINE = `<circle cx="48" cy="14" r="9"/><path d="M34 28h28l4 36H30z"/><path d="M34 30l-12 28M62 30l12 28"/><path d="M38 64l-4 26M58 64l4 26"/>`;
+// The figure faces the viewer, so the person's LEFT is on the viewer's right (x > 48). Labels say "your left arm".
 const BODY_HIGHLIGHT: Record<string, string> = {
   head: '<circle cx="48" cy="14" r="9" fill="var(--accent)" stroke="none"/>',
   face: '<circle cx="48" cy="14" r="9" fill="var(--accent)" stroke="none"/>',
@@ -25,7 +35,6 @@ const BODY_HIGHLIGHT: Record<string, string> = {
   'lower stomach': '<path d="M33 53h30l1 9H32z" fill="var(--accent)" stroke="none"/>',
   chest: '<path d="M35 30h26l1 14H34z" fill="var(--accent)" stroke="none"/>',
   stomach: '<path d="M34 44h28l2 18H32z" fill="var(--accent)" stroke="none"/>',
-  side: '<path d="M58 34h4l3 26h-5z" fill="var(--accent)" stroke="none"/>',
   back: '<path d="M35 30h26l3 32H32z" fill="var(--accent)" stroke="none" opacity=".55"/><path d="M48 30v32" stroke="var(--accent)"/>',
   'upper back': '<path d="M35 30h26l1 16H34z" fill="var(--accent)" stroke="none" opacity=".6"/>',
   'lower back': '<path d="M34 46h28l2 16H32z" fill="var(--accent)" stroke="none" opacity=".6"/>',
@@ -38,11 +47,13 @@ const BODY_HIGHLIGHT: Record<string, string> = {
   'left leg': '<path d="M58 64l4 26" stroke="var(--accent)" stroke-width="8"/>',
   'right leg': '<path d="M38 64l-4 26" stroke="var(--accent)" stroke-width="8"/>',
 };
+export const BODY_PARTS = Object.keys(BODY_HIGHLIGHT);
 
 const P: Record<string, string> = {
   yes: '<path d="M20 50l18 18 38-40" stroke="var(--yes)" stroke-width="9"/>',
   no: '<path d="M24 24l48 48M72 24L24 72" stroke="var(--no)" stroke-width="9"/>',
   'not sure': '<path d="M34 34c0-9 6-15 14-15s14 6 14 14c0 10-14 12-14 24"/><circle cx="48" cy="74" r="3.5" fill="currentColor"/>',
+  // the only dashed shape in the set (rule 4)
   'something else': '<rect x="14" y="22" width="68" height="52" rx="10" stroke-dasharray="8 7"/><circle cx="34" cy="48" r="4" fill="currentColor"/><circle cx="48" cy="48" r="4" fill="currentColor"/><circle cx="62" cy="48" r="4" fill="currentColor"/>',
   'someone else': `${personShape}<path d="M70 26c0-5 4-9 9-9s9 4 9 9c0 6-9 7-9 14" stroke-width="4"/><circle cx="79" cy="50" r="2.5" fill="currentColor"/>`,
   'somewhere else': '<path d="M48 86s-24-26-24-44a24 24 0 0148 0c0 18-24 44-24 44z"/><path d="M42 36c0-4 3-7 6-7s7 3 7 7c0 5-7 6-7 11" stroke-width="4"/><circle cx="48" cy="54" r="2.5" fill="currentColor"/>',
@@ -65,7 +76,38 @@ const P: Record<string, string> = {
   'a little': bars(1),
   some: bars(2),
   'a lot': bars(4),
+
+  // batch 1, drawn 11 Nov 2026 (evening): fixed / meta
+  change: '<path d="M70 40a24 24 0 00-42-8"/><path d="M26 20v14h14"/><path d="M26 56a24 24 0 0042 8"/><path d="M70 76V62H56"/>',
+  wait: '<circle cx="48" cy="50" r="32"/><path d="M48 30v20l13 9"/><path d="M40 12h16"/>',
+  stop: '<path d="M34 12h28l22 22v28L62 84H34L12 62V34z"/><path d="M32 48h32" stroke="var(--accent)" stroke-width="7"/>',
+  'write it': '<path d="M18 78l6-20 36-36 14 14-36 36z"/><path d="M60 22l14 14"/><path d="M24 58l14 14"/><path d="M18 88h60"/>',
+  more: '<circle cx="48" cy="48" r="34"/><path d="M48 30v36M30 48h36" stroke-width="7"/>',
+
+  // batch 1: feelings (faces only on the feelings scale; no gender, no skin tone)
+  tired: face('<path d="M36 64h24"/>', '<path d="M28 42c4-5 10-5 14 0M54 42c4-5 10-5 14 0" stroke-width="4"/>'),
+  worried: face('<path d="M33 66c5-5 10 5 15 0s10 5 15 0"/>', '<circle cx="35" cy="44" r="3" fill="currentColor"/><circle cx="61" cy="44" r="3" fill="currentColor"/><path d="M27 32l12 5M69 32l-12 5" stroke-width="4"/>'),
+  pain: '<path d="M56 10L28 52h18l-6 34 28-44H52z" stroke="var(--accent)"/>',
+
+  // batch 1: people roles (one attribute each)
+  spouse: `${mid(30)}${mid(66)}<circle cx="48" cy="18" r="7" stroke="var(--accent)"/>`,
+  child: `${big(30)}${low(72)}`,
+  sibling: `${mid(30)}${mid(66)}`,
+  grandchild: `${big(30)}${small(72)}`,
+  friend: `${mid(30)}${mid(66)}<path d="M84 62l8-18" stroke="var(--accent)" stroke-width="6"/>`,
+  neighbour: `${mid(28)}<path d="M54 54l18-16 18 16v28H54z"/><path d="M68 82V68h8v14"/>`,
+  carer: `${big(48)}<path d="M48 80c-6-6-12-9-12-15a6 6 0 0112 0 6 6 0 0112 0c0 6-6 9-12 15z" fill="var(--accent)" stroke="none"/>`,
+  nurse: `${big(48)}<path d="M48 60v20M38 70h20" stroke="var(--accent)" stroke-width="7"/>`,
+  doctor: `${big(48)}<path d="M36 46v12a12 12 0 0024 0V46M48 70v4a9 9 0 0018 0"/><circle cx="66" cy="78" r="5" fill="var(--accent)" stroke="none"/>`,
+  'speech therapist': `${big(40)}<path d="M62 10h24a4 4 0 014 4v16a4 4 0 01-4 4h-8l-8 8v-8h-8a4 4 0 01-4-4V14a4 4 0 014-4z" stroke="var(--accent)"/><path d="M68 22h12" stroke="var(--accent)" stroke-width="4"/>`,
+  physio: `${big(44)}<path d="M66 60l14-22" stroke="var(--accent)" stroke-width="6"/><path d="M74 32l12 8" stroke="var(--accent)" stroke-width="6"/>`,
+  priest: `${big(48)}<rect x="42" y="42" width="12" height="9" rx="2" fill="var(--bg)" stroke="var(--accent)"/>`,
+  family: `${low(20)}${low(48)}${low(76)}`,
+  visitor: `${mid(48)}<path d="M18 90V10h60v80"/>`,
 };
+
+/** Every bundled pictogram id (for the provenance check in tests and PICTOGRAMS.md). */
+export const PICTO_IDS = [...Object.keys(P), ...BODY_PARTS.map((b) => `body:${b}`), 'monogram'];
 
 export function builtinPicto(id: string): string {
   if (id.startsWith('body:')) {
@@ -75,12 +117,15 @@ export function builtinPicto(id: string): string {
   return svg(P[id] ?? P['something else'], id);
 }
 
+/** A named person without a photo: their initial in a soft circle (the one place letters are allowed, rule 5). */
 export function monogram(initial: string): string {
   return `<svg viewBox="0 0 96 96" role="img" aria-label="${initial}"><circle cx="48" cy="48" r="42" fill="var(--accent-soft)"/><text x="48" y="62" text-anchor="middle" font-size="42" font-family="Verdana, sans-serif" fill="currentColor">${initial}</text></svg>`;
 }
 
-/** Shown while a cloud picture is loading or unavailable: a plain empty frame, no text. */
-export const PICTURE_PENDING = svg('<rect x="16" y="20" width="64" height="56" rx="8" stroke-dasharray="6 6" opacity=".45"/>', 'picture not available');
+/** A named person's own photo (a local data URL): round, same size as a pictogram. */
+export function photoTile(dataUrl: string, name: string): string {
+  return `<img class="photo" src="${dataUrl}" alt="${name}">`;
+}
 
 export const TICK = svg(P.yes, 'yes');
 export const CROSS = svg(P.no, 'no');

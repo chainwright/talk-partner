@@ -7,6 +7,10 @@ export interface Person {
   relation: string;
   /** Lives in the same home. Household members are never offered for call / visit / invite. */
   household: boolean;
+  /** Optional short form the partner uses ("Jen" for Jenny). Swapped out before the cloud like the name (§2.19). */
+  nickname?: string;
+  /** Optional photo (a small data URL). Stays on the device; shown on the person's tile instead of the initial. */
+  photo?: string;
 }
 
 /** The "About me" profile. Stored only in IndexedDB on this device; never sent anywhere. */
@@ -62,6 +66,21 @@ export interface RouteDecision {
   reasons: string[];
 }
 
+/**
+ * Where each step of one card ran, from what the engine reported (the SDK's `inferenceSource`), never assumed.
+ * `private` is the ONLY_ON_DEVICE leg, `stripped` the PREFER_IN_CLOUD leg, `code` the rules with no model.
+ * Shown to a judge as "where it ran": a step that did not run says so and why.
+ */
+export interface StepTrace {
+  step: 'private' | 'stripped' | 'code';
+  ran: 'on-device' | 'in-cloud' | 'skipped' | 'failed';
+  /** Plain words: why it was skipped or failed, or what it got. */
+  why: string;
+  ms?: number;
+  /** True when the card the person sees came from this step. */
+  used: boolean;
+}
+
 export interface Card {
   /** The question shown on this card (first part if the input was split). */
   asked: string;
@@ -92,6 +111,8 @@ export interface Card {
   ms: number;
   /** The stripped leg (PREFER_IN_CLOUD) fell back to the device because the cloud was unreachable. */
   ranOffline?: boolean;
+  /** Where each step ran for this card (judge mode, "How this works"). Built by makeCard from engine reports only. */
+  trace?: StepTrace[];
 }
 
 export type SupportLevel = 'mild' | 'more' | 'most';
