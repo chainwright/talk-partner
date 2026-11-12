@@ -10,7 +10,7 @@ import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
 import { LEGS } from '../../core/models';
 import { bodyDetailCard, makeCard, quizOverrideCard, repairCard } from '../../core/pipeline';
-import { sessionReceipt } from '../../core/receipt';
+import { countSwaps, sessionReceipt } from '../../core/receipt';
 import { cloudTextRequest } from '../../core/requests';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_PROFILE, SAMPLE_QUESTIONS } from '../../core/sample';
@@ -181,6 +181,18 @@ function badge(c: Card): string {
   return `<span class="badge cloud">${C.badge.cloud}</span>`;
 }
 
+/**
+ * The badge and, after it, what left this computer for this card: one line that is always on screen and always true.
+ * "Left" is the receipt's own definition (`Card.cloudPayload` is recorded only when the SDK reported that the cloud
+ * answered); the swap counts are read from the recorded swaps, the same numbers the receipt shows.
+ */
+function badgeLine(c: Card): string {
+  const T = C.badge.tail;
+  let tail: string = T.kept;
+  if (c.cloudPayload) { const n = countSwaps(c.cloudSwaps); tail = T.sent(n.names, n.other); }
+  return `<p class="badge-line">${badge(c)}<span class="tail">· ${esc(tail)}</span></p>`;
+}
+
 function sentPanel(c: Card): string {
   const swaps = c.cloudSwaps?.length ? `<p class="swaps">${C.sent.swaps}<br>${c.cloudSwaps.map(esc).join('<br>')}</p>` : '';
   if (c.cloudPayload) return `<p>${c.source === 'in-cloud' ? C.sent.sentFor : C.sent.notUsed}</p><pre>${esc(c.cloudPayload)}</pre>${swaps}`;
@@ -213,10 +225,22 @@ function whyLine(w: CardWhy): string {
   return parts.join(' · ');
 }
 
-/** The panel: one line, open in judge mode and on "How this works", collapsed on the partner screen. */
+/** The panel: one line, open in judge mode and on "How this works"; on the partner screen it sits inside "How this card was made". */
 function whyPanel(c: Card, open: boolean): string {
   if (!c.why) return '';
   return `<details class="why" ${open ? 'open' : ''}><summary>${C.how.why.heading}</summary><p>${whyLine(c.why)}</p></details>`;
+}
+
+/**
+ * How this card was made, in the order a judge reads it: why this card → where each step ran → what was sent. The same
+ * three panels, open, in both modes. In judge mode they stand under the card; on the partner screen they sit inside one
+ * closed disclosure (`#made`) with the privacy receipt (folded, it is long) after them: one click shows all three, and
+ * nothing is removed, only folded.
+ */
+function madePanels(c: Card): string {
+  return `${whyPanel(c, true)}
+    <details class="sent" open><summary>${C.how.traceHeading}</summary>${traceList(c.trace)}</details>
+    <details class="sent" id="sent" open><summary>${C.sent.heading}</summary>${sentPanel(c)}</details>`;
 }
 
 function tally(): { device: number; cloud: number; code: number; failed: number } {
@@ -265,10 +289,23 @@ function diagram(): string {
 }
 
 // ---------------------------------------------------------------- partner screen
+/** Judge mode: the one-tap questions in three groups, by what the judge sees happen; the chip shows the short form, asks the full question. */
+function chipGroups(): string {
+  const G = C.judge.groups;
+  return `<div class="chipgroups">${(Object.keys(G) as (keyof typeof G)[]).map((g) =>
+    `<div class="chips group"><span class="gl">${G[g]}</span><span class="gc">${SAMPLE_QUESTIONS.filter((s) => s.group === g).map((s) => `<button class="chip" data-q="${esc(s.q)}" title="${esc(s.q)} — ${esc(s.shows)}">${esc(s.short)}</button>`).join('')}</span></div>`).join('')}</div>`;
+}
+
+/**
+ * The partner screen. Judge mode (#/demo) is ordered for a 60-second read: the chips under the question box, then the
+ * card with its panels open (badge → why → where each step ran → what was sent), the privacy receipt right after, and
+ * one compact session line (tally; the intro and the no-helper note fold under it). Outside judge mode the panels and
+ * the receipt are folded into "How this card was made" inside the card panel, so above the fold there is only the
+ * question, the coaching line, the line to say, the card and the actions.
+ */
 function partnerScreen(): string {
   const c = state.card;
-  const chips = state.demo ? `<div class="chips">${SAMPLE_QUESTIONS.map((s) => `<button class="chip" data-q="${esc(s.q)}" title="${esc(s.shows)}">${esc(s.q)}</button>`).join('')}</div>` : '';
-  const judgeIntro = state.demo ? `<details class="judge" open><summary><b>${C.judge.label}</b> · ${C.how.tallyHeading}: ${C.how.tally(tally())}</summary><p>${C.judge.intro}</p><p id="nodevice" ${state.device === 'available' ? 'hidden' : ''}>${C.judge.noDevice}</p></details>${receiptPanel(true)}` : '';
+  const judgeLine = state.demo ? `<details class="judge"><summary><b>${C.judge.label}</b> · ${C.how.tallyHeading}: ${C.how.tallyShort(tally())}</summary><p>${C.judge.intro}</p><p id="nodevice" ${state.device === 'available' ? 'hidden' : ''}>${C.judge.noDevice}</p></details>` : '';
   return `${nav()}
 <main class="layout">
   <section class="partner" aria-label="Partner">
@@ -276,9 +313,10 @@ function partnerScreen(): string {
     <p id="status" class="status">${statusLine()}</p>
     ${state.demo ? `<p class="sample">${C.app.sample}</p>` : ''}
     <form id="ask"><input id="q" autocomplete="off" placeholder="${C.ask.placeholder}" aria-label="${C.ask.label}" value="${esc(state.lastQuestion)}"><button id="make" type="submit" ${state.busy ? 'disabled' : ''}>${state.busy ? C.ask.making : C.ask.make}</button></form>
+    ${state.demo ? chipGroups() : ''}
     <div id="result" aria-live="polite">${c ? cardPanel(c) : ''}</div>
-    ${chips}
-    ${judgeIntro}
+    ${state.demo ? receiptPanel(true) : ''}
+    ${judgeLine}
     <div class="settings">
       <label>Support <select id="support"><option value="mild" ${state.settings.support === 'mild' ? 'selected' : ''}>mild (3 choices)</option><option value="more" ${state.settings.support === 'more' ? 'selected' : ''}>more (2 choices)</option><option value="most" ${state.settings.support === 'most' ? 'selected' : ''}>most (2, larger)</option></select></label>
       <span class="privacy">${state.settings.cloudHelp ? C.consent.isOn : C.privacy.cloudOff}</span>
@@ -324,10 +362,10 @@ function cardPanel(c: Card): string {
       ? `<p class="done">${esc(C.card.choseRepair(p.label))}</p><p class="say">${esc(C.repair.lines[p.label] ?? '')}</p>`
       : `<p class="done">${p.role === 'escape' ? esc(C.card.choseEscape(p.label)) : esc(C.card.chose(p.label))}</p>`;
   }
-  return `${badge(c)}${coach}${main}${answered}${actions ? `<div class="actions">${actions}</div>` : ''}${safety}${notes}
-    ${whyPanel(c, state.demo)}
-    <details class="sent" id="sent"><summary>${C.sent.heading}</summary>${sentPanel(c)}</details>
-    <details class="sent" ${state.demo ? 'open' : ''}><summary>${C.how.traceHeading}</summary>${traceList(c.trace)}</details>`;
+  // judge mode: the panels stand open in reading order; partner screen: one closed fold holds them and the receipt
+  const made = state.demo ? madePanels(c) : `<details class="made" id="made"><summary>${C.card.made}</summary>${madePanels(c)}${receiptPanel(false)}</details>`;
+  return `${badgeLine(c)}${coach}${main}${answered}${actions ? `<div class="actions">${actions}</div>` : ''}${safety}${notes}
+    ${made}`;
 }
 
 const recapText = () => state.answers.map((a) => `${a.topic}, ${a.label}`).join('; ') + '. Right?';
@@ -598,7 +636,11 @@ function act(el: HTMLElement) {
       downloadFile(C.judge.receipt.exportName, JSON.stringify({ app: C.app.name, exportedAt: new Date().toISOString(), page: location.origin, sampleFamily: state.demo, receipt: r }, null, 2), 'application/json');
       break;
     }
-    case 'show-sent': { const d = document.querySelector<HTMLDetailsElement>('#sent'); if (d) { d.open = true; d.scrollIntoView({ block: 'nearest' }); } break; }
+    case 'show-sent': {
+      const m = document.querySelector<HTMLDetailsElement>('#made'); if (m) m.open = true; // the fold around it on the partner screen
+      const d = document.querySelector<HTMLDetailsElement>('#sent'); if (d) { d.open = true; d.scrollIntoView({ block: 'nearest' }); }
+      break;
+    }
     case 'download': void download(); break;
     case 'leave-demo': void leaveDemo(); break;
     case 'welcome-setup': state.settings.welcomed = true; saveSettings(); go('about'); break;

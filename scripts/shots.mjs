@@ -66,6 +66,41 @@ try {
   const nav = async (hash) => { await send('Page.navigate', { url: `${URL_}${hash}` }); await waitFor('!!document.querySelector("main")'); await sleep(300); };
   const click = async (sel) => { await js(`(() => { const b = document.querySelector(${JSON.stringify(sel)}); if (!b) return false; b.click(); return true; })()`); await sleep(350); };
   const chip = async (q) => { await click(`.chip[data-q="${q}"]`); await waitFor('!!document.querySelector("#result .badge")'); await sleep(300); };
+  // typing a question on the partner screen (no chips outside judge mode)
+  const ask = async (q) => { await js(`(() => { const i = document.querySelector('#q'); i.value = ${JSON.stringify(q)}; i.dispatchEvent(new Event('input', { bubbles: true })); document.querySelector('#ask').requestSubmit(); return true; })()`); await waitFor('!!document.querySelector("#result .badge")'); await sleep(300); };
+  /** Bottom edge of each selector in the viewport (undefined when absent), plus the lowest tile on the person's card. */
+  const edges = async (sels) => js(`(() => { const b = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().bottom) : undefined; };
+    const tiles = [...document.querySelectorAll('#person .tile')].map((t) => t.getBoundingClientRect().bottom);
+    return { ...Object.fromEntries(${JSON.stringify(sels)}.map((s) => [s, b(s)])), tiles: tiles.length ? Math.round(Math.max(...tiles)) : undefined, n: tiles.length }; })()`);
+  // The fold: the phone is 390 × 844 as shot; the desktop frame a judge reads is 1280 × 800 (shots are 900 tall so
+  // the whole page is in the file). `fold()` sets the height, runs the checks, saves the frame as seen, restores.
+  const FOLD = { phone: 844, desktop: 800 };
+  const withFold = async (fn) => {
+    if (size === 'desktop') { await send('Emulation.setDeviceMetricsOverride', { ...SIZES.desktop, height: FOLD.desktop }); await sleep(200); }
+    await fn(FOLD[size]);
+    if (size === 'desktop') await setSize('desktop');
+  };
+  const frame = async (name) => {
+    if (ONLY && !ONLY.includes(name.slice(0, 2))) return;
+    await js('document.fonts.ready.then(() => true)'); await sleep(150);
+    const r = await send('Page.captureScreenshot', { format: 'png' }); // the viewport only: the frame as a judge sees it
+    writeFileSync(join(OUT, `${size}_${name}.png`), Buffer.from(r.result.data, 'base64'));
+  };
+  /** Above the fold: question box, coaching line, "Say this", the badge line and the main actions; the person's card on the desktop. */
+  // `all`: every main action (show, less, next, stuck) must fit (the partner screen); otherwise the main pair (show,
+  // less). Judge mode gets the pair: its chips sit above the card, and the status line is two to four lines depending on
+  // what the SDK reports for the helper, so the third action row lands at 750–813 px on the desktop and 754–882 px on the phone.
+  const aboveFold = async (label, fold, needCoach, all) => {
+    const sels = ['#q', '.badge-line', '.say', '[data-act=show]', '[data-act=less]', '[data-act=next]', '[data-act=stuck]', '[data-act=recap]', '.coach', '#person .headline'];
+    const e = await edges(sels);
+    const must = ['#q', '.badge-line', '.say', '[data-act=show]', '[data-act=less]'].concat(all ? ['[data-act=next]', '[data-act=stuck]'] : []).concat(needCoach ? ['.coach'] : []);
+    const okLeft = must.every((s) => e[s] !== undefined && e[s] <= fold);
+    check(`${size} ${label}: question, badge line, coaching line, "Say this" and the actions above the fold (${fold}px)`, okLeft, must.map((s) => `${s} ${e[s]}`).join(', '));
+    if (size === 'desktop') {
+      const okRight = e['#person .headline'] !== undefined && e.n >= 2 && e.tiles <= fold;
+      check(`${size} ${label}: the person's card (headline and ${e.n} tiles) fits the same frame`, okRight, `headline ${e['#person .headline']}, lowest tile ${e.tiles}`);
+    }
+  };
 
   for (const s of ['phone', 'desktop']) {
     await setSize(s);
@@ -124,6 +159,13 @@ try {
     // day 5: the coaching line on a double question, "why this card" (open in judge mode), the repair card
     await chip('How was therapy today, and did you eat?');
     await shot('18-double-question-coach');
+    // day 6: judge mode reads badge → why this card → where each step ran → privacy receipt, all open, top to bottom
+    const order = await js(`(() => { const y = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().top) : undefined; }; return ['#result .badge', '#result .why[open]', '#result details[open] .trace', '.receipt[open]'].map(y); })()`);
+    check(`${s} judge mode: badge → why this card → where each step ran → privacy receipt, each open, in that order`, order.every((v, i) => v !== undefined && (i === 0 || v > order[i - 1])), order.join(' < '));
+    const groups = await js('document.querySelectorAll(".chips.group").length');
+    check(`${s} judge mode: the sample questions sit in groups above the card; the session line is one line under the receipt`, groups === 3 && (await js('document.querySelector(".chips.group").getBoundingClientRect().top < document.querySelector("#result").getBoundingClientRect().top && document.querySelector(".judge").getBoundingClientRect().top > document.querySelector(".receipt").getBoundingClientRect().top && !document.querySelector(".judge").open')), `${groups} groups`);
+    // the one-frame wow (FIELD_BEAT ★2): the partner's question and the correction on the left, the person's card on the right
+    await withFold(async (fold) => { await aboveFold('judge mode, double question', fold, true, false); await frame('23-wow-frame'); });
     await chip('Should we ring Jen or Tyler?');
     await shot('19-why-this-card');
     await click('[data-act="stuck"]');
@@ -134,6 +176,28 @@ try {
     await shot('21-repair-person');
     await nav('#/demo');
     await click('[data-act="unstuck"]');
+    // day 6: the partner screen outside judge mode: one closed fold ("How this card was made") holds the rest
+    await click('[data-act="leave-demo"]');
+    await waitFor('!document.querySelector(".chip") && !!document.querySelector("#q")');
+    await ask('How was therapy today, and did you eat?');
+    await shot('22-partner-normal');
+    const folded = await js(`(() => { const m = document.querySelector('#made'); if (!m || m.open) return 'no closed #made';
+      const hidden = ['#result .why', '#result .trace', '#result #sent', '#result .receipt'].map((s) => { const e = document.querySelector(s); return e ? (m.contains(e) && !e.checkVisibility()) : s + ' missing'; });
+      return hidden.every((h) => h === true) ? 'ok' : JSON.stringify(hidden); })()`);
+    check(`${s} partner screen: why / where each step ran / what was sent / receipt are all inside the closed fold`, folded === 'ok', folded);
+    const line = await js('document.querySelector("#result .badge-line")?.innerText.replace(/\\s+/g, " ")');
+    check(`${s} partner screen: the badge line is visible and says what left this computer`, !!line && /left this computer/.test(line), line);
+    await withFold(async (fold) => { await aboveFold('partner screen, double question', fold, true, true); await frame('24-partner-frame'); });
+    // the fold opens: by hand, and from the blocked card's "Show what would be sent" (which must open the fold around it too)
+    await js('(() => { document.querySelector("#made").open = true; return true; })()');
+    await sleep(200);
+    await shot('25-made-open');
+    await ask('What do you want to do this weekend?');
+    await click('[data-act="show-sent"]');
+    const opened = await js('(() => { const m = document.querySelector("#made"), s = document.querySelector("#sent"); return !!m && m.open && !!s && s.open && s.checkVisibility(); })()');
+    check(`${s} partner screen: "Show what would be sent" opens the fold and the panel inside it`, opened === true, String(opened));
+    await nav('#/demo');
+    await waitFor('!!document.querySelector(".chip")');
     // About me with the sample family, cloud help consent, how this works
     await nav('#/about');
     await shot('14-about-sample');

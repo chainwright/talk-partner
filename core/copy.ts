@@ -53,6 +53,8 @@ const COPY = {
     justAsk: 'Just ask it normally and give time.',
     stuck: "We're stuck",
     unstuck: 'Back to the choices',
+    /** The one fold on the partner screen: why this card, where each step ran, what was sent, the privacy receipt. */
+    made: 'How this card was made',
   },
 
   // A quiet coaching line for the partner. Only where a rule detected it; never a judgement of the person.
@@ -87,6 +89,12 @@ const COPY = {
     offline: 'Ran on this computer (offline)',
     code: 'No AI needed',
     none: 'No card',
+    // The line after the badge, always visible. Read from the card's recorded payload (the receipt's own test), never assumed.
+    tail: {
+      kept: 'nothing left this computer',
+      sent: (names: number, other: number) =>
+        `the question left this computer, ${names + other ? `${names} name${names === 1 ? '' : 's'} and ${other} other About me word${other === 1 ? '' : 's'} swapped out` : 'no About me words in it'}`,
+    },
   },
 
   blocked: {
@@ -207,6 +215,9 @@ const COPY = {
     tallyHeading: 'This session',
     tally: (n: { device: number; cloud: number; code: number; failed: number }) =>
       `${n.code} with no AI, ${n.device} on this computer, ${n.cloud} with cloud help, ${n.failed} step failures.`,
+    /** The same tally in one line, for the judge-mode strip. */
+    tallyShort: (n: { device: number; cloud: number; code: number; failed: number }) =>
+      `${n.code} no AI · ${n.device} on this computer · ${n.cloud} cloud help · ${n.failed} failed`,
     steps: { private: 'Private step (on this computer)', stripped: 'Cloud step (question only)', code: 'Rules in code' },
     ran: { 'on-device': 'ran on this computer', 'in-cloud': 'ran in the cloud', skipped: 'did not run', failed: 'failed' },
     used: 'used for this card',
@@ -288,6 +299,8 @@ const COPY = {
     intro: 'A made-up family, one-tap questions of each kind, and per card: where each step ran, and why this card.',
     noDevice: "This browser has no private helper, so the private step shows as \"did not run\" on every card. Cloud help can make the open cards: it gets the question only, and the sample family is made up.",
     exit: 'Leave judge mode',
+    /** The one-tap questions, grouped by what the judge sees happen (core/sample.ts gives each question its group). */
+    groups: { code: 'Read in code', coach: 'The app corrects the partner', model: 'A model proposes' },
     receipt: {
       heading: 'Privacy receipt',
       summary: (n: { cards: number; cardsLeft: number; bodyBytes: number; questionBytes: number; namesWithheld: number; otherWithheld: number; leaksFound: number; photosFound: number; offlineRuns: number }) =>

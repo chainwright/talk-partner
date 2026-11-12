@@ -35,7 +35,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
 .dot.ok { background: var(--yes); } .dot.wait { background: var(--warn); } .dot.off { background: var(--muted); }
 .sample { margin: 0; color: var(--muted); font-size: 14px; }
 .judge { border: 1px dashed var(--accent); border-radius: 10px; padding: 6px 12px; font-size: 14px; }
-.judge p:last-child { margin: 0; } .judge summary { font-size: 14px; display: block; }
+.judge p:last-child { margin: 0; } .judge summary { font-size: 14px; display: block; } .judge p:first-of-type { margin-top: 6px; }
 #ask { display: flex; gap: 8px; }
 #ask input { flex: 1; min-width: 0; min-height: 48px; padding: 8px 12px; border: 1px solid var(--muted); border-radius: 10px; background: var(--bg); }
 button, .button { min-height: 44px; padding: 8px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
@@ -46,12 +46,27 @@ button.danger, .danger { color: var(--no); border-color: var(--no); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 @media (max-width: 520px) { .chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; } .chip { flex: 0 0 auto; } }
 .chip { min-height: 36px; padding: 4px 10px; font-size: 14px; border-radius: 18px; }
+/* judge mode: the chips in three groups. Desktop: a small caption above each row; phone: the caption starts the scroll row */
+.chipgroups { display: grid; gap: 6px; }
+.chips.group { display: grid; gap: 2px; }
+.chips .gl { font-size: 12px; line-height: 14px; color: var(--muted); }
+.chips .gc { display: flex; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 520px) {
+  .chipgroups { gap: 4px; }
+  .chips.group { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; padding-bottom: 0; }
+  .chips.group .gl { flex: 0 0 auto; } .chips.group .gc { display: contents; }
+}
 .settings { display: flex; gap: 10px 16px; flex-wrap: wrap; align-items: center; font-size: 14px; }
 .settings select { min-height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); }
 .settings .privacy { color: var(--muted); }
 
 #result { display: grid; gap: 6px; }
-.badge { justify-self: start; font-size: 13px; padding: 2px 10px; border-radius: 12px; border: 1px solid var(--line); }
+/* the badge and, after it, what left this computer for this card: always on screen */
+.badge-line { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; font-size: 13px; color: var(--muted); }
+.badge { justify-self: start; font-size: 13px; padding: 2px 10px; border-radius: 12px; border: 1px solid var(--line); color: var(--ink); }
+/* the partner screen's one fold: why this card, where each step ran, what was sent, the receipt, all inside */
+.made > summary { color: var(--muted); }
+.made > details { margin-top: 6px; }
 .badge.device { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 .badge.cloud { background: #fff3d6; color: #6b4400; border-color: #c9a24a; }
 @media (prefers-color-scheme: dark) { .badge.cloud { background: #3b2f12; color: #f0d08a; } }

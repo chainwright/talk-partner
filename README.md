@@ -7,7 +7,7 @@ partner the exact line to say. It never guesses the person's answer.
 
 Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a therapy, not a diagnosis.
 
-Built for #BuildHybridAI 2026. Status: early (day 5: card rules, the five screens, consent flow, judge mode with a privacy receipt, "why this card", the coaching line and the repair card; no deploy yet). See `devlog/`.
+Built for #BuildHybridAI 2026. Status: early (day 6: card rules, the five screens, consent flow, judge mode with a privacy receipt, "why this card", the coaching line, the repair card, and a partner screen that folds the technical panels away; no deploy yet). See `devlog/`.
 
 It also corrects **the partner**, quietly, where a rule can tell: two questions in one become "One thing at a time: showing the first"; a memory question becomes "You know this one: tell, don't test." The person is never corrected.
 
@@ -16,7 +16,7 @@ It also corrects **the partner**, quietly, where a rule can tell: two questions 
 ```
 npm install && npm run dev        # then open http://localhost:5179/#/demo
 ```
-No account, no sign-in. `#/demo` loads a made-up family (Frank; Carol asking) and one-tap questions. Click these, in order:
+No account, no sign-in. `#/demo` loads a made-up family (Frank; Carol asking) and one-tap questions under the question box, in three groups (read in code / the app corrects the partner / a model proposes); each chip shows the short form, the hover text has the full question and what to look for. Under every card, in reading order: the badge with what left this computer, the coaching line if any, the line to say, the card on the right, then **Why this card**, **Where each step ran**, **What was sent**, the **privacy receipt** and the session line. Click these, in order:
 
 | Click | What you see | Badge |
 |---|---|---|
@@ -36,11 +36,13 @@ No account, no sign-in. `#/demo` loads a made-up family (Frank; Carol asking) an
 - **No AI needed**: code decided the card (yes/no, either-or, pain, body map, memory); a model may have run, but nothing of its answer is on the card.
 - **No card**: blocked; the partner is told to ask normally.
 
-Under every card, **"Where each step ran"** lists the private step, the cloud step and the rules, each as *ran on this computer / ran in the cloud / did not run (why) / failed (why)*. A step that did not run says so.
+After the badge, one line that is always on screen says what left this computer for this card ("nothing left this computer", or "the question left this computer, 2 names and 0 other About me words swapped out"); it is read from the same recorded request body the receipt counts, never assumed.
+
+Under every card, **"Where each step ran"** lists the private step, the cloud step and the rules, each as *ran on this computer / ran in the cloud / did not run (why) / failed (why)*. A step that did not run says so. In judge mode it stands open under the card; on the partner screen it sits, with "Why this card", "What was sent" and the receipt, inside one closed fold, **"How this card was made"**, so the partner sees only the question, the line to say, the card and the actions. Nothing is removed, only folded.
 
 **Privacy receipt** (judge mode and `#/how`): per session, the bytes that left this computer and the names withheld, counted on the recorded request bodies (`core/receipt.ts`), never estimated; the counted text is in the export so you can check it by hand. "Checked after" searches the sent text once more for About-me words and photo bytes.
 
-**Why this card** (every card; one line open in judge mode and on `#/how`, collapsed on the partner screen): the model's parsed proposal (topic, kind, choices, copied options) and which step made it, the labels code kept, the labels code added and where from ("people from About me"), every proposed choice that is not on the card with the rule that removed it ("negative wording", "lives here: never offered for a call or a visit", "over the limit at this support level"), who decided, and where the headline came from. `Card.why` is written in `core/pipeline.ts` at the moment each rule runs, on the values it ran on; `tests/unit/day5.test.ts` checks that every kept or added label is on the card and every dropped one is not.
+**Why this card** (every card; one line, open in judge mode and on `#/how`, inside "How this card was made" on the partner screen): the model's parsed proposal (topic, kind, choices, copied options) and which step made it, the labels code kept, the labels code added and where from ("people from About me"), every proposed choice that is not on the card with the rule that removed it ("negative wording", "lives here: never offered for a call or a visit", "over the limit at this support level"), who decided, and where the headline came from. `Card.why` is written in `core/pipeline.ts` at the moment each rule runs, on the values it ran on; `tests/unit/day5.test.ts` checks that every kept or added label is on the card and every dropped one is not.
 
 **States you can force:** cloud leg = turn on cloud help (`#/cloud`); no-model state = any browser without Gemini Nano shows the private step as "did not run" on every card; offline fall-back = switch the network off after a cloud card and ask again.
 
