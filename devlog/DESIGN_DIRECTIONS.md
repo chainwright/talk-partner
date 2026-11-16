@@ -2,7 +2,7 @@
 
 Date: 11 Nov 2026. Judge round 1 is on 15 Nov.
 
-**Status:** these are preview themes only. The default look in `web/src/styles.css` is unchanged and nothing has been chosen in code yet.
+**Status:** C "Two Sides" was chosen on 16 Nov 2026 and is now the default look (`web/src/styles.css`), with no `?theme=` needed. The Signal and Marker previews, the `?theme=` switch (`theme.ts`, `themes.css`) and their font files were removed; Two Sides' fonts are self-hosted (`web/src/fonts.css`). Screens: `devlog/shots_twosides_default/`. The sections below are the record of the choice as it was made on 11 Nov; the "How to look at them" steps no longer apply.
 
 **How to look at them:**
 - Run `npm run dev`, then open `http://localhost:5179/?theme=signal`, `?theme=marker` or `?theme=twosides`. Add `#/demo` for judge mode or `#/welcome` for the first screen.

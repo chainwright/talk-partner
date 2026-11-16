@@ -4,8 +4,6 @@
 
 import './styles.css';
 import './fonts.css';
-import './themes.css';
-import { applyPreviewTheme } from './theme';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
 import { LEGS } from '../../core/models';
@@ -718,5 +716,4 @@ app.addEventListener('pointercancel', cancelHold);
 app.addEventListener('pointerleave', cancelHold, true);
 window.addEventListener('hashchange', render);
 
-applyPreviewTheme();
 void Promise.all([load(), loadTrial()]).then(() => { render(); void refreshDevice(); });

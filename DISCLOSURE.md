@@ -66,7 +66,12 @@ See `git log` for dates. Day by day: `devlog/`.
   the double-question chip in judge mode, the "why" panel, "We're stuck" and the look-alikes list on `#/how` (`web/src/main.ts`,
   `styles.css`), `tests/unit/day5.test.ts`, the README sections "One documented cut" and "Look-alikes, named", `devlog/SUBMISSION_NOTES.md`.
 
-Fonts in `web/public/fonts/` are third-party, each under the SIL Open Font License 1.1 (licence text in each folder): Overpass,
-Atkinson Hyperlegible Next, Lexend, Public Sans, Instrument Sans, IBM Plex Mono (fontsource 5.3.0 packages, latin subset).
+- 16 Nov 2026: design direction C "Two Sides" made the default look (`web/src/styles.css`); the `?theme=` previews, `theme.ts`,
+  `themes.css` and the unused font files removed; `scripts/fonts-check.mjs` and `scripts/shots.mjs` updated
+  (the scroll check now compares with the emulated width). Screenshots: `devlog/shots_twosides_default/`.
+
+Fonts in `web/public/fonts/` are third-party, each under the SIL Open Font License 1.1 (licence text in each folder): Instrument
+Sans, IBM Plex Mono, Atkinson Hyperlegible Next (fontsource 5.3.0 packages, latin subset). Overpass, Lexend and Public Sans were
+bundled for the design previews from Day 4 until 16 Nov 2026 and are no longer shipped.
 
 Tools: AI coding assistants were used during development, as the rules allow.

@@ -1,7 +1,7 @@
-// Fonts leave no trace: a headless run that logs every network request while the app is used in the default look
-// and in each design-direction preview, then checks that (1) every request goes to the app's own host (so no font
-// service is ever contacted), (2) the default look requests no font file at all, and (3) each preview theme loads its
-// families from /fonts/ with status 200. Same throwaway headless Chrome as scripts/shots.mjs; code cards only.
+// Fonts leave no trace: a headless run that logs every network request while the app is used (first screen, judge
+// mode, a card, the full-screen card), then checks that (1) every request goes to the app's own host (so no font
+// service is ever contacted), (2) each of the look's three families loads from /fonts/ with status 200, and (3) no
+// other font file is requested. Same throwaway headless Chrome as scripts/shots.mjs; code cards only.
 //
 // Usage: npm run dev (in another shell), then  node scripts/fonts-check.mjs [--url http://localhost:5179/]
 import { spawn, execSync } from 'node:child_process';
@@ -16,13 +16,8 @@ const CHROME = process.env.CHROME_BIN || '/Applications/Google Chrome.app/Conten
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const commit = (() => { try { return execSync('git rev-parse HEAD').toString().trim(); } catch { return 'unknown'; } })();
 
-/** The families each preview theme uses (web/src/themes.css) and the folder each lives in (web/public/fonts/). */
-const THEMES = {
-  '': [],
-  signal: ['overpass', 'atkinson-hyperlegible-next'],
-  marker: ['lexend', 'public-sans'],
-  twosides: ['instrument-sans', 'ibm-plex-mono', 'atkinson-hyperlegible-next'],
-};
+/** The families the look uses (web/src/styles.css, "Two Sides") and the folder each lives in (web/public/fonts/). */
+const FAMILIES = ['instrument-sans', 'ibm-plex-mono', 'atkinson-hyperlegible-next'];
 
 const profile = mkdtempSync(join(tmpdir(), 'tp-fonts-'));
 const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check', '--window-size=1280,900', 'about:blank'], { stdio: 'ignore' });
@@ -62,10 +57,10 @@ try {
   await send('Runtime.enable');
   const appHost = new URL(URL_).host;
 
-  for (const [theme, families] of Object.entries(THEMES)) {
+  {
     requests = [];
     statuses.clear();
-    const base = theme ? `${URL_}?theme=${theme}` : URL_;
+    const base = URL_;
     // the same path a judge takes: first screen, judge mode, a card (the pane and the trace), the full-screen card
     await send('Page.navigate', { url: `${base}#/welcome` });
     await waitFor('!!document.querySelector("main.welcome")');
@@ -78,25 +73,20 @@ try {
     await js('document.fonts.ready.then(() => true)');
     await sleep(400);
 
-    const label = theme || 'default';
+    const label = 'app';
     const hosts = [...new Set(requests.map((u) => { try { return new URL(u).host; } catch { return u.slice(0, 30); } }))];
     check(`${label}: every request goes to ${appHost} (no font service, no other host)`, hosts.every((h) => h === appHost), hosts.join(', '));
     check(`${label}: nothing from fonts.googleapis.com / fonts.gstatic.com`, !requests.some((u) => /googleapis|gstatic/.test(u)));
     const fontReqs = requests.filter((u) => /\/fonts\/.*\.woff2$/.test(u));
     const loaded = await js('[...document.fonts].filter((f) => f.status === "loaded").map((f) => f.family.replace(/"/g, "")).filter((v, i, a) => a.indexOf(v) === i)');
-    if (!theme) {
-      check('default: no font file requested at all', fontReqs.length === 0, fontReqs.join(', ') || 'none');
-      check('default: no webfont loaded', (loaded ?? []).length === 0, (loaded ?? []).join(', ') || 'none');
-    } else {
-      for (const fam of families) {
-        const mine = fontReqs.filter((u) => u.includes(`/fonts/${fam}/`));
-        const ok = mine.length > 0 && mine.every((u) => statuses.get(u) === 200);
-        check(`${theme}: ${fam} served from /fonts/ with 200`, ok, mine.map((u) => `${u.split('/').pop()}→${statuses.get(u)}`).join(', ') || 'no request');
-      }
-      const other = fontReqs.filter((u) => !families.some((f) => u.includes(`/fonts/${f}/`)));
-      check(`${theme}: no font outside its own families`, other.length === 0, other.join(', ') || 'none');
-      console.log(`      ${theme}: loaded families ${JSON.stringify(loaded)}`);
+    for (const fam of FAMILIES) {
+      const mine = fontReqs.filter((u) => u.includes(`/fonts/${fam}/`));
+      const ok = mine.length > 0 && mine.every((u) => statuses.get(u) === 200);
+      check(`${label}: ${fam} served from /fonts/ with 200`, ok, mine.map((u) => `${u.split('/').pop()}→${statuses.get(u)}`).join(', ') || 'no request');
     }
+    const other = fontReqs.filter((u) => !FAMILIES.some((f) => u.includes(`/fonts/${f}/`)));
+    check(`${label}: no font outside the look's three families`, other.length === 0, other.join(', ') || 'none');
+    console.log(`      loaded families ${JSON.stringify(loaded)}`);
   }
   ws.close();
 } catch (e) {

@@ -3,7 +3,7 @@
 // Uses its own headless Chrome with a throwaway profile; makes only code cards (no model, no cloud call).
 //
 // Usage: npm run dev (in another shell), then  node scripts/shots.mjs [--url http://localhost:5179/] [--out devlog/shots_day3]
-// Design previews: --url 'http://localhost:5179/?theme=signal' --out devlog/design_dirs/signal --only 03,04,05
+// A subset: --only 03,04,05 (the flow still runs in full)
 import { spawn, execSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -60,7 +60,9 @@ try {
     const r = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
     writeFileSync(join(OUT, `${size}_${name}.png`), Buffer.from(r.result.data, 'base64'));
     const sw = await js('document.documentElement.scrollWidth');
-    const iw = await js('window.innerWidth');
+    // compare with the emulated width, not innerWidth: with mobile emulation the layout viewport widens to fit an
+    // overflowing page, so innerWidth grew with it and an 8px overflow on the repair card passed unseen (16 Nov 2026)
+    const iw = SIZES[size].width;
     check(`${size} ${name}: no horizontal scroll`, sw <= iw, `${sw} <= ${iw}`);
   };
   const nav = async (hash) => { await send('Page.navigate', { url: `${URL_}${hash}` }); await waitFor('!!document.querySelector("main")'); await sleep(300); };

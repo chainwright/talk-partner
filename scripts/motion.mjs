@@ -1,19 +1,18 @@
-// Records the motion of one design direction as an mp4: the first screen, then judge mode opens, a sample question becomes a card
+// Records the app's motion as an mp4: the first screen, then judge mode opens, a sample question becomes a card
 // (tiles + "where each step ran" trace), then the full-screen card. Same throwaway headless Chrome as shots.mjs;
 // code cards only (no model, no cloud call). Needs ffmpeg on PATH.
 //
 // Usage: npm run dev (in another shell), then
-//   node scripts/motion.mjs --theme signal [--size desktop|phone] [--out devlog/design_dirs/signal]
+//   node scripts/motion.mjs [--size desktop|phone] [--out devlog/motion]
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
-const THEME = arg('--theme', 'signal');
 const SIZE = arg('--size', 'desktop');
-const OUT = arg('--out', `devlog/design_dirs/${THEME}`);
-const URL_ = `${arg('--url', 'http://localhost:5179/')}?theme=${THEME}`;
+const OUT = arg('--out', 'devlog/motion');
+const URL_ = arg('--url', 'http://localhost:5179/');
 const PORT = 9343;
 const CHROME = process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -7,7 +7,7 @@ partner the exact line to say. It never guesses the person's answer.
 
 Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a therapy, not a diagnosis.
 
-Built for #BuildHybridAI 2026. Status: early (day 6: card rules, the five screens, consent flow, judge mode with a privacy receipt, "why this card", the coaching line, the repair card, and a partner screen that folds the technical panels away; no deploy yet). See `devlog/`.
+Built for #BuildHybridAI 2026. Status: early (day 6: card rules, the five screens, consent flow, judge mode with a privacy receipt, "why this card", the coaching line, the repair card, and a partner screen that folds the technical panels away; on 16 Nov 2026 design direction C "Two Sides" was chosen and is now the default look: a dark desk for the partner, a white card held up for the person, fonts self-hosted; no deploy yet). See `devlog/`.
 
 It also corrects **the partner**, quietly, where a rule can tell: two questions in one become "One thing at a time: showing the first"; a memory question becomes "You know this one: tell, don't test." The person is never corrected.
 
@@ -72,7 +72,7 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `core/pipeline.ts:425` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:505` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:533` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:177` | `function badge(` | the badge is drawn from `card.source` only |
+| `web/src/main.ts:175` | `function badge(` | the badge is drawn from `card.source` only |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (`validation/VALIDATION_2026-11-09.md`, run 3). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35-state matrix (`tests/unit/engine-matrix.test.ts`) the options are garbage in 5 cells and the topic is one of them in 5 more, and "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Every cut is visible per card in "Why this card".
@@ -138,7 +138,7 @@ npm run check                # lint + typecheck + unit tests
 npm run build                # production build + check that no debug token is bundled
 node scripts/e2e-cloud.mjs   # with the dev server running: real Firebase AI Logic end-to-end
 node scripts/shots.mjs       # with the dev server running: screenshots of every screen at 390 and 1280 px + layout checks
-node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the default look loads no webfont
+node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 Hidden route for the timed trial in `devlog/TRIAL_PROTOCOL.md`: `#/trial` (a stopwatch and log, kept in this browser, exported as CSV).
 On-device inference needs desktop Chrome with Gemini Nano (Chrome's hardware and disk requirements apply).
