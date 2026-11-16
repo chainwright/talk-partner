@@ -12,7 +12,7 @@ partner the exact line to say. It never guesses the person's answer.
 
 Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a therapy, not a diagnosis.
 
-Built for #BuildHybridAI 2026. Status: early. Six build sessions on 11 Nov 2026 (card rules, the five screens, consent flow, judge mode with a privacy receipt, "why this card", the coaching line, the repair card, the folded partner screen), a design commit on 16 Nov (direction C "Two Sides": a dark desk for the partner, a white card held up for the person, fonts self-hosted), and on 16 Nov the first real run of the on-device step and a truth pass over every claim here. No deploy yet, no video yet, no measured result yet. See `devlog/`.
+Built for #BuildHybridAI 2026. Status: early. Six build sessions on 11 Nov 2026 (card rules, the five screens, consent flow, judge mode with a privacy receipt, "why this card", the coaching line, the repair card, the folded partner screen), a design commit on 16 Nov (direction C "Two Sides": a dark desk for the partner, a white card held up for the person, fonts self-hosted), and on 16 Nov the first real run of the on-device step, a truth pass over every claim here, and a first measurement: on a labelled set of 60 partner questions that we wrote ourselves, 55 cards matched the label with the on-device model and 54 with rules alone (`devlog/evidence_r2/heldout_r2_NOTES.md`; our labels, not a user trial, and we would overturn two of the 55). No deploy yet, no video yet, no trial with people yet. Judges: `JUDGES.md` (60 seconds), `CLAIMS.md` (every claim with its status), `EVIDENCE.md` (claim → file, command, saved output). See `devlog/`.
 
 It also corrects **the partner**, quietly, where a rule can tell: two questions in one become "One thing at a time: showing the first"; a memory question becomes "You know this one: tell, don't test." The person is never corrected.
 
@@ -187,6 +187,7 @@ npm run build                # production build + check that no debug token is b
 node scripts/e2e-cloud.mjs   # with the dev server running: real Firebase AI Logic end-to-end (cloud step)
 node scripts/e2e-noconfig.mjs # starts its own server with no settings: rules-only cards from a bare clone
 node scripts/e2e-ondevice.mjs --port 9335   # with the dev server and a Chrome that has Gemini Nano on that debugging port
+node scripts/eval-heldout.mjs             # the labelled set in eval/, rules alone; add --port 9335 for the real app with the on-device model
 node scripts/shots.mjs       # with the dev server running: screenshots of every screen at 390 and 1280 px + layout checks
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```

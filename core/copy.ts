@@ -238,7 +238,7 @@ const COPY = {
     columns: { step: 'step', mode: 'mode', gets: 'gets', why: 'why' },
     legNames: { private: 'private card', stripped: 'stripped card', pictures: 'pictures' },
     scoresHeading: 'Measured results',
-    scoresNone: 'No measured scores yet. The timed pad-versus-card trial (two sealed sets of 10 questions, two or three pairs) has not been run; its numbers go here with the date and the commit.',
+    scoresNone: 'One measurement so far, and it is ours: on 60 questions we wrote and labelled ourselves (16 Nov 2026), 55 cards matched the label with the helper on this computer and 54 with rules alone; reading the cards afterwards we would overturn two of the 55. That is how often the card is the one we meant, not whether it helps anyone. The timed pad-versus-card trial with people (two sealed sets of 10 questions, two or three pairs) has not been run.',
     traceHeading: 'Where each step ran for this card',
     tallyHeading: 'This session',
     tally: (n: { device: number; cloud: number; code: number; none: number; failed: number }) =>

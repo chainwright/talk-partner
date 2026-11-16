@@ -1,0 +1,27 @@
+device status line: This computer can't run the private helper. Yes/no, either-or and pain questions still work. Open questions need cloud help. Turn on cloud help
+hosts contacted on page load (cloud help off): localhost:5179×35
+PASS  page load with cloud help off contacts only the app host  (localhost:5179×35)
+PASS  coffee/tea card is coffee / tea / something else  (["coffee","tea","something else"])
+PASS  coffee/tea needs no AI  (No AI needed)
+PASS  coffee/tea sent nothing to Firebase/Google  (no Google hosts)
+PASS  cloud help turned on through the consent screen  (Cloud help: on)
+open question -> badge "Cloud help (question only)", tiles ["stay home","go out","something else"], 4271 ms
+notes: More on the next page: visit family. "something else" on the card, or "Next: more choices", shows the next page.
+PASS  open question answered by the cloud leg (inferenceSource in_cloud)  (Cloud help (question only))
+PASS  the card has at least two answers plus one escape  (["stay home","go out","something else"])
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=4204
+PASS  the SDK reported inferenceSource=in_cloud for the stripped leg  ([ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=4204)
+PASS  the badge line says the question left with 1 name swapped out  (· the question left this computer, 1 name and 0 other About me words swapped out)
+PASS  the sent payload has "Person A", not the name  (Partner asks: What do you want to do this weekend with Person A?)
+PASS  the panel says it was sent
+PASS  the request went to Firebase AI Logic  (content-firebaseappcheck.googleapis.com, firebasevertexai.googleapis.com)
+PASS  a third choice from the model is on the next page, with the way out  (["visit family","something else"])
+who to call -> tiles ["doctor","Jenny","someone else"]
+why: The cloud step proposed: call tonight · choice · family, friend, doctor · Kept: doctor · Added by code: Jenny (people from About me) · Dropped: family (a general word when About me has the people themselves), friend (a general word when About me has the people themselves) · From About me (never sent): Jenny · Decided by: the model proposed; code checked every choice · Headline: the model's topic
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=7340
+PASS  "who to call" with cloud help only: no general word, at least one person About me names, "someone else" as the way out  (["doctor","Jenny","someone else"])
+PASS  the cloud answered it (inferenceSource=in_cloud) and got the bare question: no name in the request  (Partner asks: Who should we call tonight?)
+hosts contacted during the cloud card: www.google.com×2, content-firebaseappcheck.googleapis.com×2, www.gstatic.com×1, firebasevertexai.googleapis.com×3
+
+commit 161c491986b5060fbc9622a0913728440be406ba  15/15 checks passed  2026-11-16T23:02:55.227Z
+exit code: 0

@@ -1,0 +1,26 @@
+
+> talk-partner@0.2.0 check
+> npm run lint && npm run typecheck && npm run test
+
+
+> talk-partner@0.2.0 lint
+> eslint .
+
+
+> talk-partner@0.2.0 typecheck
+> tsc --noEmit
+
+
+> talk-partner@0.2.0 test
+> vitest run
+
+
+ RUN  v5.1.0 <repo>
+
+
+ Test Files  25 passed (25)
+      Tests  922 passed (922)
+   Start at  17:02:33
+   Duration  813ms (tests 78%, import 15%, transform 5%, worker 2%)
+
+exit code: 0
