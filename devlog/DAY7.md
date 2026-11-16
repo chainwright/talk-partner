@@ -75,8 +75,43 @@ Pinned by `tests/unit/truth.test.ts`, `tests/unit/day3.test.ts` and `tests/unit/
   `devlog/evidence_r2/`. The "9/9 on day 1" in `DAY1.md` has no saved output; these files are the record now.
 - `scripts/shots.mjs`: 63/63 layout checks on the changed screens; screenshots in `devlog/shots_r2fix/`.
 
+## 5. Later on 16 Nov: the rest of the review's list (commits `46fda05` to the judge files)
+Each item is its own commit, each made with `npm run check` and `npm run build` at exit 0.
+
+- **Stakes line, sourced** (`46fda05`). The README opens with two figures read at the source today: about 2 million
+  people in the United States live with aphasia (NIDCD page), and fewer than 3% of sampled therapy goals involved
+  partner training, though 97% of surveyed clinicians say they do some (Haley & Hardy 2025; the journal page refused
+  an automated fetch, so the abstract was read in its PubMed record, and the title is "…for Significant Others…").
+  Not used: Bartlett et al., CMAJ 2008. We read it: hospital patients with any communication problem, mostly
+  deafness; aphasia is not named, and it is not about talking at home.
+- **Phone** (`51678cb`). In one column the person's card now follows the buttons. Judge mode at 390 × 844: the card
+  starts at 806 px and ends at 1176 px (it started at 3714 of 4216). Its top edge is in the first screen, the tiles
+  in the second. `scripts/shots.mjs` checks both; 65/65.
+- **Who-cards, the cap, the labels** (`64509da`). With cloud help only, general words on a call / visit / invite
+  question ("family", "a friend") are replaced in code by the people About me names. We did not send labels such as
+  "Person A, Person B" to the cloud for this: the cloud could not tell them apart, so it would add nothing and would
+  learn how many people are listed. A third good choice at two a card now waits on a next page ("visit family" was
+  dropped before). "Less support" is "Hide the choices"; "Support: more (2 choices)" is "Choices on a card: 2 at a
+  time".
+- **A measured number** (`9ac4fd9` the set and the script, `2cc3c30` the first run). 60 questions we wrote and
+  labelled, committed before they were run. Real app with the on-device model, cloud help off: **55 of 60** matched
+  the label. Rules alone: **54 of 60**. Reading the cards afterwards, two that passed are wrong in our judgement
+  (foods on a "where" question, a TV show as music), so 53 of 60 on a stricter reading. Nothing was tuned after the
+  run. `devlog/evidence_r2/heldout_r2_NOTES.md`.
+- **Answers so far** (`cb921d9`). Confirmed answers are kept on this computer; the partner sees "Last time
+  (yesterday) they chose …" when the same question comes again. Never on the person's card, never in a prompt.
+- **Judge files**: `JUDGES.md`, `CLAIMS.md`, `EVIDENCE.md`, with runs at `161c491` in `devlog/evidence_r2/at_head_2/`
+  (check 922 tests, build, no-config 10/10, cloud 15/15, layout 65/65, on-device 33/33).
+
 ## Still not true or not done
 - No hosted URL, no production App Check provider, no public repository, no video.
-- No measured result: the trial protocol has not been run.
-- The stakes line at the top of the README has no source yet.
-- Cloud cards for "who" questions are general (the cloud has no About me); with the device model they are personal.
+- No trial with people: the trial protocol has not been run. The only number is the one above, on our own labels.
+- Open from the held-out run, not fixed so the run stays a first run: "What did you have for breakfast?" gets a
+  choice card (a memory question the quiz rule misses); "ring Tyler / Jenny first" and "hot / cold in here" keep
+  stray words; "How bad is your headache" misses the pain scale; the on-device model offered foods for "where do you
+  want to eat" and a TV show for music, and code let both through.
+- With cloud help only, a role from the cloud ("doctor") can take the place of the second About-me person on a
+  who-card (seen once today).
+- On a phone the card's tiles are still in the second screen in judge mode.
+- `devlog/DESIGN_DIRECTIONS.md:57` links to a page whose address names an AI coding tool; to be removed or replaced
+  before the repository is public.
