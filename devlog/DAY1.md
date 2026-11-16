@@ -1,5 +1,7 @@
 # Day 1: Wed 11 Nov 2026
 
+> **Correction, 16 Nov 2026.** This page says the on-device step could not run on the development machine for lack of disk. On 11 Nov that was our reading of the disk; on 16 Nov the machine had 36 GiB free and the Gemini Nano files from the 9–10 Nov prototype were still on it, and the step ran that day (`DAY7.md`, `ondevice_proof_1/RUN_LOG.md`). Read every "(disk)" below as "not run yet". Line numbers quoted for `web/src/main.ts` and other files are those of that day.
+
 ## What works (checked, not assumed)
 - **Firebase project `talk-partner`** (display name "Talk Partner"), web app `talk-partner-web`, Hosting site `talk-partner` reserved (no deploy yet).
   Analytics off, console Gemini assistant off, AI monitoring off (no prompt logging anywhere off the device).

@@ -144,9 +144,12 @@ export class FirebaseEngine implements Engine {
   }
 
   async runCloud(strippedQuestion: string): Promise<ModelResult> {
-    if (!this.cloudConfigured) throw new Error('cloud help is not set up (App Check)');
+    if (!this.cloudConfigured) throw Object.assign(new Error('cloud help is not set up (App Check)'), { notSent: true });
     const t0 = performance.now();
-    const r = await this.cloud.text.generateContent(cloudPrompt(strippedQuestion));
+    const r = await this.cloud.text.generateContent(cloudPrompt(strippedQuestion)).catch((e: Error) => {
+      // the browser knew it was offline: the request certainly did not leave. Anything else: it may have.
+      throw Object.assign(e, { notSent: typeof navigator !== 'undefined' && navigator.onLine === false });
+    });
     // the badge comes from inferenceSource, never assumed: PREFER_IN_CLOUD runs on device when offline
     const source = r.response.inferenceSource === InferenceSource.ON_DEVICE ? 'on-device' : 'in-cloud';
     const ms = Math.round(performance.now() - t0);

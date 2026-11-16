@@ -1,4 +1,4 @@
-// Everything local lives in IndexedDB on this device (REBUILD_SPEC §1.2): the About me profile (with photos as small
+// Everything local lives in IndexedDB on this device (build spec §1.2): the About me profile (with photos as small
 // data URLs) and the settings (support level, cloud help consent, first run). No backend of our own, nothing synced.
 // If IndexedDB is unavailable (private mode, blocked storage), an in-memory map stands in for the session.
 

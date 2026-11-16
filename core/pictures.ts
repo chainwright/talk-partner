@@ -12,7 +12,7 @@ export const BUILTIN = new Set([
   'a little', 'some', 'a lot', 'this one', 'that one',
   // added 11 Nov 2026
   'listen', 'tea', 'coffee',
-  // batch 1, 11 Nov 2026: fixed / meta, feelings, people roles (REBUILD_SPEC §3.1)
+  // batch 1, 11 Nov 2026: fixed / meta, feelings, people roles (build spec §3.1)
   'change', 'wait', 'stop', 'write it', 'more',
   'tired', 'worried', 'pain',
   // day 5, 11 Nov 2026: the "we're stuck" repair card ('write it' and 'change' are above)

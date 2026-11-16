@@ -1,4 +1,4 @@
-// REBUILD_SPEC §5.2 property tests (seeded, repeatable): card invariants over random questions, random model
+// build spec §5.2 property tests (seeded, repeatable): card invariants over random questions, random model
 // output and random engine states, plus the picture gate. Written 11 Nov 2026.
 import { describe, expect, it } from 'vitest';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';

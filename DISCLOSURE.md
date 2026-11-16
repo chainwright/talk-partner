@@ -6,7 +6,7 @@ with any pre-existing code or work disclosed. This file lists exactly what exist
 
 ## What existed before 11 Nov 2026
 On 9–10 Nov 2026 we built a throwaway prototype of Talk Partner in a separate local repository (never published).
-It called Chrome's built-in model directly, had no Firebase project, and its cloud step never ran.
+It called Chrome's built-in model directly, had no Firebase project, and its cloud step never ran. It also held an unrun Firebase engine file (see the last row of the table and the note under it).
 We took these files from it **verbatim**, in this repository's first commit (`949e8ec`, tagged **`pre-contest`**), so the
 history shows exactly what was carried over: `git diff pre-contest..HEAD` is the work of the submission period.
 
@@ -19,6 +19,15 @@ history shows exactly what was carried over: `git diff pre-contest..HEAD` is the
 | `core/pictures.ts`, `core/types.ts`, `core/engine.ts`, `core/requests.ts` | Picture choice, shared types, the engine interface, the cloud request bodies |
 | `web/src/pictos.ts` | Hand-drawn line pictograms (SVG), our own work |
 | `tests/unit/*.test.ts` (rules, pipeline, fixround 1–4, strip property test), `tests/unit/fixtures.ts` | Unit tests for the above |
+| **Not in the `pre-contest` commit, but pre-existing:** the design of `web/src/ai/firebaseEngine.ts` | The prototype had `src/ai/firebaseEngine.ts` (108 lines, last changed 10 Nov 2026) and model names in `src/config.ts`: a `FirebaseEngine` class with the same three `getGenerativeModel` calls (`ONLY_ON_DEVICE` with the About-me prompt, `PREFER_IN_CLOUD` with the stripped question, `ONLY_IN_CLOUD` for pictures), the `initializeAppCheck` hook, and the `inferenceSource` check on the private step. It was never executed: the prototype's Firebase config was a `null` placeholder and no project existed, so the app always took the direct Chrome engine |
+
+**Correction, 16 Nov 2026.** Until today this file listed `web/src/ai/firebaseEngine.ts` only under "built during the
+submission period" and did not mention the prototype's file. That was a gap. The Day 1 engine was written from the
+prototype's file: the constructor's three model definitions and the two run methods are close to it line for line. So
+`git diff pre-contest..HEAD` overstates the period's work by roughly those 100 lines. What the period added to that file:
+the config from environment variables instead of a placeholder, the lazy start, the first real runs against a Firebase
+project (cloud step 11 Nov, on-device step 16 Nov), the private step's own Firebase app without App Check, the
+warm-up, the per-call report of `inferenceSource`, and its tests.
 
 Research that informed the rules (aphasia knowledge base, five blind held-out question sets) also predates the period.
 Its numbers came from the prototype's direct Chrome path, not from this build, and we do not claim them as results of this submission.
@@ -31,15 +40,15 @@ Its numbers came from the prototype's direct Chrome path, not from this build, a
 ## Built during the submission period (from 11 Nov 2026)
 See `git log` for dates. Day by day: `devlog/`.
 - Firebase project `talk-partner`: web app, Firebase AI Logic (Gemini Developer API), App Check.
-- `web/src/ai/firebaseEngine.ts`: all three AI legs on `firebase/ai` hybrid inference (`ONLY_ON_DEVICE`, `PREFER_IN_CLOUD`,
-  `ONLY_IN_CLOUD`), `inferenceSource` checked on every response, App Check, lazy start so the app contacts no Google host
-  until an AI call is needed.
+- `web/src/ai/firebaseEngine.ts`: rewritten from the prototype's unrun engine file (see the table and the correction above)
+  and run for the first time: config from the environment, lazy start so the app contacts no Google host until an AI call
+  is needed, App Check with a debug token.
 - `core/pipeline.ts` changes: the coffee/tea fix (a valid either-or pair read from the question is never dropped because a model
   ran) and honest "sent" reporting (a request is shown as sent only when the cloud actually answered; an offline fall-back to
   the device says so).
 - `core/models.ts`, `core/sample.ts`: shared model config and the made-up judge-mode family, for all clients.
 - The one-screen web client (`web/src/main.ts`, `styles.css`), three new pictograms (listen, tea, coffee).
-- Tests: the guard against direct model calls, the coffee/tea engine-state matrix, the real end-to-end check against
+- Tests: the guard against direct model calls, the coffee/tea engine-state matrix, the end-to-end check of the cloud step against
   Firebase (`scripts/e2e-cloud.mjs`), and the production-bundle check (`scripts/check-dist.mjs`).
 - Day 2 (11 Nov), in `core/rules.ts`, `core/pipeline.ts`, `core/strip.ts`, `core/pictures.ts`: the or-pair headline
   (the shared topic, never an option), the either-or label check applied to both the model's options and the code
@@ -69,6 +78,12 @@ See `git log` for dates. Day by day: `devlog/`.
 - 16 Nov 2026: design direction C "Two Sides" made the default look (`web/src/styles.css`); the `?theme=` previews, `theme.ts`,
   `themes.css` and the unused font files removed; `scripts/fonts-check.mjs` and `scripts/shots.mjs` updated
   (the scroll check now compares with the emulated width). Screenshots: `devlog/shots_twosides_default/`.
+
+- 16 Nov 2026, after our second internal review: rules-only cards on a copy with no settings (`core/engine.ts` `NullEngine`,
+  `web/src/ai/pick.ts`); the first real on-device run and what it needed (the private step on its own Firebase app with no App
+  Check, About-me cards kept on this computer, no model call for cards code decides alone, warm-up; `scripts/e2e-ondevice.mjs`,
+  `devlog/ondevice_proof_1/`, tag `ondevice-proof-1`); the truth pass over the screen lines and these documents
+  (`tests/unit/truth.test.ts`); `devlog/DAY7.md`.
 
 Fonts in `web/public/fonts/` are third-party, each under the SIL Open Font License 1.1 (licence text in each folder): Instrument
 Sans, IBM Plex Mono, Atkinson Hyperlegible Next (fontsource 5.3.0 packages, latin subset). Overpass, Lexend and Public Sans were

@@ -46,7 +46,7 @@ All 9 layout checks pass on each direction. That means no horizontal scroll, and
 
 ### What Google judges rewarded
 
-From `memory/knowledge/judge_corpus/devpost_chrome-builtin-ai-2024.md`, `-2025.md` and `PATTERNS.md`:
+From our notes on the winners of the 2024 and 2025 Chrome built-in AI challenges (internal, not in this repo):
 - **"Most Helpful" went to accessibility two years running.** Mochi in 2024; Nutshell and **AAC Board AI** in 2025. https://developer.chrome.com/blog/ai-challenge-winners-2025
 - **AAC Board AI is a pictogram board.** We must not look like a second one. Our difference is that this is a *two-person* conversation tool, and the design has to show that at a glance.
 - **Hybrid winners were rewarded for a clear reason to combine device and cloud.** The 2024 Hybrid wording was "combine the strengths of both for a smooth user experience". So the trace showing where each step ran is a judging surface, not a debug panel.
@@ -222,7 +222,7 @@ It reads like a small architecture diagram of *this* card, which is what a Chrom
 - From A, the route-line trace as an alternative to the three cards. It reads faster in a still screenshot, and the stills show it is the clearest trace of the three.
 - From B, the single highlighter under the keyword, as an optional touch on the person's card. SCA partners do underline the keyword.
 
-**Before it ships (if the project owner picks C):**
+**Before it ships (if C is picked):**
 - Self-host the fonts (woff2 in `web/public/`). The app promises "Everything runs on this computer", and it should not call Google Fonts at runtime or need the network offline.
 - Run the entrance animation once per card, not on every render.
 - Add a light variant of the desk for daylight, which keeps the same white card.

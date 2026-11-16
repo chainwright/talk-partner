@@ -13,6 +13,12 @@ export interface ModelResult {
   ms: number;
 }
 
+/**
+ * An engine may mark a cloud error as "certainly not sent" (the browser was offline, or cloud help is not set up), by
+ * setting `notSent` on the error it throws. Any other cloud failure is treated as "may have left".
+ */
+export interface CloudError extends Error { notSent?: boolean }
+
 export interface Engine {
   /** Shown in the mode bar. */
   readonly label: string;

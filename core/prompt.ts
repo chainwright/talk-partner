@@ -1,5 +1,5 @@
 // Prompts and the JSON schema. Rule 6: the model's job is small (topic + kind + <=3 choices); code does the rest.
-// The device prompt is the validated v7 prompt (validation/run_nano_v7.py) plus the run 8-10 wording on axis/overlap.
+// The device prompt is the v7 prompt from the pre-period validation runs plus the run 8-10 wording on axis/overlap.
 
 import type { Profile } from './types';
 

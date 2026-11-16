@@ -1,5 +1,7 @@
 # Day 2: Wed 11 Nov 2026, evening session (work pulled forward from Fri 13 and Sat 14)
 
+> **Correction, 16 Nov 2026.** This page says the on-device step could not run on the development machine for lack of disk. On 11 Nov that was our reading of the disk; on 16 Nov the machine had 36 GiB free and the Gemini Nano files from the 9–10 Nov prototype were still on it, and the step ran that day (`DAY7.md`, `ondevice_proof_1/RUN_LOG.md`). Read every "(disk)" below as "not run yet". Line numbers quoted for `web/src/main.ts` and other files are those of that day.
+
 Scope: everything on the GATE plan for Fri 13 and Sat 14 that needs no deploy, no billing, no install and no account.
 All AI calls still go through Firebase AI Logic exactly as on Day 1; `web/src/ai/firebaseEngine.ts` is untouched.
 Nothing claims on-device inference: this Mac still cannot run Gemini Nano (disk), so no on-device run happened today.
@@ -81,7 +83,7 @@ competence principle and the write-up must say so. The pain card is a conversati
 ## Decisions taken where the spec was silent or clashed with itself
 1. "You need something?" is a subject-less offer → yes/no (§2.4), not the §2.6 generic set; the set applies to the open
    form "What do you need?".
-2. An or-pair whose headline cannot be found reads "which one" (a short pair reads as itself). The project owner may prefer another
+2. An or-pair whose headline cannot be found reads "which one" (a short pair reads as itself). the project owner may prefer another
    fallback; one line to change in `orHeadline()`.
 3. "…, do you know?" is treated as a tag, not as a memory marker (§2.3 hints otherwise); "…, do you remember?" is a
    memory question. Open for the SLP review.

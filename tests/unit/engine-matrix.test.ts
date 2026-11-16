@@ -1,4 +1,4 @@
-// REBUILD_SPEC §2.5 non-negotiable regression: "Do you want coffee or tea?" gives coffee / tea / something else in
+// build spec §2.5 non-negotiable regression: "Do you want coffee or tea?" gives coffee / tea / something else in
 // EVERY engine state. Plus the matrix invariants (§5.1): or-pairs always give a card; blocked cards carry no choices;
 // "sent" only when the source is in-cloud; the private leg never gets a stripped prompt; the stripped leg never gets
 // the profile. Extended 11 Nov 2026: seven card shapes × seven model states × five cloud states.

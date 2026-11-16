@@ -1,4 +1,4 @@
-// Every string a person reads, in one place (REBUILD_SPEC §4). Plain words, adult tone, short.
+// Every string a person reads, in one place (build spec §4). Plain words, adult tone, short.
 // Rules checked by tests/unit/copy.test.ts: nothing technical on the main screens (no mode names, no "Firebase",
 // no "placeholder", no rule numbers), no exclamation marks anywhere, and every "never sent" claim is literally true
 // of the payloads the core builds. The technical words live only in `consent`, `how` and `judge`.
@@ -92,6 +92,8 @@ const COPY = {
     // The line after the badge, always visible. Read from the card's recorded payload (the receipt's own test), never assumed.
     tail: {
       kept: 'nothing left this computer',
+      /** A cloud request that failed after it was handed to the SDK: never claimed as kept. */
+      attempted: 'cloud help was asked and failed: the question may have left this computer',
       /** After `kept`, on a card made on this computer that offers About-me entries. */
       personal: (labels: string) => `${labels} from About me`,
       sent: (names: number, other: number) =>
@@ -146,7 +148,7 @@ const COPY = {
     music: 'Music',
     other: 'Other',
     onePerLine: 'One per line',
-    note: 'Saved only in this browser on this computer. Only the private helper on this computer reads it. It is never sent anywhere.',
+    note: 'Saved only in this browser on this computer. It is never sent anywhere.',
     nudge: (name: string) => `Fill this in together with ${name || 'them'} if you can.`,
     saved: 'Saved on this computer.',
     deleteAll: 'Delete everything on this computer',
@@ -167,13 +169,17 @@ const COPY = {
     notUsed: "Sent for this card (the cloud's answer wasn't used):",
     nothing: 'Nothing sent for this card.',
     notSent: 'Not sent. If cloud help were on, it would get only this:',
+    /** Cloud help is on, yet nothing left for this card (the cloud was unreachable or not set up, or the card stayed here). */
+    notSentOn: 'Not sent for this card. Cloud help would have got only this:',
+    /** The request was handed to the SDK and failed: it may or may not have reached the cloud. */
+    attempted: 'Cloud help was asked and no answer came back. If the request left this computer, it held only this:',
     swaps: 'Swapped before sending (only you see this):',
   },
 
   welcome: {
     heading: 'Talk Partner',
     what: 'You ask what you would normally ask. The app turns it into a card with a keyword and two big choices the person can point to, with a way out every time, and gives you the line to say.',
-    local: 'Everything runs on this computer.',
+    local: 'Your About me lists and photos stay on this computer.',
     cloudOff: 'Cloud help is off. You can turn it on later.',
     setup: 'Set up About me',
     sample: 'Try it with a sample family',
@@ -193,7 +199,7 @@ const COPY = {
     neverHeading: 'Never sent',
     termsHeading: 'Data use',
     terms: 'On the free tier, Google may use what is sent to improve its products (Gemini API Additional Terms, in force since 23 March 2026). The paid tier does not.',
-    termsLink: 'https://ai.google.dev/gemini-api/terms',
+    termsLink: 'https://aistudio.google.com/docs/terms',
     termsLinkText: 'Read the terms',
     checkbox: 'I understand. Turn on cloud help.',
     turnOn: 'Turn on cloud help',
@@ -207,19 +213,19 @@ const COPY = {
   // Technical words are allowed here: this panel is collapsed on the partner screen and open in judge mode.
   how: {
     heading: 'How this works',
-    intro: 'The model only proposes; code decides. Every AI call goes through Firebase AI Logic, and the badge on each card comes from what the SDK reports, never from an assumption.',
+    intro: 'The model only proposes; code decides. Every AI call goes through Firebase AI Logic. The two AI badges ("On this computer", "Cloud help") come from what the SDK reports for that call; "No AI needed" and "No card" come from the card rules.',
     legs: 'The three steps',
     columns: { step: 'step', mode: 'mode', gets: 'gets', why: 'why' },
     legNames: { private: 'private card', stripped: 'stripped card', pictures: 'pictures' },
     scoresHeading: 'Measured results',
-    scoresNone: 'No measured scores yet. Two sealed sets of 50 questions run on the real build from 18 November; the numbers go here with the date and commit.',
+    scoresNone: 'No measured scores yet. The timed pad-versus-card trial (two sealed sets of 10 questions, two or three pairs) has not been run; its numbers go here with the date and the commit.',
     traceHeading: 'Where each step ran for this card',
     tallyHeading: 'This session',
-    tally: (n: { device: number; cloud: number; code: number; failed: number }) =>
-      `${n.code} with no AI, ${n.device} on this computer, ${n.cloud} with cloud help, ${n.failed} step failures.`,
+    tally: (n: { device: number; cloud: number; code: number; none: number; failed: number }) =>
+      `${n.code} with no AI, ${n.device} on this computer, ${n.cloud} with cloud help, ${n.none} with no card; ${n.failed} step failure${n.failed === 1 ? '' : 's'}.`,
     /** The same tally in one line, for the judge-mode strip. */
-    tallyShort: (n: { device: number; cloud: number; code: number; failed: number }) =>
-      `${n.code} no AI · ${n.device} on this computer · ${n.cloud} cloud help · ${n.failed} failed`,
+    tallyShort: (n: { device: number; cloud: number; code: number; none: number; failed: number }) =>
+      `${n.code} no AI · ${n.device} on this computer · ${n.cloud} cloud help · ${n.none} no card · ${n.failed} failed`,
     steps: { private: 'Private step (on this computer)', stripped: 'Cloud step (question only)', code: 'Rules in code' },
     ran: { 'on-device': 'ran on this computer', 'in-cloud': 'ran in the cloud', skipped: 'did not run', failed: 'failed' },
     used: 'used for this card',
@@ -243,6 +249,9 @@ const COPY = {
         body: 'a body question: the fixed body map, never a model',
         quiz: 'a memory question: no card, a line to say instead',
         open: 'the model proposed; code checked every choice',
+        /** An open question no model answered: whatever is on the card, code put there. */
+        openCode: 'no model answered; code completed the choices from About me or a fixed set',
+        blockedNoModel: 'no card: no model answered this open question, and the rules alone cannot make its choices',
         blocked: 'no card: fewer than two choices survived',
         repair: 'a fixed card for a stuck moment, never a model',
         recognition: 'a recognition card from About me only, nothing made up',
@@ -271,7 +280,7 @@ const COPY = {
         fixed: 'a fixed card: the model\'s choices are not used',
         orOnly: 'either-or: only the two options the question names',
         optionsFailed: 'failed the label check',
-        cloudUnfit: "the cloud's choices did not hold up; device card kept",
+        cloudUnfit: "the cloud's choices did not hold up; the card made on this computer is kept",
       },
     },
     lookalikesHeading: 'Look-alikes, named',
@@ -309,20 +318,22 @@ const COPY = {
     groups: { code: 'Read in code', coach: 'The app corrects the partner', model: 'A model proposes' },
     receipt: {
       heading: 'Privacy receipt',
-      summary: (n: { cards: number; cardsLeft: number; bodyBytes: number; questionBytes: number; namesWithheld: number; otherWithheld: number; leaksFound: number; photosFound: number; offlineRuns: number }) =>
+      summary: (n: { cards: number; cardsLeft: number; bodyBytes: number; questionBytes: number; namesWithheld: number; otherWithheld: number; leaksFound: number; photosFound: number; offlineRuns: number; attempts: number; attemptBytes: number }) =>
         `${n.cards} card${n.cards === 1 ? '' : 's'} this session. Left this computer: ${n.bodyBytes} bytes in ${n.cardsLeft} request${n.cardsLeft === 1 ? '' : 's'} (${n.questionBytes} bytes of question text). ` +
         `Withheld before sending: ${n.namesWithheld} name${n.namesWithheld === 1 ? '' : 's'}, ${n.otherWithheld} other About me word${n.otherWithheld === 1 ? '' : 's'}. ` +
         `Checked after sending: ${n.leaksFound} About me word${n.leaksFound === 1 ? '' : 's'} and ${n.photosFound} photo${n.photosFound === 1 ? '' : 's'} in the sent text.` +
-        (n.offlineRuns ? ` ${n.offlineRuns} cloud step${n.offlineRuns === 1 ? '' : 's'} ran on this computer instead (cloud unreachable): nothing left.` : ''),
+        (n.offlineRuns ? ` ${n.offlineRuns} cloud step${n.offlineRuns === 1 ? '' : 's'} ran on this computer instead (cloud unreachable): nothing left.` : '') +
+        (n.attempts ? ` ${n.attempts} cloud request${n.attempts === 1 ? '' : 's'} failed after being handed to the SDK: the question may have left (${n.attemptBytes} bytes, not in the count above).` : ''),
       columns: { card: 'card', left: 'left this computer', bytes: 'bytes (question)', withheld: 'withheld', check: 'checked after' },
       leftYes: 'yes, cloud answered',
       leftNo: 'nothing',
+      leftMaybe: 'maybe: asked, no answer',
       leftOffline: 'nothing (ran here, offline)',
       withheld: (names: number, other: number) => `${names} name${names === 1 ? '' : 's'}, ${other} other`,
       kept: 'whole question kept here',
       checkOk: '0 About me words, no photo',
       checkBad: (leaks: number, photo: boolean) => `${leaks} About me word${leaks === 1 ? '' : 's'}${photo ? ', photo bytes' : ''}`,
-      how: 'How this is counted: the bytes are the UTF-8 length of the request body this app built for the cloud step (fixed instructions, the schema and the swapped question), kept only when the SDK reported that the cloud answered; a card where nothing left counts 0. The body is in the export, so the count can be checked by hand. Not counted: the SDK\'s transport around it (headers, the App Check token), which carries no family data. "Withheld" counts the About me words swapped for labels such as "Person A". "Checked after" searches the sent text for About me words and photo bytes once more, after the fact.',
+      how: 'How this is counted: the bytes are the UTF-8 length of the request body this app built for the cloud step (fixed instructions, the schema and the swapped question), kept when the SDK reported that the cloud answered; a card where nothing left counts 0. A request that was handed to the SDK and failed is listed apart as "maybe", with its size: the app cannot tell whether it reached the cloud. The body is in the export, so the count can be checked by hand. Not counted: the SDK\'s transport around it (headers, the App Check token), which carries no family data. "Withheld" counts the About me words swapped for labels such as "Person A". "Checked after" searches the sent text for About me words and photo bytes once more, after the fact.',
       exportButton: 'Export receipt',
       exportName: 'talk-partner-privacy-receipt.json',
     },
@@ -366,14 +377,14 @@ const COPY = {
     optionsNeither: 'The on-device options did not pass the check, and the pair read from the question did not either.',
     optionsFailed: 'The on-device options did not pass the check.',
     completedFrom: (source: string) => `Choices completed from ${source}.`,
-    cloudWouldCheckOff: 'The cloud would check this card, but cloud help is off. Device card kept.',
-    cloudWouldCheckUnconfigured: 'The cloud would check this card, but cloud help is not configured on this copy. Device card kept.',
-    leak: 'Not sent: the question still held an About me word after stripping. Device card kept.',
-    cloudOptionsUnfit: "The cloud's options didn't fit; device card kept.",
+    cloudWouldCheckOff: (kept: boolean) => `Cloud help could try this one, but it is off.${kept ? ' The card made on this computer is kept.' : ''}`,
+    cloudWouldCheckUnconfigured: (kept: boolean) => `Cloud help could try this one, but it is not configured on this copy.${kept ? ' The card made on this computer is kept.' : ''}`,
+    leak: 'Not sent: the question still held an About me word after stripping.',
+    cloudOptionsUnfit: "The cloud's options didn't fit; the card made on this computer is kept.",
     holdUpTwo: 'The real options are not known: hold up two and point to each as you ask.',
     ranOffline: 'Ran on this computer (offline). Nothing was sent.',
     personalKept: 'Every choice on this card is from About me, so cloud help is not asked: it never sees About me.',
-    cloudFailed: (msg: string) => `Cloud step failed (${msg}); device card kept.`,
+    cloudFailed: (msg: string, kept: boolean) => `Cloud step failed (${msg})${kept ? '; the card made on this computer is kept' : ''}.`,
     page: (i: number, n: number, escape: string) => `Page ${i} of ${n}: "${escape}" shows the next ones.`,
     tellPrefix: "Tell, don't test: ",
     memoryBlocked: 'This one asks them to remember, so there is no card. Try saying it instead.',

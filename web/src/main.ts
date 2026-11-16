@@ -8,7 +8,7 @@ import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
 import { LEGS } from '../../core/models';
 import { bodyDetailCard, makeCard, quizOverrideCard, repairCard } from '../../core/pipeline';
-import { countSwaps, sessionReceipt } from '../../core/receipt';
+import { countSwaps, sessionReceipt, sessionTally } from '../../core/receipt';
 import { cloudTextRequest } from '../../core/requests';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_PROFILE, SAMPLE_QUESTIONS } from '../../core/sample';
@@ -189,6 +189,7 @@ function badgeLine(c: Card): string {
   const T = C.badge.tail;
   let tail: string = T.kept;
   if (c.cloudPayload) { const n = countSwaps(c.cloudSwaps); tail = T.sent(n.names, n.other); }
+  else if (c.cloudAttempted) tail = T.attempted;
   // a card made on this computer that offers About-me entries says so: the cloud step could not have offered them
   else if (c.source === 'on-device' && !c.blocked && c.why?.personal?.length) tail = `${T.kept} · ${T.personal(c.why.personal.join(', '))}`;
   return `<p class="badge-line">${badge(c)}<span class="tail">· ${esc(tail)}</span></p>`;
@@ -197,7 +198,8 @@ function badgeLine(c: Card): string {
 function sentPanel(c: Card): string {
   const swaps = c.cloudSwaps?.length ? `<p class="swaps">${C.sent.swaps}<br>${c.cloudSwaps.map(esc).join('<br>')}</p>` : '';
   if (c.cloudPayload) return `<p>${c.source === 'in-cloud' ? C.sent.sentFor : C.sent.notUsed}</p><pre>${esc(c.cloudPayload)}</pre>${swaps}`;
-  if (c.unsentPayload) return `<p>${C.sent.notSent}</p><pre>${esc(c.unsentPayload)}</pre>${swaps}`;
+  if (c.cloudAttempted) return `<p>${C.sent.attempted}</p><pre>${esc(c.cloudAttempted)}</pre>${swaps}`;
+  if (c.unsentPayload) return `<p>${state.settings.cloudHelp ? C.sent.notSentOn : C.sent.notSent}</p><pre>${esc(c.unsentPayload)}</pre>${swaps}`;
   return `<p>${C.sent.nothing}</p>`;
 }
 
@@ -245,14 +247,9 @@ function madePanels(c: Card): string {
     <details class="sent" id="sent" open><summary>${C.sent.heading}</summary>${sentPanel(c)}</details>`;
 }
 
-function tally(): { device: number; cloud: number; code: number; failed: number } {
-  const n = { device: 0, cloud: 0, code: 0, failed: 0 };
-  for (const c of state.made) {
-    if (c.blocked) continue;
-    if (c.source === 'code') n.code++; else if (c.source === 'in-cloud') n.cloud++; else n.device++;
-    n.failed += (c.trace ?? []).filter((t) => t.ran === 'failed').length;
-  }
-  return n;
+/** Every card made this session by its badge, and every step that failed, on any card: a blocked card's failed step counts too. */
+function tally(): { device: number; cloud: number; code: number; none: number; failed: number } {
+  return sessionTally(state.made);
 }
 
 function legsTable(): string {
@@ -265,7 +262,7 @@ function receiptPanel(open: boolean): string {
   const R = C.judge.receipt;
   const r = sessionReceipt(state.made, state.profile);
   const K = R.columns; // on a phone the cells stack, each labelled by its column name (styles.css)
-  const rows = r.perCard.map((x, i) => `<tr><td data-l="${K.card}">${i + 1}. ${esc(x.asked)}</td><td data-l="${K.left}">${x.left ? R.leftYes : x.offline ? R.leftOffline : R.leftNo}</td><td data-l="${K.bytes}">${x.left ? `${x.bodyBytes} (${x.questionBytes})` : '0'}</td><td data-l="${K.withheld}">${x.left ? esc(R.withheld(x.namesWithheld, x.otherWithheld)) : R.kept}</td><td data-l="${K.check}">${x.left ? (x.leaksFound || x.photoFound ? esc(R.checkBad(x.leaksFound, x.photoFound)) : R.checkOk) : '—'}</td></tr>`).join('');
+  const rows = r.perCard.map((x, i) => `<tr><td data-l="${K.card}">${i + 1}. ${esc(x.asked)}</td><td data-l="${K.left}">${x.left ? R.leftYes : x.attempted ? R.leftMaybe : x.offline ? R.leftOffline : R.leftNo}</td><td data-l="${K.bytes}">${x.left ? `${x.bodyBytes} (${x.questionBytes})` : x.attempted ? `(${x.attemptBytes})` : '0'}</td><td data-l="${K.withheld}">${x.left ? esc(R.withheld(x.namesWithheld, x.otherWithheld)) : x.attempted ? '—' : R.kept}</td><td data-l="${K.check}">${x.left ? (x.leaksFound || x.photoFound ? esc(R.checkBad(x.leaksFound, x.photoFound)) : R.checkOk) : '—'}</td></tr>`).join('');
   const table = r.cards ? `<table><tr><th>${R.columns.card}</th><th>${R.columns.left}</th><th>${R.columns.bytes}</th><th>${R.columns.withheld}</th><th>${R.columns.check}</th></tr>${rows}</table>` : '';
   return `<details class="receipt" ${open ? 'open' : ''}><summary><b>${R.heading}</b></summary><p>${esc(R.summary(r))}</p>${table}<p class="muted">${esc(R.how)}</p>
     <div class="actions"><button data-act="export-receipt" ${r.cards ? '' : 'disabled'}>${R.exportButton}</button></div></details>`;

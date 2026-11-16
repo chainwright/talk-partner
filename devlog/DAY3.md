@@ -1,5 +1,7 @@
 # Day 3: Wed 11 Nov 2026, late session (the Sun 15 list pulled forward, minus the deploy)
 
+> **Correction, 16 Nov 2026.** This page says the on-device step could not run on the development machine for lack of disk. On 11 Nov that was our reading of the disk; on 16 Nov the machine had 36 GiB free and the Gemini Nano files from the 9–10 Nov prototype were still on it, and the step ran that day (`DAY7.md`, `ondevice_proof_1/RUN_LOG.md`). Read every "(disk)" below as "not run yet". Line numbers quoted for `web/src/main.ts` and other files are those of that day.
+
 Scope: everything on the GATE plan for Sun 15 that needs no deploy, no install, no billing and no account, plus the Day 2
 leftovers. No Firebase deploy, no CLI, nothing bought. `web/src/ai/firebaseEngine.ts` is untouched; all AI still goes
 through Firebase AI Logic. No on-device run happened (this Mac still can't run Gemini Nano: disk); nothing claims one.

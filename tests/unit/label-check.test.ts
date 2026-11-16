@@ -1,4 +1,4 @@
-// REBUILD_SPEC §2.5, the label check table: applied to the model's copied options and to the code parser's pair.
+// build spec §2.5, the label check table: applied to the model's copied options and to the code parser's pair.
 // A side is rewritten (whole noun phrase, About-me item, shared time words dropped, the person's side) or rejected
 // (a question, a leftover, a pronoun, a negative, too long); the pair is rejected when the sides are the same, synonyms,
 // or not on one axis. Written 11 Nov 2026; all examples new.

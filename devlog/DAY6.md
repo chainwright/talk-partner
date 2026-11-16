@@ -1,5 +1,7 @@
 # Day 6: Wed 11 Nov 2026, night (CST; 12 Nov UTC)
 
+> **Correction, 16 Nov 2026.** This page says the on-device step could not run on the development machine for lack of disk. On 11 Nov that was our reading of the disk; on 16 Nov the machine had 36 GiB free and the Gemini Nano files from the 9–10 Nov prototype were still on it, and the step ran that day (`DAY7.md`, `ondevice_proof_1/RUN_LOG.md`). Read every "(disk)" below as "not run yet". Line numbers quoted for `web/src/main.ts` and other files are those of that day.
+
 Scope: the partner screen had become a wall of panels (`devlog/shots_day5/desktop_18-double-question-coach.png`: badge,
 coach line, say, actions, "Why this card", "What was sent", "Where each step ran", nine chips, the judge box, the
 receipt with seven rows and the counting note, all in one column). Tonight is progressive disclosure, theme-neutral:
@@ -40,7 +42,7 @@ default look itself is unchanged as a look (tokens and classes only). `web/src/a
   note fold under it, still patched in place by `patchDevice()`). Checked: the four tops are in that order at both
   widths (desktop 440 < 786 < 926 < 1171; phone 520 < 937 < 1097 < 1420) and each is open; the groups sit above the card
   and the session line below the receipt.
-- **The one-frame wow (FIELD_BEAT ★2)**, `desktop_23-wow-frame.png`, captured at exactly 1280 × 800 (viewport only):
+- **The one-frame wow (field review, item ★2)**, `desktop_23-wow-frame.png`, captured at exactly 1280 × 800 (viewport only):
   the partner's question in the box, the correction "One thing at a time: showing the first." under the badge line
   "No AI needed · nothing left this computer", the line to say, all five actions (We're stuck at 750 px), and on the
   right "therapy today" with good / bad / something else (lowest tile 470 px). The same frame holds in the three
@@ -81,7 +83,7 @@ through the existing group rules). `scripts/shots.mjs` 63 / 63 on the default lo
 ## Not done, by design
 - No video, no billing, no deploy, no native, no on-device run (disk).
 - The default look's spacing is as it was; the chosen direction's phone spacing (status line, chip rows) is tuned when
-  the project owner picks it, per DESIGN_DIRECTIONS "before it ships".
+  the direction is picked, per DESIGN_DIRECTIONS "before it ships".
 - The judge-mode phone frame keeps the third action row under the fold when the status runs to four lines; the pair
   and the wow elements fit.
 

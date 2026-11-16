@@ -71,7 +71,7 @@ describe('either-or cards: one on-device call with options; validated, else the 
     expect(e.cloudCalls).toHaveLength(0);
   });
 
-  // Changed 11 Nov 2026 (REBUILD_SPEC §1.4 step 3, the coffee/tea bug): the pre-period behaviour sent this card to the
+  // Changed 11 Nov 2026 (build spec §1.4 step 3, the coffee/tea bug): the pre-period behaviour sent this card to the
   // cloud. A valid code pair is now never thrown away because a model ran, so the card is the same in every engine state.
   it('device options fail the check: the code pair from the question is used, no cloud call', async () => {
     const e = new Fake(yesno, ['want to walk', 'stay'], { topic: 'out', kind: 'choice', choices: ['shops', 'stay in'], options: ['walk to the shops', 'stay in the warm'] });

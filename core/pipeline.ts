@@ -4,7 +4,7 @@
 // "Why this card" (Card.why) is written here, on the values the rules worked on, as they are worked on.
 
 import { COPY } from './copy';
-import type { Engine } from './engine';
+import type { CloudError, Engine } from './engine';
 import { pictureFor } from './pictures';
 import { cloudPrompt, devicePrompt } from './prompt';
 import {
@@ -270,7 +270,7 @@ export function assemble(
       for (const c of o.choices) if (!pair.some((p) => lc(p) === lc(c))) track.dropped.push({ label: c, rule: W.rules.orOnly });
     }
   } else {
-    decided = W.decidedBy.open;
+    decided = o ? W.decidedBy.open : W.decidedBy.openCode;
     ({ answers, rejected, filled } = cleanChoices(asked, topic, o?.choices ?? [], profile, support, track));
     // §2.16: the headline is never one of the options (a filled answer may coincide with the model's topic)
     if (answers.some((a) => lc(a) === lc(headline))) {
@@ -403,7 +403,7 @@ function coachFor(card: Card): string | undefined {
 /** A choice card left with fewer than two answers is not shown (an escape alone can't be answered): just ask normally. */
 function noEscapeOnly(card: Card): Card {
   if (card.kind !== 'choice' || card.blocked || card.choices.filter((c) => c.role === 'answer').length >= 2) return card;
-  const why = card.why ? { ...card.why, decided: W.decidedBy.blocked } : undefined;
+  const why = card.why ? { ...card.why, decided: card.why.proposed ? W.decidedBy.blocked : W.decidedBy.blockedNoModel } : undefined;
   return { ...card, choices: [], say: N.justAsk(card.asked), blocked: N.noChoicesBlocked, why };
 }
 
@@ -456,7 +456,7 @@ async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]
   }
   // Either-or: two independent candidates, the model's copied options and the code parser's pair. The first one that
   // passes the label check wins (model first). A valid code pair is never thrown away because a model ran
-  // (REBUILD_SPEC §1.4 step 3: the "coffee or tea" bug). Only when neither passes does the card go to the cloud.
+  // (build spec §1.4 step 3: the "coffee or tea" bug). Only when neither passes does the card go to the cloud.
   let devicePair: [string, string] | null = null;
   let pairFrom: 'model' | 'code' = 'code';
   let useRules = !o;
@@ -494,6 +494,7 @@ async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]
     return {
       ...card, notes, unsentPayload: preview, cloudSwaps,
       blocked: engine.cloudConfigured ? N.notReadyCloudPossible : N.notReadyNoCloud,
+      why: card.why ? { ...card.why, decided: W.decidedBy.blockedNoModel } : undefined,
     };
   }
 
@@ -506,7 +507,8 @@ async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]
     cloudSkipped();
     card.unsentPayload = preview;
     card.cloudSwaps = cloudSwaps;
-    card.notes.push(engine.cloudConfigured ? N.cloudWouldCheckOff : N.cloudWouldCheckUnconfigured);
+    const kept = card.choices.filter((c) => c.role === 'answer').length >= 2;
+    card.notes.push(engine.cloudConfigured ? N.cloudWouldCheckOff(kept) : N.cloudWouldCheckUnconfigured(kept));
   }
   return card;
 }
@@ -522,8 +524,13 @@ async function cloudCard(
     const base = fallback ?? assemble(asked, pending, null, env.profile, env.support, 'code');
     return { ...base, cloudPayload: null, unsentPayload: preview, notes: [...notes, N.leak] };
   }
+  // Did the question leave this computer? 'maybe' from the moment the request is handed to the SDK until the SDK
+  // reports where the answer came from; an error in between leaves it at 'maybe', and the card says so.
+  let left: 'no' | 'maybe' | 'yes' = 'no';
   try {
+    left = 'maybe';
     const r = await env.engine.runCloud(stripped.text);
+    left = r.source === 'in-cloud' ? 'yes' : 'no';
     // the badge and the trace come from inferenceSource: PREFER_IN_CLOUD runs on the device when offline
     trace.push({ step: 'stripped', ran: r.source, why: r.source === 'in-cloud' ? T.cloudGot : T.cloudOffline, ms: r.ms, used: false });
     const o = parseModelOutput(r.text);
@@ -552,7 +559,7 @@ async function cloudCard(
     }
     // keep the routing reasons; the cloud's own answer is not re-routed
     // "Sent" only when inferenceSource says the cloud answered. PREFER_IN_CLOUD runs on the device when offline:
-    // then nothing left this computer and the card says so (REBUILD_SPEC §1.3 item 3).
+    // then nothing left this computer and the card says so (build spec §1.3 item 3).
     const sent = r.source === 'in-cloud';
     if (!sent) cloudNotes.push(N.ranOffline);
     return {
@@ -563,8 +570,14 @@ async function cloudCard(
     if (!trace.some((t) => t.step === 'stripped')) trace.push({ step: 'stripped', ran: 'failed', why: (e as Error).message, used: false });
     else trace[trace.findIndex((t) => t.step === 'stripped')] = { step: 'stripped', ran: 'failed', why: (e as Error).message, used: false };
     const base = fallback ?? assemble(asked, pending, null, env.profile, env.support, 'code');
-    // no answer came back, so nothing is claimed as sent; the payload is shown as what cloud help would get
-    return { ...base, cloudPayload: null, unsentPayload: preview, cloudSwaps: swaps(stripped.map), notes: [...notes, N.cloudFailed((e as Error).message)] };
+    if ((e as CloudError).notSent) left = 'no';
+    // "kept" only when there is a card made on this computer that the person will actually see
+    const note = N.cloudFailed((e as Error).message, !!fallback && fallback.choices.filter((c) => c.role === 'answer').length >= 2);
+    // the cloud answered and the answer was unusable: the question did leave, and the receipt counts it
+    if (left === 'yes') return { ...base, cloudPayload: preview, unsentPayload: null, cloudSwaps: swaps(stripped.map), notes: [...notes, note] };
+    // handed to the SDK, then an error: it may have left; never shown as "nothing left this computer"
+    if (left === 'maybe') return { ...base, cloudPayload: null, cloudAttempted: preview, unsentPayload: null, cloudSwaps: swaps(stripped.map), notes: [...notes, note] };
+    return { ...base, cloudPayload: null, unsentPayload: preview, cloudSwaps: swaps(stripped.map), notes: [...notes, note] };
   }
 }
 

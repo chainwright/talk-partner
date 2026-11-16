@@ -131,7 +131,7 @@ describe('KB §7 rule 9: no quiz questions', () => {
     const c = await makeCard("What's my name, love?", env(e));
     expect(c.kind).toBe('no-quiz');
     expect(c.choices).toEqual([]);
-    // Changed 11 Nov 2026 (REBUILD_SPEC §2.10): plain words, no rule number on screen
+    // Changed 11 Nov 2026 (build spec §2.10): plain words, no rule number on screen
     expect(c.blocked).toMatch(/asks them to remember/);
     expect(c.blocked).not.toMatch(/KB|rule \d/);
     expect(c.say).toBe("Tell, don't test: It's me, Maria.");

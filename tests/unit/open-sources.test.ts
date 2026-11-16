@@ -1,4 +1,4 @@
-// REBUILD_SPEC §2.6 (where open-question choices may come from), §2.7 (people), §2.9 (figures), §2.10 (the line per
+// build spec §2.6 (where open-question choices may come from), §2.7 (people), §2.9 (figures), §2.10 (the line per
 // memory-question type), §2.11 (medicine is not a body map), §2.13 (a blocked card carries no choices).
 // Written 11 Nov 2026; all examples new.
 import { describe, expect, it } from 'vitest';

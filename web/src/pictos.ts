@@ -1,5 +1,5 @@
 // Built-in pictographs: simple, concrete line drawings (KB §7 rule 13: no emoji, no decorative clip art).
-// Hand-drawn SVG on a 96 × 96 grid, stroke 5, round caps and joins, `currentColor` plus one accent (REBUILD_SPEC §3.2).
+// Hand-drawn SVG on a 96 × 96 grid, stroke 5, round caps and joins, `currentColor` plus one accent (build spec §3.2).
 // Each returns an inline SVG string; colour comes from CSS (currentColor + --accent).
 // Provenance and licence per pictogram: PICTOGRAMS.md (all drawn by us, Apache-2.0, dated).
 

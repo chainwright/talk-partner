@@ -1,4 +1,4 @@
-// The 11 build rules from the on-device validation (validation/VALIDATION_2026-11-09.md, runs 1-10),
+// The 11 build rules from the on-device validation (pre-period validation runs 1-10),
 // ported from run_nano_v6.py / run_nano_v7.py and the run 8-10 notes. Pure functions, no DOM, no model.
 //
 //  1 splitQuestion        two-part questions are split in code
@@ -270,7 +270,7 @@ export function validateOptions(options: unknown, q: string, profile?: Profile):
   return checkPair([out[0], out[1]], q, profile);
 }
 
-// ---------------------------------------------------------------- rule 3: the label check (REBUILD_SPEC §2.5)
+// ---------------------------------------------------------------- rule 3: the label check (build spec §2.5)
 const LINKERS = '(?:and|or|of|the|a|an|on|with|by|in|at|for)';
 const TIME_ONLY = /^(?:now|later|soon|today|tonight|tomorrow|morning|afternoon|evening|night|teatime|lunchtime|bedtime|weekend|week|month|monday|tuesday|wednesday|thursday|friday|saturday|sunday|this|next|last|the|on|at|in|after|before|early|late|first|thing|\d+(?::\d+)?|am|pm|o'clock|half|quarter|past|to)$/i;
 const FEMALE = /^(?:wife|daughter|sister|mother|mum|mom|granddaughter|niece|aunt|auntie|grandmother|gran|nan|girlfriend|daughter-in-law|sister-in-law|mother-in-law)$/i;
@@ -358,7 +358,7 @@ export function plainPair(q: string, pair: [string, string]): boolean {
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-// ---------------------------------------------------------------- headline (REBUILD_SPEC §2.5, §2.16, §2.2)
+// ---------------------------------------------------------------- headline (build spec §2.5, §2.16, §2.2)
 /** Words a partner uses to address the person: never part of a headline or a label. */
 export const ADDRESS = new Set(['ma', 'mum', 'mom', 'mam', 'dad', 'pa', 'love', 'hen', 'pet', 'mate', 'dear', 'darling', 'hon', 'honey', 'sweetheart', 'duck', 'lovey', 'chuck', 'sweetie', 'luv']);
 const ADVERB_ONLY = new Set(['again', 'already', 'then', 'still', 'yet', 'just', 'really', 'also', 'too', 'ever', 'never', 'anyway', 'else', 'instead', 'maybe', 'perhaps']);

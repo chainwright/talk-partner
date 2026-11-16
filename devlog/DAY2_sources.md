@@ -1,6 +1,6 @@
 # Day 2 sources note: what the spec's §2.6–2.13 rules rest on (checked 11 Nov 2026)
 
-Why this note: REBUILD_SPEC §2.6–2.13 encode rules from our aphasia knowledge base. Before the write-up claims
+Why this note: build spec §2.6–2.13 encode rules from our aphasia knowledge base. Before the write-up claims
 "based on Supported Conversation for Adults with Aphasia (SCA)", each rule should point at something we actually read.
 This lists what was verified on the page, what was seen only in search snippets, and what we could not reach.
 

@@ -1,5 +1,5 @@
 // Screenshots of every screen at phone (390 × 844) and desktop (1280 × 900) widths, with layout checks:
-// no horizontal scroll, and "Show to person" above the fold on the phone (REBUILD_SPEC §5.3).
+// no horizontal scroll, and "Show to person" above the fold on the phone (build spec §5.3).
 // Uses its own headless Chrome with a throwaway profile; makes only code cards (no model, no cloud call).
 //
 // Usage: npm run dev (in another shell), then  node scripts/shots.mjs [--url http://localhost:5179/] [--out devlog/shots_day3]
@@ -166,7 +166,7 @@ try {
     check(`${s} judge mode: badge → why this card → where each step ran → privacy receipt, each open, in that order`, order.every((v, i) => v !== undefined && (i === 0 || v > order[i - 1])), order.join(' < '));
     const groups = await js('document.querySelectorAll(".chips.group").length');
     check(`${s} judge mode: the sample questions sit in groups above the card; the session line is one line under the receipt`, groups === 3 && (await js('document.querySelector(".chips.group").getBoundingClientRect().top < document.querySelector("#result").getBoundingClientRect().top && document.querySelector(".judge").getBoundingClientRect().top > document.querySelector(".receipt").getBoundingClientRect().top && !document.querySelector(".judge").open')), `${groups} groups`);
-    // the one-frame wow (FIELD_BEAT ★2): the partner's question and the correction on the left, the person's card on the right
+    // the one-frame wow (field review, item ★2): the partner's question and the correction on the left, the person's card on the right
     await withFold(async (fold) => { await aboveFold('judge mode, double question', fold, true, false); await frame('23-wow-frame'); });
     await chip('Should we ring Jen or Tyler?');
     await shot('19-why-this-card');

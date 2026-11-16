@@ -1,8 +1,10 @@
 # Day 4: Wed 11 Nov 2026, evening (CST; the file comments dated 12 Nov use UTC)
 
+> **Correction, 16 Nov 2026.** This page says the on-device step could not run on the development machine for lack of disk. On 11 Nov that was our reading of the disk; on 16 Nov the machine had 36 GiB free and the Gemini Nano files from the 9–10 Nov prototype were still on it, and the step ran that day (`DAY7.md`, `ondevice_proof_1/RUN_LOG.md`). Read every "(disk)" below as "not run yet". Line numbers quoted for `web/src/main.ts` and other files are those of that day.
+
 Scope: the work that does not depend on the design-direction choice (the project owner is picking between A/B/C in
 `DESIGN_DIRECTIONS.md`; the default theme is untouched as a look). Three threads: the "must fix" list from the design
-pass, FIELD_BEAT must-do #3 (the 60-second judge path), and the preparation for must-do #1 (the timed trial, no people
+pass, must-do #3 of our 12 Nov review of the field (the 60-second judge path), and the preparation for must-do #1 (the timed trial, no people
 involved yet). No deploy, no install beyond font files, no billing, no on-device run (this Mac still cannot run Gemini
 Nano: disk). `web/src/ai/firebaseEngine.ts` is untouched.
 
@@ -33,7 +35,7 @@ Nano: disk). `web/src/ai/firebaseEngine.ts` is untouched.
   Side effect in the default look: the welcome screen sits 40 px higher than in the Day 3 shots. Everything else
   unchanged (35/35 layout checks, `devlog/shots_day4/`).
 
-### 2. 60-second judge path (FIELD_BEAT #3)
+### 2. 60-second judge path (field review, must-do #3)
 - **README "For judges"** at the top: the command, the six clicks in `#/demo` in order with what appears and which badge,
   what each of the five badges means (all from `inferenceSource`), the three states a judge can force (cloud leg,
   no-model, offline fall-back), honesty notes (no on-device run yet; sample family made up; `pre-contest` tag).
@@ -56,7 +58,7 @@ Nano: disk). `web/src/ai/firebaseEngine.ts` is untouched.
   fall-back / code card / blocked card / device card kept; sums; a planted name and photo are found by the check. On a
   phone the receipt rows stack with labels (the five-column table squeezed the question to one word per line at 390 px).
 
-### 3. Trial preparation (FIELD_BEAT #1, no people yet)
+### 3. Trial preparation (field review, must-do #1; no people yet)
 - **`devlog/TRIAL_PROTOCOL.md`**: pad-and-marker vs card; 2–3 volunteer pairs (the person role is a simulation unless a
   family living with aphasia joins, stated per pair); two sealed 10-question sets written by a non-partner, SHA-256
   committed before session 1, files after the last session; counterbalanced order (Pad-A/Card-B, Card-A/Pad-B,
@@ -82,6 +84,5 @@ person" bottom at 588 px); `scripts/fonts-check.mjs` 20/20.
 - Sets A and B are not written (they must be sealed by a non-partner). The stopwatch is ready for them.
 - Still open from Day 1–3: deploy (disk + browser login), the real on-device run, pictograms batch 2, the two-screen relay.
 
-Next step: the judge round 1 on this build (`#/demo`, official fwd/rev + engineering seats), then fixes; apply the owner's
-design choice (move that direction's block into the default, re-run shots and fonts-check on it); deploy when the disk is
+Next step: the judge round 1 on this build (`#/demo`, official fwd/rev + engineering seats), then fixes; apply the owner's design choice (move that direction's block into the default, re-run shots and fonts-check on it); deploy when the disk is
 freed.

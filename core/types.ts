@@ -127,6 +127,11 @@ export interface Card {
   cloudPayload: string | null;
   /** Which About-me words were swapped for which placeholder before sending (shown on the partner screen only). */
   cloudSwaps?: string[];
+  /**
+   * The request body of a cloud call that was handed to the SDK and failed (an error from the service, a broken
+   * connection). The app cannot tell whether it reached the cloud, so the card never says "nothing left" for it.
+   */
+  cloudAttempted?: string | null;
   /** What WOULD have been sent if the cloud were on/configured (shown as "not sent"). */
   unsentPayload?: string | null;
   /** Set when no card could be made without a step the partner has to allow (e.g. cloud consent). */

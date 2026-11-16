@@ -5,7 +5,7 @@ Every picture in the app is a hand-authored SVG line drawing in `web/src/pictos.
 images. All are licensed under the repository licence, **Apache-2.0** (see `LICENSE`), by the Talk Partner team.
 
 `tests/unit/day3.test.ts` checks that this table lists exactly the ids the code bundles, that each row carries a date and the
-licence, and that only the escape icon uses a dashed stroke (REBUILD_SPEC §3.2 rule 4).
+licence, and that only the escape icon uses a dashed stroke (build spec §3.2 rule 4).
 
 Dates: rows marked 9–10 Nov 2026 were drawn for the pre-period prototype and are disclosed in `DISCLOSURE.md`; everything
 else was drawn in the submission period.

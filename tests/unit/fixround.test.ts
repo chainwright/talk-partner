@@ -132,7 +132,7 @@ describe('P0 privacy: no About-me term in any cloud payload', () => {
     expect(pictureFor("shepherd's pie", RICH)).toEqual({ type: 'cloud', word: 'food' });
     expect(pictureFor('Royal Oak', RICH)).toEqual({ type: 'cloud', word: 'a place' });
     expect(pictureFor('Coronation Street', RICH)).toEqual({ type: 'cloud', word: 'a TV show' });
-    // Changed 11 Nov 2026 (REBUILD_SPEC §2.20): a word with no picture is a word-only tile, never the escape icon or an empty frame.
+    // Changed 11 Nov 2026 (build spec §2.20): a word with no picture is a word-only tile, never the escape icon or an empty frame.
     expect(pictureFor('Pip', RICH)).toEqual({ type: 'word' });
     expect(pictureFor('umbrella', RICH)).toEqual({ type: 'cloud', word: 'umbrella' });
   });
@@ -214,7 +214,7 @@ describe('fit, made-up options and negatives', () => {
     const e = new Fake({ topic: 'cook', kind: 'choice', choices: ["don't mind", 'pasta', 'not hungry'] }, { topic: 'cook', kind: 'choice', choices: ['pasta', 'stew'] });
     const c = await makeCard('What shall we cook tonight?', env(e, PROFILE));
     expect(labels(c).some(hasNegative)).toBe(false);
-    // Changed 11 Nov 2026 (REBUILD_SPEC §2.6 source b): one good answer is completed from the About-me foods on the
+    // Changed 11 Nov 2026 (build spec §2.6 source b): one good answer is completed from the About-me foods on the
     // device, so nothing goes to the cloud. Before, the card was routed to the cloud for the missing answer.
     expect(labels(c)).toEqual(['pasta', 'lamb', 'something else']);
     expect(c.route.to).toBe('device');

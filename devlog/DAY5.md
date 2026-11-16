@@ -1,6 +1,8 @@
 # Day 5: Wed 11 Nov 2026, late (CST; 12 Nov UTC)
 
-Scope: the `FIELD_BEAT_2026-11-12.md` §5 items that need no billing, no deploy and no native build, and that do not
+> **Correction, 16 Nov 2026.** This page says the on-device step could not run on the development machine for lack of disk. On 11 Nov that was our reading of the disk; on 16 Nov the machine had 36 GiB free and the Gemini Nano files from the 9–10 Nov prototype were still on it, and the step ran that day (`DAY7.md`, `ondevice_proof_1/RUN_LOG.md`). Read every "(disk)" below as "not run yet". Line numbers quoted for `web/src/main.ts` and other files are those of that day.
+
+Scope: the §5 items of our 12 Nov review of the field (internal notes, not in this repo) that need no billing, no deploy and no native build, and that do not
 depend on the owner's design choice: ★2 (the partner correction made visible, logic and UI, not the video), 7 ("Why this
 card"), 8 (the "we're stuck" repair card), 6 (look-alikes named), ★1(c) (one documented cut) and 11 (tagline and
 Built-with). Every new piece of UI uses the existing tokens and classes only, so it renders in the default look and in
@@ -21,8 +23,8 @@ on-device run happened (this Mac still cannot run Gemini Nano: disk); nothing cl
 - Judge mode: the chip "How was therapy today?" became **"How was therapy today, and did you eat?"**: the card shows the
   coaching line, the first half as the feeling scale, and "Next: second question" gives "Did you eat?" as yes / no. The
   test question ("What year did we get married?") was already a chip.
-- **Wow it gives (real):** the one frame FIELD_BEAT §6 asks for exists in the product, not only in a video plan: left,
-  the partner's question with the correction; right, the person's card. Nobody in the field corrects the partner.
+- **Wow it gives (real):** the one frame our field review asks for exists in the product, not only in a video plan: left,
+  the partner's question with the correction; right, the person's card. [Corrected 16 Nov: this line read "Nobody in the field corrects the partner", which is false: AACessTalk gives real-time guides to the parent, and our README names it as the source of the idea. What we did not find is a tool that corrects the partner's own question while turning it into a card.]
 
 ### 7 "Why this card" (`Card.why`, `core/pipeline.ts`)
 - Written while the rules run, on the values they run on: `cleanChoices()` records every choice that leaves the list
@@ -134,7 +136,7 @@ card, stuck partner, repair person) in the normal flow.
 - No video, no billing, no deploy, no native, no on-device run (disk).
 - The why line's rich form (proposed / kept / dropped) is covered by tests, not yet seen with a live model.
 - "Change topic" and the five-tile repair card are design decisions to check with an SLP; stated above and in the sources note.
-- The default look is unchanged; the new pieces will take whichever direction the project owner picks without further CSS.
+- The default look is unchanged; the new pieces will take whichever direction is picked without further CSS.
 
 Next step: judge round 1 on this build (`#/demo`, official fwd/rev + engineering seats), then fixes; apply the owner's design
 choice; deploy when the disk is freed.

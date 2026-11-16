@@ -1,4 +1,4 @@
-// REBUILD_SPEC §2.19: plural forms, unknown capitalised words as "Name A", the leak gate as the last check before
+// build spec §2.19: plural forms, unknown capitalised words as "Name A", the leak gate as the last check before
 // a send (mutant M3), two people with the same relation become "someone" (mutant M4). Written 11 Nov 2026.
 import { describe, expect, it } from 'vitest';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';

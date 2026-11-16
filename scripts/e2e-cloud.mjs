@@ -70,7 +70,7 @@ try {
   const status = await js(`document.querySelector('#status').innerText`);
   console.log(`device status line: ${status}`);
 
-  // page load with cloud help OFF (REBUILD_SPEC §1.5 day-1 check): which hosts did loading the app contact?
+  // page load with cloud help OFF (build spec §1.5 day-1 check): which hosts did loading the app contact?
   const loadHosts = [...hosts.entries()].map(([h, n]) => `${h}×${n}`).join(', ');
   console.log(`hosts contacted on page load (cloud help off): ${loadHosts}`);
   const appHost = new URL(URL_).host;

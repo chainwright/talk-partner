@@ -1,4 +1,4 @@
-// REBUILD_SPEC §2.5 (headline for an or-pair = the shared topic, never one of the options), §2.16 (headline rules)
+// build spec §2.5 (headline for an or-pair = the shared topic, never one of the options), §2.16 (headline rules)
 // and §2.2 (address words and the person's name are not part of a headline). Written 11 Nov 2026; all examples new.
 import { describe, expect, it } from 'vitest';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';

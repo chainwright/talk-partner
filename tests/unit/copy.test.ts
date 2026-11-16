@@ -1,4 +1,4 @@
-// REBUILD_SPEC §4 and §5.1 "copy truth": every string a person reads comes from core/copy.ts; the main screens carry
+// build spec §4 and §5.1 "copy truth": every string a person reads comes from core/copy.ts; the main screens carry
 // nothing technical; adult tone (no exclamation marks); and every "never sent" claim is literally true of every payload
 // the core can build from a rich fixture. Written 11 Nov 2026.
 import { describe, expect, it } from 'vitest';
