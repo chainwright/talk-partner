@@ -5,16 +5,16 @@ PASS  coffee/tea card is coffee / tea / something else  (["coffee","tea","someth
 PASS  coffee/tea needs no AI  (No AI needed)
 PASS  coffee/tea sent nothing to Firebase/Google  (no Google hosts)
 PASS  cloud help turned on through the consent screen  (Cloud help: on)
-open question -> badge "Cloud help (question only)", tiles ["stay home","go out","something else"], 2139 ms
+open question -> badge "Cloud help (question only)", tiles ["stay home","go out","something else"], 8517 ms
 notes: 
 PASS  open question answered by the cloud leg (inferenceSource in_cloud)  (Cloud help (question only))
 PASS  the card has at least two answers plus one escape  (["stay home","go out","something else"])
-SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=1831
-PASS  the SDK reported inferenceSource=in_cloud for the stripped leg  ([ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=1831)
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=8234
+PASS  the SDK reported inferenceSource=in_cloud for the stripped leg  ([ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=8234)
 PASS  the badge line says the question left with 1 name swapped out  (· the question left this computer, 1 name and 0 other About me words swapped out)
 PASS  the sent payload has "Person A", not the name  (Partner asks: What do you want to do this weekend with Person A?)
 PASS  the panel says it was sent
 PASS  the request went to Firebase AI Logic  (content-firebaseappcheck.googleapis.com, firebasevertexai.googleapis.com)
 hosts contacted during the cloud card: www.google.com×2, content-firebaseappcheck.googleapis.com×2, www.gstatic.com×1, firebasevertexai.googleapis.com×2
 
-commit bc7ca69c53601a72175aee09a71031d69c1f0000  12/12 checks passed  2026-11-16T22:31:41.013Z
+commit 83a7da5acc3448b11e7969943bd83a5ea00b72bb  12/12 checks passed  2026-11-16T22:34:14.084Z

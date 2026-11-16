@@ -1,0 +1,13 @@
+status line: This copy has no project settings, so no AI runs here. Yes/no, either-or, feeling, pain and body questions still make cards.
+PASS  the copy really has no project settings  (This copy has no project settings, so no AI runs here. Yes/no, either-or, feeling, pain and body questions still make cards.)
+PASS  coffee/tea card is coffee / tea / something else  (["coffee","tea","something else"])
+PASS  coffee/tea badge is "No AI needed"  (No AI needed)
+PASS  "Do you need the toilet?" makes a card  (["yes","no","not sure"])
+PASS  "Should we ring Jen or Tyler?" makes a card  (["Jen","Tyler","someone else"])
+PASS  "Where does it hurt?" makes a card  (["head","chest","somewhere else"])
+PASS  "How was therapy today, and did you eat?" makes a card  (["good","bad","something else"])
+PASS  the memory question coaches instead of quizzing  (You know this one: tell, don't test.)
+PASS  an open question gets an honest "No card"  (No card · The private helper isn't ready on this computer and cloud help is not configured on this copy. Just ask normally.)
+PASS  no host contacted but the app itself  (localhost:5181×36)
+
+commit 83a7da5acc3448b11e7969943bd83a5ea00b72bb  10/10 checks passed  2026-11-16T22:34:16.696Z
