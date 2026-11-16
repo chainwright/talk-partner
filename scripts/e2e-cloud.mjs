@@ -1,7 +1,11 @@
-// End-to-end check against the REAL Firebase AI Logic project (no stand-in model).
-// Launches its own headless Chrome with a throwaway profile, opens the dev server, and makes cards:
+// End-to-end check of the CLOUD step against the REAL Firebase AI Logic project (no stand-in model).
+// Launches its own headless Chrome with a throwaway profile (so no Gemini Nano), opens judge mode on the dev server,
+// and makes cards:
 //   1. "Do you want coffee or tea?"  -> code card, nothing sent
-//   2. an open question with cloud help ON -> the stripped leg (PREFER_IN_CLOUD) answers; badge from inferenceSource
+//   2. cloud help turned on through the consent screen, then an open question with a name in it -> the stripped leg
+//      (PREFER_IN_CLOUD) answers; badge from inferenceSource; "What was sent" holds "Person A", not the name
+// Updated 16 Nov 2026 to the current screens (judge-mode chips, the consent screen, the #sent panel): it had kept the
+// 11 Nov selectors and failed 2/9. The on-device step has its own script: scripts/e2e-ondevice.mjs.
 // Logs every network host the page contacted and the commit hash. Exit code 0 only if every check passes.
 //
 // Usage: npm run dev (in another shell), then  node scripts/e2e-cloud.mjs [--url http://localhost:5179] [--shots DIR]
@@ -64,13 +68,13 @@ try {
   await send('Network.enable');
   await send('Runtime.enable');
   await send('Page.enable');
-  await send('Page.navigate', { url: URL_ });
-  await waitFor(`!!document.querySelector('#make')`);
+  await send('Page.navigate', { url: `${URL_}#/demo` });
+  await waitFor(`!!document.querySelector('.chip')`);
   await sleep(1500);
   const status = await js(`document.querySelector('#status').innerText`);
   console.log(`device status line: ${status}`);
 
-  // page load with cloud help OFF (build spec §1.5 day-1 check): which hosts did loading the app contact?
+  // page load with cloud help OFF: which hosts did loading the app contact?
   const loadHosts = [...hosts.entries()].map(([h, n]) => `${h}×${n}`).join(', ');
   console.log(`hosts contacted on page load (cloud help off): ${loadHosts}`);
   const appHost = new URL(URL_).host;
@@ -89,8 +93,13 @@ try {
   await shot('01-coffee-tea');
 
   // 2. open question through the stripped leg, cloud help on
-  await js(`(() => { const c = document.querySelector('#cloud'); c.checked = true; c.dispatchEvent(new Event('change')); })()`);
-  hosts.clear();
+  await js(`location.hash = '#/cloud'`); await sleep(500);
+  await js(`document.querySelector('#consent').click()`); await sleep(300);
+  await js(`document.querySelector('[data-act="cloud-on"]').click()`); await sleep(300);
+  await js(`location.hash = '#/demo'`); await sleep(600);
+  const cloudNav = await js(`[...document.querySelectorAll('header nav a')].map((a) => a.innerText).find((t) => t.startsWith('Cloud help'))`);
+  check('cloud help turned on through the consent screen', cloudNav === 'Cloud help: on', cloudNav);
+  hosts.clear(); consoleLines.length = 0;
   const t0 = Date.now();
   await js(`(() => { const q = document.querySelector('#q'); q.value = 'What do you want to do this weekend with Jenny?'; document.querySelector('#ask').requestSubmit(); })()`);
   await waitFor(`document.querySelector('#make') && !document.querySelector('#make').disabled && !!document.querySelector('#result .badge')`, 60000);
@@ -101,9 +110,13 @@ try {
   console.log(`open question -> badge "${badge2}", tiles ${JSON.stringify(tiles2)}, ${ms} ms\nnotes: ${notes}`);
   check('open question answered by the cloud leg (inferenceSource in_cloud)', badge2 === 'Cloud help (question only)', badge2);
   check('the card has at least two answers plus one escape', (tiles2?.length ?? 0) >= 3, JSON.stringify(tiles2));
-  await js(`document.querySelector('.sent').open = true`);
-  const sent = await js(`document.querySelector('.sent').innerText`);
-  const payload = await js(`document.querySelector('.sent pre')?.innerText ?? ''`);
+  const sent = await js(`document.querySelector('#sent').innerText`);
+  const payload = await js(`document.querySelector('#sent pre')?.innerText ?? ''`);
+  const tail = await js(`document.querySelector('#result .badge-line .tail')?.innerText ?? ''`);
+  const report = consoleLines.filter((l) => l.startsWith('[ai-logic]'));
+  console.log(`SDK report: ${report.join(' | ')}`);
+  check('the SDK reported inferenceSource=in_cloud for the stripped leg', report.length === 1 && /leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud/.test(report[0]), report.join(' | '));
+  check('the badge line says the question left with 1 name swapped out', /1 name and 0 other About me words swapped out/.test(tail), tail);
   check('the sent payload has "Person A", not the name', /Person A/.test(payload) && !/Jenny/.test(payload), payload.match(/Partner asks:[^"]*/)?.[0] ?? '');
   check('the panel says it was sent', /Sent for this card/.test(sent));
   const aiHosts2 = [...hosts.keys()].filter((h) => /googleapis|firebase|recaptcha/.test(h));

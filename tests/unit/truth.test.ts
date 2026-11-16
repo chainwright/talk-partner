@@ -163,3 +163,33 @@ describe('the welcome screen', () => {
     expect(COPY.welcome.local).toMatch(/About me/);
   });
 });
+
+// Should-fix items of the same review, pinned so they do not come back.
+describe('the cross on the white card is readable', () => {
+  const lum = (hex: string) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const ratio = (a: string, b: string) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  it('the card\'s own --no colour is at least 3:1 on white (WCAG non-text contrast)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const css = readFileSync(join(__dirname, '..', '..', 'web/src/styles.css'), 'utf8');
+    const person = css.slice(css.indexOf('\n.person {'), css.indexOf('}', css.indexOf('\n.person {')));
+    const no = /--no:\s*(#[0-9a-f]{6})/i.exec(person)?.[1];
+    expect(no, 'the person card defines its own --no').toBeTruthy();
+    expect(ratio(no!, '#ffffff')).toBeGreaterThanOrEqual(3);
+    expect(ratio('#ff8a80', '#ffffff')).toBeLessThan(3); // the desk colour it used to inherit
+  });
+});
+
+describe('the first screen and the wait', () => {
+  it('the welcome screen says who it is for and why, in one line', () => {
+    expect(COPY.welcome.who).toMatch(/aphasia/);
+    expect(COPY.welcome.who).toMatch(/famil|carer|partner/);
+    expect(COPY.welcome.who.split('. ').length).toBe(1);
+  });
+  it('there is a "making the card" line for the wait', () => {
+    expect(COPY.ask.makingCard).toMatch(/Making the card/);
+  });
+});

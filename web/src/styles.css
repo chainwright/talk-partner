@@ -116,7 +116,7 @@ details td, details th, .screen td, .screen th { border-top: 1px solid var(--lin
 /* the person's card: pane on the partner screen, or the whole screen. Always a bright paper card with its own
    palette (card ink 18.5:1 and card muted 7.8:1 on white, both AAA), whatever the desk or the OS looks like. */
 .person {
-  --bg: #ffffff; --ink: #0f141a; --muted: #4a5361; --line: #c9d1db; --accent: #0b6e4f; --accent-soft: #d5f5ea; --yes: #0b6e4f;
+  --bg: #ffffff; --ink: #0f141a; --muted: #4a5361; --line: #c9d1db; --accent: #0b6e4f; --accent-soft: #d5f5ea; --yes: #0b6e4f; --no: #b3261e; /* the cross on white: 6.5:1 (the desk's #ff8a80 was 2.3:1 here) */
   color-scheme: light; background: #fff; color: var(--ink); border: 0; border-radius: 26px; padding: 26px;
   box-shadow: 0 2px 0 rgba(255, 255, 255, .25) inset, 0 40px 80px -30px rgba(0, 0, 0, .75), 0 0 0 1px #2c3a4b;
   font-family: "Atkinson Hyperlegible Next", Verdana, sans-serif;
@@ -255,3 +255,12 @@ main.welcome::after { transform-origin: left center; animation: ts-turn 1s .3s c
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* while a card is being made: a plain line for the partner; on the person's side the ear, breathing slowly */
+.making { margin: 0; display: flex; align-items: center; gap: 10px; color: var(--ink); font-size: 17px; }
+.making .dot { flex: none; }
+.making small { color: var(--muted); font-size: 13px; }
+.listening.thinking svg { animation: tp-breathe 1.6s ease-in-out infinite; }
+@keyframes tp-breathe { 0%, 100% { opacity: .45; transform: scale(.97); } 50% { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .listening.thinking svg { animation: none; } }
+.welcome .who { margin: 0 0 6px; font-size: 19px; color: var(--ink); }

@@ -33,8 +33,8 @@ video, no deploy, no console changes.
   requests; cloud help on: the names card stays, "which shirt" runs both steps (`on_device`, then `in_cloud`); network
   off: `PREFER_IN_CLOUD` falls back, `inferenceSource=on_device`; and the same questions in a Chrome without the model:
   family / friend, meat / fish, and "Jenny" leaving as "Person A".
-- **Times in that run:** 15.8 s from page load to "Ready" in a freshly started browser (the warm-up), then 3.0–3.4 s
-  per on-device answer; cloud answers 1.6–2.8 s.
+- **Times in that run:** 15.8 s from page load to "Ready" in a freshly started browser (the warm-up), then 2.9–3.5 s
+  per on-device answer (10 answers); cloud answers 1.9–3.3 s (3 answers).
 - **Honest limits:** one machine, one made-up family, one answer per question. The model's choices vary between runs
   (the third choice was "Dr Smith", "hospital" or "doctor" on three runs; code dropped it each time). This shows the
   path, not card quality. The timed trial is still not run.
@@ -62,6 +62,18 @@ protocol says; the terms link points at the page it redirected to; the project o
 documents are out of the repository (comments that cite "build spec §" refer to an internal specification).
 
 Pinned by `tests/unit/truth.test.ts`, `tests/unit/day3.test.ts` and `tests/unit/personal-card.test.ts`.
+
+## 4. Cheap should-fix items (commit after the truth pass)
+- **The cross on the white card:** the card now has its own `--no` (#b3261e, 6.5:1 on white); it inherited the desk's
+  #ff8a80, 2.3:1. Pinned by a contrast test computed from `styles.css`.
+- **The wait:** while a card is being made the partner sees "Making the card… A few seconds. Nothing is on their
+  screen yet." and the ear on the person's side breathes slowly (still under reduced motion). Checked in the live app
+  during an on-device answer.
+- **The first screen:** one line before anything else: who it is for and why.
+- **`scripts/e2e-cloud.mjs`:** moved to the current screens (judge chips, the consent screen, the `#sent` panel) and
+  now also checks the SDK's `inferenceSource=in_cloud` line and the "1 name swapped out" tail. 12/12; output in
+  `devlog/evidence_r2/`. The "9/9 on day 1" in `DAY1.md` has no saved output; these files are the record now.
+- `scripts/shots.mjs`: 63/63 layout checks on the changed screens; screenshots in `devlog/shots_r2fix/`.
 
 ## Still not true or not done
 - No hosted URL, no production App Check provider, no public repository, no video.

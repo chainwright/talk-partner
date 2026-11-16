@@ -30,6 +30,9 @@ const COPY = {
     placeholder: "Ask what you'd normally ask…",
     make: 'Make card',
     making: 'Making…',
+    /** Shown in place of the card while it is being made (a model answer takes a few seconds). */
+    makingCard: 'Making the card…',
+    makingHint: 'A few seconds. Nothing is on their screen yet.',
     label: 'Your question',
   },
 
@@ -178,6 +181,8 @@ const COPY = {
 
   welcome: {
     heading: 'Talk Partner',
+    /** Who this is for and why, in one line, before anything else. */
+    who: 'For the family and carers of an adult with aphasia after a stroke: they understand you, but the words to answer will not come.',
     what: 'You ask what you would normally ask. The app turns it into a card with a keyword and two big choices the person can point to, with a way out every time, and gives you the line to say.',
     local: 'Your About me lists and photos stay on this computer.',
     cloudOff: 'Cloud help is off. You can turn it on later.',

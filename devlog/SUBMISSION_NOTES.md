@@ -22,7 +22,7 @@ Devpost "Built with" is a tag list; these are the tags, in the order to enter th
 |---|---|---|
 | `firebase-ai-logic` | `web/src/ai/firebaseEngine.ts`: every model call, three `getGenerativeModel` modes | the only path to any model |
 | `gemini-nano` | the private step, `ONLY_ON_DEVICE`; the offline fall-back of the stripped step | run for real on 16 Nov 2026: `devlog/ondevice_proof_1/RUN_LOG.md` (private step and offline fall-back, `inferenceSource=on_device`), at the tag `ondevice-proof-1` |
-| `gemini` | the stripped step in the cloud, `gemini-3.5-flash-lite` (`core/models.ts`) | real cloud runs recorded on 16 Nov 2026: `devlog/ondevice_proof_1/RUN_LOG.md` §3 and §5 |
+| `gemini` | the stripped step in the cloud, `gemini-3.5-flash-lite` (`core/models.ts`) | real cloud runs recorded on 16 Nov 2026: `devlog/ondevice_proof_1/RUN_LOG.md` §3 and §5, and `devlog/evidence_r2/e2e-cloud.txt` |
 | `firebase-app-check` | `initializeAppCheck` in the engine; debug token locally, reCAPTCHA Enterprise on deploy | enforcement comes with the first deploy |
 | `typescript` | `core/`, `web/`, tests | |
 | `vite` | the web client build | |

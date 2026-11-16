@@ -313,7 +313,7 @@ function partnerScreen(): string {
     ${state.demo ? `<p class="sample">${C.app.sample}</p>` : ''}
     <form id="ask"><input id="q" autocomplete="off" placeholder="${C.ask.placeholder}" aria-label="${C.ask.label}" value="${esc(state.lastQuestion)}"><button id="make" type="submit" ${state.busy ? 'disabled' : ''}>${state.busy ? C.ask.making : C.ask.make}</button></form>
     ${state.demo ? chipGroups() : ''}
-    <div id="result" aria-live="polite">${c ? cardPanel(c) : state.error ? `<p class="warn">${esc(state.error)}</p>` : ''}</div>
+    <div id="result" aria-live="polite">${state.busy ? `<p class="making" role="status"><span class="dot wait"></span>${C.ask.makingCard} <small>${C.ask.makingHint}</small></p>` : c ? cardPanel(c) : state.error ? `<p class="warn">${esc(state.error)}</p>` : ''}</div>
     ${state.demo ? receiptPanel(true) : ''}
     ${judgeLine}
     <div class="settings">
@@ -389,7 +389,7 @@ function personView(full: boolean): string {
       <div class="tiles two"><button class="tile yes" data-confirm="recap-yes">${TICK}<span>${C.person.yes}</span></button>
       <button class="tile" data-confirm="recap-change">${CROSS}<span>${C.person.change}</span></button></div>`;
   }
-  if (!c || c.blocked || !c.choices.length) return `${exit}<div class="listening">${builtinPicto('listen')}</div>`;
+  if (!c || c.blocked || !c.choices.length) return `${exit}<div class="listening${state.busy ? ' thinking' : ''}">${builtinPicto('listen')}</div>`;
   if (state.less) return `${exit}<h2 class="headline">${esc(c.topic)}</h2>`;
   if (state.picked && state.confirmed) {
     return `${exit}<h2 class="headline">${esc(c.topic)}</h2><div class="answered">${picture(state.picked)}<p>${esc(state.picked.label)}</p></div>`;
@@ -489,6 +489,7 @@ function welcomeScreen(): string {
   const W = C.welcome;
   return `<main class="screen welcome">
     <h1>${W.heading}</h1>
+    <p class="who">${W.who}</p>
     <p class="lead">${W.what}</p>
     <ol class="points">
       <li>${W.local}</li>
