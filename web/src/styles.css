@@ -105,6 +105,9 @@ button.danger, .danger { color: var(--no); border-color: var(--no); }
 .safety { color: var(--warn); }
 .warn { margin: 0; color: var(--warn); }
 .done { margin: 0; color: var(--yes); }
+/* what they chose last time: a quiet line for the partner, under the badge */
+.last { margin: 0; font-size: 14px; color: var(--muted); }
+.history { list-style: none; padding: 0; margin: 6px 0; font-size: 15px; } .history li { padding: 4px 0; border-top: 1px solid var(--line); } .history span { color: var(--muted); font-size: 13px; margin-right: 6px; }
 .offer { font-size: 14px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
 .notes { padding-left: 18px; }

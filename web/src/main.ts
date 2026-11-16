@@ -6,6 +6,7 @@ import './styles.css';
 import './fonts.css';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
+import { addAnswer, answerCounts, lastAnswer, whenText, type Answered } from '../../core/history';
 import { LEGS } from '../../core/models';
 import { bodyDetailCard, makeCard, quizOverrideCard, repairCard } from '../../core/pipeline';
 import { countSwaps, sessionReceipt, sessionTally } from '../../core/receipt';
@@ -57,6 +58,10 @@ interface State {
   recapDone: boolean;
   lastQuestion: string;
   error: string | null;
+  /** Confirmed answers kept on this computer (IndexedDB key 'history'); in judge mode, in memory only. Never sent, never in a prompt. */
+  history: Answered[];
+  /** When the card on screen was made: "last time" only looks at answers from before it. */
+  cardAt: number;
   /** Every card made this session (judge mode tally). */
   made: Card[];
   waitStart: number | null;
@@ -80,6 +85,8 @@ const state: State = {
   confirmed: false,
   less: false,
   answers: [],
+  history: [],
+  cardAt: 0,
   recap: false,
   recapDone: false,
   lastQuestion: '',
@@ -112,11 +119,13 @@ function enterDemo() {
   if (state.demo) return;
   state.demo = true;
   state.profile = SAMPLE_PROFILE;
+  state.history = []; // the sample family starts with no answers; the real list on disk is untouched
   resetCard();
 }
 async function leaveDemo() {
   state.demo = false;
   state.profile = (await kvGet<Profile>('profile')) ?? { ...EMPTY_PROFILE };
+  state.history = (await kvGet<Answered[]>('history')) ?? [];
   resetCard();
   go('');
 }
@@ -127,7 +136,7 @@ function resetCard() { state.card = null; state.before = null; state.picked = nu
  * again on a redraw caused by a tap, a toggle or a status update.
  */
 let cardSeq = 0;
-function setCard(c: Card | null) { state.card = c; if (c) cardSeq++; }
+function setCard(c: Card | null) { state.card = c; if (c) { cardSeq++; state.cardAt = Date.now(); } }
 
 // ---------------------------------------------------------------- persistence
 async function load() {
@@ -135,6 +144,8 @@ async function load() {
   if (p) state.profile = { ...EMPTY_PROFILE, ...p, people: p.people ?? [] };
   const s = await kvGet<Settings>('settings');
   if (s) state.settings = { ...state.settings, ...s };
+  const h = await kvGet<Answered[]>('history');
+  if (Array.isArray(h)) state.history = h;
 }
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 function saveProfile() {
@@ -330,6 +341,10 @@ function cardPanel(c: Card): string {
   const safety = c.kind === 'body' || c.kind === 'pain' ? `<p class="safety">${C.safety}</p>` : '';
   // the coaching line: only when a rule found something about the question itself (Card.coach), never otherwise
   const coach = c.coach ? `<p class="coach">${esc(c.coach)}</p>` : '';
+  // what they chose the last time this question was asked: for the partner only, from the list kept on this computer
+  const prev = c.blocked || c.kind === 'repair' ? null : lastAnswer(state.history, c.asked, state.cardAt);
+  const counts = prev ? answerCounts(state.history, c.asked, state.cardAt) : [];
+  const last = prev ? `<p class="last">${esc(C.card.lastTime(whenText(prev.at, Date.now()), prev.label))}${counts.length > 1 || counts[0]?.n > 1 ? ` ${esc(C.card.lastTimeCounts(counts.map((x) => `${x.label} ×${x.n}`).join(', ')))}` : ''}</p>` : '';
   // "We're stuck" sits on every card the person can see; the repair card itself offers the way back
   const stuck = c.kind === 'repair' ? `<button data-act="unstuck">${C.card.unstuck}</button>` : !c.blocked ? `<button data-act="stuck">${C.card.stuck}</button>` : '';
   let main: string;
@@ -363,7 +378,7 @@ function cardPanel(c: Card): string {
   }
   // judge mode: the panels stand open in reading order; partner screen: one closed fold holds them and the receipt
   const made = state.demo ? madePanels(c) : `<details class="made" id="made"><summary>${C.card.made}</summary>${madePanels(c)}${receiptPanel(false)}</details>`;
-  return `${badgeLine(c)}${coach}${main}${answered}${actions ? `<div class="actions">${actions}</div>` : ''}${safety}${notes}
+  return `${badgeLine(c)}${coach}${last}${main}${answered}${actions ? `<div class="actions">${actions}</div>` : ''}${safety}${notes}
     ${made}`;
 }
 
@@ -445,6 +460,10 @@ function aboutScreen(): string {
       <button type="button" data-act="person-add">${A.addPerson}</button>
       <h2>${A.foods}, ${A.places}, ${A.tv}, ${A.music}</h2>
       ${list('foods', A.foods)}${list('places', A.places)}${list('tv', A.tv)}${list('music', A.music)}${list('other', A.other)}
+      <h2>${A.historyHeading}</h2>
+      <p class="note">${A.historyNote}${state.demo ? ` ${A.historyNoteSample}` : ''}</p>
+      ${state.history.length ? `<ul class="history">${state.history.slice(-8).reverse().map((h) => `<li><span>${esc(whenText(h.at, Date.now()))}</span> ${esc(h.q)} <b>${esc(h.label)}</b></li>`).join('')}</ul>${state.history.length > 8 ? `<p class="muted">${state.history.length} in all.</p>` : ''}
+      <button type="button" data-act="history-forget">${A.historyForget}</button>` : `<p class="muted">${A.historyEmpty}</p>`}
       <p id="saved" class="saved">${state.saved ? A.saved : ''}</p>
       <div class="actions"><a class="button primary" href="#/">${A.done}</a><button type="button" class="danger" data-act="delete-all">${A.deleteAll}</button></div>
     </form></main>${footer()}`;
@@ -596,7 +615,12 @@ function onPersonTap(t: HTMLElement) {
   if (!c) return;
   if (t.dataset.confirm === 'yes') {
     state.confirmed = true;
-    if (state.picked && state.picked.role === 'answer') state.answers.push({ topic: c.topic, label: state.picked.label });
+    if (state.picked && state.picked.role === 'answer') {
+      state.answers.push({ topic: c.topic, label: state.picked.label });
+      // kept on this computer for "last time"; with the sample family it stays in memory and goes when judge mode is left
+      state.history = addAnswer(state.history, { q: c.asked, topic: c.topic, label: state.picked.label, at: Date.now() });
+      if (!state.demo) void kvSet('history', state.history);
+    }
     render(); return;
   }
   if (t.dataset.confirm === 'change') { state.picked = null; state.waitStart = Date.now(); render(); return; }
@@ -665,9 +689,12 @@ function act(el: HTMLElement) {
     case 'person-remove': state.profile.people.splice(i, 1); saveProfile(); render(); break;
     case 'photo-add': document.querySelector<HTMLInputElement>(`input[data-photo="${i}"]`)?.click(); break;
     case 'photo-remove': delete state.profile.people[i].photo; saveProfile(); render(); break;
+    case 'history-forget':
+      if (confirm(C.about.historyForgetConfirm)) { state.history = []; if (!state.demo) void kvSet('history', []); render(); }
+      break;
     case 'delete-all':
       if (confirm(C.about.deleteConfirm)) {
-        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.made = []; resetCard(); go('welcome'); });
+        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.made = []; resetCard(); go('welcome'); });
       }
       break;
     default:
