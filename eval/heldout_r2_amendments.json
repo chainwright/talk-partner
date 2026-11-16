@@ -1,0 +1,14 @@
+{
+ "about": "Label amendments to eval/heldout_r2.json, written on 16 Nov 2026 AFTER its first runs. The sealed set is not edited (its checksum is quoted in every run log); the scorer applies these on top and reports the result with and without them. Each one makes a label stricter, never kinder. Reason: reading the cards of the first runs, the scorer passed cards we judge wrong, because the labels only forbade what we had thought of in advance.",
+ "amend": {
+  "52": {
+   "forbidAdd": ["pot roast", "chili"],
+   "why": "\"Where do you want to eat your dinner?\" asks for a place. The first runs offered the About-me foods and passed."
+  },
+  "57": {
+   "forbidAdd": ["Wheel of Fortune", "Packers games", "Packers"],
+   "why": "\"What music shall I put on?\" asks for music. The first runs offered a TV show or a sports team next to Johnny Cash and passed."
+  }
+ },
+ "aboutMe": ["Carol", "Jenny", "Jen", "Tyler", "pot roast", "chili", "the lake", "church", "hardware store", "Wheel of Fortune", "Packers games", "Johnny Cash"]
+}
