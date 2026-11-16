@@ -101,6 +101,11 @@ export interface CardWhy {
   dropped: { label: string; rule: string }[];
   /** Where the headline came from. */
   headline: string;
+  /**
+   * Answers on the card that are About-me entries (names, places, foods…). Only a step that ran on this computer can
+   * put them there: the cloud step never sees About me. Empty when the card holds none.
+   */
+  personal?: string[];
 }
 
 export interface Card {

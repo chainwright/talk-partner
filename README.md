@@ -53,25 +53,26 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 
 | Where | Line holds | What it is |
 |---|---|---|
-| `web/src/ai/firebaseEngine.ts:20` | `from 'firebase/ai'` | the only import of the SDK in the repo (guarded by `tests/unit/no-direct-model-calls.test.ts:60`) |
-| `web/src/ai/firebaseEngine.ts:55` | `initializeAppCheck(` | App Check, required by AI Logic |
-| `web/src/ai/firebaseEngine.ts:57` | `getAI(` | the AI Logic instance (Gemini Developer API backend) |
-| `web/src/ai/firebaseEngine.ts:58` | `getGenerativeModel(` | private step model |
-| `web/src/ai/firebaseEngine.ts:59` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
-| `web/src/ai/firebaseEngine.ts:62` | `getGenerativeModel(` | stripped step model |
-| `web/src/ai/firebaseEngine.ts:63` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back is safe |
-| `web/src/ai/firebaseEngine.ts:72` | `getGenerativeModel(` | pictures model (not used in this bundled-pictures build) |
-| `web/src/ai/firebaseEngine.ts:73` | `InferenceMode.ONLY_IN_CLOUD` | its mode |
-| `web/src/ai/firebaseEngine.ts:94` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
-| `web/src/ai/firebaseEngine.ts:99` | `generateContent(` | private step call |
-| `web/src/ai/firebaseEngine.ts:100` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
-| `web/src/ai/firebaseEngine.ts:114` | `generateContent(` | stripped step call |
-| `web/src/ai/firebaseEngine.ts:116` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
-| `web/src/ai/firebaseEngine.ts:125` | `generateContent(` | pictures call (unused in this build) |
-| `web/src/ai/firebaseEngine.ts:145` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app contacts no Google host |
-| `core/pipeline.ts:425` | `ran: r.source` | the private step's trace line is the engine's report |
-| `core/pipeline.ts:505` | `ran: r.source` | the stripped step's trace line is the engine's report |
-| `core/pipeline.ts:533` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
+| `web/src/ai/firebaseEngine.ts:26` | `from 'firebase/ai'` | the only import of the SDK in the repo (guarded by `tests/unit/no-direct-model-calls.test.ts`) |
+| `web/src/ai/firebaseEngine.ts:69` | `getAI(` | the AI Logic instance of the private step: its own Firebase app with no App Check, so a card made on this computer contacts no host |
+| `web/src/ai/firebaseEngine.ts:70` | `getGenerativeModel(` | private step model |
+| `web/src/ai/firebaseEngine.ts:71` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
+| `web/src/ai/firebaseEngine.ts:83` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started on the first cloud call only |
+| `web/src/ai/firebaseEngine.ts:84` | `getAI(` | the AI Logic instance of the cloud steps (Gemini Developer API backend) |
+| `web/src/ai/firebaseEngine.ts:85` | `getGenerativeModel(` | stripped step model |
+| `web/src/ai/firebaseEngine.ts:86` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
+| `web/src/ai/firebaseEngine.ts:95` | `getGenerativeModel(` | pictures model (not used in this bundled-pictures build) |
+| `web/src/ai/firebaseEngine.ts:96` | `InferenceMode.ONLY_IN_CLOUD` | its mode |
+| `web/src/ai/firebaseEngine.ts:118` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
+| `web/src/ai/firebaseEngine.ts:132` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
+| `web/src/ai/firebaseEngine.ts:133` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
+| `web/src/ai/firebaseEngine.ts:149` | `generateContent(` | stripped step call |
+| `web/src/ai/firebaseEngine.ts:151` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
+| `web/src/ai/firebaseEngine.ts:162` | `generateContent(` | pictures call (unused in this build) |
+| `web/src/ai/firebaseEngine.ts:182` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app contacts no Google host |
+| `core/pipeline.ts:448` | `ran: r.source` | the private step's trace line is the engine's report |
+| `core/pipeline.ts:528` | `ran: r.source` | the stripped step's trace line is the engine's report |
+| `core/pipeline.ts:556` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
 | `web/src/main.ts:176` | `function badge(` | the badge is drawn from `card.source` only |
 
 ## One documented cut

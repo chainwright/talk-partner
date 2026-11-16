@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { BUILTIN, pictureFor } from '../../core/pictures';
 import { bodyDetailCard, makeCard, quizOverrideCard } from '../../core/pipeline';
@@ -80,13 +81,28 @@ describe('the step trace reports only what the engine reported (never claims on-
     }
   });
 
-  it('a code-determined card carries "No AI needed" even when the model ran (nothing of its answer is shown)', async () => {
-    const e = new E('ready', 'ok', { topic: 'toilet', kind: 'choice', choices: ['now', 'later'] });
-    const card = await makeCard('Do you need the toilet?', env(e, 'ready', 'ok'));
+  // Changed 16 Nov 2026: a card code decides alone no longer runs the model at all (it used to run it and throw the
+  // answer away, a 3 s wait on a real device), so "No AI needed" is literally true and the trace says "did not run".
+  it('a code-determined card runs no model, even when one is ready: "No AI needed" is literal', async () => {
+    for (const q of ['Do you need the toilet?', 'Do you want coffee or tea?', 'How was the walk?', 'Should we ring Jen or Tyler?']) {
+      const e = new E('ready', 'ok', { topic: 'toilet', kind: 'choice', choices: ['now', 'later'] });
+      const card = await makeCard(q, env(e, 'ready', 'ok'));
+      expect(e.deviceCalls, q).toBe(0);
+      expect(card.source, q).toBe('code');
+      expect(step(card, 'private').ran, q).toBe('skipped');
+      expect(step(card, 'private').why, q).toBe(COPY.notes.trace.notNeeded);
+      expect(step(card, 'stripped').why, q).toBe(COPY.notes.trace.notNeeded);
+    }
+  });
+  it('a longer either-or still asks the model to copy the options, and says so when the code pair is used instead', async () => {
+    const e = new E('ready', 'ok', { topic: 'out', kind: 'choice', choices: ['now', 'later'], options: ['want to walk', 'or'] });
+    const card = await makeCard('Do you want to walk to the shops or stay in the warm?', env(e, 'ready', 'ok'));
     expect(e.deviceCalls).toBe(1);
     expect(card.source).toBe('code');
     expect(step(card, 'private').ran).toBe('on-device');
     expect(step(card, 'private').used).toBe(false);
+    // the cloud step was not needed because the rules made the card, not because a device card was good enough
+    expect(step(card, 'stripped').why).toBe(COPY.notes.trace.notNeeded);
   });
 });
 

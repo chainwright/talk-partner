@@ -189,6 +189,8 @@ function badgeLine(c: Card): string {
   const T = C.badge.tail;
   let tail: string = T.kept;
   if (c.cloudPayload) { const n = countSwaps(c.cloudSwaps); tail = T.sent(n.names, n.other); }
+  // a card made on this computer that offers About-me entries says so: the cloud step could not have offered them
+  else if (c.source === 'on-device' && !c.blocked && c.why?.personal?.length) tail = `${T.kept} · ${T.personal(c.why.personal.join(', '))}`;
   return `<p class="badge-line">${badge(c)}<span class="tail">· ${esc(tail)}</span></p>`;
 }
 
@@ -208,17 +210,18 @@ function traceList(t: StepTrace[] | undefined): string {
  * "Why this card" as one line: what the model proposed, what code kept, added and dropped (each with its rule), who
  * decided, where the headline came from. Every value is read from `Card.why`, which the pipeline wrote while it worked.
  */
-function whyLine(w: CardWhy): string {
+function whyLine(w: CardWhy, ranOffline = false): string {
   const Y = C.how.why;
   const parts: string[] = [];
   if (w.proposed) {
     const p = w.proposed;
     const opts = p.options.length ? ` · ${Y.options}: ${p.options.join(' / ')}` : '';
-    parts.push(`<b>${Y.proposed[p.step]}</b>: ${esc(p.topic || '—')} · ${esc(p.kind)} · ${esc(p.choices.join(', ') || '—')}${esc(opts)}`);
+    parts.push(`<b>${p.step === 'stripped' && ranOffline ? Y.proposedOffline : Y.proposed[p.step]}</b>: ${esc(p.topic || '—')} · ${esc(p.kind)} · ${esc(p.choices.join(', ') || '—')}${esc(opts)}`);
   } else parts.push(`<b>${Y.noProposal}</b>`);
   if (w.kept.length) parts.push(`<b>${Y.kept}</b>: ${esc(w.kept.join(', '))}`);
   if (w.added.length) parts.push(`<b>${Y.added}</b>: ${esc(w.added.map((a) => `${a.label} (${a.from})`).join(', '))}`);
   if (w.dropped.length) parts.push(`<b>${Y.dropped}</b>: ${esc(w.dropped.map((d) => `${d.label} (${d.rule})`).join(', '))}`);
+  if (w.personal?.length) parts.push(`<b>${Y.personal}</b>: ${esc(w.personal.join(', '))}`);
   parts.push(`<b>${Y.decided}</b>: ${esc(w.decided)}`);
   parts.push(`<b>${Y.headline}</b>: ${esc(w.headline)}`);
   return parts.join(' · ');
@@ -227,7 +230,7 @@ function whyLine(w: CardWhy): string {
 /** The panel: one line, open in judge mode and on "How this works"; on the partner screen it sits inside "How this card was made". */
 function whyPanel(c: Card, open: boolean): string {
   if (!c.why) return '';
-  return `<details class="why" ${open ? 'open' : ''}><summary>${C.how.why.heading}</summary><p>${whyLine(c.why)}</p></details>`;
+  return `<details class="why" ${open ? 'open' : ''}><summary>${C.how.why.heading}</summary><p>${whyLine(c.why, !!c.ranOffline)}</p></details>`;
 }
 
 /**
@@ -556,6 +559,20 @@ function patchDevice() {
 async function refreshDevice() {
   state.device = await state.engine.deviceStatus();
   patchDevice();
+  void warm();
+}
+/**
+ * Once per page load, when the private helper is there: load it into memory before the first question, so the first
+ * open question does not wait for it (about 25 s cold on the development machine, about 3 s afterwards). The status
+ * line says "getting ready" meanwhile; questions can be asked during it.
+ */
+let warmed = false;
+async function warm() {
+  if (warmed || state.device !== 'available' || !state.engine.warmDevice) return;
+  warmed = true;
+  state.warming = true; patchDevice();
+  try { await state.engine.warmDevice(); } catch { /* the first real question will report the failure in its trace */ }
+  state.warming = false; patchDevice();
 }
 
 async function make(q: string) {
@@ -666,6 +683,13 @@ async function download() {
   try {
     await state.engine.prepareDevice((p) => { state.downloading = p; if (p >= 1) state.warming = true; patchDevice(); });
   } catch (err) { state.error = (err as Error).message; }
+  // the SDK starts the download and returns; the browser reports when the helper is there
+  for (let i = 0; i < 900; i++) {
+    state.device = await state.engine.deviceStatus();
+    if (state.device === 'available' || state.device === 'unavailable') break;
+    state.device = 'downloading'; patchDevice();
+    await new Promise((r) => setTimeout(r, 2000));
+  }
   state.downloading = null; state.warming = false; await refreshDevice();
 }
 

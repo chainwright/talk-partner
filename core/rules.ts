@@ -346,6 +346,16 @@ export function codePair(q: string, profile?: Profile): [string, string] | null 
   return rx ? checkPair(rx, q, profile) : null;
 }
 
+/**
+ * A plain either-or ("Do you want coffee or tea?"): a short question, no comma, and the pair the code parser read is
+ * two options of one or two words each. Such a card needs no model at all. A longer or twisted either-or ("Nina
+ * Simone, or would you rather have the Antiques Roadshow on?") still gets the model's copy of the options, which the
+ * label check then accepts or rejects: there the model reads better than the parser does.
+ */
+export function plainPair(q: string, pair: [string, string]): boolean {
+  return !q.includes(',') && words(q).length <= 9 && pair.every((p) => words(p).length <= 2);
+}
+
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // ---------------------------------------------------------------- headline (REBUILD_SPEC §2.5, §2.16, §2.2)
@@ -838,6 +848,23 @@ export function snapToProfile(choice: string, profile: Profile): string {
     if (key(e) === k) return e.replace(/^the\s+/i, '');
   }
   return choice;
+}
+
+/**
+ * Which About-me list a card label comes from ("Jenny" -> people, "lake" for "the lake" -> places), or null when it is
+ * not an About-me entry. Used to say, per card, which choices only this computer could have offered: the cloud step
+ * never sees About me.
+ */
+export function fromAboutMe(label: string, profile: Profile): string | null {
+  const key = (s: string) => lc(s).replace(/^the\s+/, '').trim();
+  const k = key(label);
+  if (!k) return null;
+  const lists: [string, string[]][] = [
+    ['people', profile.people.flatMap((p) => [p.name, p.nickname ?? ''])],
+    ['places', profile.places], ['foods', profile.foods], ['TV', profile.tv], ['music', profile.music], ['other', profile.other ?? []],
+  ];
+  for (const [name, entries] of lists) if (entries.some((e) => e && key(e) === k)) return name;
+  return null;
 }
 
 // ---------------------------------------------------------------- rule 7

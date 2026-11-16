@@ -23,6 +23,8 @@ export interface Engine {
   deviceStatus(): Promise<DeviceStatus>;
   /** Must be called from a user gesture if a download is needed. */
   prepareDevice(onProgress?: (p: number) => void): Promise<void>;
+  /** Optional: load the on-device model into memory before the first question. On this computer only; no profile data. */
+  warmDevice?(): Promise<void>;
   /** Private step: the profile is in this prompt, so it runs ONLY on device and throws rather than fall back. */
   runDevice(prompt: string): Promise<ModelResult>;
   /** The exact request body the cloud step would send for this stripped question. */

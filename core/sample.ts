@@ -30,7 +30,7 @@ export const SAMPLE_QUESTIONS: { q: string; short: string; group: SampleGroup; s
   { q: 'Where does it hurt?', short: 'where does it hurt?', group: 'code', shows: 'body map, never AI' },
   { q: 'How was therapy today, and did you eat?', short: 'therapy today, and did you eat?', group: 'coach', shows: 'two questions: one thing at a time, then Next; the first is a feeling scale' },
   { q: 'What year did we get married?', short: 'what year did we marry?', group: 'coach', shows: "tell, don't test" },
-  { q: 'What do you want to do this weekend?', short: 'this weekend?', group: 'model', shows: 'open question: the model proposes' },
-  { q: 'Who should we call tonight?', short: 'who to call tonight?', group: 'model', shows: 'household left out' },
+  { q: 'What do you want to do this weekend?', short: 'this weekend?', group: 'model', shows: 'open question: on this computer the choices come from About me (the lake, church); with cloud help only, they are general' },
+  { q: 'Who should we call tonight?', short: 'who to call tonight?', group: 'model', shows: 'on this computer: real names from About me, the person who lives here left out; nothing is sent' },
   { q: 'Which shirt for the doctor?', short: 'which shirt?', group: 'model', shows: 'weak card: cloud help, or hold two up' },
 ];

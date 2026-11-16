@@ -10,7 +10,7 @@ import { cloudPrompt, devicePrompt } from './prompt';
 import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
-  madeUpVariants, orPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
+  fromAboutMe, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
 import type { BodyRegion, Card, CardWhy, Choice, ModelOutput, Profile, Source, StepTrace, SupportLevel } from './types';
@@ -33,6 +33,19 @@ export function parseModelOutput(text: string): ModelOutput | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Questions that never run a model: the card is fixed by code and identical in every engine state, so a model call
+ * would only add a wait (about 3 s on device). An either-or the parser cannot read plainly, or options it cannot find,
+ * still go to the model, which copies the options out of the question for the label check.
+ */
+export function needsNoModel(q: string, profile?: Profile): boolean {
+  if (isQuiz(q) || isPainLevel(q) || isBodyWhere(q)) return true;
+  const pair = codePair(q, profile);
+  if (pair) return plainPair(q, pair);
+  if (offersOptions(q)) return false;
+  return isAuxYesNo(q) || isOrNot(q) || isFeelingQuestion(q);
 }
 
 /** Questions where code alone fixes the choices (the model only adds a topic). */
@@ -160,10 +173,10 @@ function proposal(o: ModelOutput | null, step: 'private' | 'stripped'): CardWhy[
 }
 
 /** The finished "why": kept = the card's answers that code did not add. */
-function whyFor(card: Card, proposed: CardWhy['proposed'], decided: string, headline: string, track: WhyTrack): CardWhy {
+function whyFor(card: Card, proposed: CardWhy['proposed'], decided: string, headline: string, track: WhyTrack, profile: Profile): CardWhy {
   const addedLabels = new Set(track.added.map((a) => lc(a.label)));
   const kept = proposed ? card.choices.filter((c) => c.role === 'answer' && !addedLabels.has(lc(c.label)) && !addedLabels.has(lc(c.spoken))).map((c) => c.label) : [];
-  return { proposed, decided, kept, added: track.added, dropped: track.dropped, headline };
+  return { proposed, decided, kept, added: track.added, dropped: track.dropped, headline, personal: card.choices.filter((c) => c.role === 'answer' && !!fromAboutMe(c.label, profile)).map((c) => c.label) };
 }
 
 /** A fixed card (yes/no, feeling, pain, body, memory): nothing the model proposed is on it. */
@@ -279,8 +292,16 @@ export function assemble(
     r.to = 'device';
     r.reasons = [];
   }
+  // A card from the private step whose every answer is an About-me entry stays on this computer: the cloud step never
+  // sees About me, so its card could only be a generic one. What the rules dropped on the way is still in the "why".
+  const shown = answers.slice(0, choiceCap(support));
+  if (!pair && o && step === 'private' && r.to === 'cloud' && shown.length >= 2 && shown.every((a) => !!fromAboutMe(a, profile))) {
+    notes.push(N.personalKept);
+    r.to = 'device';
+    r.reasons = [];
+  }
   const card = finish({ ...base, notes, topic: headline, kind: 'choice', route: r }, answers, [escapeFor(asked, answers, profile)], profile, support);
-  card.why = whyFor(card, proposal(o, step), decided, headlineFrom, track);
+  card.why = whyFor(card, proposal(o, step), decided, headlineFrom, track, profile);
   return card;
 }
 
@@ -393,7 +414,8 @@ function noEscapeOnly(card: Card): Card {
 function finishTrace(trace: StepTrace[], card: Card): StepTrace[] {
   const byStep = new Map(trace.map((t) => [t.step, t]));
   const priv = byStep.get('private') ?? { step: 'private' as const, ran: 'skipped' as const, why: T.notNeeded, used: false };
-  const strip = byStep.get('stripped') ?? { step: 'stripped' as const, ran: 'skipped' as const, why: T.cloudNotNeeded, used: false };
+  // not needed because the rules made the card alone, or because the card made on this computer was good enough: say which
+  const strip = byStep.get('stripped') ?? { step: 'stripped' as const, ran: 'skipped' as const, why: card.source === 'on-device' ? T.cloudNotNeeded : T.notNeeded, used: false };
   const code: StepTrace = { step: 'code', ran: 'on-device', why: T.codeRan, used: true };
   // the step whose answer the person sees: the stripped leg when the cloud (or its offline fall-back) answered,
   // the private leg when the device card was kept, neither when code decided alone or the card is blocked
@@ -414,7 +436,8 @@ async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]
   if (pending) notes.push(N.twoQuestions);
 
   if (isQuiz(asked)) return { ...assemble(asked, pending, null, profile, support, 'code'), notes };
-  if (!isPainLevel(asked) && !isBodyWhere(asked)) {
+  // A question code decides alone (yes / no, a plain either-or, feeling, pain, body) never runs a model.
+  if (!needsNoModel(asked, profile)) {
     if (env.deviceReady) {
       try {
         const r = await engine.runDevice(devicePrompt(asked, profile));

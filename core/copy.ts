@@ -18,7 +18,7 @@ const COPY = {
     notDownloaded: 'One-time setup: download the private helper (several GB, once).',
     download: 'Download',
     downloading: (pct: string) => `Downloading the private helper${pct}. Simple questions work meanwhile.`,
-    warming: 'Getting ready. About 20 seconds the first time.',
+    warming: 'Getting the private helper ready on this computer. The first time after the browser starts can take about half a minute.',
     unavailable: "This computer can't run the private helper. Yes/no, either-or and pain questions still work.",
     unavailableCloudOff: 'Open questions need cloud help.',
     unavailableCloudOn: 'Open questions use cloud help.',
@@ -92,6 +92,8 @@ const COPY = {
     // The line after the badge, always visible. Read from the card's recorded payload (the receipt's own test), never assumed.
     tail: {
       kept: 'nothing left this computer',
+      /** After `kept`, on a card made on this computer that offers About-me entries. */
+      personal: (labels: string) => `${labels} from About me`,
       sent: (names: number, other: number) =>
         `the question left this computer, ${names + other ? `${names} name${names === 1 ? '' : 's'} and ${other} other About me word${other === 1 ? '' : 's'} swapped out` : 'no About me words in it'}`,
     },
@@ -225,8 +227,12 @@ const COPY = {
     why: {
       heading: 'Why this card',
       proposed: { private: 'The private step proposed', stripped: 'The cloud step proposed' },
+      /** The question-only step when the cloud was unreachable and the SDK ran it on this computer instead. */
+      proposedOffline: 'The question-only step (run on this computer, offline) proposed',
       noProposal: 'No model answer reached the rules',
       kept: 'Kept', added: 'Added by code', dropped: 'Dropped', decided: 'Decided by', headline: 'Headline',
+      /** Answers that are About-me entries: only a step on this computer can offer them. */
+      personal: 'From About me (never sent)',
       options: 'either-or options',
       decidedBy: {
         pairModel: 'either-or: the two options the model copied out of the question, passed the label check',
@@ -366,6 +372,7 @@ const COPY = {
     cloudOptionsUnfit: "The cloud's options didn't fit; device card kept.",
     holdUpTwo: 'The real options are not known: hold up two and point to each as you ask.',
     ranOffline: 'Ran on this computer (offline). Nothing was sent.',
+    personalKept: 'Every choice on this card is from About me, so cloud help is not asked: it never sees About me.',
     cloudFailed: (msg: string) => `Cloud step failed (${msg}); device card kept.`,
     page: (i: number, n: number, escape: string) => `Page ${i} of ${n}: "${escape}" shows the next ones.`,
     tellPrefix: "Tell, don't test: ",
@@ -382,7 +389,7 @@ const COPY = {
       deviceGot: 'got the question and the About me lists',
       cloudOff: 'cloud help is off',
       cloudUnconfigured: 'cloud help is not configured on this copy',
-      cloudNotNeeded: 'not needed: the card from this computer was good enough',
+      cloudNotNeeded: 'not needed: the card made on this computer was good enough',
       cloudLeak: 'not sent: the question still held an About me word',
       cloudGot: 'got the question only, About me words swapped out',
       cloudOffline: 'the cloud was unreachable, so the stripped question ran on this computer',

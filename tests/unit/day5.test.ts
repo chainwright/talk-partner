@@ -105,21 +105,24 @@ describe('"why this card" is written from the values the rules worked on', () =>
     expect(c.why!.kept).toEqual([]);
   });
   it('either-or: the model\'s copied options are kept and its loose choices dropped', async () => {
-    const dev = choice(['tea', 'water'], 'drink', ['coffee', 'tea']);
-    const c = await makeCard('Do you want coffee or tea?', env(new Fake(dev)));
+    // Changed 16 Nov 2026: a plain either-or ("coffee or tea?") no longer runs a model at all (needsNoModel), so this
+    // case uses a longer either-or, where the model's copy of the options is still asked for and checked.
+    const dev = choice(['stay in the warm', 'nap'], 'out', ['walk to the shops', 'stay in the warm']);
+    const c = await makeCard('Do you want to walk to the shops or stay in the warm?', env(new Fake(dev)));
     consistent(c, dev);
     expect(c.why!.decided).toBe(W.decidedBy.pairModel);
-    expect(c.why!.kept).toEqual(['coffee', 'tea']);
-    expect(c.why!.dropped).toEqual([{ label: 'water', rule: W.rules.orOnly }]);
+    expect(c.why!.kept).toEqual(['walk to the shops', 'stay in the warm']);
+    expect(c.why!.dropped).toEqual([{ label: 'nap', rule: W.rules.orOnly }]);
     expect(c.why!.headline).toBe(W.headlineFrom.pair);
   });
   it('either-or: failed model options are listed, and the pair is read from the question in code', async () => {
-    const dev = choice(['coffee', 'tea'], 'coffee', ['want coffee', 'or']);
-    const c = await makeCard('Do you want coffee or tea?', env(new Fake(dev)));
+    // Changed 16 Nov 2026: a longer either-or, for the same reason as above.
+    const dev = choice(['walk to the shops', 'stay in the warm'], 'out', ['want to walk', 'or']);
+    const c = await makeCard('Do you want to walk to the shops or stay in the warm?', env(new Fake(dev)));
     consistent(c, dev);
     expect(c.why!.decided).toBe(W.decidedBy.pairCode);
-    expect(c.why!.dropped).toEqual([{ label: 'want coffee', rule: W.rules.optionsFailed }, { label: 'or', rule: W.rules.optionsFailed }]);
-    expect(c.why!.kept).toEqual(['coffee', 'tea']);
+    expect(c.why!.dropped).toEqual([{ label: 'want to walk', rule: W.rules.optionsFailed }, { label: 'or', rule: W.rules.optionsFailed }]);
+    expect(c.why!.kept).toEqual(['walk to the shops', 'stay in the warm']);
   });
   it('no model: no proposal, the pair read in code', async () => {
     const c = await makeCard('Do you want coffee or tea?', env(new Fake(null), { deviceReady: false }));
