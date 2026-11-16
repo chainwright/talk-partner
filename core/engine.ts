@@ -2,6 +2,8 @@
 // through Firebase AI Logic (web: firebase/ai; Android: firebase-ai + firebase-ai-ondevice; iOS: FirebaseAILogic).
 // There is no direct model engine: tests/unit/no-direct-model-calls.test.ts fails the build if one appears.
 
+import { cloudTextRequest, pictureRequestBody } from './requests';
+
 export type DeviceStatus = 'available' | 'downloadable' | 'downloading' | 'unavailable';
 
 export interface ModelResult {
@@ -31,4 +33,24 @@ export interface Engine {
   pictureRequest(word: string): unknown;
   /** Generates a picture for a generic word (cloud only; images cannot be made on device). Data URL or null. */
   picture(word: string): Promise<string | null>;
+}
+
+/**
+ * The engine of a copy with no project settings (a bare clone, no `.env.local`): no model can run here, on the device
+ * or in the cloud, and every model call says so. Cards that code decides alone (yes / no, either-or, pain, body map,
+ * feelings, memory questions, the repair card) never call the engine, so they work on such a copy unchanged.
+ */
+export class NullEngine implements Engine {
+  readonly label = 'no project settings: rules only';
+  readonly cloudConfigured = false;
+  readonly modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  async deviceStatus(): Promise<DeviceStatus> { return 'unavailable'; }
+  async prepareDevice(): Promise<void> { throw new Error(NullEngine.WHY); }
+  async runDevice(): Promise<ModelResult> { throw new Error(NullEngine.WHY); }
+  /** What cloud help would get, for the "what would be sent" panel; nothing is ever sent from this engine. */
+  cloudRequest(strippedQuestion: string): unknown { return cloudTextRequest(strippedQuestion); }
+  async runCloud(): Promise<ModelResult> { throw new Error(NullEngine.WHY); }
+  pictureRequest(word: string): unknown { return pictureRequestBody(word); }
+  async picture(): Promise<string | null> { return null; }
+  static readonly WHY = 'this copy has no project settings';
 }

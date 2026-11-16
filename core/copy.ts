@@ -22,7 +22,7 @@ const COPY = {
     unavailable: "This computer can't run the private helper. Yes/no, either-or and pain questions still work.",
     unavailableCloudOff: 'Open questions need cloud help.',
     unavailableCloudOn: 'Open questions use cloud help.',
-    noConfig: 'This copy of the app is not set up yet (no project settings).',
+    noConfig: 'This copy has no project settings, so no AI runs here. Yes/no, either-or, feeling, pain and body questions still make cards.',
     deviceReason: 'The private helper runs on desktop Chrome and needs free disk space and memory. Phones, tablets and other browsers use cloud help instead.',
   },
 

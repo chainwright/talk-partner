@@ -15,7 +15,7 @@ import { SAMPLE_PROFILE, SAMPLE_QUESTIONS } from '../../core/sample';
 import { stripQuestion } from '../../core/strip';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
-import { LazyFirebaseEngine } from './ai/firebaseEngine';
+import { pickEngine } from './ai/pick';
 import { CROSS, TICK, builtinPicto, monogram, photoTile } from './pictos';
 import { kvClear, kvGet, kvSet } from './store';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
@@ -34,7 +34,8 @@ interface Settings {
 }
 
 interface State {
-  engine: Engine | null;
+  /** Never null: a copy with no project settings gets the rules-only engine (ai/pick.ts), so code cards still work. */
+  engine: Engine;
   device: DeviceStatus;
   downloading: number | null;
   warming: boolean;
@@ -65,7 +66,7 @@ interface State {
 
 const cfg = webConfig();
 const state: State = {
-  engine: cfg ? new LazyFirebaseEngine(cfg) : null,
+  engine: pickEngine(cfg),
   device: 'unavailable',
   downloading: null,
   warming: false,
@@ -82,7 +83,7 @@ const state: State = {
   recap: false,
   recapDone: false,
   lastQuestion: '',
-  error: cfg ? null : C.status.noConfig,
+  error: null,
   made: [],
   waitStart: null,
   consentChecked: false,
@@ -159,7 +160,7 @@ function nav(): string {
 const footer = () => `<footer>${C.footer}</footer>`;
 
 function statusLine(): string {
-  if (!state.engine) return `<span class="dot off"></span>${esc(state.error ?? C.status.noConfig)}`;
+  if (!cfg) return `<span class="dot off"></span>${C.status.noConfig}`;
   if (state.warming) return `<span class="dot wait"></span>${C.status.warming}`;
   switch (state.device) {
     case 'available': return `<span class="dot ok"></span>${C.status.ready}`;
@@ -312,7 +313,7 @@ function partnerScreen(): string {
     ${state.demo ? `<p class="sample">${C.app.sample}</p>` : ''}
     <form id="ask"><input id="q" autocomplete="off" placeholder="${C.ask.placeholder}" aria-label="${C.ask.label}" value="${esc(state.lastQuestion)}"><button id="make" type="submit" ${state.busy ? 'disabled' : ''}>${state.busy ? C.ask.making : C.ask.make}</button></form>
     ${state.demo ? chipGroups() : ''}
-    <div id="result" aria-live="polite">${c ? cardPanel(c) : ''}</div>
+    <div id="result" aria-live="polite">${c ? cardPanel(c) : state.error ? `<p class="warn">${esc(state.error)}</p>` : ''}</div>
     ${state.demo ? receiptPanel(true) : ''}
     ${judgeLine}
     <div class="settings">
@@ -340,7 +341,7 @@ function cardPanel(c: Card): string {
     main = `<p class="label">${C.card.sayThis}</p><p class="say">${esc(c.say)}</p><p class="tip">${C.repair.tip} <span id="wait" class="wait"></span></p>`;
     actions = `<button class="primary" data-act="show">${C.card.show}</button>${stuck}`;
   } else if (c.blocked) {
-    const offer = !state.settings.cloudHelp && state.engine?.cloudConfigured && c.unsentPayload
+    const offer = !state.settings.cloudHelp && state.engine.cloudConfigured && c.unsentPayload
       ? `<p class="offer">${C.blocked.cloudCouldTry} <button class="link" data-act="show-sent">${C.blocked.showWouldSend}</button> <a href="#/cloud">${C.blocked.turnOn}</a></p>` : '';
     main = `<p class="warn">${esc(c.blocked)}</p><p class="say">${C.card.justAsk}</p>${offer}`;
   } else if (state.less) {
@@ -478,7 +479,7 @@ function cloudScreen(): string {
 /** The private helper's state on the first screen, as the SDK reports it. Patched in place when the check finishes. */
 function welcomeDevice(): string {
   const W = C.welcome;
-  if (!state.engine) return `<p class="warn">${esc(state.error ?? '')}</p>`;
+  if (!cfg) return `<p><span class="dot off"></span>${C.status.noConfig}</p>`;
   if (state.device === 'available') return `<p><span class="dot ok"></span>${C.status.ready}</p>`;
   if (state.device === 'downloadable' || state.device === 'downloading') return `<p><span class="dot wait"></span>${statusLine().replace(/<span class="dot[^>]*><\/span>/, '')}</p>`;
   return `<p><span class="dot off"></span>${W.cantRun} ${C.status.deviceReason}</p>`;
@@ -553,13 +554,13 @@ function patchDevice() {
   const n = document.querySelector<HTMLElement>('#nodevice'); if (n) n.hidden = state.device === 'available';
 }
 async function refreshDevice() {
-  if (state.engine) state.device = await state.engine.deviceStatus();
+  state.device = await state.engine.deviceStatus();
   patchDevice();
 }
 
 async function make(q: string) {
-  if (!state.engine || !q.trim()) return;
-  state.busy = true; state.lastQuestion = q; resetCard(); render();
+  if (!q.trim()) return;
+  state.busy = true; state.error = null; state.lastQuestion = q; resetCard(); render();
   try {
     const card = await makeCard(q, {
       profile: state.profile, support: state.settings.support, engine: state.engine,
@@ -660,7 +661,7 @@ function act(el: HTMLElement) {
 }
 
 async function download() {
-  if (!state.engine) return;
+  if (!cfg) return;
   state.device = 'downloading'; patchDevice();
   try {
     await state.engine.prepareDevice((p) => { state.downloading = p; if (p >= 1) state.warming = true; patchDevice(); });
