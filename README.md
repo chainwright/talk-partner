@@ -46,7 +46,7 @@ Under every card, **"Where each step ran"** lists the private step, the cloud st
 
 **States you can force:** cloud leg = turn on cloud help (`#/cloud`); no-model state = any browser without Gemini Nano shows the private step as "did not run" on every card; offline fall-back = switch the network off after a cloud card and ask again.
 
-**Honesty notes.** No on-device run has happened on the development machine yet (it lacks the disk for Gemini Nano), so every "on-device" claim here is what the code enforces and the tests check, not something we have watched run. The sample family is made up. The pre-period prototype is listed in `DISCLOSURE.md`; the git tag **`pre-contest`** marks the import commit that holds exactly the carried-over files.
+**Honesty notes.** The on-device step was first run on 16 Nov 2026 (Gemini Nano in desktop Chrome 157, through Firebase AI Logic `ONLY_ON_DEVICE`); the recorded run, with the SDK's `inferenceSource` per call, the hosts contacted and screenshots, is in `devlog/ondevice_proof_1/RUN_LOG.md`, made at the git tag **`ondevice-proof-1`** by `scripts/e2e-ondevice.mjs`. It is one machine and one made-up family, not a measurement of card quality. The sample family is made up. The pre-period prototype is listed in `DISCLOSURE.md`; the git tag **`pre-contest`** marks the import commit that holds exactly the carried-over files.
 
 ### Every Firebase AI Logic call, by file and line
 Checked by `tests/unit/judge-path.test.ts` (each line must still contain the snippet), so this table cannot go stale silently.
