@@ -2,7 +2,8 @@
 
 For each row of `CLAIMS.md`: the file that does it, the command that checks it, and the saved output. Commands run
 from the repository root after `npm install`. Saved outputs under `devlog/evidence_r2/at_head_2/` were made at commit
-`161c491` on a clean tree; each file ends with its exit code or its commit line.
+`161c491`; each file ends with its exit code or its commit line. `check.txt` there was made again at `510f84a`
+(its header says so) with `scripts/save-log.mjs`, which keeps a machine's folder names out of a saved log.
 
 | # | Where it is done | Command | Saved output |
 |---|---|---|---|

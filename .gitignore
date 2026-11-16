@@ -8,3 +8,4 @@ dist/
 
 # owner-only notes: never published
 devlog/*_STEPS_*.md
+devlog/PUBLIC_SCRUB_TODO.md

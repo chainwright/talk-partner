@@ -1,3 +1,7 @@
+date: 2026-11-16T23:54:26.998Z
+commit: 510f84a37612f20d8cad6dab25fc03ef4aad4203 (clean working tree)
+command: npm run check
+
 
 > talk-partner@0.2.0 check
 > npm run lint && npm run typecheck && npm run test
@@ -20,7 +24,7 @@
 
  Test Files  25 passed (25)
       Tests  922 passed (922)
-   Start at  17:02:33
-   Duration  813ms (tests 78%, import 15%, transform 5%, worker 2%)
+   Start at  17:54:28
+   Duration  555ms (tests 73%, import 18%, transform 7%, worker 3%)
 
 exit code: 0
