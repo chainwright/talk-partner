@@ -1,5 +1,10 @@
 # Talk Partner
 
+About 2 million people in the United States live with aphasia[^1], and the people who talk with them every day are
+rarely taught how: when practising speech-language pathologists sent in samples of their therapy goals, fewer than 3%
+involved any communication partner training, although 97% of those surveyed said they do some with families, mostly
+without a written goal[^2].
+
 After a stroke, many adults with aphasia understand what is said but can't find the words to answer.
 Talk Partner helps **the partner** ask the way a speech therapist would: it turns the partner's own question into a
 written-choice card (a keyword, two choices with pictures, an escape every time, a tick/cross check) and gives the
@@ -178,6 +183,10 @@ Hidden route for the timed trial in `devlog/TRIAL_PROTOCOL.md`: `#/trial` (a sto
 On-device inference needs desktop Chrome with Gemini Nano (Chrome's hardware and disk requirements apply).
 Without it, yes / no, either-or, feeling and pain cards still work, and open questions use cloud help only if the partner turns it on.
 Without `.env.local` the same cards work and open questions get no card.
+
+## Sources for the first lines
+[^1]: National Institute on Deafness and Other Communication Disorders, "Aphasia" (page last updated 16 Apr 2025): "About 2 million people in the United States are living with aphasia, according to the National Aphasia Association." <https://www.nidcd.nih.gov/health/aphasia>, read 16 Nov 2026.
+[^2]: Haley KL, Hardy LE. "Is Communication Training for Significant Others a Reasonable Rehabilitation Goal in Aphasia Therapy?" *American Journal of Speech-Language Pathology* 2025;34(2):782-797. <https://doi.org/10.1044/2024_AJSLP-24-00472>. Abstract read in the PubMed record (PMID 39913273) on 16 Nov 2026: "less than 3% [of the goal samples] involved any form of communication partner training"; "Almost all SLPs (97%) reported engaging in CPT with family members ... most explained that CPT was typically handled without goal setting" (156 speech-language pathologists in the United States). A survey of clinicians, not a count of families.
 
 ## Licence
 Apache-2.0. Pre-existing work is listed in `DISCLOSURE.md`.
