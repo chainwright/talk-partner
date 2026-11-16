@@ -126,6 +126,12 @@ try {
     if (s === 'phone') {
       const top = await js('document.querySelector("[data-act=show]")?.getBoundingClientRect().bottom');
       check('phone: "Show to person" above the fold (390 × 844)', top !== undefined && top <= 844, `bottom at ${Math.round(top)}px`);
+      // judge mode on a phone: the person's card follows the actions, before the panels (it was at 3714 of 4216 px)
+      const pc = await js(`(() => { const y = (s, k) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect()[k] + scrollY) : -1; };
+        const tiles = [...document.querySelectorAll('#person .tile')].map((t) => t.getBoundingClientRect().bottom + scrollY);
+        return { card: y('#person', 'top'), headline: y('#person .headline', 'top'), tiles: Math.round(Math.max(...tiles)), n: tiles.length, actions: y('#result .actions', 'bottom'), why: y('#result .why', 'top'), page: document.documentElement.scrollHeight }; })()`);
+      check('phone judge mode: the person\'s card starts in the first screen, right after the actions and before "Why this card"', pc.n >= 2 && pc.card >= pc.actions && pc.card <= 844 && pc.tiles < pc.why, JSON.stringify(pc));
+      check('phone judge mode: the whole card (headline and every tile) is within the first two screens', pc.n >= 2 && pc.tiles <= 2 * 844, `lowest tile ends at ${pc.tiles}px of ${pc.page}px`);
     }
     // full-screen person view, then a tap and the confirm step
     await click('[data-act="show"]');
@@ -165,7 +171,7 @@ try {
     const order = await js(`(() => { const y = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().top) : undefined; }; return ['#result .badge', '#result .why[open]', '#result details[open] .trace', '.receipt[open]'].map(y); })()`);
     check(`${s} judge mode: badge → why this card → where each step ran → privacy receipt, each open, in that order`, order.every((v, i) => v !== undefined && (i === 0 || v > order[i - 1])), order.join(' < '));
     const groups = await js('document.querySelectorAll(".chips.group").length');
-    check(`${s} judge mode: the sample questions sit in groups above the card; the session line is one line under the receipt`, groups === 3 && (await js('document.querySelector(".chips.group").getBoundingClientRect().top < document.querySelector("#result").getBoundingClientRect().top && document.querySelector(".judge").getBoundingClientRect().top > document.querySelector(".receipt").getBoundingClientRect().top && !document.querySelector(".judge").open')), `${groups} groups`);
+    check(`${s} judge mode: the sample questions sit in groups above the card; the session line is one line under the receipt`, groups === 3 && (await js('document.querySelector(".chips.group").getBoundingClientRect().top < document.querySelector("#result .badge-line").getBoundingClientRect().top && document.querySelector(".judge").getBoundingClientRect().top > document.querySelector(".receipt").getBoundingClientRect().top && !document.querySelector(".judge").open')), `${groups} groups`);
     // the one-frame wow (field review, item ★2): the partner's question and the correction on the left, the person's card on the right
     await withFold(async (fold) => { await aboveFold('judge mode, double question', fold, true, false); await frame('23-wow-frame'); });
     await chip('Should we ring Jen or Tyler?');
