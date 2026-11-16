@@ -1,0 +1,994 @@
+{
+ "about": {
+  "what": "A labelled set of 60 partner questions with the card we expect for each. Written by the project authors on 16 Nov 2026, after the card rules were frozen at commit 64509da and before the first run of scripts/eval-heldout.mjs; no rule was changed after that run. The labels are ours. This is not a user trial and says nothing about people living with aphasia.",
+  "family": "The made-up sample family in core/sample.ts (Frank; Carol asking; Jenny \"Jen\", Tyler; pot roast, chili; the lake, church, hardware store; Wheel of Fortune, Packers games; Johnny Cash). Two choices at a time (the default).",
+  "scoring": {
+   "either-or, yes-no": "correct when the card is of the expected kind, its answers are exactly the expected ones in order (any of the listed phrasings, case ignored) and the way-out tile is one of the listed",
+   "feeling": "correct when the card is a feeling scale with the way-out \"something else\" (the scale words are fixed in code and not labelled)",
+   "pain, body": "correct when the card is of the expected kind",
+   "memory": "correct when there is no card and the partner gets the \"tell, don't test\" line",
+   "who, where, what (open)": "rules alone: correct when no card is made and the question is passed on (a wrong card would be an error). With a model: correct when a choice card is shown with at least two answers, the expected way-out tile, no forbidden answer and, where \"personal\" is given, at least \"personalMin\" answers from that About-me list"
+  }
+ },
+ "questions": [
+  {
+   "id": 1,
+   "type": "either-or",
+   "q": "Would you like toast or cereal?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "toast"
+     ],
+     [
+      "cereal"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 2,
+   "type": "either-or",
+   "q": "Shall I open the window or the door?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "window",
+      "the window"
+     ],
+     [
+      "door",
+      "the door"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 3,
+   "type": "either-or",
+   "q": "Do you want to sit inside or outside?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "inside"
+     ],
+     [
+      "outside"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 4,
+   "type": "either-or",
+   "q": "Should we go today or tomorrow?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "today"
+     ],
+     [
+      "tomorrow"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 5,
+   "type": "either-or",
+   "q": "Red jumper or the green one?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "red jumper",
+      "red"
+     ],
+     [
+      "green one",
+      "the green one",
+      "green jumper",
+      "green"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 6,
+   "type": "either-or",
+   "q": "Frank, do you want the big spoon or the small spoon?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "big spoon",
+      "the big spoon"
+     ],
+     [
+      "small spoon",
+      "the small spoon"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 7,
+   "type": "either-or",
+   "q": "Do you want to watch Wheel of Fortune or the Packers game?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "Wheel of Fortune"
+     ],
+     [
+      "Packers game",
+      "the Packers game",
+      "Packers games"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 8,
+   "type": "either-or",
+   "q": "Shall we ring Tyler or Jenny first?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "Tyler"
+     ],
+     [
+      "Jenny"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 9,
+   "type": "either-or",
+   "q": "Would you rather have a bath or a shower tonight?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "bath",
+      "a bath"
+     ],
+     [
+      "shower",
+      "a shower"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 10,
+   "type": "either-or",
+   "q": "Do you want your tablets now or after lunch?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "now"
+     ],
+     [
+      "after lunch"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 11,
+   "type": "either-or",
+   "q": "Is it too hot or too cold in here?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "too hot",
+      "hot"
+     ],
+     [
+      "too cold",
+      "cold"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 12,
+   "type": "either-or",
+   "q": "Shall I make chili, or would you rather have pot roast?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "chili"
+     ],
+     [
+      "pot roast"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 13,
+   "type": "either-or",
+   "q": "Do you want me to drive, or shall we take the bus?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "drive",
+      "me to drive",
+      "I drive",
+      "you drive"
+     ],
+     [
+      "take the bus",
+      "the bus",
+      "bus"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 14,
+   "type": "either-or",
+   "q": "Soup or a sandwich for lunch?",
+   "expect": {
+    "kind": "choice",
+    "answers": [
+     [
+      "soup"
+     ],
+     [
+      "sandwich",
+      "a sandwich"
+     ]
+    ],
+    "escape": [
+     "something else",
+     "someone else"
+    ]
+   }
+  },
+  {
+   "id": 15,
+   "type": "yes-no",
+   "q": "Are you cold?",
+   "expect": {
+    "kind": "yesno",
+    "answers": [
+     [
+      "yes"
+     ],
+     [
+      "no"
+     ]
+    ],
+    "escape": [
+     "not sure"
+    ]
+   }
+  },
+  {
+   "id": 16,
+   "type": "yes-no",
+   "q": "Do you want the light off?",
+   "expect": {
+    "kind": "yesno",
+    "answers": [
+     [
+      "yes"
+     ],
+     [
+      "no"
+     ]
+    ],
+    "escape": [
+     "not sure"
+    ]
+   }
+  },
+  {
+   "id": 17,
+   "type": "yes-no",
+   "q": "Is the telly too loud?",
+   "expect": {
+    "kind": "yesno",
+    "answers": [
+     [
+      "yes"
+     ],
+     [
+      "no"
+     ]
+    ],
+    "escape": [
+     "not sure"
+    ]
+   }
+  },
+  {
+   "id": 18,
+   "type": "yes-no",
+   "q": "Did you sleep well?",
+   "expect": {
+    "kind": "yesno",
+    "answers": [
+     [
+      "yes"
+     ],
+     [
+      "no"
+     ]
+    ],
+    "escape": [
+     "not sure"
+    ]
+   }
+  },
+  {
+   "id": 19,
+   "type": "yes-no",
+   "q": "Shall we go out or not?",
+   "expect": {
+    "kind": "yesno",
+    "answers": [
+     [
+      "yes"
+     ],
+     [
+      "no"
+     ]
+    ],
+    "escape": [
+     "not sure"
+    ]
+   }
+  },
+  {
+   "id": 20,
+   "type": "yes-no",
+   "q": "Have you taken your tablets?",
+   "expect": {
+    "kind": "yesno",
+    "answers": [
+     [
+      "yes"
+     ],
+     [
+      "no"
+     ]
+    ],
+    "escape": [
+     "not sure"
+    ]
+   }
+  },
+  {
+   "id": 21,
+   "type": "yes-no",
+   "q": "Can I get you a drink?",
+   "expect": {
+    "kind": "yesno",
+    "answers": [
+     [
+      "yes"
+     ],
+     [
+      "no"
+     ]
+    ],
+    "escape": [
+     "not sure"
+    ]
+   }
+  },
+  {
+   "id": 22,
+   "type": "yes-no",
+   "q": "Would you like a blanket?",
+   "expect": {
+    "kind": "yesno",
+    "answers": [
+     [
+      "yes"
+     ],
+     [
+      "no"
+     ]
+    ],
+    "escape": [
+     "not sure"
+    ]
+   }
+  },
+  {
+   "id": 23,
+   "type": "yes-no",
+   "q": "Are you tired, love?",
+   "expect": {
+    "kind": "yesno",
+    "answers": [
+     [
+      "yes"
+     ],
+     [
+      "no"
+     ]
+    ],
+    "escape": [
+     "not sure"
+    ]
+   }
+  },
+  {
+   "id": 24,
+   "type": "yes-no",
+   "q": "Do you want Jenny to come on Sunday?",
+   "expect": {
+    "kind": "yesno",
+    "answers": [
+     [
+      "yes"
+     ],
+     [
+      "no"
+     ]
+    ],
+    "escape": [
+     "not sure"
+    ]
+   }
+  },
+  {
+   "id": 25,
+   "type": "feeling",
+   "q": "How are you feeling this morning?",
+   "expect": {
+    "kind": "feeling",
+    "escape": [
+     "something else"
+    ]
+   }
+  },
+  {
+   "id": 26,
+   "type": "feeling",
+   "q": "How was the physio?",
+   "expect": {
+    "kind": "feeling",
+    "escape": [
+     "something else"
+    ]
+   }
+  },
+  {
+   "id": 27,
+   "type": "feeling",
+   "q": "How did you sleep?",
+   "expect": {
+    "kind": "feeling",
+    "escape": [
+     "something else"
+    ]
+   }
+  },
+  {
+   "id": 28,
+   "type": "feeling",
+   "q": "How was your lunch?",
+   "expect": {
+    "kind": "feeling",
+    "escape": [
+     "something else"
+    ]
+   }
+  },
+  {
+   "id": 29,
+   "type": "feeling",
+   "q": "How do you feel about moving the bed downstairs?",
+   "expect": {
+    "kind": "feeling",
+    "escape": [
+     "something else"
+    ]
+   }
+  },
+  {
+   "id": 30,
+   "type": "feeling",
+   "q": "How was the visit with Tyler?",
+   "expect": {
+    "kind": "feeling",
+    "escape": [
+     "something else"
+    ]
+   }
+  },
+  {
+   "id": 31,
+   "type": "feeling",
+   "q": "How's the new chair?",
+   "expect": {
+    "kind": "feeling",
+    "escape": [
+     "something else"
+    ]
+   }
+  },
+  {
+   "id": 32,
+   "type": "feeling",
+   "q": "How was church today?",
+   "expect": {
+    "kind": "feeling",
+    "escape": [
+     "something else"
+    ]
+   }
+  },
+  {
+   "id": 33,
+   "type": "pain",
+   "q": "How bad is the pain?",
+   "expect": {
+    "kind": "pain"
+   }
+  },
+  {
+   "id": 34,
+   "type": "pain",
+   "q": "How much does it hurt?",
+   "expect": {
+    "kind": "pain"
+   }
+  },
+  {
+   "id": 35,
+   "type": "pain",
+   "q": "How bad is your headache right now?",
+   "expect": {
+    "kind": "pain"
+   }
+  },
+  {
+   "id": 36,
+   "type": "body",
+   "q": "Where is the pain?",
+   "expect": {
+    "kind": "body"
+   }
+  },
+  {
+   "id": 37,
+   "type": "body",
+   "q": "Where does it hurt today?",
+   "expect": {
+    "kind": "body"
+   }
+  },
+  {
+   "id": 38,
+   "type": "body",
+   "q": "Where is it sore?",
+   "expect": {
+    "kind": "body"
+   }
+  },
+  {
+   "id": 39,
+   "type": "memory",
+   "q": "What day is it today?",
+   "expect": {
+    "kind": "no-quiz",
+    "noCard": true
+   }
+  },
+  {
+   "id": 40,
+   "type": "memory",
+   "q": "Do you remember when Tyler was born?",
+   "expect": {
+    "kind": "no-quiz",
+    "noCard": true
+   }
+  },
+  {
+   "id": 41,
+   "type": "memory",
+   "q": "What's my name?",
+   "expect": {
+    "kind": "no-quiz",
+    "noCard": true
+   }
+  },
+  {
+   "id": 42,
+   "type": "memory",
+   "q": "What did you have for breakfast?",
+   "expect": {
+    "kind": "no-quiz",
+    "noCard": true
+   }
+  },
+  {
+   "id": 43,
+   "type": "who",
+   "q": "Who do you want to ring this afternoon?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "someone else"
+    ],
+    "personal": [
+     "Jenny",
+     "Jen",
+     "Tyler"
+    ],
+    "personalMin": 2,
+    "forbid": [
+     "Carol",
+     "you",
+     "me",
+     "Frank"
+    ]
+   }
+  },
+  {
+   "id": 44,
+   "type": "who",
+   "q": "Who should we invite for Sunday dinner?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "someone else"
+    ],
+    "personal": [
+     "Jenny",
+     "Jen",
+     "Tyler"
+    ],
+    "personalMin": 2,
+    "forbid": [
+     "Carol",
+     "you",
+     "me",
+     "Frank"
+    ]
+   }
+  },
+  {
+   "id": 45,
+   "type": "who",
+   "q": "Who would you like to visit this week?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "someone else"
+    ],
+    "personal": [
+     "Jenny",
+     "Jen",
+     "Tyler"
+    ],
+    "personalMin": 2,
+    "forbid": [
+     "Carol",
+     "you",
+     "me",
+     "Frank"
+    ]
+   }
+  },
+  {
+   "id": 46,
+   "type": "who",
+   "q": "Who shall I text about the appointment?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "someone else"
+    ],
+    "forbid": [
+     "Frank"
+    ]
+   }
+  },
+  {
+   "id": 47,
+   "type": "who",
+   "q": "Who do you want to sit with at the wedding?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "someone else"
+    ],
+    "forbid": [
+     "Frank"
+    ]
+   }
+  },
+  {
+   "id": 48,
+   "type": "who",
+   "q": "Who should drive us on Friday?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "someone else"
+    ],
+    "forbid": [
+     "Frank"
+    ]
+   }
+  },
+  {
+   "id": 49,
+   "type": "where",
+   "q": "Where do you want to go this afternoon?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "somewhere else"
+    ],
+    "personal": [
+     "lake",
+     "the lake",
+     "church",
+     "hardware store"
+    ],
+    "personalMin": 2
+   }
+  },
+  {
+   "id": 50,
+   "type": "where",
+   "q": "Where shall we go on Saturday?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "somewhere else"
+    ],
+    "personal": [
+     "lake",
+     "the lake",
+     "church",
+     "hardware store"
+    ],
+    "personalMin": 2
+   }
+  },
+  {
+   "id": 51,
+   "type": "where",
+   "q": "Where would you like to sit?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "somewhere else"
+    ],
+    "forbid": [
+     "lake",
+     "the lake",
+     "church",
+     "hardware store"
+    ]
+   }
+  },
+  {
+   "id": 52,
+   "type": "where",
+   "q": "Where do you want to eat your dinner?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "somewhere else"
+    ],
+    "forbid": [
+     "lake",
+     "the lake",
+     "church",
+     "hardware store"
+    ]
+   }
+  },
+  {
+   "id": 53,
+   "type": "where",
+   "q": "Where should we go for a walk?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "somewhere else"
+    ],
+    "forbid": [
+     "hardware store"
+    ]
+   }
+  },
+  {
+   "id": 54,
+   "type": "where",
+   "q": "Where would you like to go for your birthday?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "somewhere else"
+    ]
+   }
+  },
+  {
+   "id": 55,
+   "type": "what",
+   "q": "What would you like for supper?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "something else"
+    ],
+    "personal": [
+     "pot roast",
+     "chili"
+    ],
+    "personalMin": 2
+   }
+  },
+  {
+   "id": 56,
+   "type": "what",
+   "q": "What do you want to watch tonight?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "something else"
+    ],
+    "personal": [
+     "Wheel of Fortune",
+     "Packers games"
+    ],
+    "personalMin": 2
+   }
+  },
+  {
+   "id": 57,
+   "type": "what",
+   "q": "What music shall I put on?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "something else"
+    ],
+    "personal": [
+     "Johnny Cash"
+    ],
+    "personalMin": 1
+   }
+  },
+  {
+   "id": 58,
+   "type": "what",
+   "q": "What do you want to do tomorrow morning?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "something else"
+    ]
+   }
+  },
+  {
+   "id": 59,
+   "type": "what",
+   "q": "What should we get Tyler for his birthday?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "something else"
+    ],
+    "forbid": [
+     "Jenny",
+     "Jen",
+     "Tyler",
+     "Carol",
+     "you",
+     "me",
+     "Frank"
+    ]
+   }
+  },
+  {
+   "id": 60,
+   "type": "what",
+   "q": "What do you fancy for breakfast?",
+   "expect": {
+    "kind": "choice",
+    "open": true,
+    "escape": [
+     "something else"
+    ],
+    "forbid": [
+     "pot roast",
+     "chili"
+    ]
+   }
+  }
+ ]
+}

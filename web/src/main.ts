@@ -321,7 +321,7 @@ function partnerScreen(): string {
       <span class="privacy">${state.settings.cloudHelp ? C.consent.isOn : C.privacy.cloudOff}</span>
     </div>
   </section>
-  <section id="person" class="person" aria-label="Card for the person">${personView(false)}</section>
+  <section id="person" class="person" aria-label="Card for the person" data-kind="${c ? c.kind : ''}" data-blocked="${c?.blocked ? '1' : ''}">${personView(false)}</section>
 </main>${footer()}`;
 }
 
