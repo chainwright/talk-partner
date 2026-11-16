@@ -49,7 +49,7 @@ interface State {
   before: Card | null;
   picked: Choice | null;
   confirmed: boolean;
-  /** "Less support": the person sees only the headline. */
+  /** "Hide the choices": the person sees only the headline. */
   less: boolean;
   /** Confirmed answers this session, for the recap. */
   answers: { topic: string; label: string }[];
@@ -317,7 +317,7 @@ function partnerScreen(): string {
     ${state.demo ? receiptPanel(true) : ''}
     ${judgeLine}
     <div class="settings">
-      <label>Support <select id="support"><option value="mild" ${state.settings.support === 'mild' ? 'selected' : ''}>mild (3 choices)</option><option value="more" ${state.settings.support === 'more' ? 'selected' : ''}>more (2 choices)</option><option value="most" ${state.settings.support === 'most' ? 'selected' : ''}>most (2, larger)</option></select></label>
+      <label>${C.support.label} <select id="support">${(['mild', 'more', 'most'] as const).map((v) => `<option value="${v}" ${state.settings.support === v ? 'selected' : ''}>${C.support.options[v]}</option>`).join('')}</select></label>
       <span class="privacy">${state.settings.cloudHelp ? C.consent.isOn : C.privacy.cloudOff}</span>
     </div>
   </section>
@@ -349,7 +349,7 @@ function cardPanel(c: Card): string {
     actions = `<button data-act="less">${C.card.lessOff}</button>`;
   } else {
     main = `<p class="label">${C.card.sayThis}</p><p class="say">${esc(c.say)}</p><p class="tip">${C.card.tip} <span id="wait" class="wait"></span></p>`;
-    const next = c.pending ? C.card.nextSecond : c.nextPage ? C.card.nextWhere : '';
+    const next = c.pending ? C.card.nextSecond : c.nextPage ? (c.kind === 'body' ? C.card.nextWhere : C.card.nextMore) : '';
     actions = `<button class="primary" data-act="show">${C.card.show}</button><button data-act="less">${C.card.less}</button>${next ? `<button data-act="next">${next}</button>` : ''}${state.answers.length ? `<button data-act="recap">${C.card.recap}</button>` : ''}${stuck}`;
   }
   let answered = '';

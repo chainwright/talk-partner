@@ -36,12 +36,18 @@ const COPY = {
     label: 'Your question',
   },
 
+  /** The support setting, named by what the person sees (it read backwards as "Support: more (2 choices)"). */
+  support: {
+    label: 'Choices on a card',
+    options: { mild: '3 at a time', more: '2 at a time', most: '2 at a time, larger tiles' },
+  },
+
   card: {
     sayThis: 'Say this:',
     tip: 'Point to each choice as you read it. Then wait.',
     waiting: (clock: string) => `Waiting ${clock}. Give time; there's no rush.`,
     show: 'Show to person',
-    less: 'Less support',
+    less: 'Hide the choices',
     lessOn: 'Just ask normally:',
     lessOff: 'Show choices again',
     next: 'Next',
@@ -281,7 +287,8 @@ const COPY = {
         overlap: 'overlaps another choice',
         overThree: 'more than three',
         genericWhere: 'a generic place when About me has real ones',
-        overCap: 'over the limit at this support level',
+        genericWho: 'a general word when About me has the people themselves',
+        overCap: 'on the next page: this card shows two at a time',
         fixed: 'a fixed card: the model\'s choices are not used',
         orOnly: 'either-or: only the two options the question names',
         optionsFailed: 'failed the label check',
@@ -390,6 +397,8 @@ const COPY = {
     ranOffline: 'Ran on this computer (offline). Nothing was sent.',
     personalKept: 'Every choice on this card is from About me, so cloud help is not asked: it never sees About me.',
     cloudFailed: (msg: string, kept: boolean) => `Cloud step failed (${msg})${kept ? '; the card made on this computer is kept' : ''}.`,
+    moreOnNext: (labels: string, escape: string) => `More on the next page: ${labels}. "${escape}" on the card, or "Next: more choices", shows the next page.`,
+    lastPage: 'The rest of the choices for this question.',
     page: (i: number, n: number, escape: string) => `Page ${i} of ${n}: "${escape}" shows the next ones.`,
     tellPrefix: "Tell, don't test: ",
     memoryBlocked: 'This one asks them to remember, so there is no card. Try saying it instead.',

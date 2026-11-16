@@ -85,9 +85,9 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:154` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
 | `web/src/ai/firebaseEngine.ts:165` | `generateContent(` | pictures call (unused in this build) |
 | `web/src/ai/firebaseEngine.ts:185` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app contacts no Google host |
-| `core/pipeline.ts:448` | `ran: r.source` | the private step's trace line is the engine's report |
-| `core/pipeline.ts:535` | `ran: r.source` | the stripped step's trace line is the engine's report |
-| `core/pipeline.ts:563` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
+| `core/pipeline.ts:466` | `ran: r.source` | the private step's trace line is the engine's report |
+| `core/pipeline.ts:553` | `ran: r.source` | the stripped step's trace line is the engine's report |
+| `core/pipeline.ts:581` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
 | `web/src/main.ts:176` | `function badge(` | the badge is drawn from `card.source` only |
 
 ## One documented cut
@@ -124,9 +124,16 @@ with the first cloud call. One availability probe (`LanguageModel.availability`,
 the only direct touch of Chrome's API; the SDK has no public call for it on the web.
 
 **What the on-device step does that the cloud step cannot.** It is the only step that sees About me. In the recorded
-run "Who should we call tonight?" gives *Jenny / Tyler* on this computer and *family / friend* from the cloud; "What
-would you like for dinner?" gives *pot roast / chili* against *meat / fish*. A card whose every answer is an About-me
+run "What would you like for dinner?" gives *pot roast / chili* on this computer and *meat / fish* from the cloud, and
+"Who should we call tonight?" gave *Jenny / Tyler* against *family / friend*. A card whose every answer is an About-me
 entry stays on this computer even when cloud help is on.
+
+Since that run, one kind of cloud card is completed on this computer: on a call / visit / invite question the cloud's
+general words ("family", "a friend") are replaced in code by the people About me names, minus whoever lives here, so
+with cloud help only the same question now reads *Jenny / Tyler* too. The cloud still gets the question alone: no name,
+no label, no count of people (`dropGenericWho` in `core/rules.ts`, `tests/unit/who-and-more.test.ts`). And when a
+card shows two choices at a time, a third good one is no longer dropped: it waits on a next page, reached by the
+way-out tile or "Next: more choices".
 
 **Limits, stated.** One development machine, one made-up family, one run per question: this shows the path works, not
 how good the cards are. The first answer after the browser starts took 15.8 s (the model loads; the app warms it up at
@@ -137,7 +144,7 @@ under `@firebase/firestore`, which this app does not import.
 
 ## Screens
 - **Partner screen** (`#/`): the question, the coaching line when a rule found one, the line to say, "Show to person",
-  "Less support", "Next", "Recap", "We're stuck", the badge, "Why this card", "What was sent" (the exact request, or what
+  "Hide the choices", "Next", "Recap", "We're stuck", the badge, "Why this card", "What was sent" (the exact request, or what
   would have been sent) and "Where each step ran".
 - **Person screen** (`#/person`): only the keyword, two or three big tiles with pictures, one way out, then "So: lake. Right?"
   with yes / change. The exit is top-right and needs a press-and-hold. "We're stuck" replaces the card with the fixed

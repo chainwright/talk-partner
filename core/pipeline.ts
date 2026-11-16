@@ -10,7 +10,7 @@ import { cloudPrompt, devicePrompt } from './prompt';
 import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
-  fromAboutMe, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
+  dropGenericWho, fromAboutMe, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
 import type { BodyRegion, Card, CardWhy, Choice, ModelOutput, Profile, Source, StepTrace, SupportLevel } from './types';
@@ -149,9 +149,14 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
   next = answers.slice(0, 3); diff(answers, next, R.overThree); answers = next;
   // §2.6: a generic "stay home / go out" is not a place when About me has places to offer instead
   const placed = dropGenericWhere(answers, asked, profile);
-  const droppedGeneric = placed.length < answers.length;
+  let droppedGeneric = placed.length < answers.length;
   diff(answers, placed, R.genericWhere);
   answers = placed;
+  // the same for people: "family / friend" on a call or visit question when About me names who could be called
+  const named2 = dropGenericWho(answers, asked, profile);
+  if (named2.length < answers.length) droppedGeneric = true;
+  diff(answers, named2, R.genericWho);
+  answers = named2;
   if (negs.length && answers.length < 2) rejected.push('negative wording');
   // §2.6: fewer than two answers -> fill from the About-me list of the same kind, or the fixed set for the question type
   let filled: string | null = null;
@@ -278,7 +283,8 @@ export function assemble(
       headlineFrom = W.headlineFrom.question;
       if (answers.some((a) => lc(a) === lc(headline))) headline = 'choices';
     }
-    // the support level's limit (the same cut finish() makes), recorded here so the why says which choice it took
+    // the support level's limit (the same cut finish() makes), recorded here so the why says which choice it moved:
+    // a choice over the limit is not thrown away, it goes to the next page (below)
     for (const a of answers.slice(choiceCap(support))) track.dropped.push({ label: a, rule: W.rules.overCap });
   }
   const r = route('choice', asked, answers, !!pair);
@@ -300,8 +306,16 @@ export function assemble(
     r.to = 'device';
     r.reasons = [];
   }
-  const card = finish({ ...base, notes, topic: headline, kind: 'choice', route: r }, answers, [escapeFor(asked, answers, profile)], profile, support);
+  const escape = escapeFor(asked, answers, profile);
+  const rest = pair ? [] : answers.slice(choiceCap(support));
+  if (rest.length) notes.push(N.moreOnNext(rest.join(', '), escape));
+  const card = finish({ ...base, notes, topic: headline, kind: 'choice', route: r }, answers, [escape], profile, support);
   card.why = whyFor(card, proposal(o, step), decided, headlineFrom, track, profile);
+  if (rest.length) {
+    // A good choice the support level has no room for is kept for a second page, reached by the way-out tile or the
+    // partner's "Next: more choices" (the body map pages the same way). Before, it was dropped without a word.
+    card.nextPage = { ...finish({ ...base, notes: [N.lastPage], topic: headline, kind: 'choice', route: r }, rest, [escape], profile, support), why: card.why };
+  }
   return card;
 }
 
@@ -385,6 +399,10 @@ export async function makeCard(input: string, env: PipelineEnv): Promise<Card> {
   const card = noEscapeOnly(await makeCardInner(input, env, trace));
   // §2.13: a blocked card is never shown to the person, so it carries no choices (not even an escape)
   const out: Card = { ...(card.blocked ? { ...card, choices: [] } : card), trace: finishTrace(trace, card) };
+  // later pages of the same card (more choices, the body map) carry the same record of where it was made and what left
+  for (let p = out.nextPage; p; p = p.nextPage) {
+    Object.assign(p, { trace: out.trace, source: out.source, route: out.route, cloudPayload: out.cloudPayload, cloudSwaps: out.cloudSwaps, cloudAttempted: out.cloudAttempted, unsentPayload: out.unsentPayload, ranOffline: out.ranOffline });
+  }
   const coach = coachFor(out);
   return coach ? { ...out, coach } : out;
 }

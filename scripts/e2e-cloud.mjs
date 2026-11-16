@@ -123,6 +123,28 @@ try {
   check('the request went to Firebase AI Logic', aiHosts2.some((h) => /firebasevertexai\.googleapis\.com/.test(h)), aiHosts2.join(', '));
   await shot('02-cloud-card');
 
+  // 2b. a third choice the model gave is not dropped at two a card: it is on the next page (only when the model gave three)
+  const moreBtn = await js(`document.querySelector('[data-act="next"]')?.innerText ?? ''`);
+  if (/more choices/.test(moreBtn)) {
+    await js(`document.querySelector('[data-act="next"]').click()`); await sleep(500);
+    const tilesNext = await js(`[...document.querySelectorAll('#person .tile span')].map(e => e.innerText)`);
+    check('a third choice from the model is on the next page, with the way out', (tilesNext?.length ?? 0) === 2 && !tiles2.slice(0, 2).includes(tilesNext[0]), JSON.stringify(tilesNext));
+  } else console.log(`next page: not offered on this run (the model gave ${Math.max(0, (tiles2?.length ?? 1) - 1)} choices)`);
+
+  // 3. "who to call" with cloud help only: the cloud gets the bare question; code puts in the people About me names
+  consoleLines.length = 0;
+  await js(`document.querySelector('.chip[data-q="Who should we call tonight?"]').click()`);
+  await sleep(300);
+  await waitFor(`document.querySelector('#make') && !document.querySelector('#make').disabled && !!document.querySelector('#result .badge')`, 60000);
+  const tiles3 = await js(`[...document.querySelectorAll('#person .tile span')].map(e => e.innerText)`);
+  const payload3 = await js(`document.querySelector('#sent pre')?.innerText ?? ''`);
+  const why3 = await js(`document.querySelector('#result .why p')?.innerText ?? ''`);
+  const report3 = consoleLines.filter((l) => l.startsWith('[ai-logic]'));
+  console.log(`who to call -> tiles ${JSON.stringify(tiles3)}\nwhy: ${why3}\nSDK report: ${report3.join(' | ')}`);
+  check('"who to call" with cloud help only offers Jenny / Tyler / someone else', JSON.stringify(tiles3) === JSON.stringify(['Jenny', 'Tyler', 'someone else']), JSON.stringify(tiles3));
+  check('the cloud answered it (inferenceSource=in_cloud) and got the bare question: no name in the request', report3.length === 1 && /inferenceSource=in_cloud/.test(report3[0]) && /Partner asks: Who should we call tonight\?/.test(payload3) && !/Jenny|Tyler|Carol|Frank/.test(payload3), payload3.match(/Partner asks:[^"]*/)?.[0] ?? '');
+  await shot('03-cloud-who-to-call');
+
   console.log(`hosts contacted during the cloud card: ${[...hosts.entries()].map(([h, n]) => `${h}×${n}`).join(', ')}`);
   // never echo tokens: the SDK prints the App Check debug token in debug mode
   const redact = (l) => l.replace(/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/gi, '[token]').replace(/AIza[\w-]{30,}/g, '[key]');

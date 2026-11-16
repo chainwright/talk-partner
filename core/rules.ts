@@ -935,7 +935,7 @@ export function sourceFill(answers: string[], q: string, profile: Profile, cap: 
   if (t === 'who') {
     // only a contact question ("who shall we ring / invite") asks for the family; "who do you fancy on the quiz" does not
     if (!CONTACT.test(q) || PAST_LIFE.test(q)) return null;
-    pool = profile.people.filter((p) => p.name && !p.household && lc(p.name) !== lc(profile.partnerName)).map((p) => p.name);
+    pool = contactPool(profile);
     source = 'people from About me';
   } else if (t === 'where') { pool = profile.places; source = 'places from About me'; }
   else if (t === 'what' && EAT_Q.test(q)) { pool = profile.foods; source = 'foods from About me'; }
@@ -979,6 +979,29 @@ export function recognitionPool(q: string, profile: Profile): { items: string[];
 export function dropGenericWhere(answers: string[], q: string, profile: Profile): string[] {
   if (questionType(q) !== 'where' || profile.places.length < 2) return answers;
   return answers.filter((a) => !GENERIC_WHERE.test(a.trim()));
+}
+
+const GENERIC_WHO = /^(?:(?:a|an|the|some|your|our|my|their)\s+)?(?:famil(?:y|ies)|family members?|friends?|relatives?|relations?|someone|somebody|anyone|people|kids|children|grandchildren|grandkids|loved ones?)$/i;
+
+/** The people a call / visit / invite question can offer: named in About me, not living here, not the partner. */
+export function contactPool(profile: Profile): string[] {
+  return profile.people.filter((p) => p.name && !p.household && lc(p.name) !== lc(profile.partnerName)).map((p) => p.name);
+}
+
+/**
+ * On a "who shall we call / visit / invite" question with at least two such people in About me, a general word
+ * ("family", "a friend") or a bare relation word of someone listed ("daughter") is not an answer: the card offers the
+ * people themselves. This is what a step with no About me (the cloud step) returns, so the names are put in by code
+ * on this computer afterwards; nothing more is sent.
+ */
+export function dropGenericWho(answers: string[], q: string, profile: Profile): string[] {
+  if (questionType(q) !== 'who' || !CONTACT.test(q) || PAST_LIFE.test(q) || contactPool(profile).length < 2) return answers;
+  const relations = new Set(profile.people.map((p) => lc(p.relation)).filter(Boolean));
+  return answers.filter((a) => {
+    const t = a.trim();
+    if (findPerson(t, profile)) return true;
+    return !GENERIC_WHO.test(t) && !relations.has(lc(t).replace(/^(?:a|an|the|your|our|my|their)\s+/, ''));
+  });
 }
 
 export function cleanTopic(t: string): string {

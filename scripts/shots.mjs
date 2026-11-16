@@ -160,7 +160,7 @@ try {
     // open question with no model and cloud help off: blocked, with the inline offer
     await chip('What do you want to do this weekend?');
     await shot('12-blocked-offer');
-    // less support
+    // "Hide the choices" (the person sees the headline only)
     await chip('Do you need the toilet?');
     await click('[data-act="less"]');
     await shot('13-less-support');
