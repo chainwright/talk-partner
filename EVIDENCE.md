@@ -3,23 +3,22 @@
 For each row of `CLAIMS.md`: the file that does it, the command that checks it, and the saved output. Commands run
 from the repository root after `npm install`.
 
-**The saved outputs are in `devlog/evidence_r4/final/`.** Every one was made at commit `5cb9c5e`. The last commit that
-changes code or the text on screen is `7db4f91`; `5cb9c5e` adds one README paragraph, and the commits after it add only
-these logs and documents. Each log was written by `scripts/save-log.mjs`, which records at the top the date, the commit
+**The saved outputs are in `devlog/evidence_r5/final/`.** Every one was made at commit `24793c1`, the last commit that
+changes code or the text on screen; the commits after it add only these logs and documents. Each log was written by `scripts/save-log.mjs`, which records at the top the date, the commit
 and whether the working tree was clean when the command started (it was, for every file there: the scripts wrote into
-the ignored folder `devlog/eval_runs/r4/`, which is the path the logs name for their screenshots, and the files were
+the ignored folder `devlog/eval_runs/r5/`, which is the path the logs name for their screenshots, and the files were
 copied here afterwards), and the exit code at the end. Of the layout screenshots only the eight named below or in the
 devlog were copied; the script makes about a hundred. Paths below are relative to that folder unless they start with
 `devlog/`.
 
 | # | Where it is done | Command | Saved output |
 |---|---|---|---|
-| 1 | `core/pipeline.ts` (`assemble`, `finish`), `core/rules.ts` | `npm run check` | `check.txt`: 957 tests, exit 0. Card shape under random input: `tests/unit/card.property.test.ts` |
-| 2 | `core/pipeline.ts` (`needsNoModel`) | `npm run eval` | `heldout/heldout_r2_rules.md`: 36 of 42 code-decided questions matched the label; the six misses are listed |
-| 3 | `core/engine.ts` (`NullEngine`), `web/src/ai/pick.ts` | `npm run e2e:noconfig` | `e2e-noconfig.txt`: 12/12, only the app's host contacted |
+| 1 | `core/pipeline.ts` (`assemble`, `finish`), `core/rules.ts` | `npm run check` | `check.txt`: 1150 tests, exit 0. Card shape under random input: `tests/unit/card.property.test.ts` |
+| 2 | `core/pipeline.ts` (`needsNoModel`) | `npm run eval` | `heldout/heldout_r2_rules.md`: 37 of 42 code-decided questions matched the label; the five misses are listed |
+| 3 | `core/engine.ts` (`NullEngine`), `web/src/ai/pick.ts` | `npm run e2e:noconfig` | `e2e-noconfig.txt`: 15/15, only the app's host contacted |
 | 4 | `web/src/ai/firebaseEngine.ts` (the only import of `firebase/ai`) | `npx vitest run tests/unit/no-direct-model-calls.test.ts tests/unit/judge-path.test.ts` | in `check.txt`. The README table lists every call by file and line and is tested against the source |
-| 5 | `firebaseEngine.ts` (`runDevice`), `core/prompt.ts` (`devicePrompt`) | `node scripts/e2e-ondevice.mjs --port 9335` (needs Gemini Nano) | `ondevice/RUN_LOG.md` §2: four questions, each `inferenceSource=on_device`, About-me choices, 0 outside requests; screenshots 01, 02. §5: the same weekend and dinner questions from the cloud alone give general choices (screenshot 08). Also 27 on-device cards in `heldout/heldout_r2_ondevice.md` |
-| 6 | `core/strip.ts` (`stripQuestion`, `findLeaks`), `core/pipeline.ts` (`cloudCard`) | `node scripts/e2e-cloud.mjs` (needs our `.env.local`) | `e2e-cloud.txt`: 18/18, "Partner asks: What do you want to do this weekend with Person A?"; `cloud_shots/02-cloud-card.png`. Unit: `tests/unit/strip-gate.test.ts`, `strip.property.test.ts` |
+| 5 | `firebaseEngine.ts` (`runDevice`), `core/prompt.ts` (`devicePrompt`) | `node scripts/e2e-ondevice.mjs --port 9335` (needs Gemini Nano) | `ondevice/RUN_LOG.md` §2: four questions, each `inferenceSource=on_device`, About-me choices, 0 outside requests; screenshots 01, 02. §5: the same weekend and dinner questions from the cloud alone give general choices (screenshot 08). Also 26 on-device cards in `heldout/heldout_r2_ondevice.md` |
+| 6 | `core/strip.ts` (`stripQuestion`, `findLeaks`), `core/pipeline.ts` (`cloudCard`) | `node scripts/e2e-cloud.mjs` (needs our `.env.local`) | `e2e-cloud.txt`: 25/25, "Partner asks: What do you want to do this weekend with Person A?"; `cloud_shots/02-cloud-card.png`. Unit: `tests/unit/strip-gate.test.ts`, `strip.property.test.ts` |
 | 7 | `firebaseEngine.ts` (`runCloud`, `PREFER_IN_CLOUD`) | `node scripts/e2e-ondevice.mjs --port 9335` | `ondevice/RUN_LOG.md` §4; `ondevice/05-offline-fallback.png` |
 | 8 | `core/pipeline.ts` (`ran: r.source`), `web/src/main.ts` (`badge`) | `npx vitest run tests/unit/firebase-engine.test.ts tests/unit/engine-matrix.test.ts` | in `check.txt`; the `[ai-logic] … inferenceSource=…` console lines are quoted per card in both run logs |
 | 9 | `core/receipt.ts`, `core/requests.ts` | `npx vitest run tests/unit/receipt.test.ts` | in `check.txt`; `e2e-cloud.txt`: "What was sent" shows one line and the size by default, the exact request is folded and one click opens it; on screen in judge mode and `#/how`, exportable as JSON; the session's receipt line is quoted at the end of `ondevice/RUN_LOG.md` §4 |
@@ -27,8 +26,8 @@ devlog were copied; the script makes about a hundred. Paths below are relative t
 | 11, 12 | `core/rules.ts` (`isQuiz`, `splitQuestion`), `core/pipeline.ts` (`coachFor`); the opening line: `core/copy.ts` (`app.tagline`) | `npm run eval`; `npx vitest run tests/unit/truth.test.ts` (section 6) | `heldout/heldout_r2_rules.md`: memory 3 of 4; the miss is question 42. In `check.txt`: the two coaching lines, no coaching line on a question with nothing to correct, and no code path in the client that picks or confirms a choice outside a tap on the card |
 | 13 | `core/rules.ts` (`dropGenericWho`, `sourceFill`) | `npx vitest run tests/unit/who-and-more.test.ts`; live: `node scripts/e2e-cloud.mjs` | `e2e-cloud.txt`: the "who to call" line with its tiles and the request "Partner asks: Who should we call tonight?"; `cloud_shots/03-cloud-who-to-call.png`. The cloud's own answer varies: see the same question in `ondevice/RUN_LOG.md` §5 |
 | 14 | `core/pipeline.ts` (`nextPage` in `assemble`) | same test file; live: `node scripts/e2e-cloud.mjs` | `e2e-cloud.txt`: "a third choice from the model is on the next page" |
-| 15 | `web/src/styles.css` (one-column order) | `node scripts/shots.mjs` (dev server running) | `shots.txt`: 83/83, with the measured positions (the two "phone judge mode, two questions in one" lines); pictures `shots/phone_04-…png`, `shots/phone_18-…png` |
-| 16 | `eval/heldout_r2.json`, `eval/heldout_r2_amendments.json`, `scripts/eval-heldout.mjs` | `npm run eval`; `node scripts/eval-heldout.mjs --port 9335` (a run with no `--out` goes to a new folder under `devlog/eval_runs/`) | The four runs the claim quotes: `devlog/evidence_r3/heldout_at_8ca45b5/run_a`, `run_b`, `run_c` and `devlog/evidence_r3/heldout_at_8251484/`. Two more, not quoted in the claim: at `43c5265` (`devlog/evidence_r3/final/heldout/`) and at `5cb9c5e`, after the changes of day 9 (`heldout/heldout_r2_ondevice.md` and `.json`, `heldout/heldout_r2_rules.md`): 16 of 18 matched and 13 personal in both; 38 and 36 of the 42 code-decided. Our reading: `devlog/evidence_r2/heldout_r2_NOTES.md`. The set was committed before it was first run (`git show 9ac4fd9 --stat`); the first run's files are kept in `devlog/evidence_r2/` and were made on a tree with uncommitted changes |
+| 15 | `web/src/styles.css` (one-column order) | `node scripts/shots.mjs` (dev server running) | `shots.txt`: 85/85, with the measured positions (the two "phone judge mode, two questions in one" lines); pictures `shots/phone_04-…png`, `shots/phone_18-…png` |
+| 16 | `eval/heldout_r2.json`, `eval/heldout_r2_amendments.json`, `scripts/eval-heldout.mjs` | `npm run eval`; `node scripts/eval-heldout.mjs --port 9335` (a run with no `--out` goes to a new folder under `devlog/eval_runs/`) | The four runs the claim quotes: `devlog/evidence_r3/heldout_at_8ca45b5/run_a`, `run_b`, `run_c` and `devlog/evidence_r3/heldout_at_8251484/`. Two more, not quoted in the claim: at `43c5265` (`devlog/evidence_r3/final/heldout/`) and at `5cb9c5e`, after the changes of day 9 (`devlog/evidence_r4/final/heldout/`): 16 of 18 matched and 13 personal in both; 38 and 36 of the 42 code-decided. The one run after the rule changes of day 10, at `24793c1` (`heldout/heldout_r2_ondevice.md` and `.json`, `heldout/heldout_r2_rules.md`): 17 of 18 matched, 14 personal; 39 of the 42 code-decided on this computer, 37 with the rules alone. Our reading: `devlog/evidence_r2/heldout_r2_NOTES.md`. The set was committed before it was first run (`git show 9ac4fd9 --stat`); the first run's files are kept in `devlog/evidence_r2/` and were made on a tree with uncommitted changes |
 | 17 | `core/history.ts`, `web/src/main.ts` | `npx vitest run tests/unit/history.test.ts` | in `check.txt` |
 | 18 | README "Look-alikes, named" | open the links | none saved; the quotes were read on 11 Nov 2026 |
 | 19 | README, first lines and footnotes | open the two links | none saved; read on 16 Nov 2026 (the journal page refused an automated fetch, so the abstract was read in its PubMed record) |
@@ -51,8 +50,12 @@ import; exit 1 is the audit's own), `fonts-check.txt` (no request leaves the app
 Rows 6, 13 and 14 (live part) need a Firebase project's web config in `.env.local`. Rows 5, 7 and the on-device pass
 of 16 need desktop Chrome with Gemini Nano. For those we can only show our saved runs.
 
-**Earlier records, kept as they were:** `devlog/evidence_r3/final/` (every log at `43c5265`, before the changes of day 9), `devlog/ondevice_proof_1/` (the first on-device run, tag `ondevice-proof-1`),
+**The hosted copy.** `devlog/evidence_live/e2e-cloud_live_2026-11-16_24793c1.txt`: `node scripts/e2e-cloud.mjs --url
+https://talk-partner.web.app/` after the deploy of `24793c1` (25/25: the cloud step through App Check, and Remote Config,
+on the live site). The log of the first deploy, at `c37e4c4`, is next to it.
+
+**Earlier records, kept as they were:** `devlog/evidence_r4/final/` (every log at `5cb9c5e`, before the changes of day 10), `devlog/evidence_r3/final/` (every log at `43c5265`, before the changes of day 9), `devlog/ondevice_proof_1/` (the first on-device run, tag `ondevice-proof-1`),
 `devlog/evidence_r2/` (runs at `83a7da5` and, under `at_head_2/`, at `161c491`; the on-device log there and the first
 held-out run record uncommitted changes in the tree, so we do not call them clean),
 `devlog/evidence_r3/cold_start_at_67fb3e2/RUN_LOG.md` (an on-device run right after a browser start: 21.7 s to
-"Ready"; the log only, its screenshots were not kept), `devlog/DAY1.md`–`DAY9.md`.
+"Ready"; the log only, its screenshots were not kept), `devlog/DAY1.md`–`DAY10.md`.

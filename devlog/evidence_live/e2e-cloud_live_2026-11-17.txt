@@ -1,0 +1,29 @@
+device status line: Checking whether this computer can run the private helper…
+hosts contacted on page load (cloud help off): talk-partner.web.app×11
+PASS  page load with cloud help off contacts only the app host  (talk-partner.web.app×11)
+PASS  coffee/tea card is coffee / tea / something else  (["coffee","tea","something else"])
+PASS  coffee/tea needs no AI  (No AI needed)
+PASS  coffee/tea sent nothing to Firebase/Google  (no Google hosts)
+PASS  before any cloud request the number under the chips reads "0 bytes left this computer"  (0 bytes left this computer 2 cards this session · page load not counted)
+PASS  cloud help turned on through the consent screen  (Cloud help: on)
+open question -> badge "Cloud help (question only)", tiles ["stay home","go out","something else"], 3358 ms
+notes: More on the next page: visit family. "something else" on the card, or "Next: more choices", shows the next page.
+PASS  open question answered by the cloud leg (inferenceSource in_cloud)  (Cloud help (question only))
+PASS  the card has at least two answers plus one escape  (["stay home","go out","something else"])
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=3250
+PASS  the SDK reported inferenceSource=in_cloud for the stripped leg  ([ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=3250)
+PASS  the badge line says the question left with 1 name swapped out  (· the question left this computer, 1 name and 0 other About me words swapped out)
+PASS  the sent payload has "Person A", not the name  (Partner asks: What do you want to do this weekend with Person A?)
+PASS  the panel says it was sent
+PASS  "What was sent" shows one line and the size by default; the exact request is folded and one click opens it  ({"line":"Partner asks: What do you want to do this weekend with Person A?","size":"4,528 bytes with the fixed instructions and the answer format, which are the same for every question","open":false,"seen":false,"opened":true,"seenAfter":true,"bytes":4528})
+PASS  the request went to Firebase AI Logic  (content-firebaseappcheck.googleapis.com, firebasevertexai.googleapis.com)
+PASS  after the cloud answered the number is the size of that request, and it is called "handed to cloud help", not "0 bytes left"  (4,528 bytes handed to cloud help in 1 request, the question only (1 About me word swapped  (request counted by hand: 4528 bytes))
+PASS  a third choice from the model is on the next page, with the way out  (["visit family","something else"])
+who to call -> tiles ["Jenny","Tyler","someone else"]
+why: The cloud step proposed: call · choice · Person A, family, friend · Added by code: Jenny (people from About me), Tyler (people from About me) · Dropped: Person A (a label the cloud made up), family (a general word when About me has the people themselves), friend (a general word when About me has the people themselves) · From About me (never sent): Jenny, Tyler · Decided by: the model proposed; code checked every choice · Headline: the model's topic
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=1686
+PASS  "who to call" with cloud help only: no general word, at least one person About me names, "someone else" as the way out  (["Jenny","Tyler","someone else"])
+PASS  the cloud answered it (inferenceSource=in_cloud) and got the bare question: no name in the request  (Partner asks: Who should we call tonight?)
+hosts contacted during the cloud card: www.google.com×3, www.gstatic.com×1, content-firebaseappcheck.googleapis.com×2, firebasevertexai.googleapis.com×3
+
+commit c37e4c4ff0f5b31e4de8d0a70364497722686d96  18/18 checks passed  2026-11-17T02:15:16.718Z

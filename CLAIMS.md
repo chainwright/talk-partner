@@ -1,7 +1,7 @@
 # Claims
 
 Every claim we make about Talk Partner in the README, on screen or in the submission notes, with its status on
-16 Nov 2026 at commit `7db4f91` (the last commit that changes code or on-screen text; `EVIDENCE.md` says where the
+16 Nov 2026 at commit `24793c1` (the last commit that changes code or on-screen text; `EVIDENCE.md` says where the
 runs made at it are saved). **True** = you can reproduce it from a clone. **True, recorded** = it needs our project
 settings or the on-device model, so we give the saved run instead. **Partial** = true with a limit, stated. **Not
 claimed** = things we are sometimes assumed to claim and do not. Proof for each row is in `EVIDENCE.md` under the same
@@ -24,7 +24,7 @@ number.
 | 13 | With cloud help only, a "who to call" card offers the people About me names; the cloud gets no name, no label and no count of people | Partial | The names are put in by code on this computer after the cloud answers. When the cloud offers a specific role ("doctor"), it keeps a place and one About-me person may be left off (seen in the run of 16 Nov) |
 | 14 | A third good choice is not dropped at two a card: it waits on a next page | True | Applies to open cards. A card read from the question shows exactly the options asked: two, or all three when the question names three ("Soup, a sandwich, or leftovers?"), also at "2 at a time"; at the largest tiles the third is on the next page, and a fourth always is |
 | 15 | On a phone the person's card comes right after the buttons and starts in the first screen | Partial | In judge mode at 390 × 844, once a card is made, the card and its headline start above the fold, also on the tallest partner side (a two-question card with its coaching line; `scripts/shots.mjs` checks it). The tiles are in the second screen. "Show to person" (full screen) is the intended way to show it |
-| 16 | On the 18 open questions of our labelled set, rules alone make no card (0 of 18); the on-device model made a card matching our label for 15 or 16 of 18, 12 or 13 of them with the family's own About-me entries | True, recorded | Our own questions and labels, written the day of the last rule change; one made-up family; four runs on 16 Nov (16, 16, 16, 15), and the model's answers vary. Two labels were made stricter after the first run (questions 52 and 57, both now misses). On the other 42 questions code decides and 36 to 38 matched. It measures "the card we meant", not benefit to anyone |
+| 16 | On the 18 open questions of our labelled set, rules alone make no card (0 of 18); the on-device model made a card matching our label for 15 or 16 of 18, 12 or 13 of them with the family's own About-me entries | True, recorded | Our own questions and labels, written the day of the last rule change; one made-up family; four runs on 16 Nov (16, 16, 16, 15), and the model's answers vary. Two labels were made stricter after the first run (questions 52 and 57, both now misses). On the other 42 questions code decides and 36 to 38 matched. One more run after the rule changes of day 10 (commit `24793c1`): 17 of 18, 14 personal, 39 of 42; it is one run, and those rules were changed after the set had been run, so we quote the four earlier runs. It measures "the card we meant", not benefit to anyone |
 | 17 | Confirmed answers are kept on this computer and never reach a model | True | Checked by import and call-site tests, not by a network capture of every path |
 | 18 | The look-alikes named in the README do something different | Partial | Read on their public pages on 11 Nov 2026. It is what we found, not proof that nothing else exists |
 | 19 | About 2 million people in the United States live with aphasia; fewer than 3% of sampled therapy goals involved partner training | True | Both read at the source on 16 Nov 2026. The second is a survey of clinicians' goals, not a count of families |
@@ -45,8 +45,9 @@ number.
 - That it is a therapy, a diagnosis or a medical device.
 - That the on-device cards are good. The recorded runs show the path works and what it returned; the misses on our own set, two
   wrong open cards among them, are listed in `devlog/evidence_r2/heldout_r2_NOTES.md`.
-- That a judge can try the AI steps today without setup: there is no hosted URL, and App Check uses a debug token on
-  localhost only.
+- That the hosted copy (<https://talk-partner.web.app>) shows the on-device step to everyone: that step needs desktop
+  Chrome with Gemini Nano downloaded. The cloud step works there once cloud help is turned on
+  (`devlog/evidence_live/`); on localhost App Check uses a debug token.
 - Any number from the 9–10 Nov prototype (16 of 50, 39 of 50) as a result of this build. They are in the README as the
   reason for one design cut and are marked as pre-period.
 - Image generation, text-to-speech, sync between two devices, Android or iOS. The pictures step is defined and unused.

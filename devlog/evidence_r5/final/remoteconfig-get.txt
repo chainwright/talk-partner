@@ -1,0 +1,21 @@
+date: 2026-11-17T03:20:46Z
+command: npx firebase-tools remoteconfig:get --project talk-partner   (the e-mail of the account that published it is replaced by <project owner>)
+
+┌─────────────────┬──────────────────────────────────────────────────────┐
+│ Entry Name      │ Value                                                │
+├─────────────────┼──────────────────────────────────────────────────────┤
+│ parameters      │ cloud_text_model                                     │
+│                 │ route_mood_words                                     │
+│                 │ route_min_choices                                    │
+│                 │                                                      │
+├─────────────────┼──────────────────────────────────────────────────────┤
+│ parameterGroups │                                                      │
+├─────────────────┼──────────────────────────────────────────────────────┤
+│ version         │ {                                                    │
+│                 │   versionNumber: '1',                                │
+│                 │   updateTime: '2026-11-17T02:57:26.026226Z',         │
+│                 │   updateUser: { email: '<project owner>' }, │
+│                 │   updateOrigin: 'REST_API',                          │
+│                 │   updateType: 'INCREMENTAL_UPDATE'                   │
+│                 │ }                                                    │
+└─────────────────┴──────────────────────────────────────────────────────┘
