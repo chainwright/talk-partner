@@ -650,6 +650,7 @@ const COPY = {
     cloudDownBlocked: 'Cloud help did not answer, so there is no card. Try again, or just ask normally and give time.',
     moreOnNext: (labels: string, escape: string) => `More on the next page: ${labels}. "${escape}" on the card, or "Next: more choices", shows the next page.`,
     lastPage: 'The rest of the choices for this question.',
+    feelingMore: (labels: string, escape: string) => `If none of the three fits: "${escape}" on the card, or "Next: more choices", shows ${labels}.`,
     negativeAsked: 'Your question had a "not" in it. The card asks it the plain way, so yes means yes.',
     optOutAsked: 'Asked as one yes / no question: the "or …?" at the end is the "no" on the card.',
     listedAll: 'You named three, so all three are on the card.',

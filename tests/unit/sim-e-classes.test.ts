@@ -368,7 +368,10 @@ describe('E-7. a feeling scale has a middle at every support level', () => {
         const card = await ask(q, e, support);
         expect(card.kind).toBe('feeling');
         expect(answers(card)).toEqual(['good', 'so-so', 'bad']);
-        expect(card.nextPage ?? null).toBeNull();
+        // (since 17 Nov a question about how the person is in themselves has a second page of feelings behind the
+        // way out: tests/unit/sim-e2-classes.test.ts, group E2-4; a question about a thing or an event has none)
+        if (q === QUESTIONS[0]) expect(answers(card.nextPage!)).toEqual(['sad', 'tired', 'in pain']);
+        else expect(card.nextPage ?? null).toBeNull();
         expect(card.choices.filter((c) => c.role === 'escape')).toHaveLength(1);
         expect(card.say).toContain('so-so');
         expect(e.calls).toEqual([]);

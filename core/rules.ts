@@ -1155,6 +1155,21 @@ export function isFeelingQuestion(q: string): boolean {
 const MEALS = ['lunch', 'dinner', 'breakfast', 'supper', 'tea', 'meal', 'soup', 'food', 'sandwich', 'cake', 'curry', 'stew', 'pie', 'coffee'];
 const ROLE_NOUNS = ['carer', 'caregiver', 'nurse', 'doctor', 'therapist', 'neighbour', 'neighbor', 'cleaner', 'driver', 'helper', 'physio', 'him', 'her', 'them'];
 
+/**
+ * "How are you feeling?", "How do you feel today?", "How's your mood?", "How are things?": a question about how the
+ * person is in themselves, not about a thing, an event or another person ("How was the physio?", "How are you
+ * finding the tablets?", "How do you feel about the move?").
+ */
+export function isSelfFeeling(q: string): boolean {
+  const s = lc(stripAddress(q)).replace(/[’]/g, "'");
+  if (/\bhow\s+(?:are|were|'re)\s+you\s+(?:finding|liking|enjoying|getting\s+on\s+with|managing\s+with|coping\s+with|going\s+to|planning)\b/.test(s)) return false;
+  if (/\bhow\s+do\s+you\s+feel\s+(?:about|if|when)\b/.test(s)) return false;
+  return /^\s*(?:and\s+|so\s+)?how\s+(?:are|'re)\s+you\b/.test(s) || /^\s*(?:and\s+|so\s+)?how\s+do\s+you\s+feel\b/.test(s)
+    || /^\s*(?:and\s+|so\s+)?how(?:'s|\s+is|\s+are)\s+(?:your\s+(?:mood|spirits)|things|everything|life|it\s+going|you\s+doing)\b/.test(s);
+}
+/** The feelings a good-to-bad scale does not hold, offered on its next page for such a question (set E, second run: "a bit sad"). */
+export const FEELING_MORE = ['sad', 'tired', 'in pain'];
+
 /** Rule 5. Which scale a feeling question gets. */
 export function feelingSubtype(q: string, profile?: Profile): FeelingSubtype {
   const s = lc(q);

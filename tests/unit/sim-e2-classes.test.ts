@@ -255,3 +255,35 @@ describe('E2-5. "Where do you want to go?" with cloud help only: the family\'s p
     expect(answers(card)).toEqual(cloud);
   });
 });
+
+describe('E2-4. "How are you feeling?": the way out of good / so-so / bad leads to feelings the scale does not hold', () => {
+  // set E, second run: a man who was "a bit sad" found no tile for it in good / so-so / bad, in all three passes
+  const SELF = ['How are you feeling in yourself today?', 'How do you feel this evening?', "How's your mood today, love?", 'How are you, Alan?', 'How are things with you this week?'];
+  it.each(SELF)('%s: a second page with sad / tired / in pain, made in code', async (q) => {
+    for (const e of [new Scripted(null), new Scripted(JUNK), new Scripted(null, JUNK)]) {
+      for (const support of ['mild', 'more', 'most'] as const) {
+        const card = await ask(q, e, support);
+        expect(card.kind).toBe('feeling');
+        expect(answers(card)).toEqual(['good', 'so-so', 'bad']);
+        const page = card.nextPage!;
+        expect(answers(page)).toEqual(['sad', 'tired', 'in pain']);
+        expect(page.choices.filter((c) => c.role === 'escape').map((c) => c.label)).toEqual(['something else']);
+        expect(page.nextPage ?? null).toBeNull();
+        expect(page.say).toContain('Sad, tired, in pain, or something else?');
+        expect(card.notes).toContain(COPY.notes.feelingMore('sad, tired, in pain', 'something else'));
+        expect(badgeKind(card)).toBe('code');
+        expect(badgeKind(page)).toBe('code');
+      }
+      expect(e.calls).toEqual([]);
+    }
+  });
+  it('each of the three has a picture', async () => {
+    const page = (await ask(SELF[0], new Scripted(null))).nextPage!;
+    expect(page.choices.slice(0, 3).map((c) => c.picture)).toEqual([{ type: 'builtin', id: 'bad' }, { type: 'builtin', id: 'tired' }, { type: 'builtin', id: 'pain' }]);
+  });
+  it.each(['How was the physio session?', "How's the new chair?", 'How did the hearing test go?', 'How was your night?', 'How are you finding the new tablets?', 'What do you think of the new carer?', 'How do you feel about moving the bed downstairs?'])('a question about a thing or an event keeps its one card: %s', async (q) => {
+    const card = await ask(q, new Scripted(null));
+    expect(card.kind).toBe('feeling');
+    expect(card.nextPage ?? null).toBeNull();
+  });
+});

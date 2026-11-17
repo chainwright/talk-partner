@@ -8,7 +8,7 @@ import type { CloudError, Engine } from './engine';
 import { pictureFor } from './pictures';
 import { cloudPrompt, devicePrompt } from './prompt';
 import {
-  BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
+  BODY_DETAIL, BODY_REGIONS, FEELING_MORE, FEELING_SCALES, isSelfFeeling, PAIN_LEVELS, choiceCap, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, wholePair, codePairRead, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   contactPool, dropGenericWho, fromAboutMe, ownFirst, ownSpecific, placesFirst, isUnguessable, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
   besideOwnFilter, codeOptions, contactFirst, dropWhichOne, fillerFilter, whenChoices, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
@@ -363,6 +363,15 @@ export function assemble(
     // the whole scale on one card, its middle included, at every support level
     const card = finish({ ...base, source: 'code', topic: heuristicTopic(asked, profile), kind, subtype }, steps, ['something else'], profile, support, steps.length);
     card.why = fixedWhy(o, step, W.decidedBy.feeling, W.headlineFrom.question);
+    if (subtype === 'general' && isSelfFeeling(asked)) {
+      // "How are you feeling?": good / so-so / bad holds no "a bit sad" (set E, second run, 17 Nov: all three passes
+      // left through the way out). The way out of the scale leads to a second page of feelings it does not hold, fixed
+      // in code like the scale itself; its own way out is the real one.
+      const page = finish({ ...base, source: 'code', topic: card.topic, kind, subtype, notes: [N.lastPage] }, [...FEELING_MORE], ['something else'], profile, support, FEELING_MORE.length);
+      page.why = card.why;
+      card.nextPage = page;
+      card.notes.push(N.feelingMore(FEELING_MORE.join(', '), 'something else'));
+    }
     return card;
   }
 
