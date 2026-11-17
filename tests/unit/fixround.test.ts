@@ -81,9 +81,23 @@ describe('P0 privacy: no About-me term in any cloud payload', () => {
     'What do you miss about Northern soul nights?',
     'What shall we do with Pip while we are out?',
     'What was the Hull City score?',
-    'What time is Tomasz coming on 07700 900456?',
-    'What should Joan bring back from the Royal Oak?',
+    // (two questions of this list changed on 16 Nov 2026, with the rules that came out of the simulation: "What time
+    // is Tomasz coming …?" is now a memory question and "… bring back from the Royal Oak?" turns on a hidden About-me
+    // word; neither is sent at all, see the test after this loop. These two take their place.)
+    'What time should Tomasz come, on 07700 900456?',
+    'What should Joan bring back for the Royal Oak quiz night?',
   ];
+
+  it('a question that is not sent leaks nothing: the time of a fixed visit, and a question that turns on a hidden About-me word', async () => {
+    for (const q of ['What time is Tomasz coming on 07700 900456?', 'What should Joan bring back from the Royal Oak?']) {
+      const e = new Fake(null);
+      const c = await makeCard(q, env(e, RICH, { deviceReady: false }));
+      expect(e.cloudCalls, q).toHaveLength(0);
+      expect(c.cloudPayload ?? null, q).toBeNull();
+      expect(c.cloudAttempted ?? null, q).toBeNull();
+      expect(c.blocked, q).toBeTruthy();
+    }
+  });
 
   for (const q of QUESTIONS) {
     it(q, async () => {

@@ -4,6 +4,7 @@
 
 import './styles.css';
 import './fonts.css';
+import { partnerActions } from '../../core/actions';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
 import { addAnswer, answerCounts, lastAnswer, topQuestions, whenText, type Answered } from '../../core/history';
@@ -408,27 +409,23 @@ function cardPanel(c: Card): string {
   const prev = c.blocked || c.kind === 'repair' ? null : lastAnswer(state.history, c.asked, state.cardAt);
   const counts = prev ? answerCounts(state.history, c.asked, state.cardAt) : [];
   const last = prev ? `<p class="last">${esc(C.card.lastTime(whenText(prev.at, Date.now()), prev.label))}${counts.length > 1 || counts[0]?.n > 1 ? ` ${esc(C.card.lastTimeCounts(counts.map((x) => `${x.label} ×${x.n}`).join(', ')))}` : ''}</p>` : '';
-  // "We're stuck" sits on every card the person can see; the repair card itself offers the way back
-  const stuck = c.kind === 'repair' ? `<button data-act="unstuck">${C.card.unstuck}</button>` : !c.blocked ? `<button data-act="stuck">${C.card.stuck}</button>` : '';
+  // The buttons under the card (core/actions.ts): "We're stuck" on every card the person can see, the way back on the
+  // repair card, and "Next: second question" whenever the question was two in one, also when the first part has no card
+  const actions = partnerActions(c, { less: state.less, hasAnswers: state.answers.length > 0 })
+    .map((a) => `<button ${a.primary ? 'class="primary" ' : ''}data-act="${a.act}">${a.label}</button>`).join('');
   let main: string;
-  let actions = '';
   if (c.kind === 'no-quiz') {
     main = `<p class="label">${C.memory.line}</p><p class="say">${esc(c.say.replace(C.notes.tellPrefix, ''))}</p>`;
-    actions = `<button data-act="override">${C.memory.override}</button>`;
   } else if (c.kind === 'repair') {
     main = `<p class="label">${C.card.sayThis}</p><p class="say">${esc(c.say)}</p><p class="tip">${C.repair.tip} <span id="wait" class="wait"></span></p>`;
-    actions = `<button class="primary" data-act="show">${C.card.show}</button>${stuck}`;
   } else if (c.blocked) {
     const offer = !state.settings.cloudHelp && state.engine.cloudConfigured && c.unsentPayload
       ? `<p class="offer">${C.blocked.cloudCouldTry} <button class="link" data-act="show-sent">${C.blocked.showWouldSend}</button> <a href="#/cloud">${C.blocked.turnOn}</a></p>` : '';
     main = `<p class="warn">${esc(c.blocked)}</p><p class="say">${C.card.justAsk}</p>${offer}`;
   } else if (state.less) {
     main = `<p class="label">${C.card.lessOn}</p><p class="say">${esc(c.asked)}</p>`;
-    actions = `<button data-act="less">${C.card.lessOff}</button>`;
   } else {
     main = `<p class="label">${C.card.sayThis}</p><p class="say">${esc(c.say)}</p><p class="tip">${C.card.tip} <span id="wait" class="wait"></span></p>`;
-    const next = c.pending ? C.card.nextSecond : c.nextPage ? (c.kind === 'body' ? C.card.nextWhere : C.card.nextMore) : '';
-    actions = `<button class="primary" data-act="show">${C.card.show}</button><button data-act="less">${C.card.less}</button>${next ? `<button data-act="next">${next}</button>` : ''}${state.answers.length ? `<button data-act="recap">${C.card.recap}</button>` : ''}${stuck}`;
   }
   let answered = '';
   if (state.recapDone) answered = `<p class="done">${C.person.recapLine} ${esc(recapText())}</p>`;

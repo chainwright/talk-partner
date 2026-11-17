@@ -11,6 +11,7 @@ import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   dropGenericWho, fromAboutMe, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
+  codeOptions, numberScale, orList, painBands, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
 import type { BodyRegion, Card, CardWhy, Choice, ModelOutput, Profile, Source, StepTrace, SupportLevel } from './types';
@@ -41,7 +42,9 @@ export function parseModelOutput(text: string): ModelOutput | null {
  * still go to the model, which copies the options out of the question for the label check.
  */
 export function needsNoModel(q: string, profile?: Profile): boolean {
-  if (isQuiz(q) || isPainLevel(q) || isBodyWhere(q)) return true;
+  if (isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q)) return true;
+  // three or more options named in the question: all of them are read in code, so no model is asked to copy them
+  if (orList(q, profile)) return true;
   const pair = codePair(q, profile);
   if (pair) return plainPair(q, pair);
   if (offersOptions(q)) return false;
@@ -50,7 +53,7 @@ export function needsNoModel(q: string, profile?: Profile): boolean {
 
 /** Questions where code alone fixes the choices (the model only adds a topic). */
 export function codeDetermined(q: string, profile?: Profile): boolean {
-  return isQuiz(q) || isPainLevel(q) || isBodyWhere(q) || !!codePair(q, profile) || isAuxYesNo(q) || isOrNot(q) || isFeelingQuestion(q);
+  return isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || !!codeOptions(q, profile) || isAuxYesNo(q) || isOrNot(q) || isFeelingQuestion(q);
 }
 
 function toChoices(answers: string[], escapes: string[], profile: Profile): Choice[] {
@@ -59,15 +62,16 @@ function toChoices(answers: string[], escapes: string[], profile: Profile): Choi
     // Rule 7: never the partner's own name on the card. The person points at "you"; the partner reads "me".
     const shown = isMe ? label.replace(new RegExp(`\\b${profile.partnerName}\\b`, 'i'), 'you') : label;
     const spoken = isMe ? label.replace(new RegExp(`\\b${profile.partnerName}\\b`, 'i'), 'me') : label;
-    return { label: shown, spoken, role, picture: pictureFor(isMe ? 'you' : label, profile) };
+    // "a lot (6 to 10)" keeps the picture of "a lot"
+    return { label: shown, spoken, role, picture: pictureFor(isMe ? 'you' : label.replace(/\s*\(\d[^)]*\)$/, ''), profile) };
   };
   return [...answers.map((a) => mk(a, 'answer')), ...escapes.map((e) => mk(e, 'escape'))];
 }
 
 /** KB §7 rule 5: up to 3 choices at "mild", 2 at "more" and "most"; always exactly one escape. Numbers as figures (§2.9). */
-function finish(base: Omit<Card, 'choices' | 'say'>, answers: string[], escapes: string[], profile: Profile, support: SupportLevel): Card {
+function finish(base: Omit<Card, 'choices' | 'say'>, answers: string[], escapes: string[], profile: Profile, support: SupportLevel, cap = choiceCap(support)): Card {
   const when = questionType(base.asked) === 'when';
-  const choices = toChoices(answers.slice(0, choiceCap(support)).map((a) => figures(a, when)), escapes.slice(0, 1), profile);
+  const choices = toChoices(answers.slice(0, cap).map((a) => figures(a, when)), escapes.slice(0, 1), profile);
   return { ...base, choices, say: spokenLine(base.asked, choices.map((c) => c.spoken)) };
 }
 
@@ -135,6 +139,11 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
   const named = inventedNameFilter(answers, asked, profile);
   if (named.length < answers.length) rejected.push('made-up options');
   diff(answers, named, R.inventedName); answers = named;
+  next = selfFilter(answers, asked, profile); diff(answers, next, R.self); answers = next;
+  const kind = wrongListFilter(answers, asked, profile);
+  if (kind.dropped.length) rejected.push("a choice didn't fit the question");
+  for (const d of kind.dropped) drop(d, R.wrongList);
+  answers = kind.kept;
   const fit = fitFilter(answers, asked, profile);
   if (fit.dropped.length) rejected.push("a choice didn't fit the question");
   for (const d of fit.dropped) drop(d, R.fit);
@@ -198,7 +207,7 @@ function fixedWhy(o: ModelOutput | null, step: 'private' | 'stripped', decided: 
  */
 export function assemble(
   asked: string, pending: string | null, o: ModelOutput | null, profile: Profile, support: SupportLevel,
-  source: Source, ms = 0, pairIn: [string, string] | null = null, useRules = true,
+  source: Source, ms = 0, pairIn: string[] | null = null, useRules = true,
   meta: { step?: 'private' | 'stripped'; pairFrom?: 'model' | 'code' } = {},
 ): Card {
   const step = meta.step ?? 'private';
@@ -210,7 +219,7 @@ export function assemble(
   topic ||= heuristicTopic(asked, profile);
   const base = { asked, pending, topic, source, ms, cloudPayload: null, notes: [] as string[], route: { to: 'device' as const, reasons: [] as string[] } };
 
-  if (isQuiz(asked)) {
+  if (isQuiz(asked, profile)) {
     // KB §7 rule 9: never a quiz. No card; the partner gets a statement to say instead. No rule number on screen (§2.10).
     const card: Card = {
       ...base, source: 'code', kind: 'no-quiz', choices: [],
@@ -221,8 +230,12 @@ export function assemble(
     return card;
   }
   if (isPainLevel(asked)) {
-    const card = finish({ ...base, source: 'code', topic: validTopic(o?.topic) || 'pain', kind: 'pain' }, [...PAIN_LEVELS[scaleLevel(support)]], [escapeFor(asked)], profile, support);
-    card.why = fixedWhy(o, step, W.decidedBy.pain, validTopic(o?.topic) ? W.headlineFrom.model : W.headlineFrom.fixed);
+    // a number scale named in the question stays on the card as ranges ("a lot (6 to 10)"): the number is not lost
+    const scale = numberScale(asked);
+    const levels = [...PAIN_LEVELS[scaleLevel(support)]];
+    // the headline of a fixed card is fixed too: nothing of a model's answer is on it
+    const card = finish({ ...base, source: 'code', topic: 'pain', kind: 'pain', notes: scale ? [N.painNumbers] : [] }, scale ? painBands(levels, scale) : levels, [escapeFor(asked)], profile, support);
+    card.why = fixedWhy(o, step, W.decidedBy.pain, W.headlineFrom.fixed);
     return card;
   }
   if (isBodyWhere(asked)) {
@@ -232,7 +245,7 @@ export function assemble(
   }
 
   // either-or options: from the on-device model when it passed validation, else the code parser (same label check)
-  const pair: [string, string] | null = pairIn ?? (useRules ? codePair(asked, profile) : null);
+  const pair: string[] | null = pairIn ?? (useRules ? codeOptions(asked, profile) : null);
   const pairFrom = meta.pairFrom ?? (pairIn && o ? 'model' : 'code');
   let kind: Card['kind'] = o?.kind ?? 'choice';
   const codeYesNo = isAuxYesNo(asked) || isOrNot(asked);
@@ -250,7 +263,7 @@ export function assemble(
   if (kind === 'yesno') {
     // simulation 16.11 (H09, C09): when only the model saw a yes / no ("You don't want…, do you?"), the model decided the
     // card, so the badge names the engine that ran, never "No AI needed"
-    const card = finish({ ...base, source: codeYesNo ? 'code' : source, topic: heuristicTopic(asked, profile), kind }, ['yes', 'no'], ['not sure'], profile, support);
+    const card = finish({ ...base, source: codeYesNo ? 'code' : source, topic: yesNoTopic(asked, profile), kind }, ['yes', 'no'], ['not sure'], profile, support);
     card.why = fixedWhy(o, step, W.decidedBy.yesno, W.headlineFrom.question);
     return card;
   }
@@ -268,8 +281,10 @@ export function assemble(
   let headline = topic;
   let decided: string;
   if (pair) {
-    answers = [...pair]; // rule 3: exactly the two options the partner offered
-    headline = orHeadline(asked, pair, profile, o?.topic); // §2.5: the shared topic, never one of the options
+    answers = [...pair]; // rule 3: exactly the options the partner offered
+    // §2.5: the shared topic, never one of the options. The model's topic may be the headline only when the options
+    // are the model's too: a card read in code says "No AI needed", so nothing of a model's answer may be on it
+    headline = orHeadline(asked, pair, profile, pairFrom === 'model' ? o?.topic : ''); 
     headlineFrom = W.headlineFrom.pair;
     decided = pairFrom === 'model' ? W.decidedBy.pairModel : W.decidedBy.pairCode;
     if (o) {
@@ -290,6 +305,7 @@ export function assemble(
     // a choice over the limit is not thrown away, it goes to the next page (below)
     for (const a of answers.slice(choiceCap(support))) track.dropped.push({ label: a, rule: W.rules.overCap });
   }
+  if (pair) for (const a of answers.slice(pair.length >= 3 && support !== 'most' ? 3 : choiceCap(support))) track.dropped.push({ label: a, rule: W.rules.overCap });
   const r = route('choice', asked, answers, !!pair);
   if (!pair && offersOptions(asked)) rejected.push('either-or options not found');
   if (!pair) for (const why of rejected) if (!r.reasons.includes(why)) r.reasons.push(why);
@@ -310,9 +326,14 @@ export function assemble(
     r.reasons = [];
   }
   const escape = escapeFor(asked, answers, profile);
-  const rest = pair ? [] : answers.slice(choiceCap(support));
+  // Three options the partner named stand on one card, also at "2 at a time": the spoken line names all three, and a
+  // tile that is missing reads as "not offered" (simulation 16.11). At the largest tiles two are shown and the third
+  // waits on the next page; a fourth always does.
+  const cap = pair && pair.length >= 3 && support !== 'most' ? 3 : choiceCap(support);
+  const rest = answers.slice(cap);
+  if (pair && pair.length >= 3 && cap > choiceCap(support)) notes.push(N.listedAll);
   if (rest.length) notes.push(N.moreOnNext(rest.join(', '), escape));
-  const card = finish({ ...base, notes, topic: headline, kind: 'choice', route: r }, answers, [escape], profile, support);
+  const card = finish({ ...base, notes, topic: headline, kind: 'choice', route: r }, answers, [escape], profile, support, cap);
   card.why = whyFor(card, proposal(o, step), decided, headlineFrom, track, profile);
   if (rest.length) {
     // A good choice the support level has no room for is kept for a second page, reached by the way-out tile or the
@@ -416,7 +437,9 @@ export async function makeCard(input: string, env: PipelineEnv): Promise<Card> {
  */
 function coachFor(card: Card): string | undefined {
   if (card.kind === 'no-quiz') return COPY.coach.test;
-  if (card.pending) return COPY.coach.twoQuestions;
+  const negative = card.notes.includes(N.negativeAsked);
+  if (card.pending) return negative ? `${COPY.coach.twoQuestions} ${COPY.coach.negative}` : COPY.coach.twoQuestions;
+  if (negative) return COPY.coach.negative;
   if (card.notes.includes(N.holdUpTwo)) return COPY.coach.holdUp;
   return undefined;
 }
@@ -446,7 +469,10 @@ function finishTrace(trace: StepTrace[], card: Card): StepTrace[] {
 }
 
 async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]): Promise<Card> {
-  const [asked, pending] = splitQuestion(input);
+  const [typed, pending] = splitQuestion(input);
+  // a negative question is asked the plain way, a proposal without its "or is that a no?" (rules.ts, plainQuestion)
+  const plain = plainQuestion(typed);
+  const asked = plain?.q ?? typed;
   const { profile, support, engine } = env;
   const fixed = codeDetermined(asked, profile);
 
@@ -455,8 +481,9 @@ async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]
   let ms = 0;
   const notes: string[] = [];
   if (pending) notes.push(N.twoQuestions);
+  if (plain) notes.push(plain.why === 'negative' ? N.negativeAsked : N.optOutAsked);
 
-  if (isQuiz(asked)) return { ...assemble(asked, pending, null, profile, support, 'code'), notes };
+  if (isQuiz(asked, profile)) return { ...assemble(asked, pending, null, profile, support, 'code'), notes };
   // A question code decides alone (yes / no, a plain either-or, feeling, pain, body) never runs a model.
   if (!needsNoModel(asked, profile)) {
     if (env.deviceReady) {
@@ -478,7 +505,7 @@ async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]
   // Either-or: two independent candidates, the model's copied options and the code parser's pair. The first one that
   // passes the label check wins (model first). A valid code pair is never thrown away because a model ran
   // (build spec §1.4 step 3: the "coffee or tea" bug). Only when neither passes does the card go to the cloud.
-  let devicePair: [string, string] | null = null;
+  let devicePair: string[] | null = null;
   let pairFrom: 'model' | 'code' = 'code';
   let useRules = !o;
   if (o && offersOptions(asked)) {
@@ -488,7 +515,7 @@ async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]
       notes.push(N.optionsCopied);
     } else {
       // the same pair the no-model path uses, so the card is identical in every engine state
-      devicePair = codePair(asked, profile);
+      devicePair = codeOptions(asked, profile);
       if (devicePair) {
         source = 'code'; // nothing of the model's answer is on this card
         notes.push(N.optionsCodePair);
@@ -545,6 +572,21 @@ async function cloudCard(
     const base = fallback ?? assemble(asked, pending, null, env.profile, env.support, 'code');
     return { ...base, cloudPayload: null, unsentPayload: preview, notes: [...notes, N.leak] };
   }
+  // A question that turns on an About-me thing ("What do you need from the hardware store?" goes as "from the Place
+  // A") cannot be answered by a step that never sees About me: its choices would be a guess (simulation 16.11: food /
+  // drink / medicine). It is not sent; a card made on this computer is kept, else there is no card and the reason is said.
+  const hidden = hiddenSubject(asked, stripped);
+  if (hidden) {
+    trace.push({ step: 'stripped', ran: 'skipped', why: T.cloudHidden, used: false });
+    const base = fallback ?? assemble(asked, pending, null, env.profile, env.support, 'code');
+    // only a card the on-device step made is kept; with no model answer at all there is no card (as on any open
+    // question no model answered), never one filled from a fixed set that does not know the question either
+    const usable = !!fallback && base.choices.filter((c) => c.role === 'answer').length >= 2;
+    return {
+      ...base, cloudPayload: null, unsentPayload: preview, cloudSwaps: swaps(stripped.map), notes: [...notes, ...(fallback ? [] : base.notes), N.hiddenSubject(hidden)],
+      ...(usable ? {} : { blocked: N.hiddenBlocked(hidden), say: N.justAsk(asked), why: base.why ? { ...base.why, decided: W.decidedBy.blockedNoModel } : undefined }),
+    };
+  }
   // Did the question leave this computer? 'maybe' from the moment the request is handed to the SDK until the SDK
   // reports where the answer came from; an error in between leaves it at 'maybe', and the card says so.
   let left: 'no' | 'maybe' | 'yes' = 'no';
@@ -600,6 +642,20 @@ async function cloudCard(
     if (left === 'maybe') return { ...base, cloudPayload: null, cloudAttempted: preview, unsentPayload: null, cloudSwaps: swaps(stripped.map), notes: [...notes, note] };
     return { ...base, cloudPayload: null, unsentPayload: preview, cloudSwaps: swaps(stripped.map), notes: [...notes, note] };
   }
+}
+
+/**
+ * The About-me words an open question turns on, when they were swapped out: a place, food, show, music or other entry
+ * right after "from" ("What do you need from the hardware store?") in a what-question with no options in it: there
+ * the hidden word is the source of every possible answer. Kept this narrow on purpose: "What shall we plant at the
+ * Place A?" still goes, because a general answer can fit. A person's label is not counted (the cloud needs no name
+ * to answer "what shall we get Person A?"), nor is a who / where / when question (filled or checked in code).
+ */
+function hiddenSubject(asked: string, stripped: ReturnType<typeof stripQuestion>): string | null {
+  const t = questionType(asked);
+  if ((t !== 'what' && t !== 'say') || offersOptions(asked)) return null;
+  const m = /\b(?:from|out\s+of)\s+(?:the\s+|a\s+|an\s+|some\s+|your\s+|my\s+|our\s+)?((?:Place|Food|Show|Music|Thing) [A-Z])\b/.exec(stripped.text);
+  return m ? stripped.map[m[1]] ?? null : null;
 }
 
 /** "Place A ← Whitby" lines for the partner's own screen (the real words never leave the device). */

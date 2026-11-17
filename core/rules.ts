@@ -51,18 +51,22 @@ export function splitQuestion(q: string): [string, string | null] {
   const s = normalizeQuestion(q);
   const patterns: RegExp[] = [
     // "..., and if so, ..." / "..., and do you ..." (comma + and + a question start)
-    new RegExp(`,\\s*and\\s+(?=${QWORD}\\b)`, 'i'),
+    new RegExp(`,\\s*and\\s+(?:then\\s+|also\\s+)?(?=${QWORD}\\b)`, 'i'),
     // two question marks: "Did you eat? What did you have?"
     /\?\s+(?=\w)/,
     // "... and are you ...?" without a comma: only when "and" is followed by aux + you, or a wh-word + aux
     /\s+and\s+(?=(?:are|do|did|would|will|can|could|should|have)\s+you\b|(?:what|where|who|when|which|how|why)\s+(?:do|did|would|will|is|are|was|should|shall)\b)/i,
+    // simulation 16.11 (two questions not split): "... and should I turn the TV off?", "... and is your back still
+    // sore?". After "and", any question start: an auxiliary and a pronoun subject, or a be / modal verb and a noun
+    // subject ("is your back", "can Tyler"). "do / have + the ..." is left alone: "go and do the shopping" is one question.
+    /\s+and\s+(?:then\s+|also\s+)?(?=(?:are|is|was|were|do|does|did|would|will|can|could|should|shall|have|has)\s+(?:you|I|we|it|they|he|she|there|that|this)\b|(?:are|is|was|were|would|will|can|could|should|shall)\s+(?:the|your|my|our|his|her|[A-Z][a-z]+)\b|(?:what|where|who|when|which|how|why)(?:'s\b|\s+(?:do|does|did|would|will|is|are|was|should|shall|can|could|about)\b))/,
   ];
   for (const re of patterns) {
     const m = re.exec(s);
     if (!m) continue;
     const first = s.slice(0, m.index).replace(/[\s,?]+$/, '');
     let second = s.slice(m.index + m[0].length).trim();
-    second = second.replace(/^if so\s*,?\s*/i, '');
+    second = second.replace(/^(?:if so|also|then|and)\s*,?\s*/i, '');
     if (first.split(' ').length >= 3 && second.split(' ').length >= 3) {
       return [first + '?', normalizeQuestion(capitalize(second))];
     }
@@ -91,8 +95,81 @@ export function isOrNot(q: string): boolean {
   return /,?\s+or\s+(?:not|no)\b(?:\s+(?:yet|really|now|today))?\s*\?\s*$/i.test(q);
 }
 
+// ---------------------------------------------------------------- rule 2 (part): negative questions, opt-out tails
+// Simulation 16.11: "You don't want to go out tonight, do you?" became yes / no, and "yes" read both ways. A negative
+// question is asked the plain way instead ("Do you want to go out tonight?"): then yes means yes. The partner is told.
+const NEG_AUX: Record<string, string> = {
+  "don't": 'do', "doesn't": 'does', "didn't": 'did', "aren't": 'are', "isn't": 'is', "wasn't": 'was', "weren't": 'were', "won't": 'will',
+  "wouldn't": 'would', "can't": 'can', cannot: 'can', "couldn't": 'could', "shouldn't": 'should', "haven't": 'have', "hasn't": 'has', "hadn't": 'had',
+};
+const CONTRACTED: Record<string, string> = { "'re": 'are', "'s": 'is', "'ve": 'have', "'ll": 'will', "'d": 'would' };
+const POS_AUX = '(?:do|does|did|are|is|was|were|will|would|can|could|should|have|has|had)';
+const NEG_AUX_RE = `(?:${Object.keys(NEG_AUX).join('|')})`;
+const PRON = '(?:you|we|it|he|she|they|there|that|this)';
+const NOUN_SUBJ = `(?:${PRON}|(?:the|your|my|our|his|her)\\s+[a-z]+|[A-Z][a-z]+)`;
+const TAG = `(?:\\s*,\\s*(?:${POS_AUX}|${NEG_AUX_RE})\\s+${PRON}|\\s*,\\s*(?:right|eh|yeah|huh|no))?`;
+
+/**
+ * The plain (positive) form of a negative yes / no question, or null when the question is not one.
+ *   "You don't want the telly on, do you?"   -> "Do you want the telly on?"
+ *   "Aren't you hungry?"                      -> "Are you hungry?"
+ *   "You're not cold, are you?"               -> "Are you cold?"
+ *   "Do you not want your tea?"               -> "Do you want your tea?"
+ * Only questions with an explicit auxiliary are rewritten; "Why don't we …?" is a suggestion and is left alone.
+ */
+export function positiveForm(q: string): string | null {
+  const voc = VOCATIVE.exec(q)?.[0] ?? '';
+  const s = q.slice(voc.length).replace(/[’]/g, "'").trim();
+  if (!/\?\s*$/.test(s)) return null;
+  const body = s.replace(/\s*\?\s*$/, '');
+  const subj = (x: string) => (/^(?:you|we|it|he|she|they|there|that|this|the|your|my|our|his|her)\b/i.test(x) ? x.charAt(0).toLowerCase() + x.slice(1) : x);
+  // the patterns below ignore case, so a name as subject is checked here: "Don't worry …" has no subject
+  const okSubj = (x: string) => new RegExp(`^(?:${PRON}|(?:the|your|my|our|his|her)\\s+[a-z]+)$`, 'i').test(x) || /^[A-Z][a-z]+$/.test(x);
+  const out = (aux: string, who: string, rest: string) => {
+    const r = rest.replace(/\s+/g, ' ').trim();
+    return r ? `${voc}${voc ? aux : capitalize(aux)} ${subj(who)} ${r}?` : null;
+  };
+  // "Don't you want …?", "Isn't the soup hot?"
+  let m = new RegExp(`^(${NEG_AUX_RE})\\s+(${NOUN_SUBJ})\\s+(.+?)${TAG}$`, 'i').exec(body);
+  if (m && okSubj(m[2])) return out(NEG_AUX[lc(m[1])], m[2], m[3]);
+  // "Do you not want …?", "Are you not hungry?"
+  m = new RegExp(`^(${POS_AUX})\\s+(${NOUN_SUBJ})\\s+not\\s+(.+?)${TAG}$`, 'i').exec(body);
+  if (m && okSubj(m[2])) return out(lc(m[1]), m[2], m[3]);
+  // "You don't want …, do you?", "You're not cold, are you?", "It is not too hot?"
+  m = new RegExp(`^(${PRON})(?:\\s+(${NEG_AUX_RE})|('re|'s|'ve|'ll|'d)\\s+not|\\s+(${POS_AUX})\\s+not)\\s+(.+?)${TAG}$`, 'i').exec(body);
+  if (m) return out(m[2] ? NEG_AUX[lc(m[2])] : m[3] ? CONTRACTED[lc(m[3])] : lc(m[4]), m[1], m[5]);
+  return null;
+}
+
+const OPT_OUT = /\s*,?\s+or\s+(?:is\s+that\s+a\s+no|would\s+you\s+rather\s+not|(?:do|would)\s+you\s+not|don't\s+you|not\s+really|not\s+bothered|are\s+you\s+(?:fine|ok|okay|alright|all\s+right|good|happy|sorted|set)(?:\s+(?:as\s+you\s+are|for\s+now|as\s+it\s+is|without|without\s+one))?|is\s+it\s+(?:fine|ok|okay|alright|all\s+right)(?:\s+as\s+it\s+is)?|shall\s+i\s+leave\s+it|should\s+i\s+leave\s+it|leave\s+it|never\s+mind|nothing(?:\s+for\s+now)?)\s*\?\s*$/i;
+/**
+ * "Do you want to rest, or is that a no?", "Something to drink, or are you fine?": one proposal and a way to decline,
+ * not two options (simulation 16.11: no card, or a card "something to drink / fine"). Returns the proposal alone, to
+ * be asked as yes / no; null when the question does not end that way.
+ */
+export function optOutTrim(q: string): string | null {
+  const s = q.replace(/[’]/g, "'");
+  const m = OPT_OUT.exec(s);
+  if (!m) return null;
+  const first = s.slice(0, m.index).replace(/[\s,]+$/, '');
+  if (first.split(/\s+/).length < 2 || /\bor\b/i.test(first)) return null;
+  const t = stripVocative(first);
+  return AUX_START.test(t) || OFFER_START.test(t) ? `${first}?` : null;
+}
+
+/**
+ * The question as the card asks it: a negative question in its plain form, a proposal without its opt-out tail.
+ * `why` says which, for the coaching line; null when the question is used as typed.
+ */
+export function plainQuestion(q: string): { q: string; why: 'negative' | 'optOut' } | null {
+  const trimmed = optOutTrim(q);
+  const pos = positiveForm(trimmed ?? q);
+  if (pos) return { q: pos, why: 'negative' };
+  return trimmed ? { q: trimmed, why: 'optOut' } : null;
+}
+
 // ---------------------------------------------------------------- rule 3
-const LEAD = /^(?:is it|is the room too|is the room|do you want to|do you want|would you like to|would you like|shall we|should we|go to|me to|to|the|on)\s+/i;
+const LEAD =/^(?:is it|is the room too|is the room|do you want to|do you want|would you like to|would you like|shall we|should we|go to|me to|to|the|on)\s+/i;
 const TRAIL = /\s+(?:that|which|who|for)\b.*$/i;
 const FRAME = new Set(['you', 'like', 'want', 'to', 'we', 'i', 'me', 'would', 'do', 'does', 'shall', 'should', 'is', 'are', 'it', 'the', 'a', 'an', 'some', 'too', 'prefer', 'rather', 'have', 'could', 'can', 'will', 'be']);
 
@@ -110,6 +187,8 @@ function cleanSide(x: string): string {
 const DET = new Set(['the', 'a', 'an', 'your', 'my', 'our', 'his', 'her', 'some']);
 const PREP = new Set(['by', 'at', 'of', 'in', 'near', 'with', 'from', 'on']);
 const PARTICLE = new Set(['on', 'off', 'in', 'out', 'up', 'down']);
+/** Verbs that own the particle after them ("turn on", "carry on"): there the particle is part of the option. */
+const PHRASAL = new Set(['turn', 'switch', 'put', 'keep', 'leave', 'carry', 'go', 'get', 'come', 'move', 'hold', 'hang', 'log', 'sign', 'try', 'it', 'them', 'that', 'this']);
 const NEG = /\b(?:not|no|never|none|nothing|nobody|neither|nor)\b|n't\b|\bdont\b/i;
 
 /** Rule 3. "... X or Y?" with short alternatives -> [X, Y]; null when the sides are not short phrases. */
@@ -125,7 +204,10 @@ export function orPair(q: string): [string, string] | null {
   const n = bw.length;
   const left = m[1].split(/\s+/).filter(Boolean);
   // "The snooker on or Pointless?": "on" says the telly is on; the option is "snooker"
-  if (left.length > 1 && PARTICLE.has(lc(left[left.length - 1])) && !PARTICLE.has(lc(bw[0]))) left.pop();
+  // (only "on" / "off" after a thing: "lie down", "go out", "stay in", "turn it off" keep their particle. Simulation
+  // 16.11: "lie down or sit in the chair" lost "down" and the tile read "lie")
+  const lastLeft = lc(left[left.length - 1]);
+  if (left.length > 1 && (lastLeft === 'on' || lastLeft === 'off') && !PHRASAL.has(lc(left[left.length - 2])) && !PARTICLE.has(lc(bw[0]))) left.pop();
   let start = Math.max(0, left.length - n);
   while (start > 0 && DET.has(lc(left[start - 1]))) start--;
   // keep the whole noun phrase ("the park by the canal", not "canal") when it opens the question or follows "the"
@@ -316,34 +398,107 @@ function sharedTail(q: string): string | null {
  * The pair is rejected when the sides are the same, synonyms, or not on one axis (a time against a thing).
  */
 export function checkPair(pair: [string, string], q: string, profile?: Profile): [string, string] | null {
+  const out = checkSides(pair, q, profile);
+  return out ? [out[0], out[1]] : null;
+}
+
+/** One side of the label check: cleaned and completed, or null when it cannot be a label. */
+function checkSide(side: string, q: string, tail: string | null, profile?: Profile): string | null {
+  // punctuation around a side ("- toast", "toast,") is never part of a label
+  let s = side.replace(/[?.!,;:"]+/g, ' ').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '').replace(/\s+/g, ' ').trim().replace(/^(?:the|a|an)\s+/i, '');
+  if (tail) s = s.replace(new RegExp(`\\s+${esc(tail)}$`, 'i'), '');
+  for (let i = 0; i < 3; i++) s = s.replace(FUNC_END, '');
+  s = s.replace(/^(?:the|a|an)\s+/i, '').trim();
+  if (!s) return null;
+  if (LABEL_BAD.test(s) || LEFTOVER_START.test(s) || LEFTOVER_END.test(s) || PRONOUN_ONLY.test(s) || NEG.test(s)) return null;
+  s = expandFromQuestion(s, q);
+  if (profile) s = snapToQuestionItem(s, q, profile);
+  s = personSide(s, profile);
+  if (s.split(/\s+/).length > 5) return null;
+  return s;
+}
+
+/** The label check for two or more sides: every side passes, no two are the same or synonyms, all on one axis. */
+function checkSides(sides: string[], q: string, profile?: Profile, list = false): string[] | null {
   const tail = sharedTail(q);
   const out: string[] = [];
-  for (const side of pair) {
-    // punctuation around a side ("- toast", "toast,") is never part of a label
-    let s = side.replace(/[?.!,;:"]+/g, ' ').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '').replace(/\s+/g, ' ').trim().replace(/^(?:the|a|an)\s+/i, '');
-    if (tail) s = s.replace(new RegExp(`\\s+${esc(tail)}$`, 'i'), '');
-    for (let i = 0; i < 3; i++) s = s.replace(FUNC_END, '');
-    s = s.replace(/^(?:the|a|an)\s+/i, '').trim();
+  for (const side of sides) {
+    const s = checkSide(side, q, tail, profile);
     if (!s) return null;
-    if (LABEL_BAD.test(s) || LEFTOVER_START.test(s) || LEFTOVER_END.test(s) || PRONOUN_ONLY.test(s) || NEG.test(s)) return null;
-    s = expandFromQuestion(s, q);
-    if (profile) s = snapToQuestionItem(s, q, profile);
-    s = personSide(s, profile);
-    if (s.split(/\s+/).length > 5) return null;
     out.push(s);
   }
-  const [a, b] = out;
-  if (lc(a) === lc(b)) return null;
-  const g = SYNONYMS.findIndex((grp) => grp.includes(lc(a)));
-  if (g >= 0 && SYNONYMS[g].includes(lc(b))) return null;
-  if (isTimeOnly(a) !== isTimeOnly(b)) return null;
-  return [a, b];
+  for (let i = 0; i < out.length; i++) for (let j = i + 1; j < out.length; j++) {
+    if (lc(out[i]) === lc(out[j])) return null;
+    const g = SYNONYMS.findIndex((grp) => grp.includes(lc(out[i])));
+    if (g >= 0 && SYNONYMS[g].includes(lc(out[j]))) return null;
+    if (isTimeOnly(out[i]) !== isTimeOnly(out[j])) return null;
+  }
+  // In a list, the capital that only opens the sentence is not part of the first label ("Soup, a sandwich, or
+  // leftovers?" -> "soup"): lowered when no other item starts with a capital and the word is not a name About me
+  // knows. A pair keeps the question's own capital: "Raglan beach or the garden centre?" may be a place name.
+  const first = out[0];
+  if (list && /^[A-Z][a-z]/.test(first) && new RegExp(`^\\s*(?:the\\s+|a\\s+|an\\s+)?${esc(first.split(/\s+/)[0])}\\b`).test(q) && out.slice(1).every((o) => !/^[A-Z]/.test(o))
+    && !(profile && (findPerson(first, profile) || snapToQuestionItem(first, q, profile) !== first
+      // an About-me entry keeps the capital only when About me writes it with one ("Elvis", not "lamb")
+      || [...profile.foods, ...profile.places, ...profile.tv, ...profile.music, ...(profile.other ?? [])].some((e) => e.replace(/^the\s+/i, '') === first)))) {
+    out[0] = first.charAt(0).toLowerCase() + first.slice(1);
+  }
+  return out;
 }
 
 /** The code parser's pair after the same label check as the model's options. */
 export function codePair(q: string, profile?: Profile): [string, string] | null {
   const rx = orPair(q);
   return rx ? checkPair(rx, q, profile) : null;
+}
+
+const QUESTION_LEAD = new RegExp(`^(?:${AUX}|want|wanna|fancy|shall|should|would|will|need|up for|you|what|where|who|when|which|how|why|let's)\\b`, 'i');
+const LIST_VERB = /^(?:put\s+on|put|watch|make|cook|have|get|wear|play|listen\s+to|go\s+to|visit|ring|call|phone|try|read|eat|drink|take|bring|buy|use|see|find|fetch|do|pick)\s+(?:you\s+|us\s+|me\s+)?(?:the\s+|a\s+|an\s+|some\s+)?/i;
+const LIST_LEAD = new RegExp(`^(?:${AUX}|want|wanna|fancy|shall|should|would|will|need|up for)\\b`, 'i');
+/**
+ * Three or more options named in the question ("Soup, a sandwich, or leftovers for lunch?", "Tea, coffee or juice?"):
+ * every one of them is an option. Simulation 16.11: such a list was read as a pair and the first option was lost.
+ * Returns the options after the same label check a pair gets, or null when the question is not a list of short things.
+ */
+export function orList(q: string, profile?: Profile): string[] | null {
+  // "Soup, a sandwich, or leftovers?" opens like "Graham, coffee or tea?": a capitalised word and a comma. The first
+  // word is someone being spoken to only when it is an address word, a name About me knows, or a question follows it;
+  // otherwise it is the first option. (This is where the simulation's "Soup" was lost: it was taken for a name.)
+  let s = q.trim();
+  const v = VOCATIVE.exec(s);
+  if (v) {
+    const word = v[0].replace(/[,\s]+$/, '').trim();
+    const rest = s.slice(v[0].length);
+    const spokenTo = ADDRESS.has(lc(word)) || (!!profile && (lc(word) === lc(profile.personName) || lc(word) === lc(profile.partnerName) || !!findPerson(word, profile)));
+    // with no name in About me to check against, "Graham, coffee or tea?" keeps its old reading (a name, then a pair)
+    const cannotTell = !profile?.personName && !rest.includes(',');
+    if (spokenTo || cannotTell || QUESTION_LEAD.test(rest)) s = rest;
+  }
+  if (isOrNot(s) || optOutTrim(s)) return null;
+  const m = /^(.*\S)\s*,?\s+or\s+([^,?]+?)\s*\?\s*$/i.exec(s);
+  if (!m) return null;
+  let head = m[1].replace(/,\s*$/, '').split(/\s*,\s*/).map((x) => x.trim()).filter(Boolean);
+  // a lead-in before the question itself ("For lunch, do you want soup, …") is not an option
+  let k = -1;
+  head.forEach((x, i) => { if (LIST_LEAD.test(x)) k = i; });
+  if (k > 0) head = head.slice(k);
+  if (head.length < 2) return null;
+  // a list is short, verbless pieces; "Shall we walk, or stay in, or …" clauses are not read here
+  if (!head.slice(1).every((x) => x.split(/\s+/).length <= 4 && !ASIDE.test(x) && !LIST_LEAD.test(x) && !/\bor\b/i.test(x))) return null;
+  if (LIST_LEAD.test(m[2]) || LABEL_BAD.test(m[2])) return null;
+  const items = [...head, m[2]].map((x) => clauseOption(x));
+  // the verb the whole list hangs on is not part of the first option ("Shall I put on cricket, westerns, or …")
+  const bare = items[0].replace(LIST_VERB, '');
+  if (bare && !items.slice(1).some((x) => LIST_VERB.test(x))) items[0] = bare;
+  // nor is a tail that belongs to all of them part of the last ("… or ice cream with it?")
+  items[items.length - 1] = items[items.length - 1].replace(/\s+(?:with|for|on|in|to)\s+(?:it|that|them|this|you|me|us)$/i, '');
+  if (items.some((x) => !x || x.split(/\s+/).length > 4)) return null;
+  return checkSides(items, q, profile, true);
+}
+
+/** The options code reads from the question: a list of three or more, else the either-or pair. */
+export function codeOptions(q: string, profile?: Profile): string[] | null {
+  return orList(q, profile) ?? codePair(q, profile);
 }
 
 /**
@@ -386,7 +541,7 @@ export function validTopic(t: string | undefined, options: string[] = []): strin
  * words left once the two sides are removed ("this weekend", "lunch"); a category both sides belong to ("drink");
  * the model's topic when it names neither side; the pair itself when short; else "which one".
  */
-export function orHeadline(q: string, pair: [string, string], profile?: Profile, modelTopic = ''): string {
+export function orHeadline(q: string, pair: string[], profile?: Profile, modelTopic = ''): string {
   let s = q.replace(/[?.!]+$/, '');
   for (const side of pair) {
     const re = new RegExp(`\\b${esc(side)}(?:'s|s|es)?\\b`, 'i');
@@ -396,6 +551,9 @@ export function orHeadline(q: string, pair: [string, string], profile?: Profile,
   s = s.replace(/\s+/g, ' ').trim();
   const time = /\b((?:this|next|on|for)\s+(?:weekend|morning|afternoon|evening|week|month|year|lunch|dinner|tea|breakfast|supper|christmas|easter|birthday|monday|tuesday|wednesday|thursday|friday|saturday|sunday|arvo|avo)|tonight|today|tomorrow)\b/i.exec(s);
   if (time) return time[1].replace(/^(?:for|on)\s+/i, '');
+  // what is left of a clause that belonged to one side ("… or wait till she calls us?" -> "till she calls us") is no
+  // topic: simulation 16.11, headline "till calls"
+  s = s.replace(CUT, '');
   const name = lc(profile?.personName ?? '');
   const content = (s.match(/[A-Za-z][A-Za-z'-]*/g) ?? []).filter((w) => {
     const l = lc(w);
@@ -411,8 +569,8 @@ export function orHeadline(q: string, pair: [string, string], profile?: Profile,
   if (pair.every(isTimeOnly)) return 'when';
   const mt = validTopic(modelTopic, pair);
   if (mt) return mt;
-  const joined = `${pair[0]} or ${pair[1]}`;
-  if (joined.split(/\s+/).length <= 5) return joined;
+  const joined = pair.length === 2 ? `${pair[0]} or ${pair[1]}` : '';
+  if (joined && joined.split(/\s+/).length <= 5) return joined;
   return 'which one';
 }
 
@@ -479,9 +637,48 @@ export function dropBoth(choices: string[], q: string): string[] {
 const BODY_WORD = /\b(hurt|hurts|hurting|pain|painful|ache|aches|aching|numb|sore)\b/i;
 const MEDICINE = /\b(medicine|medication|tablet|tablets|pill|pills|relief|killers?|cream)\b/i;
 
-/** Rule 4. "How much pain / how bad is the ache" -> fixed pain level card. */
+const PAIN_NOUN = /\b(pain|pains|ache|aches|aching|sore|soreness|hurting|headache|backache|toothache)\b/i;
+const NOT_THE_PAIN = /\b(clinic|nurse|doctor|appointment|team|specialist|management)\b/i;
+const NUM = '(?:0|1|zero|one|nought)';
+const NUM_TOP = '(?:5|10|five|ten)';
+const NUMBER_SCALE = new RegExp(`\\b(?:from\\s+)?(${NUM})\\s*(?:to|-|–)\\s*(${NUM_TOP})\\b|\\bout\\s+of\\s+(${NUM_TOP})\\b`, 'i');
+const NUM_VALUE: Record<string, number> = { zero: 0, nought: 0, one: 1, five: 5, ten: 10 };
+
+/** The number scale a question names ("from 0 to 10", "1-5", "out of ten"), or null. */
+export function numberScale(q: string): { lo: number; hi: number } | null {
+  const m = NUMBER_SCALE.exec(q);
+  if (!m) return null;
+  const n = (x: string) => NUM_VALUE[lc(x)] ?? Number(x);
+  return m[3] ? { lo: 0, hi: n(m[3]) } : { lo: n(m[1]), hi: n(m[2]) };
+}
+
+/**
+ * Rule 4. "How much pain / how bad is the ache" -> fixed pain level card. Since the simulation of 16.11 also: a "how
+ * is" question about the pain itself ("How's the pain in your arm today?" got the general good / bad scale), and any
+ * pain question that names a number scale.
+ */
 export function isPainLevel(q: string): boolean {
-  return (/\bhow\s+(much|bad)\b/i.test(q) && BODY_WORD.test(q) && !MEDICINE.test(q)) || /\bpain\s+(level|score)\b/i.test(q);
+  if (MEDICINE.test(q)) return /\bpain\s+(level|score)\b/i.test(q);
+  if (/\bhow\s+(much|bad)\b/i.test(q) && (BODY_WORD.test(q) || PAIN_NOUN.test(q))) return true;
+  if (/\bpain\s+(level|score)\b/i.test(q)) return true;
+  if (FEELING_Q.test(stripVocative(q)) && PAIN_NOUN.test(q) && !NOT_THE_PAIN.test(q)) return true;
+  return (BODY_WORD.test(q) || PAIN_NOUN.test(q)) && !!numberScale(q) && !/\b(where|which)\b/i.test(q);
+}
+
+/**
+ * The pain levels as ranges of the scale the question named, so the number is not lost (simulation 16.11: "from 0 to
+ * 10" became "a little / a lot"). "a little (0 to 5)", "a lot (6 to 10)": the word and the numbers on one tile.
+ */
+export function painBands(levels: string[], scale: { lo: number; hi: number }): string[] {
+  const n = scale.hi - scale.lo + 1;
+  const k = levels.length;
+  if (n < k) return levels;
+  const edge = (i: number) => scale.lo + Math.round((i * n) / k);
+  return levels.map((word, i) => {
+    const a = edge(i);
+    const b = i === k - 1 ? scale.hi : edge(i + 1) - 1;
+    return a === b ? `${word} (${a})` : `${word} (${a} to ${b})`;
+  });
 }
 
 /** Rule 4. Pain or body "where" questions -> fixed two-step body map (never model choices: a safety rule). */
@@ -560,6 +757,19 @@ export function escapeFor(q: string, answers: string[] = [], profile?: Profile):
 // ---------------------------------------------------------------- rule 9
 const CONTACT = /\b(call|calls|ring|phone|visit|visits|invite|invites|text|message|write\s+to)\b/i;
 const GENERIC_PERSON = /\b(another person|someone|somebody|other person|a friend)\b/i;
+const SEE = /\b(see|seeing|meet|meeting|have\s+(?:over|round|around)|come\s+(?:over|round|around|by)|drop\s+in|pop\s+(?:in|round|over)|talk\s+to|speak\s+to|chat\s+(?:to|with)|catch\s+up\s+with|hear\s+from|skype|facetime)\b/i;
+const ON_SCREEN = /\b(tv|telly|television|film|movie|show|programme|program|match|game|win|play|sing|stage|concert)\b/i;
+
+/**
+ * A question about getting in touch with someone: call / visit / invite, and, on a "who" question, see / meet / have
+ * over (simulation 16.11: "Who do you want to see this week?" got no card with cloud help only, and offered "you",
+ * who lives here, on this computer). "Who do you want to see win?" and "see on TV" are not contact.
+ */
+export function isContactQ(q: string): boolean {
+  if (CONTACT.test(q)) return true;
+  const s = stripVocative(q);
+  return (/^\s*(who|whom)\b/i.test(s) || /^\s*which\s+(person|one of them)\b/i.test(s)) && SEE.test(s) && !ON_SCREEN.test(s);
+}
 
 export function findPerson(label: string, profile: Profile): Person | undefined {
   const w = new Set(words(label).map((x) => x.replace(/'s$/, '')));
@@ -574,7 +784,7 @@ export function isPartnerName(label: string, profile: Profile): boolean {
  * and a generic "another person" choice is replaced by a named person who does not live in the home.
  */
 export function householdFilter(choices: string[], q: string, profile: Profile): string[] {
-  if (!CONTACT.test(q)) return choices;
+  if (!isContactQ(q)) return choices;
   const out = choices.filter((c) => {
     const p = findPerson(c, profile);
     return !(p && p.household) && !isPartnerName(c, profile);
@@ -595,15 +805,31 @@ export function householdFilter(choices: string[], q: string, profile: Profile):
  * doesn't know is dropped (the on-device model sometimes makes one up). Real people come from About me only.
  */
 export function inventedNameFilter(choices: string[], q: string, profile: Profile): string[] {
-  if (!/^\s*(who|whom)\b/i.test(q) && !CONTACT.test(q)) return choices;
+  // also on any question about a name or about who someone is: simulation 16.11, "…granddaughter's name again?" put
+  // a made-up "Emma" on the next page
+  if (!/^\s*(who|whom)\b/i.test(stripVocative(q)) && !isContactQ(q) && !ABOUT_A_NAME.test(q)) return choices;
   const known = new Set(
-    [profile.partnerName, ...profile.people.map((p) => p.name), ...profile.people.map((p) => p.nickname ?? ''), ...profile.places, ...profile.tv, ...profile.music, ...profile.foods]
+    [profile.partnerName, ...profile.people.map((p) => p.name), ...profile.people.map((p) => p.nickname ?? ''), ...profile.places, ...profile.tv, ...profile.music, ...profile.foods,
+      // a name the partner typed in the question is theirs, not the model's
+      ...(q.match(/\b[A-Z][a-z']+\b/g) ?? []).map((w) => w.replace(/'s$/, ''))]
       .filter(Boolean).map(lc),
   );
   return choices.filter((c) => {
     const caps = c.split(/\s+/).filter((w) => /^[A-Z][a-z']+$/.test(w)).map((w) => lc(w).replace(/'s$/, ''));
     return caps.every((w) => known.has(w) || [...known].some((k) => k.split(' ').includes(w)));
   });
+}
+
+const ABOUT_A_NAME = /\bnames?\b|\bcalled\b|\bwho(?:'s|\s+is|\s+are|\s+was|\s+were)\b/i;
+
+/**
+ * The person the card is for is never one of its choices on a question about people (simulation 16.11: "What's our
+ * grandson's name?" offered "Frank", the person himself, on the next page).
+ */
+export function selfFilter(choices: string[], q: string, profile: Profile): string[] {
+  const me = lc(profile.personName ?? '');
+  if (!me || (questionType(q) !== 'who' && !isContactQ(q) && !ABOUT_A_NAME.test(q))) return choices;
+  return choices.filter((c) => !words(c).map((w) => w.replace(/'s$/, '')).includes(me));
 }
 
 // ---------------------------------------------------------------- rule 10
@@ -734,6 +960,7 @@ const SYNONYMS = [
 //   fact      a past or personal fact with a single right answer: a year, a date, an age, a name, "when did ...",
 //             "how long ago", "how many ... have we got"
 export type QuizKind = 'now' | 'identity' | 'remember' | 'fact';
+const KIN = 'wife|husband|son|daughter|sister|brother|mother|father|mum|mom|dad|grandson|granddaughter|grandchild|grandchildren|grandkids|niece|nephew|aunt|auntie|uncle|cousin|children|kids|doctor|gp|carer|nurse|neighbour|neighbor';
 
 const NOW_Q = /\bwhat\s+(?:day|date|month|year|time)\s+(?:is\s+it|it\s+is)\b|\bwhat(?:'s|\s+is)\s+(?:today'?s|the)\s+(?:date|day)\b|\bwhat\s+day\s+(?:is\s+)?(?:it\s+)?today\b|\bwhat(?:'s|\s+is)\s+the\s+time\b/i;
 const IDENTITY_Q = /\bwhat(?:'s|\s+is)\s+my\s+name\b|\bwho\s+am\s+i\b|\bknow\s+who\s+i\s+am\b|\bwho(?:'s|\s+is)\s+(?:this|that)(?:\s+in\s+the\s+(?:photo|picture))?\s*\?/i;
@@ -747,23 +974,36 @@ const FACT_TARGET = [
   /\bwhen(?:'s|\s+is)\s+(?:your|our|my|his|her|their|\w+'s)\s+(?:birthday|anniversary)\b/i,
   /\bhow\s+many\s+\w+\s+(?:have\s+we\s+got|do\s+we\s+have|have\s+you\s+got|did\s+we\s+have)\b/i,
   /\bwhat(?:'s|\s+is|\s+was|\s+were)\s+(?:the\s+|his\s+|her\s+|their\s+|its\s+|\w+'s\s+)?names?\b/i,
-  /\bwhat(?:'s|\s+is|\s+was|\s+were)\s+(?:\w+\s+){0,3}(?:called|named)\s*\??$/i,
+  // simulation 16.11: "What's our grandson's name?" was not caught (two words before "name") and became a card of names.
+  // Any question that asks for someone's or something's name is a test: the partner knows it.
+  /\bwhat(?:'s|\s+is|\s+was|\s+were|\s+are)\s+(?:[\w'’-]+\s+){0,5}names?\b/i,
+  /\b(?:know|tell\s+me|say|give\s+me)\s+(?:[\w'’-]+\s+){0,5}names?\b/i,
+  /\bwhat\s+(?:do|did)\s+(?:we|you|they)\s+(?:name|call)\b/i,
+  new RegExp(`\\bwho(?:'s|\\s+is|\\s+are)\\s+(?:our|your|my)\\s+(?:${KIN})s?\\b`, 'i'),
+  // the time or day of something that is already fixed ("What time is the doctor tomorrow?", "When does the nurse
+  // come?"): the partner knows it. Not "what time is it" (that is 'now'), not a wish ("when do you want …", "when
+  // should …"), not "when is a good time", not the person's own plan ("when are you going to bed?").
+  /\b(?:what\s+time|what\s+day|when)(?:'s|\s+is|\s+are|\s+does)\s+(?!it\b|you\b|(?:a\s+|the\s+)?(?:good|best|better|easiest|right|convenient)\b)/i,
+  /\bwhat(?:'s|\s+is|\s+was|\s+were)\s+(?:[\w'’-]+\s+){0,5}(?:called|named)\s*\??$/i,
   /\bwhat\s+do\s+(?:we|you)\s+call\b/i,
   /\bwho\s+(?:was|were)\s+(?:that|the|those)\b/i,
 ];
 
-export function quizKind(q: string): QuizKind | null {
+export function quizKind(q: string, profile?: Profile): QuizKind | null {
   if (!/\?\s*$/.test(q)) return null;
   if (NOW_Q.test(q)) return 'now';
   if (IDENTITY_Q.test(q)) return 'identity';
+  // "Who is Tyler?": asking who a person in About me is
+  const who = /^\s*who(?:'s|\s+is)\s+([\p{L}'-]+)\s*\?\s*$/iu.exec(stripVocative(q));
+  if (who && profile && (findPerson(who[1], profile) || isPartnerName(who[1], profile))) return 'identity';
   // "What do you remember about the trip?" asks them to share, not to retrieve one right answer: a normal card
   if (REMEMBER_Q.test(q) && !/\bwhat\s+(?:do|did)\s+you\s+(?:remember|recall)\s+(?:about|of|most|best)\b/i.test(q)) return 'remember';
   if (FACT_TARGET.some((re) => re.test(q))) return 'fact';
   return null;
 }
 /** Rule 9: a question that asks the person to retrieve a fact, a name or the date is a test, not a conversation. */
-export function isQuiz(q: string): boolean {
-  return quizKind(q) !== null;
+export function isQuiz(q: string, profile?: Profile): boolean {
+  return quizKind(q, profile) !== null;
 }
 
 const GENERIC_TELL = "If you know it, say it: \"It was …\". If you don't: \"I can't think of it either. Shall we look it up together?\"";
@@ -789,7 +1029,8 @@ function factLine(q: string, profile?: Profile): string {
     const past = /\b(?:was|were|did)\b/i.test(s);
     return `If you know it, say it: "${past ? 'It was' : "It's"} …". If you don't: "I can't think of it either."`;
   }
-  if (/\bwhen(?:'s|\s+is|\s+will)\b|\bnext\b/i.test(s) && !/\b(?:was|were|did)\b/i.test(s)) return "If you know it, say it: \"It's on …\".";
+  if (/\bwhat\s+time\b/i.test(s) && !/\b(?:was|were|did)\b/i.test(s)) return "If you know it, say it: \"It's at …\".";
+  if (/\b(?:when|what\s+day)(?:'s|\s+is|\s+are|\s+does|\s+will)\b|\bnext\b/i.test(s) && !/\b(?:was|were|did)\b/i.test(s)) return "If you know it, say it: \"It's on …\".";
   if (/\bhow\s+many\b/i.test(s)) return "If you know it, say it: \"We've got …\".";
   return GENERIC_TELL;
 }
@@ -799,8 +1040,11 @@ function factLine(q: string, profile?: Profile): string {
  * we marry?") never does. "Do you remember our trip?" becomes "I was thinking about our trip."
  */
 export function quizRephrase(q: string, partnerName: string, now = new Date(), profile?: Profile): string {
-  const k = quizKind(q);
+  const k = quizKind(q, profile);
   if (k === 'identity' && /\bmy\s+name\b|\bwho\s+am\s+i\b|who\s+i\s+am\b/i.test(q)) return `It's me, ${partnerName || 'your partner'}.`;
+  const named = /^\s*who(?:'s|\s+is)\s+([\p{L}'-]+)\s*\?\s*$/iu.exec(stripVocative(q));
+  const person = named && profile ? findPerson(named[1], profile) : undefined;
+  if (k === 'identity' && person?.relation) return `${person.name} is your ${person.relation}.`;
   if (k === 'now') {
     if (/\btime\b/i.test(q)) return `It's ${now.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' })} now.`;
     if (/\byear\b/i.test(q)) return `It's ${now.getFullYear()}.`;
@@ -912,10 +1156,59 @@ export function heuristicTopic(q: string, profile?: Profile): string {
   return ws.slice(0, 3).join(' ').toLowerCase() || 'question';
 }
 
+const YN_FRAME = [
+  /^(?:is|would|will)\s+(?:it|that)\s+(?:be\s+)?(?:ok|okay|alright|all right|fine|good|better)\s+(?:if|to|for|with\s+you\s+if)\s+/i,
+  /^(?:do|did|does|would|will|can|could|should|shall|may|might|must|have|has|had|are|is|am|was|were)\s+(?:you|we|i|it|they|he|she|there|that|this)\s+/i,
+  /^(?:do|did|does|would|will|can|could|should|shall|may|might|must|have|has|had|are|is|am|was|were)\s+/i,
+  /^you\s+/i,
+  /^(?:want|wanna|need|like|fancy|feel\s+like|mind|care)\s+(?:to\s+|for\s+|if\s+)?/i,
+  /^(?:me|us)\s+to\s+/i,
+  /^(?:just|still|really|maybe|perhaps|also)\s+/i,
+];
+const YN_DET = /^(?:the|a|an|your|my|our|some|any)$/i;
+
+/**
+ * The headline of a yes / no card: the proposal itself, in the question's own words and order, at most four words
+ * ("Did you take your pills this morning?" -> "take pills this morning", "Is it okay if Tyler comes over Saturday?"
+ * -> "Tyler comes over Saturday"). Before the simulation of 16.11 it was the first three content words wherever they
+ * stood ("take pills morning", "okay tyler comes"), with names in lower case.
+ */
+export function yesNoTopic(q: string, profile?: Profile): string {
+  let s = stripVocative(q).replace(/[?.!]+\s*$/, '').replace(/\s*,\s*(?:love|dear|darling|hen|pet|mate|hon|[A-Z][a-z]+)\s*$/, '').trim();
+  const start = s;
+  for (let i = 0; i < 6; i++) {
+    const y = YN_FRAME.reduce((acc, re) => acc.replace(re, ''), s);
+    if (y === s) break;
+    s = y;
+  }
+  s = s.replace(CUT, '').split(/\s*,\s*/)[0];
+  const name = lc(profile?.personName ?? '');
+  let ws = s.split(/\s+/).filter((w) => w && lc(w) !== name && !ADDRESS.has(lc(w)));
+  // a word left dangling by the cut goes; "on" / "in" / "off" at the end of a phrase that was not cut is its own word ("kettle on")
+  let cut = false;
+  const trimEnd = () => { while (ws.length > 1 && (cut ? /^(?:for|to|at|with|and|of|the|a|an|by|from|about|your|my|our|some|or|if|in|on)$/i : /^(?:for|to|at|with|and|of|the|a|an|by|from|about|your|my|our|some|or|if)$/i).test(ws[ws.length - 1])) ws.pop(); };
+  // "a bit", "a little", "for you" after the proposal are not part of it
+  let phrase = ws.join(' ').replace(/\s+(?:a\s+)?(?:bit|little|while|moment|minute)$/i, '').replace(/\s+(?:for|with|to)\s+(?:you|me|us)$/i, '');
+  ws = phrase.split(/\s+/).filter(Boolean);
+  // too long: first the time it ends with goes ("this morning", "on Friday"), then the small words
+  for (let i = 0; i < 3 && ws.length > 4; i++) { phrase = ws.join(' ').replace(TAIL, ''); ws = phrase.split(/\s+/).filter(Boolean); }
+  if (ws.length > 4) ws = ws.filter((w) => !YN_DET.test(w));
+  cut = ws.length > 4;
+  ws = ws.slice(0, 4);
+  trimEnd();
+  while (ws.length > 1 && YN_DET.test(ws[0])) ws.shift();
+  phrase = ws.join(' ');
+  // the capital that only opens the sentence goes; a name keeps its own
+  if (phrase && start.startsWith(phrase.split(' ')[0]) && /^[A-Z][a-z]/.test(phrase) && !(profile && findPerson(phrase.split(' ')[0], profile))) phrase = phrase.charAt(0).toLowerCase() + phrase.slice(1);
+  return phrase && !/^(?:it|that|this|so|one)$/i.test(phrase) ? phrase : heuristicTopic(q, profile);
+}
+
 // ---------------------------------------------------------------- open questions: allowed sources (§2.6)
 const EAT_Q = /\b(?:eat|food|dinner|lunch|breakfast|supper|cook|meal|hungry|fancy for tea|have for tea)\b/i;
 const WATCH_Q = /\b(?:watch|telly|tv|television|programme|program|show|film|movie)\b/i;
-const LISTEN_Q = /\b(?:listen|music|song|songs|record|records|radio|put on|play)\b/i;
+const LISTEN_Q = /\b(?:listen|listening|music|song|songs|record|records|radio|put on|play)\b/i;
+/** Without the two words that also fit the telly ("put on", "play"): only then is a TV entry certainly the wrong kind. */
+const LISTEN_ONLY = /\b(?:listen|listening|music|song|songs|record|records|radio|sing|tune|tunes|album)\b/i;
 const UPSET_Q = /\b(?:upset|wrong|bothering|the matter|on your mind|worried|worrying|troubling|cross|angry|sad)\b/i;
 // "What do you need?" / "Is there something you need?" are open; "You need something?" is a yes/no offer (§2.4 wins over §2.6)
 const NEED_Q = /\bwhat\s+(?:do\s+you|is\s+it\s+you|would\s+you)\s+need\b|\bwhat\s+(?:do\s+you\s+)?need\b|\b(?:something|anything)\s+(?:that\s+)?you\s+need\b/i;
@@ -934,13 +1227,18 @@ export function sourceFill(answers: string[], q: string, profile: Profile, cap: 
   let source = '';
   if (t === 'who') {
     // only a contact question ("who shall we ring / invite") asks for the family; "who do you fancy on the quiz" does not
-    if (!CONTACT.test(q) || PAST_LIFE.test(q)) return null;
+    if (!isContactQ(q) || PAST_LIFE.test(q)) return null;
     pool = contactPool(profile);
     source = 'people from About me';
   } else if (t === 'where') { pool = profile.places; source = 'places from About me'; }
   else if (t === 'what' && EAT_Q.test(q)) { pool = profile.foods; source = 'foods from About me'; }
   else if (t === 'what' && WATCH_Q.test(q)) { pool = profile.tv; source = 'TV from About me'; }
-  else if (t === 'what' && LISTEN_Q.test(q)) { pool = profile.music; source = 'music from About me'; }
+  else if (t === 'what' && LISTEN_Q.test(q)) {
+    // About me may hold one artist only: the radio is the one general choice that is always true, and no second
+    // artist is ever made up (simulation 16.11: a TV show and a team stood in as music)
+    pool = profile.music.length ? [...profile.music, 'radio'] : [];
+    source = profile.music.length >= cap ? 'music from About me' : 'music from About me and the radio';
+  }
   else if (UPSET_Q.test(q)) { pool = ['pain', 'family']; source = 'a fixed set for this kind of question'; }
   else if (NEED_Q.test(q)) { pool = ['toilet', 'pain']; source = 'a fixed set for this kind of question'; }
   if (!pool.length) return null;
@@ -952,6 +1250,41 @@ export function sourceFill(answers: string[], q: string, profile: Profile, cap: 
     if (!have.has(lc(item)) && !have.has(lc(p))) { out.push(item); have.add(lc(item)); }
   }
   return out.length >= 2 ? { answers: out, source } : null;
+}
+
+/** The About-me list a label belongs to, also when it is a name-like part of an entry ("Packers" of "Packers games"). */
+function aboutList(label: string, profile: Profile): string | null {
+  const exact = fromAboutMe(label, profile);
+  if (exact) return exact;
+  const ws = words(label);
+  if (!ws.length || !/\b[A-Z][a-z]/.test(label)) return null;
+  const lists: [string, string[]][] = [['places', profile.places], ['foods', profile.foods], ['TV', profile.tv], ['music', profile.music], ['other', profile.other ?? []]];
+  for (const [name, entries] of lists) if (entries.some((e) => { const ew = new Set(words(e)); return ws.every((w) => ew.has(w)); })) return name;
+  return null;
+}
+
+/**
+ * An About-me entry of another kind than the question asks for is not an answer: a TV show is not music, a place is
+ * not a food (simulation 16.11: "What do you feel like listening to?" offered "Packers" and "Wheel of Fortune").
+ * Only for questions whose kind is certain (eat / watch / listen, and not two of them at once). An entry under
+ * "other" (a pet, a team, a hobby) goes too: what the family listens to is in the music list. Returns the kept
+ * choices and the dropped ones.
+ */
+export function wrongListFilter(choices: string[], q: string, profile: Profile): { kept: string[]; dropped: string[] } {
+  const kinds: string[] = [];
+  if (questionType(q) === 'what') {
+    if (EAT_Q.test(q)) kinds.push('foods');
+    if (WATCH_Q.test(q)) kinds.push('TV');
+    if (LISTEN_ONLY.test(q)) kinds.push('music');
+  }
+  if (kinds.length !== 1) return { kept: choices, dropped: [] };
+  const kept: string[] = [];
+  const dropped: string[] = [];
+  for (const c of choices) {
+    const list = aboutList(c, profile);
+    (list && list !== kinds[0] ? dropped : kept).push(c);
+  }
+  return { kept, dropped };
 }
 
 const PLACE_NOUN = /\b(?:where|hotel|street|road|house|town|village|city|shop|pub|church|chapel|beach|school|place|cottage|caravan|park|hospital|club|café|cafe|restaurant)\b/i;
@@ -995,7 +1328,7 @@ export function contactPool(profile: Profile): string[] {
  * on this computer afterwards; nothing more is sent.
  */
 export function dropGenericWho(answers: string[], q: string, profile: Profile): string[] {
-  if (questionType(q) !== 'who' || !CONTACT.test(q) || PAST_LIFE.test(q) || contactPool(profile).length < 2) return answers;
+  if (questionType(q) !== 'who' || !isContactQ(q) || PAST_LIFE.test(q) || contactPool(profile).length < 2) return answers;
   const relations = new Set(profile.people.map((p) => lc(p.relation)).filter(Boolean));
   return answers.filter((a) => {
     const t = a.trim();

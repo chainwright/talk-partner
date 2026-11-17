@@ -14,7 +14,7 @@ Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a 
 
 Built for #BuildHybridAI 2026. Status: early. Six build sessions on 11 Nov 2026 (card rules, the five screens, consent flow, judge mode with a privacy receipt, "why this card", the coaching line, the repair card, the folded partner screen), a design commit on 16 Nov (direction C "Two Sides": a dark desk for the partner, a white card held up for the person, fonts self-hosted), and on 16 Nov the first real run of the on-device step, a truth pass over the lines our review marked false, and a first measurement on a labelled set of 60 partner questions that we wrote ourselves. **What it shows: on the 18 open questions (who, where, what), where the choices are not in the question, rules alone make no card at all (0 of 18); the on-device model, reading About me on this computer, made a card that matched our label for 15 or 16 of 18, and 12 or 13 of those offer the family's own people, places or foods.** Four runs on a clean tree on 16 Nov: 16, 16, 16 and 15 matched (`devlog/evidence_r2/heldout_r2_NOTES.md`); the model's answers vary a little from run to run. The other 42 questions are decided by code with no model; 36 to 38 of those matched. Later the same evening, seven changes to the first screen from a design review (`devlog/DAY9.md`): none of them touches a card rule or that number. Our labels, not a user trial; two labels were made stricter after the first run, and every miss is listed. No deploy yet, no video yet, no trial with people yet. Judges: `JUDGES.md` (60 seconds), `CLAIMS.md` (every claim with its status), `EVIDENCE.md` (claim → file, command, saved output). See `devlog/`.
 
-It also corrects **the partner**, quietly, where a rule can tell: two questions in one become "One thing at a time: showing the first"; a memory question becomes "You know this one: tell, don't test." The person is never corrected. The partner screen opens on that: "It corrects how you ask. It never answers for them." (the limits of both halves are in `CLAIMS.md`, row 11).
+It also corrects **the partner**, quietly, where a rule can tell: two questions in one become "One thing at a time: showing the first"; a memory question becomes "You know this one: tell, don't test."; a "you don't want …, do you?" question is asked the plain way ("Do you want …?"), so that a yes on the card means yes. The person is never corrected. The partner screen opens on that: "It corrects how you ask. It never answers for them." (the limits of both halves are in `CLAIMS.md`, row 11).
 
 ## For judges: 60 seconds
 
@@ -25,7 +25,7 @@ No account, no sign-in. What you get depends on what the copy has:
 
 | This copy has | What works |
 |---|---|
-| nothing (a bare clone, no `.env.local`) | every card that code decides alone: coffee or tea, yes / no, the feeling scale, the body map, the memory coaching, "We're stuck". An open question gets an honest "No card". Nothing contacts any host but the app's own (`npm run e2e:noconfig`, 12 checks) |
+| nothing (a bare clone, no `.env.local`) | every card that code decides alone: coffee or tea, yes / no, the feeling scale, the body map, the memory coaching, "We're stuck". An open question gets an honest "No card". Nothing contacts any host but the app's own (`npm run e2e:noconfig`, 15 checks) |
 | the Firebase web config in `.env.local` (see **Run**) | the above, plus cloud help for open questions once you turn it on |
 | the config and desktop Chrome with Gemini Nano | the above, plus the private step on this computer: open questions answered with the family's own names and places, nothing sent |
 
@@ -50,7 +50,7 @@ There is no hosted URL yet.
 - **On this computer**: the private step (`ONLY_ON_DEVICE`) answered and the SDK reported `ON_DEVICE`.
 - **Cloud help (question only)**: the stripped step (`PREFER_IN_CLOUD`) answered and the SDK reported `IN_CLOUD`. Only then does "What was sent" say *sent*.
 - **Ran on this computer (offline)**: the stripped step fell back to the device (SDK reported `ON_DEVICE`); nothing left.
-- **No AI needed**: code decided the card (yes / no, either-or, feeling, pain, body map, memory). For a plain question of these kinds no model runs at all. For a longer either-or the on-device model is asked to copy the two options out of the question; if its copy fails the check, the pair read in code is used and the badge is still "No AI needed", because nothing of the model's answer is on the card.
+- **No AI needed**: code decided the card (yes / no, either-or, three options named in the question, feeling, pain, body map, memory). For a plain question of these kinds no model runs at all. For a longer either-or the on-device model is asked to copy the two options out of the question; if its copy fails the check, the pair read in code is used and the badge is still "No AI needed", because nothing of the model's answer is on the card: not the choices and, since 16 Nov, not the headline either (`tests/unit/sim-classes.test.ts`, group 12). When the model's copy is what the card shows, or only a model read the question as yes / no, the badge names the step that ran.
 - **No card**: blocked; the partner is told to ask normally.
 
 After the badge, one line that is always on screen says what left this computer for this card ("nothing left this computer", or "the question left this computer, 1 name and 0 other About me words swapped out", or, when a cloud request was made and failed, "cloud help was asked and failed: the question may have left this computer"); it is read from the same recorded request body the receipt counts. On a card made on this computer it also names the choices that came from About me.
@@ -89,10 +89,10 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:154` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
 | `web/src/ai/firebaseEngine.ts:165` | `generateContent(` | pictures call (unused in this build) |
 | `web/src/ai/firebaseEngine.ts:185` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app contacts no Google host |
-| `core/pipeline.ts:469` | `ran: r.source` | the private step's trace line is the engine's report |
-| `core/pipeline.ts:556` | `ran: r.source` | the stripped step's trace line is the engine's report |
-| `core/pipeline.ts:584` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:212` | `function badge(` | the badge is drawn from `card.source` only |
+| `core/pipeline.ts:496` | `ran: r.source` | the private step's trace line is the engine's report |
+| `core/pipeline.ts:598` | `ran: r.source` | the stripped step's trace line is the engine's report |
+| `core/pipeline.ts:626` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
+| `web/src/main.ts:213` | `function badge(` | the badge is drawn from `card.source` only |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all. Every cut is visible per card in "Why this card".
@@ -136,13 +136,20 @@ runs "What would you like for dinner?" gives *pot roast / chili* on this compute
 entry stays on this computer even when cloud help is on. On our labelled set this is the whole difference: 12 or 13 of
 18 open questions got a matching card with the family's own entries on this computer, and rules alone made none.
 
-One kind of cloud card is completed on this computer: on a call / visit / invite question the cloud's
+One kind of cloud card is completed on this computer: on a call / visit / invite question (and "who do you want to
+see / meet / have over") the cloud's
 general words ("family", "a friend") are replaced in code by the people About me names, minus whoever lives here, so
 with cloud help only "Who should we call tonight?" reads *Jenny / Tyler* too. That is why the judge path does not
 open on that question: it shows a rule, not the model. The cloud still gets the question alone: no name,
 no label, no count of people (`dropGenericWho` in `core/rules.ts`, `tests/unit/who-and-more.test.ts`). And when a
 card shows two choices at a time, a third good one is no longer dropped: it waits on a next page, reached by the
 way-out tile or "Next: more choices".
+
+One kind of question is not sent at all, although cloud help is on: an open question that turns on a swapped-out
+About-me word ("What do you need from the hardware store?" would go as "from the Place A"). A step that never sees
+About me could only guess there, so the question stays on this computer: a card the on-device step made is kept,
+otherwise there is no card and the reason is on screen. The rule is narrow on purpose (a what-question with
+"from <an About-me place, food, show or thing>"); "What should we plant at the allotment?" still goes, swapped.
 
 **Limits, stated.** One development machine, one made-up family, one run per question: this shows the path works, not
 how good the cards are. After a browser start the model has to load: the app warms it up at page load with one fixed

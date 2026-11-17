@@ -119,6 +119,25 @@ try {
   check('an open question gets an honest "No card"', (await badge()) === 'No card' && /not configured on this copy/.test(warn), `${await badge()} · ${warn}`);
   await shot('noconfig-02-open-question');
 
+  // Typed questions (not chips), one per class the rehearsal of 16 Nov found: all read in code, so they work here too.
+  const type = async (q) => { await js(`(() => { const i = document.querySelector('#q'); i.value = ${JSON.stringify(q)}; i.dispatchEvent(new Event('input', { bubbles: true })); document.querySelector('#ask').requestSubmit(); })()`); await sleep(150); await settled(); };
+  const act = (a) => js(`!!document.querySelector('#result [data-act="${a}"]')`);
+  await type('What time is the dentist on Thursday? Shall I come in with you?');
+  const firstHalf = { badge: await badge(), coach: await js(`document.querySelector('.coach')?.innerText ?? ''`), next: await js(`document.querySelector('#result [data-act="next"]')?.innerText ?? ''`) };
+  await js(`document.querySelector('#result [data-act="next"]')?.click()`); await sleep(150); await settled();
+  const secondHalf = { tiles: await tiles(), say: await js(`document.querySelector('#result .say')?.innerText ?? ''`) };
+  check('two questions, the first with no card: "Next: second question" is there and shows the second',
+    firstHalf.badge === 'No card' && /tell, don't test/.test(firstHalf.coach) && firstHalf.next === 'Next: second question' && JSON.stringify(secondHalf.tiles) === JSON.stringify(['yes', 'no', 'not sure']) && secondHalf.say.startsWith('Shall I come in with you?'),
+    JSON.stringify({ firstHalf, secondHalf }));
+  await type('Porridge, toast, or a boiled egg this morning?');
+  const three = await tiles();
+  check('three options named in the question are three tiles, and "No AI needed"', JSON.stringify(three) === JSON.stringify(['porridge', 'toast', 'boiled egg', 'something else']) && (await badge()) === 'No AI needed' && !(await act('next')), JSON.stringify(three));
+  await shot('noconfig-03-three-options');
+  await type("You don't want the lamp on, do you?");
+  const neg = { tiles: await tiles(), say: await js(`document.querySelector('#result .say')?.innerText ?? ''`), coach: await js(`document.querySelector('.coach')?.innerText ?? ''`), headline: await js(`document.querySelector('#person .headline')?.innerText ?? ''`) };
+  check('a negative question is asked the plain way: the line to say and the headline have no "don\'t", and the partner is told',
+    JSON.stringify(neg.tiles) === JSON.stringify(['yes', 'no', 'not sure']) && neg.say.startsWith('Do you want the lamp on?') && !/don't|not\b(?! sure)/i.test(neg.say + neg.headline) && /plain way/.test(neg.coach), JSON.stringify(neg));
+
   // the one number under the chips, after every card of this run: nothing was handed to any cloud step, and (next check) no other host was contacted
   const bytes = await js(`document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? ''`);
   check('the number under the chips reads "0 bytes left this computer" after every card of this run', /^0 bytes left this computer \d+ cards this session · page load not counted/.test(bytes), bytes);
