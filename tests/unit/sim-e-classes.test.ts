@@ -9,7 +9,7 @@ import { partnerActions } from '../../core/actions';
 import { makeCard } from '../../core/pipeline';
 import { badgeKind, modelAsked, sessionTally } from '../../core/receipt';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
-import { codeOptions, codePair, dropWhichOne, isUnguessable, listedAnswers, noticeLead, quizKind, quizRephrase, splitQuestion } from '../../core/rules';
+import { codeOptions, codePair, dropWhichOne, whenChoices, isUnguessable, listedAnswers, noticeLead, quizKind, quizRephrase, splitQuestion } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -502,5 +502,55 @@ describe('E-10. "No AI needed" only when no model was called; when one was asked
     expect(sessionTally(cards)).toMatchObject({ code: 1, asked: 1, device: 0, cloud: 0, none: 0 });
     expect(COPY.how.tallyShort(sessionTally(cards))).toContain('1 no AI · 1 in code, AI not used');
     expect(COPY.badge.codeAsked).not.toBe(COPY.badge.code);
+  });
+});
+
+describe('E-11. an open "when" question gets the same line of times in every engine state', () => {
+  // set E: "When do you want to go to bed tonight?" -> 8 pm / 9 pm / 10 pm on two on-device runs, "early / late / now"
+  // on the third, "soon / later / now" from the cloud
+  const TIMES: [string, string[]][] = [
+    ['When would you like to turn in this evening?', ['8 pm', '9 pm', '10 pm']],
+    ['What time do you want your supper?', ['5 pm', '6 pm', '7 pm']],
+    ['When shall we have lunch?', ['12 noon', '1 pm', '2 pm']],
+    ['What time shall I wake you tomorrow morning?', ['7 am', '8 am', '9 am']],
+    ['When do you want your nap?', ['1 pm', '2 pm', '3 pm']],
+    ['When shall I do your hair today?', ['this morning', 'this afternoon', 'this evening']],
+    ['When would you like Grace to visit?', ['today', 'tomorrow', 'at the weekend']],
+    ['When did your shoulder start hurting?', ['today', 'yesterday', 'before that']],
+    ['When do you want your shower?', ['now', 'in a while', 'later today']],
+  ];
+  const VARIED: ModelOutput[] = [
+    { topic: 'time', kind: 'choice', choices: ['early', 'late', 'now'] },
+    { topic: 'time', kind: 'choice', choices: ['soon', 'later', 'now'] },
+    { topic: 'time', kind: 'choice', choices: ['8 pm', '9 pm', '10 pm'] },
+  ];
+  it.each(TIMES)('%s', async (q, want) => {
+    expect(whenChoices(q, PROFILE)).toEqual(want);
+    const cards: Card[] = [await ask(q, new Scripted(null))];
+    for (const out of VARIED) {
+      const dev = new Scripted(out); const cloud = new Scripted(null, out);
+      cards.push(await ask(q, dev), await ask(q, cloud));
+      // no model is asked, so nothing can vary and nothing is sent
+      expect(dev.calls).toEqual([]);
+      expect(cloud.calls).toEqual([]);
+    }
+    for (const card of cards) {
+      expect(card.blocked ?? null).toBeNull();
+      expect(answers(card)).toEqual(want);
+      expect(card.nextPage ?? null).toBeNull();
+      expect(card.choices.filter((c) => c.role === 'escape')).toHaveLength(1);
+      expect(badgeKind(card)).toBe('code');
+      expect(card.say).toBe(cards[0].say);
+    }
+  });
+  it('all three stand on one card at every support level', async () => {
+    for (const support of ['mild', 'more', 'most'] as const) expect(answers(await ask('When shall we have lunch?', new Scripted(null), support))).toHaveLength(3);
+  });
+  it('a time the partner knows is still a test, and times she names herself are still the card', async () => {
+    expect(whenChoices('When is the chiropodist coming?', PROFILE)).toBeNull();
+    expect((await ask('When is the chiropodist coming?', new Scripted(null))).kind).toBe('no-quiz');
+    expect(whenChoices('When shall we go, at 2 or at 4?', PROFILE)).toBeNull();
+    expect(answers(await ask('When shall we go, at 2 or at 4?', new Scripted(null)))).toEqual(['at 2', 'at 4']);
+    expect(whenChoices('Where shall we go this evening?', PROFILE)).toBeNull();
   });
 });

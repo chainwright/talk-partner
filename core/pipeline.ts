@@ -11,7 +11,7 @@ import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   contactPool, dropGenericWho, fromAboutMe, isUnguessable, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
-  codeOptions, contactFirst, dropWhichOne, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
+  codeOptions, contactFirst, dropWhichOne, whenChoices, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
 import type { BodyRegion, Card, CardWhy, Choice, ModelOutput, Profile, Source, StepTrace, SupportLevel } from './types';
@@ -42,7 +42,7 @@ export function parseModelOutput(text: string): ModelOutput | null {
  * still go to the model, which copies the options out of the question for the label check.
  */
 export function needsNoModel(q: string, profile?: Profile): boolean {
-  if (isUnguessable(q) || isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || unseenPeople(q, profile)) return true;
+  if (isUnguessable(q) || isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || unseenPeople(q, profile) || whenChoices(q, profile)) return true;
   // three or more options named in the question: all of them are read in code, so no model is asked to copy them
   if (orList(q, profile)) return true;
   const pair = codePair(q, profile);
@@ -53,7 +53,7 @@ export function needsNoModel(q: string, profile?: Profile): boolean {
 
 /** Questions where code alone fixes the choices (the model only adds a topic). */
 export function codeDetermined(q: string, profile?: Profile): boolean {
-  return isUnguessable(q) || isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || !!unseenPeople(q, profile) || !!codeOptions(q, profile) || isAuxYesNo(q) || isOrNot(q) || isFeelingQuestion(q);
+  return isUnguessable(q) || isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || !!unseenPeople(q, profile) || !!whenChoices(q, profile) || !!codeOptions(q, profile) || isAuxYesNo(q) || isOrNot(q) || isFeelingQuestion(q);
 }
 
 /**
@@ -297,6 +297,15 @@ export function assemble(
       dropped: (o?.choices ?? []).map((label) => ({ label, rule: W.rules.fixed })), headline: W.headlineFrom.fixed, personal: people,
     };
     for (let c: Card | null | undefined = card; c; c = c.nextPage) c.why = why;
+    return card;
+  }
+
+  const times = meta.listed ? null : whenChoices(asked, profile);
+  if (times) {
+    // An open "when": one line of three times, fixed in code, all three on the card at every support level (one
+    // idea on one axis, like a feeling scale). No model, so the card does not change from run to run or from step to step.
+    const card = finish({ ...base, source: 'code', topic: heuristicTopic(asked, profile), kind: 'choice', notes: [N.timeLine] }, times, [escapeFor(asked)], profile, support, times.length);
+    card.why = { ...fixedWhy(o, step, W.decidedBy.when, W.headlineFrom.question), added: times.map((label) => ({ label, from: 'a fixed set for this kind of question' })) };
     return card;
   }
 

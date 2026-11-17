@@ -1794,6 +1794,32 @@ export function contactFirst(answers: string[], q: string, profile: Profile): st
   return [...pool, ...others];
 }
 
+/**
+ * The times an open "when" question gets: a fixed line of three, chosen in code by what the question is about, the
+ * same in every engine state. Set E, 16 Nov: "When do you want to go to bed tonight?" gave 8 pm / 9 pm / 10 pm on two
+ * on-device runs, "early / late / now" on the third and "soon / later / now" from the cloud. Null when the question is
+ * not an open "when" (it names its own options, or it asks for a fixed time the partner knows: that is a test).
+ *   bed, sleep, tonight, this evening     8 pm / 9 pm / 10 pm          dinner, supper, tea        5 pm / 6 pm / 7 pm
+ *   getting up, breakfast, the morning    7 am / 8 am / 9 am           lunch                      12 noon / 1 pm / 2 pm
+ *   the afternoon, a nap                  1 pm / 2 pm / 3 pm           today                      this morning / this afternoon / this evening
+ *   something that began or happened      today / yesterday / before that
+ *   a visit, a call, an outing, "what day"  today / tomorrow / at the weekend
+ *   anything else                         now / in a while / later today
+ */
+export function whenChoices(q: string, profile?: Profile): string[] | null {
+  if (questionType(q) !== 'when' || offersOptions(q) || isQuiz(q, profile)) return null;
+  const s = lc(stripAddress(q));
+  if (/\bwhen\s+(?:did|was|were|have|has|had)\b|\blast\s+(?:time|have|had|eat|ate|go|went|see|saw)\b|\bwhen\b[^?]*\b(?:start|started|begin|began)\b/.test(s)) return ['today', 'yesterday', 'before that'];
+  if (/\b(?:dinner|supper|evening\s+meal|tea\s+tonight|eat\s+tonight|eat\s+this\s+evening)\b/.test(s)) return ['5 pm', '6 pm', '7 pm'];
+  if (/\blunch\b/.test(s)) return ['12 noon', '1 pm', '2 pm'];
+  if (/\b(?:bed|sleep|turn\s+in|lights\s+out|tonight|this\s+evening|evening)\b/.test(s)) return ['8 pm', '9 pm', '10 pm'];
+  if (/\b(?:get\s+up|getting\s+up|wake|woken|breakfast|tomorrow\s+morning|this\s+morning|in\s+the\s+morning)\b/.test(s)) return ['7 am', '8 am', '9 am'];
+  if (/\b(?:this\s+afternoon|afternoon|nap)\b/.test(s)) return ['1 pm', '2 pm', '3 pm'];
+  if (/\btoday\b/.test(s)) return ['this morning', 'this afternoon', 'this evening'];
+  if (/^what\s+day\b/.test(s.trim()) || /\b(?:visit|visiting|come\s+(?:over|round|by)|see|trip|outing|holiday|call|ring|phone|invite|this\s+week|weekend|appointment|hairdresser|barber|shopping)\b/.test(s)) return ['today', 'tomorrow', 'at the weekend'];
+  return ['now', 'in a while', 'later today'];
+}
+
 export function cleanTopic(t: string): string {
   return t.replace(/[^\w\s'-]/g, '').replace(/\s+/g, ' ').trim().split(' ').slice(0, 4).join(' ');
 }

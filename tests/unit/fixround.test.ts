@@ -84,7 +84,8 @@ describe('P0 privacy: no About-me term in any cloud payload', () => {
     // (two questions of this list changed on 16 Nov 2026, with the rules that came out of the simulation: "What time
     // is Tomasz coming …?" is now a memory question and "… bring back from the Royal Oak?" turns on a hidden About-me
     // word; neither is sent at all, see the test after this loop. These two take their place.)
-    'What time should Tomasz come, on 07700 900456?',
+    // (since set E, 16 Nov, an open "when" is a fixed card made in code and is not sent either; so this asks what, not when)
+    'What should Tomasz bring, on 07700 900456?',
     'What should Joan bring back for the Royal Oak quiz night?',
   ];
 

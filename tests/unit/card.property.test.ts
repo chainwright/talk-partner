@@ -1,6 +1,7 @@
 // build spec §5.2 property tests (seeded, repeatable): card invariants over random questions, random model
 // output and random engine states, plus the picture gate. Written 11 Nov 2026.
 import { describe, expect, it } from 'vitest';
+import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { pictureFor } from '../../core/pictures';
 import { makeCard } from '../../core/pipeline';
@@ -123,7 +124,8 @@ describe('property: card invariants over random questions, model output and engi
         expect(esc, ctx).toHaveLength(1);
         expect(ans.length, ctx).toBeGreaterThanOrEqual(2);
         // (a feeling scale keeps its middle at every level: three steps on one line)
-        expect(ans.length, ctx).toBeLessThanOrEqual(card.kind === 'feeling' ? 3 : cap(support));
+        // (so does the fixed line of three times an open "when" question gets)
+        expect(ans.length, ctx).toBeLessThanOrEqual(card.kind === 'feeling' || card.notes.includes(COPY.notes.timeLine) ? 3 : cap(support));
       }
       // no negative words (the yes / no card's own "no" is the one exception), no "both" (no body sides in these
       // questions), no placeholder, never the headline

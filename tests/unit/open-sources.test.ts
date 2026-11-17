@@ -114,9 +114,10 @@ describe('§2.9: numbers as figures', () => {
     expect(figures('eleven', false)).toBe('eleven');
   });
   it('on a card', async () => {
-    const c = await makeCard('When do you want your bath?', env(new Fake(choice(['half past ten', 'after lunch'], 'bath'))));
-    expect(labels(c)).toEqual(['10:30', 'after lunch', 'something else']);
-    expect(c.say).toBe('When do you want your bath? 10:30, after lunch, or something else?');
+    // (since set E, 16 Nov, an open "when" is a fixed line made in code; times the partner names are still written as figures)
+    const c = await makeCard('When do you want your bath, at half past ten or after lunch?', env(new Fake(choice(['half past ten', 'after lunch'], 'bath'))));
+    expect(labels(c)).toEqual(['at 10:30', 'after lunch', 'something else']);
+    expect(c.say).toBe('When do you want your bath, at half past ten or after lunch? At 10:30, after lunch, or something else?');
   });
 });
 
