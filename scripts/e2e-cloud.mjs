@@ -113,7 +113,7 @@ try {
   check('open question answered by the cloud leg (inferenceSource in_cloud)', badge2 === 'Cloud help (question only)', badge2);
   check('the card has at least two answers plus one escape', (tiles2?.length ?? 0) >= 3, JSON.stringify(tiles2));
   const sent = await js(`document.querySelector('#sent').innerText`);
-  const payload = await js(`document.querySelector('#sent pre')?.innerText ?? ''`);
+  const payload = await js(`document.querySelector('#sent pre')?.textContent ?? ''`);
   const tail = await js(`document.querySelector('#result .badge-line .tail')?.innerText ?? ''`);
   const report = consoleLines.filter((l) => l.startsWith('[ai-logic]'));
   console.log(`SDK report: ${report.join(' | ')}`);
@@ -121,6 +121,12 @@ try {
   check('the badge line says the question left with 1 name swapped out', /1 name and 0 other About me words swapped out/.test(tail), tail);
   check('the sent payload has "Person A", not the name', /Person A/.test(payload) && !/Jenny/.test(payload), payload.match(/Partner asks:[^"]*/)?.[0] ?? '');
   check('the panel says it was sent', /Sent for this card/.test(sent));
+  // "What was sent" by default: one line (the question after the swap) and the size; the exact request is folded, one click opens it
+  const folded = await js(`(() => { const d = document.querySelector('#sent details.exact'), pre = d?.querySelector('pre'); const line = document.querySelector('#sent .sent-line');
+    const before = { line: line?.querySelector('code')?.innerText ?? '', size: line?.querySelector('span')?.innerText ?? '', open: d?.open, seen: pre?.checkVisibility() };
+    d?.querySelector('summary').click(); return { ...before, opened: d?.open, seenAfter: pre?.checkVisibility(), bytes: new TextEncoder().encode(JSON.stringify(JSON.parse(pre?.textContent ?? '{}'))).length }; })()`);
+  check('"What was sent" shows one line and the size by default; the exact request is folded and one click opens it',
+    folded.line === 'Partner asks: What do you want to do this weekend with Person A?' && folded.size.startsWith(`${folded.bytes.toLocaleString('en-US')} bytes`) && folded.open === false && folded.seen === false && folded.opened === true && folded.seenAfter === true, JSON.stringify(folded));
   const aiHosts2 = [...hosts.keys()].filter((h) => /googleapis|firebase|recaptcha/.test(h));
   check('the request went to Firebase AI Logic', aiHosts2.some((h) => /firebasevertexai\.googleapis\.com/.test(h)), aiHosts2.join(', '));
   // the one number: what the app handed to the cloud step, counted on the same request "What was sent" shows
@@ -144,7 +150,7 @@ try {
   await sleep(300);
   await waitFor(`document.querySelector('#make') && !document.querySelector('#make').disabled && !!document.querySelector('#result .badge')`, 60000);
   const tiles3 = await js(`[...document.querySelectorAll('#person .tile span')].map(e => e.innerText)`);
-  const payload3 = await js(`document.querySelector('#sent pre')?.innerText ?? ''`);
+  const payload3 = await js(`document.querySelector('#sent pre')?.textContent ?? ''`);
   const why3 = await js(`document.querySelector('#result .why p')?.innerText ?? ''`);
   const report3 = consoleLines.filter((l) => l.startsWith('[ai-logic]'));
   console.log(`who to call -> tiles ${JSON.stringify(tiles3)}\nwhy: ${why3}\nSDK report: ${report3.join(' | ')}`);

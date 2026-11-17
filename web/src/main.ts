@@ -9,7 +9,7 @@ import type { DeviceStatus, Engine } from '../../core/engine';
 import { addAnswer, answerCounts, lastAnswer, whenText, type Answered } from '../../core/history';
 import { LEGS } from '../../core/models';
 import { bodyDetailCard, makeCard, quizOverrideCard, repairCard } from '../../core/pipeline';
-import { countSwaps, sessionReceipt, sessionTally } from '../../core/receipt';
+import { countSwaps, sentLine, sessionReceipt, sessionTally } from '../../core/receipt';
 import { cloudTextRequest } from '../../core/requests';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS } from '../../core/sample';
@@ -231,11 +231,21 @@ function badgeLine(c: Card): string {
   return `<p class="badge-line">${badge(c)}<span class="tail">· ${esc(tail)}</span></p>`;
 }
 
+/**
+ * "What was sent": by default one line, the part of the request that changes from card to card ("Partner asks: …",
+ * after the swap), and the size of the whole request. The request itself, exactly as the app handed it to the SDK
+ * (model, mode, fixed instructions, answer format), is one click further, under "Show the exact request".
+ */
 function sentPanel(c: Card): string {
   const swaps = c.cloudSwaps?.length ? `<p class="swaps">${C.sent.swaps}<br>${c.cloudSwaps.map(esc).join('<br>')}</p>` : '';
-  if (c.cloudPayload) return `<p>${c.source === 'in-cloud' ? C.sent.sentFor : C.sent.notUsed}</p><pre>${esc(c.cloudPayload)}</pre>${swaps}`;
-  if (c.cloudAttempted) return `<p>${C.sent.attempted}</p><pre>${esc(c.cloudAttempted)}</pre>${swaps}`;
-  if (c.unsentPayload) return `<p>${state.settings.cloudHelp ? C.sent.notSentOn : C.sent.notSent}</p><pre>${esc(c.unsentPayload)}</pre>${swaps}`;
+  const body = (label: string, payload: string) => {
+    const s = sentLine(payload);
+    return `<p>${label}</p><p class="sent-line"><code>${esc(s.text)}</code><span>${esc(C.sent.size(s.bytes))}</span></p>${swaps}
+      <details class="exact"><summary>${C.sent.exact}</summary><pre>${esc(payload)}</pre></details>`;
+  };
+  if (c.cloudPayload) return body(c.source === 'in-cloud' ? C.sent.sentFor : C.sent.notUsed, c.cloudPayload);
+  if (c.cloudAttempted) return body(C.sent.attempted, c.cloudAttempted);
+  if (c.unsentPayload) return body(state.settings.cloudHelp ? C.sent.notSentOn : C.sent.notSent, c.unsentPayload);
   return `<p>${C.sent.nothing}</p>`;
 }
 

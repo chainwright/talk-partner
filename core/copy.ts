@@ -197,6 +197,9 @@ const COPY = {
     /** The request was handed to the SDK and failed: it may or may not have reached the cloud. */
     attempted: 'Cloud help was asked and no answer came back. If the request left this computer, it held only this:',
     swaps: 'Swapped before sending (only you see this):',
+    /** After the one line that changes per card: the size of the whole request, and what the rest of it is. */
+    size: (bytes: number) => `${bytes.toLocaleString('en-US')} bytes with the fixed instructions and the answer format, which are the same for every question`,
+    exact: 'Show the exact request',
   },
 
   welcome: {

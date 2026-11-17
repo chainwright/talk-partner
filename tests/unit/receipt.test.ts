@@ -1,9 +1,10 @@
 // Day 4 (12 Nov 2026): the privacy receipt counts bytes on the payload the card recorded, never on an estimate, and
 // says 0 whenever nothing left this computer (cloud off, cloud unreachable, a code card, a blocked card).
 import { describe, expect, it } from 'vitest';
+import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
-import { cardReceipt, countSwaps, questionInPayload, sessionReceipt, utf8Bytes } from '../../core/receipt';
+import { cardReceipt, countSwaps, questionInPayload, sentLine, sessionReceipt, utf8Bytes } from '../../core/receipt';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
 import { SAMPLE_PROFILE } from '../../core/sample';
 import { stripQuestion } from '../../core/strip';
@@ -115,5 +116,22 @@ describe('privacy receipt: counted on the recorded payload', () => {
   it('countSwaps: people and unknown names are names; foods, places, shows, music and things are the rest', () => {
     expect(countSwaps(['Person A ← Jenny', 'Name A ← Whitby', 'Place A ← the lake', 'Food B ← chili', 'Show A ← Packers games'])).toEqual({ names: 2, other: 3 });
     expect(countSwaps(undefined)).toEqual({ names: 0, other: 0 });
+  });
+});
+
+describe('"What was sent" in one line', () => {
+  it('the line is the user part of the recorded request, and the size is the receipt\'s own count of the whole request', () => {
+    const req = cloudTextRequest('What do you want to do this weekend with Person A?');
+    const pretty = JSON.stringify(req, null, 2); // as the pipeline records it for the panel
+    const s = sentLine(pretty);
+    expect(s.text).toBe('Partner asks: What do you want to do this weekend with Person A?');
+    expect(s.bytes).toBe(utf8Bytes(JSON.stringify(req)));
+    expect(s.text).toBe(`Partner asks: ${questionInPayload(pretty)}`);
+  });
+  it('the size line says what the rest of the request is', () => {
+    expect(COPY.sent.size(4505)).toBe('4,505 bytes with the fixed instructions and the answer format, which are the same for every question');
+  });
+  it('something that is not a request is still counted, with no line', () => {
+    expect(sentLine('not json')).toEqual({ text: '', bytes: 8 });
   });
 });

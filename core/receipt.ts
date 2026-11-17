@@ -66,6 +66,20 @@ export function questionInPayload(payloadJson: string): string {
   }
 }
 
+/**
+ * A recorded request in one line, for "What was sent": the one part that changes from card to card (the user part,
+ * "Partner asks: …", after the swap) and the size of the whole request, counted the way the receipt counts it.
+ */
+export function sentLine(payloadJson: string): { text: string; bytes: number } {
+  try {
+    const o = JSON.parse(payloadJson);
+    const text: unknown = o?.contents?.[0]?.parts?.[0]?.text;
+    return { text: typeof text === 'string' ? text : '', bytes: utf8Bytes(JSON.stringify(o)) };
+  } catch {
+    return { text: '', bytes: utf8Bytes(payloadJson) };
+  }
+}
+
 /** "Person A ← Jenny" lines -> how many were people (Person / Name labels) and how many other About-me entries. */
 export function countSwaps(swaps: string[] | undefined): { names: number; other: number } {
   let names = 0;

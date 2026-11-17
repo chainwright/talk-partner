@@ -93,7 +93,7 @@ async function attach(port) {
     const v = await js(`({ badge: document.querySelector('#result .badge')?.innerText ?? '', tail: document.querySelector('#result .badge-line .tail')?.innerText ?? '',
       tiles: [...document.querySelectorAll('#person .tile span')].map((e) => e.innerText), why: document.querySelector('.why p')?.innerText ?? '',
       trace: [...document.querySelectorAll('.trace li')].map((e) => e.innerText.replace(/\\n/g, ' — ')), notes: document.querySelector('.notes')?.innerText ?? '',
-      sentQuestion: (document.querySelector('#sent pre')?.innerText.match(/Partner asks:[^"\\\\]*/) ?? [''])[0], sentHead: document.querySelector('#sent p')?.innerText ?? '' })`);
+      sentQuestion: (document.querySelector('#sent pre')?.textContent.match(/Partner asks:[^"\\\\]*/) ?? [''])[0], sentHead: document.querySelector('#sent p')?.innerText ?? '' })`);
     log(`\n**Asked:** "${q}"  (${ms} ms from submit to card)`);
     log(`- badge line: ${v.badge} ${v.tail}`);
     log(`- tiles on the person's card: ${v.tiles.join(' / ') || '(none)'}`);
