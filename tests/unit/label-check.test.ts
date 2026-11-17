@@ -76,7 +76,10 @@ describe('both sources go through the same check', () => {
     expect(codePair('Raglan beach or the garden centre this weekend?')).toEqual(['Raglan beach', 'garden centre']);
     expect(codePair('Do you want the cottage up at the lake or a hotel?', LAKE)).toEqual(['cottage up at the lake', 'hotel']);
     expect(codePair('Tired or sleepy?')).toBeNull();
-    expect(codePair('Shall we try the hospital, or Thursday?')).toBeNull();
+    // a thing against a time fails the strict check; since set E (17 Nov) the partner's own two options still make
+    // the card, read as clauses (before: no card, or a cloud call for options that are in the question)
+    expect(checkPair(['hospital', 'Thursday'], 'Shall we try the hospital, or Thursday?')).toBeNull();
+    expect(codePair('Shall we try the hospital, or Thursday?')).toEqual(['try the hospital', 'Thursday']);
   });
 });
 
@@ -98,16 +101,16 @@ const env = (engine: Engine, allowCloud = true) => ({ profile: PROFILE, support:
 const labels = (c: { choices: { label: string }[] }) => c.choices.map((x) => x.label);
 
 describe('on a card', () => {
-  it('a pair the check rejects goes to the cloud (consent on) or is blocked (consent off), never shown as is', async () => {
+  it('a pair the model copied badly is never shown as is: the card is the two options read in code, and nothing is sent', async () => {
+    // (until set E, 17 Nov, this question went to the cloud, or had no card with cloud help off: the options are in it)
     const q = 'Shall we try the hospital, or Thursday?';
     const e = new Fake({ topic: 'x', kind: 'choice', choices: ['yes', 'no'], options: ['the hospital', 'Thursday'] }, { topic: 'appointment', kind: 'choice', choices: ['hospital', 'Thursday'] });
-    const sent = await makeCard(q, env(e));
-    expect(e.cloudCalls).toHaveLength(1);
-    expect(sent.route.reasons).toContain('either-or options not found');
-    expect(labels(sent)).not.toContain('yes');
+    const on = await makeCard(q, env(e));
+    expect(e.cloudCalls).toHaveLength(0);
+    expect(labels(on)).toEqual(['try the hospital', 'Thursday', 'something else']);
     const off = await makeCard(q, env(new Fake({ topic: 'x', kind: 'choice', choices: ['yes', 'no'], options: ['the hospital', 'Thursday'] }), false));
-    expect(off.blocked).toBeTruthy();
-    expect(off.choices).toEqual([]);
+    expect(off.blocked ?? null).toBeNull();
+    expect(labels(off)).toEqual(['try the hospital', 'Thursday', 'something else']);
   });
 
   it('the shared time phrase is in the headline, not on a tile', async () => {

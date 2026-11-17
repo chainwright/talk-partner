@@ -292,6 +292,9 @@ export function orPair(q: string): [string, string] | null {
   const a = aw.join(' ');
   const b = bw.join(' ');
   if (!a || aw.length > 4) return clausePair(q);
+  // "book the taxi for Friday or hold off": counting two words off the left gave "for Friday" against "hold off". A
+  // left side that opens with a preposition the right side does not share is the tail of a clause: read both as clauses.
+  if (aw.length > 1 && /^(?:for|to|at|on|with|by|from|about|in)$/i.test(aw[0]) && lc(bw[0]) !== lc(aw[0]) && !isTimeOnly(b)) return clausePair(q) ?? [a, b];
   if (lc(a) === lc(b) || NEG.test(a) || NEG.test(b)) return null;
   return [a, b];
 }
@@ -305,7 +308,8 @@ const CLAUSE_LEAD = [
   new RegExp(`^(?:you\\s+)?(?:want|fancy|prefer|rather|mean|need)\\s+(?:to\\s+)?`, 'i'),
   new RegExp(`^(?:shall|should|can|could|will)\\s+(?:we|i)\\s+`, 'i'),
   /^(?:would|will|is|was)\s+it\s+be\s+(?:better|best|easier|nicer)\s+(?:to\s+|if\s+(?:we|i)\s+)?/i,
-  new RegExp(`^${AUX}\\s+${SUBJ}\\s+(?:just\\s+|still\\s+|really\\s+)?`, 'i'),
+  // ("do it yourself", "do that first": there "do" is the verb of the option, not the question's auxiliary)
+  new RegExp(`^(?!do\\s+(?:it|that|this)\\b)${AUX}\\s+${SUBJ}\\s+(?:just\\s+|still\\s+|really\\s+)?`, 'i'),
   /^(?:just|maybe|perhaps|still|rather|or|else|instead)\s+/i,
   /^(?:a\s+)?bit\s+(?:of\s+a\s+)?/i,
   /^(?:me|us)\s+to\s+/i,
@@ -331,7 +335,7 @@ function clauseOption(x: string, other = ''): string {
   const some = new RegExp(`^${AUX}\\s+(something|anything)\\s+(.*)$`, 'i').exec(s);
   if (some) s = `${some[1]} ${some[2]}`.replace(/\byou\b/gi, 'me');
   // "Is the soup alright" / "Has Pickles got enough seed": an aux + subject is not part of the option
-  const aux = new RegExp(`^${AUX}\\s+(?:(?:the|your|my|our|that|this)\\s+\\w+|[A-Z][\\p{L}']+|(?:Person|Thing|Place|Food|Show|Music) [A-Z])\\s+`, 'iu').exec(s);
+  const aux = new RegExp(`^(?!do\\s+(?:it|that|this)\\b)${AUX}\\s+(?:(?:the|your|my|our|that|this)\\s+\\w+|[A-Z][\\p{L}']+|(?:Person|Thing|Place|Food|Show|Music) [A-Z])\\s+`, 'iu').exec(s);
   if (aux && s.slice(aux[0].length).trim()) s = s.slice(aux[0].length);
   s = s.replace(CUT, '');
   for (let i = 0; i < 4; i++) {
@@ -396,7 +400,8 @@ export function clausePair(q: string): [string, string] | null {
 
 const stem = (w: string) => lc(w).replace(/'s$/, '').replace(/(?:ing|ed|es|s)$/, '');
 const LEFTOVER_START = new RegExp(`^(?:is|was|are|were|am|do|does|did|would|will|can|could|should|shall|want|wanna|like|rather|prefer|fancy|mean|need|shall|should|would|will|could|can|going|gonna)\\b`, 'i');
-const LEFTOVER_END = /\b(?:to|for|at|with|of|the|a|an|and|or|have|be|going|get|do|is|are|was|were|you|your|i|we|my)$/i;
+// ("you" is not here: "help you", "come with you" are whole options; a leftover "do you" is caught by its first word)
+const LEFTOVER_END = /\b(?:to|for|at|with|of|the|a|an|and|or|have|be|going|get|do|is|are|was|were|your|i|we|my)$/i;
 const PRONOUN_ONLY = /^(?:it|that|this|one|ones|them|those|these|either|both|something|anything)$/i;
 
 /**
@@ -494,17 +499,19 @@ function checkSide(side: string, q: string, tail: string | null, profile?: Profi
   for (let i = 0; i < 3; i++) s = s.replace(FUNC_END, '');
   s = s.replace(/^(?:the|a|an)\s+/i, '').trim();
   if (!s) return null;
-  if (LABEL_BAD.test(s) || LEFTOVER_START.test(s) || LEFTOVER_END.test(s) || PRONOUN_ONLY.test(s) || NEG.test(s)) return null;
+  // "when you go up to bed" is a time the partner offered, not a question left over
+  const whenClause = /^when\s+(?:you|we|i|he|she|they|it|the|your|my|our)\s+[a-z']+/i.test(s) && isTimeLike(s);
+  if ((LABEL_BAD.test(s) && !whenClause) || LEFTOVER_START.test(s) || LEFTOVER_END.test(s) || PRONOUN_ONLY.test(s) || NEG.test(s)) return null;
   s = expandFromQuestion(s, q);
   s = questionCase(s, q);
   if (profile) s = snapToQuestionItem(s, q, profile);
   s = personSide(s, profile);
-  if (s.split(/\s+/).length > 5) return null;
+  if (s.split(/\s+/).length > (isTimeLike(s) ? 6 : 5)) return null;
   return s;
 }
 
 /** The label check for two or more sides: every side passes, no two are the same or synonyms, all on one axis. */
-function checkSides(sides: string[], q: string, profile?: Profile, list = false): string[] | null {
+function checkSides(sides: string[], q: string, profile?: Profile, list = false, oneAxis = true): string[] | null {
   const tail = sharedTail(stripAddress(q));
   const out: string[] = [];
   for (const side of sides) {
@@ -516,7 +523,7 @@ function checkSides(sides: string[], q: string, profile?: Profile, list = false)
     if (lc(out[i]) === lc(out[j])) return null;
     const g = SYNONYMS.findIndex((grp) => grp.includes(lc(out[i])));
     if (g >= 0 && SYNONYMS[g].includes(lc(out[j]))) return null;
-    if (isTimeOnly(out[i]) !== isTimeOnly(out[j])) return null;
+    if (oneAxis && isTimeOnly(out[i]) !== isTimeOnly(out[j])) return null;
   }
   // In a list, the capital that only opens the sentence is not part of the first label ("Soup, a sandwich, or
   // leftovers?" -> "soup"): lowered when no other item starts with a capital and the word is not a name About me
@@ -537,10 +544,71 @@ function checkSides(sides: string[], q: string, profile?: Profile, list = false)
   return out;
 }
 
-/** The code parser's pair after the same label check as the model's options. */
+/** A side that says when: a time word or phrase ("tonight", "at 6"), or a clause that sets a moment ("after you eat"). */
+function isTimeLike(side: string): boolean {
+  const ws = side.trim().split(/\s+/).filter(Boolean);
+  return isTimeOnly(side) || (ws.length >= 2 && ws.length <= 6 && /^(?:after|before|once|when|while)$/i.test(ws[0]));
+}
+
+/**
+ * "Do you want your pills now or after you eat?": the second side says when, so the first option is the time the
+ * left side ends with ("now"), not its last words counted off ("pills now"). Set E, 17 Nov: such a question had no
+ * card without a model, and with one only in some runs.
+ */
+function timePair(q: string): [string, string] | null {
+  const m = /^(.*\S)\s*,?\s+or\s+(.*?)\s*\?\s*$/i.exec(stripAddress(q).trim());
+  if (!m) return null;
+  const right = m[2].trim().replace(/^(?:maybe|just|else|perhaps|rather)\s+/i, '').replace(new RegExp(`^on\\s+(?=${DAYRE}$)`, 'i'), '');
+  if (!isTimeLike(right)) return null;
+  const tail = new RegExp(`\\b((?:right\\s+)?now|later(?:\\s+on)?|soon|today|tonight|tomorrow|first|straight\\s+away|(?:this|tomorrow|in\\s+the)\\s+(?:morning|afternoon|evening)|${DAYRE}|at\\s+\\d{1,2}(?::\\d{2})?(?:\\s*[ap]m)?|(?:before|after|with)\\s+(?:lunch|dinner|tea|breakfast|supper|bed|church|work|school|the\\s+\\w+))$`, 'i').exec(m[1].replace(/[\s,]+$/, ''));
+  return tail ? [tail[1], right] : null;
+}
+
+/**
+ * The last reading of an either-or, used only when every stricter one failed the label check: each side as its
+ * clause, shortened, with no demand that the two sit on one axis ("tell Jen" against "wait"). The sides are still
+ * the question's own words, never a question, a bare pronoun or a negative.
+ */
+function loosePair(q: string): [string, string] | null {
+  if (isOrNot(q)) return null;
+  const m = /^(.*\S)\s*,?\s+or\s+(.*?)\s*\?\s*$/i.exec(stripAddress(q).trim());
+  if (!m || /\bor\b/i.test(m[1])) return null;
+  const segs = m[1].split(/\s*,\s*/).filter(Boolean);
+  // a list in front ("soup, a sandwich, or would you rather …") is three options, not a pair
+  if (segs.slice(1).some((x) => x.split(/\s+/).length <= 2 && !ASIDE.test(x))) return null;
+  const a = clauseOption(segs[segs.length - 1] ?? '');
+  const b = clauseOption(m[2].split(/\s*,\s*/)[0]);
+  if (!a || !b || a.split(/\s+/).length > 5 || b.split(/\s+/).length > 5) return null;
+  return [a, b];
+}
+
+/**
+ * The code parser's pair after the same label check as the model's options. Several readings are tried, the strict
+ * one first: short sides counted off around "or"; a time against a time clause; each side as a clause; and last the
+ * same without the one-axis demand. The first that passes the label check is the pair, so a question that names its
+ * two options gets a card from them whatever a model made of it (set E, 17 Nov: "No good choices came out" on some
+ * runs of "… now or after you eat?", no card at all without a model).
+ */
 export function codePair(q: string, profile?: Profile): [string, string] | null {
+  const same = (x: [string, string] | null, y: [string, string] | null) => !!x && !!y && x[0] === y[0] && x[1] === y[1];
+  // "… now or after you eat?", "… before supper or once the news is over?": when the second side says when and the
+  // first ends with a time, those two are the options, whatever else could be counted off
+  const tp = isOrNot(q) ? null : timePair(q);
+  const timed = tp ? checkSides(tp, q, profile, false, false) : null;
+  if (timed) return [timed[0], timed[1]];
   const rx = orPair(q);
-  return rx ? checkPair(rx, q, profile) : null;
+  const strict = rx ? checkPair(rx, q, profile) : null;
+  if (strict) return strict;
+  // "…, or not?" and "…, or is that a no?" are one proposal, never a pair
+  if (isOrNot(q) || optOutTrim(q)) return null;
+  const cp = clausePair(q);
+  const clause = cp && !same(cp, rx) ? checkPair(cp, q, profile) : null;
+  if (clause) return clause;
+  for (const cand of [cp, loosePair(q)]) {
+    const loose = cand ? checkSides(cand, q, profile, false, false) : null;
+    if (loose) return [loose[0], loose[1]];
+  }
+  return null;
 }
 
 const QUESTION_LEAD = new RegExp(`^(?:${AUX}|want|wanna|fancy|shall|should|would|will|need|up for|you|what|where|who|when|which|how|why|let's)\\b`, 'i');
