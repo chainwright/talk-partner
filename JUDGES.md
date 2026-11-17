@@ -15,9 +15,20 @@ sees; it is not the AI part.
 Gemini Nano the first step runs by itself, with no click: when the model has loaded (a few seconds; up to about 20 s
 right after the browser starts) the app asks "What do you want to do this weekend?" and the model on this computer
 makes the card from the family's About me: *lake / church / something else*, badge **On this computer**, taken from
-the SDK's `inferenceSource`. Nothing is sent, and this step is made with cloud help left out whatever the setting. In
-any other browser the status line reads "No Gemini Nano in this browser, so the on-device step can't run here. The
-card shown is made in code." and nothing runs by itself.
+the SDK's `inferenceSource`. Nothing is sent, and this step is made with cloud help left out whatever the setting.
+
+**Without the model nothing runs by itself, and the status line says which of two cases you are in:**
+
+| Your browser | The status line reads |
+|---|---|
+| desktop Chrome that could run Gemini Nano but has not downloaded it (the usual case) | "Gemini Nano is not downloaded in this browser, so the on-device step can't run yet. The card shown is made in code. Download (several GB, once)" |
+| any other browser, or a computer that cannot run the model | "No Gemini Nano in this browser, so the on-device step can't run here. The card shown is made in code." |
+
+In both cases the line under it ("Sample family: …") ends with **See what the on-device step makes →**. It opens a
+recording of that step from our machine, in a dashed frame tagged "Recording": the weekend question answered
+*lake / church* on 17 Nov 2026, with the SDK's console line (`inferenceSource=on_device`). It is a recording, not a
+card made in your browser: nothing runs for it and nothing is sent. The cloud step you can run yourself, right there:
+turn on cloud help (you read what is sent and tick a box first) and ask the same question.
 
 Under the question box are one-tap questions. The first two are open questions: the choices are not in the question,
 so a model has to propose them. They are where the two steps of the hybrid give different cards.
