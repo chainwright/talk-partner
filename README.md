@@ -141,8 +141,10 @@ card shows two choices at a time, a third good one is no longer dropped: it wait
 way-out tile or "Next: more choices".
 
 **Limits, stated.** One development machine, one made-up family, one run per question: this shows the path works, not
-how good the cards are. The first answer after the browser starts took 15.8 s (the model loads; the app warms it up at
-page load), later ones about 3 s. The privacy swap covers About-me entries, relation words and capitalised unknown
+how good the cards are. After a browser start the model has to load: the app warms it up at page load with one fixed
+sentence, and that took 15.8 s and 17.0 s in the two starts we timed (the status line says "getting ready" meanwhile,
+and code-decided cards work). After it a single on-device answer took about 3 s (median 3.1 to 3.3 s on the labelled
+set, 5.4 s at the slowest), and a card that also asks the cloud 6 to 13 s. The privacy swap covers About-me entries, relation words and capitalised unknown
 names in mid-sentence; a lowercase name, a name that starts a sentence, a health detail or an address is sent as typed
 when cloud help is on, and the consent screen says so. `npm audit` reports 4 high advisories, all in the gRPC package
 under `@firebase/firestore`, which this app does not import.

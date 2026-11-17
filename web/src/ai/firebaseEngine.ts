@@ -119,8 +119,8 @@ export class FirebaseEngine implements Engine {
   }
 
   /**
-   * Loads the model into memory ahead of the first question (the first answer after a browser start took about
-   * 25 s on the development machine, later ones about 3 s). One fixed sentence through the private leg, no About me
+   * Loads the model into memory ahead of the first question (after a browser start this warm-up took 15 to 17 s on
+   * the development machine; answers after it about 3 s). One fixed sentence through the private leg, no About me
    * in it; the answer is thrown away. Runs on this computer only, like every call on this leg.
    */
   async warmDevice(): Promise<void> {
