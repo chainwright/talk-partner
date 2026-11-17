@@ -316,6 +316,7 @@ const COPY = {
         blocked: 'no card: fewer than two choices survived',
         repair: 'a fixed card for a stuck moment, never a model',
         recognition: 'a recognition card from About me only, nothing made up',
+        people: 'a question about who it was, which only they know: the people About me names, nothing made up',
       },
       headlineFrom: {
         model: "the model's topic",
@@ -507,6 +508,7 @@ const COPY = {
     notReadyNoCloud: "The private helper isn't ready on this computer and cloud help is not configured on this copy. Just ask normally.",
     justAsk: (q: string) => `Just ask normally: ${q}`,
     recognition: 'Only things from About me are on this card; nothing is made up.',
+    unseenWho: 'You were not there, so only they know who it was. The card offers the people About me names, a few at a time; nothing is made up.',
     // step trace, plain words
     trace: {
       notNeeded: 'not needed: this card is made by rules alone',

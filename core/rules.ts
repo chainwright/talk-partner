@@ -1236,8 +1236,25 @@ export function quizKind(q: string, profile?: Profile): QuizKind | null {
   return quizForm(q, profile)?.kind ?? null;
 }
 
+const UNSEEN_CONTACT = /\bon\s+the\s+(?:phone|telephone|line)\b|\bat\s+the\s+door\b|\b(?:phoned|phoning|called|calling|rang|ringing|knocking|knocked|texted|texting|messaged|visited|visiting)\b|\b(?:came|come|dropped|popped|stopped|called)\s+(?:by|round|around|over|in)\b|\b(?:talking|speaking|chatting)\s+(?:to|with)\b/i;
+/**
+ * "Who was that on the phone with you?", "Who were you talking to?", "Who came by while I was out?": someone the
+ * person was in touch with and the partner was not. The partner does not know the answer, so it is not a test (set
+ * E, 17 Nov: refused with "You know this one"). Not a wish ("Who shall we ring?") and not a face on a screen or in a
+ * photo.
+ */
+export function isUnseenContact(q: string): boolean {
+  const s = stripAddress(q).replace(/[’]/g, "'");
+  return /^\s*(?:so\s+|and\s+)?who\b/i.test(s) && UNSEEN_CONTACT.test(s)
+    && !/\b(?:should|shall|would|want|wanna|like|could|can|will|might|need|going\s+to|gonna)\b/i.test(s)
+    && !/\b(?:photo|photograph|picture|album|tv|telly|television|film|movie|show|programme|program|radio)\b/i.test(s)
+    // further back than today it is a question to memory again ("Who were those people at the door yesterday?")
+    && !/\b(?:yesterday|last\s+(?:night|week|month|year|time)|ago|the\s+other\s+(?:day|week)|back\s+then)\b/i.test(s);
+}
+
 function quizKindOf(q: string, profile?: Profile): QuizKind | null {
   if (!/\?\s*$/.test(q)) return null;
+  if (isUnseenContact(q)) return null;
   if (NOW_Q.test(q)) return 'now';
   if (IDENTITY_Q.test(q)) return 'identity';
   // "Who is Tyler?": asking who a person in About me is

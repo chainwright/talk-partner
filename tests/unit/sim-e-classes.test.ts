@@ -124,3 +124,47 @@ describe('E-2. a test asked politely ("Can you tell me who …?") is still a tes
     }
   });
 });
+
+describe('E-3. "Who was that on the phone?": the partner does not know, so it is not a test; the card is the people About me names', () => {
+  // set E: refused with "You know this one: tell, don't test", no card
+  const QUESTIONS = [
+    'Who was that at the door just now?',
+    'Who were you talking to on the phone?',
+    'Who was it that rang this morning?',
+    'Who came by while I was at the shops?',
+    'Who was that calling earlier?',
+    "Who's that on the phone, Alan?",
+  ];
+  for (const [state, engine] of STATES) {
+    it.each(QUESTIONS)(`${state}: %s`, async (q) => {
+      const e = engine();
+      const card = await ask(q, e);
+      expect(quizKind(q, PROFILE)).toBeNull();
+      expect(card.blocked ?? null).toBeNull();
+      expect(card.kind).toBe('choice');
+      // Grace, Leo and Peter do not live there; Maria is asking, Sam lives there, Alan is the person
+      expect(answers(card)).toEqual(['Grace', 'Leo']);
+      expect(card.choices.find((c) => c.role === 'escape')?.label).toBe('someone else');
+      expect(answers(card.nextPage!)).toEqual(['Peter']);
+      expect(card.coach ?? null).toBeNull();
+      expect(card.source).toBe('code');
+      // nothing is asked of a model, so nothing can be made up and nothing is sent
+      expect(e.calls).toEqual([]);
+      expect(card.cloudPayload).toBeNull();
+    });
+  }
+  it('at three a card all three stand on one page', async () => {
+    expect(answers(await ask('Who was that at the door just now?', new Scripted(null), 'mild'))).toEqual(['Grace', 'Leo', 'Peter']);
+  });
+  it('with fewer than two such people in About me the question goes the usual way (no card made of one name)', async () => {
+    const few: Profile = { ...PROFILE, people: PROFILE.people.slice(0, 3) };
+    const card = await ask('Who was that at the door just now?', new Scripted(null), 'more', few);
+    expect(card.blocked).toBeTruthy();
+    expect(card.kind).not.toBe('no-quiz');
+  });
+  it('a face in a photo or on the telly, and a fact, are still tests; a wish is still an open question', async () => {
+    for (const q of ['Who was that man in the photo?', 'Who was the first man on the moon?', 'Who was that on the telly last night?']) expect(quizKind(q, PROFILE)).not.toBeNull();
+    const wish = await ask('Who shall we ring tonight?', new Scripted({ topic: 'call', kind: 'choice', choices: ['Grace', 'Leo'] }));
+    expect(wish.source).toBe('on-device');
+  });
+});

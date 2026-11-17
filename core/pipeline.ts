@@ -10,7 +10,7 @@ import { cloudPrompt, devicePrompt } from './prompt';
 import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
-  dropGenericWho, fromAboutMe, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
+  contactPool, dropGenericWho, fromAboutMe, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
   codeOptions, leadIn, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
@@ -42,7 +42,7 @@ export function parseModelOutput(text: string): ModelOutput | null {
  * still go to the model, which copies the options out of the question for the label check.
  */
 export function needsNoModel(q: string, profile?: Profile): boolean {
-  if (isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q)) return true;
+  if (isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || unseenPeople(q, profile)) return true;
   // three or more options named in the question: all of them are read in code, so no model is asked to copy them
   if (orList(q, profile)) return true;
   const pair = codePair(q, profile);
@@ -53,7 +53,17 @@ export function needsNoModel(q: string, profile?: Profile): boolean {
 
 /** Questions where code alone fixes the choices (the model only adds a topic). */
 export function codeDetermined(q: string, profile?: Profile): boolean {
-  return isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || !!codeOptions(q, profile) || isAuxYesNo(q) || isOrNot(q) || isFeelingQuestion(q);
+  return isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || !!unseenPeople(q, profile) || !!codeOptions(q, profile) || isAuxYesNo(q) || isOrNot(q) || isFeelingQuestion(q);
+}
+
+/**
+ * The people a "who was that on the phone?" card offers: those About me names who do not live here, when there are
+ * at least two (one name and a way out is no choice). Null for any other question.
+ */
+function unseenPeople(q: string, profile?: Profile): string[] | null {
+  if (!profile || !isUnseenContact(q)) return null;
+  const pool = contactPool(profile);
+  return pool.length >= 2 ? pool : null;
 }
 
 function toChoices(answers: string[], escapes: string[], profile: Profile): Choice[] {
@@ -248,6 +258,20 @@ export function assemble(
   if (isBodyWhere(asked)) {
     const card = paged({ ...base, source: 'code', topic: 'where it hurts', kind: 'body', bodyStep: 1 }, [...BODY_REGIONS], 'somewhere else', profile, support);
     for (let c: Card | null | undefined = card; c; c = c.nextPage) c.why = fixedWhy(o, step, W.decidedBy.body, W.headlineFrom.fixed);
+    return card;
+  }
+
+  const people = unseenPeople(asked, profile);
+  if (people) {
+    // "Who was that on the phone with you?": only the person knows, and the app cannot guess. The card is the people
+    // About me names (never whoever lives here, never the person), paged; no model is asked, so it is the same card
+    // in every engine state and nothing is sent.
+    const card = paged({ ...base, source: 'code', topic: 'who', kind: 'choice', notes: [N.unseenWho] }, people, 'someone else', profile, support);
+    const why: CardWhy = {
+      proposed: proposal(o, step), decided: W.decidedBy.people, kept: [], added: people.map((label) => ({ label, from: 'people from About me' })),
+      dropped: (o?.choices ?? []).map((label) => ({ label, rule: W.rules.fixed })), headline: W.headlineFrom.fixed, personal: people,
+    };
+    for (let c: Card | null | undefined = card; c; c = c.nextPage) c.why = why;
     return card;
   }
 
