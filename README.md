@@ -49,11 +49,11 @@ No account, no sign-in. What you get depends on what the copy has:
 
 | This copy has | What works |
 |---|---|
-| nothing (a bare clone, no `.env.local`) | every card that code decides alone: coffee or tea, yes / no, the feeling scale, the body map, the memory coaching, "We're stuck". An open question gets an honest "No card". Nothing contacts any host but the app's own (`npm run e2e:noconfig`, 15 checks) |
+| nothing (a bare clone, no `.env.local`) | every card that code decides alone: coffee or tea, yes / no, the feeling scale, the body map, the memory coaching, "We're stuck". An open question gets an honest "No card". Nothing contacts any host but the app's own (`npm run e2e:noconfig`, 16 checks) |
 | the Firebase web config in `.env.local` (see **Run**) | the above, plus cloud help for open questions once you turn it on |
 | the config and desktop Chrome with Gemini Nano | the above, plus the private step on this computer: open questions answered with the family's own names and places, nothing sent |
 
-Hosted copy: <https://talk-partner.web.app/#/demo>. It is the build of commit `8ace9f0` with our project settings, so it is the second or the third row of this table, depending on your browser.
+Hosted copy: <https://talk-partner.web.app/#/demo>. It is the build of commit `deebc94` with our project settings, so it is the second or the third row of this table, depending on your browser. Both rows are recorded on the hosted copy itself (`devlog/evidence_live/`: the cloud step in a browser without the model, and the on-device step in a Chrome that has Gemini Nano). In a browser without Gemini Nano the "Sample family" line ends with **See what the on-device step makes →**: a recording of that step from our machine, labelled as a recording.
 
 `#/demo` loads a made-up family (Frank; Carol asking) and opens with one card already made, so the first thing on screen is a card and not an empty pane: "Do you want coffee or tea?", read in code, no model, nothing sent (its chip is lit). **Then the first step runs by itself, with no click:** as soon as the on-device model has loaded (about 3 s when it is already in the browser's memory, 16 to 22 s right after a browser start; the card takes about 3 s more, and the status line says where it stands), the app asks "What do you want to do this weekend?" and Gemini Nano makes the card on this computer from About me ("lake / church" in the recorded run), with the badge "On this computer" from the SDK's `inferenceSource`. That step is made with cloud help left out, whatever the setting, so nothing can be sent by a step you did not click; it stands down if you ask or type anything first; and if the model gives no card, the first card stays and the status line says so. **In a browser with no Gemini Nano nothing runs by itself:** the status line says "No Gemini Nano in this browser, so the on-device step can't run here. The card shown is made in code." (or "… is not downloaded …", with the download link), and everything else is as before. Under the question box are one-tap questions, in three groups (open question: a model proposes / the app corrects the partner / read in code, no AI); each chip shows the short form, the hover text has the full question and what to look for. Under every card, in reading order: the badge with what left this computer, the coaching line if any, the line to say, the card on the right, then **Why this card**, **Where each step ran**, **What was sent**, the **privacy receipt** and the session line. Under the card judge mode opens with, those panels stand open; under every card after it they are one line, **"How this card was made: …"** (who decided; how many choices code kept, added and dropped), and one click opens all three, with the receipt closed below it. Click these, in order:
 
@@ -142,7 +142,8 @@ answer that didn't run on the device. Questions that code can answer alone (yes 
 body map, memory questions) run no model. The model only proposes; code decides.
 
 The private step runs on its own Firebase app instance with no App Check, so a card made on this computer contacts no
-host at all (in the recorded run: 0 requests outside the app's own host for every on-device card). App Check starts
+host at all (in the recorded runs, on localhost and on the hosted copy: 0 requests outside the app's own host for
+every on-device card). App Check starts
 with the first cloud call, and the cloud step asks it for a limited-use token per request (`useLimitedUseAppCheckTokens`;
 replay protection for the project is a console setting we have not switched on). One availability probe (`LanguageModel.availability`, a capability query, no inference) is
 the only direct touch of Chrome's API. Firebase's own guide to hybrid inference on the web checks the same flag
@@ -264,14 +265,15 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-Done on 16 Nov 2026: <https://talk-partner.web.app> serves the build of commit `8ace9f0`, and the last command below
-passed against it (`devlog/evidence_live/`). The steps, for another project:
+Last done on 17 Nov 2026: <https://talk-partner.web.app> serves the build of commit `deebc94`, and the last two commands
+below passed against it (`devlog/evidence_live/`). The steps, for another project:
 ```
 # 1. console: create a reCAPTCHA Enterprise key (website; domains talk-partner.web.app, talk-partner.firebaseapp.com)
 #    and set it as the App Check provider of the web app; turn on Hosting
 # 2. .env.local: VITE_RECAPTCHA_ENTERPRISE_SITE_KEY=<the key id>
 npx firebase-tools deploy --only hosting      # runs npm run build:hosting first; it refuses to build without the key
 node scripts/e2e-cloud.mjs --url https://talk-partner.web.app/      # the cloud step, end to end, on the live site
+node scripts/e2e-ondevice.mjs --port 9335 --url https://talk-partner.web.app/   # the on-device step on the live site, in a Chrome with Gemini Nano
 ```
 A production build never contains the App Check debug token (`scripts/check-dist.mjs`), so without the site key a
 deployed copy has no cloud step: code-decided cards and the on-device step still work there. `build:hosting` stops

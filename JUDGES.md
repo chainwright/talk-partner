@@ -35,7 +35,7 @@ so a model has to propose them. They are where the two steps of the hybrid give 
 
 | Second | Do | You should see |
 |---|---|---|
-| 0–15 | with Gemini Nano: watch the first step run by itself; without it: click **this weekend?** | depends on your copy, see the table below. With Gemini Nano: *lake / church / something else*, badge **On this computer**, "nothing left this computer · lake, church from About me". The places are the family's own, read on this computer |
+| 0–15 | with Gemini Nano: watch the first step run by itself; without it: click **See what the on-device step makes →** (a recording), then **this weekend?** | depends on your copy, see the table below. With Gemini Nano: *lake / church / something else*, badge **On this computer**, "nothing left this computer · lake, church from About me". The places are the family's own, read on this computer |
 | 15–25 | click **for dinner?** | with Gemini Nano: *pot roast / chili / something else*, the family's own foods, nothing sent |
 | any time | look at the figure under the chips | "0 bytes left this computer" until a cloud request is made; after one, the size of what the app handed to cloud help. The same count as the privacy receipt below the card |
 | 25–35 | click the line **How this card was made: …** under the card (it opens **Why this card**, **Where each step ran** and **What was sent**) | the line itself says who decided and how many choices code kept, added and dropped; opened, one line: what the model proposed, what code kept, added and dropped and by which rule; and which step ran where, from the SDK's `inferenceSource` |
@@ -62,11 +62,13 @@ so we do not open the path on it.
 
 We cannot give you the third row without the model on your machine, and the second needs our project settings, which
 are not in the repository. What we recorded on ours, with the SDK's own report per call and screenshots:
-`devlog/evidence_r7/final/ondevice/RUN_LOG.md` (41 checks; section 1b is the first step running by itself, section 5
-has the same two questions answered by the cloud alone) and, earlier, `devlog/ondevice_proof_1/RUN_LOG.md`.
+`devlog/evidence_r8/final/ondevice/RUN_LOG.md` (43 checks; section 1b is the first step running by itself, section 5
+has the same two questions answered by the cloud alone); the same run against the hosted copy,
+`devlog/evidence_live/ondevice_live_2026-11-17_deebc94/RUN_LOG.md` (43 checks); and, earlier,
+`devlog/ondevice_proof_1/RUN_LOG.md`.
 
 **If you have five minutes more**
-- `npm run check` (lint, types, 1703 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings).
+- `npm run check` (lint, types, 1714 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings).
 - `npm run eval`: the labelled set of 60 questions against the rules alone (it writes its report to a new folder under
   `devlog/eval_runs/`): 40 of 42 code-decided questions, 0 of 18 open. What the on-device model adds on the 18 open
   questions: `devlog/evidence_r8/heldout_at_c346d3d/` (three runs); our reading of the cards of the first runs:
