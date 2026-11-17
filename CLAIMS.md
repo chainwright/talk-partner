@@ -23,7 +23,7 @@ number.
 | 13 | With cloud help only, a "who to call" card offers the people About me names; the cloud gets no name, no label and no count of people | Partial | The names are put in by code on this computer after the cloud answers. When the cloud offers a specific role ("doctor"), it keeps a place and one About-me person may be left off (seen in the run of 16 Nov) |
 | 14 | A third good choice is not dropped at two a card: it waits on a next page | True | Applies to open cards; an either-or card always shows exactly the two options asked |
 | 15 | On a phone the person's card comes right after the buttons | Partial | In judge mode at 390 × 844 the card starts at 806 px and ends at 1176 px: its top edge is in the first screen, the tiles in the second. It was at 3714 px. "Show to person" (full screen) is the intended way to show it |
-| 16 | 55 of 60 cards matched the label with the on-device model; 54 of 60 with rules alone | Partial | Our own questions and labels, written the day of the last rule change; one run; one family. Reading the cards, we would overturn two of the 55 (53 of 60). It measures "the card we meant", not benefit to anyone |
+| 16 | On the 18 open questions of our labelled set, rules alone make no card (0 of 18); the on-device model made a card matching our label for 16 of 18, 13 of them with the family's own About-me entries | True, recorded | Our own questions and labels, written the day of the last rule change; one made-up family; three runs with the same counts, and the model's answers can vary. Two labels were made stricter after the first run (questions 52 and 57, both now misses). On the other 42 questions code decides and 36 to 38 matched. It measures "the card we meant", not benefit to anyone |
 | 17 | Confirmed answers are kept on this computer and never reach a model | True | Checked by import and call-site tests, not by a network capture of every path |
 | 18 | The look-alikes named in the README do something different | Partial | Read on their public pages on 11 Nov 2026. It is what we found, not proof that nothing else exists |
 | 19 | About 2 million people in the United States live with aphasia; fewer than 3% of sampled therapy goals involved partner training | True | Both read at the source on 16 Nov 2026. The second is a survey of clinicians' goals, not a count of families |
@@ -33,8 +33,8 @@ number.
 - That Talk Partner helps people with aphasia or their partners. No one living with aphasia has used it. The timed
   trial in `devlog/TRIAL_PROTOCOL.md` has not been run.
 - That it is a therapy, a diagnosis or a medical device.
-- That the on-device cards are good. The recorded runs show the path works and what it returned; five misses and two
-  doubtful cards on our own set are listed in `devlog/evidence_r2/heldout_r2_NOTES.md`.
+- That the on-device cards are good. The recorded runs show the path works and what it returned; the misses on our own set, two
+  wrong open cards among them, are listed in `devlog/evidence_r2/heldout_r2_NOTES.md`.
 - That a judge can try the AI steps today without setup: there is no hosted URL, and App Check uses a debug token on
   localhost only.
 - Any number from the 9–10 Nov prototype (16 of 50, 39 of 50) as a result of this build. They are in the README as the

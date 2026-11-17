@@ -13,7 +13,7 @@ One-line insight for the top of the text:
 
 (Not every tool: Aphonos is conversation practice with a tip for the family, AphasiaGPT is therapy practice, Lingraphica Smart Folders is used by care partners to build cards. The line above claims only what we found.)
 
-(The first line of the page text is reserved for the measured number from the timed trial, `devlog/TRIAL_PROTOCOL.md` §6.4, once it exists. Until then the honest line is the one in `#/how`: 55 of 60 cards matched our own labels with the on-device model, 54 of 60 with rules alone, two of the 55 doubtful on reading; no trial with people yet. Never quote the 55 without "our labels".)
+(The first line of the page text is reserved for the measured number from the timed trial, `devlog/TRIAL_PROTOCOL.md` §6.4, once it exists. Until then the honest line is the one in `#/how`: on the 18 open questions of our own labelled set, rules alone make no card; the on-device model made a card matching our label for 16, and 13 of those offered the family's own people, places or foods; no trial with people yet. Never quote the 16 without "our labels", and never quote one total for all 60: rules alone and the model are not doing the same job there.)
 
 ## Built-with tags (only what the build really uses today)
 Devpost "Built with" is a tag list; these are the tags, in the order to enter them:

@@ -1,37 +1,70 @@
-# Held-out set: our reading of the first run (16 Nov 2026)
+# Held-out set: what it shows, and our reading of the cards (16 Nov 2026, rewritten the same evening)
 
-The two result files next to this one (`heldout_r2_rules.md`, `heldout_r2_ondevice.md`) are the first and only run of
-`eval/heldout_r2.json`, made at commit `9ac4fd9`, the commit that added the set. They are unedited. No rule, prompt or
-label was changed after the run; the misses below are open.
+`eval/heldout_r2.json` is 60 partner questions we wrote and labelled ourselves, committed before its first run. This
+note was rewritten after an outside review of that first run. What changed, and why, is at the end.
 
-## The numbers
-- **Real app, on-device model, cloud help off: 55 of 60 cards matched the label.** 38 of 42 where the rules decide
-  alone; 17 of 18 open questions (who, where, what), each answered by Gemini Nano through Firebase AI Logic
-  (`inferenceSource=on_device` on 27 of the 60 cards; the other 33 ran no model). No request left the app's host.
-- **Rules alone, no model: 54 of 60.** 36 of 42 where the rules decide alone; all 18 open questions correctly got no
-  card instead of a wrong one.
+## The number to quote: the 18 open questions
+42 of the 60 questions carry their own answers ("coffee or tea?", "are you cold?") or have a fixed card (feeling,
+pain, body map, memory). Code decides those and no model is needed. The other 18 are open (who, where, what): the
+choices are not in the question. That is the only place a model is needed, and the family's own people, places and
+foods are only in About me, which only the on-device step sees.
 
-## The labels were too kind twice
-Reading every card after the run, two that the scorer passed are wrong cards in our own judgement. The labels only
-forbade what we had thought of in advance:
+| On the 18 open questions | Rules alone | On-device model (Gemini Nano through Firebase AI Logic, `ONLY_ON_DEVICE`, cloud help off) |
+|---|---|---|
+| a card was made | 0 | 18 |
+| the card matched our label | 0 | **16** |
+| …and it offers the family's own entries from About me (a personal card) | 0 | **13** |
+| the card is wrong by our label | 0 | 2 (questions 52 and 57) |
+
+Three runs of the real app on a clean working tree at commit `8ca45b5`, the same four counts in each
+(`devlog/evidence_r3/heldout_at_8ca45b5/run_a`, `run_b`, `run_c`; rules alone: `heldout_r2_rules.md` next to them).
+`inferenceSource=on_device` was reported for 27 of the 60 cards in each run; the other 33 ran no model. No request
+left the app's host. Open cards took about 3.1–3.3 s at the median and 5.4 s at the slowest.
+
+On the 42 questions the rules decide alone: 36 matched with rules alone; 37, 38 and 37 in the three runs with the
+model (it can copy the two options out of a long either-or that the parser cannot read; that copy varies).
+
+## What we no longer say
+The first report gave one total: "55 of 60 with the on-device model, 54 of 60 with rules alone". Both halves were
+poor measures:
+- The 54 counted the 18 open questions as correct for rules alone because no card was made. Not making a wrong card
+  is right, but it is not a card. Rules alone gave the partner a card to show on 36 of 60 questions.
+- The 55 was one run, made on a working tree with uncommitted changes (the run's own header says so), and it does not
+  reproduce: an outside re-run at `510f84a` gave 54, and the difference was the scorer, which failed
+  "Packers game" against the About-me entry "Packers games". The scorer now ignores articles and plural endings in
+  list entries.
+
+## The labels were too kind, and are now stricter
+Reading every card after the first run, two that the scorer passed are wrong cards in our own judgement, and a
+third appeared in the re-run. The labels only forbade what we had thought of in advance:
 - 52. "Where do you want to eat your dinner?" gave *pot roast / chili / somewhere else*: foods on a "where" question.
-- 57. "What music shall I put on?" gave *Johnny Cash / Wheel of Fortune*: a TV show offered as music.
+  Every run since has given the same card.
+- 57. "What music shall I put on?" gave *Johnny Cash / Wheel of Fortune* in the first run and *Johnny Cash / Packers*
+  in every run since: a TV show, then a sports team, offered as music.
 
-Counting those as misses, the on-device figure is **53 of 60**. We quote 55 of 60 only together with this note.
+`eval/heldout_r2_amendments.json` now forbids those answers for the two questions. The sealed set is not edited (its
+checksum is in every run log); the scorer applies the amendments on top and each report also gives the count with the
+labels as first sealed (18 of 18 open cards in these three runs). Both cards come from the model reaching for
+About-me entries of the wrong kind, and code lets them through. Not fixed: fixing rules against this set would turn
+it into a tuning set.
 
-## The misses (on-device run)
+## The other misses (every run)
 - 8. "Shall we ring Tyler or Jenny first?" → *ring Tyler / Jenny first*: the parser kept the verb and the trailing word.
 - 11. "Is it too hot or too cold in here?" → *hot / cold in here*: the trailing phrase stayed on the second option.
+- 12. "Shall I make chili, or would you rather have pot roast?" → *make chili / pot roast* with rules alone and in two
+  of three model runs; no card for question 10 with rules alone.
 - 35. "How bad is your headache right now?" → a model card *a little / some*, not the fixed pain scale: the pain rule
   does not know "headache".
-- 42. "What did you have for breakfast?" → a choice card *cereal / toast*: a memory question the quiz rule missed, so
-  the app invented answers to something only the person knows. The most serious of the five.
-- 53. "Where should we go for a walk?" → *the lake / hardware store*.
+- 42. "What did you have for breakfast?" → a choice card (*cereal / toast*, *eggs / toast*): a memory question the
+  quiz rule missed, so the app invented answers to something only the person knows. The most serious one.
 
-Rules alone, also: 10 and 12 (either-or questions the parser cannot read without the model's copy of the options: no
-card, and *make chili / pot roast*).
+## Earlier records, kept as they were
+`heldout_r2_rules.md`, `heldout_r2_ondevice.md` and `.json` in this folder are the first run of the set, unedited,
+with the first scorer. Their headers name commit `9ac4fd9`; the on-device one also says the working tree had
+uncommitted changes. We did not record what they were (the rules report written a moment earlier was at least one of
+them), so we do not call that run "at `9ac4fd9`" any more. Both are superseded by the runs above.
 
 ## What this does not show
-The labels are ours and were written the same day as the last rule change. One made-up family, two choices at a time,
-one answer per question; the model's answers vary between runs. "Matched the label" is not "a person with aphasia could
-answer with it". The timed trial (`devlog/TRIAL_PROTOCOL.md`) has not been run.
+The labels are ours and were written the same day as the last rule change; no second labeller. One made-up family,
+two choices at a time, one answer per question. "Matched the label" is not "a person with aphasia could answer with
+it". The timed trial (`devlog/TRIAL_PROTOCOL.md`) has not been run.
