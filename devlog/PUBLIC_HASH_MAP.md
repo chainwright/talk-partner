@@ -133,5 +133,12 @@ the table.
 | 110 | `209aee5` | `2d1120d` | 2026-11-17 09:23 | Feedback: the form's own message for a broken email address (the browser's built-in chec… |
 | 111 | `40fedec` | `8e9c1b8` | 2026-11-17 09:23 | Wording on "How this works": with cloud help off the page contacts no host but its own u… |
 | 112 | `77011fe` | `c51bb14` | 2026-11-17 11:06 | Docs after voice moved to Firebase AI Logic and feedback to Firestore: README, CLAIMS rows… |
+| 113 | `4e27d1e` | `d5897c7` | 2026-11-17 12:19 | An either-or whose two options the code reads whole is the card at once: the on-device m… |
+| 114 | `ec9ff59` | `9a3f3a6` | 2026-11-17 12:21 | Headline "what to do" where the options share no word; "…, or is Carol watching her show… |
+| 115 | `abb2494` | `cd2f619` | 2026-11-17 12:27 | The family's own entries first, three of them on one card; places first on "where shall … |
+| 116 | `66c4574` | `8531905` | 2026-11-17 12:28 | "How are you feeling?": the way out of good / so-so / bad leads to a second page, sad / … |
+| 117 | `30db57a` | `b7dfe32` | 2026-11-17 12:36 | "How are you?" card: a fixed headline ("feeling", "feeling today"); README section on wh… |
+| 118 | `4d7edee` | `2378ef4` | 2026-11-17 12:43 | Runs at 30db57a saved; README and CLAIMS say the hosted copy does not have the 17 Nov fi… |
+| 119 | `03a43fe` | `1aa258e` | 2026-11-17 13:07 | The hosted copy has the second-rehearsal fixes: deploy of 17 Nov 19:05 UTC, live cloud 2… |
 
-Rows 100–106, 107–111 and 112 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row).
+Rows 100–106, 107–111, 112 and 113–119 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
