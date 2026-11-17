@@ -119,6 +119,10 @@ try {
   check('an open question gets an honest "No card"', (await badge()) === 'No card' && /not configured on this copy/.test(warn), `${await badge()} · ${warn}`);
   await shot('noconfig-02-open-question');
 
+  // the one number under the chips, after every card of this run: nothing was handed to any cloud step, and (next check) no other host was contacted
+  const bytes = await js(`document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? ''`);
+  check('the number under the chips reads "0 bytes left this computer" after every card of this run', /^0 bytes left this computer \d+ cards this session · page load not counted/.test(bytes), bytes);
+
   const all = [...hosts.entries()].map(([h, n]) => `${h}×${n}`).join(', ');
   check('no host contacted but the app itself', [...hosts.keys()].every((h) => h === `localhost:${APP_PORT}`), all);
   ws.close();

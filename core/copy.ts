@@ -355,7 +355,28 @@ const COPY = {
       kept: 'whole question kept here',
       checkOk: '0 About me words, no photo',
       checkBad: (leaks: number, photo: boolean) => `${leaks} About me word${leaks === 1 ? '' : 's'}${photo ? ', photo bytes' : ''}`,
-      how: 'How this is counted: the bytes are the UTF-8 length of the request this app handed to the SDK for the cloud step (the model name and mode, the fixed instructions, the schema and the swapped question), kept when the SDK reported that the cloud answered; a card where nothing left counts 0. A request that was handed to the SDK and failed is listed apart as "maybe", with its size: the app cannot tell whether it reached the cloud. The body is in the export, so the count can be checked by hand. Not counted: what the SDK makes of it on the wire (its own format, headers, the App Check token), which this app does not see and which carries no family data. "Withheld" counts the About me words swapped for labels such as "Person A". "Checked after" searches the sent text for About me words and photo bytes once more, after the fact.',
+      /**
+       * The one number of the receipt, at display size, with the words that make it literally true. "0 bytes left this
+       * computer" is said only when no cloud request was handed to the SDK this session (none answered, none failed).
+       * Once the cloud has answered, the number is what the app handed over, and it is called that: the app does not
+       * see what the SDK adds on the wire. A request that failed is never counted as kept.
+       */
+      number: (n: { cards: number; cardsLeft: number; bodyBytes: number; namesWithheld: number; otherWithheld: number; attempts: number; attemptBytes: number }) => {
+        const bytes = (b: number) => `${b.toLocaleString('en-US')} byte${b === 1 ? '' : 's'}`;
+        const cards = `${n.cards} card${n.cards === 1 ? '' : 's'}`;
+        const maybe = n.attempts ? `${n.attempts} cloud request${n.attempts === 1 ? '' : 's'} failed after being handed over` : '';
+        if (n.cardsLeft) {
+          return {
+            figure: bytes(n.bodyBytes), label: 'handed to cloud help',
+            scope: `in ${n.cardsLeft} request${n.cardsLeft === 1 ? '' : 's'}, the question only (${n.namesWithheld + n.otherWithheld} About me word${n.namesWithheld + n.otherWithheld === 1 ? '' : 's'} swapped out first); ${cards} this session. What the SDK adds on the wire is not counted.` +
+              (maybe ? ` Not in the number: ${maybe} and may have left (up to ${bytes(n.attemptBytes)}).` : ''),
+          };
+        }
+        if (n.attempts) return { figure: `up to ${bytes(n.attemptBytes)}`, label: 'may have left this computer', scope: `${maybe}; ${cards} this session.` };
+        return { figure: bytes(0), label: 'left this computer', scope: `${cards} this session · page load not counted` };
+      },
+      howHeading: 'How this is counted',
+      how: 'The bytes are the UTF-8 length of the request this app handed to the SDK for the cloud step (the model name and mode, the fixed instructions, the schema and the swapped question), kept when the SDK reported that the cloud answered; a card where nothing left counts 0. A request that was handed to the SDK and failed is listed apart as "maybe", with its size: the app cannot tell whether it reached the cloud. The body is in the export, so the count can be checked by hand. Not counted: what the SDK makes of it on the wire (its own format, headers, the App Check token), which this app does not see and which carries no family data. "Withheld" counts the About me words swapped for labels such as "Person A". "Checked after" searches the sent text for About me words and photo bytes once more, after the fact.',
       exportButton: 'Export receipt',
       exportName: 'talk-partner-privacy-receipt.json',
     },

@@ -293,14 +293,24 @@ function legsTable(): string {
   return `<table><tr><th>${C.how.columns.step}</th><th>${C.how.columns.mode}</th><th>${C.how.columns.gets}</th><th>${C.how.columns.why}</th></tr>${(Object.keys(LEGS) as (keyof typeof LEGS)[]).map((k) => `<tr><td>${names[k]}</td><td><code>${LEGS[k].mode}</code></td><td>${esc(LEGS[k].gets)}</td><td>${esc(LEGS[k].why)}</td></tr>`).join('')}</table>`;
 }
 
+/**
+ * The receipt's one number at display size ("0 bytes left this computer"), from the same count as the receipt table.
+ * In judge mode it stands under the chips; elsewhere it opens the receipt.
+ */
+function bytesLine(): string {
+  const n = C.judge.receipt.number(sessionReceipt(state.made, state.profile));
+  return `<p class="bytes" id="bytes"><b>${esc(n.figure)}</b> <span>${esc(n.label)}</span><small>${esc(n.scope)}</small></p>`;
+}
+
 /** The privacy receipt for this session: counted on the payloads the cards recorded (core/receipt.ts), never estimated. */
-function receiptPanel(open: boolean): string {
+function receiptPanel(open: boolean, withNumber = true): string {
   const R = C.judge.receipt;
   const r = sessionReceipt(state.made, state.profile);
   const K = R.columns; // on a phone the cells stack, each labelled by its column name (styles.css)
   const rows = r.perCard.map((x, i) => `<tr><td data-l="${K.card}">${i + 1}. ${esc(x.asked)}</td><td data-l="${K.left}">${x.left ? R.leftYes : x.attempted ? R.leftMaybe : x.offline ? R.leftOffline : R.leftNo}</td><td data-l="${K.bytes}">${x.left ? `${x.bodyBytes} (${x.questionBytes})` : x.attempted ? `(${x.attemptBytes})` : '0'}</td><td data-l="${K.withheld}">${x.left ? esc(R.withheld(x.namesWithheld, x.otherWithheld)) : x.attempted ? '—' : R.kept}</td><td data-l="${K.check}">${x.left ? (x.leaksFound || x.photoFound ? esc(R.checkBad(x.leaksFound, x.photoFound)) : R.checkOk) : '—'}</td></tr>`).join('');
   const table = r.cards ? `<table><tr><th>${R.columns.card}</th><th>${R.columns.left}</th><th>${R.columns.bytes}</th><th>${R.columns.withheld}</th><th>${R.columns.check}</th></tr>${rows}</table>` : '';
-  return `<details class="receipt" ${open ? 'open' : ''}><summary><b>${R.heading}</b></summary><p>${esc(R.summary(r))}</p>${table}<p class="muted">${esc(R.how)}</p>
+  return `<details class="receipt" ${open ? 'open' : ''}><summary><b>${R.heading}</b></summary>${withNumber ? bytesLine() : ''}${table}
+    <details class="counted"><summary>${R.howHeading}</summary><p>${esc(R.summary(r))}</p><p class="muted">${esc(R.how)}</p></details>
     <div class="actions"><button data-act="export-receipt" ${r.cards ? '' : 'disabled'}>${R.exportButton}</button></div></details>`;
 }
 
@@ -351,8 +361,9 @@ function partnerScreen(): string {
     ${state.demo ? `<p class="sample">${C.app.sample}</p>` : ''}
     <form id="ask"><input id="q" autocomplete="off" placeholder="${C.ask.placeholder}" aria-label="${C.ask.label}" value="${esc(state.lastQuestion)}"><button id="make" type="submit" ${state.busy ? 'disabled' : ''}>${state.busy ? C.ask.making : C.ask.make}</button></form>
     ${state.demo ? chipGroups() : ''}
+    ${state.demo ? bytesLine() : ''}
     <div id="result" aria-live="polite">${state.busy ? `<p class="making" role="status"><span class="dot wait"></span>${C.ask.makingCard} <small>${C.ask.makingHint}</small></p>` : c ? cardPanel(c) : state.error ? `<p class="warn">${esc(state.error)}</p>` : ''}</div>
-    ${state.demo ? receiptPanel(true) : ''}
+    ${state.demo ? receiptPanel(true, false) : ''}
     ${judgeLine}
     <div class="settings">
       <label>${C.support.label} <select id="support">${(['mild', 'more', 'most'] as const).map((v) => `<option value="${v}" ${state.settings.support === v ? 'selected' : ''}>${C.support.options[v]}</option>`).join('')}</select></label>

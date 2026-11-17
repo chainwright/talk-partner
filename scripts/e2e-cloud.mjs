@@ -90,6 +90,8 @@ try {
   check('coffee/tea needs no AI', badge1 === 'No AI needed', badge1);
   const aiHosts1 = [...hosts.keys()].filter((h) => /googleapis|firebase/.test(h));
   check('coffee/tea sent nothing to Firebase/Google', aiHosts1.length === 0, aiHosts1.join(', ') || 'no Google hosts');
+  const bytes1 = await js(`document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? ''`);
+  check('before any cloud request the number under the chips reads "0 bytes left this computer"', /^0 bytes left this computer/.test(bytes1), bytes1);
   await shot('01-coffee-tea');
 
   // 2. open question through the stripped leg, cloud help on
@@ -121,6 +123,11 @@ try {
   check('the panel says it was sent', /Sent for this card/.test(sent));
   const aiHosts2 = [...hosts.keys()].filter((h) => /googleapis|firebase|recaptcha/.test(h));
   check('the request went to Firebase AI Logic', aiHosts2.some((h) => /firebasevertexai\.googleapis\.com/.test(h)), aiHosts2.join(', '));
+  // the one number: what the app handed to the cloud step, counted on the same request "What was sent" shows
+  const bytes2 = await js(`(() => { const pre = document.querySelector('#sent pre')?.textContent ?? ''; let n = -1; try { n = new TextEncoder().encode(JSON.stringify(JSON.parse(pre))).length; } catch { /* no payload */ }
+    return { text: document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? '', counted: n }; })()`);
+  check('after the cloud answered the number is the size of that request, and it is called "handed to cloud help", not "0 bytes left"',
+    bytes2.counted > 0 && bytes2.text.startsWith(`${bytes2.counted.toLocaleString('en-US')} bytes handed to cloud help`) && !/^0 bytes/.test(bytes2.text), `${bytes2.text.slice(0, 90)} (request counted by hand: ${bytes2.counted} bytes)`);
   await shot('02-cloud-card');
 
   // 2b. a third choice the model gave is not dropped at two a card: it is on the next page (only when the model gave three)

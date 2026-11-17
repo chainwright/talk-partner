@@ -157,6 +157,50 @@ describe('4. a request that was sent and then failed is never "nothing left this
   });
 });
 
+describe('5. the one number of the receipt says "0 bytes left this computer" only when no cloud request was made', () => {
+  const N = COPY.judge.receipt.number;
+  it('code cards and cards with cloud help off: 0 bytes left this computer', async () => {
+    const cards = [await makeCard('Do you want coffee or tea?', env(new E('ok'))), await makeCard(OPEN, env(new E('ok'), false))];
+    const n = N(sessionReceipt(cards, SAMPLE_PROFILE));
+    expect(`${n.figure} ${n.label}`).toBe('0 bytes left this computer');
+    expect(n.scope).toBe('2 cards this session · page load not counted');
+  });
+  it('the cloud was unreachable and the engine knows the request was not sent: still 0', async () => {
+    const n = N(sessionReceipt([await makeCard(OPEN, env(new E('offline-not-sent')))], SAMPLE_PROFILE));
+    expect(`${n.figure} ${n.label}`).toBe('0 bytes left this computer');
+  });
+  it('the cloud answered: the number is the size of the request handed over, and it is not called "left this computer"', async () => {
+    const e = new E('ok');
+    const cards = [await makeCard('Do you want coffee or tea?', env(e)), await makeCard(OPEN, env(e))];
+    const r = sessionReceipt(cards, SAMPLE_PROFILE);
+    const n = N(r);
+    expect(r.bodyBytes).toBeGreaterThan(0);
+    expect(n.figure).toBe(`${r.bodyBytes.toLocaleString('en-US')} bytes`);
+    expect(n.label).toBe('handed to cloud help');
+    expect(n.scope).toMatch(/in 1 request, the question only \(1 About me word swapped out first\); 2 cards this session/);
+    expect(n.scope).toMatch(/What the SDK adds on the wire is not counted/);
+  });
+  it('a request that failed after it was handed over: never "0 bytes left"', async () => {
+    const r = sessionReceipt([await makeCard(OPEN, env(new E('error-after-send')))], SAMPLE_PROFILE);
+    const n = N(r);
+    expect(n.figure).toBe(`up to ${r.attemptBytes.toLocaleString('en-US')} bytes`);
+    expect(n.label).toBe('may have left this computer');
+    expect(`${n.figure} ${n.label}`).not.toMatch(/^0 bytes/);
+  });
+  it('a failed request next to an answered one is named beside the number', async () => {
+    const r = sessionReceipt([await makeCard(OPEN, env(new E('ok'))), await makeCard(OPEN, env(new E('error-after-send')))], SAMPLE_PROFILE);
+    const n = N(r);
+    expect(n.label).toBe('handed to cloud help');
+    expect(n.scope).toMatch(/Not in the number: 1 cloud request failed after being handed over and may have left/);
+  });
+  it('the web client draws the number from the same count as the receipt table', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const main = readFileSync(join(__dirname, '..', '..', 'web/src/main.ts'), 'utf8');
+    expect(main).toContain('C.judge.receipt.number(sessionReceipt(state.made, state.profile))');
+  });
+});
+
 describe('the welcome screen', () => {
   it('does not say that everything runs on this computer', () => {
     expect(COPY.welcome.local).not.toMatch(/everything/i);

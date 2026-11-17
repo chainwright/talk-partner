@@ -206,7 +206,7 @@ try {
   const offWho = await c.ask('Who should we call tonight?');
   check('offline, the private step works as before', offWho.badge === 'On this computer' && fromAbout(offWho.tiles).length >= 2, offWho.tiles.join(' / '));
   await c.offline(false);
-  const receipt = await c.js(`document.querySelector('.receipt p')?.innerText ?? ''`);
+  const receipt = await c.js(`[document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? '', document.querySelector('.receipt .counted p')?.textContent ?? ''].join(' | ')`);
   const session = await c.js(`document.querySelector('details.judge summary')?.innerText ?? ''`);
   log(`\n- privacy receipt for this session: ${receipt}`);
   log(`- session line: ${session}`);

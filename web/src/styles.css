@@ -236,6 +236,17 @@ details td, details th, .screen td, .screen th { border-top: 1px solid var(--lin
 /* "how this works": the look-alikes, named */
 .lookalikes { padding-left: 18px; display: grid; gap: 10px; font-size: 14px; } .lookalikes .ours { color: var(--accent); }
 
+/* the receipt's one number, at display size: what left this computer this session. Mint while nothing was handed to
+   cloud help; the words after it carry the scope. In judge mode it stands under the chips. */
+.bytes { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; font-size: 15px; color: var(--ink); }
+.bytes b { font-family: var(--mono); font-size: 28px; line-height: 1.15; font-weight: 600; color: var(--accent); letter-spacing: -0.02em; }
+.bytes small { font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+.receipt .bytes { margin: 4px 0 6px; }
+.receipt .counted { margin: 6px 0; border: 0; padding: 0; background: none; }
+.receipt .counted summary { color: var(--accent); text-decoration: underline; font-family: inherit; font-size: 13px; }
+/* one column: the number goes below the card with the receipt, so the card still starts in the first screen */
+@media (max-width: 820px) { .layout .partner > .bytes { order: 2; } }
+
 /* judge mode and "how this works": the privacy receipt */
 .receipt table { margin: 6px 0; }
 @media (max-width: 640px) {

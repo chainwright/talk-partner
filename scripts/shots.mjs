@@ -130,6 +130,9 @@ try {
     check(`${s} judge mode, first frame: a finished card is on screen before any click (headline, three tiles, its chip lit, no entrance)`,
       firstCard.n === 3 && firstCard.headline === 'drink' && !firstCard.ear && !firstCard.enter && firstCard.lit === 'coffee or tea?', JSON.stringify(firstCard));
     check(`${s} judge mode, first frame: ${s === 'desktop' ? 'the whole card' : "the card's top"} is in the first screen`, s === 'desktop' ? firstCard.lowest <= 800 : firstCard.top < 844, s === 'desktop' ? `lowest tile ${firstCard.lowest}px of 800` : `card top ${firstCard.top}px of 844`);
+    const num = await js(`(() => { const b = document.querySelector('#bytes'), r = b?.getBoundingClientRect(), c = document.querySelector('.receipt .counted'); return { text: b?.innerText.replace(/\\s+/g, ' ') ?? '', size: b ? parseFloat(getComputedStyle(b.querySelector('b')).fontSize) : 0, bottom: r ? Math.round(r.bottom) : -1, howOpen: c ? c.open : null, howSeen: c ? c.querySelector('p').checkVisibility() : null }; })()`);
+    check(`${s} judge mode: one number at display size ("0 bytes left this computer")${s === 'desktop' ? ' in the first screen' : ''}; "How this is counted" is folded behind one link`,
+      /^0 bytes left this computer/.test(num.text) && num.size >= 28 && (s !== 'desktop' || num.bottom <= 800) && num.howOpen === false && num.howSeen === false, JSON.stringify(num));
     await shot('03-judge-mode');
     await chip('Do you want coffee or tea?');
     await shot('04-partner-card-coffee-tea');
