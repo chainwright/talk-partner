@@ -263,7 +263,7 @@ try {
   if (PORT) {
     const { rows, status, version } = await devicePass();
     const f = join(OUT, `${stem}_ondevice.md`);
-    const rep = report(`Labelled set (first run 16 Nov 2026; ${HELD}), the real app with the on-device model (cloud help off)`, rows, true, [`- browser: ${version}, attached on port ${PORT}; status line: "${status}"`, `- app: ${URL_} (the dev server of this commit), judge mode`]);
+    const rep = report(`Labelled set (first run 16 Nov 2026; ${HELD}), the real app with the on-device model (cloud help off)`, rows, true, [`- browser: ${version}, attached on port ${PORT}; status line: "${status}"`, `- app: ${URL_} (${/^https?:\/\/(?:localhost|127\.0\.0\.1)[:/]/.test(URL_) ? 'the dev server of this commit' : 'a hosted copy, not a dev server: the commit above is this checkout\'s; which build the host serves is in the README'}), judge mode`]);
     writeFileSync(f, rep.text);
     writeFileSync(join(OUT, `${stem}_ondevice.json`), `${JSON.stringify(rows.map((r) => ({ id: r.item.id, q: r.item.q, type: r.item.type, ok: r.ok, okWithSealedLabel: r.sealedOk, why: r.why, ...r.obs })), null, 1)}\n`);
     console.log(`\nopen questions: ${rep.o.matched}/${rep.o.n} cards matched the label, ${rep.o.personal}/${rep.o.n} personal; rules-decided: ${rep.closedOk}/${rep.closedN} -> ${f.replace(`${ROOT}/`, '')}`);

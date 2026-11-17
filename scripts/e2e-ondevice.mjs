@@ -144,7 +144,7 @@ try {
   log(`\n- date: ${new Date().toISOString()}`);
   log(`- commit: \`${git('rev-parse HEAD')}\` (${git('describe --tags --always')}); working tree ${git('status --porcelain') ? 'has uncommitted changes' : 'clean'}`);
   log(`- browser: ${version.Browser}, ${version['User-Agent'].includes('Headless') ? 'headless' : 'with a window'}, attached on port ${PORT}`);
-  log(`- app: ${URL_} (the dev server of this commit), judge mode, the made-up sample family (Frank; Carol asking; Jenny "Jen", Tyler; the lake, church, hardware store; pot roast, chili)`);
+  log(`- app: ${URL_} (${/^https?:\/\/(?:localhost|127\.0\.0\.1)[:/]/.test(URL_) ? 'the dev server of this commit' : 'a hosted copy, not a dev server: the commit above is this checkout\'s; which build the host serves is in the README'}), judge mode, the made-up sample family (Frank; Carol asking; Jenny "Jen", Tyler; the lake, church, hardware store; pot roast, chili)`);
   log(`- SDK: firebase ${JSON.parse(execSync('cat node_modules/firebase/package.json').toString()).version}, @firebase/ai ${JSON.parse(execSync('cat node_modules/@firebase/ai/package.json').toString()).version}`);
 
   const c = await attach(PORT);
