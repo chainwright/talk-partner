@@ -5,8 +5,8 @@
 // The real SDK and the real model are exercised in scripts/e2e-cloud.mjs and scripts/e2e-ondevice.mjs.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-interface Rec { apps: string[]; appChecks: string[]; models: { app: string; mode: string; params: any }[]; calls: { mode: string; prompt: string }[]; inits: string[] }
-const rec: Rec = { apps: [], appChecks: [], models: [], calls: [], inits: [] };
+interface Rec { apps: string[]; appChecks: string[]; ais: { app: string; options: any }[]; models: { app: string; mode: string; params: any }[]; calls: { mode: string; prompt: string }[]; inits: string[] }
+const rec: Rec = { apps: [], appChecks: [], ais: [], models: [], calls: [], inits: [] };
 const answers: Record<string, { text: string; source: string } | Error> = {};
 
 vi.mock('firebase/app', () => ({
@@ -23,7 +23,7 @@ vi.mock('firebase/ai', () => ({
   InferenceSource: { ON_DEVICE: 'on_device', IN_CLOUD: 'in_cloud' },
   ResponseModality: { TEXT: 'TEXT', IMAGE: 'IMAGE' },
   GoogleAIBackend: class {},
-  getAI: (app: { name: string }) => ({ app: app.name }),
+  getAI: (app: { name: string }, options?: unknown) => { rec.ais.push({ app: app.name, options }); return { app: app.name }; },
   getGenerativeModel: (ai: { app: string }, params: any) => {
     rec.models.push({ app: ai.app, mode: params.mode, params });
     return {
@@ -43,7 +43,7 @@ const { SYSTEM_PROMPT, CLOUD_SYSTEM_PROMPT, CARD_SCHEMA } = await import('../../
 const CFG = { firebase: { apiKey: 'k', appId: 'a', projectId: 'p' }, appCheckDebugToken: 'debug' };
 
 beforeEach(() => {
-  rec.apps = []; rec.appChecks = []; rec.models = []; rec.calls = []; rec.inits = [];
+  rec.apps = []; rec.appChecks = []; rec.ais = []; rec.models = []; rec.calls = []; rec.inits = [];
   answers.only_on_device = { text: '{"topic":"t"}', source: 'on_device' };
   answers.prefer_in_cloud = { text: '{"topic":"c"}', source: 'in_cloud' };
   (globalThis as any).self = globalThis;
@@ -96,6 +96,15 @@ describe('FirebaseEngine: the stripped leg', () => {
     expect(m.params.inCloudParams.generationConfig.responseJsonSchema).toBe(CARD_SCHEMA);
     expect(m.params.onDeviceParams.createOptions.initialPrompts[0].content[0].value).toBe(CLOUD_SYSTEM_PROMPT);
     expect(m.params.onDeviceParams.createOptions.initialPrompts[0].content[0].value).not.toContain('ABOUT lists');
+  });
+  // 17 Nov 2026: the cloud step asks for limited-use App Check tokens; the private leg has no App Check and no such option
+  it('the AI Logic instance of the cloud step uses limited-use App Check tokens; the private one does not', async () => {
+    const e = new LazyFirebaseEngine(CFG);
+    await e.runCloud('x');
+    await e.runDevice('y');
+    expect(rec.ais.find((a) => a.app === '[DEFAULT]')?.options.useLimitedUseAppCheckTokens).toBe(true);
+    expect(rec.ais.find((a) => a.app === 'private-on-device')?.options.useLimitedUseAppCheckTokens).toBeUndefined();
+    expect(rec.ais).toHaveLength(2);
   });
   it('reports an offline fall-back as on-device, from inferenceSource', async () => {
     answers.prefer_in_cloud = { text: '{}', source: 'on_device' };

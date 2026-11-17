@@ -94,18 +94,18 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:74` | `getGenerativeModel(` | private step model |
 | `web/src/ai/firebaseEngine.ts:75` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
 | `web/src/ai/firebaseEngine.ts:90` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started on the first cloud call only |
-| `web/src/ai/firebaseEngine.ts:91` | `getAI(` | the AI Logic instance of the cloud steps (Gemini Developer API backend) |
-| `web/src/ai/firebaseEngine.ts:94` | `getGenerativeModel(` | stripped step model |
-| `web/src/ai/firebaseEngine.ts:95` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
-| `web/src/ai/firebaseEngine.ts:104` | `getGenerativeModel(` | pictures model (not used in this bundled-pictures build) |
-| `web/src/ai/firebaseEngine.ts:105` | `InferenceMode.ONLY_IN_CLOUD` | its mode |
-| `web/src/ai/firebaseEngine.ts:127` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
-| `web/src/ai/firebaseEngine.ts:141` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
-| `web/src/ai/firebaseEngine.ts:142` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
-| `web/src/ai/firebaseEngine.ts:165` | `generateContent(` | stripped step call |
-| `web/src/ai/firebaseEngine.ts:170` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
-| `web/src/ai/firebaseEngine.ts:181` | `generateContent(` | pictures call (unused in this build) |
-| `web/src/ai/firebaseEngine.ts:202` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
+| `web/src/ai/firebaseEngine.ts:94` | `getAI(` | the AI Logic instance of the cloud steps (Gemini Developer API backend), with `useLimitedUseAppCheckTokens: true`: a fresh short-lived App Check token per cloud request |
+| `web/src/ai/firebaseEngine.ts:97` | `getGenerativeModel(` | stripped step model |
+| `web/src/ai/firebaseEngine.ts:98` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
+| `web/src/ai/firebaseEngine.ts:107` | `getGenerativeModel(` | pictures model (not used in this bundled-pictures build) |
+| `web/src/ai/firebaseEngine.ts:108` | `InferenceMode.ONLY_IN_CLOUD` | its mode |
+| `web/src/ai/firebaseEngine.ts:130` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
+| `web/src/ai/firebaseEngine.ts:144` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
+| `web/src/ai/firebaseEngine.ts:145` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
+| `web/src/ai/firebaseEngine.ts:168` | `generateContent(` | stripped step call |
+| `web/src/ai/firebaseEngine.ts:173` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
+| `web/src/ai/firebaseEngine.ts:184` | `generateContent(` | pictures call (unused in this build) |
+| `web/src/ai/firebaseEngine.ts:205` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
 | `core/pipeline.ts:656` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:771` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:799` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
@@ -137,7 +137,8 @@ body map, memory questions) run no model. The model only proposes; code decides.
 
 The private step runs on its own Firebase app instance with no App Check, so a card made on this computer contacts no
 host at all (in the recorded run: 0 requests outside the app's own host for every on-device card). App Check starts
-with the first cloud call. One availability probe (`LanguageModel.availability`, a capability query, no inference) is
+with the first cloud call, and the cloud step asks it for a limited-use token per request (`useLimitedUseAppCheckTokens`;
+replay protection for the project is a console setting we have not switched on). One availability probe (`LanguageModel.availability`, a capability query, no inference) is
 the only direct touch of Chrome's API; the SDK has no public call for it on the web.
 
 **What the on-device step does that the cloud step cannot.** It is the only step that sees About me. In the recorded

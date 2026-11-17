@@ -88,7 +88,10 @@ export class FirebaseEngine implements Engine {
       if (cfg.appCheckDebugToken) (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = cfg.appCheckDebugToken;
       const siteKey = cfg.recaptchaEnterpriseSiteKey || (cfg.appCheckDebugToken ? 'debug-provider-in-use' : '');
       if (siteKey) initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(siteKey), isTokenAutoRefreshEnabled: true });
-      this.cloudAi = getAI(app, { backend: new GoogleAIBackend() });
+      // limited-use App Check tokens for the cloud step: the SDK asks App Check for a fresh short-lived token per
+      // request instead of reusing the session token (it is what replay protection consumes, once that is switched on
+      // for the project). The private leg has no App Check at all, so this does not touch it.
+      this.cloudAi = getAI(app, { backend: new GoogleAIBackend(), useLimitedUseAppCheckTokens: true });
     }
     const ai = this.cloudAi;
     const text = getGenerativeModel(ai, {
