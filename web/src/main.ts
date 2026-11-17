@@ -856,6 +856,7 @@ function act(el: HTMLElement) {
       if (state.card?.pending) void make(state.card.pending);
       else if (state.card?.nextPage) { setCard(state.card.nextPage); state.picked = null; state.confirmed = false; render(); }
       break;
+    case 'retry': if (state.card?.retry) void make(state.card.retry); break;
     case 'recap': state.recap = true; state.recapDone = false; render(); break;
     case 'stuck':
       // the repair card takes the person's screen; the question card waits behind it

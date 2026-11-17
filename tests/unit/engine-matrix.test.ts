@@ -3,6 +3,7 @@
 // "sent" only when the source is in-cloud; the private leg never gets a stripped prompt; the stripped leg never gets
 // the profile. Extended 11 Nov 2026: seven card shapes × seven model states × five cloud states.
 import { describe, expect, it } from 'vitest';
+import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
@@ -210,9 +211,11 @@ const SHAPES: { q: string; dev: ModelOutput; cloud?: ModelOutput; same: boolean;
         expect(card.ranOffline).toBe(true);
         expect(card.cloudPayload).toBeNull();
       } else if (c === 'throws') {
-        // the cloud failed: §2.6 completes the card from the About-me foods rather than show nothing
-        expect(card.blocked ?? null).toBeNull();
-        expect(labels(card)).toEqual(['pot roast', 'chili', 'something else']);
+        // the cloud failed and no model answered: no card, and the reason is said (set D, 16 Nov: a card completed
+        // from About me by code alone stood under "No AI needed" after a failed cloud call)
+        expect(card.blocked).toBe(COPY.notes.cloudDownBlocked);
+        expect(card.choices).toEqual([]);
+        expect(card.retry).toBe('What shall we have for tea tonight?');
         expect(card.cloudPayload).toBeNull();
       } else {
         // no model and no cloud allowed: never a silent fallback; the payload is shown as "not sent"

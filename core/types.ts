@@ -132,10 +132,17 @@ export interface Card {
    * connection). The app cannot tell whether it reached the cloud, so the card never says "nothing left" for it.
    */
   cloudAttempted?: string | null;
+  /** How many such requests were handed over and failed for this card: 1, or 2 when the one retry failed too. */
+  cloudAttempts?: number;
   /** What WOULD have been sent if the cloud were on/configured (shown as "not sent"). */
   unsentPayload?: string | null;
   /** Set when no card could be made without a step the partner has to allow (e.g. cloud consent). */
   blocked?: string | null;
+  /**
+   * Set on a card that has no choices because cloud help failed (busy, unreachable): the question to ask again. The
+   * partner screen offers "Try again" for it.
+   */
+  retry?: string | null;
   /** Paged fixed list (body map at "more"): the escape on this card leads to the next page. */
   nextPage?: Card | null;
   /** Notes for the partner screen (e.g. "cloud not configured: card kept from device"). */

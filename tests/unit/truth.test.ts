@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
 import type { CloudError, DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
-import { cardReceipt, sessionReceipt, sessionTally } from '../../core/receipt';
+import { cardReceipt, sessionReceipt, sessionTally, utf8Bytes } from '../../core/receipt';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
 import { SAMPLE_PROFILE } from '../../core/sample';
 import type { ModelOutput } from '../../core/types';
@@ -35,7 +35,8 @@ class E implements Engine {
   pictureRequest(w: string) { return pictureRequestBody(w); }
   async picture() { return null; }
 }
-const env = (e: E, allowCloud = true) => ({ profile: SAMPLE_PROFILE, support: 'more' as const, engine: e, allowCloud, deviceReady: false });
+// `sleep`: the one retry of a failed cloud call does not make the tests wait
+const env = (e: E, allowCloud = true) => ({ profile: SAMPLE_PROFILE, support: 'more' as const, engine: e, allowCloud, deviceReady: false, sleep: async () => {} });
 const OPEN = 'What do you want to do this weekend with Jenny?';
 const W = COPY.how.why;
 
@@ -47,10 +48,11 @@ describe('1. who decided: never "the model proposed" when no model answered', ()
     expect(c.why!.decided).toBe(W.decidedBy.blockedNoModel);
     expect(c.why!.decided).not.toMatch(/model proposed/);
   });
-  it('no model, the cloud step failed: the same', async () => {
+  it('no model, the cloud step failed: no card either, and the why says cloud help failed', async () => {
     const c = await makeCard(OPEN, env(new E('error-after-send')));
     expect(c.blocked).toBeTruthy();
-    expect(c.why!.decided).toBe(W.decidedBy.blockedNoModel);
+    expect(c.why!.proposed).toBeNull();
+    expect(c.why!.decided).toBe(W.decidedBy.blockedCloud);
   });
   it('no settings at all on this copy: the same', async () => {
     const c = await makeCard(OPEN, env(new E('unconfigured')));
@@ -84,13 +86,13 @@ describe('2. the session line counts a failed step on a card that ended as "no c
 describe('3. "kept" is said only when a card made on this computer exists', () => {
   it('cloud failed, no device card: the note does not say a card was kept', async () => {
     const c = await makeCard(OPEN, env(new E('error-after-send')));
-    expect(c.notes.join(' ')).toMatch(/Cloud step failed \(429 quota exceeded\)\./);
+    expect(c.notes.join(' ')).toMatch(/Cloud step failed \(too many requests this minute, HTTP 429\)\./);
     expect(c.notes.join(' ')).not.toMatch(/kept/);
   });
   it('cloud failed, a weak device card exists: the note says it is kept, and it is on screen', async () => {
     const e = new E('error-after-send', { topic: 'message', kind: 'choice', choices: ['good news', 'bad news'] });
     const c = await makeCard('What should I tell Jenny when she rings?', { ...env(e), deviceReady: true });
-    expect(e.wire).toHaveLength(1);
+    expect(e.wire).toHaveLength(2); // busy: asked once more, and busy again
     expect(c.source).toBe('on-device');
     expect(c.blocked).toBeFalsy();
     expect(c.notes.join(' ')).toMatch(/the card made on this computer is kept/);
@@ -119,7 +121,8 @@ describe('4. a request that was sent and then failed is never "nothing left this
   it('an error after the request went out: recorded as attempted, with the body; not as "not sent"', async () => {
     const e = new E('error-after-send');
     const c = await makeCard(OPEN, env(e));
-    expect(e.wire).toEqual(['What do you want to do this weekend with Person A?']);
+    // busy (429): the request is handed over once more, so two requests may have left, and both are counted
+    expect(e.wire).toEqual(['What do you want to do this weekend with Person A?', 'What do you want to do this weekend with Person A?']);
     expect(c.cloudPayload).toBeNull();
     expect(c.unsentPayload ?? null).toBeNull();
     expect(c.cloudAttempted).toContain('Person A');
@@ -129,8 +132,9 @@ describe('4. a request that was sent and then failed is never "nothing left this
     expect(r.attempted).toBe(true);
     expect(r.attemptBytes).toBeGreaterThan(0);
     const s = sessionReceipt([c], SAMPLE_PROFILE);
-    expect(s.attempts).toBe(1);
-    expect(COPY.judge.receipt.summary(s)).toMatch(/1 cloud request failed after being handed to the SDK: the question may have left/);
+    expect(s.attempts).toBe(2);
+    expect(s.attemptBytes).toBe(2 * utf8Bytes(JSON.stringify(JSON.parse(c.cloudAttempted!))));
+    expect(COPY.judge.receipt.summary(s)).toMatch(/2 cloud requests failed after being handed to the SDK: the question may have left/);
   });
   it('the cloud answered with something unusable: the question did leave, and the receipt counts it', async () => {
     const e = new E('bad-json');
@@ -194,7 +198,8 @@ describe('5. the one number of the receipt says "0 bytes left this computer" onl
     const r = sessionReceipt([await makeCard(OPEN, env(new E('ok'))), await makeCard(OPEN, env(new E('error-after-send')))], SAMPLE_PROFILE);
     const n = N(r);
     expect(n.label).toBe('handed to cloud help');
-    expect(n.scope).toMatch(/Not in the number: 1 cloud request failed after being handed over and may have left/);
+    // two: the busy answer (429) was followed by one more try, and both requests may have left
+    expect(n.scope).toMatch(/Not in the number: 2 cloud requests failed after being handed over and may have left/);
   });
   it('the web client draws the number from the same count as the receipt table', async () => {
     const { readFileSync } = await import('node:fs');

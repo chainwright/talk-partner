@@ -31,6 +31,9 @@ export interface CardReceipt {
   offline: boolean;
   /** A cloud request was handed to the SDK and failed: it may have left. Its size is here, not in `bodyBytes`. */
   attempted: boolean;
+  /** How many requests failed after being handed over (a failed call is tried once more when the service allows). */
+  attempts: number;
+  /** Their total size: the same body, once per failed request. */
   attemptBytes: number;
 }
 
@@ -110,7 +113,8 @@ export function cardReceipt(card: Card, profile: Profile): CardReceipt {
     photoFound: !!sentText && sentText.includes('data:image'),
     offline: !!card.ranOffline,
     attempted: !!card.cloudAttempted,
-    attemptBytes: card.cloudAttempted ? utf8Bytes(JSON.stringify(JSON.parse(card.cloudAttempted))) : 0,
+    attempts: card.cloudAttempted ? Math.max(1, card.cloudAttempts ?? 1) : 0,
+    attemptBytes: card.cloudAttempted ? utf8Bytes(JSON.stringify(JSON.parse(card.cloudAttempted))) * Math.max(1, card.cloudAttempts ?? 1) : 0,
   };
 }
 
@@ -128,7 +132,7 @@ export function sessionReceipt(cards: Card[], profile: Profile): SessionReceipt 
     leaksFound: sum((r) => r.leaksFound),
     photosFound: perCard.filter((r) => r.photoFound).length,
     offlineRuns: perCard.filter((r) => r.offline).length,
-    attempts: perCard.filter((r) => r.attempted).length,
+    attempts: sum((r) => r.attempts),
     attemptBytes: sum((r) => r.attemptBytes),
     perCard,
   };

@@ -5,7 +5,8 @@
 import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
-import { makeCard } from '../../core/pipeline';
+import { partnerActions } from '../../core/actions';
+import { cloudRetryWait, makeCard } from '../../core/pipeline';
 import { cardReceipt, sentLine } from '../../core/receipt';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
 import { findLeaks, restoreNames, stripQuestion } from '../../core/strip';
@@ -40,7 +41,7 @@ const ask = (q: string, e: Scripted, support: SupportLevel = 'more', profile: Pr
   makeCard(q, { profile, support, engine: e, allowCloud: e.cloudConfigured, deviceReady: e['dev' as keyof Scripted] !== null, ...extra });
 const answers = (c: Card) => c.choices.filter((x) => x.role === 'answer').map((x) => x.label);
 const everyPage = (c: Card) => { const out: string[] = []; for (let p: Card | null | undefined = c; p; p = p.nextPage) out.push(...answers(p)); return out; };
-void [ANY, YES, ask, answers, everyPage, COPY, cardReceipt, sentLine];
+void everyPage; // used by the groups below
 
 describe('D-a. a name that is not in About me never reaches the cloud request as typed', () => {
   // names the fixture family does not list, in the positions set D found open: after a title, opening the sentence
@@ -115,5 +116,118 @@ describe('D-a. a name that is not in About me never reaches the cloud request as
       // the partner's own screen still shows which word was swapped; that list never leaves
       expect(card.cloudSwaps!.join(' '), q).toMatch(/Name A ← (?:Okafor|Brenda|winnie)/);
     }
+  });
+});
+
+describe('D-b. a failed cloud call (HTTP 429 on the free tier, a network error) never becomes a card made of About me', () => {
+  // the message the SDK gave in the run of 16 Nov, shortened; the free tier allows 15 requests a minute
+  const QUOTA = () => new Error('AI: Error fetching from https://example.invalid/v1beta/models/m:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. Please retry in 41.3s.');
+  const BUSY = () => new Error('AI: Error fetching from https://example.invalid/v1beta/models/m:generateContent: [429 ] Resource has been exhausted (e.g. check quota).');
+  const NET = () => new TypeError('Failed to fetch');
+  const ABOUT = [...PROFILE.places, ...PROFILE.foods, ...PROFILE.tv, ...PROFILE.music, ...PROFILE.people.map((p) => p.name)];
+  const waits: number[] = [];
+  const sleep = async (ms: number) => { waits.push(ms); };
+  const OPEN = ['Where shall I put your slippers?', 'Where do you want the lamp to go?', 'What did the plumber leave behind?', 'What shall we take to the neighbours?', 'Where would you like your chair?'];
+
+  it.each(OPEN)('429 with a long wait named: no second try, no card, an honest reason and a way out: %s', async (q) => {
+    waits.length = 0;
+    const e = new Scripted(null, ANY);
+    e.fail = [QUOTA()];
+    const card = await ask(q, e, 'more', PROFILE, { sleep });
+    expect(e.calls).toEqual(['cloud']);
+    expect(waits).toEqual([]);
+    expect(card.blocked).toBe(COPY.notes.cloudBusyBlocked);
+    expect(card.choices).toEqual([]);
+    expect(card.nextPage ?? null).toBeNull();
+    // nothing from About me anywhere the partner would read it aloud
+    for (const w of ABOUT) expect(card.say.toLowerCase(), w).not.toContain(w.replace(/^the\s+/i, '').toLowerCase());
+    // the badge is "No card" (a blocked card), never "No AI needed"; the tail is "may have left"
+    expect(card.cloudPayload).toBeNull();
+    expect(card.cloudAttempted).toBeTruthy();
+    expect(cardReceipt(card, PROFILE)).toMatchObject({ source: 'blocked', left: false, attempted: true });
+    expect(card.trace!.find((t) => t.step === 'stripped')).toMatchObject({ ran: 'failed', used: false });
+    // the way out: ask again
+    expect(card.retry).toBe(q);
+    expect(partnerActions(card, { less: false, hasAnswers: false })[0]).toMatchObject({ act: 'retry', label: COPY.card.retry });
+  });
+
+  it('429 with no wait named: one more try after a short wait; the second answer is the card, and the first request is counted as "may have left"', async () => {
+    waits.length = 0;
+    const e = new Scripted(null, { topic: 'neighbours', kind: 'choice', choices: ['flowers', 'a cake', 'wine'] });
+    e.fail = [BUSY()];
+    const card = await ask('What shall we take to the neighbours?', e, 'more', PROFILE, { sleep });
+    expect(e.calls).toEqual(['cloud', 'cloud']);
+    expect(waits).toHaveLength(1);
+    expect(waits[0]).toBeGreaterThan(0);
+    expect(waits[0]).toBeLessThanOrEqual(3100);
+    expect(card.blocked ?? null).toBeNull();
+    expect(card.source).toBe('in-cloud');
+    expect(answers(card)).toEqual(['flowers', 'a cake']);
+    expect(card.cloudPayload).toBeTruthy();
+    expect(card.cloudAttempted).toBeTruthy();
+    expect(card.notes).toContain(COPY.notes.cloudRetried);
+    expect(cardReceipt(card, PROFILE)).toMatchObject({ left: true, attempted: true });
+  });
+
+  it('busy twice: two tries and no more, then the honest state', async () => {
+    const e = new Scripted(null, ANY);
+    e.fail = [BUSY(), BUSY()];
+    const card = await ask('Where do you want the lamp to go?', e, 'more', PROFILE, { sleep });
+    expect(e.calls).toEqual(['cloud', 'cloud']);
+    expect(card.blocked).toBe(COPY.notes.cloudBusyBlocked);
+    expect(card.choices).toEqual([]);
+  });
+
+  it('a network error is retried once too; when it fails again the card says cloud help did not answer', async () => {
+    const e = new Scripted(null, ANY);
+    e.fail = [NET(), NET()];
+    const card = await ask('What did the plumber leave behind?', e, 'more', PROFILE, { sleep });
+    expect(e.calls).toEqual(['cloud', 'cloud']);
+    expect(card.blocked).toBe(COPY.notes.cloudDownBlocked);
+    expect(card.retry).toBe('What did the plumber leave behind?');
+  });
+
+  it('a request that certainly did not leave (offline) is not retried and is not counted as "may have left"', async () => {
+    const e = new Scripted(null, ANY);
+    e.fail = [Object.assign(new TypeError('Failed to fetch'), { notSent: true })];
+    const card = await ask('Where would you like your chair?', e, 'more', PROFILE, { sleep });
+    expect(e.calls).toEqual(['cloud']);
+    expect(card.blocked).toBe(COPY.notes.cloudDownBlocked);
+    expect(card.cloudAttempted ?? null).toBeNull();
+    expect(card.unsentPayload).toBeTruthy();
+  });
+
+  it('a card the on-device step made is kept when the cloud is busy, with its own badge', async () => {
+    // two mood words send this card to the cloud for a second opinion
+    const e = new Scripted({ topic: 'afternoon', kind: 'choice', choices: ['happy film', 'sad film', 'a walk'] }, ANY);
+    e.fail = [QUOTA()];
+    const card = await ask('What shall we do after the physio has gone?', e, 'mild', PROFILE, { sleep });
+    expect(e.calls).toEqual(['device', 'cloud']);
+    expect(card.blocked ?? null).toBeNull();
+    expect(card.source).toBe('on-device');
+    expect(answers(card)).toEqual(['happy film', 'sad film', 'a walk']);
+    expect(card.cloudAttempted).toBeTruthy();
+    expect(card.retry ?? null).toBeNull();
+  });
+
+  it('a two-in-one question keeps its second half reachable and asks both again on "Try again"', async () => {
+    const e = new Scripted(null, ANY);
+    e.fail = [QUOTA()];
+    const card = await ask('Where shall I put your slippers, and do you want the heating on?', e, 'more', PROFILE, { sleep });
+    expect(card.blocked).toBe(COPY.notes.cloudBusyBlocked);
+    expect(card.pending).toBe('Do you want the heating on?');
+    expect(card.retry).toBe('Where shall I put your slippers? Do you want the heating on?');
+    expect(partnerActions(card, { less: false, hasAnswers: false }).map((a) => a.act)).toEqual(['retry', 'next']);
+  });
+
+  it('when to try once more: within about 3 s if the service allows, never when it names a longer wait', () => {
+    expect(cloudRetryWait(QUOTA())).toBeNull();
+    expect(cloudRetryWait(BUSY())).toBe(1200);
+    expect(cloudRetryWait(NET())).toBe(1200);
+    expect(cloudRetryWait(new Error('[429 ] Too many requests. Please retry in 2s.'))).toBe(2100);
+    expect(cloudRetryWait(new Error('[503 ] The model is overloaded. Please try again later.'))).toBe(1200);
+    expect(cloudRetryWait(new Error('[400 ] API key not valid.'))).toBeNull();
+    expect(cloudRetryWait(new Error('cloud answer was not valid JSON'))).toBeNull();
+    expect(cloudRetryWait(Object.assign(new Error('Failed to fetch'), { notSent: true }))).toBeNull();
   });
 });

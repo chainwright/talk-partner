@@ -420,6 +420,33 @@ export interface PipelineEnv {
    * Optional: without it the defaults apply, so a card never waits for, or depends on, a settings request.
    */
   routing?: { moodWords: number; minChoices: number };
+  /** The wait before the one retry of a failed cloud call. Only tests pass it (so they need not wait); the app uses a timer. */
+  sleep?: (ms: number) => Promise<void>;
+}
+
+/**
+ * How long to wait before asking the cloud once more, or null when a second try is pointless or would take too long.
+ * Retried: "too many requests" (HTTP 429: the free tier allows 15 requests a minute), a busy or unavailable service
+ * (500 / 502 / 503 / 504) and a network error. When the service names its own wait ("retry in 37s") and it is over
+ * 3 s, there is no second try: the partner is told now, not after a long silence. Never retried: a request that
+ * certainly did not leave (the browser is offline, cloud help is not set up) or was refused for another reason.
+ */
+export function cloudRetryWait(e: unknown): number | null {
+  if ((e as CloudError)?.notSent) return null;
+  const msg = String((e as Error)?.message ?? e);
+  if (!CLOUD_BUSY.test(msg) && !CLOUD_NETWORK.test(msg)) return null;
+  const named = /retry\s*(?:in|after|delay)["':\s]*([\d.]+)\s*(ms|s)?/i.exec(msg);
+  if (named) {
+    const ms = Math.ceil(Number(named[1]) * (named[2]?.toLowerCase() === 'ms' ? 1 : 1000));
+    return Number.isFinite(ms) && ms <= 3000 ? ms + 100 : null;
+  }
+  return 1200;
+}
+const CLOUD_BUSY = /\b429\b|quota|resource[_ -]?exhausted|rate[ -]?limit|too many requests|\b50[0234]\b|unavailable|overloaded|try again later/i;
+const CLOUD_NETWORK = /failed to fetch|fetch failed|error fetching|network|timed? ?out|econn|socket|load failed/i;
+/** True when the cloud refused for load, not for the question: the partner is told "busy", and that a retry may work. */
+export function cloudWasBusy(e: unknown): boolean {
+  return /\b429\b|quota|resource[_ -]?exhausted|rate[ -]?limit|too many requests/i.test(String((e as Error)?.message ?? e));
 }
 
 /** Full flow for one partner question. */
@@ -430,7 +457,7 @@ export async function makeCard(input: string, env: PipelineEnv): Promise<Card> {
   const out: Card = { ...(card.blocked ? { ...card, choices: [] } : card), trace: finishTrace(trace, card) };
   // later pages of the same card (more choices, the body map) carry the same record of where it was made and what left
   for (let p = out.nextPage; p; p = p.nextPage) {
-    Object.assign(p, { trace: out.trace, source: out.source, route: out.route, cloudPayload: out.cloudPayload, cloudSwaps: out.cloudSwaps, cloudAttempted: out.cloudAttempted, unsentPayload: out.unsentPayload, ranOffline: out.ranOffline });
+    Object.assign(p, { trace: out.trace, source: out.source, route: out.route, cloudPayload: out.cloudPayload, cloudSwaps: out.cloudSwaps, cloudAttempted: out.cloudAttempted, cloudAttempts: out.cloudAttempts, unsentPayload: out.unsentPayload, ranOffline: out.ranOffline });
   }
   const coach = coachFor(out);
   return coach ? { ...out, coach } : out;
@@ -595,9 +622,22 @@ async function cloudCard(
   // Did the question leave this computer? 'maybe' from the moment the request is handed to the SDK until the SDK
   // reports where the answer came from; an error in between leaves it at 'maybe', and the card says so.
   let left: 'no' | 'maybe' | 'yes' = 'no';
+  // one failed try that was followed by a second: its request may have left too, so the receipt counts it
+  let firstTryFailed = false;
   try {
     left = 'maybe';
-    const r = await env.engine.runCloud(stripped.text);
+    let r: Awaited<ReturnType<Engine['runCloud']>>;
+    try {
+      r = await env.engine.runCloud(stripped.text);
+    } catch (e) {
+      // Busy (429 on the free tier's 15 requests a minute) or a network error: one more try after a short wait, when
+      // the service allows it within about 3 s. Otherwise the error stands and the partner is told at once.
+      const wait = cloudRetryWait(e);
+      if (wait === null) throw e;
+      firstTryFailed = true;
+      await (env.sleep ?? ((ms: number) => new Promise<void>((res) => setTimeout(res, ms))))(wait);
+      r = await env.engine.runCloud(stripped.text);
+    }
     left = r.source === 'in-cloud' ? 'yes' : 'no';
     // the badge and the trace come from inferenceSource: PREFER_IN_CLOUD runs on the device when offline
     trace.push({ step: 'stripped', ran: r.source, why: r.source === 'in-cloud' ? T.cloudGot : T.cloudOffline, ms: r.ms, used: false });
@@ -630,22 +670,36 @@ async function cloudCard(
     // then nothing left this computer and the card says so (build spec §1.3 item 3).
     const sent = r.source === 'in-cloud';
     if (!sent) cloudNotes.push(N.ranOffline);
+    if (firstTryFailed) cloudNotes.push(N.cloudRetried);
     return {
       ...card, route: { to: 'cloud', reasons }, cloudPayload: sent ? preview : null, unsentPayload: sent ? null : preview,
+      ...(firstTryFailed ? { cloudAttempted: preview, cloudAttempts: 1 } : {}),
       ranOffline: !sent, cloudSwaps: swaps(stripped.map), notes: [...notes, ...card.notes, ...cloudNotes],
     };
   } catch (e) {
     if (!trace.some((t) => t.step === 'stripped')) trace.push({ step: 'stripped', ran: 'failed', why: (e as Error).message, used: false });
     else trace[trace.findIndex((t) => t.step === 'stripped')] = { step: 'stripped', ran: 'failed', why: (e as Error).message, used: false };
-    const base = fallback ?? assemble(asked, pending, null, env.profile, env.support, 'code');
     if ((e as CloudError).notSent) left = 'no';
-    // "kept" only when there is a card made on this computer that the person will actually see
-    const note = N.cloudFailed((e as Error).message, !!fallback && fallback.choices.filter((c) => c.role === 'answer').length >= 2);
+    // Only a card the step on this computer made is kept. With none, there is no card: a card put together from About
+    // me by code alone does not know the question (set D, 16 Nov: after a 429, "Where do you want to sit?" offered the
+    // lake and church under the badge "No AI needed"). The partner is told that cloud help failed, and can try again.
+    const kept = !!fallback && !fallback.blocked && fallback.choices.filter((c) => c.role === 'answer').length >= 2;
+    // the note says it in a few words; the step trace ("where each step ran") keeps the service's full message
+    const note = N.cloudFailed(cloudWasBusy(e) ? 'too many requests this minute, HTTP 429' : (e as Error).message.slice(0, 160), kept);
+    const base: Card = kept ? fallback! : {
+      ...(fallback ?? assemble(asked, pending, null, env.profile, env.support, 'code')),
+      source: 'code', kind: 'choice', choices: [], nextPage: null, say: N.justAsk(asked),
+      blocked: cloudWasBusy(e) ? N.cloudBusyBlocked : N.cloudDownBlocked,
+      // the question to ask again, both halves when it was two in one
+      retry: pending ? `${asked} ${pending}` : asked,
+      why: { proposed: null, decided: W.decidedBy.blockedCloud, kept: [], added: [], dropped: [], headline: W.headlineFrom.question },
+    };
+    const out = { ...base, cloudSwaps: swaps(stripped.map), notes: [...notes, note] };
     // the cloud answered and the answer was unusable: the question did leave, and the receipt counts it
-    if (left === 'yes') return { ...base, cloudPayload: preview, unsentPayload: null, cloudSwaps: swaps(stripped.map), notes: [...notes, note] };
+    if (left === 'yes') return { ...out, cloudPayload: preview, unsentPayload: null, ...(firstTryFailed ? { cloudAttempted: preview, cloudAttempts: 1 } : {}) };
     // handed to the SDK, then an error: it may have left; never shown as "nothing left this computer"
-    if (left === 'maybe') return { ...base, cloudPayload: null, cloudAttempted: preview, unsentPayload: null, cloudSwaps: swaps(stripped.map), notes: [...notes, note] };
-    return { ...base, cloudPayload: null, unsentPayload: preview, cloudSwaps: swaps(stripped.map), notes: [...notes, note] };
+    if (left === 'maybe') return { ...out, cloudPayload: null, cloudAttempted: preview, cloudAttempts: firstTryFailed ? 2 : 1, unsentPayload: null };
+    return { ...out, cloudPayload: null, unsentPayload: preview };
   }
 }
 

@@ -6,7 +6,7 @@
 import { COPY } from './copy';
 import type { Card } from './types';
 
-export type PartnerAct = 'show' | 'less' | 'next' | 'recap' | 'stuck' | 'unstuck' | 'override';
+export type PartnerAct = 'show' | 'less' | 'next' | 'recap' | 'stuck' | 'unstuck' | 'override' | 'retry';
 export interface PartnerAction { act: PartnerAct; label: string; primary?: boolean }
 
 export function partnerActions(c: Card, ui: { less: boolean; hasAnswers: boolean }): PartnerAction[] {
@@ -17,7 +17,8 @@ export function partnerActions(c: Card, ui: { less: boolean; hasAnswers: boolean
   const second: PartnerAction[] = c.pending ? [{ act: 'next', label: K.nextSecond }] : [];
   if (c.kind === 'no-quiz') return [{ act: 'override', label: COPY.memory.override }, ...second];
   if (c.kind === 'repair') return [{ act: 'show', label: K.show, primary: true }, { act: 'unstuck', label: K.unstuck }];
-  if (c.blocked) return second;
+  // cloud help failed and nothing stands in for it: the way out is to ask again (or to just ask, as the card says)
+  if (c.blocked) return c.retry ? [{ act: 'retry', label: K.retry, primary: true }, ...second] : second;
   if (ui.less) return [{ act: 'less', label: K.lessOff }, ...second];
   out.push({ act: 'show', label: K.show, primary: true }, { act: 'less', label: K.less });
   if (nextLabel) out.push({ act: 'next', label: nextLabel });
