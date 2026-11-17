@@ -74,6 +74,35 @@ with every field checked again on the server; nobody can read, change or delete 
 them in the Firebase console). Rules tested on the emulator (`npm run test:rules`, 37 cases) and against the deployed
 rules (`node scripts/rules-check.mjs --live`, 25 refusals).
 
+## Changed on 17 Nov after the second rehearsal run
+A second run of our rehearsal set E (simulated partners and answers, not people; its numbers are not quoted anywhere)
+left seven things. Each was fixed as a class and tested on new phrasings (`tests/unit/sim-e2-classes.test.ts`, 63
+tests; none of them is a sentence of that set). What changed, with the limit of each:
+
+- **No wait for a card the code already has.** An either-or whose two options the code reads whole is made at once,
+  with no model call ("No AI needed"). Before, 12 such cards waited about 3 s for the on-device model and then
+  showed the pair read in code. The model is still asked when the reading breaks off, and "whole" is a check of where
+  a side ends, not of its sense (`CLAIMS.md` row 2).
+- **The family's own entries first.** They stand before a model's general words, and exactly three of them share one
+  card at "2 at a time" (in today's on-device run "Where shall we go on Sunday?" read *lake / church / hardware
+  store*). Four or more are paged as before; nobody has checked three tiles at that level with a person with aphasia
+  (row 14).
+- **A general word gives way to the family's own kind of it**: "jacket" to "tweed jacket", "chair" to the one
+  rocking chair in About me. Only when About me holds exactly one such entry, by its last word or a short table. The
+  sample family has none, so its cards are unchanged (row 44).
+- **"How are you feeling?"** keeps good / so-so / bad, and its way out now leads to *sad / tired / in pain*. "Sad" is
+  on the second page, not the first (row 34).
+- **"Where do you want to go?" with cloud help only** offers the family's places first, the cloud's general ones
+  after; the cloud still gets the question alone. Only for a plain question about going out (row 43).
+- **Headlines.** Options that share no word and are each something to do get "what to do" where the card said "which
+  one"; a yes / no headline no longer reads "that's one you liked". "Which one" remains for two long things with
+  nothing in common (row 1).
+- **"…, or is Carol watching her show?"** offers "Carol's show", not "watching her show" (row 31).
+
+Checked at commit `66c4574` on localhost (one commit before the fixed headline of the "How are you feeling?" card): unit tests, `e2e:noconfig` 25/25, `e2e-cloud.mjs` 28/28, `e2e-ondevice.mjs`
+43/43 in a Chrome with Gemini Nano, `shots.mjs` 139/139 (`devlog/evidence_r10/`). The classes were found by a
+simulation and fixed by the people who read its results; a new sealed set would be the real test.
+
 It also corrects **the partner**, quietly, where a rule can tell: two questions in one become "One thing at a time: showing the first"; a memory question becomes "You know this one: tell, don't test."; a "you don't want …, do you?" question is asked the plain way ("Do you want …?"), so that a yes on the card means yes. The person is never corrected. The partner screen opens on that: "It corrects how you ask. It never answers for them." (the limits of both halves are in `CLAIMS.md`, row 11).
 
 ## For judges: 60 seconds
@@ -151,9 +180,9 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:199` | `inferenceSource === InferenceSource.ON_DEVICE` | where the recording was turned into text, from the SDK's report |
 | `web/src/ai/firebaseEngine.ts:221` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
 | `web/src/ai/app.ts:32` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started by the first cloud call (a card, a recording) or the first feedback note, never at page load |
-| `core/pipeline.ts:686` | `ran: r.source` | the private step's trace line is the engine's report |
-| `core/pipeline.ts:801` | `ran: r.source` | the stripped step's trace line is the engine's report |
-| `core/pipeline.ts:829` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
+| `core/pipeline.ts:690` | `ran: r.source` | the private step's trace line is the engine's report |
+| `core/pipeline.ts:805` | `ran: r.source` | the stripped step's trace line is the engine's report |
+| `core/pipeline.ts:833` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
 | `web/src/main.ts:280` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
@@ -205,9 +234,9 @@ see / meet / have over") the cloud's
 general words ("family", "a friend") are replaced in code by the people About me names, minus whoever lives here, so
 with cloud help only "Who should we call tonight?" reads *Jenny / Tyler* too. That is why the judge path does not
 open on that question: it shows a rule, not the model. The cloud still gets the question alone: no name,
-no label, no count of people (`dropGenericWho` in `core/rules.ts`, `tests/unit/who-and-more.test.ts`). And when a
+no label, no count of people (`dropGenericWho` in `core/rules.ts`, `tests/unit/who-and-more.test.ts`). The same is done for places on a plain "where shall we go" question (`placesFirst`; `CLAIMS.md` row 43). And when a
 card shows two choices at a time, a third good one is no longer dropped: it waits on a next page, reached by the
-way-out tile or "Next: more choices" (a filler word, or a model's guess after two of the family's own entries, is
+way-out tile or "Next: more choices"; the family's own entries stand first, and exactly three of them share one card (a filler word, or a model's guess after two of the family's own entries, is
 dropped: `CLAIMS.md` row 14).
 
 One kind of question is not sent at all, although cloud help is on: an open question that turns on a swapped-out

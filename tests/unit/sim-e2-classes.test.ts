@@ -277,6 +277,12 @@ describe('E2-4. "How are you feeling?": the way out of good / so-so / bad leads 
       expect(e.calls).toEqual([]);
     }
   });
+  it('the headline of such a card is fixed: "feeling", with the time the question names', async () => {
+    expect((await ask('How are you, Alan?', new Scripted(null))).topic).toBe('feeling');
+    expect((await ask('How are you feeling in yourself today?', new Scripted(null))).topic).toBe('feeling today');
+    expect((await ask('How do you feel this evening?', new Scripted(null))).topic).toBe('feeling this evening');
+    expect((await ask('How was the physio session?', new Scripted(null))).topic).toBe('physio session');
+  });
   it('each of the three has a picture', async () => {
     const page = (await ask(SELF[0], new Scripted(null))).nextPage!;
     expect(page.choices.slice(0, 3).map((c) => c.picture)).toEqual([{ type: 'builtin', id: 'bad' }, { type: 'builtin', id: 'tired' }, { type: 'builtin', id: 'pain' }]);

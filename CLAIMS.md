@@ -70,7 +70,8 @@ number.
   (row 39). The cloud step works there once cloud help is turned on (`devlog/evidence_live/`); on localhost App Check
   uses a debug token.
 - That the classes of mistake the rehearsals found are gone. Each fix is tested on new phrasings (`tests/unit/sim-classes.test.ts`,
-  `sim-d-classes.test.ts`, `sim-e-classes.test.ts`); every rehearsal so far has found classes the one before had not.
+  `sim-d-classes.test.ts`, `sim-e-classes.test.ts`, `sim-e2-classes.test.ts`); every rehearsal so far has found classes the one before had not.
+  The fixes of 17 Nov (rows 1, 2, 14, 31, 34, 43, 44) have not been run against any rehearsal set yet.
 - Any number from the 9–10 Nov prototype (16 of 50, 39 of 50) as a result of this build. They are in the README as the
   reason for one design cut and are marked as pre-period.
 - That the person's speech is recognised. It is not, on purpose: recognition of aphasic speech gives confident

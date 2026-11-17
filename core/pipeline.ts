@@ -361,9 +361,13 @@ export function assemble(
     const subtype = feelingSubtype(asked, profile);
     const steps = [...FEELING_SCALES[subtype][scaleLevel(support)]];
     // the whole scale on one card, its middle included, at every support level
-    const card = finish({ ...base, source: 'code', topic: heuristicTopic(asked, profile), kind, subtype }, steps, ['something else'], profile, support, steps.length);
-    card.why = fixedWhy(o, step, W.decidedBy.feeling, W.headlineFrom.question);
-    if (subtype === 'general' && isSelfFeeling(asked)) {
+    // "How are you?", "How are you feeling in yourself today?": the content words left of such a question make no
+    // headline ("question", "feeling yourself today"), so it gets a fixed one, with the time the question names
+    const self = subtype === 'general' && isSelfFeeling(asked);
+    const when = /\b(today|tonight|now|this\s+(?:morning|afternoon|evening|week))\b/i.exec(asked)?.[1].toLowerCase().replace(/\s+/g, ' ');
+    const card = finish({ ...base, source: 'code', topic: self ? (when ? `feeling ${when}` : 'feeling') : heuristicTopic(asked, profile), kind, subtype }, steps, ['something else'], profile, support, steps.length);
+    card.why = fixedWhy(o, step, W.decidedBy.feeling, self ? W.headlineFrom.fixed : W.headlineFrom.question);
+    if (self) {
       // "How are you feeling?": good / so-so / bad holds no "a bit sad" (set E, second run, 17 Nov: all three passes
       // left through the way out). The way out of the scale leads to a second page of feelings it does not hold, fixed
       // in code like the scale itself; its own way out is the real one.
