@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
-import { createVoice, localAvailable, recognitionCtor, tidy, type RecognitionCtor, type RecognitionLike, type VoiceView } from '../../web/src/voice';
+import { chromeMajor, createVoice, localAvailable, recognitionCtor, tidy, type RecognitionCtor, type RecognitionLike, type VoiceView } from '../../web/src/voice';
 
 const ROOT = join(__dirname, '..', '..');
 const read = (p: string) => readFileSync(join(ROOT, p), 'utf8');
@@ -207,18 +207,18 @@ describe('voice input: on-device recognition is used only where the browser repo
   };
   it('"available" for en-US with processLocally is a yes, and the query is a capability query only', async () => {
     const { R, asked } = withAvailable('available');
-    expect(await localAvailable(R)).toBe(true);
+    expect(await localAvailable(R, 'en-US', CHROME157)).toBe(true);
     expect(asked).toEqual([{ langs: ['en-US'], processLocally: true }]);
     expect(FakeRec.made).toHaveLength(0); // no recognition object was made for the question
   });
   it.each(['downloadable', 'downloading', 'unavailable', 'anything else'])('"%s" is a no: the app installs nothing', async (answer) => {
-    expect(await localAvailable(withAvailable(answer).R)).toBe(false);
+    expect(await localAvailable(withAvailable(answer).R, 'en-US', CHROME157)).toBe(false);
   });
   it('a browser without the query, without the flag, or whose query fails is a no', async () => {
     expect(await localAvailable(null)).toBe(false);
     expect(await localAvailable(Ctor)).toBe(false);
-    expect(await localAvailable(withAvailable('available', false).R)).toBe(false);
-    expect(await localAvailable(withAvailable(new Error('nope')).R)).toBe(false);
+    expect(await localAvailable(withAvailable('available', false).R, 'en-US', CHROME157)).toBe(false);
+    expect(await localAvailable(withAvailable(new Error('nope')).R, 'en-US', CHROME157)).toBe(false);
   });
   it('the source never installs a language pack', () => {
     expect(read('web/src/voice.ts')).not.toMatch(/\.install\(/);
@@ -296,5 +296,22 @@ describe('voice input: what the app says about where spoken words go, and how th
     expect(main).toContain("if (r !== 'partner') voice.cancel();"); // and it stops listening when the partner screen is left
     expect(main.match(/\$\{voiceButton\(\)\}/g)).toHaveLength(1);
     expect(main).toContain('${voiceButton()}<button id="make"');
+  });
+});
+
+const CHROME157 = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.8103.79 Safari/537.36';
+describe('older Chromium: available() is never called (Chromium 148 crashed the tab on it, 17 Nov)', () => {
+  it('reads the Chrome major version', () => {
+    expect(chromeMajor(CHROME157)).toBe(157);
+    expect(chromeMajor('Mozilla/5.0 Firefox/140.0')).toBe(0);
+  });
+  it('does not call available() below Chrome 157 and answers no', async () => {
+    let called = 0;
+    class R { static available() { called++; return Promise.resolve('available'); } }
+    (R.prototype as unknown as { processLocally: boolean }).processLocally = false;
+    expect(await localAvailable(R as unknown as RecognitionCtor, 'en-US', CHROME157.replace('157.0', '148.0'))).toBe(false);
+    expect(called).toBe(0);
+    expect(await localAvailable(R as unknown as RecognitionCtor, 'en-US', CHROME157)).toBe(true);
+    expect(called).toBe(1);
   });
 });

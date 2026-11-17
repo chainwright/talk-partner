@@ -64,8 +64,20 @@ export function recognitionCtor(w: unknown): RecognitionCtor | null {
  * True only when the browser says on-device recognition of this language is there now ("available"). "downloadable"
  * and "downloading" are a no: the app does not install language packs. A capability query: no sound, no recognition.
  */
-export async function localAvailable(ctor: RecognitionCtor | null, lang = VOICE_LANG): Promise<boolean> {
+/**
+ * The Chrome major version from a user-agent string, or 0 if there is none. Chromium 148 crashes the whole tab when
+ * SpeechRecognition.available() is called (found 17 Nov in Playwright's Chromium 148: the page died on load; with the
+ * call stubbed it loaded). Chrome 157 answers it. So the query is made only from MIN_AVAILABLE_CHROME on.
+ */
+export const MIN_AVAILABLE_CHROME = 157;
+export function chromeMajor(ua: string): number {
+  const m = /Chrome\/(\d+)/.exec(ua);
+  return m ? Number(m[1]) : 0;
+}
+
+export async function localAvailable(ctor: RecognitionCtor | null, lang = VOICE_LANG, ua = typeof navigator === 'undefined' ? '' : navigator.userAgent): Promise<boolean> {
   if (!ctor || typeof ctor.available !== 'function' || !('processLocally' in ctor.prototype)) return false;
+  if (chromeMajor(ua) < MIN_AVAILABLE_CHROME) return false;
   try { return (await ctor.available({ langs: [lang], processLocally: true })) === 'available'; } catch { return false; }
 }
 
