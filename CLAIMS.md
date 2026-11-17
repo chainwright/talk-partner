@@ -29,6 +29,7 @@ number.
 | 18 | The look-alikes named in the README do something different | Partial | Read on their public pages on 11 Nov 2026. It is what we found, not proof that nothing else exists |
 | 19 | About 2 million people in the United States live with aphasia; fewer than 3% of sampled therapy goals involved partner training | True | Both read at the source on 16 Nov 2026. The second is a survey of clinicians' goals, not a count of families |
 | 20 | Based on Supported Conversation for Adults with Aphasia (SCA) principles | Partial | Our reading of published SCA materials. We have no review or endorsement to cite, from the Aphasia Institute or from a speech-language pathologist |
+| 21 | Judge mode opens with one card already on screen ("Do you want coffee or tea?"), made in code: no model runs and nothing is sent, on any copy | True | It is a code-decided card, shown first so the screen is not empty. It does not show the on-device or the cloud step; the first two chips do |
 
 ## Not claimed
 - That Talk Partner helps people with aphasia or their partners. No one living with aphasia has used it. The timed

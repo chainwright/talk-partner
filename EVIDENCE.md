@@ -30,6 +30,7 @@ path the logs name for their screenshots, and the files were copied here afterwa
 | 18 | README "Look-alikes, named" | open the links | none saved; the quotes were read on 11 Nov 2026 |
 | 19 | README, first lines and footnotes | open the two links | none saved; read on 16 Nov 2026 (the journal page refused an automated fetch, so the abstract was read in its PubMed record) |
 | 20 | `core/copy.ts`, `core/rules.ts` comments | — | none: no outside review exists |
+| 21 | `web/src/main.ts` (`firstCard`), `core/sample.ts` (`SAMPLE_FIRST`) | `npx vitest run tests/unit/first-card.test.ts`; `npm run e2e:noconfig`; `node scripts/shots.mjs` | the unit test asks the question under every setting with an engine that fails on any call; `e2e-noconfig.txt`: "judge mode opens with a card already made, before any click"; `shots.txt`: the two "first frame" lines per width |
 
 Also in that folder: `build.txt` (production build, the check that no debug token is bundled, exit 0), `audit.txt`
 (`npm audit --omit=dev`: 4 high advisories, all in the gRPC package under `@firebase/firestore`, which the app does not

@@ -53,10 +53,11 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
 /* A phone, once a card is on screen: the opening line and the sample-family note have been read, so they move below
    the card, and the status line is set smaller. With a coaching line and the longest status line ("can't run the
    private helper…") the person's card started at 893 px of an 844 px screen; it now starts above the fold, headline
-   included (scripts/shots.mjs measures it on the two-question chip, the tallest partner side there is). */
+   included (scripts/shots.mjs measures it on the two-question chip, the tallest partner side there is).
+   Not for the card judge mode opens with (`.first`): nothing has been read yet, so the opening line stays on top. */
 @media (max-width: 520px) {
-  .layout:has(#result > .badge-line) .partner > .tagline, .layout:has(#result > .badge-line) .partner > .sample { order: 2; }
-  .layout:has(#result > .badge-line) .partner > .status { padding: 6px 10px; font-size: 12.5px; line-height: 1.4; }
+  .layout:not(.first):has(#result > .badge-line) .partner > .tagline, .layout:not(.first):has(#result > .badge-line) .partner > .sample { order: 2; }
+  .layout:not(.first):has(#result > .badge-line) .partner > .status { padding: 6px 10px; font-size: 12.5px; line-height: 1.4; }
 }
 .partner { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .tagline { margin: 0; font-size: 22px; color: var(--ink); font-weight: 600; line-height: 1.3; }
@@ -79,6 +80,8 @@ button.danger, .danger { color: var(--no); border-color: var(--no); }
 @media (max-width: 520px) { .chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; } .chip { flex: 0 0 auto; } }
 .chip { min-height: 36px; padding: 4px 10px; font-size: 14px; border-radius: 999px; font-weight: 400; }
 .chip:hover { border-color: var(--accent); }
+/* the chip whose question is on screen */
+.chip.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 /* judge mode: the chips in three groups. Desktop: a small caption above each row; phone: the caption starts the scroll row */
 .chipgroups { display: grid; gap: 6px; }
 .chips.group { display: grid; gap: 2px; }

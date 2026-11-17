@@ -58,8 +58,11 @@ describe('an answer never reaches a model', () => {
   });
   it('the web client hands the pipeline the profile and settings only', () => {
     const main = readFileSync(join(ROOT, 'web/src/main.ts'), 'utf8');
-    const call = main.slice(main.indexOf('await makeCard(q, {'), main.indexOf('setCard(card);'));
-    expect(call).toContain('profile: state.profile');
-    expect(call).not.toMatch(/history/);
+    // every call of the pipeline in the client (a typed question, and the card judge mode opens with): from the call to its closing "});"
+    const calls = [...main.matchAll(/await makeCard\([\s\S]*?\}\);/g)].map((m) => m[0]);
+    expect(calls).toHaveLength(2);
+    expect(calls[0]).toContain('profile: SAMPLE_PROFILE');
+    expect(calls[1]).toContain('profile: state.profile');
+    for (const call of calls) expect(call).not.toMatch(/history/);
   });
 });

@@ -87,6 +87,13 @@ try {
   console.log(`status line: ${status}`);
   check('the copy really has no project settings', /no project settings/.test(status ?? ''), status);
 
+  // judge mode opens with one card already made, before any click: read in code, so it is there on a bare clone too
+  const first = await js(`({ tiles: [...document.querySelectorAll('#person .tile span')].map(e => e.innerText), badge: document.querySelector('#result .badge')?.innerText ?? '', tail: document.querySelector('#result .badge-line .tail')?.innerText ?? '', lit: document.querySelector('.chip.on')?.dataset.q ?? '', enter: document.querySelector('#app').classList.contains('enter') })`);
+  check('judge mode opens with a card already made, before any click: coffee / tea / something else, "No AI needed", nothing left',
+    JSON.stringify(first?.tiles) === JSON.stringify(['coffee', 'tea', 'something else']) && first.badge === 'No AI needed' && /nothing left this computer/.test(first.tail) && first.lit === 'Do you want coffee or tea?' && first.enter === false, JSON.stringify(first));
+
+  await chip('What year did we get married?');
+  await settled();
   await chip('Do you want coffee or tea?');
   await settled();
   const t1 = await tiles();

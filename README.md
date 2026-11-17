@@ -31,7 +31,7 @@ No account, no sign-in. What you get depends on what the copy has:
 
 There is no hosted URL yet.
 
-`#/demo` loads a made-up family (Frank; Carol asking) and one-tap questions under the question box, in three groups (open question: a model proposes / the app corrects the partner / read in code, no AI); each chip shows the short form, the hover text has the full question and what to look for. Under every card, in reading order: the badge with what left this computer, the coaching line if any, the line to say, the card on the right, then **Why this card**, **Where each step ran**, **What was sent**, the **privacy receipt** and the session line. Click these, in order:
+`#/demo` loads a made-up family (Frank; Carol asking) and opens with one card already made, so the first thing on screen is a card and not an empty pane: "Do you want coffee or tea?", read in code, no model, nothing sent (its chip is lit). Under the question box are one-tap questions, in three groups (open question: a model proposes / the app corrects the partner / read in code, no AI); each chip shows the short form, the hover text has the full question and what to look for. Under every card, in reading order: the badge with what left this computer, the coaching line if any, the line to say, the card on the right, then **Why this card**, **Where each step ran**, **What was sent**, the **privacy receipt** and the session line. Click these, in order:
 
 | Click | What you see | Badge |
 |---|---|---|
@@ -90,7 +90,7 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `core/pipeline.ts:466` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:553` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:581` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:189` | `function badge(` | the badge is drawn from `card.source` only |
+| `web/src/main.ts:212` | `function badge(` | the badge is drawn from `card.source` only |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all. Every cut is visible per card in "Why this card".
@@ -165,7 +165,7 @@ under `@firebase/firestore`, which this app does not import.
   (`core/history.ts`, `tests/unit/history.test.ts`). With the sample family it lasts until judge mode is left.
 - **Cloud help** (`#/cloud`): off by default. The consent screen shows what is sent (the last question in the exact
   payload form), who receives it, what is never sent, and the data-use terms; one checkbox turns it on, one tap turns it off.
-- **Judge mode** (`#/demo`): a made-up family, one-tap questions of each kind, and per card a "where each step ran" line
+- **Judge mode** (`#/demo`): a made-up family, a first card already on screen (coffee or tea, read in code), one-tap questions of each kind, and per card a "where each step ran" line
   built only from what the SDK reported (`inferenceSource`). A step that did not run says so and why. Nothing claims
   on-device unless the device answered. **How this works** (`#/how`): the three steps, a diagram, the session tally,
   the last card's trace and "why", and the look-alikes named above.

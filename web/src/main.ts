@@ -12,7 +12,7 @@ import { bodyDetailCard, makeCard, quizOverrideCard, repairCard } from '../../co
 import { countSwaps, sessionReceipt, sessionTally } from '../../core/receipt';
 import { cloudTextRequest } from '../../core/requests';
 import { BODY_REGIONS } from '../../core/rules';
-import { SAMPLE_PROFILE, SAMPLE_QUESTIONS } from '../../core/sample';
+import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS } from '../../core/sample';
 import { stripQuestion } from '../../core/strip';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
@@ -63,6 +63,8 @@ interface State {
   history: Answered[];
   /** When the card on screen was made: "last time" only looks at answers from before it. */
   cardAt: number;
+  /** The card on screen is the one judge mode opened with (made in code before the first draw): it is shown without an entrance. */
+  first: boolean;
   /** Every card made this session (judge mode tally). */
   made: Card[];
   waitStart: number | null;
@@ -88,6 +90,7 @@ const state: State = {
   answers: [],
   history: [],
   cardAt: 0,
+  first: false,
   recap: false,
   recapDone: false,
   lastQuestion: '',
@@ -101,7 +104,7 @@ const state: State = {
 // ---------------------------------------------------------------- routing
 function route(): Route {
   const h = location.hash.replace(/^#\/?/, '');
-  if (h === 'demo') { enterDemo(); return 'partner'; }
+  if (h === 'demo') { if (!state.demo) void enterDemo().then(render); return 'partner'; }
   if (h === 'about') return 'about';
   if (h === 'cloud') return 'cloud';
   if (h === 'person') return 'person';
@@ -116,12 +119,32 @@ function go(r: Route | 'demo' | '') {
   if (location.hash.replace(/^#\/?$/, '') === h) render(); else location.hash = h;
 }
 
-function enterDemo() {
-  if (state.demo) return;
+function enterDemo(): Promise<void> {
+  if (state.demo) return Promise.resolve();
   state.demo = true;
   state.profile = SAMPLE_PROFILE;
   state.history = []; // the sample family starts with no answers; the real list on disk is untouched
   resetCard();
+  return firstCard();
+}
+/**
+ * Judge mode opens with one card already made, so the first thing on screen is the product and not an empty pane.
+ * The question is one that code decides alone (core/sample.ts, `SAMPLE_FIRST`): no model runs, nothing is sent, and
+ * the card is there before the first draw. It is a real card from the same pipeline as every other and it is counted
+ * in the session line and the receipt like any other.
+ */
+async function firstCard(): Promise<void> {
+  try {
+    const card = await makeCard(SAMPLE_FIRST, {
+      profile: SAMPLE_PROFILE, support: state.settings.support, engine: state.engine,
+      allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available',
+    });
+    if (!state.demo || state.card || state.busy) return; // a question was asked meanwhile, or judge mode was left
+    state.lastQuestion = SAMPLE_FIRST;
+    setCard(card);
+    state.made.push(card);
+    state.first = true;
+  } catch { /* no first card: the screen opens empty, as it did before */ }
 }
 async function leaveDemo() {
   state.demo = false;
@@ -130,14 +153,14 @@ async function leaveDemo() {
   resetCard();
   go('');
 }
-function resetCard() { state.card = null; state.before = null; state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.recapDone = false; state.waitStart = null; }
+function resetCard() { state.card = null; state.first = false; state.before = null; state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.recapDone = false; state.waitStart = null; }
 /**
  * Every new card the person is shown (a made card, a body-map step, the next page, the override) bumps this counter.
  * The render keys the entrance animation on it and on the route, so an animation plays once per real event and never
  * again on a redraw caused by a tap, a toggle or a status update.
  */
 let cardSeq = 0;
-function setCard(c: Card | null) { state.card = c; if (c) { cardSeq++; state.cardAt = Date.now(); } }
+function setCard(c: Card | null) { state.card = c; state.first = false; if (c) { cardSeq++; state.cardAt = Date.now(); } }
 
 // ---------------------------------------------------------------- persistence
 async function load() {
@@ -304,8 +327,10 @@ function diagram(): string {
 /** Judge mode: the one-tap questions in three groups, by what the judge sees happen; the chip shows the short form, asks the full question. */
 function chipGroups(): string {
   const G = C.judge.groups;
+  // the chip whose question is on screen (or being made) is lit, so the card can be traced back to its question
+  const on = (q: string) => q === state.lastQuestion && (!!state.card || state.busy);
   return `<div class="chipgroups">${(Object.keys(G) as (keyof typeof G)[]).map((g) =>
-    `<div class="chips group"><span class="gl">${G[g]}</span><span class="gc">${SAMPLE_QUESTIONS.filter((s) => s.group === g).map((s) => `<button class="chip" data-q="${esc(s.q)}" title="${esc(s.q)} — ${esc(s.shows)}">${esc(s.short)}</button>`).join('')}</span></div>`).join('')}</div>`;
+    `<div class="chips group"><span class="gl">${G[g]}</span><span class="gc">${SAMPLE_QUESTIONS.filter((s) => s.group === g).map((s) => `<button class="chip${on(s.q) ? ' on' : ''}" ${on(s.q) ? 'aria-current="true" ' : ''}data-q="${esc(s.q)}" title="${esc(s.q)} — ${esc(s.shows)}">${esc(s.short)}</button>`).join('')}</span></div>`).join('')}</div>`;
 }
 
 /**
@@ -319,7 +344,7 @@ function partnerScreen(): string {
   const c = state.card;
   const judgeLine = state.demo ? `<details class="judge"><summary><b>${C.judge.label}</b> · ${C.how.tallyHeading}: ${C.how.tallyShort(tally())}</summary><p>${C.judge.intro}</p><p id="nodevice" ${state.device === 'available' || state.device === 'checking' ? 'hidden' : ''}>${C.judge.noDevice}</p></details>` : '';
   return `${nav()}
-<main class="layout">
+<main class="layout${state.first ? ' first' : ''}">
   <section class="partner" aria-label="Partner">
     <p class="tagline">${C.app.tagline}</p>
     <p id="status" class="status">${statusLine()}</p>
@@ -551,7 +576,8 @@ function render() {
   app.className = `route-${r}`;
   // entrance animations play once per real event (a new route or a new card), not on every redraw
   const key = `${r}|${cardSeq}`;
-  if (key !== lastKey) { lastKey = key; app.classList.add('enter'); }
+  // the card judge mode opens with is simply there: no entrance, so the very first frame is a finished card
+  if (key !== lastKey) { lastKey = key; if (!(r === 'partner' && state.first)) app.classList.add('enter'); }
   app.innerHTML = r === 'partner' ? partnerScreen() : r === 'person' ? personScreen() : r === 'about' ? aboutScreen() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   if (r === 'trial') {
@@ -786,4 +812,8 @@ app.addEventListener('pointercancel', cancelHold);
 app.addEventListener('pointerleave', cancelHold, true);
 window.addEventListener('hashchange', render);
 
-void Promise.all([load(), loadTrial()]).then(() => { render(); void refreshDevice(); });
+// Opened straight on judge mode: the first card is made before the first draw, so there is no empty frame before it.
+void Promise.all([load(), loadTrial()]).then(async () => {
+  if (location.hash.replace(/^#\/?/, '') === 'demo') await enterDemo();
+  render(); void refreshDevice();
+});

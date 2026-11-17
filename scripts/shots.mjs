@@ -124,6 +124,12 @@ try {
     // judge mode: sample family, chips, coffee/tea code card
     await nav('#/demo');
     await waitFor('!!document.querySelector(".chip")');
+    // judge mode opens with a finished card (coffee or tea, read in code), not an empty pane, and without an entrance
+    const firstCard = await js(`(() => { const p = document.querySelector('#person'); const t = [...p.querySelectorAll('.tile')]; const r = p.getBoundingClientRect();
+      return { n: t.length, headline: p.querySelector('.headline')?.innerText ?? '', top: Math.round(r.top), lowest: t.length ? Math.round(Math.max(...t.map((x) => x.getBoundingClientRect().bottom))) : 0, enter: document.querySelector('#app').classList.contains('enter'), lit: document.querySelector('.chip.on')?.innerText ?? '', ear: !!p.querySelector('.listening') }; })()`);
+    check(`${s} judge mode, first frame: a finished card is on screen before any click (headline, three tiles, its chip lit, no entrance)`,
+      firstCard.n === 3 && firstCard.headline === 'drink' && !firstCard.ear && !firstCard.enter && firstCard.lit === 'coffee or tea?', JSON.stringify(firstCard));
+    check(`${s} judge mode, first frame: ${s === 'desktop' ? 'the whole card' : "the card's top"} is in the first screen`, s === 'desktop' ? firstCard.lowest <= 800 : firstCard.top < 844, s === 'desktop' ? `lowest tile ${firstCard.lowest}px of 800` : `card top ${firstCard.top}px of 844`);
     await shot('03-judge-mode');
     await chip('Do you want coffee or tea?');
     await shot('04-partner-card-coffee-tea');

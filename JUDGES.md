@@ -6,7 +6,9 @@ Nothing here needs an account. There is no hosted URL yet, so this path starts f
 npm install && npm run dev        # then open http://localhost:5179/#/demo
 ```
 
-`#/demo` loads a made-up family (Frank; his wife Carol is asking). Under the question box are one-tap questions. The
+`#/demo` loads a made-up family (Frank; his wife Carol is asking) and opens with one card already made: "Do you want
+coffee or tea?", read in code, with no model and nothing sent. It is there so the first frame shows what the person
+sees; it is not the AI part. Under the question box are one-tap questions. The
 first two are open questions: the choices are not in the question, so a model has to propose them. They are where the
 two steps of the hybrid give different cards.
 

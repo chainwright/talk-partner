@@ -36,3 +36,9 @@ export const SAMPLE_QUESTIONS: { q: string; short: string; group: SampleGroup; s
   { q: 'Should we ring Jen or Tyler?', short: 'ring Jen or Tyler?', group: 'code', shows: 'nickname swapped like a name' },
   { q: 'Where does it hurt?', short: 'where does it hurt?', group: 'code', shows: 'body map, never AI' },
 ];
+
+/**
+ * The question judge mode opens with, already made into a card: one of the chips above that code decides alone, so the
+ * first card needs no model and sends nothing on any copy (tests/unit/first-card.test.ts).
+ */
+export const SAMPLE_FIRST = 'Do you want coffee or tea?';
