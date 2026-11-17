@@ -142,14 +142,36 @@ export function sessionReceipt(cards: Card[], profile: Profile): SessionReceipt 
  * The session line: every card by its badge (a blocked card is "no card"), and every failed step on any card. A failed
  * cloud step on a card that ended with no card is still a failure, so the line can never say "0 failed" next to one.
  */
-export function sessionTally(cards: Card[]): { device: number; cloud: number; code: number; none: number; failed: number } {
-  const n = { device: 0, cloud: 0, code: 0, none: 0, failed: 0 };
+export function sessionTally(cards: Card[]): { device: number; cloud: number; code: number; asked: number; none: number; failed: number } {
+  const n = { device: 0, cloud: 0, code: 0, asked: 0, none: 0, failed: 0 };
   for (const c of cards) {
     n.failed += (c.trace ?? []).filter((t) => t.ran === 'failed').length;
-    if (c.blocked) n.none++;
-    else if (c.source === 'code') n.code++;
-    else if (c.source === 'in-cloud') n.cloud++;
+    const b = badgeKind(c);
+    if (b === 'none') n.none++;
+    else if (b === 'code') n.code++;
+    else if (b === 'codeAsked') n.asked++;
+    else if (b === 'cloud') n.cloud++;
     else n.device++;
   }
   return n;
+}
+
+/** True when a model step was run for this card (it answered, or it was asked and failed), whatever became of its answer. */
+export function modelAsked(c: Card): boolean {
+  return (c.trace ?? []).some((t) => t.step !== 'code' && t.ran !== 'skipped');
+}
+
+export type BadgeKind = 'none' | 'code' | 'codeAsked' | 'device' | 'offline' | 'cloud';
+/**
+ * Which badge a card gets. "No AI needed" ('code') only when no model was called for it at all. When a model was
+ * asked and code made the card all the same (its copied options failed the check, so the pair read in code is what
+ * the card shows), the badge says exactly that ('codeAsked'): set D and set E of the rehearsal found "No AI needed"
+ * on cards that had waited about 3 s for the on-device model. The two AI badges come from the SDK's report
+ * (`Card.source`).
+ */
+export function badgeKind(c: Card): BadgeKind {
+  if (c.blocked) return 'none';
+  if (c.source === 'code') return modelAsked(c) ? 'codeAsked' : 'code';
+  if (c.source === 'on-device') return c.ranOffline ? 'offline' : 'device';
+  return 'cloud';
 }

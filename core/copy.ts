@@ -118,6 +118,8 @@ const COPY = {
     cloud: 'Cloud help (question only)',
     offline: 'Ran on this computer (offline)',
     code: 'No AI needed',
+    /** A model was asked for this card and code made it all the same: nothing of the model's answer is on it. */
+    codeAsked: 'Made in code (AI answer not used)',
     none: 'No card',
     // The line after the badge, always visible. Read from the card's recorded payload (the receipt's own test), never assumed.
     tail: {
@@ -285,11 +287,11 @@ const COPY = {
     scoresNone: 'One measurement so far, and it is ours: 60 questions we wrote and labelled ourselves (16 Nov 2026). 18 of them are open (who, where, what): the choices are not in the question. Rules alone make no card for any of the 18. In four runs on 16 Nov 2026 the helper on this computer made a card matching our label for 15 or 16 of them, and 12 or 13 of those offered the family\'s own people, places or foods. The other 42 are decided by code with no model; 36 to 38 matched. That is how often the card is the one we meant, not whether it helps anyone. The timed pad-versus-card trial with people (two sealed sets of 10 questions, two or three pairs) has not been run.',
     traceHeading: 'Where each step ran for this card',
     tallyHeading: 'This session',
-    tally: (n: { device: number; cloud: number; code: number; none: number; failed: number }) =>
-      `${n.code} with no AI, ${n.device} on this computer, ${n.cloud} with cloud help, ${n.none} with no card; ${n.failed} step failure${n.failed === 1 ? '' : 's'}.`,
+    tally: (n: { device: number; cloud: number; code: number; asked?: number; none: number; failed: number }) =>
+      `${n.code} with no AI, ${n.asked ? `${n.asked} made in code after a model was asked, ` : ''}${n.device} on this computer, ${n.cloud} with cloud help, ${n.none} with no card; ${n.failed} step failure${n.failed === 1 ? '' : 's'}.`,
     /** The same tally in one line, for the judge-mode strip. */
-    tallyShort: (n: { device: number; cloud: number; code: number; none: number; failed: number }) =>
-      `${n.code} no AI · ${n.device} on this computer · ${n.cloud} cloud help · ${n.none} no card · ${n.failed} failed`,
+    tallyShort: (n: { device: number; cloud: number; code: number; asked?: number; none: number; failed: number }) =>
+      `${n.code} no AI · ${n.asked ? `${n.asked} in code, AI not used · ` : ''}${n.device} on this computer · ${n.cloud} cloud help · ${n.none} no card · ${n.failed} failed`,
     steps: { private: 'Private step (on this computer)', stripped: 'Cloud step (question only)', code: 'Rules in code' },
     ran: { 'on-device': 'ran on this computer', 'in-cloud': 'ran in the cloud', skipped: 'did not run', failed: 'failed' },
     used: 'used for this card',

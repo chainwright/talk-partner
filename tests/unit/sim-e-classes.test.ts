@@ -7,6 +7,7 @@ import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { partnerActions } from '../../core/actions';
 import { makeCard } from '../../core/pipeline';
+import { badgeKind, modelAsked, sessionTally } from '../../core/receipt';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
 import { codeOptions, codePair, dropWhichOne, isUnguessable, listedAnswers, noticeLead, quizKind, quizRephrase, splitQuestion } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
@@ -455,5 +456,51 @@ describe('E-9. who to call: every person About me names is on the card, with a n
     const card = await ask('Who shall I ring for you?', new Scripted(null, CLOUD[0]), 'more', big);
     expect(everyPage(card)).toEqual(['Grace', 'Leo', 'Peter', 'Nora', 'Hal', 'doctor']);
     expect(answers(await ask('Shall I ring Grace or Leo?', new Scripted(null)))).toEqual(['Grace', 'Leo']);
+  });
+});
+
+describe('E-10. "No AI needed" only when no model was called; when one was asked and code made the card, the badge says so', () => {
+  // set D and set E: "No AI needed" on cards that had waited about 3 s for the on-device model
+  // (a comma or a long question keeps these from being "plain" either-ors, so the on-device model is asked)
+  const QUESTIONS = [
+    'When shall I run your bath, before the news or after it?',
+    'Do you want the big blue blanket from the cupboard or the tartan one?',
+    'Shall we sit out in the garden for a while, or would you rather stay in?',
+  ];
+  it.each(QUESTIONS)('a model was asked, its options failed, code made the card: %s', async (q) => {
+    const e = new Scripted(JUNK);
+    const card = await ask(q, e);
+    expect(e.calls).toEqual(['device']);
+    expect(card.source).toBe('code');
+    expect(modelAsked(card)).toBe(true);
+    expect(badgeKind(card)).toBe('codeAsked');
+    // and the same question with no model at all is the same card under "No AI needed"
+    const none = await ask(q, new Scripted(null));
+    expect(answers(none)).toEqual(answers(card));
+    expect(modelAsked(none)).toBe(false);
+    expect(badgeKind(none)).toBe('code');
+  });
+  it('the other badges are as before', async () => {
+    // no model is called for a plain either-or, a yes / no, a feeling scale: "No AI needed" is literal
+    for (const q of ['Do you want jam or honey?', 'Are you warm enough?', 'How was the walk?']) {
+      const e = new Scripted(JUNK);
+      const card = await ask(q, e);
+      expect(e.calls).toEqual([]);
+      expect(badgeKind(card)).toBe('code');
+    }
+    const copied = await ask('Shall we walk down to the library, or would you rather we went to the market?', new Scripted({ topic: 'outing', kind: 'choice', choices: [], options: ['the library', 'the market'] }));
+    expect(badgeKind(copied)).toBe('device');
+    const open = await ask('What shall we have for tea tonight?', new Scripted({ topic: 'tea', kind: 'choice', choices: ['lamb', 'rice'] }));
+    expect(badgeKind(open)).toBe('device');
+    const cloud = await ask('What shall we have for tea tonight?', new Scripted(null, { topic: 'tea', kind: 'choice', choices: ['fish', 'eggs'] }));
+    expect(badgeKind(cloud)).toBe('cloud');
+    const blocked = await ask('What shall we have for tea tonight?', new Scripted(null));
+    expect(badgeKind(blocked)).toBe('none');
+  });
+  it('the session line counts such a card apart from "no AI"', async () => {
+    const cards = [await ask(QUESTIONS[0], new Scripted(JUNK)), await ask('Do you want jam or honey?', new Scripted(JUNK))];
+    expect(sessionTally(cards)).toMatchObject({ code: 1, asked: 1, device: 0, cloud: 0, none: 0 });
+    expect(COPY.how.tallyShort(sessionTally(cards))).toContain('1 no AI · 1 in code, AI not used');
+    expect(COPY.badge.codeAsked).not.toBe(COPY.badge.code);
   });
 });

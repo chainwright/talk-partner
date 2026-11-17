@@ -77,7 +77,7 @@ describe('2. the session line counts a failed step on a card that ended as "no c
     ];
     expect(cards[2].trace!.find((t) => t.step === 'stripped')!.ran).toBe('failed');
     const n = sessionTally(cards);
-    expect(n).toEqual({ code: 1, cloud: 1, device: 0, none: 2, failed: 1 });
+    expect(n).toEqual({ code: 1, asked: 0, cloud: 1, device: 0, none: 2, failed: 1 });
     expect(COPY.how.tallyShort(n)).toBe('1 no AI · 0 on this computer · 1 cloud help · 2 no card · 1 failed');
     expect(n.code + n.cloud + n.device + n.none).toBe(cards.length);
   });

@@ -10,7 +10,7 @@ import type { DeviceStatus, Engine } from '../../core/engine';
 import { addAnswer, answerCounts, lastAnswer, topQuestions, whenText, type Answered } from '../../core/history';
 import { DEFAULT_SETTINGS, LEGS, REMOTE_KEYS, defaultReport, type RuntimeSettings, type SettingsReport } from '../../core/models';
 import { bodyDetailCard, makeCard, quizOverrideCard, repairCard } from '../../core/pipeline';
-import { countSwaps, sentLine, sessionReceipt, sessionTally } from '../../core/receipt';
+import { badgeKind, countSwaps, sentLine, sessionReceipt, sessionTally } from '../../core/receipt';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS, SAMPLE_STEP } from '../../core/sample';
 import { stripQuestion } from '../../core/strip';
@@ -225,9 +225,11 @@ function statusLine(): string {
 }
 
 function badge(c: Card): string {
-  if (c.blocked) return `<span class="badge none">${C.badge.none}</span>`;
-  if (c.source === 'code') return `<span class="badge code">${C.badge.code}</span>`;
-  if (c.source === 'on-device') return `<span class="badge device">${c.ranOffline ? C.badge.offline : C.badge.device}</span>`;
+  // the two AI badges come from `card.source` only (the SDK's report); "No AI needed" only when no model was called
+  const kind = badgeKind(c);
+  if (kind === 'none') return `<span class="badge none">${C.badge.none}</span>`;
+  if (kind === 'code' || kind === 'codeAsked') return `<span class="badge code">${kind === 'code' ? C.badge.code : C.badge.codeAsked}</span>`;
+  if (kind === 'device' || kind === 'offline') return `<span class="badge device">${kind === 'offline' ? C.badge.offline : C.badge.device}</span>`;
   return `<span class="badge cloud">${C.badge.cloud}</span>`;
 }
 
@@ -309,7 +311,7 @@ function madePanels(c: Card): string {
 }
 
 /** Every card made this session by its badge, and every step that failed, on any card: a blocked card's failed step counts too. */
-function tally(): { device: number; cloud: number; code: number; none: number; failed: number } {
+function tally(): { device: number; cloud: number; code: number; asked: number; none: number; failed: number } {
   return sessionTally(state.made);
 }
 
