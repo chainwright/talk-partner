@@ -92,3 +92,13 @@ describe('the recording on screen: labelled, shown only where the step cannot ru
     expect(css).toMatch(/\.badge\.rec \{ border-style: dashed; \}/);
   });
 });
+
+// 17 Nov 2026: "How this works" named two of the three badges that come from the card rules (review round 4).
+describe('"How this works" names every badge', () => {
+  it('the three rule badges and the two AI badges are all in the opening lines, as the badges spell them', () => {
+    const intro = COPY.how.intro;
+    for (const b of [COPY.badge.code, COPY.badge.codeAsked, COPY.badge.none, COPY.badge.device]) expect(intro).toContain(`"${b}"`);
+    expect(intro).toContain('"Cloud help"');
+    expect(COPY.badge.cloud.startsWith('Cloud help')).toBe(true);
+  });
+});
