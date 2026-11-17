@@ -115,7 +115,7 @@ All AI inference goes through Firebase AI Logic. The code is in **`web/src/ai/fi
 | Step | Gets | Mode | Why |
 |---|---|---|---|
 | Private card | question + the family's About-me lists | `ONLY_ON_DEVICE` | Family data must never fall back to the cloud. `PREFER_ON_DEVICE` would send this prompt to the cloud while Gemini Nano is missing or downloading. |
-| Stripped card | the question with every About-me word swapped for "Person A", "Place A"… and any other capitalised word (a name the family didn't list) swapped for "Name A" | `PREFER_IN_CLOUD` | Holds no profile data, so an offline fall-back to the device is safe. |
+| Stripped card | the question with every About-me word swapped for "Person A", "Place A"… and a word that looks like a name the family didn't list (a capitalised word, or the word after a title such as "Dr.") swapped for "Name A" | `PREFER_IN_CLOUD` | Holds no profile data, so an offline fall-back to the device is safe. |
 | Pictures | one generic word | `ONLY_IN_CLOUD` | Not used in this build: pictures are bundled. |
 
 **Why `gemini-3.5-flash-lite` for the cloud step** (`core/models.ts`): the stripped question needs a topic and two or three words back, so the smallest current stable model is enough. It is not on the Firebase AI Logic list of models "no longer recommended" (release note of 5 Oct 2026: `gemini-3.5-flash`, `3.6-flash` and `3.7-flash`, not the Lite model), and from 1 Dec 2026 Firebase routes `gemini-2.5-flash` requests to it (release note of 2 Nov 2026). Read at <https://firebase.google.com/support/releases> on 16 Nov 2026.
@@ -173,9 +173,11 @@ how good the cards are. After a browser start the model has to load: the app war
 sentence, and that took 16 to 22 s in the four starts we timed (15.8, 17.0, 18.2 and 21.7 s from page load to
 "Ready"; the status line says "getting ready… up to half a minute" meanwhile,
 and code-decided cards work). After it a single on-device answer took about 3 s (median 3.1 to 3.3 s on the labelled
-set, 5.4 s at the slowest), and a card that also asks the cloud 6 to 13 s. The privacy swap covers About-me entries, relation words and capitalised unknown
-names in mid-sentence; a lowercase name, a name that starts a sentence, a health detail or an address is sent as typed
-when cloud help is on, and the consent screen says so. `npm audit` reports 4 high advisories, all in the gRPC package
+set, 5.4 s at the slowest), and a card that also asks the cloud 6 to 13 s. The privacy swap covers About-me entries, relation words and, for
+names About me does not list, a capitalised word (also one that opens a sentence, unless it is on a list of ordinary
+opening words) and the word after a title ("Dr. Patel", "aunt linda"); a lowercase name with no title, a name the
+lists take for an ordinary word, a health detail or an address is sent as typed when cloud help is on (`CLAIMS.md`
+row 6), and the consent screen says that anything else typed is sent as written. `npm audit` reports 4 high advisories, all in the gRPC package
 under `@firebase/firestore`, which this app does not import.
 
 ## Screens

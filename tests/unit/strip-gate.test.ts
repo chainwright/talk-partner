@@ -36,15 +36,16 @@ describe('an unknown capitalised word becomes "Name A" and comes back on the dev
     ['Is the TV on, or the BBC radio?', 'Is the TV on, or the BBC radio?'],
     ['Do you want the Christmas tree up before Easter?', 'Do you want the Christmas tree up before Easter?'],
     ['What time is Dr Patel coming?', 'What time is Dr Name A coming?'],
-    ['Pauline rang. Shall we go to Whitby with Mary-Jo?', 'Pauline rang. Shall we go to Place A with Name A-Name B?'],
+    ['Pauline rang. Shall we go to Whitby with Mary-Jo?', 'Name A rang. Shall we go to Place A with Name B-Name C?'],
   ])('%s', (q, want) => {
     const s = stripQuestion(q, P);
     expect(s.text).toBe(want);
     expect(restoreNames(s.text, s.map)).toBe(q);
     expect(findLeaks(s.text, P)).toEqual([]);
   });
-  it('a sentence-initial capital is left as typed (it is usually just the first word)', () => {
-    expect(stripQuestion('Pauline, do you want tea?', P).text).toBe('Pauline, do you want tea?');
+  it('a capital that opens the sentence is swapped too, unless it is an ordinary opening word (set D, 16 Nov)', () => {
+    expect(stripQuestion('Pauline, do you want tea?', P).text).toBe('Name A, do you want tea?');
+    expect(stripQuestion('Toast or cereal?', P).text).toBe('Toast or cereal?');
   });
   it('"Name A" counts as a placeholder the cloud must not invent', () => {
     expect(hasPlaceholder('Name A')).toBe(true);

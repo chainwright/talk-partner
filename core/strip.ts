@@ -16,7 +16,11 @@ type Kind = 'Person' | 'Food' | 'Place' | 'Show' | 'Music' | 'Thing' | 'Name';
 
 /**
  * Capitalised words that are ordinary English, not someone's name: these stay in the cloud text. Any other
- * capitalised word that is not sentence-initial and not in About me becomes "Name A" (§2.19, a heuristic).
+ * capitalised word that is not in About me becomes "Name A" (§2.19, a heuristic). Since the simulation of 16 Nov
+ * (set D: "Dr. Patel's office called…", "Mike from next door…" went as typed) that includes the word that opens a
+ * sentence, unless it is in ORDINARY_OPENERS below, and the word after a title ("Dr. Patel", "aunt linda").
+ * When the code cannot tell a name from a word, the word is swapped: a label too many costs a little of the cloud's
+ * understanding, a name too many is someone's name on the wire.
  */
 const COMMON_CAPS = new Set([
   'i', "i'm", "i'll", "i'd", "i've", 'a', 'ok', 'okay', 'tv', 'gp', 'nhs', 'bbc', 'itv', 'pc', 'dvd', 'cd', 'id', 'ps',
@@ -32,6 +36,60 @@ const COMMON_CAPS = new Set([
 ]);
 /** Where a word starts a sentence: at the start, or after a sentence end (or an opening quote / dash after one). */
 const SENTENCE_START = /(?:^|[.?!:;]|\n)\s*["'“‘(-]*\s*$/;
+
+/**
+ * Words that often open a partner's question and are not names: the things asked about ("Coffee or tea?", "Pills
+ * with juice?"), what to do ("Rate that headache"), how someone is ("Hungry?"). A word that opens a sentence and is
+ * not here (nor in COMMON_CAPS) is treated as a name and swapped. The list is not complete and does not need to be:
+ * a missing word is swapped for a label and put back on this computer.
+ */
+const ORDINARY_OPENERS = new Set((
+  // asking, telling, offering
+  'want wanna fancy need like feel ready up time let lets tell ask say show point rate give take put get go come sit stand lie rest wait look listen ' +
+  'try pick choose think remember know mind care keep leave stay turn switch open close shut bring call ring phone text write read watch play eat drink ' +
+  'cook make wear wash walk drive sleep wake help stop start finish use find see hear meet visit invite send pay buy sell check hold lift move push pull ' +
+  'feeling going doing having getting coming wanting thinking looking sitting eating sleeping hurting talking speaking ' +
+  // how someone is
+  'hungry thirsty cold warm hot tired sleepy comfy comfortable sore dizzy sick better worse fine good bad happy sad scared worried upset bored busy lonely ' +
+  'enough more less too still again maybe perhaps really just only even also now later soon today tonight tomorrow yesterday here there never always ' +
+  'sometimes usually already almost about after before during until since because although though while once twice first next last then ' +
+  // small words
+  'an any some this that these those all both each every either neither none nothing something anything everything nobody someone anyone everyone ' +
+  'not no on in at by for from with without of to into onto over under up down out off near around through between ' +
+  'me us him them mine yours ours their theirs its there\'s here\'s that\'s what\'s who\'s where\'s when\'s how\'s it\'s he\'s she\'s we\'re ' +
+  'you\'re they\'re you\'ve we\'ve they\'ve you\'ll we\'ll they\'ll you\'d we\'d let\'s don\'t doesn\'t didn\'t isn\'t aren\'t wasn\'t weren\'t won\'t wouldn\'t ' +
+  'can\'t couldn\'t shouldn\'t haven\'t hasn\'t hadn\'t might must may one two three four five six seven eight nine ten zero ' +
+  // food and drink
+  'coffee tea water juice milk cocoa beer wine soda pop lemonade squash soup sandwich toast eggs egg oatmeal porridge cereal bacon sausage cheese ' +
+  'bread butter jam honey fruit apple banana orange grapes berries salad chicken beef pork fish ham turkey rice pasta noodles potato potatoes chips fries ' +
+  'pizza burger pie cake cookie cookies biscuit biscuits chocolate ice cream yogurt yoghurt pudding dessert snack breakfast lunch dinner supper meal ' +
+  'leftovers stew curry beans peas carrots vegetables veg meat sugar salt pepper sauce ketchup ' +
+  // home, care, body, clothes
+  'shower bath toilet bathroom loo bed bedroom kitchen porch garden yard garage door window light lights lamp heat heating fan blanket pillow chair ' +
+  'recliner couch sofa table tv telly television radio music news film movie show game phone remote glasses hearing teeth dentures pills pill tablets ' +
+  'tablet medicine meds walker wheelchair cane stick frame car bus taxi shop shops store church doctor nurse hospital clinic appointment therapy physio ' +
+  'exercise exercises walk nap sleep rest shirt jumper sweater cardigan jacket coat trousers pants jeans dress skirt socks shoes slippers hat scarf gloves ' +
+  'pyjamas pajamas robe red blue green grey gray black white brown pink yellow big small old new ' +
+  'pain ache back hip knee shoulder neck head leg legs arm arms foot feet hand hands stomach chest ' +
+  'cash card money mail post letter paper newspaper book puzzle crossword cards photo photos picture pictures dog cat pet ' +
+  'mother father sister brother wife husband son daughter grandson granddaughter kids children family friend friends neighbour neighbor ' +
+  'morning afternoon evening night weekend week month birthday holiday home outside inside upstairs downstairs somewhere anywhere nowhere'
+).split(/\s+/));
+
+/** A word before a name: "Dr. Patel", "Aunt Linda", "Pastor Dave". The title stays; the word after it is swapped. */
+const TITLES = new Set(['dr', 'doctor', 'mr', 'mrs', 'ms', 'miss', 'mx', 'aunt', 'auntie', 'aunty', 'uncle', 'pastor', 'father', 'fr', 'reverend', 'rev', 'sister', 'brother', 'nurse', 'prof', 'professor', 'cousin', 'grandma', 'grandpa', 'granny', 'nana', 'coach', 'officer', 'deacon', 'rabbi', 'bishop', 'minister', 'judge', 'captain', 'sergeant', 'sgt', 'sir', 'lady', 'lord']);
+/** Titles that are also everyday words in lower case ("did you miss lunch", "sir"): a lowercase word after them is left alone. */
+const TITLE_CAPS_ONLY = new Set(['miss', 'sir', 'lady', 'lord', 'judge', 'captain', 'minister', 'officer', 'coach', 'brother', 'sister', 'father']);
+const DETERMINER = new Set(['the', 'a', 'an', 'your', 'my', 'our', 'his', 'her', 'their', 'that', 'this', 'which', 'what', 'any', 'some', 'no', 'every', 'another', 'other']);
+/** Lowercase words that follow a title in ordinary speech ("the doctor called", "aunt is coming"): not a name. */
+const AFTER_TITLE_NOT_NAME = new Set((
+  'called calls calling phoned phones rang rings said says came comes coming went goes going visited visits visiting wants wanted asked asks told tells ' +
+  'sent wrote texted emailed left arrived is was will would can could should has had does did might may must and or but who that which when if so ' +
+  'about again today tomorrow tonight yesterday now later soon here there too also still never always just really appointment visit office surgery ' +
+  'practice clinic call said\'s').split(/\s+/));
+/** Names that are also ordinary capitalised words (a month, an auxiliary): a name only where the next word says so. */
+const NAME_OR_WORD = new Set(['will', 'may', 'june', 'april', 'august']);
+const NAME_CONTEXT = /^(?:['’]s\b|\s+(?:is|was|has|had|says|said|called|calls|rang|phoned|wants|wanted|came|comes|and|from)\b)/i;
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const lc = (s: string) => s.toLowerCase();
@@ -203,15 +261,37 @@ export function stripQuestion(q: string, profile: Profile): Stripped {
       text = text.slice(0, s) + mask(label(t, found)) + text.slice(e);
     }
   }
-  // last: a capitalised word that is not sentence-initial, not ordinary English and not in About me is probably a
-  // name the partner didn't list ("a trip to Whitby", "ring Pauline"). It goes as "Name A" and comes back on the device.
+  // last: a capitalised word that is not ordinary English and not in About me is probably a name the partner didn't
+  // list ("a trip to Whitby", "ring Pauline", "Mike from next door…"), and so is the word after a title, whatever
+  // its case ("Dr. Patel", "aunt linda"). It goes as "Name A" and comes back on the device.
   const nameTerm: Term = { kind: 'Name', entry: '', keys: new Set(), words: new Set() };
-  const names = tokens(text).filter((tk) => {
+  const all = tokens(text);
+  const ordinary = (w: string) => ORDINARY_OPENERS.has(w) || GENERIC.has(w) || (w.length > 3 && ORDINARY_OPENERS.has(w.replace(/(?:es|s)$/, '')));
+  const names = all.filter((tk, i) => {
     const raw = text.slice(tk.start, tk.end);
-    if (!/^\p{Lu}/u.test(raw) || /\p{N}/u.test(raw)) return false;
-    if (COMMON_CAPS.has(lc(raw)) || COMMON_CAPS.has(norm(raw))) return false;
-    if (/^\p{Lu}+$/u.test(raw) && raw.length <= 4) return false; // an acronym (TV, GP, NHS) stays
-    return !SENTENCE_START.test(text.slice(0, tk.start));
+    if (/\p{N}/u.test(raw)) return false;
+    const low = lc(raw);
+    const cap = /^\p{Lu}/u.test(raw);
+    const prev = i > 0 ? all[i - 1] : null;
+    const title = prev && /^\.?\s+$/.test(text.slice(prev.end, tk.start)) ? lc(text.slice(prev.start, prev.end)) : '';
+    if (title && TITLES.has(title)) {
+      // "Dr. Patel", "Aunt May": any capitalised word after a title but a small function word
+      if (cap) return !GENERIC.has(low);
+      // "dr. patel", "aunt linda": a lowercase word after a title, unless the title is used as a plain noun
+      // ("the doctor called", "your aunt is coming") or is an everyday word itself ("miss lunch")
+      const before = i > 1 ? lc(text.slice(all[i - 2].start, all[i - 2].end)) : '';
+      return !TITLE_CAPS_ONLY.has(title) && !DETERMINER.has(before) && !ordinary(low) && !ordinary(tk.w) && !AFTER_TITLE_NOT_NAME.has(low) && !COMMON_CAPS.has(low);
+    }
+    if (!cap || TITLES.has(low)) return false;
+    if (/^\p{Lu}+$/u.test(raw) && raw.length <= 4 && low !== 'i') { if (COMMON_CAPS.has(low) || raw.length <= 3) return false; } // an acronym (TV, GP, NHS) stays
+    // (a plural counts as its word: "Mondays")
+    if (COMMON_CAPS.has(low) || COMMON_CAPS.has(tk.w) || (low.length > 4 && low.endsWith('s') && COMMON_CAPS.has(low.slice(0, -1)))) {
+      // "Will's coming over", "May called": a name where the next word says so; else the ordinary word
+      return NAME_OR_WORD.has(low) && NAME_CONTEXT.test(text.slice(tk.end)) && !/^\s+(?:you|we|i|it|they|he|she|there|the|a|an|your|my|our)\b/i.test(text.slice(tk.end));
+    }
+    // the word that opens a sentence: a name unless it is a word partners open questions with
+    if (SENTENCE_START.test(text.slice(0, tk.start))) return !ordinary(low) && !ordinary(tk.w);
+    return true;
   });
   // labels in reading order (the first unknown name is "Name A"), replaced from the end so offsets stay valid
   const lbls = names.map((tk) => mask(label(nameTerm, text.slice(tk.start, tk.end))));
