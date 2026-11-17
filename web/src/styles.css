@@ -248,6 +248,7 @@ details td, details th, .screen td, .screen th { border-top: 1px solid var(--lin
 .bytes { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; font-size: 15px; color: var(--ink); }
 .bytes b { font-family: var(--mono); font-size: 28px; line-height: 1.15; font-weight: 600; color: var(--accent); letter-spacing: -0.02em; }
 .bytes small { font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+.bytes.sent b { color: var(--cloud); } .bytes.maybe b { color: var(--warn); } /* sky once the cloud was used, amber when a request may have left: the badge colours */
 .receipt .bytes { margin: 4px 0 6px; }
 .receipt .counted { margin: 6px 0; border: 0; padding: 0; background: none; }
 .receipt .counted summary { color: var(--accent); text-decoration: underline; font-family: inherit; font-size: 13px; }

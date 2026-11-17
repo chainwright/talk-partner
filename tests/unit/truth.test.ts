@@ -163,6 +163,7 @@ describe('5. the one number of the receipt says "0 bytes left this computer" onl
     const cards = [await makeCard('Do you want coffee or tea?', env(new E('ok'))), await makeCard(OPEN, env(new E('ok'), false))];
     const n = N(sessionReceipt(cards, SAMPLE_PROFILE));
     expect(`${n.figure} ${n.label}`).toBe('0 bytes left this computer');
+    expect(n.state).toBe('none');
     expect(n.scope).toBe('2 cards this session · page load not counted');
   });
   it('the cloud was unreachable and the engine knows the request was not sent: still 0', async () => {
@@ -177,6 +178,7 @@ describe('5. the one number of the receipt says "0 bytes left this computer" onl
     expect(r.bodyBytes).toBeGreaterThan(0);
     expect(n.figure).toBe(`${r.bodyBytes.toLocaleString('en-US')} bytes`);
     expect(n.label).toBe('handed to cloud help');
+    expect(n.state).toBe('sent');
     expect(n.scope).toMatch(/in 1 request, the question only \(1 About me word swapped out first\); 2 cards this session/);
     expect(n.scope).toMatch(/What the SDK adds on the wire is not counted/);
   });
@@ -185,6 +187,7 @@ describe('5. the one number of the receipt says "0 bytes left this computer" onl
     const n = N(r);
     expect(n.figure).toBe(`up to ${r.attemptBytes.toLocaleString('en-US')} bytes`);
     expect(n.label).toBe('may have left this computer');
+    expect(n.state).toBe('maybe');
     expect(`${n.figure} ${n.label}`).not.toMatch(/^0 bytes/);
   });
   it('a failed request next to an answered one is named beside the number', async () => {

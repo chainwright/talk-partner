@@ -309,7 +309,7 @@ function legsTable(): string {
  */
 function bytesLine(): string {
   const n = C.judge.receipt.number(sessionReceipt(state.made, state.profile));
-  return `<p class="bytes" id="bytes"><b>${esc(n.figure)}</b> <span>${esc(n.label)}</span><small>${esc(n.scope)}</small></p>`;
+  return `<p class="bytes ${n.state}" id="bytes"><b>${esc(n.figure)}</b> <span>${esc(n.label)}</span><small>${esc(n.scope)}</small></p>`;
 }
 
 /** The privacy receipt for this session: counted on the payloads the cards recorded (core/receipt.ts), never estimated. */

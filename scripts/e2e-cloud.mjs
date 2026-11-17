@@ -131,9 +131,9 @@ try {
   check('the request went to Firebase AI Logic', aiHosts2.some((h) => /firebasevertexai\.googleapis\.com/.test(h)), aiHosts2.join(', '));
   // the one number: what the app handed to the cloud step, counted on the same request "What was sent" shows
   const bytes2 = await js(`(() => { const pre = document.querySelector('#sent pre')?.textContent ?? ''; let n = -1; try { n = new TextEncoder().encode(JSON.stringify(JSON.parse(pre))).length; } catch { /* no payload */ }
-    return { text: document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? '', counted: n }; })()`);
+    return { text: document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? '', counted: n, mint: document.querySelector('#bytes').classList.contains('none') }; })()`);
   check('after the cloud answered the number is the size of that request, and it is called "handed to cloud help", not "0 bytes left"',
-    bytes2.counted > 0 && bytes2.text.startsWith(`${bytes2.counted.toLocaleString('en-US')} bytes handed to cloud help`) && !/^0 bytes/.test(bytes2.text), `${bytes2.text.slice(0, 90)} (request counted by hand: ${bytes2.counted} bytes)`);
+    bytes2.counted > 0 && !bytes2.mint && bytes2.text.startsWith(`${bytes2.counted.toLocaleString('en-US')} bytes handed to cloud help`) && !/^0 bytes/.test(bytes2.text), `${bytes2.text.slice(0, 90)} (request counted by hand: ${bytes2.counted} bytes)`);
   await shot('02-cloud-card');
 
   // 2b. a third choice the model gave is not dropped at two a card: it is on the next page (only when the model gave three)
