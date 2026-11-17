@@ -36,7 +36,7 @@ The same question through the two steps, in our recorded run: "What do you want 
 [Where the AI runs, in detail](#where-the-ai-runs-in-detail).
 
 Built for #BuildHybridAI 2026. Status on 17 Nov 2026, in three lines:
-- **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo>. It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI), a microphone for the partner's question (through Firebase AI Logic, in the cloud) and a feedback form (Cloud Firestore), all untried by anyone they are for.
+- **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo> (the full view, in judge mode; the bare address opens the simple view for families, added 17 Nov). It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI), a microphone for the partner's question (through Firebase AI Logic, in the cloud) and a feedback form (Cloud Firestore), all untried by anyone they are for.
 - **One number, at commit `7dd16a1`:** on the 18 open questions of our own labelled set, rules alone make no card (0 of 18); the on-device model made a card matching our label for 15, 16 and 15 of 18 in three runs (17 Nov, the last commit that changes code), 12, 13 and 12 of them with the family's own people, places or foods. Three runs an hour earlier, at `2aeb1d0`, gave 16 each time, and so did the three before that day's rule changes, at `c346d3d`: the model's answers vary, so the number is 15 to 16. Our labels and a set the rules have since been changed around: not a held-out test, not a trial with people.
 - **Every claim with its status:** `CLAIMS.md` (and `JUDGES.md` for the 60-second path, `EVIDENCE.md` for claim → file, command, saved output). No video yet, no trial with people yet. How it got here, day by day: `devlog/` (the long form of this paragraph is kept in `devlog/DAY12.md`).
 
@@ -295,7 +295,22 @@ can miss one and that anything else typed is sent as written. `npm audit` report
 under `@firebase/firestore`, which this app does not import.
 
 ## Screens
-- **Partner screen** (`#/`): in the top bar, **Quick needs** (the board below, in one tap); next to the question
+- **Simple view** (`/`, the default since 17 Nov; direction A of `design/simple_shell_2026-11-17/PROPOSAL.md`): what a
+  carer on a phone gets. First screen: one sentence, the question field with the microphone, "Make a card", three
+  ready questions (each with a small line saying how its card is made here), "Quick needs", About them, and at the
+  foot what has left this session, where the AI runs, and **See how it works inside →**. A card: "1 Say this out
+  loud", "2 Show <name> the card", the card, the main button, "Hide the choices" and "We're stuck", and under the card
+  where it was made (by the app's rules, by the AI built into Chrome on this computer, or with online help, and what
+  was sent). After the tick: what they chose, "Ask another question", today's answers. A question that needs cloud
+  help while it is off brings up a sheet: the exact line that would go, what else is in the request, what can be
+  missed, what is never sent, the data use, and two buttons of the same size ("Yes, send open questions to Google" /
+  "No, not for this question"); nothing is asked of any other host before a yes. About them is four rows over the
+  same fields. Light by default, dark when the system asks for it. The words say "this phone", "this tablet" or
+  "this computer" by what the browser reports (`deviceKindFrom` in `core/copy.ts`). It draws less than the full view
+  and computes nothing: the same `makeCard` makes every card (`web/src/simple.ts`, `core/simple.ts`). **Nobody it is
+  for has tried it.** "See how it works inside" opens the full view below and the browser keeps that choice;
+  "Simple view", first among its links, goes back.
+- **Partner screen** (the full view; `/#/demo` opens it in judge mode whatever view was chosen): in the top bar, **Quick needs** (the board below, in one tap); next to the question
   field, where the browser can record, a microphone for the partner's own question (through Firebase AI Logic) (the words go into the
   field and wait there). Above the question field, up to three one-tap chips with the questions answered most
   often ("Asked before:", read from "Answers so far" on this computer; none until an answer has been confirmed, and
@@ -319,7 +334,7 @@ under `@firebase/firestore`, which this app does not import.
   The same list feeds the "Asked before" chips on the partner screen: a chip holds the question only, and a tap asks
   it again like a typed question (so with cloud help on, an open question goes the usual way; the earlier answers do not).
 - **Cloud help** (`#/cloud`): off by default. The consent screen shows what is sent (the last question in the exact
-  payload form), who receives it, what is never sent, and the data-use terms; one checkbox turns it on, one tap turns it off.
+  payload form), who receives it, what is never sent, and the data-use terms; one checkbox turns it on, one tap turns it off. In the simple view the same switch is the "Yes" button of the sheet an open question brings up, which carries the same facts in fewer words.
 - **Judge mode** (`#/demo`): a made-up family, a first card already on screen (coffee or tea, read in code), then, where the browser has Gemini Nano, the first open question asked by the app itself and answered on this computer, one-tap questions of each kind, and per card a "where each step ran" line
   built only from what the SDK reported (`inferenceSource`), one click away under every card. A step that did not run says so and why. Nothing claims
   on-device unless the device answered. **How this works** (`#/how`): the two steps, a diagram, the session tally,
@@ -355,6 +370,9 @@ npm run check                # lint + typecheck + unit tests
 npm run build                # production build + check that no debug token is bundled
 node scripts/e2e-cloud.mjs   # with the dev server running: real Firebase AI Logic end-to-end (cloud step)
 node scripts/e2e-noconfig.mjs # starts its own server with no settings: rules-only cards from a bare clone, and the quick-needs board with the network off
+python3 scripts/e2e-simple.py     # with the dev server running: the simple view in a browser, as a phone, a desktop and a tablet (99 checks; --live for a hosted copy: it then never presses "Yes")
+python3 scripts/overflow-check.py # with the dev server running: nothing runs off the side at 320, 360, 390 and 412 px (the simple view at all four, the full view from 360)
+node scripts/contrast-check.mjs   # the simple view's colours, read from the stylesheet: text 4.5:1, controls 3:1, light and dark
 node scripts/e2e-needs.mjs   # with the dev server running (or --url <a hosted copy>): the quick-needs board with the network off, the microphone's notice
 node scripts/e2e-ondevice.mjs --port 9335   # with the dev server and a Chrome that has Gemini Nano on that debugging port
 node scripts/eval-heldout.mjs             # the labelled set in eval/, rules alone; add --port 9335 for the real app with the on-device model; the report goes to devlog/eval_runs/

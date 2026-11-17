@@ -8,6 +8,17 @@ give no card:** it needs App Check to accept your browser, and on the evening of
 then reads "Cloud help could not confirm this browser"; `README.md`, "Where the AI runs, in detail"). Everything
 else on this page works without it. Or from a clone:
 
+**Two views of one app (since 17 Nov).** `/#/demo`, the address above, opens the full view in judge mode, and this
+page is about it. The bare address `/` opens the **simple view**, made for a carer on a phone: one field, three
+ready questions, then "1 Say this out loud", "2 Show <name> the card". It draws less and computes nothing: the same
+pipeline makes every card. Under every card it says in plain words where the card was made ("Made by the app's rules
+on this phone. No AI used. Nothing was sent." / "Made by the AI built into Chrome on this computer…" / "Made with
+online help… Sent to Google: your question, with any names you listed swapped out, and the app's fixed
+instructions"), read from the same `inferenceSource` report as the badges here. **See how it works inside →** at the
+foot of every simple screen opens the full view (kept for that browser), and **Simple view**, first among the links
+at the top, goes back. In the simple view an open question that needs cloud help brings up a sheet with the exact
+line that would go; **Yes, send open questions to Google** on it is the same switch as the tick box below.
+
 ```
 npm install && npm run dev        # then open http://localhost:5179/#/demo
 ```
@@ -83,7 +94,7 @@ has the same two questions answered by the cloud alone); the same run against th
 `devlog/ondevice_proof_1/RUN_LOG.md`.
 
 **If you have five minutes more**
-- `npm run check` (lint, types, 1870 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
+- `npm run check` (lint, types, 1915 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
 - `npm run eval`: the labelled set of 60 questions against the rules alone (it writes its report to a new folder under
   `devlog/eval_runs/`): 40 of 42 code-decided questions, 0 of 18 open. What the on-device model adds on the 18 open
   questions: `devlog/evidence_r11/heldout_at_7dd16a1/` (three runs); our reading of the cards of the first runs:
