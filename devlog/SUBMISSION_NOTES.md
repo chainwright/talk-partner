@@ -33,4 +33,4 @@ Devpost "Built with" is a tag list; these are the tags, in the order to enter th
 **Not to add until they are real:** `firebase-hosting` (no deploy yet), `firestore` / `firebase-auth` (the two-screen relay, E-B), `remote-config` (the therapist defaults, E-B). Adding them early would be the "demo mode that simulates" trap our review of the field warns about.
 
 ## Judge path, in one line for the page
-"Try it: `#/demo`, no account. Click the questions in order; the AI badges come from the SDK's `inferenceSource`; under each card, *Why this card* and *Where each step ran*; the privacy receipt counts the bytes that left."
+"Try it: `#/demo`, no account. Click the questions in order; the AI badges come from the SDK's `inferenceSource`; under each card, *Why this card* and *Where each step ran*; the privacy receipt counts the bytes handed to the cloud step."

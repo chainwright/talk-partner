@@ -16,7 +16,7 @@ number.
 | 6 | The cloud step (`PREFER_IN_CLOUD`) gets the question only, with About-me words swapped for labels ("Person A") | True, recorded | The swap covers About-me entries, relation words and capitalised unknown names in mid-sentence. A lowercase name, a name that starts a sentence, a health detail or an address goes as typed; the consent screen says so |
 | 7 | With the network off, the cloud step falls back to the device and nothing leaves | True, recorded | Needs Gemini Nano in that Chrome; without it there is no card |
 | 8 | The AI badges come from the SDK's `inferenceSource`, not from what we expected to happen | True | |
-| 9 | "What was sent" and the privacy receipt show the exact request and count its bytes | True | The count is of the request body the app built. The SDK's transport around it (headers, App Check token) is not counted |
+| 9 | "What was sent" and the privacy receipt show the request this app handed to the SDK for the cloud step, and count its bytes | True | It is the app's own record of the request (question after the swap, fixed instructions, schema, model name and mode), not a capture of the wire. The SDK's format and transport (headers, App Check token) are not counted |
 | 10 | The model only proposes; code decides, and "Why this card" shows what was kept, added and dropped, with the rule | True | |
 | 11 | The app corrects the partner, never the person: two questions in one, a memory test | Partial | On our labelled set the memory rule missed 1 of 4 ("What did you have for breakfast?" got a choice card) |
 | 12 | A memory question never becomes a quiz | Partial | Same miss as row 11. The rule matches by structure and does not catch every recall question |
