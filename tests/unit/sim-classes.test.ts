@@ -322,11 +322,12 @@ describe('9. a pain question gets the pain card, and a number scale stays on it'
     expect(answers(c)).toEqual(['a little', 'a lot']);
     expect(c.topic).toBe('pain');
   });
+  // (since set D of 16 Nov the scale is a line of every number, not two or three ranges: the number was being lost)
   it.each([
-    ['How bad is the ache, on a scale of 1 to 10?', 'more', ['a little (1 to 5)', 'a lot (6 to 10)']],
+    ['How bad is the ache, on a scale of 1 to 10?', 'more', ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']],
     ['Where is the pain today, 0 to 10?', 'more', null],
-    ['What is your pain out of ten?', 'mild', ['a little (0 to 3)', 'some (4 to 6)', 'a lot (7 to 10)']],
-    ['How much does it hurt, from one to five?', 'mild', ['a little (1 to 2)', 'some (3)', 'a lot (4 to 5)']],
+    ['What is your pain out of ten?', 'mild', ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']],
+    ['How much does it hurt, from one to five?', 'mild', ['1', '2', '3', '4', '5']],
   ] as [string, SupportLevel, string[] | null][])('%s', async (q, support, want) => {
     const e = new Scripted(ANY, ANY);
     const c = await ask(q, e, support);
@@ -334,9 +335,8 @@ describe('9. a pain question gets the pain card, and a number scale stays on it'
     if (!want) { expect(c.kind).toBe('body'); return; } // "where" stays the body map
     expect(c.kind).toBe('pain');
     expect(answers(c)).toEqual(want);
-    // the picture of the level is kept, and every number of the scale is on exactly one tile
-    expect(c.choices[0].picture).toEqual({ type: 'builtin', id: 'a little' });
-    expect(c.notes).toContain(COPY.notes.painNumbers);
+    expect(c.scale).toEqual({ lo: Number(want[0]), hi: Number(want[want.length - 1]) });
+    expect(c.notes).toContain(COPY.notes.painLine);
   });
   it('not the pain itself: the pain clinic, the painkillers, a feeling', () => {
     for (const q of ['How was the pain clinic?', 'How are the pain tablets working?', 'How was your day?']) expect(isPainLevel(q), q).toBe(false);

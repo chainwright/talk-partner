@@ -10,7 +10,7 @@ import { cloudRetryWait, makeCard, quizOverrideCard } from '../../core/pipeline'
 import { cardReceipt, sentLine } from '../../core/receipt';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
 import { findLeaks, restoreNames, stripQuestion } from '../../core/strip';
-import { optOutTrim, orList, quizKind, quizRephrase } from '../../core/rules';
+import { isPainLevel, optOutTrim, orList, quizKind, quizRephrase } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -387,5 +387,56 @@ describe('D-3. three options where the last is "nothing / neither / quiet" keep 
       expect(card.kind).toBe('yesno');
     }
     expect(orList(q, PROFILE)).toBeNull();
+  });
+});
+
+describe('D-4. asking after a part of the body, or for a number, gets the pain card: never good / bad, and the number is on it', () => {
+  const PLAIN = ["How's your knee today?", 'How is that shoulder?', 'How are your feet, love?', "Alan, how's your neck this morning?", 'How is your lower back now?'];
+  for (const [state, engine] of STATES) {
+    it.each(PLAIN)(`${state}: %s`, async (q) => {
+      const e = engine();
+      const card = await ask(q, e);
+      expect(card.kind).toBe('pain');
+      expect(answers(card)).toEqual(['a little', 'a lot']);
+      expect(e.calls).toEqual([]);
+    });
+  }
+  const NUMBERED: [string, number, number][] = [
+    ["How's your knee, one to ten?", 1, 10],
+    ['Your shoulder, zero to ten?', 0, 10],
+    ['Give me a number for the ache, 0 to 10.', 0, 10],
+    ['On a scale of one to five, how sore is your neck?', 1, 5],
+    ['How is your hip this morning, out of ten?', 0, 10],
+    ['And the toothache, from 0 to 5?', 0, 5],
+  ];
+  for (const [state, engine] of STATES) {
+    it.each(NUMBERED)(`${state}: %s`, async (q, lo, hi) => {
+      const e = engine();
+      const card = await ask(q, e);
+      expect(card.kind).toBe('pain');
+      expect(card.scale).toEqual({ lo, hi });
+      // every number of the scale is a tile, in order, and nothing else is: the person points at the number itself
+      expect(answers(card)).toEqual(Array.from({ length: hi - lo + 1 }, (_, i) => String(lo + i)));
+      expect(card.choices.filter((c) => c.role === 'escape')).toHaveLength(1);
+      expect(card.nextPage ?? null).toBeNull();
+      // the line to say names the ends, not eleven numbers
+      expect(card.say).toContain(COPY.notes.painLineSay(lo, hi));
+      expect(card.say).not.toMatch(/\b3, 4, 5\b/);
+      expect(e.calls).toEqual([]);
+    });
+  }
+  it('the same line at every support level: it is one scale, not eleven choices', async () => {
+    for (const support of ['mild', 'more', 'most'] as SupportLevel[]) {
+      const card = await ask('Your shoulder, zero to ten?', new Scripted(null), support);
+      expect(answers(card)).toHaveLength(11);
+    }
+  });
+  it('two in one: the body part first, as the pain card; the second question is still reachable', async () => {
+    const card = await ask("How's your knee, and did you sleep?", new Scripted(null));
+    expect(card.kind).toBe('pain');
+    expect(card.pending).toBe('Did you sleep?');
+  });
+  it.each(["How's your day going?", "How's your sister?", "How's your back garden looking?", "How's your head for heights?", 'Rate your sleep for me, one to ten.', 'How was your walk?', 'Where is your knee sore, 0 to 10?'])('not the pain card: %s', (q) => {
+    expect(isPainLevel(q)).toBe(false);
   });
 });

@@ -517,6 +517,15 @@ function personView(full: boolean): string {
       <div class="tiles two">${c.choices.slice(3).map((ch, i) => tile(ch, i + 3, 'out')).join('')}</div>`;
   }
   const answers = c.choices.filter((x) => x.role === 'answer');
+  if (c.scale) {
+    // a number scale named in the question: one line of numbers, the two ends named under it, then the way out
+    const num = (ch: Choice, i: number) => `<button class="tile wordonly" data-i="${i}"><span>${esc(ch.label)}</span></button>`;
+    const out = c.choices.map((ch, i) => (ch.role === 'escape' ? `<button class="tile escape ${picture(ch) ? '' : 'wordonly'}" data-i="${i}">${picture(ch)}<span>${esc(ch.label)}</span></button>` : '')).join('');
+    return `${exit}<h2 class="headline">${esc(c.topic)}</h2>
+    <div class="tiles scale" style="--n:${Math.min(6, answers.length)}">${c.choices.map((ch, i) => (ch.role === 'answer' ? num(ch, i) : '')).join('')}</div>
+    <p class="scale-ends"><span>${c.scale.lo} · ${c.scale.lo === 0 ? C.scale.low : C.scale.lowFromOne}</span><span>${c.scale.hi} · ${C.scale.high}</span></p>
+    <div class="tiles two">${out}</div>`;
+  }
   const cls = state.settings.support === 'most' ? 'tiles stacked' : answers.length >= 3 ? 'tiles three' : 'tiles two';
   return `${exit}<h2 class="headline">${esc(c.topic)}</h2>
     <div class="${cls}">${c.choices.map((ch, i) => `<button class="tile ${ch.role === 'escape' ? 'escape' : ''} ${picture(ch) ? '' : 'wordonly'}" data-i="${i}">${picture(ch)}<span>${esc(ch.label)}</span></button>`).join('')}</div>`;

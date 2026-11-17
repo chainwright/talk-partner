@@ -177,6 +177,10 @@ details td, details th, .screen td, .screen th { border-top: 1px solid var(--lin
 .tiles.repair { grid-template-columns: repeat(3, 1fr); }
 .tiles .tile.out { border-color: var(--muted); color: var(--muted); min-height: 110px; font-size: 24px; font-weight: 400; box-shadow: none; }
 .tiles .tile.out svg { width: 64px; height: 64px; }
+/* the number line of a pain card: one row of numbers (two rows from seven on), every target at least 44px */
+.tiles.scale { grid-template-columns: repeat(var(--n, 6), 1fr); gap: 8px; }
+.tiles.scale .tile, .person.full .tiles.scale .tile { min-height: 84px; padding: 6px 2px; border-radius: 14px; font-size: 32px; }
+.scale-ends { display: flex; justify-content: space-between; gap: 12px; margin: 8px 2px 14px; font-size: 24px; color: var(--muted); }
 .tile.pressed { background: var(--accent-soft); }
 .tile.yes { border-color: var(--yes); }
 .tiles.stacked .tile { font-size: 32px; }

@@ -106,6 +106,9 @@ const COPY = {
     } as Record<string, string>,
   },
 
+  // The two ends of the number line on a pain card (under the numbers on the person's card).
+  scale: { low: 'no pain', lowFromOne: 'hardly any', high: 'the worst' },
+
   badge: {
     device: 'On this computer',
     cloud: 'Cloud help (question only)',
@@ -491,7 +494,8 @@ const COPY = {
     negativeAsked: 'Your question had a "not" in it. The card asks it the plain way, so yes means yes.',
     optOutAsked: 'Asked as one yes / no question: the "or …?" at the end is the "no" on the card.',
     listedAll: 'You named three, so all three are on the card.',
-    painNumbers: 'The scale is shown in ranges. For the exact number, ask again inside the range they chose.',
+    painLine: 'The scale you named is on the card as a line of numbers. Run your finger along it as you ask, then wait.',
+    painLineSay: (lo: number, hi: number) => `Point to a number: ${lo} is ${lo === 0 ? 'no pain' : 'hardly any'}, ${hi} is the worst.`,
     hiddenSubject: (word: string) => `Not sent: this question turns on "${word}" from About me, and cloud help never sees About me, so it could only guess.`,
     hiddenBlocked: (word: string) => `This question turns on "${word}" from About me. Cloud help never sees About me, so it was not asked and there is no card. Just ask normally and give time.`,
     page: (i: number, n: number, escape: string) => `Page ${i} of ${n}: "${escape}" shows the next ones.`,

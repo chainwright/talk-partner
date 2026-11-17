@@ -117,6 +117,8 @@ export interface Card {
   kind: CardKind;
   subtype?: FeelingSubtype;
   bodyStep?: 1 | 2;
+  /** A pain card whose question named a number scale: its choices are the numbers lo … hi, shown as one line. */
+  scale?: { lo: number; hi: number };
   region?: BodyRegion;
   choices: Choice[];
   /** The line the partner says aloud, built in code from the final choices. */

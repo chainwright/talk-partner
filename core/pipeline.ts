@@ -11,7 +11,7 @@ import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   dropGenericWho, fromAboutMe, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
-  codeOptions, numberScale, orList, painBands, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
+  codeOptions, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
 import type { BodyRegion, Card, CardWhy, Choice, ModelOutput, Profile, Source, StepTrace, SupportLevel } from './types';
@@ -230,11 +230,18 @@ export function assemble(
     return card;
   }
   if (isPainLevel(asked)) {
-    // a number scale named in the question stays on the card as ranges ("a lot (6 to 10)"): the number is not lost
-    const scale = numberScale(asked);
-    const levels = [...PAIN_LEVELS[scaleLevel(support)]];
     // the headline of a fixed card is fixed too: nothing of a model's answer is on it
-    const card = finish({ ...base, source: 'code', topic: 'pain', kind: 'pain', notes: scale ? [N.painNumbers] : [] }, scale ? painBands(levels, scale) : levels, [escapeFor(asked)], profile, support);
+    const scale = numberScale(asked);
+    const line = scale ? painNumbers(scale) : null;
+    if (scale && line) {
+      // A number scale named in the question is the card: one line of numbers the person points along, at every
+      // support level (it is one idea on one axis, not eleven separate choices). The partner says what the ends mean.
+      const card = finish({ ...base, source: 'code', topic: 'pain', kind: 'pain', scale, notes: [N.painLine] }, line, [escapeFor(asked)], profile, support, line.length);
+      card.say = `${asked} ${N.painLineSay(scale.lo, scale.hi)}`;
+      card.why = fixedWhy(o, step, W.decidedBy.pain, W.headlineFrom.fixed);
+      return card;
+    }
+    const card = finish({ ...base, source: 'code', topic: 'pain', kind: 'pain' }, [...PAIN_LEVELS[scaleLevel(support)]], [escapeFor(asked)], profile, support);
     card.why = fixedWhy(o, step, W.decidedBy.pain, W.headlineFrom.fixed);
     return card;
   }

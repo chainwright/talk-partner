@@ -686,6 +686,11 @@ const NUM_TOP = '(?:5|10|five|ten)';
 const NUMBER_SCALE = new RegExp(`\\b(?:from\\s+)?(${NUM})\\s*(?:to|-|–)\\s*(${NUM_TOP})\\b|\\bout\\s+of\\s+(${NUM_TOP})\\b`, 'i');
 const NUM_VALUE: Record<string, number> = { zero: 0, nought: 0, one: 1, five: 5, ten: 10 };
 
+const BODY_PARTS = '(?:back|hips?|knees?|shoulders?|neck|head|legs?|arms?|foot|feet|hands?|wrists?|ankles?|elbows?|stomach|tummy|belly|chest|throat|tooth|teeth|jaw|ears?|fingers?|toes?|ribs|joints?|wound|scar|stitches|bruise)';
+const BODY_PART = new RegExp(`\\b${BODY_PARTS}\\b`, 'i');
+/** "How's your hip?", "How is that knee today?", "How are your feet, love?": the part, then the end of the question or a time. */
+const HOW_PART = new RegExp(`^\\s*(?:and\\s+|so\\s+)?how(?:'s|\\s+is|\\s+are|\\s+was|\\s+were)\\s+(?:your|the|that|this)\\s+(?:(?:bad|sore|poor|left|right|other|dodgy|new|lower|upper)\\s+)?${BODY_PARTS}(?=\\s*(?:[?,.]|$|today|now|tonight|this\\b|feeling|doing|holding|after|since|at\\s+the\\s+moment|these\\s+days|on\\s+a\\s+scale|out\\s+of|from\\s+(?:0|1|zero|one)|(?:0|1|zero|one)\\s*(?:to|-)))`, 'i');
+
 /** The number scale a question names ("from 0 to 10", "1-5", "out of ten"), or null. */
 export function numberScale(q: string): { lo: number; hi: number } | null {
   const m = NUMBER_SCALE.exec(q);
@@ -701,6 +706,10 @@ export function numberScale(q: string): { lo: number; hi: number } | null {
  */
 export function isPainLevel(q: string): boolean {
   if (MEDICINE.test(q)) return /\bpain\s+(level|score)\b/i.test(q);
+  // "How's your hip?", "How's your back today, zero to ten?": asking after a part of the body is asking about pain
+  // (set D, 16 Nov: both got the general good / bad card, and the number was lost)
+  if (HOW_PART.test(stripVocative(q))) return true;
+  if (BODY_PART.test(q) && !!numberScale(q) && !/\b(where|which)\b/i.test(q)) return true;
   if (/\bhow\s+(much|bad)\b/i.test(q) && (BODY_WORD.test(q) || PAIN_NOUN.test(q))) return true;
   if (/\bpain\s+(level|score)\b/i.test(q)) return true;
   if (FEELING_Q.test(stripVocative(q)) && PAIN_NOUN.test(q) && !NOT_THE_PAIN.test(q)) return true;
@@ -708,19 +717,14 @@ export function isPainLevel(q: string): boolean {
 }
 
 /**
- * The pain levels as ranges of the scale the question named, so the number is not lost (simulation 16.11: "from 0 to
- * 10" became "a little / a lot"). "a little (0 to 5)", "a lot (6 to 10)": the word and the numbers on one tile.
+ * The number line for a scale the question named: every number, in order ("0" … "10"), so the person can point at
+ * the number itself. (Before set D of 16 Nov the card showed two or three ranges, "a lot (6 to 10)", and the number
+ * was lost.) Null when the scale is too long for one line.
  */
-export function painBands(levels: string[], scale: { lo: number; hi: number }): string[] {
+export function painNumbers(scale: { lo: number; hi: number }): string[] | null {
   const n = scale.hi - scale.lo + 1;
-  const k = levels.length;
-  if (n < k) return levels;
-  const edge = (i: number) => scale.lo + Math.round((i * n) / k);
-  return levels.map((word, i) => {
-    const a = edge(i);
-    const b = i === k - 1 ? scale.hi : edge(i + 1) - 1;
-    return a === b ? `${word} (${a})` : `${word} (${a} to ${b})`;
-  });
+  if (n < 2 || n > 11) return null;
+  return Array.from({ length: n }, (_, i) => String(scale.lo + i));
 }
 
 /** Rule 4. Pain or body "where" questions -> fixed two-step body map (never model choices: a safety rule). */
