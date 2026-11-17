@@ -1,0 +1,59 @@
+PASS  360px  first run (welcome)
+FAIL  360px  judge mode, the card it opens with  scrollWidth 376 / body 375 > 360; 44 element(s) past the edge: p.tagline right=375; p.tagline-sub right=375; p#status.status right=375; p.sample right=375; form#ask right=375; button#make right=375
+FAIL  360px  judge mode, the recording of the on-device step open  scrollWidth 376 / body 375 > 360; 54 element(s) past the edge: p.tagline right=375; p.tagline-sub right=375; p#status.status right=375; div#recorded right=375; section.recorded right=375; p.rec-head right=361
+FAIL  360px  judge mode, a yes / no card  scrollWidth 376 / body 375 > 360; 50 element(s) past the edge: p.tagline right=375; p.tagline-sub right=375; p#status.status right=375; p.sample right=375; form#ask right=375; button#make right=375
+FAIL  360px  judge mode, every fold under the card open  scrollWidth 376 / body 375 > 360; 50 element(s) past the edge: p.tagline right=375; p.tagline-sub right=375; p#status.status right=375; p.sample right=375; form#ask right=375; button#make right=375
+FAIL  360px  judge mode, two questions in one (coaching line, Next)  scrollWidth 376 / body 375 > 360; 59 element(s) past the edge: p.tagline right=375; p.tagline-sub right=375; p#status.status right=375; p.sample right=375; form#ask right=375; button#make right=375
+FAIL  360px  judge mode, a memory test (no card)  scrollWidth 376 / body 375 > 360; 62 element(s) past the edge: p.tagline right=375; p.tagline-sub right=375; p#status.status right=375; p.sample right=375; form#ask right=375; button#make right=375
+FAIL  360px  judge mode, an open question with no model here  scrollWidth 376 / body 375 > 360; 67 element(s) past the edge: p.tagline right=375; p.tagline-sub right=375; p#status.status right=375; p.sample right=375; form#ask right=375; button#make right=375
+FAIL  360px  judge mode, We're stuck  scrollWidth 376 / body 375 > 360; 76 element(s) past the edge: p.tagline right=375; p.tagline-sub right=375; p#status.status right=375; p.sample right=375; form#ask right=375; button#make right=375
+PASS  360px  the person's screen, the repair card
+PASS  360px  the person's screen, quick needs
+PASS  360px  #/about (sample family)
+PASS  360px  #/cloud (sample family)
+PASS  360px  #/how (sample family)
+PASS  360px  #/feedback (sample family)
+PASS  360px  About me, empty
+FAIL  360px  partner screen, no card yet  scrollWidth 376 / body 375 > 360; 9 element(s) past the edge: p.tagline right=375; p.tagline-sub right=375; p#status.status right=375; form#ask right=375; button#make right=375; div.settings right=375
+FAIL  360px  partner screen, a long either-or question  scrollWidth 376 / body 375 > 360; 20 element(s) past the edge: p.tagline right=375; p.tagline-sub right=375; p#status.status right=375; form#ask right=375; button#make right=375; p.badge-line right=375
+FAIL  360px  partner screen, every fold open  scrollWidth 376 / body 375 > 360; 20 element(s) past the edge: p.tagline right=375; p.tagline-sub right=375; p#status.status right=375; form#ask right=375; button#make right=375; p.badge-line right=375
+PASS  390px  first run (welcome)
+PASS  390px  judge mode, the card it opens with
+PASS  390px  judge mode, the recording of the on-device step open
+PASS  390px  judge mode, a yes / no card
+PASS  390px  judge mode, every fold under the card open
+PASS  390px  judge mode, two questions in one (coaching line, Next)
+PASS  390px  judge mode, a memory test (no card)
+PASS  390px  judge mode, an open question with no model here
+PASS  390px  judge mode, We're stuck
+PASS  390px  the person's screen, the repair card
+PASS  390px  the person's screen, quick needs
+PASS  390px  #/about (sample family)
+PASS  390px  #/cloud (sample family)
+PASS  390px  #/how (sample family)
+PASS  390px  #/feedback (sample family)
+PASS  390px  About me, empty
+PASS  390px  partner screen, no card yet
+PASS  390px  partner screen, a long either-or question
+PASS  390px  partner screen, every fold open
+PASS  412px  first run (welcome)
+PASS  412px  judge mode, the card it opens with
+PASS  412px  judge mode, the recording of the on-device step open
+PASS  412px  judge mode, a yes / no card
+PASS  412px  judge mode, every fold under the card open
+PASS  412px  judge mode, two questions in one (coaching line, Next)
+PASS  412px  judge mode, a memory test (no card)
+PASS  412px  judge mode, an open question with no model here
+PASS  412px  judge mode, We're stuck
+PASS  412px  the person's screen, the repair card
+PASS  412px  the person's screen, quick needs
+PASS  412px  #/about (sample family)
+PASS  412px  #/cloud (sample family)
+PASS  412px  #/how (sample family)
+PASS  412px  #/feedback (sample family)
+PASS  412px  About me, empty
+PASS  412px  partner screen, no card yet
+PASS  412px  partner screen, a long either-or question
+PASS  412px  partner screen, every fold open
+
+46 of 57 checks passed

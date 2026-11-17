@@ -35,7 +35,11 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
 
 /* partner + person layout: the desk on the left, the card held up on the right, 32px between the two sides */
 .layout { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(320px, 1.15fr); gap: 32px; padding: 26px 22px; }
-@media (max-width: 820px) { .layout { grid-template-columns: 1fr; padding: 18px 16px; } }
+/* minmax(0, 1fr), not 1fr: a bare 1fr column is never narrower than its widest item's min-content width, and the
+   question form's is 359 px (a text field counts at its default 20 characters whatever its min-width). On a 360 px
+   phone that made the whole column 15 px wider than the screen: "Make card", the status box and the person's card ran
+   off the right edge (the owner's phone, 17 Nov 2026; scripts/overflow-check.py checks 360, 390 and 412 px). */
+@media (max-width: 820px) { .layout { grid-template-columns: minmax(0, 1fr); padding: 18px 16px; } }
 /* One column (a phone, a narrow window): the person's card comes right after the line to say and the actions, before
    the notes and the "how this card was made" panels, the receipt and the settings. The partner column and the result
    box dissolve into the page grid so the card can sit between their children; the reading order in the document is
