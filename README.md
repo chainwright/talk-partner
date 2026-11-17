@@ -29,7 +29,7 @@ No account, no sign-in. What you get depends on what the copy has:
 | the Firebase web config in `.env.local` (see **Run**) | the above, plus cloud help for open questions once you turn it on |
 | the config and desktop Chrome with Gemini Nano | the above, plus the private step on this computer: open questions answered with the family's own names and places, nothing sent |
 
-Hosted copy: <https://talk-partner.web.app/#/demo>. It is the build of commit `24793c1` with our project settings, so it is the second or the third row of this table, depending on your browser.
+Hosted copy: <https://talk-partner.web.app/#/demo>. It is the build of commit `0afbf77` with our project settings, so it is the second or the third row of this table, depending on your browser.
 
 `#/demo` loads a made-up family (Frank; Carol asking) and opens with one card already made, so the first thing on screen is a card and not an empty pane: "Do you want coffee or tea?", read in code, no model, nothing sent (its chip is lit). **Then the first step runs by itself, with no click:** as soon as the on-device model has loaded (about 3 s when it is already in the browser's memory, 16 to 22 s right after a browser start; the card takes about 3 s more, and the status line says where it stands), the app asks "What do you want to do this weekend?" and Gemini Nano makes the card on this computer from About me ("lake / church" in the recorded run), with the badge "On this computer" from the SDK's `inferenceSource`. That step is made with cloud help left out, whatever the setting, so nothing can be sent by a step you did not click; it stands down if you ask or type anything first; and if the model gives no card, the first card stays and the status line says so. **In a browser with no Gemini Nano nothing runs by itself:** the status line says "No Gemini Nano in this browser, so the on-device step can't run here. The card shown is made in code." (or "… is not downloaded …", with the download link), and everything else is as before. Under the question box are one-tap questions, in three groups (open question: a model proposes / the app corrects the partner / read in code, no AI); each chip shows the short form, the hover text has the full question and what to look for. Under every card, in reading order: the badge with what left this computer, the coaching line if any, the line to say, the card on the right, then **Why this card**, **Where each step ran**, **What was sent**, the **privacy receipt** and the session line. Click these, in order:
 
@@ -237,7 +237,7 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-Done on 16 Nov 2026: <https://talk-partner.web.app> serves the build of commit `24793c1`, and the last command below
+Done on 16 Nov 2026: <https://talk-partner.web.app> serves the build of commit `0afbf77`, and the last command below
 passed against it (`devlog/evidence_live/`). The steps, for another project:
 ```
 # 1. console: create a reCAPTCHA Enterprise key (website; domains talk-partner.web.app, talk-partner.firebaseapp.com)

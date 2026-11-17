@@ -1,0 +1,15 @@
+date: 2026-11-17T04:21:17.434Z
+commit: 0afbf77ac0fb98316c44e6aae7e442e4b2a95841 (clean working tree)
+command: node scripts/fonts-check.mjs
+
+PASS  app: every request goes to localhost:5179 (no font service, no other host)  (localhost:5179)
+PASS  app: nothing from fonts.googleapis.com / fonts.gstatic.com
+PASS  app: instrument-sans served from /fonts/ with 200  (instrument-sans-latin-400-normal.woff2→200, instrument-sans-latin-700-normal.woff2→200, instrument-sans-latin-600-normal.woff2→200)
+PASS  app: ibm-plex-mono served from /fonts/ with 200  (ibm-plex-mono-latin-400-normal.woff2→200, ibm-plex-mono-latin-600-normal.woff2→200)
+PASS  app: atkinson-hyperlegible-next served from /fonts/ with 200  (atkinson-hyperlegible-next-latin-700-normal.woff2→200, atkinson-hyperlegible-next-latin-400-normal.woff2→200)
+PASS  app: no font outside the look's three families  (none)
+      loaded families ["Atkinson Hyperlegible Next","Instrument Sans","IBM Plex Mono"]
+
+commit 0afbf77ac0fb98316c44e6aae7e442e4b2a95841  6/6 checks passed  2026-11-17T04:21:25.999Z
+
+exit code: 0
