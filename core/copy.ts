@@ -82,7 +82,7 @@ const COPY = {
   coach: {
     twoQuestions: 'One thing at a time: showing the first.',
     test: "You know this one: tell, don't test.",
-    recall: 'This asks them to recall something. Say it if you know it; if you do not, ask yes / no about one real thing at a time.',
+    recall: "Tell, don't test: say it if you know it. If you don't know either, ask yes / no about one real thing at a time.",
     holdUp: 'The real options are not on the screen: hold two up and point to each as you ask.',
     negative: 'Asked the plain way: to a "not" question, a yes can mean either thing.',
   },
