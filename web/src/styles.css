@@ -352,3 +352,32 @@ main.welcome::after { transform-origin: left center; animation: ts-turn 1s .3s c
 @keyframes tp-breathe { 0%, 100% { opacity: .45; transform: scale(.97); } 50% { opacity: 1; transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .listening.thinking svg { animation: none; } }
 .welcome .who { margin: 0 0 6px; font-size: 19px; color: var(--ink); }
+
+/* ================================================================== QUICK NEEDS (17 Nov 2026)
+   Quick needs: one button in the top bar, on the brand's row, so it costs the partner screen no height; it opens a
+   fixed board on the person's screen. The board is one screen: eight needs, each a picture and its word, four across
+   (two on a phone), and the way out on a row of its own. Tiles are far above the 64 px a pointing hand needs. */
+.needs-open { min-height: 40px; padding: 6px 16px; border-radius: 999px; border: 2px solid var(--accent); background: var(--accent-soft); color: var(--accent); font-size: 15px; }
+.needs-open:hover { background: var(--accent); color: var(--on-accent); }
+@media (max-width: 520px) { .needs-open { min-height: 36px; padding: 4px 14px; font-size: 14px; } }
+.tiles.needs { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.tiles.needs .tile { min-height: 132px; padding: 10px 4px; font-size: 22px; }
+.tiles.needs .tile svg { width: 72px; height: 72px; }
+.tiles.needs .tile.escape { min-height: 92px; font-size: 22px; } .tiles.needs .tile.escape svg { width: 52px; height: 52px; }
+.person.full .tiles.needs { width: 100%; max-width: 1100px; margin: 0 auto; gap: 16px; }
+.person.full .tiles.needs .tile { min-height: 190px; font-size: 30px; } .person.full .tiles.needs .tile svg { width: 112px; height: 112px; }
+.person.full .tiles.needs .tile.escape { min-height: 110px; font-size: 28px; } .person.full .tiles.needs .tile.escape svg { width: 64px; height: 64px; }
+.person:not(.full) .tiles.needs .tile { animation-delay: .35s; }
+@media (max-width: 820px) {
+  .person.full .tiles.needs .tile { min-height: 150px; font-size: 26px; } .person.full .tiles.needs .tile svg { width: 84px; height: 84px; }
+}
+@media (max-width: 520px) {
+  .tiles.needs, .person.full .tiles.needs { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .tiles.needs .tile, .person.full .tiles.needs .tile { min-height: 124px; font-size: 24px; padding: 8px 4px; }
+  .tiles.needs .tile svg, .person.full .tiles.needs .tile svg { width: 68px; height: 68px; }
+  .tiles.needs .tile.escape, .person.full .tiles.needs .tile.escape { min-height: 84px; font-size: 24px; grid-auto-flow: column; justify-content: center; align-items: center; gap: 12px; }
+  .tiles.needs .tile.escape svg, .person.full .tiles.needs .tile.escape svg { width: 48px; height: 48px; }
+  .person.full:has(.tiles.needs) { gap: 12px; padding: 14px 12px; }
+}
+/* the partner's next move after a confirmed need: the line to act on, a little smaller than the line to say */
+.say.need-line { font-size: 20px; }

@@ -27,8 +27,10 @@ describe('lift the card', () => {
     const reduced = css.slice(css.lastIndexOf('@media (prefers-reduced-motion: reduce)', css.indexOf('::view-transition-group(*)')));
     expect(reduced).toMatch(/::view-transition-group\(\*\), ::view-transition-old\(\*\), ::view-transition-new\(\*\) \{ animation: none !important; \}/);
   });
-  it('only "Show to person" and the way back start it', () => {
-    expect(main.match(/lift = true;/g)).toHaveLength(2);
+  it('only "Show to person", the quick-needs board and the way back start it', () => {
+    expect(main.match(/lift = true;/g)).toHaveLength(3);
     expect(main).toContain("case 'show': lift = true; go('person'); break;");
+    // (since 17 Nov: "Quick needs" puts its board on the person's screen in the same gesture)
+    expect(main).toContain("case 'needs': openNeeds(); lift = true; go('needs'); break;");
   });
 });

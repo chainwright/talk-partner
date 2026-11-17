@@ -62,6 +62,12 @@ else was drawn in the submission period.
 | priest | figure with a collar (priest, minister, vicar) | 11 Nov 2026 | Apache-2.0 |
 | family | three figures | 11 Nov 2026 | Apache-2.0 |
 | visitor | figure in a door frame | 11 Nov 2026 | Apache-2.0 |
+| toilet | toilet seen from the side: cistern, bowl, foot | 17 Nov 2026 | Apache-2.0 |
+| drink | glass of water with a straw | 17 Nov 2026 | Apache-2.0 |
+| food | plate between a fork and a knife | 17 Nov 2026 | Apache-2.0 |
+| too hot | thermometer, full, with a sun | 17 Nov 2026 | Apache-2.0 |
+| too cold | thermometer, low, with a snowflake | 17 Nov 2026 | Apache-2.0 |
+| call someone | telephone handset with two sound arcs | 17 Nov 2026 | Apache-2.0 |
 | body:head | body figure, head highlighted | 9–10 Nov 2026 | Apache-2.0 |
 | body:face | body figure, face highlighted | 9–10 Nov 2026 | Apache-2.0 |
 | body:eyes | body figure, eyes highlighted | 9–10 Nov 2026 | Apache-2.0 |
@@ -89,5 +95,6 @@ else was drawn in the submission period.
 | body:right leg | body figure, the person's right leg (viewer's left) highlighted | 9–10 Nov 2026 | Apache-2.0 |
 | monogram | a named person's initial in a soft circle (letters allowed only here) | 9–10 Nov 2026 | Apache-2.0 |
 
-Not yet drawn (batch 2, planned): food and drink, places, activities, things, time words (§3.1). Until then those labels
-show as word-only tiles, never an empty frame.
+Not yet drawn (batch 2, planned): particular foods and drinks (beyond coffee, tea and the general "food" and "drink"
+of the quick-needs board), places, activities, things, time words (§3.1). Until then those labels show as word-only
+tiles, never an empty frame.

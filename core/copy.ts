@@ -110,6 +110,35 @@ const COPY = {
     } as Record<string, string>,
   },
 
+  // The quick-needs board: one tap from the partner screen, a fixed board of everyday needs for the person to point
+  // to. No model, no request: it is built in code (core/needs.ts) and works with no connection once the page is open.
+  // The tile words are the picture ids (web/src/pictos.ts). The lines are for the partner, after the tick: what to do
+  // next, short, never about the person and never on their screen.
+  needs: {
+    open: 'Quick needs',
+    openTitle: 'A board of everyday needs they can point to. No AI, nothing sent; it works with no connection.',
+    ask: 'What do you need?',
+    headline: 'I need',
+    tiles: ['toilet', 'drink', 'food', 'pain', 'tired', 'too hot', 'too cold', 'call someone'] as const,
+    escape: 'something else',
+    say: 'What do you need? Show me.',
+    tip: 'Hold the screen where they can reach it. Name a tile as you point, if it helps. Then wait.',
+    note: 'A fixed board of everyday needs: made in code, no AI, nothing sent. It works with no connection once this page is open.',
+    lines: {
+      toilet: 'Go now. The rest can wait.',
+      drink: 'Hold up two real drinks and let them point.',
+      food: 'Hold up two real things to eat and let them point.',
+      pain: 'Ask where it hurts. The body card needs no AI:',
+      tired: 'Offer a rest. Say when you will come back to the conversation, and come back.',
+      'too hot': 'Change one thing: a layer off, a window, a fan. Then ask "Better?" and wait for a yes or a no.',
+      'too cold': 'Change one thing: a blanket, a layer, the heating. Then ask "Better?" and wait for a yes or a no.',
+      'call someone': 'Say one name at a time, or show photos, and wait for a yes. Then make the call together.',
+      'something else': 'Ask in the question box, one thing at a time. Or press "We\'re stuck" for other ways to get it across.',
+    } as Record<string, string>,
+    /** After "pain" is confirmed: one tap asks the body-map question (made in code, like the board). */
+    painQuestion: 'Where does it hurt?',
+  },
+
   // The two ends of the number line on a pain card (under the numbers on the person's card).
   scale: { low: 'no pain', lowFromOne: 'hardly any', high: 'the worst' },
 
@@ -323,6 +352,7 @@ const COPY = {
         blockedCloud: 'no card: cloud help was asked and failed, and nothing made on this computer could stand in for it',
         blocked: 'no card: fewer than two choices survived',
         repair: 'a fixed card for a stuck moment, never a model',
+        needs: 'a fixed board of everyday needs, never a model',
         recognition: 'a recognition card from About me only, nothing made up',
         unguessable: 'a question only they can answer, in their own way: the fixed ways to get a message across, never a guess',
         when: 'an open "when" question: a fixed line of three times, chosen in code by what the question is about',

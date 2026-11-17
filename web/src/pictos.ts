@@ -114,6 +114,19 @@ const P: Record<string, string> = {
   priest: `${big(48)}<rect x="42" y="42" width="12" height="9" rx="2" fill="var(--bg)" stroke="var(--accent)"/>`,
   family: `${low(20)}${low(48)}${low(76)}`,
   visitor: `${mid(48)}<path d="M18 90V10h60v80"/>`,
+
+  // the quick-needs board, drawn 17 Nov 2026 ('pain', 'tired' and 'something else' are above)
+  // toilet: seen from the side, cistern behind, bowl and foot
+  toilet: '<path d="M20 12h22v36H20z"/><path d="M20 48h58c0 15-10 26-24 26H40c-11 0-20-9-20-20z"/><path d="M38 74l-3 12h30l-3-12"/><path d="M27 24h8" stroke="var(--accent)"/>',
+  // drink: a glass of water with a straw
+  drink: '<path d="M26 26h44l-6 60H32z"/><path d="M29 48h38" stroke="var(--accent)"/><path d="M50 74l10-64h14" stroke-width="4"/>',
+  // food: a plate between a fork and a knife
+  food: '<circle cx="50" cy="50" r="22"/><circle cx="50" cy="50" r="10"/><path d="M8 16v16a6 6 0 0012 0V16M14 16v66"/><path d="M88 82V14c-6 6-8 26-4 36h4"/>',
+  // too hot / too cold: the same thermometer, full with a sun or low with a snowflake
+  'too hot': '<path d="M26 18a9 9 0 0118 0v38a16 16 0 11-18 0z"/><circle cx="35" cy="69" r="8" fill="var(--accent)" stroke="none"/><path d="M35 66V22" stroke="var(--accent)" stroke-width="6"/><circle cx="72" cy="34" r="8"/><path d="M72 16v4M72 48v4M54 34h4M86 34h4M59 21l3 3M82 44l3 3M85 21l-3 3M62 44l-3 3" stroke-width="4"/>',
+  'too cold': '<path d="M26 18a9 9 0 0118 0v38a16 16 0 11-18 0z"/><circle cx="35" cy="69" r="8" fill="var(--accent)" stroke="none"/><path d="M35 66V56" stroke="var(--accent)" stroke-width="6"/><path d="M72 14v40M55 24l34 20M89 24L55 44" stroke-width="4"/><path d="M66 17l6 5 6-5M66 51l6-5 6 5" stroke-width="3"/>',
+  // call someone: a telephone handset with two sound arcs
+  'call someone': '<path d="M24 14l12-2 8 20-10 8c4 10 12 18 22 22l8-10 20 8-2 12c-1 6-6 10-12 10C40 80 16 56 14 26c0-6 4-11 10-12z"/><path d="M58 30a12 12 0 0110 10M60 16a26 26 0 0122 22" stroke="var(--accent)" stroke-width="4"/>',
 };
 
 /** Every bundled pictogram id (for the provenance check in tests and PICTOGRAMS.md). */

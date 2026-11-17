@@ -40,7 +40,8 @@ export interface ModelOutput {
 }
 
 /** 'repair' is the fixed "we're stuck" card (show me / write it / draw / later / change topic): never a model, never an answer. */
-export type CardKind = 'choice' | 'yesno' | 'feeling' | 'body' | 'pain' | 'no-quiz' | 'repair';
+/** 'needs' is the fixed quick-needs board (core/needs.ts): everyday needs to point to, made in code, never a model. */
+export type CardKind = 'choice' | 'yesno' | 'feeling' | 'body' | 'pain' | 'no-quiz' | 'repair' | 'needs';
 export type FeelingSubtype = 'general' | 'taste' | 'idea' | 'result' | 'person';
 export type BodyRegion = 'head' | 'chest' | 'stomach' | 'back' | 'arms' | 'legs';
 

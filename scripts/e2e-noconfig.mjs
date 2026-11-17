@@ -1,7 +1,8 @@
 // End-to-end check of a copy with NO project settings (what a judge gets from a bare clone, no .env.local).
 // Starts its own dev server with the Firebase settings forced empty, opens judge mode in a headless Chrome with a
 // throwaway profile, clicks the one-tap questions and checks that every rules-only card appears, that an open
-// question gets an honest "No card", and that the page contacts no host but its own.
+// question gets an honest "No card", and that the page contacts no host but its own. Since 17 Nov it also runs,
+// with the network switched off in the browser, the quick-needs board from the first tap to the partner's line.
 // Exit code 0 only if every check passes.
 //
 // Usage: node scripts/e2e-noconfig.mjs [--shots DIR]
@@ -145,6 +146,64 @@ try {
   // the one number under the chips, after every card of this run: nothing was handed to any cloud step, and (next check) no other host was contacted
   const bytes = await js(`document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? ''`);
   check('the number under the chips reads "0 bytes left this computer" after every card of this run', /^0 bytes left this computer \d+ cards this session · page load not counted/.test(bytes), bytes);
+
+  // 17 Nov: the quick-needs board, with the network switched off in the browser first: one tap from the partner
+  // screen, nine tiles (each a picture and its word), the tick / cross check, the partner's line, the way out, and
+  // "pain" leading on to the body card. Everything from here on runs offline.
+  await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  const offline = await js(`fetch('/?offline-probe=' + Date.now()).then(() => false, () => true)`);
+  check('the network is off for the rest of this run (a request to the app\'s own host fails)', offline === true && (await js('navigator.onLine')) === false, `fetch failed: ${offline}`);
+  const made0 = Number((await js(`document.querySelector('#bytes')?.innerText ?? ''`)).match(/(\d+) cards? this session/)?.[1] ?? -1);
+  await js(`document.querySelector('[data-act="needs"]').click()`);
+  await waitFor(`!!document.querySelector('.person.full .tiles.needs')`, 4000); await sleep(400);
+  const board = await js(`(() => { const t = [...document.querySelectorAll('#person .tile')]; const r = t.map((x) => x.getBoundingClientRect());
+    return { hash: location.hash, headline: document.querySelector('#person .headline')?.innerText ?? '', words: t.map((x) => x.querySelector('span')?.innerText ?? ''), pictures: t.filter((x) => x.querySelector('svg[role="img"]')).length,
+      smallest: Math.round(Math.min(...r.map((b) => Math.min(b.width, b.height)))), lowest: Math.round(Math.max(...r.map((b) => b.bottom))), screen: innerHeight, wide: document.documentElement.scrollWidth <= innerWidth, images: document.querySelectorAll('#person img').length,
+      other: [...document.querySelectorAll('#person *')].filter((e) => !e.closest('.tile') && !e.closest('#exit') && e.children.length === 0 && e.innerText?.trim()).map((e) => e.innerText) }; })()`);
+  check('offline: "Quick needs" opens the board full screen in one tap: nine tiles, each a picture and its word, every target at least 64 px, all on one screen, nothing else on it but the keyword',
+    board.hash === '#/needs' && board.headline === 'I need' && JSON.stringify(board.words) === JSON.stringify(['toilet', 'drink', 'food', 'pain', 'tired', 'too hot', 'too cold', 'call someone', 'something else']) && board.pictures === 9 && board.images === 0 && board.smallest >= 64 && board.lowest <= board.screen && board.wide && JSON.stringify(board.other) === JSON.stringify(['I need']), JSON.stringify(board));
+  await shot('noconfig-04-needs-board-offline');
+  const tap = async (i) => { await js(`document.querySelector('#person .tile[data-i="${i}"]').click()`); await waitFor(`!!document.querySelector('#person [data-confirm="yes"]')`, 3000); await sleep(200); };
+  const verify = () => js(`({ headline: document.querySelector('#person .headline')?.innerText ?? '', word: document.querySelector('#person .confirm-pic p')?.innerText ?? '', picture: !!document.querySelector('#person .confirm-pic svg'), yes: document.querySelector('[data-confirm="yes"]')?.innerText ?? '', tick: !!document.querySelector('[data-confirm="yes"] svg'), change: document.querySelector('[data-confirm="change"]')?.innerText ?? '', cross: !!document.querySelector('[data-confirm="change"] svg') })`);
+  await tap(0);
+  const v1 = await verify();
+  check('offline: a tap on "toilet" asks "So: toilet. Right?" with the picture, the word, a tick and a cross', v1.headline === 'So: toilet. Right?' && v1.word === 'toilet' && v1.picture && v1.yes === 'yes' && v1.tick && v1.change === 'change' && v1.cross, JSON.stringify(v1));
+  await shot('noconfig-05-needs-check');
+  // the cross goes back to the board, nothing chosen; then "drink" and the tick
+  await js(`document.querySelector('[data-confirm="change"]').click()`); await sleep(300);
+  const backToBoard = await js(`document.querySelectorAll('#person .tiles.needs .tile').length`);
+  await tap(1);
+  await js(`document.querySelector('[data-confirm="yes"]').click()`); await sleep(300);
+  const done = await js(`({ person: document.querySelector('#person').innerText.replace(/\\s+/g, ' ').trim(), picture: !!document.querySelector('#person .answered svg') })`);
+  check('offline: the cross returns to the board; after the tick the person\'s screen shows the need (picture and word) and no coaching, praise or score',
+    backToBoard === 9 && done.picture && done.person === 'I need drink', JSON.stringify({ backToBoard, ...done }));
+  // the partner's side (the press-and-hold exit leads here): the line for the partner, the badge, and nothing of it on the card pane
+  await js(`location.hash = '#/demo'`); await waitFor(`!!document.querySelector('#result .need-line')`, 3000); await sleep(200);
+  const side = await js(`({ done: document.querySelector('#result .done')?.innerText ?? '', line: document.querySelector('#result .need-line')?.innerText ?? '', badge: document.querySelector('#result .badge')?.innerText ?? '', tail: document.querySelector('#result .badge-line .tail')?.innerText ?? '', pane: document.querySelector('#person').innerText.replace(/\\s+/g, ' ').trim(), acts: [...document.querySelectorAll('#result .actions button')].map((b) => b.innerText) })`);
+  check('offline: the partner\'s side says what was chosen and gives one short line for it ("Hold up two real drinks and let them point."), badge "No AI needed", nothing left; the card pane holds no such line',
+    side.done === 'Chose "drink" and confirmed it.' && side.line === 'Hold up two real drinks and let them point.' && side.badge === 'No AI needed' && /nothing left this computer/.test(side.tail) && side.pane === 'I need drink' && side.acts.includes("We're stuck"), JSON.stringify(side));
+  await shot('noconfig-06-needs-partner-side');
+  // "pain" leads on to the body card (made in code, so it is there offline too)
+  await js(`document.querySelector('[data-act="needs"]').click()`); await waitFor(`!!document.querySelector('.person.full .tiles.needs')`, 4000); await sleep(300);
+  await tap(3); await js(`document.querySelector('[data-confirm="yes"]').click()`); await sleep(300);
+  await js(`location.hash = '#/demo'`); await waitFor(`!!document.querySelector('#result .need-line')`, 3000); await sleep(200);
+  const pain = { line: await js(`document.querySelector('#result .need-line')?.innerText ?? ''`), safety: await js(`document.querySelector('#result .safety')?.innerText ?? ''`) };
+  await js(`document.querySelector('#result .chip[data-q="Where does it hurt?"]').click()`); await sleep(150); await settled();
+  const body = { tiles: await tiles(), badge: await badge(), kind: await js(`document.querySelector('#person').dataset.kind`) };
+  check('offline: after "pain" the partner is one tap from "Where does it hurt?", and the body card is made with no network',
+    /where it hurts/i.test(pain.line) && /Not for emergencies/.test(pain.safety) && body.kind === 'body' && body.badge === 'No AI needed' && (body.tiles?.length ?? 0) >= 3, JSON.stringify({ pain, body }));
+  // the way out: "something else" is checked like any choice and sends the partner back to the question box
+  await js(`document.querySelector('[data-act="needs"]').click()`); await waitFor(`!!document.querySelector('.person.full .tiles.needs')`, 4000); await sleep(300);
+  await tap(8);
+  const v2 = await verify();
+  await js(`document.querySelector('[data-confirm="yes"]').click()`); await sleep(300);
+  await js(`location.hash = '#/demo'`); await waitFor(`!!document.querySelector('#result .need-line')`, 3000); await sleep(200);
+  const out = await js(`({ done: document.querySelector('#result .done')?.innerText ?? '', line: document.querySelector('#result .need-line')?.innerText ?? '', field: !!document.querySelector('#q') && !document.querySelector('#q').disabled, stuck: !!document.querySelector('#result [data-act="stuck"]') })`);
+  check('offline: "something else" gets the same check, then hands back to the question box and "We\'re stuck"',
+    v2.headline === 'So: something else. Right?' && out.done === 'They chose "something else".' && /question box/.test(out.line) && out.field && out.stuck, JSON.stringify({ v2: v2.headline, ...out }));
+  const made1 = await js(`document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? ''`);
+  check('offline: the boards and the body card are counted like every card made in code, and the number still reads "0 bytes left this computer"',
+    new RegExp(`^0 bytes left this computer ${made0 + 4} cards this session`).test(made1), `${made0} cards before, then: ${made1}`);
 
   const all = [...hosts.entries()].map(([h, n]) => `${h}×${n}`).join(', ');
   check('no host contacted but the app itself', [...hosts.keys()].every((h) => h === `localhost:${APP_PORT}`), all);

@@ -18,6 +18,8 @@ export const BUILTIN = new Set([
   'tired', 'worried', 'pain',
   // day 5, 11 Nov 2026: the "we're stuck" repair card ('write it' and 'change' are above)
   'show me', 'draw', 'later', 'change topic',
+  // the quick-needs board, 17 Nov 2026
+  'toilet', 'drink', 'food', 'too hot', 'too cold', 'call someone',
   'spouse', 'child', 'sibling', 'grandchild', 'friend', 'neighbour', 'carer', 'nurse', 'doctor', 'speech therapist', 'physio', 'priest', 'family', 'visitor',
 ]);
 

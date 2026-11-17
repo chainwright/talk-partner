@@ -1,6 +1,7 @@
 // Screenshots of every screen at phone (390 × 844) and desktop (1280 × 900) widths, with layout checks:
 // no horizontal scroll, and "Show to person" above the fold on the phone (build spec §5.3).
 // Uses its own headless Chrome with a throwaway profile; makes only code cards (no model, no cloud call).
+// Since 17 Nov it also opens the quick-needs board.
 //
 // Usage: npm run dev (in another shell), then  node scripts/shots.mjs [--url http://localhost:5179/] [--out devlog/shots_day3]
 // A subset: --only 03,04,05 (the flow still runs in full)
@@ -281,6 +282,34 @@ try {
     await click('[data-act="cloud-off"]');
     await nav('#/how');
     await shot('17-how-this-works');
+
+    // 17 Nov: the quick-needs board. One tap from the partner screen (the top bar), full screen, one board.
+    await nav('#/demo');
+    await waitFor('!!document.querySelector(".chip")');
+    const pill = await js(`(() => { const b = document.querySelector('.top [data-act="needs"]'); if (!b) return null; const r = b.getBoundingClientRect(); return { text: b.innerText, h: Math.round(r.height), top: Math.round(r.top + scrollY), bottom: Math.round(r.bottom + scrollY), topbar: Math.round(document.querySelector('.top').getBoundingClientRect().height) }; })()`);
+    check(`${s} "Quick needs" is in the top bar of the partner screen, in the first row`, !!pill && pill.text === 'Quick needs' && pill.h >= 36 && pill.bottom <= 60, JSON.stringify(pill));
+    await click('.top [data-act="needs"]');
+    await waitFor('!!document.querySelector(".person.full .tiles.needs")');
+    await sleep(400);
+    const board = await js(`(() => { const t = [...document.querySelectorAll('#person .tile')]; const r = t.map((x) => x.getBoundingClientRect());
+      return { n: t.length, words: t.filter((x) => x.querySelector('span')?.innerText.trim()).length, pictures: t.filter((x) => x.querySelector('svg[role="img"]')).length, smallest: Math.round(Math.min(...r.map((b) => Math.min(b.width, b.height)))),
+        gap: Math.round(Math.min(...r.slice(1).map((b, i) => (Math.abs(b.top - r[i].top) < 2 ? b.left - r[i].right : b.top - r[i].bottom)))), lowest: Math.round(Math.max(...r.map((b) => b.bottom))), page: document.documentElement.scrollHeight,
+        font: Math.min(...t.map((x) => parseFloat(getComputedStyle(x).fontSize))), clipped: t.filter((x) => x.scrollWidth > x.clientWidth + 1).map((x) => x.innerText), bg: getComputedStyle(document.querySelector('#person')).backgroundColor, ink: getComputedStyle(t[0]).color }; })()`);
+    check(`${s} quick-needs board: nine tiles, each a picture and its word, all on one screen with no scrolling (${SIZES[s].height}px)`, board.n === 9 && board.words === 9 && board.pictures === 9 && board.lowest <= SIZES[s].height && board.page <= SIZES[s].height, JSON.stringify(board));
+    check(`${s} quick-needs board: every target at least 64 px with space between, words at least 22 px and never clipped, dark ink on white`, board.smallest >= 64 && board.gap >= 8 && board.font >= 22 && board.clipped.length === 0 && board.bg === 'rgb(255, 255, 255)' && board.ink === 'rgb(15, 20, 26)', `smallest side ${board.smallest}px, gap ${board.gap}px, font ${board.font}px, clipped ${JSON.stringify(board.clipped)}`);
+    await shot('27-needs-board');
+    await js('document.querySelector("#person .tile[data-i=\\"0\\"]").click()');
+    await waitFor('!!document.querySelector("#person [data-confirm=yes]")');
+    await sleep(300);
+    const chk = await js(`({ headline: document.querySelector('#person .headline').innerText, tick: !!document.querySelector('[data-confirm="yes"] svg'), cross: !!document.querySelector('[data-confirm="change"] svg'), h: Math.round(Math.min(...[...document.querySelectorAll('#person [data-confirm]')].map((b) => Math.min(b.getBoundingClientRect().width, b.getBoundingClientRect().height)))) })`);
+    check(`${s} quick-needs board: a tap is checked with a tick and a cross ("So: toilet. Right?")`, chk.headline === 'So: toilet. Right?' && chk.tick && chk.cross && chk.h >= 64, JSON.stringify(chk));
+    await shot('28-needs-check');
+    await click('[data-confirm="yes"]');
+    await nav('#/demo');
+    await waitFor('!!document.querySelector("#result .need-line")');
+    const pside = await js(`({ line: document.querySelector('#result .need-line').innerText, pane: document.querySelector('#person').innerText.replace(/\\s+/g, ' ').trim() })`);
+    check(`${s} quick-needs board: the partner's line is on the partner's side only`, pside.line === 'Go now. The rest can wait.' && pside.pane === 'I need toilet', JSON.stringify(pside));
+    await shot('29-needs-partner-side');
   }
   ws.close();
 } catch (e) {

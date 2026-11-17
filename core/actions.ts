@@ -18,6 +18,8 @@ export function partnerActions(c: Card, ui: { less: boolean; hasAnswers: boolean
   if (c.kind === 'no-quiz') return [{ act: 'override', label: COPY.memory.override }, ...second];
   // (a repair card made for the question itself has no card behind it to go back to)
   if (c.kind === 'repair') return c.unguessable ? [{ act: 'show', label: K.show, primary: true }, ...second] : [{ act: 'show', label: K.show, primary: true }, { act: 'unstuck', label: K.unstuck }];
+  // the quick-needs board: shown, or left for another way; there are no choices to hide and no next page
+  if (c.kind === 'needs') return [{ act: 'show', label: K.show, primary: true }, ...(ui.hasAnswers ? [{ act: 'recap' as const, label: K.recap }] : []), { act: 'stuck', label: K.stuck }];
   // cloud help failed and nothing stands in for it: the way out is to ask again (or to just ask, as the card says)
   if (c.blocked) return c.retry ? [{ act: 'retry', label: K.retry, primary: true }, ...second] : second;
   if (ui.less) return [{ act: 'less', label: K.lessOff }, ...second];

@@ -8,6 +8,7 @@ import { partnerActions } from '../../core/actions';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
 import { addAnswer, answerCounts, lastAnswer, topQuestions, whenText, type Answered } from '../../core/history';
+import { needLine, needsCard } from '../../core/needs';
 import { DEFAULT_SETTINGS, LEGS, REMOTE_KEYS, defaultReport, type RuntimeSettings, type SettingsReport } from '../../core/models';
 import { bodyDetailCard, makeCard, quizOverrideCard, repairCard } from '../../core/pipeline';
 import { RECORDED_STEP } from '../../core/recorded';
@@ -116,13 +117,15 @@ function route(): Route {
   if (h === 'about') return 'about';
   if (h === 'cloud') return 'cloud';
   if (h === 'person') return 'person';
+  // the quick-needs board, full screen: also reachable by its own address, with no question asked and no model
+  if (h === 'needs') { if (state.card?.kind !== 'needs') openNeeds(); return 'person'; }
   if (h === 'how') return 'how';
   if (h === 'trial') return 'trial';
   if (h === 'welcome' || (!state.settings.welcomed && !state.demo)) return 'welcome';
   return 'partner';
 }
 /** Changes the hash (the hashchange event draws the screen); draws directly when the hash is already there. */
-function go(r: Route | 'demo' | '') {
+function go(r: Route | 'demo' | 'needs' | '') {
   const h = r ? `#/${r}` : '';
   if (location.hash.replace(/^#\/?$/, '') === h) draw(); else location.hash = h;
 }
@@ -193,6 +196,7 @@ function nav(): string {
   const cloud = state.settings.cloudHelp ? 'on' : 'off';
   return `<header class="top">
     <a class="brand" href="#/">${C.app.name}</a>
+    <button class="needs-open" data-act="needs" title="${esc(C.needs.openTitle)}">${C.needs.open}</button>
     <nav aria-label="Sections">
       <a href="#/about">${esc(C.app.nav.about(name))}</a>
       <a href="#/cloud">${C.app.nav.cloud}: ${cloud}</a>
@@ -419,6 +423,20 @@ function diagram(): string {
   </svg>`;
 }
 
+// ---------------------------------------------------------------- quick needs
+/**
+ * The quick-needs board (core/needs.ts): a fixed card made in code, put on the person's screen in one tap. No engine is
+ * called and nothing is asked of the network, so it is there with no model and no connection. It takes the place of
+ * whatever card was on screen (a card still being made gives way), and it is counted like any card made in code.
+ */
+function openNeeds() {
+  if (step === 'waiting') step = 'cancelled'; // judge mode's automatic step stands down, as for a typed question
+  makeSeq++;
+  state.busy = false; state.error = null; state.lastQuestion = ''; resetCard();
+  const card = needsCard();
+  setCard(card); state.made.push(card); state.waitStart = Date.now();
+}
+
 // ---------------------------------------------------------------- partner screen
 /** Judge mode: the one-tap questions in three groups, by what the judge sees happen; the chip shows the short form, asks the full question. */
 function chipGroups(): string {
@@ -483,7 +501,7 @@ function cardPanel(c: Card): string {
   // the coaching line: only when a rule found something about the question itself (Card.coach), never otherwise
   const coach = c.coach ? `<p class="coach">${esc(c.coach)}</p>` : '';
   // what they chose the last time this question was asked: for the partner only, from the list kept on this computer
-  const prev = c.blocked || c.kind === 'repair' ? null : lastAnswer(state.history, c.asked, state.cardAt);
+  const prev = c.blocked || c.kind === 'repair' || c.kind === 'needs' ? null : lastAnswer(state.history, c.asked, state.cardAt);
   const counts = prev ? answerCounts(state.history, c.asked, state.cardAt) : [];
   const last = prev ? `<p class="last">${esc(C.card.lastTime(whenText(prev.at, Date.now()), prev.label))}${counts.length > 1 || counts[0]?.n > 1 ? ` ${esc(C.card.lastTimeCounts(counts.map((x) => `${x.label} ×${x.n}`).join(', ')))}` : ''}</p>` : '';
   // The buttons under the card (core/actions.ts): "We're stuck" on every card the person can see, the way back on the
@@ -495,6 +513,9 @@ function cardPanel(c: Card): string {
     main = `<p class="label">${C.memory.line}</p><p class="say">${esc(c.say.replace(C.notes.tellPrefix, ''))}</p>`;
   } else if (c.kind === 'repair') {
     main = `<p class="label">${C.card.sayThis}</p><p class="say">${esc(c.say)}</p><p class="tip">${C.repair.tip} <span id="wait" class="wait"></span></p>`;
+  } else if (c.kind === 'needs') {
+    // once a need is confirmed, the line to say has done its work: the partner's next move stands in its place (below)
+    main = state.confirmed && state.picked ? '' : `<p class="label">${C.card.sayThis}</p><p class="say">${esc(c.say)}</p><p class="tip">${C.needs.tip} <span id="wait" class="wait"></span></p>`;
   } else if (c.blocked) {
     const offer = !state.settings.cloudHelp && state.engine.cloudConfigured && c.unsentPayload
       ? `<p class="offer">${C.blocked.cloudCouldTry} <button class="link" data-act="show-sent">${C.blocked.showWouldSend}</button> <a href="#/cloud">${C.blocked.turnOn}</a></p>` : '';
@@ -509,8 +530,12 @@ function cardPanel(c: Card): string {
   else if (state.confirmed && state.picked) {
     const p = state.picked;
     // a repair tile is a way to try, not an answer: the partner gets the next move for that way
+    // a confirmed need: the partner's next move, on the partner's side only; after "pain", one tap asks where (a card made in code)
+    const where = p.label === 'pain' ? `<p><button class="chip" data-q="${esc(C.needs.painQuestion)}">${esc(C.needs.painQuestion)}</button></p><p class="safety">${C.safety}</p>` : '';
     answered = p.role === 'repair'
       ? `<p class="done">${esc(C.card.choseRepair(p.label))}</p><p class="say">${esc(C.repair.lines[p.label] ?? '')}</p>`
+      : c.kind === 'needs'
+      ? `<p class="done">${esc(p.role === 'escape' ? C.card.choseRepair(p.label) : C.card.chose(p.label))}</p><p class="say need-line">${esc(needLine(p.label))}</p>${where}`
       : `<p class="done">${p.role === 'escape' ? esc(C.card.choseEscape(p.label)) : esc(C.card.chose(p.label))}</p>`;
   }
   // judge mode: under the card it opens with, the panels stand open in reading order, so the first frame shows what
@@ -565,6 +590,11 @@ function personView(full: boolean): string {
     return `${exit}<h2 class="headline">${esc(c.topic)}</h2>
       <div class="tiles repair">${c.choices.slice(0, 3).map((ch, i) => tile(ch, i, '')).join('')}</div>
       <div class="tiles two">${c.choices.slice(3).map((ch, i) => tile(ch, i + 3, 'out')).join('')}</div>`;
+  }
+  if (c.kind === 'needs') {
+    // one board: eight needs, each a picture and its word, then the way out on a row of its own
+    return `${exit}<h2 class="headline">${esc(c.topic)}</h2>
+      <div class="tiles needs">${c.choices.map((ch, i) => `<button class="tile ${ch.role === 'escape' ? 'escape' : ''}" data-i="${i}">${picture(ch)}<span>${esc(ch.label)}</span></button>`).join('')}</div>`;
   }
   const answers = c.choices.filter((x) => x.role === 'answer');
   if (c.scale) {
@@ -881,8 +911,11 @@ function onPersonTap(t: HTMLElement) {
     if (state.picked && state.picked.role === 'answer') {
       state.answers.push({ topic: c.topic, label: state.picked.label });
       // kept on this computer for "last time"; with the sample family it stays in memory and goes when judge mode is left
-      state.history = addAnswer(state.history, { q: c.asked, topic: c.topic, label: state.picked.label, at: Date.now() });
-      if (!state.demo) void kvSet('history', state.history);
+      // (a need from the quick-needs board is of the moment: it is in the recap, and not in "Answers so far" or "Asked before")
+      if (c.kind !== 'needs') {
+        state.history = addAnswer(state.history, { q: c.asked, topic: c.topic, label: state.picked.label, at: Date.now() });
+        if (!state.demo) void kvSet('history', state.history);
+      }
     }
     render(); return;
   }
@@ -944,6 +977,7 @@ function act(el: HTMLElement) {
       break;
     }
     case 'download': void download(); break;
+    case 'needs': openNeeds(); lift = true; go('needs'); break;
     // the recording of the on-device step: shown or hidden in place; no card, no engine call, no setting changed
     case 'recorded': state.recorded = !state.recorded; patchRecorded(); break;
     case 'leave-demo': void leaveDemo(); break;
