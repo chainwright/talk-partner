@@ -11,6 +11,8 @@ command started (it was, for every file there: the scripts wrote into a folder o
 logs name as `<scratch>` for their screenshots, and the files were copied here afterwards), and the exit code at the
 end. Of the layout screenshots only the eight named below or in the devlog were copied; the script makes about fifty. Paths below are relative to that folder unless they start with `devlog/`.
 
+**Commit hashes.** The hashes in these documents and in the saved logs are from our working history. The public history has the same commits, in the same order and with the same dates, re-made under new hashes; `devlog/PUBLIC_HASH_MAP.md` gives working hash → public hash for each. The name `ondevice-proof-1` in some log headers is a tag of the working history on commit `1092be7`; it is not in the public repository.
+
 **One set of runs is at an earlier commit:** the labelled set on the on-device model (row 16) was run three times on
 17 Nov at `c346d3d`, on a clean tree: `devlog/evidence_r8/heldout_at_c346d3d/` (three on-device runs and the
 rules-alone pass). Between `c346d3d` and `deebc94` the code differs in one on-screen string (the paragraph that quotes
@@ -82,7 +84,7 @@ the local build). Two runs against it, both in `devlog/evidence_live/`:
 
 The logs of the earlier deploys, at `8ace9f0`, `0afbf77`, `24793c1` and `c37e4c4`, are next to them.
 
-**Earlier records, kept as they were:** `devlog/evidence_r7/final/` (every log at `8ace9f0`, before the changes that followed the fourth review; the recording shown in judge mode is copied from its on-device log), `devlog/evidence_r6/final/` (every log at `0afbf77`, before the changes that followed set E), `devlog/evidence_r5/final/` (every log at `24793c1`, before the changes that followed set D), `devlog/evidence_r4/final/` (every log at `5cb9c5e`, before the changes of day 10), `devlog/evidence_r3/final/` (every log at `43c5265`, before the changes of day 9), `devlog/ondevice_proof_1/` (the first on-device run, tag `ondevice-proof-1`),
+**Earlier records, kept as they were:** `devlog/evidence_r7/final/` (every log at `8ace9f0`, before the changes that followed the fourth review; the recording shown in judge mode is copied from its on-device log), `devlog/evidence_r6/final/` (every log at `0afbf77`, before the changes that followed set E), `devlog/evidence_r5/final/` (every log at `24793c1`, before the changes that followed set D), `devlog/evidence_r4/final/` (every log at `5cb9c5e`, before the changes of day 10), `devlog/evidence_r3/final/` (every log at `43c5265`, before the changes of day 9), `devlog/ondevice_proof_1/` (the first on-device run),
 `devlog/evidence_r2/` (runs at `83a7da5` and, under `at_head_2/`, at `161c491`; the on-device log there and the first
 held-out run record uncommitted changes in the tree, so we do not call them clean),
 `devlog/evidence_r3/cold_start_at_67fb3e2/RUN_LOG.md` (an on-device run right after a browser start: 21.7 s to

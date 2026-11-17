@@ -1,3 +1,5 @@
+Repository: <https://github.com/chainwright/talk-partner> (public, Apache-2.0)
+
 # For judges: the 60-second path
 
 Nothing here needs an account. Hosted copy: <https://talk-partner.web.app/#/demo> (our project settings are in it, so

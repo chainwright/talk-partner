@@ -13,7 +13,7 @@ video, no deploy, no console changes.
 - **Checked:** `tests/unit/no-config.test.ts` (the app path with the settings forced empty, every judge chip);
   `npm run e2e:noconfig`: 10/10 in a real browser, and no host contacted but the app's own.
 
-## 2. The on-device step, run for real (commits `1092be7`, tag `ondevice-proof-1`; `dd3e3ae`)
+## 2. The on-device step, run for real (commits `1092be7`, `dd3e3ae`; the run saved in `devlog/ondevice_proof_1/`)
 - **What we used:** a separate headless Chrome 157 with its own profile folder, started only for this, holding the
   Gemini Nano files (version folder `2025.8.8.1141`, 4.0 GB) left on this Mac by the 9–10 Nov prototype. The app's own
   "Download" button registered the model in about five seconds; nothing was downloaded again.

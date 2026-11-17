@@ -83,7 +83,7 @@ See `git log` for dates. Day by day: `devlog/`.
 - 16 Nov 2026, after our second internal review: rules-only cards on a copy with no settings (`core/engine.ts` `NullEngine`,
   `web/src/ai/pick.ts`); the first real on-device run and what it needed (the private step on its own Firebase app with no App
   Check, About-me cards kept on this computer, no model call for cards code decides alone, warm-up; `scripts/e2e-ondevice.mjs`,
-  `devlog/ondevice_proof_1/`, tag `ondevice-proof-1`); the truth pass over the screen lines and these documents
+  `devlog/ondevice_proof_1/`); the truth pass over the screen lines and these documents
   (`tests/unit/truth.test.ts`); `devlog/DAY7.md`.
 
 - 17 Nov 2026, after our fourth internal review: a recording of the on-device step for judges whose browser cannot run it
