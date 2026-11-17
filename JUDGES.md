@@ -72,10 +72,6 @@ for any of them, and the on-device step made a matching card for 16 of them in e
 (`devlog/evidence_r11/heldout_at_2aeb1d0/`; our labels, not a trial with people, and the rules have been changed
 since the questions were written, so it is not a held-out set).
 
-**who to call tonight?** (the third chip) reads *Jenny / Tyler* with either step: with cloud help only, the cloud says
-"family / a friend" and code on this computer puts in the people About me names. It is a rule doing the work there,
-so we do not open the path on it.
-
 We cannot give you the third row without the model on your machine, and the second needs our project settings, which
 are not in the repository. What we recorded on ours, with the SDK's own report per call and screenshots:
 `devlog/evidence_r8/final/ondevice/RUN_LOG.md` (43 checks; section 1b is the first step running by itself, section 5
