@@ -198,6 +198,20 @@ node scripts/eval-heldout.mjs             # the labelled set in eval/, rules alo
 node scripts/shots.mjs       # with the dev server running: screenshots of every screen at 390 and 1280 px + layout checks
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
+### Deploy (Firebase Hosting): prepared, not done yet
+The repository is ready for it (`firebase.json`, `.firebaserc`, `npm run build:hosting`); two console steps by the
+project owner are still missing, so there is no hosted URL today.
+```
+# 1. console: create a reCAPTCHA Enterprise key (website; domains talk-partner.web.app, talk-partner.firebaseapp.com)
+#    and set it as the App Check provider of the web app; turn on Hosting
+# 2. .env.local: VITE_RECAPTCHA_ENTERPRISE_SITE_KEY=<the key id>
+npx firebase-tools deploy --only hosting      # runs npm run build:hosting first; it refuses to build without the key
+node scripts/e2e-cloud.mjs --url https://talk-partner.web.app/      # the cloud step, end to end, on the live site
+```
+A production build never contains the App Check debug token (`scripts/check-dist.mjs`), so without the site key a
+deployed copy has no cloud step: code-decided cards and the on-device step still work there. `build:hosting` stops
+before that can happen by accident.
+
 Hidden route for the timed trial in `devlog/TRIAL_PROTOCOL.md`: `#/trial` (a stopwatch and log, kept in this browser, exported as CSV).
 On-device inference needs desktop Chrome with Gemini Nano (Chrome's hardware and disk requirements apply).
 Without it, yes / no, either-or, feeling and pain cards still work, and open questions use cloud help only if the partner turns it on.
