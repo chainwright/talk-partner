@@ -35,7 +35,7 @@ export const SYNONYM: Record<string, string> = {
   priest: 'priest', minister: 'priest', vicar: 'priest', reverend: 'priest', pastor: 'priest',
   family: 'family', visitor: 'visitor', visitors: 'visitor',
   sleepy: 'tired', exhausted: 'tired', 'worn out': 'tired', worried: 'worried', anxious: 'worried', hurts: 'pain', hurting: 'pain', sore: 'pain',
-  fine: 'okay', ok: 'okay', alright: 'okay', 'all right': 'okay',
+  fine: 'okay', ok: 'okay', alright: 'okay', 'all right': 'okay', 'so-so': 'okay',
 };
 
 export function pictureFor(label: string, profile: Profile): PictureRef {

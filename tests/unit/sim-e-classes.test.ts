@@ -350,3 +350,27 @@ describe('E-6. the partner\'s name in the question means someone else is asking:
     for (const c of what.choices) expect(c.label).not.toMatch(/you's/);
   });
 });
+
+describe('E-7. a feeling scale has a middle at every support level', () => {
+  // set E: "How are you feeling?" gave good / bad; "so-so" and "a bit sad" could only go through the way out
+  const QUESTIONS = ['How are you doing this morning?', 'How was the physio session?', "How's the new chair?", 'How did the hearing test go?', 'How was your night?'];
+  for (const [state, engine] of STATES) {
+    it.each(QUESTIONS)(`${state}: %s`, async (q) => {
+      for (const support of ['mild', 'more', 'most'] as const) {
+        const e = engine();
+        const card = await ask(q, e, support);
+        expect(card.kind).toBe('feeling');
+        expect(answers(card)).toEqual(['good', 'so-so', 'bad']);
+        expect(card.nextPage ?? null).toBeNull();
+        expect(card.choices.filter((c) => c.role === 'escape')).toHaveLength(1);
+        expect(card.say).toContain('so-so');
+        expect(e.calls).toEqual([]);
+      }
+    });
+  }
+  it('the middle step has a picture, and the scale about a person has its middle too', async () => {
+    const card = await ask('How are you doing this morning?', new Scripted(null));
+    expect(card.choices[1].picture).toEqual({ type: 'builtin', id: 'okay' });
+    expect(answers(await ask('What do you think of the new carer?', new Scripted(null)))).toEqual(['like them', 'okay', 'unhappy']);
+  });
+});

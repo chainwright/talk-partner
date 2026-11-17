@@ -176,7 +176,8 @@ describe('KB §7 rule 5: choice count by support level', () => {
       for (const x of qs) {
         const c = await makeCard(x, env(new Fake(three), PROFILE, { support }));
         expect(c.choices.filter((ch) => ch.role === 'escape')).toHaveLength(1);
-        expect(answers(c).length).toBeLessThanOrEqual(support === 'mild' ? 3 : 2);
+        // (a feeling scale is one line with its middle on it, at every level: since set E, 16 Nov)
+        expect(answers(c).length).toBeLessThanOrEqual(support === 'mild' || c.kind === 'feeling' ? 3 : 2);
       }
     }
   });

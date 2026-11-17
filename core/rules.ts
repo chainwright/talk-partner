@@ -1002,12 +1002,15 @@ export function feelingSubtype(q: string, profile?: Profile): FeelingSubtype {
 }
 
 /** Feeling scales by subtype and support (rule 4: no negatives in a choice; rule 5: 2 choices at "more"). */
+// Since set E (16 Nov) a scale that runs from good to bad has its middle at every support level: with "good / bad"
+// alone, "so-so" and "a bit sad" could only go through the way out. A scale is one idea on one line, so its three
+// steps stand on one card also at "2 at a time" (like three options the partner named, and the pain number line).
 export const FEELING_SCALES: Record<FeelingSubtype, Record<'mild' | 'more', string[]>> = {
-  general: { mild: ['good', 'okay', 'bad'], more: ['good', 'bad'] },
+  general: { mild: ['good', 'so-so', 'bad'], more: ['good', 'so-so', 'bad'] },
   taste: { mild: ['tasty', 'plain', 'too salty'], more: ['tasty', 'plain'] },
   idea: { mild: ['good idea', 'leave it'], more: ['good idea', 'leave it'] },
-  result: { mild: ['good', 'bad'], more: ['good', 'bad'] },
-  person: { mild: ['like them', 'okay', 'unhappy'], more: ['like them', 'unhappy'] },
+  result: { mild: ['good', 'so-so', 'bad'], more: ['good', 'so-so', 'bad'] },
+  person: { mild: ['like them', 'okay', 'unhappy'], more: ['like them', 'okay', 'unhappy'] },
 };
 
 /** KB §7 rule 5: up to 3 choices (plus the escape) at "mild"; 2 at "more" and "most". */

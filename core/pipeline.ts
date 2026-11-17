@@ -309,7 +309,9 @@ export function assemble(
   }
   if (kind === 'feeling') {
     const subtype = feelingSubtype(asked, profile);
-    const card = finish({ ...base, source: 'code', topic: heuristicTopic(asked, profile), kind, subtype }, [...FEELING_SCALES[subtype][scaleLevel(support)]], ['something else'], profile, support);
+    const steps = [...FEELING_SCALES[subtype][scaleLevel(support)]];
+    // the whole scale on one card, its middle included, at every support level
+    const card = finish({ ...base, source: 'code', topic: heuristicTopic(asked, profile), kind, subtype }, steps, ['something else'], profile, support, steps.length);
     card.why = fixedWhy(o, step, W.decidedBy.feeling, W.headlineFrom.question);
     return card;
   }

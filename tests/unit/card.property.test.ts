@@ -122,7 +122,8 @@ describe('property: card invariants over random questions, model output and engi
       else {
         expect(esc, ctx).toHaveLength(1);
         expect(ans.length, ctx).toBeGreaterThanOrEqual(2);
-        expect(ans.length, ctx).toBeLessThanOrEqual(cap(support));
+        // (a feeling scale keeps its middle at every level: three steps on one line)
+        expect(ans.length, ctx).toBeLessThanOrEqual(card.kind === 'feeling' ? 3 : cap(support));
       }
       // no negative words (the yes / no card's own "no" is the one exception), no "both" (no body sides in these
       // questions), no placeholder, never the headline

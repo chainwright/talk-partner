@@ -74,9 +74,9 @@ describe('device card', () => {
   it('feeling question gets the general scale', async () => {
     const e = new FakeEngine(true, { topic: 'walk', kind: 'feeling', choices: ['lovely', 'windy'] });
     const c = await makeCard('How was the walk by the river?', env(e));
-    expect(labels(c)).toEqual(['good', 'bad', 'something else']);
+    expect(labels(c)).toEqual(['good', 'so-so', 'bad', 'something else']);
     const m = await makeCard('How was the walk by the river?', env(e, { support: 'mild' }));
-    expect(labels(m)).toEqual(['good', 'okay', 'bad', 'something else']);
+    expect(labels(m)).toEqual(['good', 'so-so', 'bad', 'something else']);
   });
 
   it('taste and person subtypes', () => {
