@@ -1,7 +1,8 @@
 # Claims
 
 Every claim we make about Talk Partner in the README, on screen or in the submission notes, with its status on
-16 Nov 2026 at commit `161c491`. **True** = you can reproduce it from a clone. **True, recorded** = it needs our project
+16 Nov 2026 at commit `43c5265` (the last commit that changes code or on-screen text; `EVIDENCE.md` says where the
+runs made at it are saved). **True** = you can reproduce it from a clone. **True, recorded** = it needs our project
 settings or the on-device model, so we give the saved run instead. **Partial** = true with a limit, stated. **Not
 claimed** = things we are sometimes assumed to claim and do not. Proof for each row is in `EVIDENCE.md` under the same
 number.
