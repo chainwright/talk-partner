@@ -5,7 +5,7 @@
 // Usage: npm run dev (in another shell), then  node scripts/shots.mjs [--url http://localhost:5179/] [--out devlog/shots_day3]
 // A subset: --only 03,04,05 (the flow still runs in full)
 import { spawn, execSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -16,6 +16,10 @@ const ONLY = arg('--only', '') ? arg('--only', '').split(',') : null; // keep on
 const PORT = 9342;
 const CHROME = process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// the longest status line the app can show, read from the copy module so this check follows the wording
+const COPY_SRC = readFileSync(new URL('../core/copy.ts', import.meta.url), 'utf8');
+const copyLine = (key) => (new RegExp(`\\b${key}: (["'])(.*?)\\1,\\n`).exec(COPY_SRC)?.[2] ?? '').replace(/\\(['"])/g, '$1');
+const LONGEST_STATUS = `${copyLine('unavailable')} ${copyLine('unavailableCloudOff')} <a href="#/cloud">Turn on cloud help</a>`;
 const commit = (() => { try { return execSync('git rev-parse HEAD').toString().trim(); } catch { return 'unknown'; } })();
 
 const profile = mkdtempSync(join(tmpdir(), 'tp-shots-'));
@@ -167,6 +171,18 @@ try {
     // day 5: the coaching line on a double question, "why this card" (open in judge mode), the repair card
     await chip('How was therapy today, and did you eat?');
     await shot('18-double-question-coach');
+    if (s === 'phone') {
+      // the tallest partner side there is (a coaching line, a two-line "say this", four actions): the person's card
+      // must still start in the first screen, headline included (it started at 851 to 893 px before 16 Nov 2026)
+      const dq = await js(`(() => { const y = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().top + scrollY) : -1; };
+        return { card: y('#person'), headline: y('#person .headline'), coach: y('#result .coach'), status: document.querySelector('#status').innerText.length }; })()`);
+      check('phone judge mode, two questions in one (coaching line): the person\'s card and its headline start above the 844 px fold', dq.coach > 0 && dq.card > 0 && dq.card <= 844 && dq.headline > 0 && dq.headline <= 844, JSON.stringify(dq));
+      // the same with the longest status line the app can show (a browser that cannot run the on-device model, cloud
+      // help off), put into the status element for the measurement; the next card redraws the real one
+      const worst = await js(`(() => { const st = document.querySelector('#status'); const keep = st.innerHTML; st.innerHTML = ${JSON.stringify(`<span class="dot off"></span>${LONGEST_STATUS}`)};
+        const y = (s) => Math.round(document.querySelector(s).getBoundingClientRect().top + scrollY); const r = { card: y('#person'), headline: y('#person .headline'), statusLines: Math.round(st.getBoundingClientRect().height) }; st.innerHTML = keep; return r; })()`);
+      check('phone judge mode, the same card under the longest status line: card and headline still above the fold', worst.card <= 844 && worst.headline <= 844, JSON.stringify(worst));
+    }
     // day 6: judge mode reads badge → why this card → where each step ran → privacy receipt, all open, top to bottom
     const order = await js(`(() => { const y = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().top) : undefined; }; return ['#result .badge', '#result .why[open]', '#result details[open] .trace', '.receipt[open]'].map(y); })()`);
     check(`${s} judge mode: badge → why this card → where each step ran → privacy receipt, each open, in that order`, order.every((v, i) => v !== undefined && (i === 0 || v > order[i - 1])), order.join(' < '));

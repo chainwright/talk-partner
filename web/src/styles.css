@@ -28,7 +28,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
 .brand { font-weight: 700; letter-spacing: -0.015em; font-size: 21px; color: var(--ink); text-decoration: none; margin-right: auto; display: inline-flex; align-items: center; gap: 12px; }
 .brand::before { content: ""; width: 22px; height: 28px; border-radius: 5px; background: #fff; box-shadow: -7px 5px 0 -1px var(--accent); transform: rotate(-6deg); }
 .top nav { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 14px; }
-@media (max-width: 520px) { .top nav { font-size: 13px; } }
+@media (max-width: 520px) { .top { padding: 8px 16px; gap: 0 14px; } .top nav { font-size: 13px; gap: 0 12px; } .brand { font-size: 19px; } }
 .top nav a, .top nav .link { min-height: 32px; display: inline-flex; align-items: center; color: var(--muted); text-decoration: none; }
 .top nav a:hover { color: var(--ink); }
 
@@ -48,6 +48,14 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
   .layout #result > .actions button { padding: 8px 10px; font-size: 15px; }
   .layout #result > .safety, .layout #result > .notes, .layout #result > details,
   .layout .partner > .receipt, .layout .partner > .judge, .layout .partner > .settings { order: 2; }
+}
+/* A phone, once a card is on screen: the opening line and the sample-family note have been read, so they move below
+   the card, and the status line is set smaller. With a coaching line and the longest status line ("can't run the
+   private helper…") the person's card started at 893 px of an 844 px screen; it now starts above the fold, headline
+   included (scripts/shots.mjs measures it on the two-question chip, the tallest partner side there is). */
+@media (max-width: 520px) {
+  .layout:has(#result > .badge-line) .partner > .tagline, .layout:has(#result > .badge-line) .partner > .sample { order: 2; }
+  .layout:has(#result > .badge-line) .partner > .status { padding: 6px 10px; font-size: 12.5px; line-height: 1.4; }
 }
 .partner { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .tagline { margin: 0; font-size: 22px; color: var(--ink); font-weight: 600; line-height: 1.3; }
