@@ -710,3 +710,31 @@ describe('E-14. a name About me does not list never goes to the cloud as typed: 
     expect(stripQuestion('was dawn here when you woke', PROFILE).text).toBe('was Name A here when you woke');
   });
 });
+
+describe('E-15. a filler is not a name, and the kind of place stays when its name is swapped', () => {
+  // set E: "Um" went as "Name A"; "Willow Street" and "Mercy Hospital" went as "Name A Name B"
+  it.each(['Um', 'Uh', 'Er', 'Erm', 'Hmm', 'Oh', 'Well', 'Right', 'Okay so', 'Hey', 'Now then', 'Ah', 'Look'])('"%s, …" at the start goes as typed', (filler) => {
+    const q = `${filler}, do you want the radio on?`;
+    expect(stripQuestion(q, PROFILE).text).toBe(q);
+  });
+  const PLACES: [string, string][] = [['Hawthorn', 'Street'], ['Calder', 'Road'], ['Whitmore', 'Hospital'], ['Bexley', 'Bakery'], ['Ravens', 'Lodge'], ['Park', 'Avenue'], ['Church', 'Lane'], ['Elm', 'Court'], ['Abbey', 'Surgery'], ['Station', 'Road']];
+  it.each(PLACES)('%s %s: the name is swapped, the kind of place is kept', (name, type) => {
+    for (const q of [`Shall we go to the one on ${name} ${type} tonight?`, `Do you want the clinic at ${name} ${type}?`, `Is it the ${name} ${type} one you mean?`]) {
+      const out = stripQuestion(q, PROFILE);
+      expect(out.text, q).toContain(`Name A ${type}`);
+      expect(out.text).not.toContain(`${name} ${type}`);
+      expect(restoreNames(out.text, out.map)).toBe(q);
+    }
+  });
+  it('a place with two names keeps its two kinds; a possessive stays outside the label', () => {
+    expect(stripQuestion('Should we try the Stag Inn on Varley Road tonight?', PROFILE).text).toBe('Should we try the Name A Inn on Name B Road tonight?');
+    expect(stripQuestion("Do you want to go to Brannigan's Bakery?", PROFILE).text).toBe("Do you want to go to Name A's Bakery?");
+    expect(stripQuestion('is it the shop on varley road', PROFILE).text).toBe('is it the shop on Name A road');
+  });
+  it('the cloud gets the kind of place, and the tile gets the name back', async () => {
+    const e = new Scripted(null, { topic: 'shop', kind: 'choice', choices: ['bread', 'milk'] });
+    const card = await ask('What do you need from the shop on Calder Road?', e);
+    expect(e.sent).toEqual(['What do you need from the shop on Name A Road?']);
+    expect(card.cloudSwaps).toContain('Name A ← Calder');
+  });
+});

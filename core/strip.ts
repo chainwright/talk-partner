@@ -123,6 +123,16 @@ const WITH_BEFORE = new Set(['with', 'from', 'and', 'or', 'about', 'for', 'like'
 const MOSTLY_NAMES = new Set([...ALWAYS_NAMES, ...('rose bill mark daisy holly ivy lily iris violet amber ruby pearl heather hazel poppy penny dawn frank robin kit earl herb lance miles norm dot peg rod ' +
   'cliff dale glen heath brook fern kitty bunny jade crystal opal').split(/\s+/)]);
 const SAYS_AFTER = new Set(['called', 'rang', 'phoned', 'said', 'says', 'wants', 'wanted', 'came', 'texted', 'wrote', 'emailed', 'visited', 'asked']);
+/**
+ * Words that say what kind of place a name belongs to. They stay in the cloud text when the name next to them is
+ * swapped ("Name A Street", "Name B Hospital"), so the cloud still knows it is a street or a hospital. Set E, 16 Nov:
+ * the whole of "Willow Street" and "Mercy Hospital" went as "Name A Name B".
+ */
+const PLACE_TYPES = new Set(('street st road rd avenue ave lane way court close crescent terrace row walk place square park hospital clinic infirmary surgery practice ' +
+  'market supermarket store stores shop shops lodge church chapel cathedral abbey school college university academy library centre center hall bank pharmacy chemist ' +
+  'cafe café diner restaurant hotel motel inn pub bar grill bakery deli station airport mall plaza arcade gym pool baths lake river beach bay bridge hill hills ' +
+  'mountain valley island farm garden gardens cemetery museum theatre theater cinema stadium arena tower building apartments house home manor village town city ' +
+  'county medical health care nursing memorial general community senior club legion office north south east west upper lower new old saint mount fort port').split(/\s+/));
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const lc = (s: string) => s.toLowerCase();
@@ -360,6 +370,8 @@ export function stripQuestion(q: string, profile: Profile): Stripped {
       if (!ordinary(low) && !ordinary(tk.w)) return true;
       return WORD_NAMES.has(tk.w) && NAME_CONTEXT.test(text.slice(tk.end)) && !/^\s+(?:you|we|i|it|they|he|she|there|the|a|an|your|my|our)\b/i.test(text.slice(tk.end));
     }
+    // a capital in mid-sentence. "Street", "Hospital", "Market": the kind of place stays, the name beside it goes
+    if (PLACE_TYPES.has(tk.w)) return false;
     // "Did May call today?", "Is Will coming?": a month or "will" with a capital is a name, unless the words around a
     // month make a date ("in May", "May 5")
     if (MONTH_NAMES.has(tk.w)) return !(DATE_BEFORE.has(near(i, -1)) || /^\d/.test(near(i, 1)) || /^\d/.test(near(i, -1)));
@@ -368,6 +380,18 @@ export function stripQuestion(q: string, profile: Profile): Stripped {
     if (COMMON_CAPS.has(low) || COMMON_CAPS.has(tk.w) || (low.length > 4 && low.endsWith('s') && COMMON_CAPS.has(low.slice(0, -1)))) return false;
     return true;
   });
+  // "Park Avenue", "Church Street", "New Road": a run of capitalised words that are all kinds of place still names one
+  // place. The last word says what kind it is and stays; the words before it are the name and go.
+  for (let i = 0; i < all.length; i++) {
+    let j = i;
+    const capAt = (k: number) => /^\p{Lu}\p{Ll}/u.test(text.slice(all[k].start, all[k].end)) && PLACE_TYPES.has(all[k].w) && !names.includes(all[k]);
+    if (!capAt(i) || (i > 0 && near(i, -1) && names.includes(all[i - 1]))) continue;
+    while (j + 1 < all.length && near(j, 1) && capAt(j + 1)) j++;
+    // (not the word that opens the sentence: "Church or the lake?" asks about going to church)
+    if (j > i && !SENTENCE_START.test(text.slice(0, all[i].start))) for (let k = i; k < j; k++) names.push(all[k]);
+    i = j;
+  }
+  names.sort((a, b) => a.start - b.start);
   // labels in reading order (the first unknown name is "Name A"), replaced from the end so offsets stay valid
   const lbls = names.map((tk) => mask(label(nameTerm, text.slice(tk.start, tk.end))));
   for (let i = names.length - 1; i >= 0; i--) text = text.slice(0, names[i].start) + lbls[i] + text.slice(names[i].end);
