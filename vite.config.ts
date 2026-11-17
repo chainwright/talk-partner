@@ -14,6 +14,9 @@ export default defineConfig({
   envDir: '..',
   publicDir: 'public',
   build: { outDir: '../dist', emptyOutDir: true },
+  // the feedback form loads Firestore on "Send" only; named here so the dev server has it ready and does not reload
+  // the page (and lose the note) the first time it meets it
+  optimizeDeps: { include: ['firebase/firestore/lite'] },
   server: { port: 5179, strictPort: true },
   preview: { port: 5179, strictPort: true },
   test: {

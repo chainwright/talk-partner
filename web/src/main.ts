@@ -844,7 +844,7 @@ function feedbackScreen(): string {
   const note = !cfg ? F.noConfig : off ? F.offline : fb.error ? F.errors[fb.error] : '';
   return `${nav()}<main class="screen feedback"><h1>${F.heading}</h1>
     <p>${F.intro}</p>
-    <form id="fb">
+    <form id="fb" novalidate>
       <label for="fb-text">${F.textLabel}</label>
       <textarea id="fb-text" rows="6" maxlength="${FEEDBACK_MAX}" ${sending ? 'disabled' : ''}>${esc(fb.text)}</textarea>
       <p class="fb-row"><span class="fb-warn">${F.noPatients}</span><span id="fb-left" class="muted">${F.left(FEEDBACK_MAX - fb.text.length)}</span></p>

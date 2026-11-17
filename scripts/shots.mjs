@@ -356,7 +356,7 @@ try {
       check(`${s} voice input: this copy has no project settings, so there is no microphone button and the question form is field and button`, /no project settings|rules only/i.test(v0.status) && JSON.stringify(v0.form) === '["q","make"]', JSON.stringify(v0));
       continue;
     }
-    const ai = { calls: [], appCheck: 0 };
+    const ai = { calls: [], appCheck: 0, notes: [] };
     const cors = [{ name: 'Access-Control-Allow-Origin', value: '*' }, { name: 'Access-Control-Allow-Headers', value: '*' }, { name: 'Access-Control-Allow-Methods', value: 'POST, GET, OPTIONS' }];
     const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64');
     let answerWith = { transcript: 'do you want coffee or tea' };
@@ -368,6 +368,12 @@ try {
       if (/firebaseappcheck\.googleapis\.com/.test(request.url)) {
         ai.appCheck++;
         void send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [...cors, { name: 'Content-Type', value: 'application/json' }], body: b64({ token: 'scripted.by.shots', ttl: '3600s' }) });
+        return;
+      }
+      if (/firestore\.googleapis\.com/.test(request.url)) {
+        // the feedback note's write, caught before it leaves: nothing is stored anywhere in this run
+        ai.notes.push({ url: request.url, body: request.postData ?? '', appCheck: request.headers['X-Firebase-AppCheck'] ?? request.headers['x-firebase-appcheck'] ?? '' });
+        void send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [...cors, { name: 'Content-Type', value: 'application/json' }], body: b64({ writeResults: [{ updateTime: new Date().toISOString() }], commitTime: new Date().toISOString() }) });
         return;
       }
       if (!/:generateContent/.test(request.url)) { void send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' }); return; }
@@ -448,6 +454,26 @@ try {
     await chip('Do you want coffee or tea?');
     const v10 = await js(`({ mic: !!document.querySelector('#mic'), line: document.querySelector('#voice')?.hidden, tiles: document.querySelectorAll('#person .tile').length, errors: window.__errors, form: [...document.querySelector('#ask').children].map((e) => e.id) })`);
     check(`${s} voice input: in a browser that cannot record there is no microphone button, no error, and the question form is as it was`, v10.mic === false && v10.line === true && v10.tiles === 3 && v10.errors.length === 0 && JSON.stringify(v10.form) === '["q","make"]', JSON.stringify(v10));
+    // "Send feedback", the send itself, with the write caught at the network (same catch as above): one request, to
+    // the collection `feedback`, carrying an App Check token, the note's fields and "set createdAt to the server's
+    // time", and nothing else of the session (the card just made, the sample family). No document is written.
+    await nav('#/feedback');
+    await waitFor('!!document.querySelector("#fb-text")');
+    await js(`(() => { const set = (id, v, ev) => { const e = document.querySelector(id); e.value = v; e.dispatchEvent(new Event(ev, { bubbles: true })); }; set('#fb-text', '  The tick and the cross are clear.  ', 'input'); set('#fb-role', 'slt', 'change'); set('#fb-email', 'not an address', 'input'); return true; })()`);
+    await click('#fb-send');
+    const s0 = await js(`document.querySelector('#fb-status').innerText`);
+    const notesAfterBadEmail = ai.notes.length;
+    await js(`(() => { const e = document.querySelector('#fb-email'); e.value = ''; e.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+    await click('#fb-send');
+    await waitFor(`!!document.querySelector('.fb-sent')`, 15000);
+    const s1 = await js(`({ status: document.querySelector('#fb-status')?.innerText, form: !!document.querySelector('#fb-text'), errors: window.__errors })`);
+    let note = {}; try { note = JSON.parse(ai.notes[0]?.body ?? '{}').writes?.[0] ?? {}; } catch { /* checked below */ }
+    const fields = note.update?.fields ?? {};
+    const sent = { requests: ai.notes.length, commit: /\/documents:commit/.test(ai.notes[0]?.url ?? ''), collection: /\/documents\/feedback\/[A-Za-z0-9]{20}$/.test(note.update?.name ?? ''), appCheck: ai.notes[0]?.appCheck, keys: Object.keys(fields).sort().join(','), text: fields.text?.stringValue, role: fields.role?.stringValue, version: fields.version?.stringValue, commitField: fields.commit?.stringValue, transform: JSON.stringify(note.updateTransforms ?? []), onlyNew: JSON.stringify(note.currentDocument ?? {}) };
+    check(`${s} feedback: a broken email address is refused in the page and nothing is sent; corrected, one request writes the note: to the collection "feedback", with an App Check token, the trimmed text, the role, the version and the commit, the server's time, and no email field`,
+      /does not look complete/.test(s0) && notesAfterBadEmail === 0 && sent.requests === 1 && sent.commit && sent.collection && sent.appCheck === 'scripted.by.shots' && sent.keys === 'commit,role,text,version' && sent.text === 'The tick and the cross are clear.' && sent.role === 'slt' && sent.version === '0.2.0' && /^[0-9a-f]{7,40}$/.test(sent.commitField ?? '') && /"fieldPath":"createdAt","setToServerValue":"REQUEST_TIME"/.test(sent.transform) && sent.onlyNew === '{"exists":false}' && !/Frank|Carol|coffee|toilet/.test(ai.notes[0].body), JSON.stringify({ s0, sent }));
+    check(`${s} feedback: after the send the screen says thank you, the form is gone, and there was no error`, /Thank you\. Your note was sent\./.test(s1.status ?? '') && s1.form === false && s1.errors.length === 0, JSON.stringify(s1));
+    await shot('34-feedback-sent');
     await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: none2.result.identifier });
     await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: errs.result.identifier });
     await send('Fetch.disable');
