@@ -228,6 +228,8 @@ const COPY = {
     exampleNone: 'Type a question first and this shows exactly what would be sent.',
     whoHeading: 'Who receives it',
     who: "Google's Gemini API, through Firebase AI Logic, on the free tier.",
+    /** Remote Config is asked when cloud help is turned on (web/src/ai/remoteConfig.ts): said here, before the tick. */
+    settings: 'When cloud help is on, the app also asks Firebase Remote Config once for its current settings (which cloud model to use). That request holds no question and nothing from About me.',
     neverHeading: 'Never sent',
     termsHeading: 'Data use',
     terms: 'On the free tier, Google may use what is sent to improve its products (Gemini API Additional Terms, in force since 23 March 2026). The paid tier does not.',
@@ -249,6 +251,27 @@ const COPY = {
     legs: 'The three steps',
     columns: { step: 'step', mode: 'mode', gets: 'gets', why: 'why' },
     legNames: { private: 'private card', stripped: 'stripped card', pictures: 'pictures' },
+    // The settings Firebase Remote Config may change (core/models.ts), with where each value in use came from.
+    settings: {
+      heading: 'Settings from Firebase Remote Config',
+      columns: { setting: 'setting', value: 'in use', from: 'from' },
+      names: {
+        cloudTextModel: 'Cloud model of the question-only step',
+        routeMoodWords: 'A card made on this computer goes for a cloud second opinion when this many of its choices are mood words',
+        routeMinChoices: '… or when it has fewer usable choices than this',
+      },
+      from: {
+        remote: 'Remote Config',
+        default: 'default in the code',
+        refused: (raw: string) => `default in the code (Remote Config sent "${raw}", which did not pass the check)`,
+      },
+      none: 'This copy has no project settings, so Remote Config is not asked. The values below are the defaults in the code.',
+      off: 'Not asked: cloud help is off. These settings concern the cloud step only, and a page with cloud help off contacts no host but its own, so Remote Config is asked only once cloud help is on. The values below are the defaults in the code.',
+      asking: 'Asking Remote Config now. The defaults in the code run meanwhile: no card waits for the answer.',
+      fetched: (time: string) => `Remote Config answered at ${time}. Each row says whether its value came from there.`,
+      failed: (why: string) => `Remote Config did not answer (${why}). The defaults in the code are in use, and no card waited for it.`,
+      note: 'What Remote Config cannot change: which step may see About me. That is fixed in the code.',
+    },
     scoresHeading: 'Measured results',
     scoresNone: 'One measurement so far, and it is ours: 60 questions we wrote and labelled ourselves (16 Nov 2026). 18 of them are open (who, where, what): the choices are not in the question. Rules alone make no card for any of the 18. In four runs on 16 Nov 2026 the helper on this computer made a card matching our label for 15 or 16 of them, and 12 or 13 of those offered the family\'s own people, places or foods. The other 42 are decided by code with no model; 36 to 38 matched. That is how often the card is the one we meant, not whether it helps anyone. The timed pad-versus-card trial with people (two sealed sets of 10 questions, two or three pairs) has not been run.',
     traceHeading: 'Where each step ran for this card',
@@ -374,22 +397,24 @@ const COPY = {
        * Once the cloud has answered, the number is what the app handed over, and it is called that: the app does not
        * see what the SDK adds on the wire. A request that failed is never counted as kept.
        */
-      number: (n: { cards: number; cardsLeft: number; bodyBytes: number; namesWithheld: number; otherWithheld: number; attempts: number; attemptBytes: number }) => {
+      number: (n: { cards: number; cardsLeft: number; bodyBytes: number; namesWithheld: number; otherWithheld: number; attempts: number; attemptBytes: number }, settingsAsked = false) => {
         const bytes = (b: number) => `${b.toLocaleString('en-US')} byte${b === 1 ? '' : 's'}`;
         const cards = `${n.cards} card${n.cards === 1 ? '' : 's'}`;
         const maybe = n.attempts ? `${n.attempts} cloud request${n.attempts === 1 ? '' : 's'} failed after being handed over` : '';
         if (n.cardsLeft) {
           return {
             state: 'sent' as const, figure: bytes(n.bodyBytes), label: 'handed to cloud help',
-            scope: `in ${n.cardsLeft} request${n.cardsLeft === 1 ? '' : 's'}, the question only (${n.namesWithheld + n.otherWithheld} About me word${n.namesWithheld + n.otherWithheld === 1 ? '' : 's'} swapped out first); ${cards} this session. What the SDK adds on the wire is not counted.` +
+            scope: `in ${n.cardsLeft} request${n.cardsLeft === 1 ? '' : 's'}, the question only (${n.namesWithheld + n.otherWithheld} About me word${n.namesWithheld + n.otherWithheld === 1 ? '' : 's'} swapped out first); ${cards} this session. What the SDK adds on the wire is not counted${settingsAsked ? ', nor is the settings request (no question in it)' : ''}.` +
               (maybe ? ` Not in the number: ${maybe} and may have left (up to ${bytes(n.attemptBytes)}).` : ''),
           };
         }
-        if (n.attempts) return { state: 'maybe' as const, figure: `up to ${bytes(n.attemptBytes)}`, label: 'may have left this computer', scope: `${maybe}; ${cards} this session.` };
-        return { state: 'none' as const, figure: bytes(0), label: 'left this computer', scope: `${cards} this session · page load not counted` };
+        if (n.attempts) return { state: 'maybe' as const, figure: `up to ${bytes(n.attemptBytes)}`, label: 'may have left this computer', scope: `${maybe}; ${cards} this session.${settingsAsked ? ' The settings request (no question in it) is not counted.' : ''}` };
+        // with cloud help on, the app has asked Remote Config for its settings: a request, though none for a card
+        return { state: 'none' as const, figure: bytes(0), label: settingsAsked ? 'of any question left this computer' : 'left this computer', scope: `${cards} this session · page load ${settingsAsked ? 'and the settings request (no question in it) ' : ''}not counted` };
       },
       howHeading: 'How this is counted',
       how: 'The bytes are the UTF-8 length of the request this app handed to the SDK for the cloud step (the model name and mode, the fixed instructions, the schema and the swapped question), kept when the SDK reported that the cloud answered; a card where nothing left counts 0. A request that was handed to the SDK and failed is listed apart as "maybe", with its size: the app cannot tell whether it reached the cloud. The body is in the export, so the count can be checked by hand. Not counted: what the SDK makes of it on the wire (its own format, headers, the App Check token), which this app does not see and which carries no family data. "Withheld" counts the About me words swapped for labels such as "Person A". "Checked after" searches the sent text for About me words and photo bytes once more, after the fact.',
+      settingsNote: 'Also not counted: the one request to Firebase Remote Config made when cloud help is on (the app id and an installation id; no question, nothing from About me).',
       exportButton: 'Export receipt',
       exportName: 'talk-partner-privacy-receipt.json',
     },

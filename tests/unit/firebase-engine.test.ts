@@ -11,6 +11,8 @@ const answers: Record<string, { text: string; source: string } | Error> = {};
 
 vi.mock('firebase/app', () => ({
   initializeApp: (_o: unknown, name = '[DEFAULT]') => { rec.apps.push(name); return { name }; },
+  // the default app is shared with Remote Config (web/src/ai/app.ts): started once, found again afterwards
+  getApps: () => rec.apps.map((name) => ({ name })),
 }));
 vi.mock('firebase/app-check', () => ({
   initializeAppCheck: (app: { name: string }) => { rec.appChecks.push(app.name); },
@@ -112,5 +114,30 @@ describe('FirebaseEngine: the stripped leg', () => {
     expect(rec.calls.map((c) => c.mode)).toEqual(['prefer_in_cloud', 'only_on_device']);
     expect(rec.apps).toEqual(['[DEFAULT]', 'private-on-device']);
     expect(rec.appChecks).toEqual(['[DEFAULT]']);
+  });
+});
+
+describe('the cloud model name is a setting (Firebase Remote Config, core/models.ts)', () => {
+  it('until a name is given, the cloud step and the request shown under a card use the default in the code', async () => {
+    const { CLOUD_TEXT_MODEL } = await import('../../core/models');
+    const e = new LazyFirebaseEngine(CFG);
+    expect((e.cloudRequest('q') as { model: string }).model).toBe(CLOUD_TEXT_MODEL);
+    await e.runCloud('q');
+    expect(rec.models.find((m) => m.mode === 'prefer_in_cloud')?.params.inCloudParams.model).toBe(CLOUD_TEXT_MODEL);
+  });
+  it('a name given before or after the first cloud call is the model of the next call, and of the request shown; the private step is untouched', async () => {
+    const e = new LazyFirebaseEngine(CFG);
+    e.setCloudModel('gemini-9.9-flash-lite');
+    expect((e.cloudRequest('q') as { model: string }).model).toBe('gemini-9.9-flash-lite');
+    expect(rec.apps).toEqual([]); // naming the model starts nothing
+    await e.runCloud('q');
+    expect(rec.models.filter((m) => m.mode === 'prefer_in_cloud').at(-1)?.params.inCloudParams.model).toBe('gemini-9.9-flash-lite');
+    e.setCloudModel('gemini-9.8-flash-lite');
+    await e.runCloud('q');
+    expect(rec.models.filter((m) => m.mode === 'prefer_in_cloud').at(-1)?.params.inCloudParams.model).toBe('gemini-9.8-flash-lite');
+    expect(rec.apps.filter((a) => a === '[DEFAULT]')).toHaveLength(1); // the default app is started once
+    expect(rec.appChecks).toHaveLength(1); // and App Check once
+    await e.runDevice('x');
+    expect(rec.models.find((m) => m.mode === 'only_on_device')?.params.inCloudParams).toBeUndefined();
   });
 });

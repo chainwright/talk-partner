@@ -1132,16 +1132,17 @@ const ESCAPES = new Set(['something else', 'someone else', 'somewhere else', 'no
  * >= 2 mood words among the answers, a comparative echoed from the question, a duplicate head noun,
  * or fewer than 2 usable answers. Or-pairs and fixed cards (yes/no, feeling, body, pain) stay on device.
  */
-export function route(kind: string, q: string, answers: string[], isOrPair: boolean): RouteDecision {
+export function route(kind: string, q: string, answers: string[], isOrPair: boolean, limits: { moodWords: number; minChoices: number } = { moodWords: 2, minChoices: 2 }): RouteDecision {
   const reasons: string[] = [];
   if (kind !== 'choice' || isOrPair) return { to: 'device', reasons };
   const core = answers.map(lc).filter((c) => !ESCAPES.has(c));
   const qw = new Set(words(q));
-  if (core.filter((c) => c.split(/\s+/).some((w) => MOOD_WORDS.has(w))).length >= 2) reasons.push('two or more mood words');
+  // the two thresholds are settings (core/models.ts): 2 and 2 in code, changeable through Firebase Remote Config
+  if (core.filter((c) => c.split(/\s+/).some((w) => MOOD_WORDS.has(w))).length >= limits.moodWords) reasons.push(limits.moodWords === 2 ? 'two or more mood words' : `${limits.moodWords} or more mood words`);
   if (core.some((c) => qw.has(c) && /er$/.test(c))) reasons.push('comparative echoed from the question');
   const heads = core.map((c) => (c.split(/\s+/).pop() ?? '').replace(/s+$/, ''));
   if (new Set(heads).size < heads.length) reasons.push('duplicate head noun');
-  if (core.length < 2) reasons.push('fewer than two usable choices');
+  if (core.length < limits.minChoices) reasons.push(limits.minChoices === 2 ? 'fewer than two usable choices' : `fewer than ${limits.minChoices} usable choices`);
   return { to: reasons.length ? 'cloud' : 'device', reasons };
 }
 

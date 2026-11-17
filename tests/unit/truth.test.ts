@@ -200,7 +200,8 @@ describe('5. the one number of the receipt says "0 bytes left this computer" onl
     const { readFileSync } = await import('node:fs');
     const { join } = await import('node:path');
     const main = readFileSync(join(__dirname, '..', '..', 'web/src/main.ts'), 'utf8');
-    expect(main).toContain('C.judge.receipt.number(sessionReceipt(state.made, state.profile))');
+    // (the second argument, since 16 Nov: whether Remote Config was asked, so the line can name that request too)
+    expect(main).toContain('C.judge.receipt.number(sessionReceipt(state.made, state.profile), settingsAsked)');
   });
 });
 

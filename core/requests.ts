@@ -4,9 +4,10 @@
 import { CLOUD_IMAGE_MODEL, CLOUD_TEXT_MODEL } from './models';
 import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, cloudPrompt } from './prompt';
 
-export function cloudTextRequest(strippedQuestion: string) {
+/** `model` is the cloud text model in use: the in-code default, or the name Remote Config gave (core/models.ts). */
+export function cloudTextRequest(strippedQuestion: string, model: string = CLOUD_TEXT_MODEL) {
   return {
-    model: CLOUD_TEXT_MODEL,
+    model,
     mode: 'PREFER_IN_CLOUD',
     contents: [{ role: 'user', parts: [{ text: cloudPrompt(strippedQuestion) }] }],
     // fixed app text, identical for every user; no personal data

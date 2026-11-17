@@ -4,6 +4,9 @@
 //   1. "Do you want coffee or tea?"  -> code card, nothing sent
 //   2. cloud help turned on through the consent screen, then an open question with a name in it -> the stripped leg
 //      (PREFER_IN_CLOUD) answers; badge from inferenceSource; "What was sent" holds "Person A", not the name
+//   and around it, Firebase Remote Config (added 16 Nov 2026): not asked while cloud help is off; with its hosts
+//   blocked the defaults in the code run and a card is made at once; unblocked, "How this works" shows the three
+//   values as "from Remote Config", and the settings request holds no question and no About-me word
 // Updated 16 Nov 2026 to the current screens (judge-mode chips, the consent screen, the #sent panel): it had kept the
 // 11 Nov selectors and failed 2/9. The on-device step has its own script: scripts/e2e-ondevice.mjs.
 // Logs every network host the page contacted and the commit hash. Exit code 0 only if every check passes.
@@ -46,12 +49,14 @@ try {
   const pending = new Map();
   const hosts = new Map();
   const consoleLines = [];
+  const settingsBodies = [];
   ws.addEventListener('message', (ev) => {
     const m = JSON.parse(ev.data);
     if (m.id && pending.has(m.id)) { pending.get(m.id)(m); pending.delete(m.id); return; }
     if (m.method === 'Network.requestWillBeSent') {
       const h = new URL(m.params.request.url).host || m.params.request.url.slice(0, 20);
       hosts.set(h, (hosts.get(h) ?? 0) + 1);
+      if (/remoteconfig|installations/.test(h)) settingsBodies.push(`${m.params.request.url.replace(/key=[^&]+/, 'key=[key]')} ${m.params.request.postData ?? ''}`);
     }
     if (m.method === 'Runtime.consoleAPICalled') consoleLines.push(m.params.args.map((a) => a.value ?? a.description).join(' '));
   });
@@ -94,13 +99,51 @@ try {
   check('before any cloud request the number under the chips reads "0 bytes left this computer"', /^0 bytes left this computer/.test(bytes1), bytes1);
   await shot('01-coffee-tea');
 
-  // 2. open question through the stripped leg, cloud help on
+  // Remote Config, part 1: with cloud help off it is not asked, and "How this works" says so with the defaults
+  const settings = () => js(`(() => { const s = document.querySelector('#settings'); return s ? { status: s.dataset.status, text: s.querySelector('p')?.innerText ?? '', rows: [...s.querySelectorAll('tr[data-setting]')].map((r) => ({ key: r.dataset.setting, from: r.dataset.from, value: r.querySelector('b')?.innerText ?? '' })) } : null; })()`);
+  const DEFAULTS = { cloud_text_model: 'gemini-3.5-flash-lite', route_mood_words: '2', route_min_choices: '2' };
+  const allFrom = (s, from) => !!s && s.rows.length === 3 && s.rows.every((r) => r.from === from);
+  const areDefaults = (s) => !!s && s.rows.every((r) => DEFAULTS[r.key] === r.value);
+  await js(`location.hash = '#/how'`); await sleep(500);
+  const off = await settings();
+  check('Remote Config is not asked while cloud help is off: "How this works" shows the three defaults in the code, and no settings host was contacted',
+    off?.status === 'off' && allFrom(off, 'default') && areDefaults(off) && settingsBodies.length === 0, JSON.stringify(off?.rows));
+
+  // Remote Config, part 2: its hosts blocked (as when offline). Turning cloud help on must not hold anything up.
+  await send('Network.setBlockedURLs', { urls: ['*firebaseremoteconfig*', '*firebaseinstallations*'] });
   await js(`location.hash = '#/cloud'`); await sleep(500);
   await js(`document.querySelector('#consent').click()`); await sleep(300);
-  await js(`document.querySelector('[data-act="cloud-on"]').click()`); await sleep(300);
-  await js(`location.hash = '#/demo'`); await sleep(600);
+  await js(`document.querySelector('[data-act="cloud-on"]').click()`); await sleep(100);
+  await js(`location.hash = '#/demo'`); await sleep(300);
+  const tCard = Date.now();
+  await js(`document.querySelector('.chip[data-q="Do you need the toilet?"]').click()`);
+  await waitFor(`document.querySelectorAll('#person .tile').length === 3 && document.querySelector('#result .badge')?.innerText === 'No AI needed'`, 5000);
+  const cardMs = Date.now() - tCard;
+  const cardTiles = await js(`[...document.querySelectorAll('#person .tile span')].map(e => e.innerText)`);
+  await js(`location.hash = '#/how'`);
+  await waitFor(`['failed', 'fetched'].includes(document.querySelector('#settings')?.dataset.status)`, 15000);
+  const blocked = await settings();
+  check('Remote Config unreachable: a card is made at once all the same, and the defaults in the code are in use',
+    JSON.stringify(cardTiles) === JSON.stringify(['yes', 'no', 'not sure']) && cardMs < 3000 && blocked?.status === 'failed' && allFrom(blocked, 'default') && areDefaults(blocked), `card in ${cardMs} ms; ${blocked?.status}: ${blocked?.text}`);
+  await send('Network.setBlockedURLs', { urls: [] });
+
+  // Remote Config, part 3: reachable. The page is loaded again (cloud help is remembered), so it is asked at load.
+  settingsBodies.length = 0;
+  await send('Page.navigate', { url: `${URL_}#/how` }); await sleep(300);
+  await send('Page.reload'); await sleep(800);
+  await waitFor(`['failed', 'fetched'].includes(document.querySelector('#settings')?.dataset.status)`, 20000);
+  const fetched = await settings();
+  console.log(`Remote Config: ${fetched?.text} ${JSON.stringify(fetched?.rows)}`);
+  check('Remote Config answered: "How this works" shows the cloud model and both routing thresholds as "from Remote Config"', fetched?.status === 'fetched' && allFrom(fetched, 'remote'), JSON.stringify(fetched));
+  const body = settingsBodies.join(' ');
+  check('the settings request went to Firebase Remote Config and holds no question and no About-me word',
+    settingsBodies.some((b) => /firebaseremoteconfig\.googleapis\.com/.test(b)) && !/Partner asks|Jenny|Tyler|Carol|Frank|lake|church|pot roast|chili|Wheel|Packers|Johnny/i.test(body), `${settingsBodies.length} requests, ${body.length} characters`);
+  await js(`location.hash = '#/demo'`); await sleep(800);
+  await waitFor(`!!document.querySelector('.chip')`);
   const cloudNav = await js(`[...document.querySelectorAll('header nav a')].map((a) => a.innerText).find((t) => t.startsWith('Cloud help'))`);
   check('cloud help turned on through the consent screen', cloudNav === 'Cloud help: on', cloudNav);
+  const bytesOn = await js(`document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? ''`);
+  check('with cloud help on and no cloud card yet, the number says "0 bytes of any question left this computer" and names the settings request as not counted', /^0 bytes of any question left this computer/.test(bytesOn) && /settings request/.test(bytesOn), bytesOn);
   hosts.clear(); consoleLines.length = 0;
   const t0 = Date.now();
   await js(`(() => { const q = document.querySelector('#q'); q.value = 'What do you want to do this weekend with Jenny?'; document.querySelector('#ask').requestSubmit(); })()`);
@@ -129,6 +172,9 @@ try {
     folded.line === 'Partner asks: What do you want to do this weekend with Person A?' && folded.size.startsWith(`${folded.bytes.toLocaleString('en-US')} bytes`) && folded.open === false && folded.seen === false && folded.opened === true && folded.seenAfter === true, JSON.stringify(folded));
   const aiHosts2 = [...hosts.keys()].filter((h) => /googleapis|firebase|recaptcha/.test(h));
   check('the request went to Firebase AI Logic', aiHosts2.some((h) => /firebasevertexai\.googleapis\.com/.test(h)), aiHosts2.join(', '));
+  // the model the request names is the one "How this works" shows as in use (from Remote Config on this run)
+  const modelSent = (() => { try { return JSON.parse(payload).model; } catch { return ''; } })();
+  check('the cloud request names the model Remote Config gave', !!modelSent && modelSent === fetched?.rows.find((r) => r.key === 'cloud_text_model')?.value, modelSent);
   // the one number: what the app handed to the cloud step, counted on the same request "What was sent" shows
   const bytes2 = await js(`(() => { const pre = document.querySelector('#sent pre')?.textContent ?? ''; let n = -1; try { n = new TextEncoder().encode(JSON.stringify(JSON.parse(pre))).length; } catch { /* no payload */ }
     return { text: document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? '', counted: n, mint: document.querySelector('#bytes').classList.contains('none') }; })()`);

@@ -110,11 +110,24 @@ async function attach(port) {
     await js(`location.hash = '#/cloud'`); await sleep(500);
     if (on) { await js(`(() => { const c = document.querySelector('#consent'); if (c && !c.checked) c.click(); })()`); await sleep(300); await js(`document.querySelector('[data-act="cloud-on"]')?.click()`); }
     else await js(`document.querySelector('[data-act="cloud-off"]')?.click()`);
+    if (on) {
+      // Turning cloud help on asks Firebase Remote Config for the settings (once per page load). Its requests are
+      // waited for and logged here, so they are not counted against the card that is asked next.
+      mark();
+      await sleep(300); await js(`location.hash = '#/how'`);
+      await waitFor(`['failed', 'fetched'].includes(document.querySelector('#settings')?.dataset.status)`, 20000);
+      await sleep(500);
+      const st = await js(`(() => { const s = document.querySelector('#settings'); return s ? { status: s.dataset.status, text: s.querySelector('p')?.innerText ?? '', rows: [...s.querySelectorAll('tr[data-setting]')].map((r) => r.dataset.setting + ' = ' + (r.querySelector('b')?.innerText ?? '') + ' (' + r.dataset.from + ')') } : null; })()`);
+      settings = st;
+      log(`\n**Remote Config** (asked when cloud help was turned on): ${st?.text ?? 'no panel'} ${st ? st.rows.join('; ') : ''}`);
+      log(`- its requests: ${[...new Set(outside().map((r) => r.host))].join(', ') || 'none (answered from the browser\'s copy)'}`);
+    }
     await sleep(300); await js(`location.hash = '#/demo'`); await sleep(600);
     return js(`[...document.querySelectorAll('header nav a')].map((a) => a.innerText).find((t) => t.startsWith('Cloud help'))`);
   };
+  let settings = null;
   const offline = (off) => send('Network.emulateNetworkConditions', { offline: off, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
-  return { send, js, waitFor, shot, ask, setCloud, offline, mark, outside, aiLines, s, close: () => ws.close() };
+  return { send, js, waitFor, shot, ask, setCloud, offline, mark, outside, aiLines, s, settings: () => settings, close: () => ws.close() };
 }
 
 const ABOUT = { people: ['Jenny', 'Jen', 'Tyler'], places: ['lake', 'the lake', 'church', 'hardware store'], foods: ['pot roast', 'chili'] };
@@ -183,6 +196,7 @@ try {
   log(`\n## 3. Cloud help ON: the two steps side by side`);
   const nav = await c.setCloud(true);
   check('cloud help was turned on through the consent screen', nav === 'Cloud help: on', nav);
+  check('turning cloud help on asked Firebase Remote Config, and the three settings in use came from it', c.settings()?.status === 'fetched' && c.settings().rows.length === 3 && c.settings().rows.every((r) => / \(remote\)$/.test(r)), c.settings()?.rows.join('; ') ?? 'no settings panel');
   const again = await c.ask('Who should we call tonight?');
   check('an all-About-me card stays on this computer with cloud help on: the cloud is not asked', again.badge === 'On this computer' && again.outside.length === 0 && again.ai.length === 1 && ON_DEVICE.test(again.ai[0]), `${again.badge}; ${again.outside.length} outside requests`);
   await c.shot('03-cloud-on-card-stays-here');

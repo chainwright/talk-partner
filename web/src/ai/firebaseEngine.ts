@@ -28,6 +28,7 @@ import type { DeviceStatus, Engine, ModelResult } from '../../../core/engine';
 import { CLOUD_IMAGE_MODEL, CLOUD_TEXT_MODEL } from '../../../core/models';
 import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, SYSTEM_PROMPT, cloudPrompt } from '../../../core/prompt';
 import { cloudTextRequest, pictureRequestBody, pictureText } from '../../../core/requests';
+import { defaultApp } from './app';
 
 const IO = {
   expectedInputs: [{ type: 'text' as const, languages: ['en'] }],
@@ -58,6 +59,9 @@ export class FirebaseEngine implements Engine {
   readonly modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
   private privateModel: GenerativeModel | null = null;
   private cloudModels: { text: GenerativeModel; images: GenerativeModel } | null = null;
+  /** The cloud text model in use: the in-code default until Remote Config gives a checked name (core/models.ts). */
+  private textModel = CLOUD_TEXT_MODEL;
+  private cloudAi: ReturnType<typeof getAI> | null = null;
 
   constructor(private cfg: WebConfig) {
     this.cloudConfigured = !!(cfg.recaptchaEnterpriseSiteKey || cfg.appCheckDebugToken);
@@ -77,15 +81,20 @@ export class FirebaseEngine implements Engine {
   private get cloud(): { text: GenerativeModel; images: GenerativeModel } {
     if (this.cloudModels) return this.cloudModels;
     const cfg = this.cfg;
-    const app: FirebaseApp = initializeApp(cfg.firebase);
-    if (cfg.appCheckDebugToken) (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = cfg.appCheckDebugToken;
-    const siteKey = cfg.recaptchaEnterpriseSiteKey || (cfg.appCheckDebugToken ? 'debug-provider-in-use' : '');
-    if (siteKey) initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(siteKey), isTokenAutoRefreshEnabled: true });
-    const ai = getAI(app, { backend: new GoogleAIBackend() });
+    // the app, App Check and the AI Logic instance are started once; only the models are built again when Remote
+    // Config names another cloud model (setCloudModel)
+    if (!this.cloudAi) {
+      const app: FirebaseApp = defaultApp(cfg.firebase);
+      if (cfg.appCheckDebugToken) (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = cfg.appCheckDebugToken;
+      const siteKey = cfg.recaptchaEnterpriseSiteKey || (cfg.appCheckDebugToken ? 'debug-provider-in-use' : '');
+      if (siteKey) initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(siteKey), isTokenAutoRefreshEnabled: true });
+      this.cloudAi = getAI(app, { backend: new GoogleAIBackend() });
+    }
+    const ai = this.cloudAi;
     const text = getGenerativeModel(ai, {
       mode: InferenceMode.PREFER_IN_CLOUD,
       inCloudParams: {
-        model: CLOUD_TEXT_MODEL,
+        model: this.textModel,
         systemInstruction: CLOUD_SYSTEM_PROMPT,
         // one schema object for both legs: responseJsonSchema in the cloud, responseConstraint on device
         generationConfig: { responseMimeType: 'application/json', responseJsonSchema: CARD_SCHEMA as any },
@@ -139,8 +148,15 @@ export class FirebaseEngine implements Engine {
     return { text: r.response.text(), source: 'on-device', ms };
   }
 
+  /** A model name from Remote Config: the cloud text model is rebuilt with it on the next cloud call. */
+  setCloudModel(model: string) {
+    if (model === this.textModel) return;
+    this.textModel = model;
+    this.cloudModels = null;
+  }
+
   cloudRequest(strippedQuestion: string) {
-    return cloudTextRequest(strippedQuestion);
+    return cloudTextRequest(strippedQuestion, this.textModel);
   }
 
   async runCloud(strippedQuestion: string): Promise<ModelResult> {
@@ -178,12 +194,16 @@ export class LazyFirebaseEngine implements Engine {
   readonly modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
   readonly cloudConfigured: boolean;
   private inner: FirebaseEngine | null = null;
+  private textModel = CLOUD_TEXT_MODEL;
   constructor(private cfg: WebConfig) {
     this.cloudConfigured = !!(cfg.recaptchaEnterpriseSiteKey || cfg.appCheckDebugToken);
   }
   private get e(): FirebaseEngine {
-    return (this.inner ??= new FirebaseEngine(this.cfg));
+    if (!this.inner) { this.inner = new FirebaseEngine(this.cfg); this.inner.setCloudModel(this.textModel); }
+    return this.inner;
   }
+  /** Kept here too, so the request shown under a card names the model in use before Firebase has been started. */
+  setCloudModel(model: string) { this.textModel = model; this.inner?.setCloudModel(model); }
   /** Capability query only; does not start Firebase. */
   async deviceStatus(): Promise<DeviceStatus> {
     const lm = (globalThis as any).LanguageModel;
@@ -193,7 +213,7 @@ export class LazyFirebaseEngine implements Engine {
   prepareDevice(onProgress?: (p: number) => void) { return this.e.prepareDevice(onProgress); }
   warmDevice() { return this.e.warmDevice(); }
   runDevice(prompt: string) { return this.e.runDevice(prompt); }
-  cloudRequest(strippedQuestion: string) { return cloudTextRequest(strippedQuestion); }
+  cloudRequest(strippedQuestion: string) { return cloudTextRequest(strippedQuestion, this.textModel); }
   runCloud(strippedQuestion: string) { return this.e.runCloud(strippedQuestion); }
   pictureRequest(word: string) { return pictureRequestBody(word); }
   picture(word: string) { return this.e.picture(word); }

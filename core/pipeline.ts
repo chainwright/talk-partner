@@ -208,7 +208,7 @@ function fixedWhy(o: ModelOutput | null, step: 'private' | 'stripped', decided: 
 export function assemble(
   asked: string, pending: string | null, o: ModelOutput | null, profile: Profile, support: SupportLevel,
   source: Source, ms = 0, pairIn: string[] | null = null, useRules = true,
-  meta: { step?: 'private' | 'stripped'; pairFrom?: 'model' | 'code' } = {},
+  meta: { step?: 'private' | 'stripped'; pairFrom?: 'model' | 'code'; routing?: { moodWords: number; minChoices: number } } = {},
 ): Card {
   const step = meta.step ?? 'private';
   // §2.16: the model's topic is a headline only when it names an idea (not one function word, not a placeholder,
@@ -306,7 +306,7 @@ export function assemble(
     for (const a of answers.slice(choiceCap(support))) track.dropped.push({ label: a, rule: W.rules.overCap });
   }
   if (pair) for (const a of answers.slice(pair.length >= 3 && support !== 'most' ? 3 : choiceCap(support))) track.dropped.push({ label: a, rule: W.rules.overCap });
-  const r = route('choice', asked, answers, !!pair);
+  const r = route('choice', asked, answers, !!pair, meta.routing);
   if (!pair && offersOptions(asked)) rejected.push('either-or options not found');
   if (!pair) for (const why of rejected) if (!r.reasons.includes(why)) r.reasons.push(why);
   if (r.reasons.length) r.to = 'cloud';
@@ -415,6 +415,11 @@ export interface PipelineEnv {
   allowCloud: boolean;
   /** On-device model reported "available". */
   deviceReady: boolean;
+  /**
+   * The routing thresholds in use (core/models.ts): the in-code defaults unless Firebase Remote Config gave others.
+   * Optional: without it the defaults apply, so a card never waits for, or depends on, a settings request.
+   */
+  routing?: { moodWords: number; minChoices: number };
 }
 
 /** Full flow for one partner question. */
@@ -546,7 +551,7 @@ async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]
     };
   }
 
-  const card = assemble(asked, pending, o, profile, support, source, ms, devicePair, useRules, { step: 'private', pairFrom });
+  const card = assemble(asked, pending, o, profile, support, source, ms, devicePair, useRules, { step: 'private', pairFrom, routing: env.routing });
   card.notes.push(...notes);
   if (card.route.to === 'cloud') {
     if (env.allowCloud && engine.cloudConfigured) {

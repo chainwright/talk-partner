@@ -1,0 +1,19 @@
+{
+  "parameters": {
+    "cloud_text_model": {
+      "defaultValue": { "value": "gemini-3.5-flash-lite" },
+      "description": "Cloud text model of the question-only step (Firebase AI Logic, PREFER_IN_CLOUD). The app uses it only if it is a Gemini text model name; otherwise the default in the code stays.",
+      "valueType": "STRING"
+    },
+    "route_mood_words": {
+      "defaultValue": { "value": "2" },
+      "description": "A card made on this computer goes to cloud help for a second opinion when this many of its choices are mood words. Whole number, 1 to 3; anything else is refused by the app.",
+      "valueType": "NUMBER"
+    },
+    "route_min_choices": {
+      "defaultValue": { "value": "2" },
+      "description": "... or when it has fewer usable choices than this. Whole number, 2 or 3; anything else is refused by the app.",
+      "valueType": "NUMBER"
+    }
+  }
+}

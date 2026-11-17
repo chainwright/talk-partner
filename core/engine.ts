@@ -33,6 +33,8 @@ export interface Engine {
   warmDevice?(): Promise<void>;
   /** Private step: the profile is in this prompt, so it runs ONLY on device and throws rather than fall back. */
   runDevice(prompt: string): Promise<ModelResult>;
+  /** Optional: use this cloud text model from the next cloud call on (a name Remote Config gave, already checked). */
+  setCloudModel?(model: string): void;
   /** The exact request body the cloud step would send for this stripped question. */
   cloudRequest(strippedQuestion: string): unknown;
   /** Cloud step: receives only the stripped question. Throws if the cloud is not configured. */

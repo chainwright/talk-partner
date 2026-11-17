@@ -8,16 +8,16 @@ import { partnerActions } from '../../core/actions';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
 import { addAnswer, answerCounts, lastAnswer, topQuestions, whenText, type Answered } from '../../core/history';
-import { LEGS } from '../../core/models';
+import { DEFAULT_SETTINGS, LEGS, REMOTE_KEYS, defaultReport, type RuntimeSettings, type SettingsReport } from '../../core/models';
 import { bodyDetailCard, makeCard, quizOverrideCard, repairCard } from '../../core/pipeline';
 import { countSwaps, sentLine, sessionReceipt, sessionTally } from '../../core/receipt';
-import { cloudTextRequest } from '../../core/requests';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS } from '../../core/sample';
 import { stripQuestion } from '../../core/strip';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
 import { pickEngine } from './ai/pick';
+import { fetchSettings } from './ai/remoteConfig';
 import { CROSS, TICK, builtinPicto, monogram, photoTile } from './pictos';
 import { kvClear, kvGet, kvSet } from './store';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
@@ -68,6 +68,8 @@ interface State {
   first: boolean;
   /** Every card made this session (judge mode tally). */
   made: Card[];
+  /** The settings in use and where each came from: the in-code defaults until Firebase Remote Config answers (askSettings). */
+  remote: SettingsReport;
   waitStart: number | null;
   consentChecked: boolean;
   saved: boolean;
@@ -97,6 +99,7 @@ const state: State = {
   lastQuestion: '',
   error: null,
   made: [],
+  remote: defaultReport(cfg ? 'off' : 'none'),
   waitStart: null,
   consentChecked: false,
   saved: false,
@@ -138,7 +141,7 @@ async function firstCard(): Promise<void> {
   try {
     const card = await makeCard(SAMPLE_FIRST, {
       profile: SAMPLE_PROFILE, support: state.settings.support, engine: state.engine,
-      allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available',
+      allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available', routing: routing(),
     });
     if (!state.demo || state.card || state.busy) return; // a question was asked meanwhile, or judge mode was left
     state.lastQuestion = SAMPLE_FIRST;
@@ -309,7 +312,7 @@ function legsTable(): string {
  * In judge mode it stands under the chips; elsewhere it opens the receipt.
  */
 function bytesLine(): string {
-  const n = C.judge.receipt.number(sessionReceipt(state.made, state.profile));
+  const n = C.judge.receipt.number(sessionReceipt(state.made, state.profile), settingsAsked);
   return `<p class="bytes ${n.state}" id="bytes"><b>${esc(n.figure)}</b> <span>${esc(n.label)}</span><small>${esc(n.scope)}</small></p>`;
 }
 
@@ -321,7 +324,7 @@ function receiptPanel(open: boolean, withNumber = true): string {
   const rows = r.perCard.map((x, i) => `<tr><td data-l="${K.card}">${i + 1}. ${esc(x.asked)}</td><td data-l="${K.left}">${x.left ? R.leftYes : x.attempted ? R.leftMaybe : x.offline ? R.leftOffline : R.leftNo}</td><td data-l="${K.bytes}">${x.left ? `${x.bodyBytes} (${x.questionBytes})` : x.attempted ? `(${x.attemptBytes})` : '0'}</td><td data-l="${K.withheld}">${x.left ? esc(R.withheld(x.namesWithheld, x.otherWithheld)) : x.attempted ? '—' : R.kept}</td><td data-l="${K.check}">${x.left ? (x.leaksFound || x.photoFound ? esc(R.checkBad(x.leaksFound, x.photoFound)) : R.checkOk) : '—'}</td></tr>`).join('');
   const table = r.cards ? `<table><tr><th>${R.columns.card}</th><th>${R.columns.left}</th><th>${R.columns.bytes}</th><th>${R.columns.withheld}</th><th>${R.columns.check}</th></tr>${rows}</table>` : '';
   return `<details class="receipt" ${open ? 'open' : ''}><summary><b>${R.heading}</b></summary>${withNumber ? bytesLine() : ''}${table}
-    <details class="counted"><summary>${R.howHeading}</summary><p>${esc(R.summary(r))}</p><p class="muted">${esc(R.how)}</p></details>
+    <details class="counted"><summary>${R.howHeading}</summary><p>${esc(R.summary(r))}</p><p class="muted">${esc(R.how)}${settingsAsked ? ` ${esc(R.settingsNote)}` : ''}</p></details>
     <div class="actions"><button data-act="export-receipt" ${r.cards ? '' : 'disabled'}>${R.exportButton}</button></div></details>`;
 }
 
@@ -332,6 +335,25 @@ function downloadFile(name: string, text: string, type: string) {
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/**
+ * "How this works": the three settings Firebase Remote Config may change, the value in use for each and where it came
+ * from (Remote Config, or the default in the code), and whether Remote Config was asked at all. Read from
+ * `state.remote`, which holds only what the SDK returned and what `checkSetting` made of it.
+ */
+function settingsPanel(): string {
+  const S = C.how.settings;
+  const r = state.remote;
+  const status = r.status === 'fetched' ? S.fetched(new Date(r.at ?? Date.now()).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }))
+    : r.status === 'failed' ? S.failed(r.error ?? '') : S[r.status];
+  const rows = (Object.keys(DEFAULT_SETTINGS) as (keyof RuntimeSettings)[]).map((k) => {
+    const from = r.sources[k] === 'remote' ? S.from.remote : r.sources[k] === 'refused' ? S.from.refused(r.refused[k] ?? '') : S.from.default;
+    return `<tr data-setting="${REMOTE_KEYS[k]}" data-from="${r.sources[k]}"><td>${esc(S.names[k])}<br><code>${REMOTE_KEYS[k]}</code></td><td><b>${esc(String(r.values[k]))}</b></td><td>${esc(from)}</td></tr>`;
+  }).join('');
+  return `<section id="settings" class="rc" data-status="${r.status}"><h2>${S.heading}</h2><p>${esc(status)}</p>
+    <table><tr><th>${S.columns.setting}</th><th>${S.columns.value}</th><th>${S.columns.from}</th></tr>${rows}</table>
+    <p class="muted">${S.note}</p></section>`;
 }
 
 function diagram(): string {
@@ -534,7 +556,7 @@ function cloudScreen(): string {
   const K = C.consent;
   const on = state.settings.cloudHelp;
   const example = state.lastQuestion
-    ? `<pre>${esc(JSON.stringify(cloudTextRequest(stripQuestion(state.lastQuestion, state.profile).text), null, 2))}</pre>`
+    ? `<pre>${esc(JSON.stringify(state.engine.cloudRequest(stripQuestion(state.lastQuestion, state.profile).text), null, 2))}</pre>`
     : `<p class="muted">${K.exampleNone}</p>`;
   const control = on
     ? `<p class="ok">${K.isOn}</p><button class="primary" data-act="cloud-off">${K.turnOff}</button>`
@@ -545,7 +567,7 @@ function cloudScreen(): string {
     <p>${K.intro}</p>
     <h2>${K.whatHeading}</h2><p>${esc(K.what)}</p>
     <h3>${K.exampleHeading}</h3>${example}
-    <h2>${K.whoHeading}</h2><p>${esc(K.who)}</p>
+    <h2>${K.whoHeading}</h2><p>${esc(K.who)}</p><p class="muted">${esc(K.settings)}</p>
     <h2>${K.neverHeading}</h2><p>${C.privacy.neverSent}</p>
     <h2>${K.termsHeading}</h2><p>${esc(K.terms)} <a href="${K.termsLink}" target="_blank" rel="noopener">${K.termsLinkText}</a></p>
     <p class="muted">${K.pictures}</p>
@@ -589,6 +611,7 @@ function howScreen(): string {
     <p>${H.intro}</p>
     ${diagram()}
     <h2>${H.legs}</h2>${legsTable()}
+    ${settingsPanel()}
     <h2>${H.tallyHeading}</h2><p>${H.tally(tally())}</p>
     ${receiptPanel(true)}
     ${last ? `<h2>${H.traceHeading}</h2><p class="muted">${esc(last.asked)}</p>${traceList(last.trace)}${whyPanel(last, true)}` : ''}
@@ -687,8 +710,32 @@ async function warm() {
   state.warming = false; patchDevice();
 }
 
+/**
+ * Firebase Remote Config, asked once per page load and only when cloud help is on (web/src/ai/remoteConfig.ts): the
+ * cloud model's name and the two routing thresholds. It runs beside the app: no card waits for it, and until it
+ * answers, or if it fails, the defaults in the code run. An answer that arrives while a card is being made is put in
+ * use after that card, so one card is never made with two sets of settings.
+ */
+let settingsAsked = false;
+let settingsWaiting: SettingsReport | null = null;
+function askSettings() {
+  if (!cfg || !state.settings.cloudHelp || settingsAsked) return;
+  settingsAsked = true;
+  state.remote = { ...state.remote, status: 'asking' };
+  void fetchSettings(cfg.firebase).then((r) => { settingsWaiting = r; useSettings(); }).catch(() => { /* fetchSettings never throws; the defaults stay either way */ });
+}
+function useSettings() {
+  if (!settingsWaiting || state.busy) return;
+  state.remote = settingsWaiting;
+  settingsWaiting = null;
+  state.engine.setCloudModel?.(state.remote.values.cloudTextModel);
+  const el = document.querySelector('#settings'); if (el) el.outerHTML = settingsPanel();
+}
+const routing = () => ({ moodWords: state.remote.values.routeMoodWords, minChoices: state.remote.values.routeMinChoices });
+
 async function make(q: string) {
   if (!q.trim()) return;
+  useSettings();
   state.busy = true; state.error = null; state.lastQuestion = q; resetCard(); render();
   // a question asked before the capability check has answered waits for it: the card must not be made as if this
   // computer could not run the private step
@@ -696,14 +743,14 @@ async function make(q: string) {
   try {
     const card = await makeCard(q, {
       profile: state.profile, support: state.settings.support, engine: state.engine,
-      allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available',
+      allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available', routing: routing(),
     });
     setCard(card);
     state.made.push(card);
   } catch (e) {
     state.card = null; state.error = (e as Error).message;
   }
-  state.busy = false; state.waitStart = Date.now(); render();
+  state.busy = false; state.waitStart = Date.now(); useSettings(); render();
 }
 
 function onPersonTap(t: HTMLElement) {
@@ -769,7 +816,7 @@ function act(el: HTMLElement) {
       break;
     case 'export-receipt': {
       const r = sessionReceipt(state.made, state.profile);
-      downloadFile(C.judge.receipt.exportName, JSON.stringify({ app: C.app.name, exportedAt: new Date().toISOString(), page: location.origin, sampleFamily: state.demo, receipt: r }, null, 2), 'application/json');
+      downloadFile(C.judge.receipt.exportName, JSON.stringify({ app: C.app.name, exportedAt: new Date().toISOString(), page: location.origin, sampleFamily: state.demo, settings: state.remote, receipt: r }, null, 2), 'application/json');
       break;
     }
     case 'show-sent': {
@@ -781,7 +828,7 @@ function act(el: HTMLElement) {
     case 'leave-demo': void leaveDemo(); break;
     case 'welcome-setup': state.settings.welcomed = true; saveSettings(); go('about'); break;
     case 'welcome-sample': state.settings.welcomed = true; saveSettings(); go('demo'); break;
-    case 'cloud-on': if (state.consentChecked) { state.settings.cloudHelp = true; saveSettings(); render(); } break;
+    case 'cloud-on': if (state.consentChecked) { state.settings.cloudHelp = true; saveSettings(); askSettings(); render(); } break;
     case 'cloud-off': state.settings.cloudHelp = false; state.consentChecked = false; saveSettings(); render(); break;
     case 'person-add': state.profile.people.push({ id: `p${Date.now().toString(36)}`, name: '', relation: '', household: false }); saveProfile(); render(); break;
     case 'person-remove': state.profile.people.splice(i, 1); saveProfile(); render(); break;
@@ -868,4 +915,5 @@ window.addEventListener('hashchange', () => draw());
 void Promise.all([load(), loadTrial()]).then(async () => {
   if (location.hash.replace(/^#\/?/, '') === 'demo') await enterDemo();
   render(); void refreshDevice();
+  askSettings(); // only if cloud help was already on in this browser; otherwise when it is turned on
 });

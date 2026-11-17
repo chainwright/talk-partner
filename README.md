@@ -57,7 +57,7 @@ After the badge, one line that is always on screen says what left this computer 
 
 Under every card, **"Where each step ran"** lists the private step, the cloud step and the rules, each as *ran on this computer / ran in the cloud / did not run (why) / failed (why)*. A step that did not run says so. In judge mode it stands open under the card; on the partner screen it sits, with "Why this card", "What was sent" and the receipt, inside one closed fold, **"How this card was made"**, so the partner sees only the question, the line to say, the card and the actions. Nothing is removed, only folded.
 
-**One number.** In judge mode, under the chips, one figure at display size says what left this computer this session. It reads "0 bytes left this computer" for as long as no cloud request has been handed to the SDK: that is the case on a bare clone, with cloud help off, and for every card made on this computer (in our recorded runs no host but the app's own was contacted for any of them; loading the page itself is not counted, and the line says so). Once the cloud has answered, the figure is the size of the requests the app handed over and it is called "handed to cloud help"; a request that failed after it was handed over is shown as "may have left", never as 0. The paragraph "How this is counted" is folded behind one link in the receipt.
+**One number.** In judge mode, under the chips, one figure at display size says what left this computer this session. It reads "0 bytes left this computer" for as long as no cloud request has been handed to the SDK: that is the case on a bare clone, with cloud help off, and for every card made on this computer; once cloud help is on, the app has asked Firebase Remote Config for its settings, so the line then reads "0 bytes of any question left this computer" and names that request as not counted (in our recorded runs no host but the app's own was contacted for any of them; loading the page itself is not counted, and the line says so). Once the cloud has answered, the figure is the size of the requests the app handed over and it is called "handed to cloud help"; a request that failed after it was handed over is shown as "may have left", never as 0. The paragraph "How this is counted" is folded behind one link in the receipt.
 
 **Privacy receipt** (judge mode and `#/how`): per session, the size of the requests this app handed to the SDK for the cloud step (the question after the swap, the fixed instructions, the schema, the model name and mode) and the names withheld. It is counted on the recorded request (`core/receipt.ts`), not estimated from the question, and the counted text is in the export so you can check it by hand. It is not a capture of the wire: the SDK's own format, the headers and the App Check token are not counted. "Checked after" searches the sent text once more for About-me words and photo bytes.
 
@@ -73,26 +73,26 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | Where | Line holds | What it is |
 |---|---|---|
 | `web/src/ai/firebaseEngine.ts:26` | `from 'firebase/ai'` | the only import of the SDK in the repo (guarded by `tests/unit/no-direct-model-calls.test.ts`) |
-| `web/src/ai/firebaseEngine.ts:69` | `getAI(` | the AI Logic instance of the private step: its own Firebase app with no App Check, so a card made on this computer contacts no host |
-| `web/src/ai/firebaseEngine.ts:70` | `getGenerativeModel(` | private step model |
-| `web/src/ai/firebaseEngine.ts:71` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
-| `web/src/ai/firebaseEngine.ts:83` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started on the first cloud call only |
-| `web/src/ai/firebaseEngine.ts:84` | `getAI(` | the AI Logic instance of the cloud steps (Gemini Developer API backend) |
-| `web/src/ai/firebaseEngine.ts:85` | `getGenerativeModel(` | stripped step model |
-| `web/src/ai/firebaseEngine.ts:86` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
-| `web/src/ai/firebaseEngine.ts:95` | `getGenerativeModel(` | pictures model (not used in this bundled-pictures build) |
-| `web/src/ai/firebaseEngine.ts:96` | `InferenceMode.ONLY_IN_CLOUD` | its mode |
-| `web/src/ai/firebaseEngine.ts:118` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
-| `web/src/ai/firebaseEngine.ts:132` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
-| `web/src/ai/firebaseEngine.ts:133` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
-| `web/src/ai/firebaseEngine.ts:149` | `generateContent(` | stripped step call |
-| `web/src/ai/firebaseEngine.ts:154` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
-| `web/src/ai/firebaseEngine.ts:165` | `generateContent(` | pictures call (unused in this build) |
-| `web/src/ai/firebaseEngine.ts:185` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app contacts no Google host |
-| `core/pipeline.ts:496` | `ran: r.source` | the private step's trace line is the engine's report |
-| `core/pipeline.ts:598` | `ran: r.source` | the stripped step's trace line is the engine's report |
-| `core/pipeline.ts:626` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:213` | `function badge(` | the badge is drawn from `card.source` only |
+| `web/src/ai/firebaseEngine.ts:73` | `getAI(` | the AI Logic instance of the private step: its own Firebase app with no App Check, so a card made on this computer contacts no host |
+| `web/src/ai/firebaseEngine.ts:74` | `getGenerativeModel(` | private step model |
+| `web/src/ai/firebaseEngine.ts:75` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
+| `web/src/ai/firebaseEngine.ts:90` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started on the first cloud call only |
+| `web/src/ai/firebaseEngine.ts:91` | `getAI(` | the AI Logic instance of the cloud steps (Gemini Developer API backend) |
+| `web/src/ai/firebaseEngine.ts:94` | `getGenerativeModel(` | stripped step model |
+| `web/src/ai/firebaseEngine.ts:95` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
+| `web/src/ai/firebaseEngine.ts:104` | `getGenerativeModel(` | pictures model (not used in this bundled-pictures build) |
+| `web/src/ai/firebaseEngine.ts:105` | `InferenceMode.ONLY_IN_CLOUD` | its mode |
+| `web/src/ai/firebaseEngine.ts:127` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
+| `web/src/ai/firebaseEngine.ts:141` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
+| `web/src/ai/firebaseEngine.ts:142` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
+| `web/src/ai/firebaseEngine.ts:165` | `generateContent(` | stripped step call |
+| `web/src/ai/firebaseEngine.ts:170` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
+| `web/src/ai/firebaseEngine.ts:181` | `generateContent(` | pictures call (unused in this build) |
+| `web/src/ai/firebaseEngine.ts:202` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
+| `core/pipeline.ts:501` | `ran: r.source` | the private step's trace line is the engine's report |
+| `core/pipeline.ts:603` | `ran: r.source` | the stripped step's trace line is the engine's report |
+| `core/pipeline.ts:631` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
+| `web/src/main.ts:216` | `function badge(` | the badge is drawn from `card.source` only |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all. Every cut is visible per card in "Why this card".
@@ -151,6 +151,23 @@ About me could only guess there, so the question stays on this computer: a card 
 otherwise there is no card and the reason is on screen. The rule is narrow on purpose (a what-question with
 "from <an About-me place, food, show or thing>"); "What should we plant at the allotment?" still goes, swapped.
 
+**Firebase Remote Config** (`web/src/ai/remoteConfig.ts`, `core/models.ts`, `remoteconfig.template.json`). Three
+values can be changed in the Firebase console without a new build: the cloud model's name (`cloud_text_model`) and
+the two thresholds of the rule that sends a card made on this computer for a cloud second opinion
+(`route_mood_words`, `route_min_choices`). The code holds a default for each (`gemini-3.5-flash-lite`, 2 and 2), and
+those run whenever Remote Config is not asked, has not answered yet, fails, or sends a value the app cannot run on
+(not a Gemini text model name, or a number outside 1 to 3 and 2 to 3): a refused value is shown as refused, never
+used. No card waits for the answer. It is asked only when cloud help is on, once per page load, because the settings
+concern the cloud step only and a page with cloud help off must contact no host but its own; the request holds the
+app id and a Firebase installation id, no question and nothing from About me, and the consent screen says so.
+**How this works** (`#/how`) shows the three values in use and, for each, whether it came from Remote Config or is
+the default in the code. What Remote Config cannot change is the boundary: which step may see About me is fixed in
+code. The template in the repository is the one published to our project (`npx firebase-tools deploy --only
+remoteconfig`); today its three values equal the defaults, so it changes nothing yet. Checked by
+`tests/unit/remote-config.test.ts` and, against the real service, by `scripts/e2e-cloud.mjs` (not asked with cloud
+help off; with its hosts blocked a card is made at once on the defaults; reachable, the three values read "from
+Remote Config" and the cloud request names that model).
+
 **Limits, stated.** One development machine, one made-up family, one run per question: this shows the path works, not
 how good the cards are. After a browser start the model has to load: the app warms it up at page load with one fixed
 sentence, and that took 16 to 22 s in the four starts we timed (15.8, 17.0, 18.2 and 21.7 s from page load to
@@ -190,7 +207,8 @@ under `@firebase/firestore`, which this app does not import.
 ## Layout
 - `core/`: the shared card logic (rules, privacy swap, prompts, schema, sample family, **`copy.ts`: every string a
   person reads**). Pure TypeScript, no DOM, no Firebase, so every client reuses it unchanged.
-- `web/`: the web client. `web/src/ai/` is the only place that imports `firebase/ai`. `pictos.ts` holds the hand-drawn
+- `web/`: the web client. `web/src/ai/` is the only place that imports `firebase/ai` (`firebaseEngine.ts`) and
+  `firebase/remote-config` (`remoteConfig.ts`). `pictos.ts` holds the hand-drawn
   pictograms (provenance and licence per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper.
 - `tests/unit/`: unit, property and matrix tests, plus a guard that fails on any direct model API call.
   `engine-matrix.test.ts` runs seven card shapes through every combination of on-device model state and cloud

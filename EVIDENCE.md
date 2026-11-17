@@ -40,6 +40,7 @@ devlog were copied; the script makes about a hundred. Paths below are relative t
 | 25 | `core/rules.ts` (`FACT_TARGET`, `quizKind`, `inventedNameFilter`, `selfFilter`) | the same file, groups 1 and 11 | in `check.txt`; `e2e-noconfig.txt`: "two questions, the first with no card" (its first half is a time question) |
 | 26 | `core/pipeline.ts` (`hiddenSubject`, in `cloudCard`) | the same file, group 8 | in `check.txt` |
 | 27 | `core/rules.ts` (`isPainLevel`, `numberScale`, `painBands`) | the same file, group 9 | in `check.txt` |
+| 28 | `web/src/ai/remoteConfig.ts` (`fetchSettings`), `core/models.ts` (`checkSetting`, `settingsFrom`), `web/src/main.ts` (`askSettings`, `settingsPanel`), `remoteconfig.template.json` | `npx vitest run tests/unit/remote-config.test.ts`; live: `node scripts/e2e-cloud.mjs`; the published template: `npx firebase-tools remoteconfig:get` | in `check.txt`; `e2e-cloud.txt`: the three "Remote Config" lines (not asked with cloud help off; unreachable: a card at once, defaults; reachable: three values "from Remote Config") and "the cloud request names the model Remote Config gave"; `remoteconfig-get.txt` |
 
 Also in that folder: `build.txt` (production build, the check that no debug token is bundled, exit 0), `audit.txt`
 (`npm audit --omit=dev`: 4 high advisories, all in the gRPC package under `@firebase/firestore`, which the app does not
