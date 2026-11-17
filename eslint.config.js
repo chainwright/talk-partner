@@ -2,7 +2,8 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**'] },
+  // design/: static mockups kept for reference (browser scripts, not app code)
+  { ignores: ['dist/**', 'node_modules/**', 'design/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction B · Three steps</title>
+<link rel="stylesheet" href="shell.css">
+<style>
+/* Direction B, "Three steps": a guided path (Ask → Show → Answer) with the step always named at the top and four
+   places at the bottom. Light by default: the whole shell takes the person's card palette (white sheet, deep green,
+   near-black ink; the pairs the card already holds at AAA). Follows the system's dark setting with the desk colours. */
+:root { --bg: #eef2f6; --ink: #0f141a; --muted: #4a5361; --line: #c9d1db; --panel: #ffffff; --accent: #0b6e4f; --accent-soft: #d5f5ea; --on-accent: #ffffff; --field: #6b7686; --warn: #8a5300; --card-edge: #c9d1db; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111823; --ink: #e8eef5; --muted: #a9b6c6; --line: #2c3a4b; --panel: #1a2431; --accent: #5fe0b5; --accent-soft: #163a30; --on-accent: #06231a; --field: #7a8a9e; --warn: #ffc266; --card-edge: #2c3a4b; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #111823; --ink: #e8eef5; --muted: #a9b6c6; --line: #2c3a4b; --panel: #1a2431; --accent: #5fe0b5; --accent-soft: #163a30; --on-accent: #06231a; --field: #7a8a9e; --warn: #ffc266; --card-edge: #2c3a4b; color-scheme: dark; }
+.wrap { max-width: 560px; margin: 0 auto; padding: 14px 16px 104px; display: grid; gap: 18px; }
+.top { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.top .who { font-size: 15px; color: var(--muted); }
+h1 { font-size: 30px; line-height: 1.15; }
+.sub { font-size: 17px; color: var(--muted); margin-top: 6px; }
+/* the two doors of the home screen */
+.doors { display: grid; gap: 12px; }
+.door { border-radius: 22px; padding: 18px; min-height: 132px; display: grid; grid-template-columns: 64px 1fr; gap: 16px; align-items: center; border: 2px solid var(--line); background: var(--panel); text-align: left; width: 100%; }
+.door svg { width: 60px; height: 60px; }
+.door b { font-size: 24px; line-height: 1.2; display: block; }
+.door span { font-size: 16px; color: var(--muted); }
+.door.main { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.door.main span { color: var(--on-accent); opacity: .9; }
+.list h2, .label { font-size: 15px; font-weight: 600; color: var(--muted); }
+.list ul { margin: 6px 0 0; padding: 0; }
+.list li { list-style: none; padding: 13px 0; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; font-size: 17px; }
+.list li b { color: var(--accent); white-space: nowrap; }
+/* the stepper: where you are, in words */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0; padding: 0; }
+.steps li { list-style: none; font-size: 15px; font-weight: 600; color: var(--muted); padding-top: 10px; border-top: 5px solid var(--line); }
+.steps li.done { border-color: var(--accent); }
+.steps li.now { border-color: var(--accent); color: var(--ink); font-weight: 700; }
+.backrow { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--muted); min-height: 44px; }
+.backrow svg { width: 22px; height: 22px; }
+textarea.field { min-height: 132px; resize: none; line-height: 1.35; }
+.speak { border-style: dashed; }
+.ex { display: flex; flex-wrap: wrap; gap: 8px; }
+.ex button { min-height: 48px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--field); background: var(--panel); font-size: 16px; }
+.tip { font-size: 16px; color: var(--muted); }
+.chose { border: 2px solid var(--accent); background: var(--accent-soft); border-radius: 18px; padding: 16px; display: flex; align-items: center; gap: 14px; }
+.chose svg { width: 64px; height: 64px; flex: none; color: var(--accent); }
+.chose b { font-size: 26px; display: block; line-height: 1.2; }
+.two-btn { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.two-btn .btn { font-size: 16px; min-height: 52px; padding: 8px 10px; }
+/* first run, screen 2 of 3: online help, yes or no */
+.dots { display: flex; gap: 6px; } .dots i { width: 28px; height: 6px; border-radius: 3px; background: var(--line); } .dots i.on { background: var(--accent); }
+.choice { border: 2px solid var(--field); border-radius: 20px; background: var(--panel); padding: 16px; display: grid; grid-template-columns: 30px 1fr; gap: 12px; text-align: left; width: 100%; }
+.choice .radio { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--field); margin-top: 2px; }
+.choice.sel { border-color: var(--accent); background: var(--accent-soft); }
+.choice.sel .radio { border: 8px solid var(--accent); background: var(--panel); }
+.choice b { font-size: 20px; display: block; line-height: 1.25; margin-bottom: 4px; }
+.choice span { font-size: 16px; line-height: 1.4; }
+/* More */
+.menu { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); overflow: hidden; }
+.menu a { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; padding: 10px 16px; border-top: 1px solid var(--line); color: var(--ink); text-decoration: none; font-weight: 600; }
+.menu a:first-child { border-top: 0; }
+.menu a small { display: block; font-weight: 400; color: var(--muted); font-size: 15px; }
+.menu a::after { content: "›"; color: var(--muted); font-size: 26px; }
+.menu a.inside { background: var(--accent-soft); }
+/* the four places */
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--panel); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px 4px 10px; }
+.tabs a { display: grid; justify-items: center; gap: 2px; font-size: 13.5px; font-weight: 600; color: var(--muted); text-decoration: none; min-height: 56px; align-content: center; }
+.tabs a svg { width: 26px; height: 26px; }
+.tabs a.on { color: var(--accent); }
+.desk-only { display: none; }
+@media (min-width: 900px) {
+  .tabs { position: static; grid-template-columns: repeat(4, auto); justify-content: end; gap: 28px; border: 0; background: none; padding: 0; }
+  .tabs a { grid-auto-flow: column; gap: 8px; font-size: 16px; }
+  body { display: flex; flex-direction: column-reverse; justify-content: flex-end; }
+  .shell-top { order: 2; }
+  .tabs { max-width: 1120px; width: 100%; margin: 0 auto; padding: 18px 32px 0; }
+  .wrap { max-width: 1120px; width: 100%; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 64px; padding: 8px 32px 40px; align-items: start; }
+  .wrap > .top, .wrap > .steps, .wrap > .backrow { grid-column: 1 / -1; }
+  .wrap > .col { display: grid; gap: 18px; }
+  .wrap.one { max-width: 620px; grid-template-columns: 1fr; margin: 0 auto; }
+  .desk-only { display: grid; gap: 10px; } .phone-only { display: none; }
+  h1 { font-size: 40px; }
+}
+@media (max-width: 899px) { .wrap > .col { display: contents; } }
+</style>
+</head>
+<body>
+
+<!-- 1 · home: two doors -->
+<section data-s="1">
+  <main class="wrap">
+    <header class="top"><span class="brand">Talk Partner</span><span class="who">with Frank</span></header>
+    <div class="col">
+      <div><h1>What do you want to do?</h1></div>
+      <div class="doors">
+        <button class="door main"><i data-p="ask"></i><div><b>Ask Frank a question</b><span>You type or say it. He gets a card to point to.</span></div></button>
+        <button class="door"><i data-p="grid"></i><div><b>Quick needs</b><span>Toilet, drink, pain… one tap, no typing.</span></div></button>
+      </div>
+    </div>
+    <div class="col">
+      <div class="list"><h2>Asked before. Tap to ask again</h2><ul><li><span>Do you want coffee or tea?</span><b>tea</b></li><li><span>Are you in pain?</span><b>no</b></li><li><span>Do you want to see Tom?</span><b>yes</b></li></ul></div>
+      <p class="lock"><i data-p="lock"></i>Nothing has left this phone.</p>
+    </div>
+  </main>
+</section>
+
+<!-- 2 · step 1 of 3: ask -->
+<section data-s="2">
+  <main class="wrap">
+    <a class="backrow" href="#1"><i data-p="back"></i>Home</a>
+    <ol class="steps"><li class="now">1 · Ask</li><li>2 · Show</li><li>3 · Answer</li></ol>
+    <div class="col">
+      <div><h1>What do you want to ask Frank?</h1><p class="sub">Ask it the way you normally would.</p></div>
+      <textarea class="field" placeholder="Type your question…" aria-label="Your question"></textarea>
+      <button class="btn speak"><i data-p="mic"></i>Say it instead</button>
+    </div>
+    <div class="col">
+      <div class="stack"><p class="label">Or try one</p><div class="ex"><button>Do you want coffee or tea?</button><button>Are you in pain?</button><button>What do you want for dinner?</button></div></div>
+      <button class="btn primary">Next: make the card</button>
+    </div>
+  </main>
+</section>
+
+<!-- 3 · step 2 of 3: show -->
+<section data-s="3">
+  <main class="wrap">
+    <a class="backrow" href="#2"><i data-p="back"></i>Change the question</a>
+    <ol class="steps"><li class="done">1 · Ask</li><li class="now">2 · Show</li><li>3 · Answer</li></ol>
+    <div class="col">
+      <div class="stack"><p class="label">Say this out loud</p><p class="say">Do you want coffee or tea? Coffee, tea, or something else?</p></div>
+      <div class="person mini phone-only"><h2 class="headline">drink</h2><div class="tiles"><div class="tile"><i data-p="coffee"></i>coffee</div><div class="tile"><i data-p="tea"></i>tea</div><div class="tile escape"><i data-p="else"></i>something else</div></div></div>
+      <button class="btn primary">Show Frank the card</button>
+      <p class="tip">Point to each choice as you say it. Then wait. There is no rush.</p>
+    </div>
+    <div class="col"><div class="desk-only"><p class="label">The card Frank will see</p>
+      <div class="person"><h2 class="headline">drink</h2><div class="tiles"><div class="tile"><i data-p="coffee"></i>coffee</div><div class="tile"><i data-p="tea"></i>tea</div><div class="tile escape"><i data-p="else"></i>something else</div></div></div></div></div>
+  </main>
+</section>
+
+<!-- 4 · step 3 of 3: answer -->
+<section data-s="4">
+  <main class="wrap">
+    <ol class="steps"><li class="done">1 · Ask</li><li class="done">2 · Show</li><li class="now">3 · Answer</li></ol>
+    <div class="col">
+      <div class="chose"><i data-p="yes"></i><div><span class="muted small">Frank chose and said yes to</span><b>tea</b></div></div>
+      <button class="btn primary">Ask the next question</button>
+      <div class="two-btn"><button class="btn quiet">We’re stuck</button><button class="btn quiet">Go over the answers</button></div>
+    </div>
+    <div class="col">
+      <p class="lock"><i data-p="lock"></i>Made on this phone. Nothing was sent.</p>
+      <a class="link" href="#6">How was this card made? →</a>
+    </div>
+  </main>
+</section>
+
+<!-- 5 · first run, screen 2 of 3: online help asked up front -->
+<section data-s="5">
+  <main class="wrap one" style="padding-bottom: 28px">
+    <header class="top"><span class="brand">Talk Partner</span><span class="dots"><i class="on"></i><i class="on"></i><i></i></span></header>
+    <div><h1>May Talk Partner use online help?</h1><p class="sub">Some questions have no choices in them, like “What do you want to do this weekend?”. This phone can’t think of the choices by itself.</p></div>
+    <button class="choice"><span class="radio"></span><div><b>Yes, for those questions</b><span>Only the question goes to Google’s AI. Names you add are swapped first (“Carol” goes as “Person A”). About Frank, photos and answers are never sent.</span></div></button>
+    <button class="choice"><span class="radio"></span><div><b>No, keep it all on this phone</b><span>Yes / no, either-or, feeling and pain questions still get a card. Open questions will not.</span></div></button>
+    <button class="btn primary" style="opacity:.45" disabled>Choose one to go on</button>
+    <p class="small muted">Nothing is chosen for you. You can change this at any time under More. <a class="link" href="#6">See exactly what is sent →</a> · <a class="link" href="#6">Google’s terms</a></p>
+  </main>
+</section>
+
+<!-- 6 · More: the way inside lives here -->
+<section data-s="6">
+  <main class="wrap one">
+    <header class="top"><span class="brand">Talk Partner</span><span class="who">with Frank</span></header>
+    <h1>More</h1>
+    <nav class="menu">
+      <a class="inside" href="#"><span>See how it works inside<small>Every step of every card, what was sent, judge mode</small></span></a>
+      <a href="#"><span>Online help: on<small>Only the question is sent. Tap to turn off</small></span></a>
+      <a href="#"><span>Choices on a card<small>2 at a time</small></span></a>
+      <a href="#"><span>Privacy<small>What stays on this phone, and how to delete it</small></span></a>
+      <a href="#"><span>Send feedback</span></a>
+    </nav>
+    <p class="small muted">Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a therapy, not a diagnosis.</p>
+  </main>
+</section>
+
+<!-- 7 · the person's screen: unchanged from the app -->
+<section data-s="7">
+  <main class="person full"><button class="exit" aria-label="Back (press and hold)"><i data-p="no"></i></button>
+    <h2 class="headline">drink</h2>
+    <div class="tiles"><button class="tile"><i data-p="coffee"></i>coffee</button><button class="tile"><i data-p="tea"></i>tea</button><button class="tile escape"><i data-p="else"></i>something else</button></div>
+  </main>
+</section>
+
+<nav class="tabs" aria-label="Places">
+  <a data-t="1 2 3 4" href="#1"><i data-p="ask"></i>Ask</a>
+  <a data-t="" href="#1"><i data-p="grid"></i>Needs</a>
+  <a data-t="" href="#1"><i data-p="person"></i>About Frank</a>
+  <a data-t="6" href="#6"><i data-p="more"></i>More</a>
+</nav>
+
+<script src="mock.js"></script>
+<script>
+// the bottom bar is hidden on the first-run screen and on the person's card; the tab of the screen on show is lit
+function tabs() {
+  const n = document.body.dataset.screen;
+  document.querySelector('.tabs').style.display = n === '5' || n === '7' ? 'none' : '';
+  document.querySelectorAll('.tabs a').forEach((a) => a.classList.toggle('on', a.dataset.t.split(' ').includes(n)));
+}
+addEventListener('hashchange', tabs); tabs();
+</script>
+</body>
+</html>
