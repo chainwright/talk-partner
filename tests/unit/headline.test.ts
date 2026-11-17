@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { heuristicTopic, orHeadline, validTopic } from '../../core/rules';
 import { SAMPLE_PROFILE } from '../../core/sample';
 import type { ModelOutput, Profile } from '../../core/types';
@@ -11,7 +11,7 @@ import { PROFILE } from './fixtures';
 
 class Fake implements Engine {
   label = 'fake';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   cloudConfigured = true;
   cloudCalls: string[] = [];
   constructor(private dev: ModelOutput | null) {}
@@ -23,8 +23,6 @@ class Fake implements Engine {
   }
   cloudRequest(q: string) { return cloudTextRequest(q); }
   async runCloud(q: string): Promise<ModelResult> { this.cloudCalls.push(q); return { text: '{"topic":"x","kind":"choice","choices":["a","b"]}', source: 'in-cloud', ms: 3 }; }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 const env = (engine: Engine, profile: Profile = PROFILE, deviceReady = true) => ({ profile, support: 'more' as const, engine, allowCloud: true, deviceReady });
 

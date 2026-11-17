@@ -9,14 +9,14 @@ import { COPY } from '../../core/copy';
 import type { CloudError, DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
 import { cardReceipt, sessionReceipt, sessionTally, utf8Bytes } from '../../core/receipt';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { SAMPLE_PROFILE } from '../../core/sample';
 import type { ModelOutput } from '../../core/types';
 
 type Cloud = 'ok' | 'error-after-send' | 'offline-not-sent' | 'bad-json' | 'unconfigured';
 class E implements Engine {
   label = 'truth';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   readonly cloudConfigured: boolean;
   /** What reached the "network" of this stand-in: recorded before any failure, like a real request. */
   wire: string[] = [];
@@ -32,8 +32,6 @@ class E implements Engine {
     if (this.c === 'bad-json') return { text: 'sorry, I cannot', source: 'in-cloud', ms: 8 };
     return { text: '{"topic":"weekend","kind":"choice","choices":["a walk","a film"]}', source: 'in-cloud', ms: 8 };
   }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 // `sleep`: the one retry of a failed cloud call does not make the tests wait
 const env = (e: E, allowCloud = true) => ({ profile: SAMPLE_PROFILE, support: 'more' as const, engine: e, allowCloud, deviceReady: false, sleep: async () => {} });

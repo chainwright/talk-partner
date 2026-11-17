@@ -9,25 +9,26 @@
 //                                                                             is unavailable and waits while it downloads.
 //   stripped   PREFER_IN_CLOUD   question with About-me words swapped out     no profile data, so falling back to the device
 //                                                                             when offline is safe.
-//   pictures   ONLY_IN_CLOUD     one generic word                             images can't be made on device (not used in
-//                                                                             the bundled-pictures build).
+//
+// Two steps, two models. There is no third: pictures are bundled, and the picture-generation model this file once
+// defined and never called was removed on 17 Nov 2026.
 //
 // inferenceSource is read on every response. The private leg treats anything but on-device as an error.
 //
 // Two Firebase app instances, on purpose. The private leg runs on its own app with NO App Check: App Check loads a
 // script from Google the moment it starts, and a card made on this computer must not contact any host at all
-// (measured in devlog/ondevice_proof_1/). The cloud legs run on the default app, with App Check, started on the first
+// (measured in devlog/ondevice_proof_1/). The cloud leg runs on the default app, with App Check, started on the first
 // cloud call only.
 
 import { initializeApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import {
-  getAI, getGenerativeModel, GoogleAIBackend, InferenceMode, InferenceSource, ResponseModality, type GenerativeModel,
+  getAI, getGenerativeModel, GoogleAIBackend, InferenceMode, InferenceSource, type GenerativeModel,
 } from 'firebase/ai';
 import type { DeviceStatus, Engine, ModelResult } from '../../../core/engine';
-import { CLOUD_IMAGE_MODEL, CLOUD_TEXT_MODEL } from '../../../core/models';
+import { CLOUD_TEXT_MODEL } from '../../../core/models';
 import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, SYSTEM_PROMPT, cloudPrompt } from '../../../core/prompt';
-import { cloudTextRequest, pictureRequestBody, pictureText } from '../../../core/requests';
+import { cloudTextRequest } from '../../../core/requests';
 import { defaultApp } from './app';
 
 const IO = {
@@ -56,9 +57,9 @@ export interface WebConfig {
 export class FirebaseEngine implements Engine {
   readonly label = 'Firebase AI Logic hybrid inference';
   readonly cloudConfigured: boolean;
-  readonly modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  readonly modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   private privateModel: GenerativeModel | null = null;
-  private cloudModels: { text: GenerativeModel; images: GenerativeModel } | null = null;
+  private cloudModel: GenerativeModel | null = null;
   /** The cloud text model in use: the in-code default until Remote Config gives a checked name (core/models.ts). */
   private textModel = CLOUD_TEXT_MODEL;
   private cloudAi: ReturnType<typeof getAI> | null = null;
@@ -77,11 +78,11 @@ export class FirebaseEngine implements Engine {
     }));
   }
 
-  /** The cloud legs: the default Firebase app with App Check (Firebase AI Logic requires it before the first cloud request). */
-  private get cloud(): { text: GenerativeModel; images: GenerativeModel } {
-    if (this.cloudModels) return this.cloudModels;
+  /** The cloud leg: the default Firebase app with App Check (Firebase AI Logic requires it before the first cloud request). */
+  private get cloud(): GenerativeModel {
+    if (this.cloudModel) return this.cloudModel;
     const cfg = this.cfg;
-    // the app, App Check and the AI Logic instance are started once; only the models are built again when Remote
+    // the app, App Check and the AI Logic instance are started once; only the model is built again when Remote
     // Config names another cloud model (setCloudModel)
     if (!this.cloudAi) {
       const app: FirebaseApp = defaultApp(cfg.firebase);
@@ -94,7 +95,7 @@ export class FirebaseEngine implements Engine {
       this.cloudAi = getAI(app, { backend: new GoogleAIBackend(), useLimitedUseAppCheckTokens: true });
     }
     const ai = this.cloudAi;
-    const text = getGenerativeModel(ai, {
+    return (this.cloudModel = getGenerativeModel(ai, {
       mode: InferenceMode.PREFER_IN_CLOUD,
       inCloudParams: {
         model: this.textModel,
@@ -103,12 +104,7 @@ export class FirebaseEngine implements Engine {
         generationConfig: { responseMimeType: 'application/json', responseJsonSchema: CARD_SCHEMA as any },
       },
       onDeviceParams: { createOptions: { ...IO, initialPrompts: sys(CLOUD_SYSTEM_PROMPT) }, promptOptions: { responseConstraint: CARD_SCHEMA } },
-    });
-    const images = getGenerativeModel(ai, {
-      mode: InferenceMode.ONLY_IN_CLOUD,
-      inCloudParams: { model: CLOUD_IMAGE_MODEL, generationConfig: { responseModalities: [ResponseModality.TEXT, ResponseModality.IMAGE] } },
-    });
-    return (this.cloudModels = { text, images });
+    }));
   }
 
   /**
@@ -155,7 +151,7 @@ export class FirebaseEngine implements Engine {
   setCloudModel(model: string) {
     if (model === this.textModel) return;
     this.textModel = model;
-    this.cloudModels = null;
+    this.cloudModel = null;
   }
 
   cloudRequest(strippedQuestion: string) {
@@ -165,7 +161,7 @@ export class FirebaseEngine implements Engine {
   async runCloud(strippedQuestion: string): Promise<ModelResult> {
     if (!this.cloudConfigured) throw Object.assign(new Error('cloud help is not set up (App Check)'), { notSent: true });
     const t0 = performance.now();
-    const r = await this.cloud.text.generateContent(cloudPrompt(strippedQuestion)).catch((e: Error) => {
+    const r = await this.cloud.generateContent(cloudPrompt(strippedQuestion)).catch((e: Error) => {
       // the browser knew it was offline: the request certainly did not leave. Anything else: it may have.
       throw Object.assign(e, { notSent: typeof navigator !== 'undefined' && navigator.onLine === false });
     });
@@ -176,15 +172,6 @@ export class FirebaseEngine implements Engine {
     return { text: r.response.text(), source, ms };
   }
 
-  pictureRequest(word: string) {
-    return pictureRequestBody(word);
-  }
-
-  async picture(word: string): Promise<string | null> {
-    const r = await this.cloud.images.generateContent(pictureText(word));
-    const part = r.response.inlineDataParts()?.[0];
-    return part ? `data:${part.inlineData.mimeType};base64,${part.inlineData.data}` : null;
-  }
 }
 
 /**
@@ -194,7 +181,7 @@ export class FirebaseEngine implements Engine {
  */
 export class LazyFirebaseEngine implements Engine {
   readonly label = 'Firebase AI Logic hybrid inference';
-  readonly modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  readonly modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   readonly cloudConfigured: boolean;
   private inner: FirebaseEngine | null = null;
   private textModel = CLOUD_TEXT_MODEL;
@@ -218,6 +205,4 @@ export class LazyFirebaseEngine implements Engine {
   runDevice(prompt: string) { return this.e.runDevice(prompt); }
   cloudRequest(strippedQuestion: string) { return cloudTextRequest(strippedQuestion, this.textModel); }
   runCloud(strippedQuestion: string) { return this.e.runCloud(strippedQuestion); }
-  pictureRequest(word: string) { return pictureRequestBody(word); }
-  picture(word: string) { return this.e.picture(word); }
 }

@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { SAMPLE_PROFILE } from '../../core/sample';
 import { findLeaks, hasPlaceholder } from '../../core/strip';
 import type { Card, ModelOutput } from '../../core/types';
@@ -16,7 +16,7 @@ type CloudState = 'off' | 'unconfigured' | 'throws' | 'offline-device-fallback' 
 
 class MatrixEngine implements Engine {
   label = 'matrix';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   deviceCalls: string[] = [];
   cloudCalls: string[] = [];
   readonly cloudConfigured: boolean;
@@ -42,8 +42,6 @@ class MatrixEngine implements Engine {
     if (this.c === 'throws' || this.c === 'unconfigured') throw new Error('cloud failed');
     return { text: JSON.stringify(this.cloudOut), source: this.c === 'offline-device-fallback' ? 'on-device' : 'in-cloud', ms: 1 };
   }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 
 const MODELS: ModelState[] = ['ready', 'garbage-options', 'wrong-kind', 'topic-is-option', 'empty', 'throws', 'absent'];

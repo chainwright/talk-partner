@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { dropGenericWho } from '../../core/rules';
 import { SAMPLE_PROFILE } from '../../core/sample';
 import type { Card, ModelOutput, SupportLevel } from '../../core/types';
@@ -16,7 +16,7 @@ import { PROFILE } from './fixtures';
 
 class CloudOnly implements Engine {
   label = 'fake';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   cloudConfigured = true;
   cloudCalls: string[] = [];
   constructor(private cloud: ModelOutput) {}
@@ -25,8 +25,6 @@ class CloudOnly implements Engine {
   async runDevice(): Promise<ModelResult> { throw new Error('no device model'); }
   cloudRequest(q: string) { return cloudTextRequest(q); }
   async runCloud(q: string): Promise<ModelResult> { this.cloudCalls.push(q); return { text: JSON.stringify(this.cloud), source: 'in-cloud', ms: 3 }; }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 const env = (e: Engine, support: SupportLevel = 'more', profile = SAMPLE_PROFILE) => ({ profile, support, engine: e, allowCloud: true, deviceReady: false });
 const answers = (c: Card) => c.choices.filter((x) => x.role === 'answer').map((x) => x.label);

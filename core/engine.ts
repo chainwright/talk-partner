@@ -1,8 +1,9 @@
 // The one seam between the shared core and a platform client. Every implementation runs ALL model calls
-// through Firebase AI Logic (web: firebase/ai; Android: firebase-ai + firebase-ai-ondevice; iOS: FirebaseAILogic).
+// through Firebase AI Logic. There is one implementation, the web client (firebase/ai); the seam is written so that
+// another client could be added, and none exists.
 // There is no direct model engine: tests/unit/no-direct-model-calls.test.ts fails the build if one appears.
 
-import { cloudTextRequest, pictureRequestBody } from './requests';
+import { cloudTextRequest } from './requests';
 
 export type DeviceStatus = 'available' | 'downloadable' | 'downloading' | 'unavailable';
 
@@ -25,7 +26,7 @@ export interface Engine {
   /** True only when a real Firebase config is present. */
   readonly cloudConfigured: boolean;
   /** Mode names used for each step, shown in the UI so the boundary is visible. */
-  readonly modes: { device: string; cloud: string; pictures: string };
+  readonly modes: { device: string; cloud: string };
   deviceStatus(): Promise<DeviceStatus>;
   /** Must be called from a user gesture if a download is needed. */
   prepareDevice(onProgress?: (p: number) => void): Promise<void>;
@@ -39,10 +40,6 @@ export interface Engine {
   cloudRequest(strippedQuestion: string): unknown;
   /** Cloud step: receives only the stripped question. Throws if the cloud is not configured. */
   runCloud(strippedQuestion: string): Promise<ModelResult>;
-  /** The exact request body for one picture word. */
-  pictureRequest(word: string): unknown;
-  /** Generates a picture for a generic word (cloud only; images cannot be made on device). Data URL or null. */
-  picture(word: string): Promise<string | null>;
 }
 
 /**
@@ -53,14 +50,12 @@ export interface Engine {
 export class NullEngine implements Engine {
   readonly label = 'no project settings: rules only';
   readonly cloudConfigured = false;
-  readonly modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  readonly modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   async deviceStatus(): Promise<DeviceStatus> { return 'unavailable'; }
   async prepareDevice(): Promise<void> { throw new Error(NullEngine.WHY); }
   async runDevice(): Promise<ModelResult> { throw new Error(NullEngine.WHY); }
   /** What cloud help would get, for the "what would be sent" panel; nothing is ever sent from this engine. */
   cloudRequest(strippedQuestion: string): unknown { return cloudTextRequest(strippedQuestion); }
   async runCloud(): Promise<ModelResult> { throw new Error(NullEngine.WHY); }
-  pictureRequest(word: string): unknown { return pictureRequestBody(word); }
-  async picture(): Promise<string | null> { return null; }
   static readonly WHY = 'this copy has no project settings';
 }

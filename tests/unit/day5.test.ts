@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard, repairCard } from '../../core/pipeline';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { SAMPLE_PROFILE, SAMPLE_QUESTIONS } from '../../core/sample';
 import { splitQuestion } from '../../core/rules';
 import type { Card, ModelOutput } from '../../core/types';
@@ -15,7 +15,7 @@ const W = COPY.how.why;
 
 class Fake implements Engine {
   label = 'fake';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   cloudConfigured = true;
   cloudCalls: string[] = [];
   constructor(private dev: ModelOutput | null, private cloud: ModelOutput | null = { topic: 'x', kind: 'choice', choices: ['one thing', 'another thing'] }, private cloudSource: 'in-cloud' | 'on-device' = 'in-cloud') {}
@@ -24,8 +24,6 @@ class Fake implements Engine {
   async runDevice(): Promise<ModelResult> { if (!this.dev) throw new Error('no model'); return { text: JSON.stringify(this.dev), source: 'on-device', ms: 3 }; }
   cloudRequest(q: string) { return cloudTextRequest(q); }
   async runCloud(q: string): Promise<ModelResult> { this.cloudCalls.push(q); if (!this.cloud) throw new Error('cloud failed'); return { text: JSON.stringify(this.cloud), source: this.cloudSource, ms: 3 }; }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 const env = (e: Fake, extra: Record<string, unknown> = {}) => ({ profile: SAMPLE_PROFILE, support: 'more' as const, engine: e, allowCloud: true, deviceReady: true, ...extra });
 const choice = (choices: string[], topic = 'x', options?: string[]): ModelOutput => ({ topic, kind: 'choice', choices, options });

@@ -9,7 +9,7 @@ import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { CLOUD_TEXT_MODEL, DEFAULT_SETTINGS, REMOTE_KEYS, checkSetting, defaultReport, settingsFrom, type RuntimeSettings } from '../../core/models';
 import { makeCard } from '../../core/pipeline';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { route } from '../../core/rules';
 import type { ModelOutput } from '../../core/types';
 import { PROFILE } from './fixtures';
@@ -121,15 +121,13 @@ describe('the routing thresholds', () => {
   });
 
   class E implements Engine {
-    label = 'e'; modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' }; cloudConfigured = true; cloudCalls = 0;
+    label = 'e'; modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' }; cloudConfigured = true; cloudCalls = 0;
     constructor(private dev: ModelOutput) {}
     async deviceStatus(): Promise<DeviceStatus> { return 'available'; }
     async prepareDevice() {}
     async runDevice(): Promise<ModelResult> { return { text: JSON.stringify(this.dev), source: 'on-device', ms: 1 }; }
     cloudRequest(q: string) { return cloudTextRequest(q); }
     async runCloud(): Promise<ModelResult> { this.cloudCalls++; return { text: JSON.stringify({ topic: 'x', kind: 'choice', choices: ['a walk', 'a rest'] }), source: 'in-cloud', ms: 1 }; }
-    pictureRequest(w: string) { return pictureRequestBody(w); }
-    async picture() { return null; }
   }
   const dev: ModelOutput = { topic: 'afternoon', kind: 'choice', choices: ['a film', 'a drive'] };
   it('a card is made the same way when no settings were ever fetched (the pipeline needs none)', async () => {

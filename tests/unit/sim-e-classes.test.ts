@@ -8,7 +8,7 @@ import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { partnerActions } from '../../core/actions';
 import { makeCard } from '../../core/pipeline';
 import { badgeKind, modelAsked, sessionTally } from '../../core/receipt';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { codeOptions, codePair, dropWhichOne, validateOptions, whenChoices, isUnguessable, listedAnswers, noticeLead, quizKind, quizRephrase, splitQuestion } from '../../core/rules';
 import { findLeaks, restoreNames, stripQuestion } from '../../core/strip';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
@@ -17,7 +17,7 @@ import { PROFILE } from './fixtures';
 /** A scripted engine: null = that step is not there. Every call is recorded. */
 class Scripted implements Engine {
   label = 'scripted';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   calls: string[] = [];
   sent: string[] = [];
   cloudConfigured: boolean;
@@ -27,8 +27,6 @@ class Scripted implements Engine {
   async runDevice(): Promise<ModelResult> { this.calls.push('device'); return { text: JSON.stringify(this.dev), source: 'on-device', ms: 3 }; }
   cloudRequest(q: string) { return cloudTextRequest(q); }
   async runCloud(q: string): Promise<ModelResult> { this.calls.push('cloud'); this.sent.push(q); return { text: JSON.stringify(this.cloud), source: 'in-cloud', ms: 4 }; }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 /** What a model returns when it has not understood: loose words, and "options" that are not the question's. */
 const JUNK: ModelOutput = { topic: 'thing', kind: 'choice', choices: ['one thing', 'another thing', 'a third thing'], options: ['thing now', 'other'] };

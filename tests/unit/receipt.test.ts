@@ -5,7 +5,7 @@ import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
 import { cardReceipt, countSwaps, questionInPayload, sentLine, sessionReceipt, utf8Bytes } from '../../core/receipt';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { SAMPLE_PROFILE } from '../../core/sample';
 import { stripQuestion } from '../../core/strip';
 import type { ModelOutput, Profile } from '../../core/types';
@@ -13,7 +13,7 @@ import type { ModelOutput, Profile } from '../../core/types';
 type CloudState = 'off' | 'offline' | 'ok' | 'throws';
 class E implements Engine {
   label = 'receipt';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   cloudConfigured = true;
   sent: string[] = [];
   constructor(private c: CloudState, private dev: ModelOutput | null = null) {}
@@ -26,8 +26,6 @@ class E implements Engine {
     this.sent.push(q);
     return { text: '{"topic":"weekend","kind":"choice","choices":["the lake","church"]}', source: this.c === 'offline' ? 'on-device' : 'in-cloud', ms: 9 };
   }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 const env = (e: E, c: CloudState, profile: Profile = SAMPLE_PROFILE, dev = false) => ({ profile, support: 'more' as const, engine: e, allowCloud: c !== 'off', deviceReady: dev });
 const Q = 'What should we do at the lake with Jen this weekend?';

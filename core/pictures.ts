@@ -1,5 +1,6 @@
 // Which picture a choice gets. Built-in pictographs for fixed words, the person's own photo or initial for names,
-// and a cloud-generated picture only for a generic word (never a name or an About-me item: see strip.ts pictureWord).
+// and for a generic word a marker that it has no bundled picture (the tile then shows the word alone). No picture is
+// generated anywhere: the picture-generation step this marker was written for was removed on 17 Nov 2026.
 
 import { BODY_DETAIL, BODY_REGIONS, findPerson, isPartnerName } from './rules';
 import { pictureWord } from './strip';

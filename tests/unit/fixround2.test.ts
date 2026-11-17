@@ -2,7 +2,7 @@
 // single-part body map, and no quiz questions (KB §7 rule 9). All examples are new: none come from any held-out set.
 import { describe, expect, it } from 'vitest';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { makeCard } from '../../core/pipeline';
 import { BODY_DETAIL, BODY_REGIONS, fitFilter, isQuiz, normalizeQuestion, orPair, quizRephrase } from '../../core/rules';
 import type { ModelOutput, SupportLevel } from '../../core/types';
@@ -10,7 +10,7 @@ import { PROFILE } from './fixtures';
 
 class Fake implements Engine {
   label = 'fake';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   cloudConfigured = true;
   deviceCalls: string[] = [];
   cloudCalls: string[] = [];
@@ -20,8 +20,6 @@ class Fake implements Engine {
   async runDevice(p: string): Promise<ModelResult> { this.deviceCalls.push(p); return { text: JSON.stringify(this.dev), source: 'on-device', ms: 5 }; }
   cloudRequest(q: string) { return cloudTextRequest(q); }
   async runCloud(q: string): Promise<ModelResult> { this.cloudCalls.push(q); return { text: JSON.stringify(this.cloud), source: 'in-cloud', ms: 7 }; }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 const env = (engine: Engine, support: SupportLevel = 'more') => ({ profile: PROFILE, support, engine, allowCloud: true, deviceReady: true });
 const labels = (c: { choices: { label: string }[] }) => c.choices.map((x) => x.label);

@@ -8,7 +8,7 @@ import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { BUILTIN, pictureFor } from '../../core/pictures';
 import { bodyDetailCard, makeCard, quizOverrideCard } from '../../core/pipeline';
 import { aboutBlock } from '../../core/prompt';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { findPerson, inventedNameFilter, recognitionPool } from '../../core/rules';
 import { SAMPLE_PROFILE } from '../../core/sample';
 import { findLeaks, stripQuestion } from '../../core/strip';
@@ -21,7 +21,7 @@ type CloudState = 'off' | 'unconfigured' | 'throws' | 'offline' | 'ok';
 
 class E implements Engine {
   label = 'trace';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   deviceCalls = 0;
   cloudCalls = 0;
   readonly cloudConfigured: boolean;
@@ -35,8 +35,6 @@ class E implements Engine {
     if (this.c === 'throws' || this.c === 'unconfigured') throw new Error('cloud failed');
     return { text: '{"topic":"weekend","kind":"choice","choices":["the lake","church"]}', source: this.c === 'offline' ? 'on-device' : 'in-cloud', ms: 9 };
   }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 const env = (e: E, m: ModelState, c: CloudState, profile: Profile = SAMPLE_PROFILE) => ({ profile, support: 'more' as const, engine: e, allowCloud: c !== 'off', deviceReady: m !== 'absent' });
 const step = (card: Card, s: 'private' | 'stripped' | 'code') => card.trace!.find((t) => t.step === s)!;

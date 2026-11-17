@@ -8,7 +8,7 @@ import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { partnerActions } from '../../core/actions';
 import { cloudRetryWait, makeCard, quizOverrideCard } from '../../core/pipeline';
 import { cardReceipt, sentLine } from '../../core/receipt';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { findLeaks, restoreNames, stripQuestion } from '../../core/strip';
 import { isAuxYesNo, isPainLevel, optOutTrim, orList, quizKind, quizRephrase } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
@@ -17,7 +17,7 @@ import { PROFILE } from './fixtures';
 /** A scripted engine: null = that step is not there. Every call is recorded; `fail` makes the next cloud calls throw. */
 class Scripted implements Engine {
   label = 'scripted';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   calls: string[] = [];
   sent: string[] = [];
   fail: Error[] = [];
@@ -33,8 +33,6 @@ class Scripted implements Engine {
     if (e) throw e;
     return { text: JSON.stringify(this.cloud), source: 'in-cloud', ms: 4 };
   }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 const ANY: ModelOutput = { topic: 'thing', kind: 'choice', choices: ['one thing', 'another thing', 'a third thing'] };
 const ask = (q: string, e: Scripted, support: SupportLevel = 'more', profile: Profile = PROFILE, extra: object = {}) =>

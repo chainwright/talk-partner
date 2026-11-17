@@ -7,14 +7,14 @@ import { describe, expect, it } from 'vitest';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard, needsNoModel } from '../../core/pipeline';
 import { cardReceipt } from '../../core/receipt';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { COPY } from '../../core/copy';
 import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS, SAMPLE_STEP } from '../../core/sample';
 
 /** An engine that records every call and fails it: the first card must never reach one. */
 class Tripwire implements Engine {
   label = 'tripwire';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   cloudConfigured = true;
   calls: string[] = [];
   async deviceStatus(): Promise<DeviceStatus> { return 'available'; }
@@ -22,8 +22,6 @@ class Tripwire implements Engine {
   async runDevice(): Promise<ModelResult> { this.calls.push('device'); throw new Error('must not run'); }
   cloudRequest(q: string) { return cloudTextRequest(q); }
   async runCloud(): Promise<ModelResult> { this.calls.push('cloud'); throw new Error('must not run'); }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { this.calls.push('picture'); return null; }
 }
 
 describe('the card judge mode opens with', () => {

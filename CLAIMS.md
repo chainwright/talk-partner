@@ -58,4 +58,4 @@ number.
   `sim-d-classes.test.ts`, `sim-e-classes.test.ts`); every rehearsal so far has found classes the one before had not.
 - Any number from the 9–10 Nov prototype (16 of 50, 39 of 50) as a result of this build. They are in the README as the
   reason for one design cut and are marked as pre-period.
-- Image generation, text-to-speech, sync between two devices, Android or iOS. The pictures step is defined and unused.
+- Image generation, text-to-speech, sync between two devices, Android or iOS. Every picture is bundled; the picture-generation step that was defined and never called was removed on 17 Nov 2026.

@@ -6,8 +6,8 @@ import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
 import { aboutBlock } from '../../core/prompt';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
-import { pictureWord, stripQuestion } from '../../core/strip';
+import { cloudTextRequest } from '../../core/requests';
+import { stripQuestion } from '../../core/strip';
 import type { ModelOutput, Profile } from '../../core/types';
 
 /** Every string in a copy group, functions called with sample arguments. */
@@ -73,7 +73,7 @@ const containsWord = (hay: string, needle: string) => new RegExp(`(^|[^A-Za-z'])
 
 class Fake implements Engine {
   label = 'fake';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   cloudConfigured = true;
   cloudCalls: string[] = [];
   constructor(private dev: ModelOutput | null) {}
@@ -82,8 +82,6 @@ class Fake implements Engine {
   async runDevice(): Promise<ModelResult> { if (!this.dev) throw new Error('no model'); return { text: JSON.stringify(this.dev), source: 'on-device', ms: 3 }; }
   cloudRequest(q: string) { return cloudTextRequest(q); }
   async runCloud(q: string): Promise<ModelResult> { this.cloudCalls.push(q); return { text: '{"topic":"x","kind":"choice","choices":["one thing","another thing"]}', source: 'in-cloud', ms: 3 }; }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 
 /** Every payload the core can build for a question: the cloud text request and a picture request per choice word. */
@@ -99,10 +97,8 @@ async function payloads(q: string): Promise<string[]> {
     const c = await makeCard(q, { profile: RICH, support: 'mild', engine: e, allowCloud: true, deviceReady: !!dev });
     for (const sent of e.cloudCalls) out.push(JSON.stringify(cloudTextRequest(sent)));
     if (c.cloudPayload) out.push(c.cloudPayload);
-    for (const ch of c.choices) {
-      const w = pictureWord(ch.label, RICH);
-      if (w && ch.picture.type === 'cloud') out.push(JSON.stringify(pictureRequestBody(ch.picture.word)));
-    }
+    // (until 17 Nov 2026 the picture requests were collected here too; the picture-generation step was never called
+    // and was removed, so the cloud text request is the only payload the core can build)
   }
   return out;
 }

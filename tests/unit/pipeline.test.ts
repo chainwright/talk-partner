@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { assemble, bodyDetailCard, makeCard, parseModelOutput } from '../../core/pipeline';
 import { aboutBlock, devicePrompt } from '../../core/prompt';
 import { isGenericWord, restoreNames, stripQuestion } from '../../core/strip';
@@ -9,7 +9,7 @@ import { PROFILE } from './fixtures';
 
 class FakeEngine implements Engine {
   label = 'fake';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   deviceCalls: string[] = [];
   cloudCalls: string[] = [];
   constructor(
@@ -30,8 +30,6 @@ class FakeEngine implements Engine {
     this.cloudCalls.push(q);
     return { text: JSON.stringify(this.cloudOut), source: 'in-cloud', ms: 1500 };
   }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 
 const env = (engine: Engine, extra: Partial<Parameters<typeof makeCard>[1]> = {}) => ({
@@ -242,9 +240,7 @@ describe('helpers', () => {
     expect(parseModelOutput('nonsense')).toBeNull();
     expect(parseModelOutput('```json\n{"topic":"t","kind":"weird","choices":["a",1]}\n```')).toEqual({ topic: 't', kind: 'choice', choices: ['a'], options: [] });
   });
-  it('the picture request carries one word and nothing else', () => {
-    const body = JSON.stringify(pictureRequestBody('umbrella'));
-    expect(body).toContain('Word: umbrella');
-    for (const w of PROFILE_WORDS) expect(body).not.toContain(w);
-  });
+  // 17 Nov 2026: the test "the picture request carries one word and nothing else" stood here. The picture-generation
+  // step it checked was defined and never called, and was removed (core/requests.ts, web/src/ai/firebaseEngine.ts):
+  // there is no picture request any more. What a tile shows for a generic word is still checked above ("pictures: …").
 });

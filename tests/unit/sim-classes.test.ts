@@ -7,7 +7,7 @@ import { partnerActions } from '../../core/actions';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard, needsNoModel } from '../../core/pipeline';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { isContactQ, isPainLevel, isQuiz, optOutTrim, orList, orPair, positiveForm, splitQuestion, yesNoTopic } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
@@ -15,7 +15,7 @@ import { PROFILE } from './fixtures';
 /** A scripted engine: null = that step is not there. Every call is recorded. */
 class Scripted implements Engine {
   label = 'scripted';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   calls: string[] = [];
   sent: string[] = [];
   cloudConfigured: boolean;
@@ -25,8 +25,6 @@ class Scripted implements Engine {
   async runDevice(): Promise<ModelResult> { this.calls.push('device'); return { text: JSON.stringify(this.dev), source: 'on-device', ms: 3 }; }
   cloudRequest(q: string) { return cloudTextRequest(q); }
   async runCloud(q: string): Promise<ModelResult> { this.calls.push('cloud'); this.sent.push(q); return { text: JSON.stringify(this.cloud), source: 'in-cloud', ms: 4 }; }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 const ANY: ModelOutput = { topic: 'thing', kind: 'choice', choices: ['one thing', 'another thing', 'a third thing'] };
 const ask = (q: string, e: Scripted, support: SupportLevel = 'more', profile: Profile = PROFILE) =>

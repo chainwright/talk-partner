@@ -7,14 +7,14 @@ import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard, needsNoModel } from '../../core/pipeline';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { fromAboutMe, plainPair } from '../../core/rules';
 import { SAMPLE_PROFILE } from '../../core/sample';
 import type { ModelOutput } from '../../core/types';
 
 class Fake implements Engine {
   label = 'fake';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   cloudConfigured = true;
   deviceCalls: string[] = [];
   cloudCalls: string[] = [];
@@ -24,8 +24,6 @@ class Fake implements Engine {
   async runDevice(p: string): Promise<ModelResult> { this.deviceCalls.push(p); return { text: JSON.stringify(this.dev), source: 'on-device', ms: 3 }; }
   cloudRequest(q: string) { return cloudTextRequest(q); }
   async runCloud(q: string): Promise<ModelResult> { this.cloudCalls.push(q); return { text: JSON.stringify(this.cloud), source: 'in-cloud', ms: 3 }; }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 const env = (e: Engine, allowCloud = true) => ({ profile: SAMPLE_PROFILE, support: 'more' as const, engine: e, allowCloud, deviceReady: true });
 const labels = (c: { choices: { label: string }[] }) => c.choices.map((x) => x.label);

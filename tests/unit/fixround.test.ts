@@ -3,7 +3,7 @@
 // the tuning set or either held-out set.
 import { describe, expect, it } from 'vitest';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { makeCard } from '../../core/pipeline';
 import { pictureFor } from '../../core/pictures';
 import { commaOrPair, fitFilter, hasNegative, isOrNot, madeUpVariants, orPair, snapToProfile } from '../../core/rules';
@@ -32,7 +32,7 @@ const RICH: Profile = {
 
 class Fake implements Engine {
   label = 'fake';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   cloudCalls: string[] = [];
   cloudConfigured = true;
   constructor(private dev: ModelOutput | null, private cloud: ModelOutput = { topic: 'x', kind: 'choice', choices: ['one thing', 'another thing'] }) {}
@@ -41,8 +41,6 @@ class Fake implements Engine {
   async runDevice(): Promise<ModelResult> { return { text: JSON.stringify(this.dev), source: 'on-device', ms: 5 }; }
   cloudRequest(q: string) { return cloudTextRequest(q); }
   async runCloud(q: string): Promise<ModelResult> { this.cloudCalls.push(q); return { text: JSON.stringify(this.cloud), source: 'in-cloud', ms: 7 }; }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 const env = (engine: Engine, profile: Profile, extra: Record<string, unknown> = {}) => ({
   profile, support: 'more' as SupportLevel, engine, allowCloud: true, deviceReady: true, ...extra,

@@ -21,7 +21,6 @@ offline; `inferenceSource` drives every badge.** All AI inference goes through F
 |---|---|---|---|
 | Private card | question + the family's About-me lists | `ONLY_ON_DEVICE` | Family data must never fall back to the cloud. `PREFER_ON_DEVICE` would send this prompt to the cloud while Gemini Nano is missing or downloading. |
 | Stripped card | the question with every About-me word swapped for "Person A", "Place A"… and a word that looks like a name the family didn't list (a capitalised word, the word after a title such as "Dr.", a lowercase word that is not an everyday English word) swapped for "Name A" | `PREFER_IN_CLOUD` | Holds no profile data, so an offline fall-back to the device is safe. |
-| Pictures | one generic word | `ONLY_IN_CLOUD` | Not used in this build: pictures are bundled. |
 
 The same question through the two steps, in our recorded run: "What do you want to do this weekend?" gives
 *lake / church* on this computer (the family's own places, read from About me by Gemini Nano; nothing sent) and
@@ -89,23 +88,20 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 
 | Where | Line holds | What it is |
 |---|---|---|
-| `web/src/ai/firebaseEngine.ts:26` | `from 'firebase/ai'` | the only import of the SDK in the repo (guarded by `tests/unit/no-direct-model-calls.test.ts`) |
-| `web/src/ai/firebaseEngine.ts:73` | `getAI(` | the AI Logic instance of the private step: its own Firebase app with no App Check, so a card made on this computer contacts no host |
-| `web/src/ai/firebaseEngine.ts:74` | `getGenerativeModel(` | private step model |
-| `web/src/ai/firebaseEngine.ts:75` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
-| `web/src/ai/firebaseEngine.ts:90` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started on the first cloud call only |
-| `web/src/ai/firebaseEngine.ts:94` | `getAI(` | the AI Logic instance of the cloud steps (Gemini Developer API backend), with `useLimitedUseAppCheckTokens: true`: a fresh short-lived App Check token per cloud request |
-| `web/src/ai/firebaseEngine.ts:97` | `getGenerativeModel(` | stripped step model |
-| `web/src/ai/firebaseEngine.ts:98` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
-| `web/src/ai/firebaseEngine.ts:107` | `getGenerativeModel(` | pictures model (not used in this bundled-pictures build) |
-| `web/src/ai/firebaseEngine.ts:108` | `InferenceMode.ONLY_IN_CLOUD` | its mode |
-| `web/src/ai/firebaseEngine.ts:130` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
-| `web/src/ai/firebaseEngine.ts:144` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
-| `web/src/ai/firebaseEngine.ts:145` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
-| `web/src/ai/firebaseEngine.ts:168` | `generateContent(` | stripped step call |
-| `web/src/ai/firebaseEngine.ts:173` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
-| `web/src/ai/firebaseEngine.ts:184` | `generateContent(` | pictures call (unused in this build) |
-| `web/src/ai/firebaseEngine.ts:205` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
+| `web/src/ai/firebaseEngine.ts:27` | `from 'firebase/ai'` | the only import of the SDK in the repo (guarded by `tests/unit/no-direct-model-calls.test.ts`) |
+| `web/src/ai/firebaseEngine.ts:74` | `getAI(` | the AI Logic instance of the private step: its own Firebase app with no App Check, so a card made on this computer contacts no host |
+| `web/src/ai/firebaseEngine.ts:75` | `getGenerativeModel(` | private step model |
+| `web/src/ai/firebaseEngine.ts:76` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
+| `web/src/ai/firebaseEngine.ts:91` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started on the first cloud call only |
+| `web/src/ai/firebaseEngine.ts:95` | `getAI(` | the AI Logic instance of the cloud step (Gemini Developer API backend), with `useLimitedUseAppCheckTokens: true`: a fresh short-lived App Check token per cloud request |
+| `web/src/ai/firebaseEngine.ts:98` | `getGenerativeModel(` | stripped step model |
+| `web/src/ai/firebaseEngine.ts:99` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
+| `web/src/ai/firebaseEngine.ts:126` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
+| `web/src/ai/firebaseEngine.ts:140` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
+| `web/src/ai/firebaseEngine.ts:141` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
+| `web/src/ai/firebaseEngine.ts:164` | `generateContent(` | stripped step call |
+| `web/src/ai/firebaseEngine.ts:169` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
+| `web/src/ai/firebaseEngine.ts:192` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
 | `core/pipeline.ts:656` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:771` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:799` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
@@ -220,7 +216,7 @@ under `@firebase/firestore`, which this app does not import.
   payload form), who receives it, what is never sent, and the data-use terms; one checkbox turns it on, one tap turns it off.
 - **Judge mode** (`#/demo`): a made-up family, a first card already on screen (coffee or tea, read in code), then, where the browser has Gemini Nano, the first open question asked by the app itself and answered on this computer, one-tap questions of each kind, and per card a "where each step ran" line
   built only from what the SDK reported (`inferenceSource`). A step that did not run says so and why. Nothing claims
-  on-device unless the device answered. **How this works** (`#/how`): the three steps, a diagram, the session tally,
+  on-device unless the device answered. **How this works** (`#/how`): the two steps, a diagram, the session tally,
   the last card's trace and "why", and the look-alikes named above.
 
 ## Layout

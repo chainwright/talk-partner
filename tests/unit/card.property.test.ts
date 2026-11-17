@@ -5,7 +5,7 @@ import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { pictureFor } from '../../core/pictures';
 import { makeCard } from '../../core/pipeline';
-import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
+import { cloudTextRequest } from '../../core/requests';
 import { codePair, hasNegative } from '../../core/rules';
 import { findLeaks, hasPlaceholder, isGenericWord } from '../../core/strip';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
@@ -78,7 +78,7 @@ type CloudState = 'off' | 'unconfigured' | 'throws' | 'offline' | 'ok';
 
 class RandomEngine implements Engine {
   label = 'random';
-  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD', pictures: 'ONLY_IN_CLOUD' };
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   deviceCalls: string[] = [];
   cloudCalls: string[] = [];
   readonly cloudConfigured: boolean;
@@ -98,8 +98,6 @@ class RandomEngine implements Engine {
     if (this.c === 'throws' || this.c === 'unconfigured') throw new Error('cloud failed');
     return { text: JSON.stringify(this.cloud), source: this.c === 'offline' ? 'on-device' : 'in-cloud', ms: 1 };
   }
-  pictureRequest(w: string) { return pictureRequestBody(w); }
-  async picture() { return null; }
 }
 
 const cap = (s: SupportLevel) => (s === 'mild' ? 3 : 2);
