@@ -12,8 +12,8 @@ coffee or tea?", read in code, with no model and nothing sent. It is there so th
 sees; it is not the AI part.
 
 **What happens next depends on your browser, and the status line at the top says which.** In desktop Chrome with
-Gemini Nano the first step runs by itself, with no click: when the model has loaded (a few seconds; up to about 20 s
-right after the browser starts) the app asks "What do you want to do this weekend?" and the model on this computer
+Gemini Nano the first step runs by itself, with no click: when the model has loaded (a few seconds; 16 to 22 s
+right after the browser starts, in the four starts we timed) the app asks "What do you want to do this weekend?" and the model on this computer
 makes the card from the family's About me: *lake / church / something else*, badge **On this computer**, taken from
 the SDK's `inferenceSource`. Nothing is sent, and this step is made with cloud help left out whatever the setting.
 
