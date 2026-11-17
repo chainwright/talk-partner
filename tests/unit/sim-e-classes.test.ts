@@ -316,3 +316,37 @@ describe('E-5. three options, a "nothing" at the end, words before and after the
     expect(answers(viaModel)).toEqual(['better', 'worse', 'the same']);
   });
 });
+
+describe('E-6. the partner\'s name in the question means someone else is asking: it stays a name, never "you" / "me"', () => {
+  // set E: a carer asked "… Honey to sit with you tonight, or Carol?" and the tile read "you", the line "…, me, or something else?"
+  const QUESTIONS: [string, string[]][] = [
+    ['Do you want Maria or Grace?', ['Maria', 'Grace']],
+    ['Should I ask Maria or Leo?', ['Maria', 'Leo']],
+    ['Shall I fetch Maria or Sam?', ['Maria', 'Sam']],
+  ];
+  for (const [state, engine] of STATES) {
+    it.each(QUESTIONS)(`${state}: %s`, async (q, want) => {
+      const card = await ask(q, engine());
+      expect(answers(card)).toEqual(want);
+      const maria = card.choices.find((c) => c.label === 'Maria')!;
+      expect(maria.spoken).toBe('Maria');
+      expect(maria.picture).toMatchObject({ type: 'person' });
+      expect(card.say).toContain('Maria');
+      expect(card.say).not.toMatch(/\b(?:me|Me)\b(?=,| or)/);
+      for (const c of card.choices) expect(c.label).not.toMatch(/^you\b/i);
+    });
+  }
+  it('a model that copies the options keeps her name too, with its possessive', async () => {
+    const card = await ask("Do you want the cricket on, or is Maria watching her programme?", new Scripted({ topic: 'telly', kind: 'choice', choices: [], options: ['cricket', "Maria's programme"] }));
+    expect(answers(card)).toEqual(['cricket', "Maria's programme"]);
+    expect(card.say).toContain("Maria's programme");
+  });
+  it('when the question does not name her, she is asking: "you" on the card, "me" in the line, "your" / "my" for what is hers', async () => {
+    const who = await ask('Who do you want to sit with this evening?', new Scripted({ topic: 'evening', kind: 'choice', choices: ['Maria', 'Grace'] }));
+    expect(who.choices[0]).toMatchObject({ label: 'you', spoken: 'me' });
+    const what = await ask('What shall we watch this evening?', new Scripted({ topic: 'telly', kind: 'choice', choices: ["Maria's programme", 'cricket'] }));
+    expect(what.choices.map((c) => c.label)).toContain('your programme');
+    expect(what.choices.find((c) => c.label === 'your programme')!.spoken).toBe('my programme');
+    for (const c of what.choices) expect(c.label).not.toMatch(/you's/);
+  });
+});

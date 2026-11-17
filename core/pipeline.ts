@@ -66,12 +66,18 @@ function unseenPeople(q: string, profile?: Profile): string[] | null {
   return pool.length >= 2 ? pool : null;
 }
 
-function toChoices(answers: string[], escapes: string[], profile: Profile): Choice[] {
+function toChoices(answers: string[], escapes: string[], profile: Profile, asked = ''): Choice[] {
+  // A partner does not call herself by name: when the question itself says "Carol" ("… or is Carol watching her
+  // show?", "… Honey to sit with you, or Carol?"), someone else is asking, and Carol is a third person on the card
+  // and in the line to say (set E, 16 Nov: the tile read "you", the line "Honey, me, or something else?").
+  const named = !!profile.partnerName && new RegExp(`(?<![\\p{L}\\p{N}])${profile.partnerName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{N}])`, 'iu').test(asked);
   const mk = (label: string, role: Choice['role']): Choice => {
-    const isMe = role === 'answer' && isPartnerName(label, profile);
+    const isMe = role === 'answer' && !named && isPartnerName(label, profile);
     // Rule 7: never the partner's own name on the card. The person points at "you"; the partner reads "me".
-    const shown = isMe ? label.replace(new RegExp(`\\b${profile.partnerName}\\b`, 'i'), 'you') : label;
-    const spoken = isMe ? label.replace(new RegExp(`\\b${profile.partnerName}\\b`, 'i'), 'me') : label;
+    // ("Carol's show" is "your show" / "my show", not "you's show")
+    const swap = (you: string, your: string) => label.replace(new RegExp(`\\b${profile.partnerName}['’]s(?![\\p{L}])`, 'i'), your).replace(new RegExp(`\\b${profile.partnerName}\\b`, 'i'), you);
+    const shown = isMe ? swap('you', 'your') : label;
+    const spoken = isMe ? swap('me', 'my') : label;
     // "a lot (6 to 10)" keeps the picture of "a lot"
     return { label: shown, spoken, role, picture: pictureFor(isMe ? 'you' : label.replace(/\s*\(\d[^)]*\)$/, ''), profile) };
   };
@@ -81,7 +87,7 @@ function toChoices(answers: string[], escapes: string[], profile: Profile): Choi
 /** KB §7 rule 5: up to 3 choices at "mild", 2 at "more" and "most"; always exactly one escape. Numbers as figures (§2.9). */
 function finish(base: Omit<Card, 'choices' | 'say'>, answers: string[], escapes: string[], profile: Profile, support: SupportLevel, cap = choiceCap(support)): Card {
   const when = questionType(base.asked) === 'when';
-  const choices = toChoices(answers.slice(0, cap).map((a) => figures(a, when)), escapes.slice(0, 1), profile);
+  const choices = toChoices(answers.slice(0, cap).map((a) => figures(a, when)), escapes.slice(0, 1), profile, base.asked);
   return { ...base, choices, say: spokenLine(base.asked, choices.map((c) => c.spoken)) };
 }
 
