@@ -309,6 +309,9 @@ export function orPair(q: string): [string, string] | null {
   // "book the taxi for Friday or hold off": counting two words off the left gave "for Friday" against "hold off". A
   // left side that opens with a preposition the right side does not share is the tail of a clause: read both as clauses.
   if (aw.length > 1 && /^(?:for|to|at|on|with|by|from|about|in)$/i.test(aw[0]) && lc(bw[0]) !== lc(aw[0]) && !isTimeOnly(b)) return clausePair(q) ?? [a, b];
+  // "take the dog out or stay home": the second side is something to do, and two words counted off the first gave
+  // "dog out". Read both as clauses.
+  if (bw.length >= 2 && ACTION_START.test(b) && !ACTION_START.test(a) && !LIST_VERB.test(`${a} x`)) return clausePair(q) ?? [a, b];
   if (lc(a) === lc(b) || NEG.test(a) || NEG.test(b)) return null;
   return [a, b];
 }
@@ -393,7 +396,7 @@ function leftClause(left: string): string | null {
   return kept[0] ?? null;
 }
 
-const LABEL_BAD = new RegExp(`^(?!do\\s+(?:it|that|this|the|your)\\b)(?:${AUX}\\s+(?:you|i|we|it|that|this|there|he|she|they|the|your)|what|where|who|when|which|how|why)\\b`, 'i');
+const LABEL_BAD = new RegExp(`^(?!(?:do|have)\\s+(?:it|that|this|the|your)\\b)(?:${AUX}\\s+(?:you|i|we|it|that|this|there|he|she|they|the|your)|what|where|who|when|which|how|why)\\b`, 'i');
 
 /**
  * Rule 3 (part). "A ..., or B ...?" is an either-or question even when the sides are long clauses. Each side is
@@ -420,7 +423,7 @@ export function clausePair(q: string): [string, string] | null {
 
 const stem = (w: string) => lc(w).replace(/'s$/, '').replace(/(?:ing|ed|es|s)$/, '');
 // ("do it for you", "do your exercises": there "do" is the verb of the option, not a question's auxiliary left over)
-const LEFTOVER_START = new RegExp(`^(?!do\\s+(?:it|that|this|your|my|the|some)\\b)(?:is|was|are|were|am|do|does|did|would|will|can|could|should|shall|want|wanna|like|rather|prefer|fancy|mean|need|shall|should|would|will|could|can|going|gonna)\\b`, 'i');
+const LEFTOVER_START = new RegExp(`^(?!(?:do|have)\\s+(?:it|that|this|your|my|the|some|a|an)\\b)(?:is|was|are|were|am|do|does|did|would|will|can|could|should|shall|want|wanna|like|rather|prefer|fancy|mean|need|shall|should|would|will|could|can|going|gonna)\\b`, 'i');
 // ("you" is not here: "help you", "come with you" are whole options; a leftover "do you" is caught by its first word)
 const LEFTOVER_END = /\b(?:to|for|at|with|of|the|a|an|and|or|have|be|going|get|do|is|are|was|were|your|i|we|my)$/i;
 // (a bare "you" is what is left of "thank you" or "help you" when a side is counted off one word short)

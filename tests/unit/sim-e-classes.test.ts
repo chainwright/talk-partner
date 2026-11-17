@@ -584,6 +584,12 @@ describe('E-12. no cut or glued labels, and no headline that is a leftover or th
     expect(validateOptions(['cricket', 'a record'], 'Do you want the cricket on, or shall I put a record on?', PROFILE)).toEqual(['cricket', 'record']);
     expect(validateOptions(['the library', 'the market'], 'Shall we walk down to the library, or would you rather we went to the market?', PROFILE)).toEqual(['library', 'market']);
   });
+  it('a thing with its verb against something to do: both sides are read as clauses', async () => {
+    // (found while re-running set E: "take the dog out or stay home" gave "dog out")
+    expect(answers(await ask('Do you want to put the bins out or leave them till morning?', new Scripted(null)))).toEqual(['put the bins out', 'leave them']);
+    expect(answers(await ask('Shall we go to the library or stay in?', new Scripted(null)))).toEqual(['go to the library', 'stay in']);
+    expect(answers(await ask('Do you want to have your shower or wait a bit?', new Scripted(null)))).toEqual(['have your shower', 'wait a bit']);
+  });
   it('a name About me knows is written as About me writes it', async () => {
     expect(answers(await ask('shall we ring grace or leo?', new Scripted(null)))).toEqual(['Grace', 'Leo']);
   });
