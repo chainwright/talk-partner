@@ -11,7 +11,20 @@ command started (it was, for every file there: the scripts wrote into a folder o
 logs name as `<scratch>` for their screenshots, and the files were copied here afterwards), and the exit code at the
 end. Of the layout screenshots only the eight named below or in the devlog were copied; the script makes about fifty. Paths below are relative to that folder unless they start with `devlog/`.
 
-**Commit hashes.** The hashes in these documents and in the saved logs are from our working history. The public history has the same commits, in the same order and with the same dates, re-made under new hashes; `devlog/PUBLIC_HASH_MAP.md` gives working hash → public hash for each. The name `ondevice-proof-1` in some log headers is a tag of the working history on commit `1092be7`; it is not in the public repository.
+**Since those runs (17 Nov, later): two features and what was run again.** The quick-needs board (`7080ebf`) and
+voice input (`a1e1b2d`) were added, then one on-screen sentence was changed (`8810f8f`, the last commit that changes
+code or text on screen), a script was added (`0eeca4e`) and one hosting header (`20d2b19`). Saved at those commits,
+each on a clean tree, in `devlog/evidence_r9/final/`: `check.txt` (1770 tests), `build.txt`, `e2e-noconfig.txt`
+(25/25), `shots.txt` (121/121), `fonts-check.txt` (6/6) and `eval-rules.txt` (40 of 42, 0 of 18: unchanged), all at
+`8810f8f`; `e2e-needs.txt` (12/12), run from `20d2b19`; and the on-device run, `ondevice_at_a1e1b2d/` (43/43, at
+`a1e1b2d`, one on-screen sentence of "How this works" before `8810f8f`; its log names ten screenshots, of which two
+were copied). **Not run again:** the cloud script on localhost and the labelled set on the on-device model; for those
+the runs at `deebc94` and `c346d3d` below stand, and nothing in the two features touches a rule, a prompt or a model
+call (`git diff deebc94..8810f8f -- core/rules.ts core/pipeline.ts core/prompt.ts core/strip.ts web/src/ai` is
+empty). Rows 40 and 41 below point into `evidence_r9`; the other rows still name the files of `evidence_r8`, where
+the counts are the older ones (1714 tests, 16/16, 87/87).
+
+**Commit hashes.** The hashes in these documents and in the saved logs are from our working history. The public history has the same commits, in the same order and with the same dates, re-made under new hashes; `devlog/PUBLIC_HASH_MAP.md` gives working hash → public hash for each. The name `ondevice-proof-1` in some log headers is a tag of the working history on commit `1092be7`; it is not in the public repository. The commits of 17 Nov after `335d604` (`7080ebf`, `a1e1b2d`, `8810f8f`, `0eeca4e`, `20d2b19` and the document commits after them) get their rows in that map when they are put into the public history.
 
 **One set of runs is at an earlier commit:** the labelled set on the on-device model (row 16) was run three times on
 17 Nov at `c346d3d`, on a clean tree: `devlog/evidence_r8/heldout_at_c346d3d/` (three on-device runs and the
@@ -60,6 +73,8 @@ those runs) and one comment (`git diff c346d3d..deebc94 -- core web`); the rules
 | 37 | `web/src/ai/firebaseEngine.ts`, `web/src/ai/remoteConfig.ts`, `firebase.json`; `devlog/SUBMISSION_NOTES.md` | `node scripts/e2e-cloud.mjs --url https://talk-partner.web.app/` | `devlog/evidence_live/`: the App Check and Remote Config hosts in the live log. Enforcement: nothing saved, because it is not switched on |
 | 38 | `core/copy.ts` (`judge.step.none`, `judge.step.notDownloaded`), `web/src/main.ts` (`statusLine`) | `npx vitest run tests/unit/first-card.test.ts`; `node scripts/e2e-cloud.mjs` | in `check.txt`; `e2e-cloud.txt`: "no on-device model in this browser: the status line says so plainly" |
 | 39 | `core/recorded.ts`, `web/src/main.ts` (`recordedBlock`) | `npx vitest run tests/unit/recorded.test.ts`; `node scripts/e2e-cloud.mjs`; `npm run e2e:noconfig`; `node scripts/e2e-ondevice.mjs --port 9335` | in `check.txt` (every value of the recording is in `devlog/evidence_r7/final/ondevice/RUN_LOG.md`); `e2e-cloud.txt`: the two "recording" lines; `cloud_shots/00-recording-of-the-on-device-step.png`; `ondevice/RUN_LOG.md`: no recording is offered where the model is |
+| 40 | `core/needs.ts` (`needsCard`, `needLine`), `core/copy.ts` (`needs`), `web/src/main.ts` (`openNeeds`, the `needs` branches of `personView` and `cardPanel`), `web/src/pictos.ts`, `web/src/styles.css` (`.tiles.needs`) | `npx vitest run tests/unit/needs.test.ts`; `npm run e2e:noconfig`; `node scripts/e2e-needs.mjs` (dev server running), and with `--url https://talk-partner.web.app/`; `node scripts/shots.mjs` | `devlog/evidence_r9/final/check.txt`; `e2e-noconfig.txt` there: "the network is off for the rest of this run" and the seven "offline:" lines after it (the network is switched off in the browser, a request to the app's own host fails, then the board, the check, the partner's line, "pain" to the body card, the way out; 17 cards and "0 bytes left this computer") and "no host contacted but the app itself"; `e2e-needs.txt`: the same on the dev server with "the page started no request for any of it"; on the hosted copy: `devlog/evidence_live/e2e-needs_live_2026-11-17_8810f8f.txt` (12/12); sizes at 390 and 1280 px: `shots.txt`, the "quick-needs board" lines (smallest target 84 px on the phone, 130 px on the desktop; one screen, no scrolling); pictures `shots/phone_27-needs-board.png`, `phone_28-needs-check.png`, `desktop_29-needs-partner-side.png`. Nothing saved shows a person using it: nobody has |
+| 41 | `web/src/voice.ts` (`createVoice`, `recognitionCtor`, `localAvailable`, `tidy`), `core/copy.ts` (`voice`; `judge.receipt.number`), `web/src/main.ts` (`voiceButton`, `voiceNote`, `startVoice`, `onVoice`, `badgeLine`, `privacyLine`) | `npx vitest run tests/unit/voice.test.ts`; `node scripts/shots.mjs`; `node scripts/e2e-needs.mjs`; `npm run e2e:noconfig` | `devlog/evidence_r9/final/check.txt`; `shots.txt` there: the "voice input" lines, made in a real page with a scripted recognition object put in place of the browser's (the notice before anything listens; en-US, interim results; interim words in the field; the final words; no new card; the card's line "nothing sent by this app · the question was spoken …"; "0 bytes handed to cloud help by this app"; a blocked microphone; no button and no error without the API); pictures `shots/phone_30-voice-notice.png`, `phone_31-voice-listening.png`, `desktop_32-voice-card.png`. With the browser's real object, only its presence and the notice: `e2e-needs.txt`, `e2e-noconfig.txt` and, on the hosted copy, `devlog/evidence_live/e2e-needs_live_2026-11-17_8810f8f.txt` ("on-device speech recognition for en-US, as this browser reports it: downloadable"). **No run has a microphone, a voice or a speech service in it**, and none shows where a real browser sends the sound |
 
 The badge "Made in code (AI answer not used)" (row 2): `core/receipt.ts` (`badgeKind`, `modelAsked`), `tests/unit/sim-e-classes.test.ts`, group E-10.
 
@@ -71,8 +86,23 @@ import; exit 1 is the audit's own), `fonts-check.txt` (no request leaves the app
 Rows 6, 13 and 14 (live part) need a Firebase project's web config in `.env.local`. Rows 5, 7 and the on-device pass
 of 16 need desktop Chrome with Gemini Nano. For those we can only show our saved runs.
 
-**The hosted copy** serves the build of `deebc94` since 17 Nov 2026 (the served bundle was compared byte for byte with
-the local build). Two runs against it, both in `devlog/evidence_live/`:
+**The hosted copy** serves the build of `8810f8f` since 17 Nov 2026, about 13:53 UTC (every served file was compared
+with the local build by its SHA-256; deploy log `devlog/evidence_live/deploy_2026-11-17_8810f8f.txt`, which is of the
+second deploy, at `20d2b19`: the same files and the `no-cache` header for `/`). Runs against it, in
+`devlog/evidence_live/`:
+- `e2e-needs_live_2026-11-17_8810f8f.txt`: `node scripts/e2e-needs.mjs --url https://talk-partner.web.app/`, 12/12:
+  the microphone button and its notice; then, with the network switched off in the browser, the quick-needs board
+  from the first tap to the partner's line, with no request started by the page (pictures in
+  `needs_live_2026-11-17_8810f8f/`).
+- `e2e-cloud_live_2026-11-17_8810f8f.txt`: `node scripts/e2e-cloud.mjs --url https://talk-partner.web.app/`, 28/28.
+- By hand, not by a kept script, in the Chrome that has Gemini Nano (157, headless, port 9335): the page loaded the
+  new bundle, the microphone button and "Quick needs" were there, the first step ran by itself (`[ai-logic]
+  leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device`, lake / church, "nothing left this computer"), the board
+  opened and checked a tap with the network off, and the only host contacted was the site's own. The full on-device
+  script was not run against the hosted copy at this build.
+
+Before that it served the build of `deebc94` (the served bundle was compared byte for byte with
+the local build). Two runs against that build, both in `devlog/evidence_live/`:
 - `e2e-cloud_live_2026-11-17_deebc94.txt`: `node scripts/e2e-cloud.mjs --url https://talk-partner.web.app/`, 28/28: the
   cloud step through App Check (reCAPTCHA Enterprise), Remote Config, and the recording of the on-device step in a
   browser without the model.

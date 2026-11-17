@@ -14,14 +14,17 @@ Talk Partner helps **the partner** ask the way a speech therapist would: it turn
 written-choice card (a keyword, two choices, pictured where we have drawn a picture, an escape every time, a
 tick/cross check) and gives the partner the exact line to say. It never picks or confirms the person's answer: only
 their tap does. Pictures today: yes / no, feelings, the body map, people (a photo or an initial), coffee and tea, the
-ways out. The family's own places and foods ("lake", "pot roast") are words for now (`PICTOGRAMS.md`).
+ways out, and the eight needs of the quick-needs board. The family's own places and foods ("lake", "pot roast") are
+words for now (`PICTOGRAMS.md`).
 
 Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a therapy, not a diagnosis.
 
 ## Where the AI runs (Firebase AI Logic hybrid inference)
 **Family data → `ONLY_ON_DEVICE`; the stripped question → `PREFER_IN_CLOUD`, which falls back to Gemini Nano when
-offline; `inferenceSource` drives every badge.** All AI inference goes through Firebase AI Logic. The code is in
-**`web/src/ai/firebaseEngine.ts`**.
+offline; `inferenceSource` drives every badge.** Every model call that makes a card goes through Firebase AI Logic. The
+code is in **`web/src/ai/firebaseEngine.ts`**. (One thing on the partner's side is not ours and not Firebase: the
+optional microphone uses the browser's own speech recognition to type the partner's question. It makes no card; see
+[Two things that need no AI of ours](#two-things-that-need-no-ai-of-ours-17-nov).)
 
 | Step | Gets | Mode | Why |
 |---|---|---|---|
@@ -34,9 +37,42 @@ The same question through the two steps, in our recorded run: "What do you want 
 [Where the AI runs, in detail](#where-the-ai-runs-in-detail).
 
 Built for #BuildHybridAI 2026. Status on 17 Nov 2026, in three lines:
-- **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo>. It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone.
+- **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo>. It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI) and a microphone for the partner's question (the browser's speech recognition, not ours), both untried by anyone they are for.
 - **One number, at commit `c346d3d`:** on the 18 open questions of our own labelled set, rules alone make no card (0 of 18); the on-device model made a card matching our label for 16 of 18 in each of three runs, 13 of them with the family's own people, places or foods. Our labels and a set the rules have since been changed around: not a held-out test, not a trial with people.
 - **Every claim with its status:** `CLAIMS.md` (and `JUDGES.md` for the 60-second path, `EVIDENCE.md` for claim → file, command, saved output). No video yet, no trial with people yet. How it got here, day by day: `devlog/` (the long form of this paragraph is kept in `devlog/DAY12.md`).
+
+## Two things that need no AI of ours (17 Nov)
+Both were added on 17 Nov 2026. **No carer and no person with aphasia has used either**; what is tested is the code
+(`CLAIMS.md` rows 40 and 41).
+
+**Quick needs.** One button in the top bar of every partner screen (or the address `#/needs`) puts a fixed board on
+the person's screen: *toilet, drink, food, pain, tired, too hot, too cold, call someone*, and *something else*. Each
+tile is one of our own line pictograms with its word. A tap is checked like every choice ("So: toilet. Right?" with a
+tick and a cross); after the tick the person's screen shows the need and nothing else, and the partner's side gets one
+short line for it ("Go now. The rest can wait."; after *pain*, one tap asks "Where does it hurt?", the body card).
+*Something else* is checked the same way and hands back to the question box and "We're stuck". The board is made in
+code (`core/needs.ts`, which imports the copy and the types and nothing else): no model, no About me, no request, so
+it works with no connection **once the page is open**. There is no offline install: a page that has never loaded, or
+is reloaded with no network, does not open. Nine tiles is more than the two or three of a card; that is our choice
+for needs that cannot wait for a question to be typed, not something the sources measured.
+
+**Voice input, for the partner's question only.** Where the browser has speech recognition (the Web Speech API), a
+microphone button sits between the question field and "Make card". The words appear in the field as they are heard
+and stay there: nothing is submitted until the partner has read them and pressed "Make card". Where the browser has
+no speech recognition the button is not drawn. The app never tries to recognise the person's speech.
+**Where the sound goes is the browser's business, and we say what we know:** in Chrome, speech recognition may send
+the sound to Google's servers to be turned into text, names included; other browsers use their own service. The app
+shows that sentence on the first press and listens only after a yes. The Chrome we checked (157) also has an
+on-device option (`processLocally`, with `SpeechRecognition.available` to ask about it): the app asks the browser
+whether on-device recognition is available for US English and uses it only then, without ever installing a language
+pack. **We have not seen that path run:** on our machine that Chrome answers "downloadable", not "available", so
+every real use there would go through the default service, and the on-device branch is covered by unit tests with a
+scripted recognition object only. We have not tested recognition
+with a real voice at all (no microphone in the automated runs): what is tested is the wiring. Once a question has
+been spoken through the default service, the lines that say "nothing left this computer" give way: the card reads
+"nothing sent by this app · the question was spoken: your browser's speech recognition may have sent the sound", and
+the session figure reads "0 bytes handed to cloud help by this app" and names the sound as not counted. The receipt
+cannot count it: the app never sees it.
 
 It also corrects **the partner**, quietly, where a rule can tell: two questions in one become "One thing at a time: showing the first"; a memory question becomes "You know this one: tell, don't test."; a "you don't want …, do you?" question is asked the plain way ("Do you want …?"), so that a yes on the card means yes. The person is never corrected. The partner screen opens on that: "It corrects how you ask. It never answers for them." (the limits of both halves are in `CLAIMS.md`, row 11).
 
@@ -49,11 +85,11 @@ No account, no sign-in. What you get depends on what the copy has:
 
 | This copy has | What works |
 |---|---|
-| nothing (a bare clone, no `.env.local`) | every card that code decides alone: coffee or tea, yes / no, the feeling scale, the body map, the memory coaching, "We're stuck". An open question gets an honest "No card". Nothing contacts any host but the app's own (`npm run e2e:noconfig`, 16 checks) |
+| nothing (a bare clone, no `.env.local`) | every card that code decides alone: coffee or tea, yes / no, the feeling scale, the body map, the memory coaching, "We're stuck". An open question gets an honest "No card". Also the quick-needs board, and the microphone where the browser has speech recognition. The page contacts no host but the app's own (`npm run e2e:noconfig`, 25 checks, the board with the network switched off); the one exception is not the page's doing: a partner who uses the microphone hands the sound to the browser's speech recognition, which in Chrome may be Google's |
 | the Firebase web config in `.env.local` (see **Run**) | the above, plus cloud help for open questions once you turn it on |
 | the config and desktop Chrome with Gemini Nano | the above, plus the private step on this computer: open questions answered with the family's own names and places, nothing sent |
 
-Hosted copy: <https://talk-partner.web.app/#/demo>. It is the build of commit `deebc94` with our project settings, so it is the second or the third row of this table, depending on your browser. Both rows are recorded on the hosted copy itself (`devlog/evidence_live/`: the cloud step in a browser without the model, and the on-device step in a Chrome that has Gemini Nano). In a browser without Gemini Nano the "Sample family" line ends with **See what the on-device step makes →**: a recording of that step from our machine, labelled as a recording.
+Hosted copy: <https://talk-partner.web.app/#/demo>. It is the build of commit `8810f8f` with our project settings, so it is the second or the third row of this table, depending on your browser. Both rows are recorded on the hosted copy itself (`devlog/evidence_live/`): the cloud step in a browser without the model at this build, and the on-device step in a Chrome that has Gemini Nano at the build before it (`deebc94`; at this build the on-device script was run on localhost, and on the hosted copy the first step was watched once by hand: `devlog/DAY13.md`). In a browser without Gemini Nano the "Sample family" line ends with **See what the on-device step makes →**: a recording of that step from our machine, labelled as a recording.
 
 `#/demo` loads a made-up family (Frank; Carol asking) and opens with one card already made, so the first thing on screen is a card and not an empty pane: "Do you want coffee or tea?", read in code, no model, nothing sent (its chip is lit). **Then the first step runs by itself, with no click:** as soon as the on-device model has loaded (about 3 s when it is already in the browser's memory, 16 to 22 s right after a browser start; the card takes about 3 s more, and the status line says where it stands), the app asks "What do you want to do this weekend?" and Gemini Nano makes the card on this computer from About me ("lake / church" in the recorded run), with the badge "On this computer" from the SDK's `inferenceSource`. That step is made with cloud help left out, whatever the setting, so nothing can be sent by a step you did not click; it stands down if you ask or type anything first; and if the model gives no card, the first card stays and the status line says so. **In a browser with no Gemini Nano nothing runs by itself:** the status line says "No Gemini Nano in this browser, so the on-device step can't run here. The card shown is made in code." (or "… is not downloaded …", with the download link), and everything else is as before. Under the question box are one-tap questions, in three groups (open question: a model proposes / the app corrects the partner / read in code, no AI); each chip shows the short form, the hover text has the full question and what to look for. Under every card, in reading order: the badge with what left this computer, the coaching line if any, the line to say, the card on the right, then **Why this card**, **Where each step ran**, **What was sent**, the **privacy receipt** and the session line. Under the card judge mode opens with, those panels stand open; under every card after it they are one line, **"How this card was made: …"** (who decided; how many choices code kept, added and dropped), and one click opens all three, with the receipt closed below it. Click these, in order:
 
@@ -209,7 +245,9 @@ can miss one and that anything else typed is sent as written. `npm audit` report
 under `@firebase/firestore`, which this app does not import.
 
 ## Screens
-- **Partner screen** (`#/`): above the question field, up to three one-tap chips with the questions answered most
+- **Partner screen** (`#/`): in the top bar, **Quick needs** (the board below, in one tap); next to the question
+  field, where the browser has speech recognition, a microphone for the partner's own question (the words go into the
+  field and wait there). Above the question field, up to three one-tap chips with the questions answered most
   often ("Asked before:", read from "Answers so far" on this computer; none until an answer has been confirmed, and
   not in judge mode, where the sample chips stand and answers are not kept); then the question, the coaching line when a rule found one, the line to say, "Show to person",
   "Hide the choices", "Next", "Recap", "We're stuck", the badge, "Why this card", "What was sent" (one line: the question after the swap, and
@@ -219,6 +257,9 @@ under `@firebase/firestore`, which this app does not import.
 - **Person screen** (`#/person`): only the keyword, two or three big tiles (with a picture where one is drawn, the word alone otherwise), one way out, then "So: lake. Right?"
   with yes / change. The exit is top-right and needs a press-and-hold. "We're stuck" replaces the card with the fixed
   repair card (show me / write it / draw / later / change topic); a tap gives the partner the next move for that way.
+- **Quick needs** (`#/needs`): the person's screen with one fixed board, eight needs and the way out, each a
+  picture and its word; a tap is checked with the tick and the cross like any choice. No AI, nothing sent. A confirmed
+  need is in the session recap and is not kept in "Answers so far".
 - **About me** (`#/about`): names, people (name, relation, lives here, photo, nickname), foods, places, TV, music, other.
   Saved only in this browser (IndexedDB). "Delete everything on this computer" also resets cloud help consent.
   **Answers so far**: each answer the person confirms with the tick is kept here, on this computer only. When the
@@ -239,11 +280,16 @@ under `@firebase/firestore`, which this app does not import.
   person reads**). Pure TypeScript, no DOM, no Firebase, so every client reuses it unchanged.
 - `web/`: the web client. `web/src/ai/` is the only place that imports `firebase/ai` (`firebaseEngine.ts`) and
   `firebase/remote-config` (`remoteConfig.ts`). `pictos.ts` holds the hand-drawn
-  pictograms (provenance and licence per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper.
+  pictograms (provenance and licence per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper;
+  `voice.ts` is the microphone's state machine around the browser's speech recognition (no DOM, so it is tested with
+  a scripted recognition object). `core/needs.ts` is the quick-needs board.
 - `tests/unit/`: unit, property and matrix tests, plus a guard that fails on any direct model API call.
   `engine-matrix.test.ts` runs seven card shapes through every combination of on-device model state and cloud
   state; `card.property.test.ts` and `strip.property.test.ts` are seeded property tests over random questions,
   model output and About-me profiles.
+- `tests/unit/needs.test.ts`, `tests/unit/voice.test.ts`: the board (tiles, pictures, no engine, whose side says
+  what) and the microphone (start, interim words, final words, each error, no speech recognition, on-device only
+  where reported, what the app says about where the sound goes).
 - `scripts/e2e-cloud.mjs`: an end-to-end check of the cloud step against the real Firebase project.
   `scripts/e2e-ondevice.mjs`: the same for the on-device step, in a Chrome that has Gemini Nano (it wrote
   `devlog/ondevice_proof_1/`). `scripts/e2e-noconfig.mjs`: a copy with no settings at all.
@@ -258,23 +304,28 @@ npm run dev                  # http://localhost:5179
 npm run check                # lint + typecheck + unit tests
 npm run build                # production build + check that no debug token is bundled
 node scripts/e2e-cloud.mjs   # with the dev server running: real Firebase AI Logic end-to-end (cloud step)
-node scripts/e2e-noconfig.mjs # starts its own server with no settings: rules-only cards from a bare clone
+node scripts/e2e-noconfig.mjs # starts its own server with no settings: rules-only cards from a bare clone, and the quick-needs board with the network off
+node scripts/e2e-needs.mjs   # with the dev server running (or --url <a hosted copy>): the quick-needs board with the network off, the microphone's notice
 node scripts/e2e-ondevice.mjs --port 9335   # with the dev server and a Chrome that has Gemini Nano on that debugging port
 node scripts/eval-heldout.mjs             # the labelled set in eval/, rules alone; add --port 9335 for the real app with the on-device model; the report goes to devlog/eval_runs/
-node scripts/shots.mjs       # with the dev server running: screenshots of every screen at 390 and 1280 px + layout checks
+node scripts/shots.mjs       # with the dev server running: screenshots of every screen at 390 and 1280 px + layout checks; the quick-needs board; voice input against a scripted recognition object
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-Last done on 17 Nov 2026: <https://talk-partner.web.app> serves the build of commit `deebc94`, and the last two commands
-below passed against it (`devlog/evidence_live/`). The steps, for another project:
+Last done on 17 Nov 2026: <https://talk-partner.web.app> serves the build of commit `8810f8f`; `e2e-cloud.mjs` and
+`e2e-needs.mjs` passed against it (`devlog/evidence_live/`). The on-device script was last run against the hosted
+copy at the build before it, `deebc94`. The steps, for another project:
 ```
 # 1. console: create a reCAPTCHA Enterprise key (website; domains talk-partner.web.app, talk-partner.firebaseapp.com)
 #    and set it as the App Check provider of the web app; turn on Hosting
 # 2. .env.local: VITE_RECAPTCHA_ENTERPRISE_SITE_KEY=<the key id>
 npx firebase-tools deploy --only hosting      # runs npm run build:hosting first; it refuses to build without the key
 node scripts/e2e-cloud.mjs --url https://talk-partner.web.app/      # the cloud step, end to end, on the live site
+node scripts/e2e-needs.mjs --url https://talk-partner.web.app/      # the quick-needs board with the network off, and the microphone's notice
 node scripts/e2e-ondevice.mjs --port 9335 --url https://talk-partner.web.app/   # the on-device step on the live site, in a Chrome with Gemini Nano
 ```
+The page itself (`/` and `/index.html`) is sent with `Cache-Control: no-cache` (`firebase.json`), so a browser that had
+the site open before a deploy gets the new build on its next visit; until 17 Nov `/` was cached for an hour.
 A production build never contains the App Check debug token (`scripts/check-dist.mjs`), so without the site key a
 deployed copy has no cloud step: code-decided cards and the on-device step still work there. `build:hosting` stops
 before that can happen by accident.

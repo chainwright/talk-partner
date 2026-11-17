@@ -36,6 +36,8 @@ Its numbers came from the prototype's direct Chrome path, not from this build, a
 - The prototype's direct Chrome engine (`ChromeDirectEngine`). This build makes no direct inference call: the only
   direct touch of Chrome's model API is one availability query (`LanguageModel.availability`, no inference). Every
   model call goes through Firebase AI Logic, and `tests/unit/no-direct-model-calls.test.ts` fails the build otherwise.
+  (Since 17 Nov the partner's optional microphone uses the browser's own speech recognition. That is not a model call
+  this build makes and not Firebase AI Logic; it types the partner's question and makes no card. `CLAIMS.md` row 41.)
 - The prototype's UI, storage and end-to-end tests.
 
 ## Built during the submission period (from 11 Nov 2026)

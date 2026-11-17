@@ -1,6 +1,6 @@
 # Submission notes (Devpost page): tagline and Built-with
 
-Written 11 Nov 2026 (day 5); corrected 17 Nov 2026 after the fourth review (the Built-with table said "no deploy yet" and "enforcement comes with the first deploy" after the deploy; the platform and the pre-existing-work summary were missing) and on 16 Nov 2026 after the truth pass (the old tagline said "privately on this computer" before the on-device step had ever run, the second line said "nameless", the insight line said "every AI aphasia app", and two notes blamed disk space). The page itself is filled in at submission time from these lines; nothing here is pasted anywhere yet.
+Written 11 Nov 2026 (day 5); on 17 Nov 2026 (day 13) the microphone row and its note were added; corrected 17 Nov 2026 after the fourth review (the Built-with table said "no deploy yet" and "enforcement comes with the first deploy" after the deploy; the platform and the pre-existing-work summary were missing) and on 16 Nov 2026 after the truth pass (the old tagline said "privately on this computer" before the on-device step had ever run, the second line said "nameless", the insight line said "every AI aphasia app", and two notes blamed disk space). The page itself is filled in at submission time from these lines; nothing here is pasted anywhere yet.
 
 ## Tagline (one clause, no tech, the sponsor can quote it)
 > Talk Partner helps the partner of an adult with aphasia ask in choices, so the answer stays the person's own.
@@ -21,7 +21,7 @@ live site on 17 Nov 2026.
 
 | Tag | Where it is used | Honest note |
 |---|---|---|
-| `firebase-ai-logic` | `web/src/ai/firebaseEngine.ts`: every model call, two `getGenerativeModel` modes (`ONLY_ON_DEVICE` for the step that reads About me, `PREFER_IN_CLOUD` for the stripped question) | the only path to any model; a third mode for pictures was defined and never called, and was removed on 17 Nov |
+| `firebase-ai-logic` | `web/src/ai/firebaseEngine.ts`: every model call, two `getGenerativeModel` modes (`ONLY_ON_DEVICE` for the step that reads About me, `PREFER_IN_CLOUD` for the stripped question) | the only path to any model that makes a card (the partner's microphone, added 17 Nov, is the browser's own speech recognition and is not listed as a tag: it is not part of the hybrid and makes no card); a third mode for pictures was defined and never called, and was removed on 17 Nov |
 | `gemini-nano` | the private step, `ONLY_ON_DEVICE`; the offline fall-back of the stripped step | recorded with the SDK's `inferenceSource=on_device` per call: `devlog/evidence_r8/final/ondevice/RUN_LOG.md` (the current build); first run on 16 Nov 2026: the run saved in `devlog/ondevice_proof_1/` (`RUN_LOG.md` there) |
 | `gemini` | the stripped step in the cloud, `gemini-3.5-flash-lite` (`core/models.ts`; the name can be changed through Remote Config) | recorded on the live site: `devlog/evidence_live/` (`inferenceSource=in_cloud`) |
 | `firebase-app-check` | `initializeAppCheck` in the engine: reCAPTCHA Enterprise on the hosted copy, a debug token on localhost; the cloud step asks for a limited-use token per request | **registered, not enforced yet.** The provider is registered and the hosted copy sends App Check tokens with its cloud requests (the live log shows `content-firebaseappcheck.googleapis.com`). Enforcement for the AI Logic API has not been switched on in the Firebase console: that is the owner's step, not done as of 17 Nov 2026, and there is no console screenshot. Do not write "enforced" on the page until it is |
@@ -32,6 +32,7 @@ live site on 17 Nov 2026.
 | `vitest` | unit, property and matrix tests (`npm run check` prints the count) | |
 | `indexeddb` | `web/src/store.ts`: About me, settings, photos, the trial log; nothing synced | |
 | `svg` | every pictogram, hand-drawn (`PICTOGRAMS.md`) | family places and foods have no pictogram yet: those tiles are words |
+| `web-speech-api` (only if the form has such a tag; otherwise leave it out) | `web/src/voice.ts`: the microphone for the partner's question | the browser's speech recognition, not Firebase and not ours; in Chrome the sound may go to Google. Never describe it as on-device or private: on our machine on-device recognition was not available, and recognition with a real voice was not tested |
 
 **Not to add until they are real:** `firestore` / `firebase-auth` (the two-screen relay). Neither is imported anywhere.
 Adding them early would be the "demo mode that simulates" trap our review of the field warns about.

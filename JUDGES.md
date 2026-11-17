@@ -44,6 +44,18 @@ so a model has to propose them. They are where the two steps of the hybrid give 
 | 35–45 | click **therapy today, and did you eat?** | the app corrects the partner, not the person: "One thing at a time: showing the first." A feeling scale; **Next: second question** gives yes / no. No AI |
 | 45–60 | click **what year did we marry?**, then **coffee or tea?** | no card for the first: "You know this one: tell, don't test", and a sentence to say instead. The second is read in code: *drink*, coffee, tea, something else, badge **No AI needed · nothing left this computer** |
 
+**Two things outside the AI part, both added on 17 Nov** (`CLAIMS.md` rows 40 and 41; nobody they are for has tried
+them yet):
+- **Quick needs** (top bar): one tap puts a fixed board on the person's screen: toilet, drink, food, pain, tired,
+  too hot, too cold, call someone, something else, each a picture and its word. Tap one: "So: toilet. Right?" with a
+  tick and a cross. Press and hold the cross (top right) to come back: the partner's side has one short line for that need. No model,
+  nothing sent; switch your network off after the page has loaded and it still works.
+- **The microphone** next to the question field (browsers with speech recognition only): the first press tells you
+  where the sound goes, and it is not "on this computer": it is your browser's speech recognition, which in Chrome
+  may be Google's. After a yes, your question is typed into the field as you speak and waits there for "Make card".
+  It is for the partner's question only; the person's speech is never recognised. It is not part of the hybrid
+  inference and makes no card.
+
 **What your copy can do.** Be sure which one you have before you judge the AI part:
 
 | Your copy | "this weekend?" and "for dinner?" show |
@@ -70,7 +82,7 @@ has the same two questions answered by the cloud alone); the same run against th
 `devlog/ondevice_proof_1/RUN_LOG.md`.
 
 **If you have five minutes more**
-- `npm run check` (lint, types, 1714 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings).
+- `npm run check` (lint, types, 1770 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
 - `npm run eval`: the labelled set of 60 questions against the rules alone (it writes its report to a new folder under
   `devlog/eval_runs/`): 40 of 42 code-decided questions, 0 of 18 open. What the on-device model adds on the 18 open
   questions: `devlog/evidence_r8/heldout_at_c346d3d/` (three runs); our reading of the cards of the first runs:

@@ -1,0 +1,21 @@
+date: 2026-11-17T13:50:51.936Z
+commit: 8810f8f19aa92c41622ed1b167bdd89914d86c5a (clean working tree)
+command: npm run build
+
+
+> talk-partner@0.2.0 build
+> tsc --noEmit && vite build && node scripts/check-dist.mjs
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 47 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.53 kB │ gzip:   0.33 kB
+dist/assets/index-DuYX2C3d.css   25.12 kB │ gzip:   5.96 kB
+dist/assets/index-BI621Nq6.js   347.85 kB │ gzip: 117.79 kB
+
+✓ built in 100ms
+dist is clean: no App Check debug token
+
+exit code: 0
