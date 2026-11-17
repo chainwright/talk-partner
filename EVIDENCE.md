@@ -90,7 +90,16 @@ import; exit 1 is the audit's own), `fonts-check.txt` (no request leaves the app
 Rows 6, 13 and 14 (live part) need a Firebase project's web config in `.env.local`. Rows 5, 7 and the on-device pass
 of 16 need desktop Chrome with Gemini Nano. For those we can only show our saved runs.
 
-**The hosted copy** serves the build of `4d7edee` since 17 Nov 2026, 19:05 UTC (the served bundle is the one a local
+**The hosted copy** serves the build of `2c5673e` since 17 Nov 2026, 20:55 UTC (every served file has the SHA-256 of
+the local build; deploy log `devlog/evidence_live/deploy_2026-11-17_2c5673e.txt`; `check` and `build` at that commit:
+`devlog/evidence_r11/`). Runs against it, in `devlog/evidence_live/`: `e2e-needs_live_2026-11-17_2c5673e.txt` (12/12);
+`live_browsers_2026-11-17_2c5673e.txt` (Chromium 148 and Chrome 157: judge mode, three code-decided cards, the
+quick-needs board, no page error); `e2e-cloud_live_2026-11-17_2c5673e_run1.txt` (18/27) and `_run2.txt` (14/27, 20
+minutes later): **the cloud step made no card**, because reCAPTCHA Enterprise refused the App Check attestation from
+our machine; `appcheck_probe_2026-11-17_2c5673e.md` has what was measured. Between 20:41 and 20:55 UTC it served the
+build of `bbcb075` (`e2e-cloud_live_2026-11-17_bbcb075.txt`, 19/27, the same refusal).
+
+**Before that, the build of `4d7edee`**, from 17 Nov 2026, 19:05 UTC (the served bundle is the one a local
 build of `4d7edee` gives; the app code is that of `30db57a`). Runs against it, in `devlog/evidence_live/`:
 `e2e-cloud_live_2026-11-17_4d7edee.txt` (28/28) and `e2e-needs_live_2026-11-17_4d7edee.txt` (12/12), both right
 after the deploy. Between 13:53 and 19:05 UTC it served first the build of `8810f8f`, then, by 16:49 UTC,

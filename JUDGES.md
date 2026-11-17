@@ -3,7 +3,10 @@ Repository: <https://github.com/chainwright/talk-partner> (public, Apache-2.0)
 # For judges: the 60-second path
 
 Nothing here needs an account. Hosted copy: <https://talk-partner.web.app/#/demo> (our project settings are in it, so
-cloud help works there once you turn it on; the on-device step needs Gemini Nano in your own Chrome). Or from a clone:
+cloud help can be turned on there; the on-device step needs Gemini Nano in your own Chrome). **Cloud help there may
+give no card:** it needs App Check to accept your browser, and on the evening of 17 Nov it refused ours (the card
+then reads "Cloud help could not confirm this browser"; `README.md`, "Where the AI runs, in detail"). Everything
+else on this page works without it. Or from a clone:
 
 ```
 npm install && npm run dev        # then open http://localhost:5179/#/demo

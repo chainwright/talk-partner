@@ -1,0 +1,49 @@
+date: 2026-11-17T20:40:55.377Z
+commit: bbcb07514d4715ef6f677a7ff7eb4845520a2c57 (clean working tree)
+command: npx -y firebase-tools@15.36.0 deploy --only hosting --project talk-partner --non-interactive
+
+
+=== Deploying to 'talk-partner'...
+
+i  deploying hosting
+Running command: npm run build:hosting
+
+> talk-partner@0.2.0 build:hosting
+> node scripts/check-deploy.mjs && npm run build
+
+deploy settings present: Firebase web config and the reCAPTCHA Enterprise site key
+
+> talk-partner@0.2.0 build
+> tsc --noEmit && vite build && node scripts/check-dist.mjs
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 56 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     0.53 kB │ gzip:   0.33 kB
+dist/assets/index-D5oupgA7.css     26.28 kB │ gzip:   6.20 kB
+dist/assets/feedback-CWrPCk8X.js   79.27 kB │ gzip:  26.71 kB
+dist/assets/index-BUOn4PIl.js     367.24 kB │ gzip: 124.44 kB
+
+✓ built in 108ms
+dist is clean: no App Check debug token
+✔  hosting: Finished running predeploy script.
+i  hosting[talk-partner]: beginning deploy...
+i  hosting[talk-partner]: found 14 files in dist
+i  hosting: uploading new files [0/3] (0%)
+i  hosting: uploading new files [0/3] (0%)
+i  hosting: uploading new files [2/3] (66%)
+i  hosting: upload complete
+✔  hosting[talk-partner]: file upload complete
+i  hosting[talk-partner]: finalizing version...
+✔  hosting[talk-partner]: version finalized
+i  hosting[talk-partner]: releasing new version...
+✔  hosting[talk-partner]: release complete
+
+✔  Deploy complete!
+
+Project Console: https://console.firebase.google.com/project/talk-partner/overview
+Hosting URL: https://talk-partner.web.app
+
+exit code: 0
