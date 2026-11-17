@@ -18,7 +18,7 @@ const COPY = {
     notDownloaded: 'One-time setup: download the private helper (several GB, once).',
     download: 'Download',
     downloading: (pct: string) => `Downloading the private helper${pct}. Simple questions work meanwhile.`,
-    warming: 'Getting the private helper ready on this computer. The first time after the browser starts this took 15 to 20 seconds on our computer.',
+    warming: 'Getting the private helper ready on this computer. The first time after the browser starts this can take up to half a minute.',
     checking: 'Checking whether this computer can run the private helper…',
     unavailable: "This computer can't run the private helper. Yes/no, either-or, feeling, pain and body cards still work.",
     unavailableCloudOff: 'Open questions need cloud help.',

@@ -142,7 +142,8 @@ way-out tile or "Next: more choices".
 
 **Limits, stated.** One development machine, one made-up family, one run per question: this shows the path works, not
 how good the cards are. After a browser start the model has to load: the app warms it up at page load with one fixed
-sentence, and that took 15 to 20 s in the starts we timed (15.8, 17.0 and 18.2 s from page load to "Ready"; the status line says "getting ready" meanwhile,
+sentence, and that took 16 to 22 s in the four starts we timed (15.8, 17.0, 18.2 and 21.7 s from page load to
+"Ready"; the status line says "getting ready… up to half a minute" meanwhile,
 and code-decided cards work). After it a single on-device answer took about 3 s (median 3.1 to 3.3 s on the labelled
 set, 5.4 s at the slowest), and a card that also asks the cloud 6 to 13 s. The privacy swap covers About-me entries, relation words and capitalised unknown
 names in mid-sentence; a lowercase name, a name that starts a sentence, a health detail or an address is sent as typed

@@ -149,7 +149,7 @@ try {
   check('the private helper is ready in this browser', ready >= 0, await c.js(`document.querySelector('#status').innerText`));
   log(`- SDK report for the warm-up: ${c.aiLines().map((l) => `\`${l}\``).join(', ') || '(none)'}`);
   const warmMs = Number((c.aiLines()[0]?.match(/ms=(\d+)/) ?? [])[1] ?? 0);
-  log(`- ${warmMs > 8000 ? `this was a cold start (the browser had just been started): the warm-up took ${(warmMs / 1000).toFixed(1)} s` : `the model was already in this browser's memory (warm-up ${(warmMs / 1000).toFixed(1)} s); a cold start, right after the browser starts, took 15 to 20 s on this machine`}`);
+  log(`- ${warmMs > 8000 ? `this was a cold start (the browser had just been started): the warm-up took ${(warmMs / 1000).toFixed(1)} s` : `the model was already in this browser's memory (warm-up ${(warmMs / 1000).toFixed(1)} s); a cold start, right after the browser starts, takes much longer (README, "Limits, stated")`}`);
   check('loading the app and warming the model contacted no host but the app itself', c.outside().length === 0, c.outside().map((r) => r.host).join(', ') || `${c.s.reqs.length} requests, all to ${APP_HOST}`);
   const cloudNav = await c.js(`[...document.querySelectorAll('header nav a')].map((a) => a.innerText).find((t) => t.startsWith('Cloud help'))`);
   check('cloud help is off', cloudNav === 'Cloud help: off', cloudNav);
