@@ -553,14 +553,15 @@ export interface PipelineEnv {
  * How long to wait before asking the cloud once more, or null when a second try is pointless or would take too long.
  * Retried: "too many requests" (HTTP 429: the free tier allows 15 requests a minute), a busy or unavailable service
  * (500 / 502 / 503 / 504) and a network error. When the service names its own wait ("retry in 37s") and it is over
- * 3 s, there is no second try: the partner is told now, not after a long silence. Also retried, once: an App Check
- * error (the token exchange failed, or the service refused the token): the hosted copy, 17 Nov. Never retried: a
- * request that certainly did not leave (the browser is offline, cloud help is not set up) or was refused for another reason.
+ * 3 s, there is no second try: the partner is told now, not after a long silence. Also retried, once: a passing App
+ * Check fault (the token exchange was unavailable, the service did not take the token). Not retried: App Check
+ * refused this browser (403); it then refuses every try for a day, until the page is loaded again (the hosted copy,
+ * 17 Nov). Never retried: a request that certainly did not leave (offline, cloud help not set up) or refused otherwise.
  */
 export function cloudRetryWait(e: unknown): number | null {
   if ((e as CloudError)?.notSent) return null;
   const msg = String((e as Error)?.message ?? e);
-  if (CLOUD_APPCHECK.test(msg)) return 1200;
+  if (CLOUD_APPCHECK.test(msg)) return /\b403\b/.test(msg) ? null : 1200;
   if (!CLOUD_BUSY.test(msg) && !CLOUD_NETWORK.test(msg)) return null;
   const named = /retry\s*(?:in|after|delay)["':\s]*([\d.]+)\s*(ms|s)?/i.exec(msg);
   if (named) {

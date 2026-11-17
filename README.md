@@ -181,9 +181,9 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:199` | `inferenceSource === InferenceSource.ON_DEVICE` | where the recording was turned into text, from the SDK's report |
 | `web/src/ai/firebaseEngine.ts:221` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
 | `web/src/ai/app.ts:32` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started by the first cloud call (a card, a recording) or the first feedback note, never at page load |
-| `core/pipeline.ts:697` | `ran: r.source` | the private step's trace line is the engine's report |
-| `core/pipeline.ts:812` | `ran: r.source` | the stripped step's trace line is the engine's report |
-| `core/pipeline.ts:840` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
+| `core/pipeline.ts:698` | `ran: r.source` | the private step's trace line is the engine's report |
+| `core/pipeline.ts:813` | `ran: r.source` | the stripped step's trace line is the engine's report |
+| `core/pipeline.ts:841` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
 | `web/src/main.ts:280` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
@@ -218,11 +218,17 @@ with the first cloud call and gives the cloud step its session token. For most o
 limited-use token per request instead (`useLimitedUseAppCheckTokens`). That evening reCAPTCHA Enterprise refused our
 test browsers after many automated runs (HTTP 403, "App attestation failed") and, with limited-use tokens, the SDK
 then throws before it sends anything: the hosted copy made no cloud card (`e2e-cloud.mjs --url` 16 or 17 of 27, three
-runs; the organiser of our fifth review saw 17/27 and 26/28). With the session token one attestation serves the
-session, and when it fails the SDK still sends the request (`@firebase/app-check` 0.13.1, `getToken`: "always
-resolves"), which the service accepts while App Check is not enforced for the project. It is not enforced, and replay
-protection, the only thing limited-use tokens add, is a console setting we have not switched on. Once enforcement is
-on, a browser reCAPTCHA refuses gets no cloud card in either mode; the card then says so in one sentence. One availability probe (`LanguageModel.availability`, a capability query, no inference) is
+runs; the organiser of our fifth review saw 17/27 and 26/28). With the session token one attestation serves
+about an hour of requests in that browser, where limited-use tokens needed one per request; replay protection, the
+only thing limited-use tokens add, is a console setting we have not switched on. **The session token does not rescue
+a browser reCAPTCHA refuses.** When the attestation fails the SDK still sends the request, with a placeholder token
+(`@firebase/app-check` 0.13.1, `getToken`: "always resolves"). We expected the service to take it while App Check is
+not enforced in the console. Measured on 17 Nov, 20:45 UTC, it does not: the same request got 200 with a valid App
+Check token, and 400 "Firebase AI Logic genai config not found" with no token or with the placeholder. So in such a
+browser there is no cloud card. The card says "Cloud help could not confirm this browser, so there is no card. Load
+the page again and try once more, …"; App Check's message and the service's stand under "Where each step ran"; and
+no second request is made, because after a 403 App Check refuses every try for a day, until the page is loaded again
+(`namedAppCheckFailure` in `web/src/ai/app.ts`, `cloudRetryWait` in `core/pipeline.ts`). One availability probe (`LanguageModel.availability`, a capability query, no inference) is
 the only direct touch of Chrome's API. Firebase's own guide to hybrid inference on the web checks the same flag
 (`await LanguageModel.availability();` in its setup steps, <https://firebase.google.com/docs/ai-logic/hybrid/web/get-started>,
 read 17 Nov 2026), and the one availability method in the SDK we have installed (`ChromeAdapter.isAvailable`,

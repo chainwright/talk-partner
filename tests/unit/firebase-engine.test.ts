@@ -14,8 +14,12 @@ vi.mock('firebase/app', () => ({
   // the default app is shared with Remote Config (web/src/ai/app.ts): started once, found again afterwards
   getApps: () => rec.apps.map((name) => ({ name })),
 }));
+// App Check's public getToken: rejects with App Check's own error when it has no valid token (`tokenError`), else resolves
+let tokenError: Error | null = null;
+let tokenAsked = 0;
 vi.mock('firebase/app-check', () => ({
-  initializeAppCheck: (app: { name: string }) => { rec.appChecks.push(app.name); },
+  initializeAppCheck: (app: { name: string }) => { rec.appChecks.push(app.name); return { app: app.name }; },
+  getToken: async () => { tokenAsked++; if (tokenError) throw tokenError; return { token: 't' }; },
   ReCaptchaEnterpriseProvider: class { constructor(public key: string) {} },
 }));
 vi.mock('firebase/ai', () => ({
@@ -48,6 +52,7 @@ beforeEach(() => {
   answers.prefer_in_cloud = { text: '{"topic":"c"}', source: 'in_cloud' };
   answers.only_in_cloud = { text: '{"transcript":"do you want tea"}', source: 'in_cloud' };
   (globalThis as any).self = globalThis;
+  tokenError = null; tokenAsked = 0;
 });
 
 describe('FirebaseEngine: the private leg', () => {
@@ -108,6 +113,46 @@ describe('FirebaseEngine: the stripped leg', () => {
     expect(rec.ais.find((a) => a.app === '[DEFAULT]')?.options.useLimitedUseAppCheckTokens).toBeFalsy();
     expect(rec.ais.find((a) => a.app === 'private-on-device')?.options.useLimitedUseAppCheckTokens).toBeUndefined();
     expect(rec.ais).toHaveLength(2);
+  });
+  // 17 Nov 2026, the hosted copy with the session token: reCAPTCHA refused the browser (403), the SDK sent the request
+  // all the same with a placeholder token, and the service answered 400 "Firebase AI Logic genai config not found",
+  // which names nothing the partner or a judge can act on. (Measured the same evening: the same request with a valid
+  // App Check token got 200, with none or the placeholder 400.) The engine asks App Check why, and says so first.
+  const GENAI = 'AI: Error fetching from https://example.invalid/v1beta/projects/p/models/m:generateContent: [400 ] Firebase AI Logic genai config not found. (AI/fetch-error)';
+  const REFUSED = 'AppCheck: Requests throttled due to previous 403 error. Attempts allowed again after 23h:59m:58s (appCheck/throttled).';
+  it.each(['runCloud', 'transcribe'] as const)('%s: a cloud call that fails while App Check has no token for this browser is named as an App Check failure, with both messages kept', async (call) => {
+    answers.prefer_in_cloud = new Error(GENAI); answers.only_in_cloud = new Error(GENAI);
+    tokenError = new Error(REFUSED);
+    const e = new FirebaseEngine(CFG);
+    const err = await (call === 'runCloud' ? e.runCloud('x') : e.transcribe({ mimeType: 'audio/wav', base64: 'UklGRg==' })).then(() => null, (x: Error) => x);
+    expect(err).toBeInstanceOf(Error);
+    expect(err!.message.startsWith('App Check gave no token for this browser')).toBe(true);
+    expect(err!.message).toContain(REFUSED);
+    expect(err!.message).toContain(GENAI);
+    expect((err as any).notSent).toBe(false);
+    expect(tokenAsked).toBe(1);
+  });
+  it('a cloud call that fails while App Check has a token keeps the service\'s message as it is', async () => {
+    answers.prefer_in_cloud = new Error('AI: Error fetching: [429 ] Resource has been exhausted');
+    const err = await new FirebaseEngine(CFG).runCloud('x').then(() => null, (x: Error) => x);
+    expect(err!.message).toBe('AI: Error fetching: [429 ] Resource has been exhausted');
+    expect(tokenAsked).toBe(1);
+  });
+  it('offline: App Check is not asked (it could only fail too), and the request is marked as not sent', async () => {
+    answers.prefer_in_cloud = new TypeError('Failed to fetch');
+    tokenError = new Error(REFUSED);
+    const nav = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    Object.defineProperty(globalThis, 'navigator', { value: { onLine: false }, configurable: true });
+    try {
+      const err = await new FirebaseEngine(CFG).runCloud('x').then(() => null, (x: Error) => x);
+      expect(err!.message).toBe('Failed to fetch');
+      expect((err as any).notSent).toBe(true);
+      expect(tokenAsked).toBe(0);
+    } finally { if (nav) Object.defineProperty(globalThis, 'navigator', nav); else delete (globalThis as any).navigator; }
+  });
+  it('a cloud call that succeeds never asks App Check for anything extra', async () => {
+    await new FirebaseEngine(CFG).runCloud('x');
+    expect(tokenAsked).toBe(0);
   });
   it('reports an offline fall-back as on-device, from inferenceSource', async () => {
     answers.prefer_in_cloud = { text: '{}', source: 'on_device' };

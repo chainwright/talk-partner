@@ -218,15 +218,20 @@ describe('D-b. a failed cloud call (HTTP 429 on the free tier, a network error) 
     expect(partnerActions(card, { less: false, hasAnswers: false }).map((a) => a.act)).toEqual(['retry', 'next']);
   });
 
-  // 17 Nov 2026, the hosted copy: reCAPTCHA refused the browser (403 "App attestation failed"), App Check threw, and
-  // the card showed the SDK's own sentence. The messages are the SDK's (firebase 13.3.0), shortened.
-  const CHECK = () => new Error('AppCheck: Requests throttled due to previous 403 error. Attempts allowed again after 01d:00m:00s (appCheck/throttled).');
+  // 17 Nov 2026, the hosted copy: reCAPTCHA refused the browser (403 "App attestation failed"). With limited-use
+  // tokens App Check threw and the card showed the SDK's own sentence; with the session token the request went out
+  // with a placeholder token, the service answered 400, and the engine names App Check first (firebaseEngine.ts).
+  // App Check then refuses every new try for a day, until the page is loaded again: asking once more is pointless.
+  const REFUSED = () => new Error('App Check gave no token for this browser (AppCheck: Requests throttled due to previous 403 error. Attempts allowed again after 23h:59m:58s (appCheck/throttled).); the service then answered: AI: Error fetching from https://example.invalid/v1beta/projects/p/models/m:generateContent: [400 ] Firebase AI Logic genai config not found. (AI/fetch-error)');
+  const REFUSED_THROWN = () => new Error('AppCheck: Requests throttled due to previous 403 error. Attempts allowed again after 01d:00m:00s (appCheck/throttled).');
+  // a passing fault: the token exchange itself was unavailable, or the service did not take the token
+  const CHECK_BUSY = () => new Error('App Check gave no token for this browser (AppCheck: 503 error. Attempts allowed again after 00m:01s (appCheck/initial-throttle).); the service then answered: AI: Error fetching from https://example.invalid/v1beta/projects/p/models/m:generateContent: [400 ] Firebase AI Logic genai config not found. (AI/fetch-error)');
   const CHECK_SERVER = () => new Error('AI: Error fetching from https://example.invalid/v1beta/models/m:generateContent: [401 ] Firebase App Check token is invalid.');
 
-  it('an App Check error is tried once more; the second answer is the card', async () => {
+  it.each([['the token exchange was unavailable', CHECK_BUSY], ['the service did not take the token', CHECK_SERVER]])('a passing App Check fault is tried once more; the second answer is the card: %s', async (_n, mk) => {
     waits.length = 0;
     const e = new Scripted(null, { topic: 'neighbours', kind: 'choice', choices: ['flowers', 'a cake', 'wine'] });
-    e.fail = [CHECK()];
+    e.fail = [mk()];
     const card = await ask('What shall we take to the neighbours?', e, 'more', PROFILE, { sleep });
     expect(e.calls).toEqual(['cloud', 'cloud']);
     expect(waits).toEqual([1200]);
@@ -236,21 +241,33 @@ describe('D-b. a failed cloud call (HTTP 429 on the free tier, a network error) 
     expect(card.notes).toContain(COPY.notes.cloudRetried);
   });
 
-  it.each([['thrown by App Check', CHECK], ['refused by the service', CHECK_SERVER]])('App Check fails twice (%s): two tries and no more, one plain sentence, the SDK text only under "Where each step ran"', async (_n, mk) => {
+  it.each([['the request went out with a placeholder token', REFUSED], ['App Check threw before sending', REFUSED_THROWN]])('this browser was refused (403): no second try, one plain sentence that says to load the page again, the SDK text only under "Where each step ran": %s', async (_n, mk) => {
+    waits.length = 0;
     const e = new Scripted(null, ANY);
-    e.fail = [mk(), mk()];
+    e.fail = [mk()];
     const card = await ask('Where do you want the lamp to go?', e, 'more', PROFILE, { sleep });
-    expect(e.calls).toEqual(['cloud', 'cloud']);
+    expect(e.calls).toEqual(['cloud']);
+    expect(waits).toEqual([]);
     expect(card.blocked).toBe(COPY.notes.cloudCheckBlocked);
+    expect(card.blocked).toMatch(/Load the page again/);
     expect(card.choices).toEqual([]);
     expect(card.retry).toBe('Where do you want the lamp to go?');
     // what the partner reads: no SDK name, no code, no address
-    for (const text of [card.blocked!, ...card.notes]) expect(text).not.toMatch(/AppCheck:|appCheck\/|AI: Error|https?:|\[\d{3}|throttled/);
+    for (const text of [card.blocked!, ...card.notes]) expect(text).not.toMatch(/AppCheck:|appCheck\/|AI: Error|https?:|\[\d{3}|throttled|genai/);
     expect(card.notes).toContain(COPY.notes.cloudFailed('check', false));
     // the step trace keeps the SDK's own message, whole
     expect(card.trace!.find((t) => t.step === 'stripped')).toMatchObject({ ran: 'failed', why: mk().message });
-    // handed to the SDK twice: never shown as "nothing left this computer"
+    // handed to the SDK: never shown as "nothing left this computer"
     expect(card.cloudAttempted).toBeTruthy();
+    expect(card.cloudAttempts).toBe(1);
+  });
+
+  it('a passing App Check fault twice: two tries and no more', async () => {
+    const e = new Scripted(null, ANY);
+    e.fail = [CHECK_SERVER(), CHECK_SERVER()];
+    const card = await ask('Where do you want the lamp to go?', e, 'more', PROFILE, { sleep });
+    expect(e.calls).toEqual(['cloud', 'cloud']);
+    expect(card.blocked).toBe(COPY.notes.cloudCheckBlocked);
     expect(card.cloudAttempts).toBe(2);
   });
 
@@ -270,8 +287,10 @@ describe('D-b. a failed cloud call (HTTP 429 on the free tier, a network error) 
     expect(cloudRetryWait(NET())).toBe(1200);
     expect(cloudRetryWait(new Error('[429 ] Too many requests. Please retry in 2s.'))).toBe(2100);
     expect(cloudRetryWait(new Error('[503 ] The model is overloaded. Please try again later.'))).toBe(1200);
-    expect(cloudRetryWait(CHECK())).toBe(1200);
+    expect(cloudRetryWait(CHECK_BUSY())).toBe(1200);
     expect(cloudRetryWait(CHECK_SERVER())).toBe(1200);
+    expect(cloudRetryWait(REFUSED())).toBeNull();
+    expect(cloudRetryWait(REFUSED_THROWN())).toBeNull();
     expect(cloudRetryWait(new Error('[400 ] API key not valid.'))).toBeNull();
     expect(cloudRetryWait(new Error('cloud answer was not valid JSON'))).toBeNull();
     expect(cloudRetryWait(Object.assign(new Error('Failed to fetch'), { notSent: true }))).toBeNull();

@@ -35,7 +35,7 @@ import type { AudioClip, DeviceStatus, Engine, ModelResult } from '../../../core
 import { CLOUD_TEXT_MODEL } from '../../../core/models';
 import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, SYSTEM_PROMPT, TRANSCRIBE_PROMPT, TRANSCRIBE_SCHEMA, TRANSCRIBE_SYSTEM_PROMPT, cloudPrompt } from '../../../core/prompt';
 import { cloudTextRequest } from '../../../core/requests';
-import { appCheckConfigured, appWithAppCheck, type WebConfig } from './app';
+import { appCheckConfigured, appWithAppCheck, namedAppCheckFailure, type WebConfig } from './app';
 
 export type { WebConfig };
 
@@ -84,8 +84,8 @@ export class FirebaseEngine implements Engine {
     // the app, App Check (ai/app.ts) and the AI Logic instance are started once; only the models are built again
     // when Remote Config names another cloud model (setCloudModel).
     // The App Check session token, not a limited-use token per request (tried 17 Nov, taken out the same day): with
-    // limited-use tokens every cloud request needs a new attestation and the SDK throws before sending when one fails
-    // (live: 403, then no card for a day's backoff); a session token is fetched once and a failure still sends the request.
+    // limited-use tokens every cloud request needs a new reCAPTCHA attestation; a session token is fetched once and
+    // serves about an hour of requests. Either way a browser the attestation refuses gets no cloud card (ai/app.ts).
     return (this.cloudAi ??= getAI(appWithAppCheck(this.cfg), { backend: new GoogleAIBackend() }));
   }
 
@@ -159,9 +159,9 @@ export class FirebaseEngine implements Engine {
   async runCloud(strippedQuestion: string): Promise<ModelResult> {
     if (!this.cloudConfigured) throw Object.assign(new Error('cloud help is not set up (App Check)'), { notSent: true });
     const t0 = performance.now();
-    const r = await this.cloud.generateContent(cloudPrompt(strippedQuestion)).catch((e: Error) => {
+    const r = await this.cloud.generateContent(cloudPrompt(strippedQuestion)).catch(async (e: Error) => {
       // the browser knew it was offline: the request certainly did not leave. Anything else: it may have.
-      throw Object.assign(e, { notSent: typeof navigator !== 'undefined' && navigator.onLine === false });
+      throw Object.assign(await namedAppCheckFailure(e), { notSent: typeof navigator !== 'undefined' && navigator.onLine === false });
     });
     // the badge comes from inferenceSource, never assumed: PREFER_IN_CLOUD runs on device when offline
     const source = r.response.inferenceSource === InferenceSource.ON_DEVICE ? 'on-device' : 'in-cloud';
@@ -193,8 +193,8 @@ export class FirebaseEngine implements Engine {
   async transcribe(clip: AudioClip): Promise<ModelResult> {
     if (!this.cloudConfigured) throw Object.assign(new Error('voice input is not set up (App Check)'), { notSent: true });
     const t0 = performance.now();
-    const r = await this.voice.generateContent([{ type: 'inlineData', inlineData: { mimeType: clip.mimeType, data: clip.base64 } }, TRANSCRIBE_PROMPT]).catch((e: Error) => {
-      throw Object.assign(e, { notSent: typeof navigator !== 'undefined' && navigator.onLine === false });
+    const r = await this.voice.generateContent([{ type: 'inlineData', inlineData: { mimeType: clip.mimeType, data: clip.base64 } }, TRANSCRIBE_PROMPT]).catch(async (e: Error) => {
+      throw Object.assign(await namedAppCheckFailure(e), { notSent: typeof navigator !== 'undefined' && navigator.onLine === false });
     });
     const source = r.response.inferenceSource === InferenceSource.ON_DEVICE ? 'on-device' : 'in-cloud';
     const ms = Math.round(performance.now() - t0);

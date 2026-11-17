@@ -3,7 +3,7 @@
 // Starting it contacts no host. App Check is started on that app once, by the first thing that sends something to
 // Google (a cloud model call, or a feedback note); it loads a script from Google, so nothing starts it at page load.
 import { getApps, initializeApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
+import { getToken, initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from 'firebase/app-check';
 
 export interface WebConfig {
   firebase: FirebaseOptions;
@@ -29,6 +29,27 @@ export function appWithAppCheck(cfg: WebConfig): FirebaseApp {
   const app = defaultApp(cfg.firebase);
   if (cfg.appCheckDebugToken) (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = cfg.appCheckDebugToken;
   const siteKey = cfg.recaptchaEnterpriseSiteKey || (cfg.appCheckDebugToken ? 'debug-provider-in-use' : '');
-  if (siteKey) initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(siteKey), isTokenAutoRefreshEnabled: true });
+  if (siteKey) appCheck = initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(siteKey), isTokenAutoRefreshEnabled: true });
   return app;
+}
+
+let appCheck: AppCheck | null = null;
+
+/**
+ * After a cloud call has failed: if App Check has no valid token for this browser, the error says so first, in App
+ * Check's own words, and keeps the service's message after it. Why: with a session token the SDK sends the request
+ * even when the attestation failed, with a placeholder token, and the service then answers 400 "Firebase AI Logic
+ * genai config not found" (the hosted copy, 17 Nov 2026: reCAPTCHA Enterprise refused the browser with 403; the same
+ * request with a valid token got 200). That message alone points nowhere near the cause. Asking App Check here
+ * starts no new attestation while it is backing off, and none when it holds a valid token. Not asked when the
+ * browser is offline: the request did not leave, and App Check could only fail too.
+ */
+export async function namedAppCheckFailure<E extends Error>(e: E): Promise<E> {
+  if (!appCheck || (typeof navigator !== 'undefined' && navigator.onLine === false)) return e;
+  try {
+    await getToken(appCheck);
+  } catch (why) {
+    e.message = `App Check gave no token for this browser (${String((why as Error)?.message ?? why)}); the service then answered: ${e.message}`;
+  }
+  return e;
 }
