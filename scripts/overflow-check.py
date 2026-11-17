@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""No sideways overflow on a phone: at 360, 390 and 412 px, on every screen and the main card states.
+"""No sideways overflow on a phone: at 320, 360, 390 and 412 px, on every screen and the main card states.
 
 Why: on 17 Nov 2026 the owner's Android phone (360 px wide) showed text and buttons running off the right edge
 ("Make ca…", the status box, the chip rows, the person's card). scripts/shots.mjs only measured 390 px.
@@ -10,10 +10,15 @@ What is checked, per width and per state:
      purpose (overflow-x: auto / scroll, the chip rows).
 The second check is there because `body { overflow-x: hidden }` can hide an overflow from the first one.
 
+The simple view ("/", every screen of it: first screen, card ready, the person's card, answered, the consent sheet,
+no card, quick needs, About them) is measured at every width, 320 px included. The full view (judge mode and the inner
+pages) is measured from 360 px up: at 320 px three of its screens are known to be 10 to 27 px too wide (the recording
+of the on-device step, the repair card, the table on "How this works"; design/simple_shell_2026-11-17/PROPOSAL.md §2).
+
 Makes code cards only. Every request that is not to the page's own host is refused, so nothing reaches Firebase.
 
 Usage: npm run dev (in another shell), then
-  python3 scripts/overflow-check.py [--url http://localhost:5179/] [--widths 360,390,412]
+  python3 scripts/overflow-check.py [--url http://localhost:5179/] [--widths 320,360,390,412]
 Exit code 0 when every check passes, 1 otherwise.
 """
 import argparse
@@ -52,17 +57,116 @@ def chip(page, text):
     page.wait_for_selector('#result > .badge-line', timeout=8000)
 
 
-def run(url, width, browser):
+PHONE_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36'
+LONG_Q = 'Do you want to go to the supermarket with Christopher or stay at home and watch television?'
+
+
+def context(url, width, browser):
     host = urlparse(url).hostname
-    ctx = browser.new_context(viewport={'width': width, 'height': 800}, device_scale_factor=2, is_mobile=True, has_touch=True)
+    ctx = browser.new_context(viewport={'width': width, 'height': 800}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA)
     ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else r.abort())
+    return ctx
+
+
+def simple(url, width, browser):
+    """The simple view, every screen, as a fresh visitor on a phone sees it."""
+    ctx = context(url, width, browser)
+    page = ctx.new_page()
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
+    page.wait_for_timeout(7000)  # the lines that follow the device check stand after it was asked again (2 s, 6 s)
+    check(page, width, 'simple: first screen')
+    page.locator('#mic').click() if page.locator('#mic').count() else None
+    check(page, width, 'simple: first screen, the microphone notice open')
+    page.locator('.try .ready', has_text='coffee or tea').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check(page, width, 'simple: card ready')
+    page.locator('button[data-act=less]').click()
+    check(page, width, 'simple: card ready, choices hidden')
+    page.locator('button[data-act=less]').click()
+    page.locator('button[data-act=stuck]').click()
+    page.wait_for_selector('#person .tiles.repair')
+    check(page, width, "simple: We're stuck (the repair card, partner side)")
+    page.locator('button[data-act=unstuck]').click()
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.person.full .tile')
+    check(page, width, "simple: the person's card, full screen")
+    page.locator('#person .tile', has_text='tea').click()
+    page.wait_for_selector('[data-confirm=yes]')
+    check(page, width, "simple: the person's card, the check (So: tea. Right?)")
+    page.locator('[data-confirm=yes]').click()
+    page.wait_for_selector('.answered')
+    page.locator('#exit').dispatch_event('pointerdown')
+    page.wait_for_selector('main.simple.s-answered', timeout=4000)
+    check(page, width, 'simple: answered')
+    page.locator('[data-act=recap]').click()
+    check(page, width, 'simple: going over the answers')
+    page.locator('[data-act=new]').click()
+    page.wait_for_selector('main.simple.home')
+    page.fill('#q', LONG_Q)
+    page.locator('#make').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check(page, width, 'simple: card ready, a long either-or question')
+    page.locator('[data-act=new]').click()
+    page.locator('.try .ready', has_text='Are you in pain').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check(page, width, 'simple: card ready, a yes / no question')
+    page.locator('[data-act=new]').click()
+    page.fill('#q', 'What year did we get married?')
+    page.locator('#make').click()
+    page.wait_for_selector('main.simple.nocard')
+    check(page, width, 'simple: a memory question (a line to say, no card)')
+    page.locator('[data-act=new]').click()
+    page.fill('#q', 'Where does it hurt?')
+    page.locator('#make').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check(page, width, 'simple: card ready, the body map')
+    page.locator('[data-act=new]').click()
+    page.locator('.try .ready', has_text='this weekend').click()
+    page.wait_for_selector('#sheet, main.simple.nocard')
+    if page.locator('#sheet').count():
+        check(page, width, 'simple: the consent sheet')
+        page.locator('[data-act=sheet-no]').click()
+    check(page, width, 'simple: no card for an open question')
+    page.locator('[data-act=new]').click()
+    page.locator('[data-act=needs]').click()
+    page.wait_for_selector('main.person.full .tiles.needs')
+    check(page, width, 'simple: quick needs, full screen')
+    page.locator('#exit').dispatch_event('pointerdown')
+    page.wait_for_selector('main.simple.card')
+    check(page, width, 'simple: quick needs, partner side')
+    page.locator('[data-act=new]').click()
+    page.locator('a.offer').click()
+    page.wait_for_selector('main.about-simple')
+    check(page, width, 'simple: About them, rows closed')
+    page.locator('.rowhead[data-row=names]').click()
+    page.fill('input[data-field=personName]', 'Christopher-Alexander')
+    page.fill('input[data-field=partnerName]', 'Wilhelmina')
+    page.locator('.rowhead[data-row=people]').click()
+    page.locator('[data-act=person-add]').click()
+    page.fill('input[data-person="0"][data-field=name]', 'Bartholomew')
+    page.fill('input[data-person="0"][data-field=relation]', 'son-in-law')
+    check(page, width, 'simple: About them, a person being added')
+    page.locator('.rowhead[data-row=places]').click()
+    check(page, width, 'simple: About them, places open, long names in the rows')
+    page.locator('a.btn.primary').click()
+    page.wait_for_selector('main.simple.home')
+    check(page, width, 'simple: first screen with a long name')
+    page.locator('.try .ready', has_text='coffee or tea').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check(page, width, 'simple: card ready with a long name')
+    ctx.close()
+
+
+def run(url, width, browser):
+    ctx = context(url, width, browser)
     page = ctx.new_page()
 
     def go(hash_):
         page.goto(url + hash_)
         page.wait_for_selector('#app > *')
 
-    go('')
+    go('#/welcome')
     check(page, width, 'first run (welcome)')
 
     go('#/demo')
@@ -96,16 +200,16 @@ def run(url, width, browser):
         check(page, width, f'#/{h} (sample family)')
 
     # the partner screen outside judge mode, with a long typed question
-    page.evaluate("location.hash = '#/'")
+    page.evaluate("location.hash = '#/welcome'")
     page.reload()
-    page.wait_for_selector('#app > *')
+    page.wait_for_selector('main.welcome')
     page.locator('button[data-act=welcome-setup]').click()
     page.wait_for_selector('#about')
     check(page, width, 'About me, empty')
     go('#/')
     page.wait_for_selector('#ask')
     check(page, width, 'partner screen, no card yet')
-    page.fill('#q', 'Do you want to go to the supermarket with Christopher or stay at home and watch television?')
+    page.fill('#q', LONG_Q)
     page.locator('#make').click()
     page.wait_for_selector('#result > .badge-line', timeout=8000)
     check(page, width, 'partner screen, a long either-or question')
@@ -117,12 +221,14 @@ def run(url, width, browser):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--url', default='http://localhost:5179/')
-    ap.add_argument('--widths', default='360,390,412')
+    ap.add_argument('--widths', default='320,360,390,412')
     a = ap.parse_args()
     with sync_playwright() as p:
         browser = p.chromium.launch()
         for w in (int(x) for x in a.widths.split(',')):
-            run(a.url, w, browser)
+            simple(a.url, w, browser)
+            if w >= 360:
+                run(a.url, w, browser)
         browser.close()
     bad = results.count(False)
     print(f"\n{len(results) - bad} of {len(results)} checks passed")
