@@ -40,11 +40,11 @@ so we do not open the path on it.
 
 We cannot give you the third row without the model on your machine, and the second needs our project settings, which
 are not in the repository. What we recorded on ours, with the SDK's own report per call and screenshots:
-`devlog/evidence_r3/final/ondevice/RUN_LOG.md` (36 checks; section 5 has the same two questions answered by the
+`devlog/evidence_r4/final/ondevice/RUN_LOG.md` (36 checks; section 5 has the same two questions answered by the
 cloud alone) and, earlier, `devlog/ondevice_proof_1/RUN_LOG.md`.
 
 **If you have five minutes more**
-- `npm run check` (lint, types, 923 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings).
+- `npm run check` (lint, types, 957 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings).
 - `npm run eval`: the labelled set of 60 questions against the rules alone (it writes its report to a new folder under
   `devlog/eval_runs/`). What the on-device model adds on the 18 open questions, and our reading of the cards:
   `devlog/evidence_r2/heldout_r2_NOTES.md`.

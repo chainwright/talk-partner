@@ -1,0 +1,7 @@
+date: 2026-11-17T01:28:05.176Z
+commit: 5cb9c5eda76f28cbfd0f714917f3fa9ed28bc4ac (clean working tree)
+command: node scripts/eval-heldout.mjs --out devlog/eval_runs/r4/heldout
+
+open questions: 0/18 cards made (rules alone make none); rules-decided: 36/42 -> devlog/eval_runs/r4/heldout/heldout_r2_rules.md
+
+exit code: 0

@@ -1,0 +1,30 @@
+date: 2026-11-17T01:26:34.286Z
+commit: 5cb9c5eda76f28cbfd0f714917f3fa9ed28bc4ac (clean working tree)
+command: npm run check
+
+
+> talk-partner@0.2.0 check
+> npm run lint && npm run typecheck && npm run test
+
+
+> talk-partner@0.2.0 lint
+> eslint .
+
+
+> talk-partner@0.2.0 typecheck
+> tsc --noEmit
+
+
+> talk-partner@0.2.0 test
+> vitest run
+
+
+ RUN  v5.1.0 <repo>
+
+
+ Test Files  27 passed (27)
+      Tests  957 passed (957)
+   Start at  19:26:36
+   Duration  590ms (tests 72%, import 17%, transform 8%, worker 3%)
+
+exit code: 0

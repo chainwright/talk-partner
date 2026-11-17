@@ -1,0 +1,25 @@
+date: 2026-11-17T01:26:39.358Z
+commit: 5cb9c5eda76f28cbfd0f714917f3fa9ed28bc4ac (clean working tree)
+command: npm run e2e:noconfig
+
+
+> talk-partner@0.2.0 e2e:noconfig
+> node scripts/e2e-noconfig.mjs
+
+status line: This copy has no project settings, so no AI runs here. Yes/no, either-or, feeling, pain and body questions still make cards.
+PASS  the copy really has no project settings  (This copy has no project settings, so no AI runs here. Yes/no, either-or, feeling, pain and body questions still make cards.)
+PASS  judge mode opens with a card already made, before any click: coffee / tea / something else, "No AI needed", nothing left  ({"tiles":["coffee","tea","something else"],"badge":"No AI needed","tail":"· nothing left this computer","lit":"Do you want coffee or tea?","enter":false})
+PASS  coffee/tea card is coffee / tea / something else  (["coffee","tea","something else"])
+PASS  coffee/tea badge is "No AI needed"  (No AI needed)
+PASS  "Do you need the toilet?" makes a card  (["yes","no","not sure"])
+PASS  "Should we ring Jen or Tyler?" makes a card  (["Jen","Tyler","someone else"])
+PASS  "Where does it hurt?" makes a card  (["head","chest","somewhere else"])
+PASS  "How was therapy today, and did you eat?" makes a card  (["good","bad","something else"])
+PASS  the memory question coaches instead of quizzing  (You know this one: tell, don't test.)
+PASS  an open question gets an honest "No card"  (No card · The private helper isn't ready on this computer and cloud help is not configured on this copy. Just ask normally.)
+PASS  the number under the chips reads "0 bytes left this computer" after every card of this run  (0 bytes left this computer 9 cards this session · page load not counted)
+PASS  no host contacted but the app itself  (localhost:5181×37)
+
+commit 5cb9c5eda76f28cbfd0f714917f3fa9ed28bc4ac  12/12 checks passed  2026-11-17T01:26:41.791Z
+
+exit code: 0
