@@ -1,0 +1,5 @@
+## chromium (bundled) 148.0.7778.96: bundle ['index-D0VmohtN.js'] first card ['coffee', 'tea', 'something else']
+    page errors: none; console errors: none; crashed: False
+## google chrome 157.0.8103.79: bundle ['index-D0VmohtN.js'] first card ['coffee', 'tea', 'something else']
+    page errors: none; console errors: ['Failed to load resource: the server responded with a status of 404 ()']; crashed: False
+RESULT PASS

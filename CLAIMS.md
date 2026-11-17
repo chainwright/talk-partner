@@ -4,7 +4,8 @@ The claims we make about Talk Partner in the README, on screen and in the submis
 17 Nov 2026. Rows 1 to 39 stand as they were checked at commit `deebc94`; rows 40 and 41 are the two features added
 after it on 17 Nov (the quick-needs board and voice input), and four older rows (3, 4, 22, 36) say what those two
 change for them. `EVIDENCE.md` says which runs were made again at the commits of the two features and which were
-not. **True** = you can reproduce it from a clone. **True, recorded** = it needs our project
+not. Rows 1, 2, 14, 31 and 34 were changed and rows 43 and 44 added later on 17 Nov, after a second rehearsal run
+(commits `4e27d1e` to `30db57a`); they are checked on localhost only, and the hosted copy does not have them yet. **True** = you can reproduce it from a clone. **True, recorded** = it needs our project
 settings or the on-device model, so we give the saved run instead. **Partial** = true with a limit, stated. **Not
 claimed** = things we are sometimes assumed to claim and do not. Proof for each row is in `EVIDENCE.md` under the same
 number.

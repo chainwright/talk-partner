@@ -99,9 +99,12 @@ tests; none of them is a sentence of that set). What changed, with the limit of 
   nothing in common (row 1).
 - **"…, or is Carol watching her show?"** offers "Carol's show", not "watching her show" (row 31).
 
-Checked at commit `66c4574` on localhost (one commit before the fixed headline of the "How are you feeling?" card): unit tests, `e2e:noconfig` 25/25, `e2e-cloud.mjs` 28/28, `e2e-ondevice.mjs`
-43/43 in a Chrome with Gemini Nano, `shots.mjs` 139/139 (`devlog/evidence_r10/`). The classes were found by a
-simulation and fixed by the people who read its results; a new sealed set would be the real test.
+Checked at commit `30db57a` on localhost: unit tests (1858), `e2e:noconfig` 25/25, `e2e-cloud.mjs` 28/28,
+`e2e-ondevice.mjs` 43/43 in a Chrome with Gemini Nano, `shots.mjs` 139/139 (`devlog/evidence_r10/`); five of the new cards were also
+asked by a script in Chromium 148 and Chrome 157 at `66c4574`, with no page error (not saved as a log). **The hosted copy does not have these changes yet:** the
+deploy of 17 Nov, 18:42 UTC, stopped at the Firebase sign-in (`deploy_attempt_2026-11-17_30db57a.txt` there), and
+<https://talk-partner.web.app> still serves the build it served before. The classes were found by a simulation and
+fixed by the people who read its results; a new sealed set would be the real test.
 
 It also corrects **the partner**, quietly, where a rule can tell: two questions in one become "One thing at a time: showing the first"; a memory question becomes "You know this one: tell, don't test."; a "you don't want …, do you?" question is asked the plain way ("Do you want …?"), so that a yes on the card means yes. The person is never corrected. The partner screen opens on that: "It corrects how you ask. It never answers for them." (the limits of both halves are in `CLAIMS.md`, row 11).
 

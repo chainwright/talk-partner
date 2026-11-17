@@ -1,0 +1,18 @@
+date: 2026-11-17T18:42:01Z
+commit: 30db57ac1f014c1dd83a941824f935cc0f6dea4c (0 changed files in the working tree)
+command: npx -y firebase-tools@15.36.0 deploy --only hosting --project talk-partner --non-interactive
+
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+
+Error: Assertion failed: resolving hosting target of a site with no site name or target name. This should have caused an error earlier
