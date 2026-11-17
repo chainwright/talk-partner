@@ -36,8 +36,10 @@ Its numbers came from the prototype's direct Chrome path, not from this build, a
 - The prototype's direct Chrome engine (`ChromeDirectEngine`). This build makes no direct inference call: the only
   direct touch of Chrome's model API is one availability query (`LanguageModel.availability`, no inference). Every
   model call goes through Firebase AI Logic, and `tests/unit/no-direct-model-calls.test.ts` fails the build otherwise.
-  (Since 17 Nov the partner's optional microphone uses the browser's own speech recognition. That is not a model call
-  this build makes and not Firebase AI Logic; it types the partner's question and makes no card. `CLAIMS.md` row 41.)
+  (Since 17 Nov the partner's optional microphone sends one recording of the partner's question to Gemini through
+  Firebase AI Logic, `ONLY_IN_CLOUD`: `transcribe()` in `web/src/ai/firebaseEngine.ts`, `CLAIMS.md` row 41. For a
+  few hours that day, from commit `a1e1b2d` until `27abd80`, it used the browser's own speech recognition, which is
+  not Firebase AI Logic; that code is gone and `tests/unit/no-direct-model-calls.test.ts` fails if it comes back.)
 - The prototype's UI, storage and end-to-end tests.
 
 ## Built during the submission period (from 11 Nov 2026)

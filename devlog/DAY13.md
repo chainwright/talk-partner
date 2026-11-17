@@ -30,6 +30,15 @@ Decisions, and why:
 - On a phone the words on the board are 24 px: at 26 px "call someone" touched the edge of its tile.
 
 ## Voice input, for the partner's question only
+**Correction, 17 Nov 2026 (later the same day).** This section describes voice input as it was for a few hours, from
+commit `a1e1b2d` to `27abd80`: the browser's own speech recognition (the Web Speech API). That was AI inference
+outside Firebase AI Logic, which the contest rules do not allow, and it was removed in `27abd80`. Since then the
+microphone records one clip of at most 15 s and sends it once to Gemini through Firebase AI Logic (`ONLY_IN_CLOUD`,
+`transcribe()` in `web/src/ai/firebaseEngine.ts`); the notice says "Google's cloud", the session figure counts the
+sound, and a test fails the build if `SpeechRecognition` comes back. Nothing below about `SpeechRecognition`,
+`processLocally`, interim words or "your browser's speech recognition" is true of the current build; `CLAIMS.md`
+row 41 and the README have what is. The text is kept as it was written.
+
 A microphone button between the question field and "Make card", where the browser has speech recognition (the Web
 Speech API); no button where it has none. Interim words show in the field, the final words fill it, and nothing is
 submitted: the partner reads, changes and presses. The person's speech is never recognised.

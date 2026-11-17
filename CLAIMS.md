@@ -77,8 +77,9 @@ number.
   reason for one design cut and are marked as pre-period.
 - That the person's speech is recognised. It is not, on purpose: recognition of aphasic speech gives confident
   wrong text. The microphone is for the partner's question only.
-- That voice input is private or on-device. On our machine it would go through Chrome's default speech service
-  (row 41).
+- That voice input is private or on-device. The recording goes to Gemini in Google's cloud through Firebase AI
+  Logic (`ONLY_IN_CLOUD`, `transcribe()` in `web/src/ai/firebaseEngine.ts`), names in it included, after a yes to
+  the notice (row 41).
 - That the quick-needs board or voice input has been tried by anyone it is for (rows 40 and 41), or that the app
   works offline from a cold start.
 - Image generation, text-to-speech, sync between two devices, Android or iOS. Every picture is bundled; the picture-generation step that was defined and never called was removed on 17 Nov 2026.

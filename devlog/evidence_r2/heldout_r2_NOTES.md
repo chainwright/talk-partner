@@ -10,8 +10,9 @@ score moved with them (36 to 38, then 39, then 40 of 42), so it is not a held-ou
 sentence "Not fixed: fixing rules against this set would turn it into a tuning set" further down was true on the
 day it was written and is not true now. Reports made before 17 Nov carry the line "no rule was changed after that
 run" from the set's own description; that was true of the first run only. `scripts/eval-heldout.mjs` now counts
-the rule commits from git and writes "no longer held out" itself. The numbers at the current commit are in
-`devlog/DAY12.md`.
+the rule commits from git and writes "no longer held out" itself. The latest on-device numbers when this note was
+last changed (commit `c346d3d`, before the rule changes of 17 Nov) are in `devlog/DAY12.md`; any later run is named
+in `CLAIMS.md`, row 16.
 
 ## The number to quote: the 18 open questions
 42 of the 60 questions carry their own answers ("coffee or tea?", "are you cold?") or have a fixed card (feeling,
