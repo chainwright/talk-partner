@@ -313,6 +313,35 @@ try {
     check(`${s} quick-needs board: the partner's line is on the partner's side only`, pside.line === 'Go now. The rest can wait.' && pside.pane === 'I need toilet', JSON.stringify(pside));
     await shot('29-needs-partner-side');
 
+    // 17 Nov: "Send feedback". The screen only: nothing is sent in this run (the one real write is in
+    // scripts/live-voice-feedback.py). The line about patient details is in view, the role and the email are optional,
+    // an empty note is refused in the page, and with no connection the button is off and a sentence says why.
+    await nav('#/feedback');
+    await waitFor('!!document.querySelector("#fb-text")');
+    const f0 = await js(`(() => { const w = document.querySelector('.fb-warn').getBoundingClientRect(); return { warn: document.querySelector('.fb-warn').innerText, warnInView: w.top >= 0 && w.bottom <= innerHeight, roles: [...document.querySelectorAll('#fb-role option')].map((o) => o.innerText), labels: [...document.querySelectorAll('#fb label')].map((l) => l.innerText), max: document.querySelector('#fb-text').maxLength, left: document.querySelector('#fb-left').innerText, send: document.querySelector('#fb-send').disabled, config: !/no project settings/.test(document.querySelector('#fb-status').innerText), scroll: document.documentElement.scrollWidth > innerWidth, fields: Math.min(...[...document.querySelectorAll('#fb textarea, #fb input, #fb select, #fb-send')].map((e) => Math.round(e.getBoundingClientRect().height))) }; })()`);
+    check(`${s} feedback: the form has the note (1000 characters at most), the line about patient details in view, a role and an email both marked optional; fields at least 44 px; no sideways scroll`,
+      /^Please don't include patient details/.test(f0.warn) && f0.warnInView && f0.roles.length === 5 && f0.roles[1] === 'a speech-language therapist' && f0.labels.join('|') === 'Your note|You are (optional)|Email (optional)' && f0.max === 1000 && f0.left === '1000 characters left' && !f0.scroll && f0.fields >= 44, JSON.stringify(f0));
+    await shot('33-feedback');
+    if (f0.config) {
+      await click('#fb-send');
+      const f1 = await js(`({ status: document.querySelector('#fb-status').innerText, hidden: document.querySelector('#fb-status').hidden })`);
+      await js(`(() => { const t = document.querySelector('#fb-text'); t.value = 'x'.repeat(40); t.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+      const f2 = await js(`document.querySelector('#fb-left').innerText`);
+      await send('Network.enable');
+      await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+      await sleep(500);
+      const f3 = await js(`({ status: document.querySelector('#fb-status').innerText, send: document.querySelector('#fb-send').disabled, text: document.querySelector('#fb-text').value.length })`);
+      await send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+      await sleep(500);
+      const f4 = await js(`({ send: document.querySelector('#fb-send').disabled, hidden: document.querySelector('#fb-status').hidden, text: document.querySelector('#fb-text').value.length })`);
+      check(`${s} feedback: an empty note is refused in the page; the count of characters left follows the typing; with no connection the button is off and a sentence says why, and the words stay; with the connection back the button is on again`,
+        /Write a few words first/.test(f1.status) && !f1.hidden && f2 === '960 characters left' && /Feedback needs a connection/.test(f3.status) && f3.send === true && f3.text === 40 && f4.send === false && f4.hidden === true && f4.text === 40, JSON.stringify({ f1, f2, f3, f4 }));
+    } else {
+      check(`${s} feedback: this copy has no project settings, so the button is off and a sentence says it has nowhere to send a note`, f0.send === true, JSON.stringify(f0));
+    }
+    await nav('#/demo');
+    await waitFor('!!document.querySelector(".chip")'); await sleep(300);
+
     // 17 Nov: voice input for the partner's question, in the real page. The microphone is Chrome's fake device (a test
     // tone), the recorder and the decoding are the browser's own, and the request the SDK makes is caught at the
     // network and answered here: no sound reaches Google and no cloud call is made. What this shows is the wiring:

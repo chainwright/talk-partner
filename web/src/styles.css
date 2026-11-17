@@ -398,3 +398,16 @@ main.welcome::after { transform-origin: left center; animation: ts-turn 1s .3s c
 .rec-bar::after { content: ''; display: block; height: 100%; width: 100%; background: var(--warn); transform-origin: left; animation: rec-fill var(--rec-s, 15s) linear both; }
 @keyframes rec-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { .rec-bar { display: none; } }
+
+/* Send feedback: one column, the same fields as About me */
+.feedback form { display: grid; gap: 8px; max-width: 640px; }
+.feedback label { font-weight: 600; margin-top: 8px; }
+.feedback textarea, .feedback input, .feedback select { width: 100%; min-height: 48px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--field); background: var(--panel); color: var(--ink); font: inherit; }
+.feedback textarea { min-height: 150px; resize: vertical; line-height: 1.45; }
+.feedback .fb-row { display: flex; gap: 12px; justify-content: space-between; align-items: baseline; margin: 0; font-size: 14px; }
+.feedback .fb-row #fb-left { flex: none; }
+.feedback .fb-warn { font-weight: 600; }
+.feedback .fb-sent { font-size: 20px; font-weight: 600; }
+.feedback p[hidden] { display: none; }
+.feedback-link { margin-left: auto; }
+@media (max-width: 520px) { .feedback .fb-row { flex-direction: column; gap: 4px; } }

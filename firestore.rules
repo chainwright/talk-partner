@@ -1,0 +1,28 @@
+rules_version = '2';
+
+// Talk Partner keeps one thing in Cloud Firestore: feedback notes (core/feedback.ts, web/src/feedback.ts).
+// A page may ADD a note that passes the checks below. Nobody can read, list, change or delete notes through the
+// client SDKs or the REST API: they are read in the Firebase console by the project's owners only.
+// Everything else in the database is closed (no other match, and the default is "deny").
+// Checked by scripts/rules-check.mjs against the Firestore emulator (every case) and against the deployed rules
+// (the refusals only, so that run writes nothing).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /feedback/{note} {
+      allow create: if validNote(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
+    function validNote(d) {
+      return d.keys().hasOnly(['text', 'role', 'email', 'version', 'commit', 'createdAt'])
+        && d.keys().hasAll(['text', 'role', 'version', 'commit', 'createdAt'])
+        && d.text is string && d.text.size() >= 1 && d.text.size() <= 1000
+        && d.role is string && d.role in ['', 'slt', 'carer', 'person', 'other']
+        && (!('email' in d) || (d.email is string && d.email.size() <= 254 && d.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')))
+        && d.version is string && d.version.size() >= 1 && d.version.size() <= 20
+        && d.commit is string && d.commit.matches('^([0-9a-f]{7,40}|unknown)$')
+        // the time is the server's own, never the sender's
+        && d.createdAt == request.time;
+    }
+  }
+}

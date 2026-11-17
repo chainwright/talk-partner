@@ -178,6 +178,35 @@ const COPY = {
     privacy: 'Except what you spoke into the microphone: those recordings went to Google\'s cloud to be turned into text.',
   },
 
+  // "Send feedback" (core/feedback.ts): a short note to the people who make the app, reachable on the partner's side and
+  // on the "How this works" page. It is the one thing the app stores away from this computer, so the screen says where it
+  // goes and what goes with it, and asks for no patient details. Sent only on a press of "Send".
+  feedback: {
+    link: 'Send feedback',
+    heading: 'Send feedback',
+    intro: 'What worked, what did not, what is missing? A few words help. Your note goes to the people who make Talk Partner.',
+    textLabel: 'Your note',
+    left: (n: number) => `${n} character${n === 1 ? '' : 's'} left`,
+    noPatients: 'Please don\'t include patient details: no names, no dates of birth, nothing that could identify a person you care for or treat.',
+    roleLabel: 'You are (optional)',
+    roles: { '': 'I\'d rather not say', slt: 'a speech-language therapist', carer: 'a carer or family member', person: 'a person with aphasia', other: 'someone else' } as Record<string, string>,
+    emailLabel: 'Email (optional)',
+    emailHint: 'Only if you want an answer. Leave it empty and the note is sent without one.',
+    where: 'Where it goes: the note, your role and the email address if you gave one are stored in our database in Google\'s cloud, with the time and the version of this app. Nothing else is sent with it: none of your questions, no cards, nothing from About me. You cannot read or change it afterwards from here.',
+    send: 'Send',
+    sending: 'Sending…',
+    sent: 'Thank you. Your note was sent.',
+    another: 'Write another',
+    offline: 'Feedback needs a connection, and this computer has none just now. Your note is kept here on the screen until you send it.',
+    noConfig: 'This copy of the app has no project settings, so it has nowhere to send a note.',
+    errors: {
+      empty: 'Write a few words first.',
+      long: 'The note is too long. Please keep it under 1,000 characters.',
+      email: 'That email address does not look complete. Correct it, or leave the field empty.',
+      failed: 'The note could not be sent. Check the connection and try again; your words are still here.',
+    },
+  },
+
   // The two ends of the number line on a pain card (under the numbers on the person's card).
   scale: { low: 'no pain', lowFromOne: 'hardly any', high: 'the worst' },
 

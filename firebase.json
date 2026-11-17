@@ -10,5 +10,7 @@
       { "source": "/", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
     ]
   },
+  "firestore": { "rules": "firestore.rules", "database": "(default)", "location": "nam5" },
+  "emulators": { "firestore": { "port": 8787 }, "ui": { "enabled": false }, "singleProjectMode": true },
   "remoteconfig": { "template": "remoteconfig.template.json" }
 }

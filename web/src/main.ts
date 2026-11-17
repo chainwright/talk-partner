@@ -7,6 +7,7 @@ import './fonts.css';
 import { partnerActions } from '../../core/actions';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
+import { EMAIL_MAX, FEEDBACK_MAX, FEEDBACK_ROLES, feedbackDoc, type FeedbackError } from '../../core/feedback';
 import { addAnswer, answerCounts, lastAnswer, topQuestions, whenText, type Answered } from '../../core/history';
 import { needLine, needsCard } from '../../core/needs';
 import { DEFAULT_SETTINGS, LEGS, REMOTE_KEYS, VOICE_MAX_SECONDS, defaultReport, type RuntimeSettings, type SettingsReport } from '../../core/models';
@@ -31,7 +32,7 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const C = COPY;
 
 /** 'trial' is the hidden stopwatch for devlog/TRIAL_PROTOCOL.md: reachable only by typing #/trial, never linked. */
-type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'trial';
+type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'feedback' | 'trial';
 
 interface Settings {
   cloudHelp: boolean;
@@ -128,6 +129,7 @@ function route(): Route {
   // the quick-needs board, full screen: also reachable by its own address, with no question asked and no model
   if (h === 'needs') { if (state.card?.kind !== 'needs') openNeeds(); return 'person'; }
   if (h === 'how') return 'how';
+  if (h === 'feedback') return 'feedback';
   if (h === 'trial') return 'trial';
   if (h === 'welcome' || (!state.settings.welcomed && !state.demo)) return 'welcome';
   return 'partner';
@@ -589,6 +591,7 @@ function partnerScreen(): string {
     <div class="settings">
       <label>${C.support.label} <select id="support">${(['mild', 'more', 'most'] as const).map((v) => `<option value="${v}" ${state.settings.support === v ? 'selected' : ''}>${C.support.options[v]}</option>`).join('')}</select></label>
       <span class="privacy" id="privacy">${privacyLine()}</span>
+      <a class="feedback-link" href="#/feedback">${C.feedback.link}</a>
     </div>
   </section>
   <section id="person" class="person" aria-label="Card for the person" data-kind="${c ? c.kind : ''}" data-blocked="${c?.blocked ? '1' : ''}">${personView(false)}</section>
@@ -819,8 +822,60 @@ function howScreen(): string {
     <h2>${H.scoresHeading}</h2><p>${H.scoresNone}</p>
     <h2>${H.lookalikesHeading}</h2><p>${H.lookalikesIntro}</p>
     <ul class="lookalikes">${H.lookalikes.map((l) => `<li><b><a href="${l.url}" target="_blank" rel="noopener">${esc(l.name)}</a></b><br>${esc(l.does)}<br><span class="ours">${esc(l.ours)}</span></li>`).join('')}</ul>
-    <p><a href="#/">${C.app.nav.home}</a></p></main>${footer()}`;
+    <p><a href="#/feedback">${C.feedback.link}</a> · <a href="#/">${C.app.nav.home}</a></p></main>${footer()}`;
 }
+
+// ---------------------------------------------------------------- feedback
+/**
+ * "Send feedback" (core/feedback.ts): one note, written to Cloud Firestore on a press of "Send" and never before
+ * (web/src/feedback.ts is loaded only then). The form is kept in memory while the page is open, so a failed send or
+ * a look at another screen loses nothing; it is never stored on this computer and never sent in part.
+ */
+const fb: { text: string; role: string; email: string; status: 'idle' | 'sending' | 'sent'; error: FeedbackError | 'failed' | null } = { text: '', role: '', email: '', status: 'idle', error: null };
+const isOnline = () => navigator.onLine !== false;
+function feedbackScreen(): string {
+  const F = C.feedback;
+  if (fb.status === 'sent') {
+    return `${nav()}<main class="screen feedback"><h1>${F.heading}</h1><p id="fb-status" class="fb-sent" role="status">${F.sent}</p>
+      <div class="actions"><button type="button" data-act="fb-again">${F.another}</button><a class="button primary" href="#/">${C.app.nav.home}</a></div></main>${footer()}`;
+  }
+  const off = !isOnline();
+  const sending = fb.status === 'sending';
+  const note = !cfg ? F.noConfig : off ? F.offline : fb.error ? F.errors[fb.error] : '';
+  return `${nav()}<main class="screen feedback"><h1>${F.heading}</h1>
+    <p>${F.intro}</p>
+    <form id="fb">
+      <label for="fb-text">${F.textLabel}</label>
+      <textarea id="fb-text" rows="6" maxlength="${FEEDBACK_MAX}" ${sending ? 'disabled' : ''}>${esc(fb.text)}</textarea>
+      <p class="fb-row"><span class="fb-warn">${F.noPatients}</span><span id="fb-left" class="muted">${F.left(FEEDBACK_MAX - fb.text.length)}</span></p>
+      <label for="fb-role">${F.roleLabel}</label>
+      <select id="fb-role" ${sending ? 'disabled' : ''}>${['', ...FEEDBACK_ROLES].map((r) => `<option value="${r}" ${fb.role === r ? 'selected' : ''}>${esc(F.roles[r])}</option>`).join('')}</select>
+      <label for="fb-email">${F.emailLabel}</label>
+      <input id="fb-email" type="email" autocomplete="email" maxlength="${EMAIL_MAX}" value="${esc(fb.email)}" aria-describedby="fb-email-hint" ${sending ? 'disabled' : ''}>
+      <p id="fb-email-hint" class="muted">${F.emailHint}</p>
+      <p class="muted">${F.where}</p>
+      <p id="fb-status" class="${!cfg || off || fb.error ? 'warn' : 'muted'}" role="status" ${note ? '' : 'hidden'}>${esc(note)}</p>
+      <div class="actions"><button id="fb-send" class="primary" type="submit" ${!cfg || off || sending ? 'disabled' : ''}>${sending ? F.sending : F.send}</button><a class="button" href="#/">${C.app.nav.home}</a></div>
+    </form></main>${footer()}`;
+}
+async function submitFeedback() {
+  if (!cfg || fb.status === 'sending') return;
+  if (!isOnline()) { fb.error = null; render(); return; } // the screen then says it needs a connection
+  const checked = feedbackDoc(fb, { version: __APP_VERSION__, commit: __APP_COMMIT__ });
+  if (!checked.ok) { fb.error = checked.error; render(); return; }
+  fb.status = 'sending'; fb.error = null; render();
+  try {
+    const { sendFeedback } = await import('./feedback');
+    const id = await sendFeedback(cfg, checked.doc);
+    console.info(`[feedback] written: ${id}`); // the new note's id; no text
+    fb.text = ''; fb.email = ''; fb.status = 'sent';
+  } catch {
+    fb.status = 'idle'; fb.error = 'failed';
+  }
+  if (route() === 'feedback') render();
+}
+// the connection coming or going changes what the form can do: say so at once
+for (const ev of ['online', 'offline']) window.addEventListener(ev, () => { if (route() === 'feedback' && fb.status === 'idle') render(); });
 
 // ---------------------------------------------------------------- render
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -837,7 +892,7 @@ function render(lifted = false) {
   const key = `${r}|${cardSeq}`;
   // the card judge mode opens with is simply there: no entrance, so the very first frame is a finished card
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? partnerScreen() : r === 'person' ? personScreen() : r === 'about' ? aboutScreen() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? partnerScreen() : r === 'person' ? personScreen() : r === 'about' ? aboutScreen() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   if (r === 'trial') {
     timer = setInterval(() => { const el = document.querySelector('#elapsed'); const c = trialClock(); if (el && c) el.textContent = c; }, 100);
@@ -1091,6 +1146,7 @@ function act(el: HTMLElement) {
     }
     case 'voice-ok': state.settings.voiceOk = 'cloud'; saveSettings(); voiceAsk = false; startVoice(); break;
     case 'voice-no': voiceAsk = false; patchVoice(); break;
+    case 'fb-again': fb.status = 'idle'; fb.error = null; render(); break;
     // the recording of the on-device step: shown or hidden in place; no card, no engine call, no setting changed
     case 'recorded': state.recorded = !state.recorded; patchRecorded(); break;
     case 'leave-demo': void leaveDemo(); break;
@@ -1143,11 +1199,13 @@ app.addEventListener('click', (ev) => {
 });
 app.addEventListener('submit', (ev) => {
   if ((ev.target as HTMLElement).id === 'ask') { ev.preventDefault(); void make(($('#q') as HTMLInputElement).value); }
+  else if ((ev.target as HTMLElement).id === 'fb') { ev.preventDefault(); void submitFeedback(); }
   else ev.preventDefault();
 });
 app.addEventListener('change', (ev) => {
   const t = ev.target as HTMLInputElement | HTMLSelectElement;
   if (t.id.startsWith('trial-')) { trialInput(t); return; }
+  if (t.id === 'fb-role') { fb.role = t.value; return; }
   if (t.id === 'support') { state.settings.support = (t as HTMLSelectElement).value as SupportLevel; saveSettings(); if (state.lastQuestion) void make(state.lastQuestion); return; }
   if (t.id === 'consent') { state.consentChecked = (t as HTMLInputElement).checked; render(); return; }
   if (t instanceof HTMLInputElement && t.dataset.photo !== undefined && t.files?.[0]) { void addPhoto(Number(t.dataset.photo), t.files[0]); return; }
@@ -1158,6 +1216,10 @@ app.addEventListener('input', (ev) => {
   // typing takes over from the microphone; an emptied field holds no spoken question any more
   if (t.id === 'q') { if (voice.view().phase !== 'idle') voice.cancel(); if (!t.value.trim()) dictated = false; }
   if (t.id === 'q') { state.lastQuestion = t.value; if (step === 'waiting') step = 'cancelled'; return; }
+  // a correction takes the complaint about the last try away
+  if ((t.id === 'fb-text' || t.id === 'fb-email') && fb.error) { fb.error = null; const st = document.querySelector<HTMLElement>('#fb-status'); if (st && isOnline()) st.hidden = true; }
+  if (t.id === 'fb-text') { fb.text = t.value; const left = document.querySelector('#fb-left'); if (left) left.textContent = C.feedback.left(FEEDBACK_MAX - t.value.length); return; }
+  if (t.id === 'fb-email') { fb.email = t.value; return; }
   if (t.id.startsWith('trial-') && t instanceof HTMLInputElement) { trialInput(t); return; }
   if (t instanceof HTMLTextAreaElement && t.dataset.list) { state.profile[t.dataset.list as 'foods'] = t.value.split('\n').map((x) => x.trim()).filter(Boolean); saveProfile(); return; }
   if (t instanceof HTMLInputElement && t.dataset.field && t.dataset.field !== 'household') {

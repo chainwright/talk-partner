@@ -17,6 +17,7 @@
     "e2e:cloud": "node scripts/e2e-cloud.mjs",
     "e2e:noconfig": "node scripts/e2e-noconfig.mjs",
     "e2e:ondevice": "node scripts/e2e-ondevice.mjs",
+    "test:rules": "npx firebase-tools emulators:exec --only firestore --project demo-talk-partner \"node scripts/rules-check.mjs\"",
     "eval": "node scripts/eval-heldout.mjs"
   },
   "dependencies": {

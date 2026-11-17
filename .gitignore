@@ -11,3 +11,6 @@ devlog/*_STEPS_*.md
 devlog/PUBLIC_SCRUB_TODO.md
 # a run of the labelled set with no --out lands here, so it never overwrites a saved run
 devlog/eval_runs/
+
+# written by the Firestore emulator (npm run test:rules)
+firestore-debug.log
