@@ -1,85 +1,58 @@
-// Voice input for the PARTNER's question: the browser's own speech recognition (Web Speech API), started by a press
-// on the microphone and never by itself. Interim words show in the question field as they come, the final words fill
-// it, and nothing is submitted: the partner reads the words, changes them if needed, and presses "Make card".
+// Voice input for the PARTNER's question, through Firebase AI Logic. A press on the microphone records one short
+// clip (at most VOICE_MAX_SECONDS); a second press, or the limit, ends it. The clip is made into a 16 kHz mono WAV
+// in the browser and handed to the engine once (web/src/ai/firebaseEngine.ts, `transcribe`: Gemini through
+// `firebase/ai`, asked only for the words). The words fill the question field and nothing is submitted: the partner
+// reads them, changes them if needed, and presses "Make card".
 //
-// The person's speech is never recognised, here or anywhere in the app: recognition of aphasic speech gives confident
-// wrong text, and the app never answers for them.
+// The person's speech is never recorded or recognised, here or anywhere in the app: recognition of aphasic speech
+// gives confident wrong text, and the app never answers for them.
 //
-// Where the sound goes is the browser's business, not this app's, and the app says so (core/copy.ts, `voice`). With
-// the browser's default service the sound may leave the computer (in Chrome: to Google). Where the browser reports
-// that it can recognise the language on the device (`SpeechRecognition.available({ processLocally: true })`; the
-// Chrome 157 we checked has it) the app sets `processLocally`, which asks the browser to keep the sound on the device and to fail
-// rather than send it; `local` in the view says which of the two was asked for. The app never installs a language
-// pack and never falls back from on-device to the default service by itself.
+// Where the sound goes: to Google's cloud, as part of that one request. The SDK's on-device step cannot take sound
+// (core/models.ts, LEGS.voice), so the app says "cloud" before the first use (core/copy.ts, `voice`) and would say
+// "on this computer" only if the SDK's `inferenceSource` reported it for that call. There is no other speech
+// recognition in the app: the browser's Web Speech API, used for a few hours on 17 Nov 2026, was removed because it
+// is AI inference outside Firebase AI Logic.
 //
-// This file has no DOM and no globals: the recognition constructor is handed in, so the state machine is tested with
-// a scripted one (tests/unit/voice.test.ts).
+// One model call per recording, and none for a clip with no sound in it (the free tier allows 15 requests a minute).
+//
+// This file has no DOM and no globals: the microphone, the recorder, the decoder and the engine call are handed in,
+// so the state machine is tested with scripted ones (tests/unit/voice.test.ts). The browser's side is web/src/mic.ts.
 
-export interface RecognitionResultLike { isFinal: boolean; 0: { transcript: string } }
-export interface RecognitionEventLike { results: ArrayLike<RecognitionResultLike> }
-export interface RecognitionErrorLike { error: string }
-/** The part of the browser's SpeechRecognition object this app uses. */
-export interface RecognitionLike {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  maxAlternatives: number;
-  processLocally?: boolean;
-  onresult: ((ev: RecognitionEventLike) => void) | null;
-  onerror: ((ev: RecognitionErrorLike) => void) | null;
-  onend: (() => void) | null;
+export interface StreamLike { getTracks(): { stop(): void }[] }
+/** The part of the browser's MediaRecorder this app uses. */
+export interface RecorderLike {
+  mimeType?: string;
+  ondataavailable: ((ev: { data: Blob }) => void) | null;
+  onstop: (() => void) | null;
+  onerror: ((ev: unknown) => void) | null;
   start(): void;
   stop(): void;
-  abort(): void;
 }
-export type RecognitionCtor = (new () => RecognitionLike) & {
-  available?: (options: { langs: string[]; processLocally: boolean }) => Promise<string>;
-};
+export interface Clip { mimeType: string; base64: string }
+export interface Heard { text: string; source: 'on-device' | 'in-cloud' }
+/** What became of the one request made for a recording: where the SDK said it ran, or that it failed after being handed over. */
+export type SentOutcome = 'in-cloud' | 'on-device' | 'failed' | 'not-sent';
 
-export type VoiceError = 'blocked' | 'no-speech' | 'no-mic' | 'network' | 'language' | 'failed';
+export type VoiceError = 'blocked' | 'no-speech' | 'no-mic' | 'offline' | 'busy' | 'failed';
+export type VoicePhase = 'idle' | 'asking' | 'recording' | 'working';
 
 export interface VoiceView {
-  /** False where the browser has no speech recognition: the microphone button is not drawn at all. */
+  /** False where the browser cannot record or this copy has no cloud step: the microphone button is not drawn at all. */
   supported: boolean;
-  listening: boolean;
-  /** What has been heard in this go: interim words while listening, the tidied final words after. */
+  /** 'asking': waiting for the browser's microphone permission. 'working': the recording is being turned into text. */
+  phase: VoicePhase;
+  /** The words of the last recording, tidied; empty until the model has answered. */
   text: string;
-  /** True once listening has ended and `text` is what was heard. */
+  /** True once `text` is what was heard. */
   final: boolean;
   error: VoiceError | null;
-  /** On-device recognition was reported by the browser and is asked for on every start. */
-  local: boolean;
+  /** Where the SDK said the last answered recording was turned into text; null before any. */
+  source: 'on-device' | 'in-cloud' | null;
 }
 
-export const VOICE_LANG = 'en-US';
-
-/** The browser's recognition constructor, standard name first; null where there is none. */
-export function recognitionCtor(w: unknown): RecognitionCtor | null {
-  const g = w as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown } | null | undefined;
-  const c = g?.SpeechRecognition ?? g?.webkitSpeechRecognition;
-  return typeof c === 'function' ? (c as RecognitionCtor) : null;
-}
-
-/**
- * True only when the browser says on-device recognition of this language is there now ("available"). "downloadable"
- * and "downloading" are a no: the app does not install language packs. A capability query: no sound, no recognition.
- */
-/**
- * The Chrome major version from a user-agent string, or 0 if there is none. Chromium 148 crashes the whole tab when
- * SpeechRecognition.available() is called (found 17 Nov in Playwright's Chromium 148: the page died on load; with the
- * call stubbed it loaded). Chrome 157 answers it. So the query is made only from MIN_AVAILABLE_CHROME on.
- */
-export const MIN_AVAILABLE_CHROME = 157;
-export function chromeMajor(ua: string): number {
-  const m = /Chrome\/(\d+)/.exec(ua);
-  return m ? Number(m[1]) : 0;
-}
-
-export async function localAvailable(ctor: RecognitionCtor | null, lang = VOICE_LANG, ua = typeof navigator === 'undefined' ? '' : navigator.userAgent): Promise<boolean> {
-  if (!ctor || typeof ctor.available !== 'function' || !('processLocally' in ctor.prototype)) return false;
-  if (chromeMajor(ua) < MIN_AVAILABLE_CHROME) return false;
-  try { return (await ctor.available({ langs: [lang], processLocally: true })) === 'available'; } catch { return false; }
-}
+export const SAMPLE_RATE = 16000;
+/** A question is one sentence: anything longer than this from the model is cut (it is shown in a one-line field). */
+export const MAX_TRANSCRIPT = 300;
 
 /** What was heard, made into a question for the field: trimmed, a capital first, and a question mark if it ends bare. */
 export function tidy(heard: string): string {
@@ -89,73 +62,162 @@ export function tidy(heard: string): string {
   return /[.?!…]$/.test(s) ? s : `${s}?`;
 }
 
-const ERRORS: Record<string, VoiceError | null> = {
-  'not-allowed': 'blocked', 'service-not-allowed': 'blocked', 'no-speech': 'no-speech', 'audio-capture': 'no-mic',
-  network: 'network', 'language-not-supported': 'language', aborted: null,
-};
+/**
+ * The model's answer -> the words. The answer must be JSON with a string `transcript` (the schema asks for exactly
+ * that); anything else counts as nothing heard, never as text for the field.
+ */
+export function transcriptFrom(raw: string): string {
+  try {
+    const j: unknown = JSON.parse(raw);
+    const t = (j as { transcript?: unknown } | null)?.transcript;
+    return typeof t === 'string' ? t.replace(/\s+/g, ' ').trim().slice(0, MAX_TRANSCRIPT) : '';
+  } catch { return ''; }
+}
+
+/** True when the clip has sound in it at all. A silent clip makes no request: nothing to hear, and the model may invent words. */
+export function hasSound(samples: Float32Array, floor = 0.01): boolean {
+  for (let i = 0; i < samples.length; i++) if (Math.abs(samples[i]) > floor) return true;
+  return false;
+}
+
+/** Mono 16-bit PCM WAV of the samples, as base64: the one audio format this app sends. */
+export function wavBase64(samples: Float32Array, rate = SAMPLE_RATE): string {
+  const bytes = new Uint8Array(44 + samples.length * 2);
+  const v = new DataView(bytes.buffer);
+  const tag = (at: number, s: string) => { for (let i = 0; i < s.length; i++) bytes[at + i] = s.charCodeAt(i); };
+  tag(0, 'RIFF'); v.setUint32(4, 36 + samples.length * 2, true); tag(8, 'WAVE');
+  tag(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  tag(36, 'data'); v.setUint32(40, samples.length * 2, true);
+  for (let i = 0; i < samples.length; i++) {
+    const x = Math.max(-1, Math.min(1, samples[i]));
+    v.setInt16(44 + i * 2, Math.round(x < 0 ? x * 0x8000 : x * 0x7fff), true);
+  }
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+/** The browser's reason for giving no microphone -> ours. */
+function micError(e: unknown): VoiceError {
+  const name = (e as { name?: string } | null)?.name ?? '';
+  if (name === 'NotAllowedError' || name === 'SecurityError') return 'blocked';
+  if (name === 'NotFoundError' || name === 'OverconstrainedError' || name === 'NotReadableError') return 'no-mic';
+  return 'failed';
+}
+/** A refused request for being one too many (the free tier's limit per minute). */
+const overQuota = (e: unknown) => /\b429\b|quota|resource[-_ ]exhausted|rate limit/i.test(String((e as { message?: string } | null)?.message ?? e));
+
+export interface VoiceDeps {
+  /** Asks the browser for the microphone; null where it has none to ask. */
+  getStream: (() => Promise<StreamLike>) | null;
+  makeRecorder: ((stream: StreamLike) => RecorderLike) | null;
+  /** The recorded pieces -> mono samples at SAMPLE_RATE. */
+  decode: ((chunks: Blob[], mimeType: string) => Promise<Float32Array>) | null;
+  /** The one model call (the engine's `transcribe`, with the answer already read as words); null on a copy without a cloud step. */
+  transcribe: ((clip: Clip) => Promise<Heard>) | null;
+  /** False when the browser knows it has no connection: then nothing is recorded, because it could not be turned into text. */
+  online?: () => boolean;
+  /** Called exactly once for every request handed to `transcribe`, also when the go was cancelled meanwhile. */
+  onSent?: (base64Bytes: number, outcome: SentOutcome) => void;
+  maxSeconds: number;
+  setTimer?: (fn: () => void, ms: number) => unknown;
+  clearTimer?: (t: unknown) => void;
+  onChange: (v: VoiceView) => void;
+}
 
 export interface Voice {
   view(): VoiceView;
-  /** Records what `localAvailable` answered; used from the next start on. */
-  setLocal(local: boolean): void;
-  /** Starts listening for one question. Does nothing where unsupported or while already listening. */
+  /** Starts one recording. Does nothing where unsupported or while a go is under way. */
   start(): void;
-  /** Ends listening and keeps what was heard (the browser gives its final words). */
+  /** Ends the recording and turns it into text. */
   stop(): void;
-  /** Ends listening and drops this go: nothing more is reported from it. */
+  /** Ends this go and drops it: nothing more is reported from it (a request already made is still counted by onSent). */
   cancel(): void;
 }
 
-export function createVoice(opts: { ctor: RecognitionCtor | null; lang?: string; onChange: (v: VoiceView) => void }): Voice {
-  const { ctor, onChange } = opts;
-  const v: VoiceView = { supported: !!ctor, listening: false, text: '', final: false, error: null, local: false };
-  let rec: RecognitionLike | null = null;
+export function createVoice(deps: VoiceDeps): Voice {
+  const { getStream, makeRecorder, decode, transcribe, onChange } = deps;
+  const setTimer = deps.setTimer ?? ((fn, ms) => setTimeout(fn, ms));
+  const clearTimer = deps.clearTimer ?? ((t) => clearTimeout(t as ReturnType<typeof setTimeout>));
+  const online = deps.online ?? (() => true);
+  const supported = !!(getStream && makeRecorder && decode && transcribe);
+  const v: VoiceView = { supported, phase: 'idle', text: '', final: false, error: null, source: null };
+  /** Every go has a number; anything that comes back for an older one is ignored. */
+  let go = 0;
+  let stream: StreamLike | null = null;
+  let rec: RecorderLike | null = null;
+  let chunks: Blob[] = [];
+  let limit: unknown = null;
   const emit = () => onChange({ ...v });
-  const end = () => { rec = null; v.listening = false; };
+  const release = () => {
+    if (limit !== null) { clearTimer(limit); limit = null; }
+    try { stream?.getTracks().forEach((t) => t.stop()); } catch { /* already stopped */ }
+    stream = null; rec = null;
+  };
+  const end = (error: VoiceError | null) => { release(); v.phase = 'idle'; v.error = error; emit(); };
+
+  async function finish(mine: number, mimeType: string) {
+    const pieces = chunks; chunks = [];
+    release(); // the microphone is let go before anything is sent
+    if (mine !== go) return;
+    let samples: Float32Array;
+    try { samples = await decode!(pieces, mimeType); } catch { if (mine === go) end(pieces.length ? 'failed' : 'no-speech'); return; }
+    if (mine !== go) return;
+    samples = samples.subarray(0, deps.maxSeconds * SAMPLE_RATE);
+    if (!samples.length || !hasSound(samples)) { end('no-speech'); return; }
+    if (!online()) { end('offline'); return; }
+    const clip: Clip = { mimeType: 'audio/wav', base64: wavBase64(samples) };
+    let heard: Heard;
+    try { heard = await transcribe!(clip); } catch (e) {
+      const notSent = (e as { notSent?: boolean } | null)?.notSent === true;
+      deps.onSent?.(clip.base64.length, notSent ? 'not-sent' : 'failed');
+      if (mine === go) end(notSent || !online() ? 'offline' : overQuota(e) ? 'busy' : 'failed');
+      return;
+    }
+    deps.onSent?.(clip.base64.length, heard.source);
+    if (mine !== go) return;
+    v.text = tidy(heard.text); v.final = !!v.text; v.source = heard.source;
+    end(v.text ? null : 'no-speech');
+  }
+
+  function stop() {
+    if (v.phase !== 'recording' || !rec) return;
+    if (limit !== null) { clearTimer(limit); limit = null; }
+    v.phase = 'working'; emit();
+    try { rec.stop(); } catch { end('failed'); }
+  }
 
   return {
     view: () => ({ ...v }),
-    setLocal(local) { if (ctor) v.local = local; },
+    stop,
     start() {
-      if (!ctor || v.listening) return;
-      const r = new ctor();
-      rec = r;
-      r.lang = opts.lang ?? VOICE_LANG;
-      r.continuous = false; // one question, then it ends by itself
-      r.interimResults = true;
-      r.maxAlternatives = 1;
-      if (v.local) r.processLocally = true;
-      // events of an earlier go (a stale object) are ignored: only the current one may change the view
-      r.onresult = (ev) => {
-        if (rec !== r) return;
-        let heard = '';
-        for (let i = 0; i < ev.results.length; i++) heard += `${ev.results[i][0].transcript} `;
-        v.text = heard.replace(/\s+/g, ' ').trim();
+      if (!supported || v.phase !== 'idle') return;
+      v.text = ''; v.final = false; v.error = null;
+      if (!online()) { v.error = 'offline'; emit(); return; }
+      const mine = ++go;
+      v.phase = 'asking'; emit();
+      getStream!().then((s) => {
+        if (mine !== go) { try { s.getTracks().forEach((t) => t.stop()); } catch { /* gone */ } return; }
+        stream = s; chunks = [];
+        const r = makeRecorder!(s);
+        rec = r;
+        r.ondataavailable = (ev) => { if (mine === go && ev.data && ev.data.size) chunks.push(ev.data); };
+        r.onerror = () => { if (mine === go) end('failed'); };
+        r.onstop = () => { void finish(mine, r.mimeType || 'audio/webm'); };
+        r.start();
+        v.phase = 'recording';
+        limit = setTimer(() => { limit = null; if (mine === go) stop(); }, deps.maxSeconds * 1000);
         emit();
-      };
-      r.onerror = (ev) => {
-        if (rec !== r) return;
-        const e = ev.error in ERRORS ? ERRORS[ev.error] : 'failed';
-        if (e) v.error = e; // "aborted" is the partner's own stop, not an error
-      };
-      r.onend = () => {
-        if (rec !== r) return;
-        end();
-        v.text = tidy(v.text);
-        v.final = !!v.text;
-        if (!v.text && !v.error) v.error = 'no-speech';
-        emit();
-      };
-      v.listening = true; v.text = ''; v.final = false; v.error = null;
-      try { r.start(); } catch { end(); v.error = 'failed'; }
-      emit();
+      }).catch((e) => { if (mine === go) end(v.phase === 'asking' ? micError(e) : 'failed'); });
     },
-    stop() { if (rec && v.listening) rec.stop(); },
     cancel() {
-      if (!rec) return;
+      if (v.phase === 'idle') return;
+      go++;
       const r = rec;
-      end(); v.text = ''; v.final = false; v.error = null;
-      try { r.abort(); } catch { /* already ended */ }
+      release(); chunks = [];
+      try { r?.stop(); } catch { /* already ended */ }
+      v.phase = 'idle'; v.text = ''; v.final = false; v.error = null;
       emit();
     },
   };

@@ -91,3 +91,18 @@ export function devicePrompt(question: string, p: Profile): string {
 export function cloudPrompt(strippedQuestion: string): string {
   return `Partner asks: ${strippedQuestion}`;
 }
+
+// Voice input for the partner's question (web/src/voice.ts): the recording is turned into text by the cloud model,
+// through Firebase AI Logic. The instructions are fixed app text; the request carries them and the sound, nothing
+// from About me. The model is asked for the words and nothing else: it does not answer, shorten or correct.
+export const TRANSCRIBE_SYSTEM_PROMPT =
+  'You are a transcriber. The audio is one adult asking another adult a short question in English. ' +
+  'Write down exactly the words that are spoken, in English, with ordinary punctuation. ' +
+  'Do not answer the question. Do not add, drop, correct or translate words. Do not describe sounds. ' +
+  'If no words are spoken, return an empty transcript.';
+export const TRANSCRIBE_PROMPT = 'Transcribe the question in this recording.';
+export const TRANSCRIBE_SCHEMA = {
+  type: 'object',
+  properties: { transcript: { type: 'string' } },
+  required: ['transcript'],
+} as const;

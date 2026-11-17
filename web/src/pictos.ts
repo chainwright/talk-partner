@@ -132,6 +132,9 @@ const P: Record<string, string> = {
 /** The microphone on the partner's "speak your question" button. A control, not a choice picture: it is never on a card. */
 export const MIC = svg('<rect x="36" y="10" width="24" height="44" rx="12"/><path d="M22 44a26 26 0 0052 0M48 70v16M34 86h28"/>', 'microphone');
 
+/** The same button while it records: a square, the usual sign for "stop". */
+export const MIC_STOP = svg('<rect x="28" y="28" width="40" height="40" rx="6" fill="currentColor"/>', 'stop recording');
+
 /** Every bundled pictogram id (for the provenance check in tests and PICTOGRAMS.md). */
 export const PICTO_IDS = [...Object.keys(P), ...BODY_PARTS.map((b) => `body:${b}`), 'monogram'];
 

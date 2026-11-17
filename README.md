@@ -133,24 +133,28 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 
 | Where | Line holds | What it is |
 |---|---|---|
-| `web/src/ai/firebaseEngine.ts:27` | `from 'firebase/ai'` | the only import of the SDK in the repo (guarded by `tests/unit/no-direct-model-calls.test.ts`) |
-| `web/src/ai/firebaseEngine.ts:74` | `getAI(` | the AI Logic instance of the private step: its own Firebase app with no App Check, so a card made on this computer contacts no host |
-| `web/src/ai/firebaseEngine.ts:75` | `getGenerativeModel(` | private step model |
-| `web/src/ai/firebaseEngine.ts:76` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
-| `web/src/ai/firebaseEngine.ts:91` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started on the first cloud call only |
-| `web/src/ai/firebaseEngine.ts:95` | `getAI(` | the AI Logic instance of the cloud step (Gemini Developer API backend), with `useLimitedUseAppCheckTokens: true`: a fresh short-lived App Check token per cloud request |
-| `web/src/ai/firebaseEngine.ts:98` | `getGenerativeModel(` | stripped step model |
-| `web/src/ai/firebaseEngine.ts:99` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
-| `web/src/ai/firebaseEngine.ts:126` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
-| `web/src/ai/firebaseEngine.ts:140` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
-| `web/src/ai/firebaseEngine.ts:141` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
-| `web/src/ai/firebaseEngine.ts:164` | `generateContent(` | stripped step call |
-| `web/src/ai/firebaseEngine.ts:169` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
-| `web/src/ai/firebaseEngine.ts:192` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
+| `web/src/ai/firebaseEngine.ts:33` | `from 'firebase/ai'` | the only import of the SDK in the repo (guarded by `tests/unit/no-direct-model-calls.test.ts`) |
+| `web/src/ai/firebaseEngine.ts:75` | `getAI(` | the AI Logic instance of the private step: its own Firebase app with no App Check, so a card made on this computer contacts no host |
+| `web/src/ai/firebaseEngine.ts:76` | `getGenerativeModel(` | private step model |
+| `web/src/ai/firebaseEngine.ts:77` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
+| `web/src/ai/firebaseEngine.ts:89` | `getAI(` | the AI Logic instance of the cloud step (Gemini Developer API backend), with `useLimitedUseAppCheckTokens: true`: a fresh short-lived App Check token per cloud request |
+| `web/src/ai/firebaseEngine.ts:95` | `getGenerativeModel(` | stripped step model |
+| `web/src/ai/firebaseEngine.ts:96` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
+| `web/src/ai/firebaseEngine.ts:123` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
+| `web/src/ai/firebaseEngine.ts:137` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
+| `web/src/ai/firebaseEngine.ts:138` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
+| `web/src/ai/firebaseEngine.ts:162` | `generateContent(` | stripped step call |
+| `web/src/ai/firebaseEngine.ts:167` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
+| `web/src/ai/firebaseEngine.ts:179` | `getGenerativeModel(` | voice step model: the same cloud model, asked only for the words of a recording (`{"transcript": string}`) |
+| `web/src/ai/firebaseEngine.ts:180` | `InferenceMode.ONLY_IN_CLOUD` | its mode: the SDK's on-device step takes text and JPEG / PNG only, so sound cannot run on the device; the app says "cloud" before the first use |
+| `web/src/ai/firebaseEngine.ts:196` | `generateContent(` | voice step call: one per recording, the sound as `inlineData` (WAV), after a yes to the notice |
+| `web/src/ai/firebaseEngine.ts:199` | `inferenceSource === InferenceSource.ON_DEVICE` | where the recording was turned into text, from the SDK's report |
+| `web/src/ai/firebaseEngine.ts:221` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
+| `web/src/ai/app.ts:32` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started by the first cloud call (a card, a recording) or the first feedback note, never at page load |
 | `core/pipeline.ts:656` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:771` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:799` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:273` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
+| `web/src/main.ts:278` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all. Every cut is visible per card in "Why this card".

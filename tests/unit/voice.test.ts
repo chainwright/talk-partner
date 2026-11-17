@@ -1,317 +1,332 @@
-// Voice input for the partner's question (web/src/voice.ts), written 17 Nov 2026. The state machine is run against
-// a scripted recognition object: start, interim words, final words, each error, a browser with no speech
-// recognition, and the on-device option. These tests cannot show how well a real browser recognises speech, nor
-// where a real browser sends the sound; what the app says about that is pinned in the last group.
+// Voice input for the partner's question (web/src/voice.ts), since the afternoon of 17 Nov 2026: one short
+// recording, one model call through Firebase AI Logic, the words into the question field. These tests run the state
+// machine against a scripted microphone, recorder, decoder and engine call (no sound, no browser, no model), and read
+// the copy and the client's wiring for what the app says about where the recording goes.
+// What they do not show: that a real recording is understood. One real call against the hosted copy is in
+// devlog/evidence_live/ (see EVIDENCE.md, row 41).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
-import { chromeMajor, createVoice, localAvailable, recognitionCtor, tidy, type RecognitionCtor, type RecognitionLike, type VoiceView } from '../../web/src/voice';
+import { LEGS, VOICE_MAX_SECONDS } from '../../core/models';
+import { TRANSCRIBE_SCHEMA, TRANSCRIBE_SYSTEM_PROMPT } from '../../core/prompt';
+import { voiceRequest } from '../../core/requests';
+import { NullEngine } from '../../core/engine';
+import {
+  MAX_TRANSCRIPT, SAMPLE_RATE, createVoice, hasSound, tidy, transcriptFrom, wavBase64,
+  type Clip, type Heard, type RecorderLike, type SentOutcome, type StreamLike, type VoiceDeps, type VoiceView,
+} from '../../web/src/voice';
 
-const ROOT = join(__dirname, '..', '..');
-const read = (p: string) => readFileSync(join(ROOT, p), 'utf8');
+const read = (p: string) => readFileSync(join(__dirname, '..', '..', p), 'utf8');
+const tick = () => new Promise((r) => setTimeout(r, 0));
+const settle = async () => { for (let i = 0; i < 6; i++) await tick(); };
+const tone = (n = 8000, level = 0.3) => Float32Array.from({ length: n }, (_, i) => level * Math.sin(i / 5));
 
-/** A scripted stand-in for the browser's SpeechRecognition: records what it was told, fires what the test says. */
-class FakeRec implements RecognitionLike {
-  static made: FakeRec[] = [];
-  static throwOnStart = false;
-  lang = ''; continuous = true; interimResults = false; maxAlternatives = 5;
-  processLocally?: boolean;
-  onresult: RecognitionLike['onresult'] = null;
-  onerror: RecognitionLike['onerror'] = null;
-  onend: RecognitionLike['onend'] = null;
-  calls: string[] = [];
-  constructor() { FakeRec.made.push(this); }
-  start() { this.calls.push('start'); if (FakeRec.throwOnStart) throw new Error('InvalidStateError'); }
-  stop() { this.calls.push('stop'); }
-  abort() { this.calls.push('abort'); }
-  /** Fires a result event: each part is [words, isFinal]. */
-  say(...parts: [string, boolean][]) { this.onresult?.({ results: parts.map(([transcript, isFinal]) => ({ isFinal, 0: { transcript } })) }); }
-  fail(error: string) { this.onerror?.({ error }); }
-  end() { this.onend?.(); }
-}
-const Ctor = FakeRec as unknown as RecognitionCtor;
-
-let seen: VoiceView[] = [];
-const last = () => seen[seen.length - 1];
-const rec = () => FakeRec.made[FakeRec.made.length - 1];
-const make = (ctor: RecognitionCtor | null = Ctor) => createVoice({ ctor, onChange: (v) => seen.push(v) });
-beforeEach(() => { seen = []; FakeRec.made = []; FakeRec.throwOnStart = false; });
-
-describe('voice input: a browser without speech recognition', () => {
-  it('no constructor is found, the view says unsupported, and start does nothing and throws nothing', () => {
-    expect(recognitionCtor({})).toBeNull();
-    expect(recognitionCtor(null)).toBeNull();
-    expect(recognitionCtor({ SpeechRecognition: 'not a function' })).toBeNull();
-    const v = make(null);
-    expect(v.view().supported).toBe(false);
-    expect(() => { v.start(); v.stop(); v.cancel(); v.setLocal(true); }).not.toThrow();
-    expect(v.view()).toEqual({ supported: false, listening: false, text: '', final: false, error: null, local: false });
-    expect(seen).toEqual([]);
-  });
-  it('the standard name is preferred, the prefixed one is used where it is all there is', () => {
-    const A = function A() { /* stand-in */ }; const B = function B() { /* stand-in */ };
-    expect(recognitionCtor({ SpeechRecognition: A, webkitSpeechRecognition: B })).toBe(A);
-    expect(recognitionCtor({ webkitSpeechRecognition: B })).toBe(B);
-  });
-  it('the web client draws no microphone button there', () => {
-    const main = read('web/src/main.ts');
-    const button = main.slice(main.indexOf('function voiceButton()'), main.indexOf('function voiceNote()'));
-    expect(button).toContain("if (!v.supported) return '';");
-  });
-});
-
-describe('voice input: start, interim words, final words', () => {
-  it('start asks for US English, one question, interim results, and listens', () => {
-    const v = make();
-    v.start();
-    expect(rec().calls).toEqual(['start']);
-    expect(rec().lang).toBe('en-US');
-    expect(rec().continuous).toBe(false);
-    expect(rec().interimResults).toBe(true);
-    expect(rec().maxAlternatives).toBe(1);
-    expect(rec().processLocally).toBeUndefined(); // not asked for unless the browser reported it (below)
-    expect(last()).toEqual({ supported: true, listening: true, text: '', final: false, error: null, local: false });
-  });
-  it('interim words are shown as they come, and replaced as the browser revises them', () => {
-    const v = make();
-    v.start();
-    rec().say(['do you', false]);
-    expect(last().text).toBe('do you');
-    expect(last().listening).toBe(true);
-    expect(last().final).toBe(false);
-    rec().say(['do you want copy', false]);
-    expect(last().text).toBe('do you want copy');
-    rec().say(['do you want coffee or tea', true]);
-    expect(last().text).toBe('do you want coffee or tea');
-    expect(last().final).toBe(false); // still listening until the browser ends it
-  });
-  it('the end fills in the final words as a question: a capital, a question mark, and nothing is submitted', () => {
-    const v = make();
-    v.start();
-    rec().say(['do you want coffee or tea', true]);
-    rec().end();
-    expect(last()).toEqual({ supported: true, listening: false, text: 'Do you want coffee or tea?', final: true, error: null, local: false });
-    // the machine has no way to submit: it only reports a view
-    expect(Object.keys(v).sort()).toEqual(['cancel', 'setLocal', 'start', 'stop', 'view']);
-  });
-  it('several parts of one go are joined in order', () => {
-    const v = make();
-    v.start();
-    rec().say(['how was therapy today', true], [' and did you eat', false]);
-    expect(last().text).toBe('how was therapy today and did you eat');
-    rec().end();
-    expect(last().text).toBe('How was therapy today and did you eat?');
-  });
-  it('tidy: trims, keeps punctuation the browser gave, leaves the words alone', () => {
-    expect(tidy('  where does it   hurt ')).toBe('Where does it hurt?');
-    expect(tidy('Do you want tea?')).toBe('Do you want tea?');
-    expect(tidy('tell me.')).toBe('Tell me.');
-    expect(tidy('   ')).toBe('');
-  });
-  it('stop asks the browser to finish and keeps what was heard; a second start while listening does nothing', () => {
-    const v = make();
-    v.start(); v.start();
-    expect(FakeRec.made).toHaveLength(1);
-    rec().say(['shall we call jenny', false]);
-    v.stop();
-    expect(rec().calls).toEqual(['start', 'stop']);
-    expect(last().listening).toBe(true); // until the browser says it has ended
-    rec().say(['shall we call Jenny', true]);
-    rec().end();
-    expect(last().text).toBe('Shall we call Jenny?');
-    expect(last().listening).toBe(false);
-  });
-  it('cancel drops this go, and nothing that object fires afterwards changes the view', () => {
-    const v = make();
-    v.start();
-    const first = rec();
-    first.say(['do you', false]);
-    v.cancel();
-    expect(first.calls).toEqual(['start', 'abort']);
-    expect(last()).toEqual({ supported: true, listening: false, text: '', final: false, error: null, local: false });
-    const n = seen.length;
-    first.say(['do you want', true]); first.fail('aborted'); first.end();
-    expect(seen).toHaveLength(n);
-    // and a new go starts clean
-    v.start();
-    expect(rec()).not.toBe(first);
-    expect(last().listening).toBe(true);
-    expect(last().text).toBe('');
-  });
-  it('a new go replaces the words of the one before', () => {
-    const v = make();
-    v.start(); rec().say(['coffee or tea', true]); rec().end();
-    v.start();
-    expect(last().text).toBe('');
-    expect(last().final).toBe(false);
-    rec().say(['are you cold', true]); rec().end();
-    expect(last().text).toBe('Are you cold?');
-  });
-});
-
-describe('voice input: errors', () => {
-  it.each([
-    ['not-allowed', 'blocked'], ['service-not-allowed', 'blocked'], ['no-speech', 'no-speech'], ['audio-capture', 'no-mic'],
-    ['network', 'network'], ['language-not-supported', 'language'], ['bad-grammar', 'failed'], ['something-new', 'failed'],
-  ])('%s is reported as "%s", listening ends, and there is a sentence for it', (code, kind) => {
-    const v = make();
-    v.start();
-    rec().fail(code); rec().end();
-    expect(last().listening).toBe(false);
-    expect(last().error).toBe(kind);
-    expect(last().final).toBe(false);
-    expect(last().text).toBe('');
-    expect(COPY.voice.errors[kind as keyof typeof COPY.voice.errors]).toMatch(/\.$/);
-  });
-  it('an end with nothing heard and no error from the browser reads as "nothing was heard"', () => {
-    const v = make();
-    v.start(); rec().end();
-    expect(last().error).toBe('no-speech');
-  });
-  it('"aborted" is not an error by itself', () => {
-    const v = make();
-    v.start(); rec().say(['do you want tea', true]); rec().fail('aborted'); rec().end();
-    expect(last().error).toBeNull();
-    expect(last().text).toBe('Do you want tea?');
-  });
-  it('an error after some words keeps the words and names the error', () => {
-    const v = make();
-    v.start(); rec().say(['where does it', false]); rec().fail('network'); rec().end();
-    expect(last().text).toBe('Where does it?');
-    expect(last().error).toBe('network');
-  });
-  it('a start the browser refuses is an error, not an exception, and the next press can try again', () => {
-    FakeRec.throwOnStart = true;
-    const v = make();
-    expect(() => v.start()).not.toThrow();
-    expect(last()).toEqual({ supported: true, listening: false, text: '', final: false, error: 'failed', local: false });
-    FakeRec.throwOnStart = false;
-    v.start();
-    expect(last().listening).toBe(true);
-    expect(last().error).toBeNull();
-  });
-  it('every error the machine can report has a sentence, and no sentence is spare', () => {
-    expect(Object.keys(COPY.voice.errors).sort()).toEqual(['blocked', 'failed', 'language', 'network', 'no-mic', 'no-speech']);
-  });
-});
-
-describe('voice input: on-device recognition is used only where the browser reports it', () => {
-  const withAvailable = (answer: string | Error, hasFlag = true) => {
-    const asked: unknown[] = [];
-    class R extends FakeRec {
-      static available(o: unknown) { asked.push(o); return answer instanceof Error ? Promise.reject(answer) : Promise.resolve(answer); }
-    }
-    if (hasFlag) Object.defineProperty(R.prototype, 'processLocally', { value: false, writable: true, configurable: true });
-    return { R: R as unknown as RecognitionCtor, asked };
+/** A scripted microphone, recorder, decoder and engine call, and a record of everything that was asked of them. */
+function rig(over: Partial<VoiceDeps> & { samples?: Float32Array; answer?: Heard | Error; mic?: Error } = {}) {
+  const log = { streams: 0, tracksStopped: 0, recorders: [] as (RecorderLike & { calls: string[] })[], decoded: 0, clips: [] as Clip[], sent: [] as [number, SentOutcome][], views: [] as VoiceView[], timers: [] as { fn: () => void; ms: number; cleared: boolean }[] };
+  let release: ((h: Heard) => void) | null = null;
+  const deps: VoiceDeps = {
+    getStream: async () => {
+      if (over.mic) throw over.mic;
+      log.streams++;
+      return { getTracks: () => [{ stop: () => { log.tracksStopped++; } }] } satisfies StreamLike;
+    },
+    makeRecorder: () => {
+      const r: RecorderLike & { calls: string[] } = {
+        mimeType: 'audio/webm;codecs=opus', calls: [], ondataavailable: null, onstop: null, onerror: null,
+        start() { this.calls.push('start'); },
+        stop() { this.calls.push('stop'); this.ondataavailable?.({ data: new Blob(['sound']) }); this.onstop?.(); },
+      };
+      log.recorders.push(r);
+      return r;
+    },
+    decode: async () => { log.decoded++; return over.samples ?? tone(); },
+    transcribe: async (clip) => {
+      log.clips.push(clip);
+      if (over.answer instanceof Error) throw over.answer;
+      if (over.answer) return over.answer;
+      return new Promise<Heard>((res) => { release = res; });
+    },
+    onSent: (bytes, outcome) => { log.sent.push([bytes, outcome]); },
+    maxSeconds: VOICE_MAX_SECONDS,
+    setTimer: (fn, ms) => { const t = { fn, ms, cleared: false }; log.timers.push(t); return t; },
+    clearTimer: (t) => { (t as { cleared: boolean }).cleared = true; },
+    onChange: (v) => { log.views.push(v); },
+    ...over,
   };
-  it('"available" for en-US with processLocally is a yes, and the query is a capability query only', async () => {
-    const { R, asked } = withAvailable('available');
-    expect(await localAvailable(R, 'en-US', CHROME157)).toBe(true);
-    expect(asked).toEqual([{ langs: ['en-US'], processLocally: true }]);
-    expect(FakeRec.made).toHaveLength(0); // no recognition object was made for the question
+  const voice = createVoice(deps);
+  return { voice, log, answer: (h: Heard) => release?.(h) };
+}
+const CLOUD: Heard = { text: 'do you want coffee or tea', source: 'in-cloud' };
+
+describe('voice input: one recording, one model call, the words into the field', () => {
+  it('a press asks for the microphone, then records; a second press ends it and makes exactly one call with a WAV clip', async () => {
+    const { voice, log, answer } = rig();
+    expect(voice.view()).toMatchObject({ supported: true, phase: 'idle', text: '', final: false, error: null, source: null });
+    voice.start();
+    expect(voice.view().phase).toBe('asking');
+    await settle();
+    expect(voice.view().phase).toBe('recording');
+    expect(log.recorders[0].calls).toEqual(['start']);
+    expect(log.clips).toHaveLength(0); // nothing is sent while recording
+    voice.stop();
+    await settle();
+    expect(voice.view().phase).toBe('working');
+    expect(log.tracksStopped).toBe(1); // the microphone is let go before the request is made
+    expect(log.clips).toHaveLength(1);
+    expect(log.clips[0].mimeType).toBe('audio/wav');
+    expect(atob(log.clips[0].base64).slice(0, 4)).toBe('RIFF');
+    answer(CLOUD);
+    await settle();
+    expect(voice.view()).toMatchObject({ phase: 'idle', text: 'Do you want coffee or tea?', final: true, error: null, source: 'in-cloud' });
+    expect(log.clips).toHaveLength(1);
+    expect(log.sent).toEqual([[log.clips[0].base64.length, 'in-cloud']]);
   });
-  it.each(['downloadable', 'downloading', 'unavailable', 'anything else'])('"%s" is a no: the app installs nothing', async (answer) => {
-    expect(await localAvailable(withAvailable(answer).R, 'en-US', CHROME157)).toBe(false);
+  it('the recording ends by itself at the limit, and the limit is the one the notice names', async () => {
+    const { voice, log } = rig({ answer: CLOUD });
+    voice.start(); await settle();
+    expect(log.timers).toHaveLength(1);
+    expect(log.timers[0].ms).toBe(VOICE_MAX_SECONDS * 1000);
+    expect(VOICE_MAX_SECONDS).toBe(15);
+    log.timers[0].fn();
+    await settle();
+    expect(log.recorders[0].calls).toEqual(['start', 'stop']);
+    expect(voice.view()).toMatchObject({ phase: 'idle', final: true });
+    expect(log.clips).toHaveLength(1);
   });
-  it('a browser without the query, without the flag, or whose query fails is a no', async () => {
-    expect(await localAvailable(null)).toBe(false);
-    expect(await localAvailable(Ctor)).toBe(false);
-    expect(await localAvailable(withAvailable('available', false).R, 'en-US', CHROME157)).toBe(false);
-    expect(await localAvailable(withAvailable(new Error('nope')).R, 'en-US', CHROME157)).toBe(false);
+  it('a clip longer than the limit is cut to it before it is sent', async () => {
+    const { voice, log } = rig({ answer: CLOUD, samples: tone(SAMPLE_RATE * 20) });
+    voice.start(); await settle(); voice.stop(); await settle();
+    const wavBytes = atob(log.clips[0].base64).length;
+    expect(wavBytes).toBe(44 + VOICE_MAX_SECONDS * SAMPLE_RATE * 2);
   });
-  it('the source never installs a language pack', () => {
-    expect(read('web/src/voice.ts')).not.toMatch(/\.install\(/);
-    expect(read('web/src/main.ts')).not.toMatch(/\.install\(/);
+  it('a second press while one go is under way starts nothing new', async () => {
+    const { voice, log } = rig();
+    voice.start(); voice.start(); await settle(); voice.start();
+    expect(log.streams).toBe(1);
+    expect(log.recorders).toHaveLength(1);
+    voice.stop(); await settle(); voice.start(); voice.stop();
+    expect(log.streams).toBe(1);
+    expect(log.clips).toHaveLength(1);
   });
-  it('once reported, every start asks the browser to keep the sound on the device, and the view says local', () => {
-    const v = make();
-    v.setLocal(true);
-    v.start();
-    expect(rec().processLocally).toBe(true);
-    expect(last().local).toBe(true);
-    v.cancel(); v.setLocal(false); v.start();
-    expect(rec().processLocally).toBeUndefined();
-    expect(last().local).toBe(false);
+  it('a silent clip makes no request at all', async () => {
+    const { voice, log } = rig({ samples: new Float32Array(8000) });
+    voice.start(); await settle(); voice.stop(); await settle();
+    expect(log.clips).toHaveLength(0);
+    expect(log.sent).toEqual([]);
+    expect(voice.view()).toMatchObject({ phase: 'idle', error: 'no-speech', final: false, text: '' });
   });
-  it('an on-device start that fails is an error: the machine never starts the default service in its place', () => {
-    const v = make();
-    v.setLocal(true);
-    v.start();
-    rec().fail('language-not-supported'); rec().end();
-    expect(last().error).toBe('language');
-    expect(FakeRec.made).toHaveLength(1);
+  it('an empty transcript is "nothing was heard", and the request is still counted', async () => {
+    const { voice, log } = rig({ answer: { text: '', source: 'in-cloud' } });
+    voice.start(); await settle(); voice.stop(); await settle();
+    expect(voice.view()).toMatchObject({ error: 'no-speech', final: false, text: '' });
+    expect(log.sent).toHaveLength(1);
+    expect(log.sent[0][1]).toBe('in-cloud');
   });
 });
 
-describe('voice input: what the app says about where spoken words go, and how the client is wired', () => {
+describe('voice input: no microphone, no permission, no connection, a refused request: one plain state each, never an exception', () => {
+  it.each([
+    ['NotAllowedError', 'blocked'], ['SecurityError', 'blocked'], ['NotFoundError', 'no-mic'], ['NotReadableError', 'no-mic'], ['AbortError', 'failed'],
+  ])('the browser answers %s -> %s, and nothing is recorded or sent', async (name, error) => {
+    const { voice, log } = rig({ mic: Object.assign(new Error('no'), { name }) });
+    voice.start(); await settle();
+    expect(voice.view()).toMatchObject({ phase: 'idle', error });
+    expect(log.recorders).toHaveLength(0);
+    expect(log.clips).toHaveLength(0);
+  });
+  it('offline: nothing is recorded, because it could not be turned into text', async () => {
+    const { voice, log } = rig({ online: () => false });
+    voice.start(); await settle();
+    expect(voice.view()).toMatchObject({ phase: 'idle', error: 'offline' });
+    expect(log.streams).toBe(0);
+  });
+  it('the connection goes while recording: the clip is not handed over', async () => {
+    let on = true;
+    const { voice, log } = rig({ online: () => on, answer: CLOUD });
+    voice.start(); await settle(); on = false; voice.stop(); await settle();
+    expect(voice.view().error).toBe('offline');
+    expect(log.clips).toHaveLength(0);
+    expect(log.sent).toEqual([]);
+  });
+  it('a request the engine marks as certainly not sent is not counted as handed over', async () => {
+    const { voice, log } = rig({ answer: Object.assign(new Error('offline'), { notSent: true }) });
+    voice.start(); await settle(); voice.stop(); await settle();
+    expect(voice.view().error).toBe('offline');
+    expect(log.sent.map((s) => s[1])).toEqual(['not-sent']);
+  });
+  it('a request refused for the quota says "busy"; any other failure says "did not work"; both are counted as handed over', async () => {
+    const a = rig({ answer: new Error('[429 ] Resource has been exhausted (e.g. check quota).') });
+    a.voice.start(); await settle(); a.voice.stop(); await settle();
+    expect(a.voice.view()).toMatchObject({ phase: 'idle', error: 'busy', final: false });
+    expect(a.log.sent.map((s) => s[1])).toEqual(['failed']);
+    const b = rig({ answer: new Error('500') });
+    b.voice.start(); await settle(); b.voice.stop(); await settle();
+    expect(b.voice.view().error).toBe('failed');
+    expect(b.log.sent.map((s) => s[1])).toEqual(['failed']);
+  });
+  it('unsupported (no recorder, or a copy with no cloud step): start does nothing', async () => {
+    for (const over of [{ getStream: null }, { makeRecorder: null }, { decode: null }, { transcribe: null }] as Partial<VoiceDeps>[]) {
+      const { voice, log } = rig(over);
+      expect(voice.view().supported).toBe(false);
+      voice.start(); await settle();
+      expect(voice.view().phase).toBe('idle');
+      expect(log.views).toHaveLength(0);
+    }
+  });
+  it('a copy with no project settings has no voice step, so no microphone button', () => {
+    expect((new NullEngine() as { transcribe?: unknown }).transcribe).toBeUndefined();
+    expect(read('web/src/main.ts')).toContain('transcribe: state.engine.cloudConfigured && state.engine.transcribe');
+  });
+});
+
+describe('voice input: cancel', () => {
+  it('while recording: the microphone is let go, nothing is decoded or sent, and nothing is reported later', async () => {
+    const { voice, log } = rig({ answer: CLOUD });
+    voice.start(); await settle();
+    voice.cancel(); await settle();
+    expect(voice.view()).toMatchObject({ phase: 'idle', text: '', final: false, error: null });
+    expect(log.tracksStopped).toBe(1);
+    expect(log.decoded).toBe(0);
+    expect(log.clips).toHaveLength(0);
+  });
+  it('while the request is out: the words are dropped, but the request is still counted as handed over', async () => {
+    const { voice, log, answer } = rig();
+    voice.start(); await settle(); voice.stop(); await settle();
+    voice.cancel();
+    answer(CLOUD); await settle();
+    expect(voice.view()).toMatchObject({ phase: 'idle', text: '', final: false });
+    expect(log.sent).toHaveLength(1);
+    expect(log.sent[0][1]).toBe('in-cloud');
+  });
+  it('while waiting for permission: a microphone given afterwards is let go at once', async () => {
+    const { voice, log } = rig();
+    voice.start(); voice.cancel(); await settle();
+    expect(log.streams).toBe(1);
+    expect(log.tracksStopped).toBe(1);
+    expect(log.recorders).toHaveLength(0);
+    expect(voice.view().phase).toBe('idle');
+  });
+});
+
+describe('voice input: the pure parts', () => {
+  it('tidy makes a question for the field', () => {
+    expect(tidy('  do you   want tea ')).toBe('Do you want tea?');
+    expect(tidy('Is it cold in here?')).toBe('Is it cold in here?');
+    expect(tidy('')).toBe('');
+  });
+  it('the words are read only from JSON with a string transcript; anything else is nothing heard', () => {
+    expect(transcriptFrom('{"transcript":" do you want  tea "}')).toBe('do you want tea');
+    expect(transcriptFrom('{"transcript":""}')).toBe('');
+    expect(transcriptFrom('{"transcript":42}')).toBe('');
+    expect(transcriptFrom('Do you want tea?')).toBe('');
+    expect(transcriptFrom('null')).toBe('');
+    expect(transcriptFrom(JSON.stringify({ transcript: 'a'.repeat(900) }))).toHaveLength(MAX_TRANSCRIPT);
+  });
+  it('hasSound: silence and a faint hiss are not sound; a voice-level signal is', () => {
+    expect(hasSound(new Float32Array(1000))).toBe(false);
+    expect(hasSound(tone(1000, 0.004))).toBe(false);
+    expect(hasSound(tone(1000, 0.2))).toBe(true);
+  });
+  it('wavBase64 writes a mono 16-bit 16 kHz WAV of the right length and values', () => {
+    const bin = atob(wavBase64(Float32Array.from([0, 1, -1, 0.5, 2])));
+    const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+    const v = new DataView(bytes.buffer);
+    expect(bin.slice(0, 4) + bin.slice(8, 16) + bin.slice(36, 40)).toBe('RIFFWAVEfmt data');
+    expect(bytes.length).toBe(44 + 5 * 2);
+    expect(v.getUint32(4, true)).toBe(36 + 10);
+    expect([v.getUint16(20, true), v.getUint16(22, true), v.getUint32(24, true), v.getUint32(28, true), v.getUint16(32, true), v.getUint16(34, true)]).toEqual([1, 1, 16000, 32000, 2, 16]);
+    expect(v.getUint32(40, true)).toBe(10);
+    expect([0, 1, 2, 3, 4].map((i) => v.getInt16(44 + i * 2, true))).toEqual([0, 32767, -32768, 16384, 32767]);
+  });
+  it('a long clip does not overflow the call stack when it is made into base64', () => {
+    expect(wavBase64(tone(SAMPLE_RATE * VOICE_MAX_SECONDS)).length).toBe(Math.ceil((44 + SAMPLE_RATE * VOICE_MAX_SECONDS * 2) / 3) * 4);
+  });
+});
+
+describe('voice input: the request, and what the app says about where the recording goes', () => {
   const V = COPY.voice;
   const main = read('web/src/main.ts');
-  it('the default notice names the browser, Chrome and Google, and does not say "on this computer"', () => {
-    const n = V.notice(false);
-    expect(n).toMatch(/your browser's speech recognition/);
-    expect(n).toMatch(/In Chrome, your speech may be sent to Google/);
-    expect(n).not.toMatch(/on this computer|on-device|private|stays/i);
-    expect(V.listening(false)).toMatch(/may send the sound/);
-    expect(V.listening(false)).not.toMatch(/on this computer/);
+  const voiceSrc = read('web/src/voice.ts');
+  const micSrc = read('web/src/mic.ts');
+  it('the request asks for the words only, as JSON, in the cloud, and carries nothing but the fixed text and the sound', () => {
+    const r = voiceRequest({ mimeType: 'audio/wav', base64: 'AAAA' });
+    expect(r.mode).toBe('ONLY_IN_CLOUD');
+    expect(r.contents[0].parts[0]).toEqual({ inlineData: { mimeType: 'audio/wav', data: 'AAAA' } });
+    expect(r.generationConfig.responseJsonSchema).toBe(TRANSCRIBE_SCHEMA);
+    expect(TRANSCRIBE_SCHEMA.required).toEqual(['transcript']);
+    expect(TRANSCRIBE_SYSTEM_PROMPT).toMatch(/Do not answer the question/);
+    expect(LEGS.voice.mode).toBe('ONLY_IN_CLOUD');
   });
-  it('the on-device notice is worded as what the browser reports and what the app asks, not as a promise of ours', () => {
-    expect(V.notice(true)).toMatch(/This browser reports/);
-    expect(V.notice(true)).toMatch(/the app asks it/);
-    expect(V.notice(true)).not.toMatch(/never leaves|guarantee|nothing is sent/i);
+  it('the notice says the recording goes to Google\'s cloud, with names, and never says it stays on this computer', () => {
+    const n = V.notice(VOICE_MAX_SECONDS);
+    expect(n).toMatch(/sends the recording to Google's cloud/);
+    expect(n).toMatch(/an AI model turns it into text/);
+    expect(COPY.how.intro).toMatch(/All AI inference in this app goes through Firebase AI Logic.*the microphone, which sends a recording of your question to Gemini in Google's cloud/);
+    expect(n).toMatch(/up to 15 seconds/);
+    expect(n).toMatch(/with any names you say: the name swap cannot be applied to sound/);
+    expect(n).toMatch(/For your question only: their speech is never recorded\./);
+    for (const t of [n, V.recording(VOICE_MAX_SECONDS), V.working, V.asking, V.heard, V.tailKept, V.tailAlso, V.sentNote, V.privacy]) expect(t).not.toMatch(/on this computer|on-device|private|your browser's speech recognition/i);
+    expect(V.working).toMatch(/Google's cloud/);
   });
-  it('both notices say whose speech it is for', () => {
-    for (const local of [true, false]) expect(V.notice(local)).toMatch(/For your question only: their speech is never recognised\./);
+  it('"on this computer" is said for a recording only on the SDK\'s report for that call', () => {
+    expect(V.heardHere).toMatch(/on this computer/);
+    expect(main).toContain("voiceHeard ? esc(v.source === 'on-device' ? V.heardHere : V.heard) : ''");
+    expect(main.match(/heardHere/g)).toHaveLength(1);
+    expect(main).toContain("dictated = v.source !== 'on-device';");
   });
-  it('the first press shows the notice; listening starts only after a yes, and a yes to on-device does not cover the default service', () => {
+  it('the first press shows the notice; recording starts only after a yes, and a yes to the earlier notice (the browser\'s speech recognition) does not count', () => {
     expect(main).toContain("if (!voiceAgreed()) { voiceAsk = !voiceAsk; patchVoice(); break; }");
-    expect(main).toContain("const voiceAgreed = () => state.settings.voiceOk === 'remote' || (state.settings.voiceOk === 'local' && voice.view().local);");
-    expect(main).toContain("case 'voice-ok': state.settings.voiceOk = voice.view().local ? 'local' : 'remote'; saveSettings(); voiceAsk = false; startVoice(); break;");
-    // voice.start() is called from startVoice only
-    expect(main.match(/voice\.start\(\)/g)).toHaveLength(1);
+    expect(main).toContain("const voiceAgreed = () => state.settings.voiceOk === 'cloud';");
+    expect(main).toContain("case 'voice-ok': state.settings.voiceOk = 'cloud'; saveSettings(); voiceAsk = false; startVoice(); break;");
+    expect(main.match(/voice\.start\(\)/g)).toHaveLength(1); // from startVoice only
   });
-  it('heard words go into the question field and no further: the voice code never makes a card', () => {
+  it('the words go into the question field and no further: the voice code never makes a card', () => {
     const block = main.slice(main.indexOf('// ---------------------------------------------------------------- voice input'), main.indexOf('// ---------------------------------------------------------------- partner screen'));
     expect(block).toContain('if (q) q.value = v.text;');
     expect(block).not.toMatch(/\bmake\(|makeCard|requestSubmit|\.submit\(/);
   });
-  it('once a question was spoken through the default service, no line on screen says "nothing left this computer" for it', () => {
+  it('once a recording was handed over, no line says "nothing left this computer" or "0 bytes" without it', () => {
     expect(V.tailKept).not.toContain(COPY.badge.tail.kept);
-    expect(V.tailKept).toMatch(/nothing sent by this app/);
+    expect(V.tailKept).toMatch(/its recording went to Google's cloud/);
     expect(main).toContain('if (voiceCards.has(c)) tail = tail.startsWith(T.kept) ? tail.replace(T.kept, C.voice.tailKept) : `${tail} · ${C.voice.tailAlso}`;');
     const none = { cards: 2, cardsLeft: 0, bodyBytes: 0, namesWithheld: 0, otherWithheld: 0, attempts: 0, attemptBytes: 0 };
     const N = COPY.judge.receipt.number;
+    const clip = { clips: 1, bytes: 120000 };
     expect(N(none).label).toBe('left this computer');
-    expect(N(none, false, true).label).toBe('handed to cloud help by this app');
-    expect(N(none, false, true).scope).toMatch(/Not counted: questions spoken into the microphone/);
-    expect(N(none, true, true).label).not.toMatch(/left this computer/);
-    expect(N({ ...none, cardsLeft: 1, bodyBytes: 900 }, false, true).scope).toMatch(/Not counted: questions spoken into the microphone/);
-    expect(N({ ...none, attempts: 1, attemptBytes: 900 }, false, true).scope).toMatch(/Not counted: questions spoken into the microphone/);
-    // and without voice the lines are what they were
-    expect(N(none, false, false)).toEqual(N(none));
+    expect(N(none).figure).toBe('0 bytes');
+    expect(N(none, false, clip)).toMatchObject({ state: 'sent', figure: '120,000 bytes', label: 'handed to Google\'s cloud by this app' });
+    expect(N(none, false, clip).scope).toMatch(/1 recording of a spoken question \(120,000 bytes of sound, as you said it, no name swap\)/);
+    // with a card request too, the figure is the sum and both are named
+    const both = N({ ...none, cardsLeft: 1, bodyBytes: 900 }, true, { clips: 2, bytes: 200000 });
+    expect(both.figure).toBe('200,900 bytes');
+    expect(both.scope).toMatch(/2 recordings of a spoken question .* and 1 card request, the question only \(900 bytes\)/);
+    // a failed card request is still listed apart
+    expect(N({ ...none, attempts: 1, attemptBytes: 900 }, false, clip).scope).toMatch(/may have left \(up to 900 bytes\)/);
+    for (const r of [N(none, false, clip), N(none, true, clip), both]) expect(`${r.figure} ${r.label}`).not.toMatch(/^0 bytes|left this computer/);
+    // and without a recording the lines are what they were
+    expect(N(none, false, null)).toEqual(N(none));
+    expect(N(none, false, { clips: 0, bytes: 0 })).toEqual(N(none));
   });
-  it('the person\'s speech is never recognised: the microphone is on the partner\'s question form and nowhere on their screen', () => {
+  it('the session figure counts every recording handed to the SDK: answered in the cloud, or failed after being handed over', () => {
+    expect(main).toContain("if (outcome !== 'in-cloud' && outcome !== 'failed') return;");
+    expect(main).toContain('voiceSent.clips++; voiceSent.bytes += bytes;');
+    expect(main).toContain('C.judge.receipt.number(sessionReceipt(state.made, state.profile), settingsAsked, voiceSent)');
+  });
+  it('the person\'s speech is never recorded: the microphone is on the partner\'s question form and nowhere on their screen', () => {
     const view = main.slice(main.indexOf('function personView('), main.indexOf('// ---------------------------------------------------------------- About me'));
-    expect(view).not.toMatch(/voice|mic\b|MIC|Recognition/);
-    expect(main).toContain("if (r !== 'partner') voice.cancel();"); // and it stops listening when the partner screen is left
+    expect(view).not.toMatch(/voice|mic\b|MIC|Recorder/);
+    expect(main).toContain("if (r !== 'partner') voice.cancel();"); // and it stops recording when the partner screen is left
     expect(main.match(/\$\{voiceButton\(\)\}/g)).toHaveLength(1);
     expect(main).toContain('${voiceButton()}<button id="make"');
   });
-});
-
-const CHROME157 = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.8103.79 Safari/537.36';
-describe('older Chromium: available() is never called (Chromium 148 crashed the tab on it, 17 Nov)', () => {
-  it('reads the Chrome major version', () => {
-    expect(chromeMajor(CHROME157)).toBe(157);
-    expect(chromeMajor('Mozilla/5.0 Firefox/140.0')).toBe(0);
-  });
-  it('does not call available() below Chrome 157 and answers no', async () => {
-    let called = 0;
-    class R { static available() { called++; return Promise.resolve('available'); } }
-    (R.prototype as unknown as { processLocally: boolean }).processLocally = false;
-    expect(await localAvailable(R as unknown as RecognitionCtor, 'en-US', CHROME157.replace('157.0', '148.0'))).toBe(false);
-    expect(called).toBe(0);
-    expect(await localAvailable(R as unknown as RecognitionCtor, 'en-US', CHROME157)).toBe(true);
-    expect(called).toBe(1);
+  it('the browser\'s own speech recognition is gone from the client: no AI call outside Firebase AI Logic', () => {
+    for (const src of [main, voiceSrc.replace(/^\s*\/\/.*$/gm, ''), micSrc]) {
+      expect(src).not.toMatch(/SpeechRecognition|webkitSpeech|processLocally|recognitionCtor|localAvailable/);
+    }
+    // the recording modules call no model and no network themselves: the one request is the engine's
+    for (const src of [voiceSrc, micSrc]) expect(src.replace(/^\s*\/\/.*$/gm, '')).not.toMatch(/\bfetch\(|XMLHttpRequest|firebase\//);
+    expect(main).toContain('await state.engine.transcribe!(clip)');
   });
 });

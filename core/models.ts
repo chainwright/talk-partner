@@ -78,8 +78,17 @@ export function settingsFrom(raw: Partial<Record<keyof RuntimeSettings, string |
   return r;
 }
 
-/** The two AI legs and the Firebase AI Logic inference mode each one uses. */
+/** The longest recording of a spoken question the voice step takes, in seconds. */
+export const VOICE_MAX_SECONDS = 15;
+
+/**
+ * The AI legs and the Firebase AI Logic inference mode each one uses. `voice` makes no card: it turns a recording of
+ * the partner's spoken question into text for the question field. It is ONLY_IN_CLOUD because the SDK's on-device
+ * step (firebase 13.3.0, @firebase/ai 3.1.0) accepts text and JPEG / PNG pictures only: a request with sound in it is
+ * never run on the device, whatever the mode (ChromeAdapterImpl.SUPPORTED_MIME_TYPES; checked 17 Nov 2026).
+ */
 export const LEGS = {
   private: { mode: 'ONLY_ON_DEVICE', gets: 'question + About me lists', why: 'holds family data; must never fall back to the cloud' },
   stripped: { mode: 'PREFER_IN_CLOUD', gets: 'question with every About-me word swapped for a label', why: 'holds no profile data, so an offline fall-back to the device is safe' },
+  voice: { mode: 'ONLY_IN_CLOUD', gets: `a recording of the partner's spoken question (up to ${VOICE_MAX_SECONDS} s), only after a yes to the notice; nothing from About me`, why: 'the SDK runs sound in the cloud only (on device it takes text and pictures), so the app says so before the first use; it makes no card' },
 } as const;

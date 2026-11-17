@@ -5,7 +5,7 @@
 // The real SDK and the real model are exercised in scripts/e2e-cloud.mjs and scripts/e2e-ondevice.mjs.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-interface Rec { apps: string[]; appChecks: string[]; ais: { app: string; options: any }[]; models: { app: string; mode: string; params: any }[]; calls: { mode: string; prompt: string }[]; inits: string[] }
+interface Rec { apps: string[]; appChecks: string[]; ais: { app: string; options: any }[]; models: { app: string; mode: string; params: any }[]; calls: { mode: string; prompt: any }[]; inits: string[] }
 const rec: Rec = { apps: [], appChecks: [], ais: [], models: [], calls: [], inits: [] };
 const answers: Record<string, { text: string; source: string } | Error> = {};
 
@@ -28,7 +28,7 @@ vi.mock('firebase/ai', () => ({
     rec.models.push({ app: ai.app, mode: params.mode, params });
     return {
       initializeDeviceModel: async () => { rec.inits.push(params.mode); },
-      generateContent: async (prompt: string) => {
+      generateContent: async (prompt: any) => {
         rec.calls.push({ mode: params.mode, prompt });
         const a = answers[params.mode];
         if (a instanceof Error) throw a;
@@ -39,13 +39,14 @@ vi.mock('firebase/ai', () => ({
 }));
 
 const { FirebaseEngine, LazyFirebaseEngine } = await import('../../web/src/ai/firebaseEngine');
-const { SYSTEM_PROMPT, CLOUD_SYSTEM_PROMPT, CARD_SCHEMA } = await import('../../core/prompt');
+const { SYSTEM_PROMPT, CLOUD_SYSTEM_PROMPT, CARD_SCHEMA, TRANSCRIBE_PROMPT, TRANSCRIBE_SCHEMA, TRANSCRIBE_SYSTEM_PROMPT } = await import('../../core/prompt');
 const CFG = { firebase: { apiKey: 'k', appId: 'a', projectId: 'p' }, appCheckDebugToken: 'debug' };
 
 beforeEach(() => {
   rec.apps = []; rec.appChecks = []; rec.ais = []; rec.models = []; rec.calls = []; rec.inits = [];
   answers.only_on_device = { text: '{"topic":"t"}', source: 'on_device' };
   answers.prefer_in_cloud = { text: '{"topic":"c"}', source: 'in_cloud' };
+  answers.only_in_cloud = { text: '{"transcript":"do you want tea"}', source: 'in_cloud' };
   (globalThis as any).self = globalThis;
 });
 
@@ -148,5 +149,58 @@ describe('the cloud model name is a setting (Firebase Remote Config, core/models
     expect(rec.appChecks).toHaveLength(1); // and App Check once
     await e.runDevice('x');
     expect(rec.models.find((m) => m.mode === 'only_on_device')?.params.inCloudParams).toBeUndefined();
+  });
+});
+
+// 17 Nov 2026: voice input goes through the engine, so through Firebase AI Logic (it was the browser's speech
+// recognition for a few hours). One recording, one call, on the cloud app with App Check, asked for the words only.
+describe('FirebaseEngine: the voice step', () => {
+  const CLIP = { mimeType: 'audio/wav', base64: 'UklGRg==' };
+  it('one call on an ONLY_IN_CLOUD model on the default app, after App Check, with the sound as inline data and the transcript schema', async () => {
+    const e = new FirebaseEngine(CFG);
+    const r = await e.transcribe(CLIP);
+    expect(r).toMatchObject({ text: '{"transcript":"do you want tea"}', source: 'in-cloud' });
+    expect(rec.calls).toEqual([{ mode: 'only_in_cloud', prompt: [{ type: 'inlineData', inlineData: { mimeType: 'audio/wav', data: 'UklGRg==' } }, TRANSCRIBE_PROMPT] }]);
+    expect(rec.apps).toEqual(['[DEFAULT]']);
+    expect(rec.appChecks).toEqual(['[DEFAULT]']);
+    expect(rec.ais).toHaveLength(1);
+    expect(rec.ais[0].options.useLimitedUseAppCheckTokens).toBe(true);
+    const m = rec.models[0];
+    expect(m.mode).toBe('only_in_cloud');
+    expect(m.params.inCloudParams.systemInstruction).toBe(TRANSCRIBE_SYSTEM_PROMPT);
+    expect(m.params.inCloudParams.generationConfig.responseJsonSchema).toBe(TRANSCRIBE_SCHEMA);
+    expect(m.params.inCloudParams.generationConfig.responseMimeType).toBe('application/json');
+    // no on-device parameters: the SDK cannot run sound on the device, and the mode says so
+    expect(m.params.onDeviceParams).toBeUndefined();
+  });
+  it('the source is the SDK\'s report, not an assumption', async () => {
+    answers.only_in_cloud = { text: '{"transcript":"x"}', source: 'on_device' };
+    expect((await new FirebaseEngine(CFG).transcribe(CLIP)).source).toBe('on-device');
+  });
+  it('the request carries the fixed instructions and the sound, and nothing the private step knows', async () => {
+    const e = new LazyFirebaseEngine(CFG);
+    await e.transcribe(CLIP);
+    const sent = JSON.stringify([rec.calls[0].prompt, rec.models[0].params]);
+    expect(sent).not.toContain('ABOUT');
+    expect(sent).not.toContain(SYSTEM_PROMPT.slice(0, 40));
+    expect(rec.apps).toEqual(['[DEFAULT]']); // the private app is not started for it
+  });
+  it('throws without an App Check provider, before any SDK call, and marks the error as not sent', async () => {
+    const e = new FirebaseEngine({ firebase: CFG.firebase });
+    await expect(e.transcribe(CLIP)).rejects.toMatchObject({ notSent: true });
+    expect(rec.apps).toEqual([]);
+  });
+  it('shares the app, App Check and the AI Logic instance with the stripped step, and uses the cloud model in use', async () => {
+    const e = new LazyFirebaseEngine(CFG);
+    e.setCloudModel('gemini-9.9-flash-lite');
+    await e.runCloud('q');
+    await e.transcribe(CLIP);
+    await e.transcribe(CLIP);
+    expect(rec.apps).toEqual(['[DEFAULT]']);
+    expect(rec.appChecks).toHaveLength(1);
+    expect(rec.ais).toHaveLength(1);
+    expect(rec.models.filter((m) => m.mode === 'only_in_cloud')).toHaveLength(1); // built once, used twice
+    expect(rec.models.find((m) => m.mode === 'only_in_cloud')?.params.inCloudParams.model).toBe('gemini-9.9-flash-lite');
+    expect(rec.calls.map((c) => c.mode)).toEqual(['prefer_in_cloud', 'only_in_cloud', 'only_in_cloud']);
   });
 });

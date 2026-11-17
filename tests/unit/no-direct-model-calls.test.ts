@@ -37,6 +37,10 @@ const FORBIDDEN: [string, RegExp][] = [
   ['Vertex AI REST endpoint called directly', /aiplatform\.googleapis\.com/],
   ['Firebase AI Logic REST proxy called without the SDK', /firebasevertexai\.googleapis\.com/],
   ['Cloud Text-to-Speech called directly', /texttospeech\.googleapis\.com/],
+  ['Cloud Speech-to-Text called directly', /speech\.googleapis\.com/],
+  // 17 Nov 2026: voice input used the browser's speech recognition for a few hours. It is AI inference outside Firebase
+  // AI Logic, so it was removed (web/src/voice.ts now records and the engine transcribes), and it may not come back.
+  ['the browser\'s speech recognition (Web Speech API) used', /new\s+(?:webkit)?SpeechRecognition\b|[.\]]\s*(?:webkit)?SpeechRecognition\b|\bSpeechRecognition\s*\.\s*available\b/],
   ['another model SDK imported', /from\s+['"](?:@google\/genai|@google\/generative-ai|@google-cloud\/vertexai|@google-cloud\/text-to-speech|openai|@anthropic-ai\/[\w-]+|@mlc-ai\/[\w-]+|@huggingface\/[\w-]+|@xenova\/transformers|onnxruntime-web|@mediapipe\/tasks-genai|langchain|@langchain\/[\w-]+|ai)['"]/],
   ['another model SDK required', /require\(\s*['"](?:@google\/genai|@google\/generative-ai|openai|@anthropic-ai\/[\w-]+)['"]\s*\)/],
   ['Android ML Kit GenAI used directly (use firebase-ai-ondevice)', /com\.google\.mlkit\.genai|com\.google\.ai\.edge/],
@@ -65,11 +69,15 @@ describe('all AI inference goes through Firebase AI Logic', () => {
 
   it('the engine really imports AND calls Firebase AI Logic (not just names it)', () => {
     const engine = ALL.find((f) => f.path === 'web/src/ai/firebaseEngine.ts')!.text;
-    for (const call of ['getAI(', 'getGenerativeModel(', 'generateContent(', 'initializeDeviceModel(', 'initializeAppCheck(', 'inferenceSource']) {
+    for (const call of ['getAI(', 'getGenerativeModel(', 'generateContent(', 'initializeDeviceModel(', 'appWithAppCheck(', 'inferenceSource', 'inlineData']) {
       expect(engine).toContain(call);
     }
+    // App Check is started in the one place the engine and the feedback form share
+    expect(ALL.find((f) => f.path === 'web/src/ai/app.ts')!.text).toContain('initializeAppCheck(');
     expect(engine).toMatch(/InferenceMode\.ONLY_ON_DEVICE/);
     expect(engine).toMatch(/InferenceMode\.PREFER_IN_CLOUD/);
+    // voice input: sound runs in the cloud only (core/models.ts, LEGS.voice)
+    expect(engine).toMatch(/InferenceMode\.ONLY_IN_CLOUD/);
   });
 
   it('Chrome LanguageModel is touched only for the availability check, only in the engine file', () => {

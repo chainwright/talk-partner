@@ -1,6 +1,6 @@
 // End-to-end check of the two things that need no AI of ours, against any copy of the app (the dev server or the
 // hosted site): the quick-needs board with the network switched off after the page has loaded, and the microphone
-// button for the partner's question (the notice only: this run has no microphone and nothing listens).
+// button for the partner's question (the notice only: this run has no microphone and nothing is recorded).
 // Launches its own headless Chrome with a throwaway profile. Makes no model call and no cloud request.
 // Exit code 0 only if every check passes.
 //
@@ -80,18 +80,22 @@ try {
   await sleep(1500);
   console.log(`status line: ${await js(`document.querySelector('#status').innerText.replace(/\\s+/g, ' ')`)}`);
 
-  // the microphone: there in a Chrome (speech recognition is in the browser), between the field and "Make card";
-  // the first press shows where spoken words go and starts nothing; this run then says "Not now"
-  const mic = await js(`(() => { const m = document.querySelector('#mic'), mk = document.querySelector('#make'), q = document.querySelector('#q'); const api = !!(window.SpeechRecognition || window.webkitSpeechRecognition); if (!m) return { has: false, api };
+  // the microphone: there on a copy with project settings (voice input is a model call through Firebase AI Logic),
+  // between the field and "Make card"; the first press says where the recording goes and starts nothing; this run
+  // then says "Not now", so nothing is recorded and nothing is sent. On a copy with no settings there is no button.
+  const hostsBeforeMic = [...hosts.keys()].join(',');
+  const mic = await js(`(() => { const m = document.querySelector('#mic'), mk = document.querySelector('#make'), q = document.querySelector('#q'); if (!m) return { has: false, status: document.querySelector('#status').innerText };
     const before = document.querySelector('#voice').hidden, between = q.getBoundingClientRect().right <= m.getBoundingClientRect().left && m.getBoundingClientRect().right <= mk.getBoundingClientRect().left, label = m.getAttribute('aria-label'), size = Math.round(Math.min(m.getBoundingClientRect().width, m.getBoundingClientRect().height));
     m.click(); const v = document.querySelector('#voice');
-    const r = { has: true, api, between, before, label, size, shown: !v.hidden, text: v.innerText.replace(/\\s+/g, ' '), pressed: document.querySelector('#mic').getAttribute('aria-pressed') };
+    const r = { has: true, between, before, label, size, shown: !v.hidden, text: v.innerText.replace(/\\s+/g, ' '), pressed: document.querySelector('#mic').getAttribute('aria-pressed'), phase: document.querySelector('#mic').dataset.phase };
     document.querySelector('[data-act="voice-no"]').click(); r.after = document.querySelector('#voice').hidden; return r; })()`);
-  check('the microphone button is there in this Chrome, between the question field and "Make card", at least 44 px', mic.has && mic.api && mic.between && mic.label === 'Speak your question' && mic.size >= 44, JSON.stringify({ has: mic.has, api: mic.api, between: mic.between, label: mic.label, size: mic.size }));
-  check('its first press only shows where spoken words go (the browser\'s speech recognition; in Chrome possibly Google), and nothing listens', mic.before === true && mic.shown && /your browser's speech recognition/.test(mic.text ?? '') && /In Chrome, your speech may be sent to Google/.test(mic.text ?? '') && /their speech is never recognised/.test(mic.text ?? '') && mic.pressed === 'false' && mic.after === true, mic.text);
-  const local = await js(`(async () => { const S = window.SpeechRecognition || window.webkitSpeechRecognition; if (!S?.available) return 'no query in this browser'; try { return await S.available({ langs: ['en-US'], processLocally: true }); } catch (e) { return 'query failed: ' + e; } })()`);
-  console.log(`on-device speech recognition for en-US, as this browser reports it: ${local}`);
-  check('the notice does not say "on this computer" unless the browser reports on-device recognition as available', local === 'available' ? /This browser reports/.test(mic.text ?? '') : !/on this computer/.test(mic.text ?? ''), `browser says: ${local}`);
+  if (mic.has) {
+    check('the microphone button is there, between the question field and "Make card", at least 44 px', mic.between && mic.label === 'Speak your question' && mic.size >= 44, JSON.stringify({ between: mic.between, label: mic.label, size: mic.size }));
+    check('its first press only says where the recording goes (to Google\'s cloud, with any names said; for the partner\'s question only), and nothing is recorded', mic.before === true && mic.shown && /sends the recording to Google's cloud/.test(mic.text ?? '') && /with any names you say/.test(mic.text ?? '') && /their speech is never recorded/.test(mic.text ?? '') && mic.pressed === 'false' && mic.phase === 'idle' && mic.after === true, mic.text);
+    check('the notice never says the recording stays on this computer, and showing it contacted no host', !/on this computer|on-device|stays/i.test(mic.text ?? '') && [...hosts.keys()].join(',') === hostsBeforeMic, `hosts: ${[...hosts.keys()].join(', ')}`);
+  } else {
+    check('this copy has no project settings, so it has no microphone button (voice input is a cloud model call)', /no project settings|rules only/i.test(mic.status ?? ''), mic.status);
+  }
   await shot('needs-00-partner-screen');
 
   // from here on the network is off: the board must open, be checked and hand over to the partner with no request

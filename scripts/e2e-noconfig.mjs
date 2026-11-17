@@ -148,14 +148,11 @@ try {
   const bytes = await js(`document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? ''`);
   check('the number under the chips reads "0 bytes left this computer" after every card of this run', /^0 bytes left this computer \d+ cards this session · page load not counted/.test(bytes), bytes);
 
-  // 17 Nov: voice input for the partner's question. The button is there where the browser has speech recognition;
-  // nothing listens until the notice has been read and agreed to, and this run never agrees (no sound is used here).
-  const mic = await js(`(() => { const m = document.querySelector('#mic'), mk = document.querySelector('#make'), q = document.querySelector('#q'); if (!m) return { has: false, api: !!(window.SpeechRecognition || window.webkitSpeechRecognition) };
-    const before = document.querySelector('#voice').hidden, between = q.getBoundingClientRect().right <= m.getBoundingClientRect().left && m.getBoundingClientRect().right <= mk.getBoundingClientRect().left; m.click(); const v = document.querySelector('#voice');
-    const r = { has: true, api: !!(window.SpeechRecognition || window.webkitSpeechRecognition), between, before, shown: !v.hidden, text: v.innerText.replace(/\\s+/g, ' '), pressed: document.querySelector('#mic').getAttribute('aria-pressed'), field: q.value };
-    document.querySelector('[data-act="voice-no"]').click(); r.after = document.querySelector('#voice').hidden; return r; })()`);
-  check('the microphone sits between the question field and "Make card"; its first press only shows where spoken words go (the browser, in Chrome possibly Google), and nothing listens',
-    mic.has && mic.api && mic.between && mic.before === true && mic.shown && /your browser's speech recognition/.test(mic.text) && /In Chrome, your speech may be sent to Google/.test(mic.text) && /their speech is never recognised/.test(mic.text) && mic.pressed === 'false' && mic.after === true, JSON.stringify(mic));
+  // 17 Nov: voice input for the partner's question is a model call (the recording goes through Firebase AI Logic to
+  // the cloud). A copy with no project settings has no cloud step, so it has no microphone button at all.
+  const mic = await js(`({ has: !!document.querySelector('#mic'), line: document.querySelector('#voice')?.hidden ?? true, form: [...document.querySelector('#ask').children].map((e) => e.id), recorder: typeof MediaRecorder })`);
+  check('no microphone button on a copy with no project settings (voice input is a cloud model call), though this browser could record; the form is field and button',
+    mic.has === false && mic.line === true && JSON.stringify(mic.form) === '["q","make"]' && mic.recorder === 'function', JSON.stringify(mic));
 
   // 17 Nov: the quick-needs board, with the network switched off in the browser first: one tap from the partner
   // screen, nine tiles (each a picture and its word), the tick / cross check, the partner's line, the way out, and

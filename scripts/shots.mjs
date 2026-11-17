@@ -1,7 +1,9 @@
 // Screenshots of every screen at phone (390 × 844) and desktop (1280 × 900) widths, with layout checks:
 // no horizontal scroll, and "Show to person" above the fold on the phone (build spec §5.3).
 // Uses its own headless Chrome with a throwaway profile; makes only code cards (no model, no cloud call).
-// Since 17 Nov it also opens the quick-needs board and runs voice input against a scripted recognition object.
+// Since 17 Nov it also opens the quick-needs board and runs voice input in the real page: Chrome's fake microphone
+// (a test tone), the real recorder, and the model's answer scripted at the network (the request to Firebase AI Logic
+// is caught before it leaves and answered here, so this run makes no cloud call and uses none of the quota).
 //
 // Usage: npm run dev (in another shell), then  node scripts/shots.mjs [--url http://localhost:5179/] [--out devlog/shots_day3]
 // A subset: --only 03,04,05 (the flow still runs in full)
@@ -24,7 +26,7 @@ const LONGEST_STATUS = `${copyLine('unavailable')} ${copyLine('unavailableCloudO
 const commit = (() => { try { return execSync('git rev-parse HEAD').toString().trim(); } catch { return 'unknown'; } })();
 
 const profile = mkdtempSync(join(tmpdir(), 'tp-shots-'));
-const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', 'about:blank'], { stdio: 'ignore' });
 const results = [];
 const check = (name, ok, detail = '') => { results.push({ name, ok }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  (${detail})` : ''}`); };
 
@@ -311,62 +313,116 @@ try {
     check(`${s} quick-needs board: the partner's line is on the partner's side only`, pside.line === 'Go now. The rest can wait.' && pside.pane === 'I need toilet', JSON.stringify(pside));
     await shot('29-needs-partner-side');
 
-    // 17 Nov: voice input for the partner's question, wired in a real page against a scripted recognition object (no
-    // sound and no speech service in this run): the notice before the first use, interim words in the field, the final
-    // words, nothing submitted, what the lines say once a question was spoken, an error, and a browser without the API.
-    const fake = await send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => { window.__recs = [];
-      class FakeSR { constructor() { window.__recs.push(this); this.calls = []; } start() { this.calls.push('start'); } stop() { this.calls.push('stop'); } abort() { this.calls.push('abort'); } }
-      FakeSR.available = () => Promise.resolve('downloadable'); FakeSR.prototype.processLocally = false;
-      Object.defineProperty(window, 'SpeechRecognition', { value: FakeSR, configurable: true }); Object.defineProperty(window, 'webkitSpeechRecognition', { value: FakeSR, configurable: true }); })();` });
+    // 17 Nov: voice input for the partner's question, in the real page. The microphone is Chrome's fake device (a test
+    // tone), the recorder and the decoding are the browser's own, and the request the SDK makes is caught at the
+    // network and answered here: no sound reaches Google and no cloud call is made. What this shows is the wiring:
+    // the notice before the first use, the recording state and the stop, one request per recording with a WAV in it,
+    // the words in the field and nothing submitted, what the lines say afterwards, a blocked microphone, no
+    // connection, and a browser that cannot record. What it does not show: that speech is understood (the "answer"
+    // is ours).
+    const hasMic = await js(`!!document.querySelector('#mic')`);
+    if (!hasMic) {
+      // a copy with no project settings: no cloud step, so no voice input and no button
+      const v0 = await js(`({ status: document.querySelector('#status').innerText, form: [...document.querySelector('#ask').children].map((e) => e.id) })`);
+      check(`${s} voice input: this copy has no project settings, so there is no microphone button and the question form is field and button`, /no project settings|rules only/i.test(v0.status) && JSON.stringify(v0.form) === '["q","make"]', JSON.stringify(v0));
+      continue;
+    }
+    const ai = { calls: [], appCheck: 0 };
+    const cors = [{ name: 'Access-Control-Allow-Origin', value: '*' }, { name: 'Access-Control-Allow-Headers', value: '*' }, { name: 'Access-Control-Allow-Methods', value: 'POST, GET, OPTIONS' }];
+    const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64');
+    let answerWith = { transcript: 'do you want coffee or tea' };
+    const onPaused = (ev) => {
+      const m = JSON.parse(ev.data);
+      if (m.method !== 'Fetch.requestPaused') return;
+      const { requestId, request } = m.params;
+      if (request.method === 'OPTIONS') { void send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders: cors }); return; }
+      if (/firebaseappcheck\.googleapis\.com/.test(request.url)) {
+        ai.appCheck++;
+        void send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [...cors, { name: 'Content-Type', value: 'application/json' }], body: b64({ token: 'scripted.by.shots', ttl: '3600s' }) });
+        return;
+      }
+      if (!/:generateContent/.test(request.url)) { void send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' }); return; }
+      ai.calls.push({ url: request.url, body: request.postData ?? '' });
+      void send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [...cors, { name: 'Content-Type', value: 'application/json' }], body: b64({ candidates: [{ content: { role: 'model', parts: [{ text: JSON.stringify(answerWith) }] }, finishReason: 'STOP', index: 0 }] }) });
+    };
+    ws.addEventListener('message', onPaused);
+    // every request to a Google API host is caught: App Check's token exchange, and the SDK's model request
+    await send('Fetch.enable', { patterns: [{ urlPattern: '*.googleapis.com/*' }] });
+    const errs = await send('Page.addScriptToEvaluateOnNewDocument', { source: `window.__errors = []; addEventListener('error', (e) => window.__errors.push(String(e.message))); addEventListener('unhandledrejection', (e) => window.__errors.push(String(e.reason)));` });
     await send('Page.reload'); await sleep(600);
     await nav('#/demo');
     await waitFor('!!document.querySelector(".chip")'); await sleep(300);
     const cardsMade = () => js(`Number((document.querySelector('#bytes')?.innerText ?? '').match(/(\\d+) cards? this session/)?.[1] ?? -1)`);
-    const v0 = await js(`({ mic: !!document.querySelector('#mic'), hidden: document.querySelector('#voice').hidden, label: document.querySelector('#mic')?.getAttribute('aria-label'), w: Math.round(document.querySelector('#mic')?.getBoundingClientRect().width ?? 0), h: Math.round(document.querySelector('#mic')?.getBoundingClientRect().height ?? 0) })`);
+    const voiceNow = () => js(`({ phase: document.querySelector('#mic')?.dataset.phase, pressed: document.querySelector('#mic')?.getAttribute('aria-pressed'), label: document.querySelector('#mic')?.getAttribute('aria-label'), line: document.querySelector('#voice').innerText.replace(/\\s+/g, ' '), hidden: document.querySelector('#voice').hidden, bar: !!document.querySelector('#voice .rec-bar'), q: document.querySelector('#q').value, bytes: document.querySelector('#bytes').innerText.replace(/\\s+/g, ' ') })`);
+    const v0 = await js(`({ hidden: document.querySelector('#voice').hidden, label: document.querySelector('#mic').getAttribute('aria-label'), w: Math.round(document.querySelector('#mic').getBoundingClientRect().width), h: Math.round(document.querySelector('#mic').getBoundingClientRect().height) })`);
     await click('#mic');
-    const v1 = await js(`({ text: document.querySelector('#voice').innerText.replace(/\\s+/g, ' '), hidden: document.querySelector('#voice').hidden, recs: window.__recs.length })`);
-    check(`${s} voice input: a microphone button (at least 44 px) next to the question field; the first press shows where spoken words go and starts nothing`,
-      v0.mic && v0.hidden && v0.label === 'Speak your question' && v0.w >= 44 && v0.h >= 44 && !v1.hidden && /In Chrome, your speech may be sent to Google/.test(v1.text) && v1.recs === 0, JSON.stringify({ v0, v1 }));
+    const v1 = await voiceNow();
+    check(`${s} voice input: a microphone button (at least 44 px) next to the question field; the first press says the recording goes to Google's cloud, and starts nothing`,
+      v0.hidden && v0.label === 'Speak your question' && v0.w >= 44 && v0.h >= 44 && !v1.hidden && /sends the recording to Google's cloud/.test(v1.line) && /their speech is never recorded/.test(v1.line) && v1.phase === 'idle' && ai.calls.length === 0 && ai.appCheck === 0, JSON.stringify({ v0, v1 }));
     await shot('30-voice-notice');
     const before = await cardsMade();
     await click('[data-act="voice-ok"]');
-    const v2 = await js(`(() => { const r = window.__recs[0]; return { calls: r?.calls, lang: r?.lang, interim: r?.interimResults, continuous: r?.continuous, local: r?.processLocally, pressed: document.querySelector('#mic').getAttribute('aria-pressed'), line: document.querySelector('#voice').innerText.replace(/\\s+/g, ' '), bytes: document.querySelector('#bytes').innerText.replace(/\\s+/g, ' ') }; })()`);
-    check(`${s} voice input: after the yes it listens (en-US, interim results, one question), the button is lit, and the session line stops saying "left this computer"`,
-      JSON.stringify(v2.calls) === '["start"]' && v2.lang === 'en-US' && v2.interim === true && v2.continuous === false && v2.local === false && v2.pressed === 'true' && /^Listening\./.test(v2.line) && /may send the sound/.test(v2.line) && /^0 bytes handed to cloud help by this app/.test(v2.bytes) && /Not counted: questions spoken into the microphone/.test(v2.bytes), JSON.stringify(v2));
-    await shot('31-voice-listening');
-    await js(`(() => { window.__recs[0].onresult({ results: [{ isFinal: false, 0: { transcript: 'do you want' } }] }); return true; })()`);
-    const v3 = await js(`document.querySelector('#q').value`);
-    await js(`(() => { const r = window.__recs[0]; r.onresult({ results: [{ isFinal: true, 0: { transcript: 'do you want coffee or tea' } }] }); r.onend(); return true; })()`);
-    await sleep(300);
-    const v4 = await js(`({ q: document.querySelector('#q').value, pressed: document.querySelector('#mic').getAttribute('aria-pressed'), line: document.querySelector('#voice').innerText, busy: document.querySelector('#make').disabled, focus: document.activeElement?.id })`);
-    check(`${s} voice input: interim words show in the field, the final words fill it as a question, and nothing is submitted (no new card; the field has the focus for changes)`,
-      v3 === 'do you want' && v4.q === 'Do you want coffee or tea?' && v4.pressed === 'false' && /Check the words/.test(v4.line) && !v4.busy && v4.focus === 'q' && (await cardsMade()) === before, JSON.stringify({ v3, v4, before, after: await cardsMade() }));
+    await waitFor(`document.querySelector('#mic')?.dataset.phase === 'recording'`, 8000);
+    await sleep(1800); // the fake microphone's tone needs a moment to be in the recording
+    const v2 = await voiceNow();
+    check(`${s} voice input: after the yes it records (the button is lit and reads "Stop recording", the line says so, the time limit is drawn), and nothing has been sent yet`,
+      v2.phase === 'recording' && v2.pressed === 'true' && v2.label === 'Stop recording' && /^Recording\. Say your question, then press the microphone again\. It stops by itself after 15 seconds\./.test(v2.line) && v2.bar && ai.calls.length === 0 && /^0 bytes left this computer/.test(v2.bytes), JSON.stringify({ v2, calls: ai.calls.length }));
+    await shot('31-voice-recording');
+    await click('#mic');
+    await waitFor(`document.querySelector('#mic')?.dataset.phase === 'idle' && !!document.querySelector('#q').value`, 15000); await sleep(300);
+    const v4 = await js(`({ q: document.querySelector('#q').value, pressed: document.querySelector('#mic').getAttribute('aria-pressed'), line: document.querySelector('#voice').innerText, busy: document.querySelector('#make').disabled, focus: document.activeElement?.id, bytes: document.querySelector('#bytes').innerText.replace(/\\s+/g, ' ') })`);
+    let sentBody = {}; try { sentBody = JSON.parse(ai.calls[0]?.body ?? '{}'); } catch { /* checked below */ }
+    const part = sentBody.contents?.[0]?.parts?.find((x) => x.inlineData)?.inlineData ?? {};
+    const wav = Buffer.from(part.data ?? '', 'base64');
+    const sentInfo = { calls: ai.calls.length, model: /models\/([^:]+):generateContent/.exec(ai.calls[0]?.url ?? '')?.[1], mime: part.mimeType, riff: wav.subarray(0, 4).toString('latin1'), rate: wav.length > 28 ? wav.readUInt32LE(24) : 0, seconds: wav.length > 44 ? +((wav.length - 44) / 32000).toFixed(1) : 0, schema: JSON.stringify(sentBody.generationConfig ?? {}).includes('transcript'), instruction: /Do not answer the question/.test(JSON.stringify(sentBody.systemInstruction ?? '')), text: JSON.stringify(sentBody.contents?.[0]?.parts?.filter((x) => x.text).map((x) => x.text)) };
+    check(`${s} voice input: the second press ends the recording and one request goes to Firebase AI Logic: a 16 kHz WAV as inline data, the transcribe instruction and the transcript schema, and no word of About me`,
+      sentInfo.calls === 1 && sentInfo.mime === 'audio/wav' && sentInfo.riff === 'RIFF' && sentInfo.rate === 16000 && sentInfo.seconds >= 1 && sentInfo.seconds <= 15 && sentInfo.schema && sentInfo.instruction && !/Carol|Frank|Jenny|lake|church|pot roast/.test(ai.calls[0].body), JSON.stringify(sentInfo));
+    check(`${s} voice input: the words fill the field as a question and nothing is submitted (no new card; the field has the focus for changes); the session figure now counts the recording`,
+      v4.q === 'Do you want coffee or tea?' && v4.pressed === 'false' && /Check the words/.test(v4.line) && !v4.busy && v4.focus === 'q' && (await cardsMade()) === before && /^[\d,]+ bytes handed to Google's cloud by this app 1 recording of a spoken question/.test(v4.bytes) && !/^0 bytes/.test(v4.bytes), JSON.stringify({ v4, before, after: await cardsMade() }));
     await js(`(() => { document.querySelector('#ask').requestSubmit(); return true; })()`);
     await waitFor(`document.querySelector('#make') && !document.querySelector('#make').disabled && !!document.querySelector('#result .badge')`); await sleep(300);
     const v5 = await js(`({ tiles: [...document.querySelectorAll('#person .tile span')].map((e) => e.innerText), tail: document.querySelector('#result .badge-line .tail').innerText, privacy: document.querySelector('#privacy').innerText, person: document.querySelector('#person').innerText })`);
-    check(`${s} voice input: the card made from the spoken question is the usual one, and its line says the sound may have left ("nothing sent by this app · the question was spoken …"), never "nothing left this computer"`,
-      JSON.stringify(v5.tiles) === JSON.stringify(['coffee', 'tea', 'something else']) && /nothing sent by this app · the question was spoken/.test(v5.tail) && !/nothing left this computer/.test(v5.tail) && /Spoken questions went through your browser's speech recognition/.test(v5.privacy) && !/spoken|speech|microphone/i.test(v5.person), JSON.stringify(v5));
+    check(`${s} voice input: the card made from the spoken question is the usual one, and its line says the recording went to Google's cloud, never only "nothing left this computer"; the person's card says nothing of it`,
+      JSON.stringify(v5.tiles) === JSON.stringify(['coffee', 'tea', 'something else']) && /the question was spoken: its recording went to Google's cloud to be turned into text · nothing else left this computer/.test(v5.tail) && !/· nothing left this computer/.test(v5.tail) && /Except what you spoke into the microphone/.test(v5.privacy) && !/spoken|speech|microphone|recording/i.test(v5.person) && ai.calls.length === 1, JSON.stringify(v5));
     await shot('32-voice-card');
-    // a typed question after it is not marked as spoken
+    // a tapped question after it is not marked as spoken
     await chip('Do you need the toilet?');
     const v6 = await js(`document.querySelector('#result .badge-line .tail').innerText`);
-    // the microphone blocked by the browser: a plain sentence, the field untouched, no exception
+    // the model hears no words: one plain sentence, the field untouched (the notice is not shown again: it was agreed to)
+    answerWith = { transcript: '' };
     await click('#mic');
-    await js(`(() => { const r = window.__recs[window.__recs.length - 1]; r.onerror({ error: 'not-allowed' }); r.onend(); return true; })()`);
-    await sleep(200);
-    const v7 = await js(`({ line: document.querySelector('#voice').innerText, q: document.querySelector('#q').value, pressed: document.querySelector('#mic').getAttribute('aria-pressed'), recs: window.__recs.length })`);
-    check(`${s} voice input: a tapped question after it is not marked as spoken; a blocked microphone gives one plain sentence and leaves the field alone (the second press listened at once: the notice was agreed to)`,
-      /^· nothing left this computer/.test(v6) && /The microphone is blocked for this page/.test(v7.line) && v7.q === 'Do you need the toilet?' && v7.pressed === 'false' && v7.recs === 2, JSON.stringify({ v6, v7 }));
-    // a browser with no speech recognition: no button, no line, and the page works as before
-    await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: fake.result.identifier });
-    const none2 = await send('Page.addScriptToEvaluateOnNewDocument', { source: `Object.defineProperty(window, 'SpeechRecognition', { value: undefined, configurable: true }); Object.defineProperty(window, 'webkitSpeechRecognition', { value: undefined, configurable: true }); window.__errors = []; addEventListener('error', (e) => window.__errors.push(String(e.message))); addEventListener('unhandledrejection', (e) => window.__errors.push(String(e.reason)));` });
+    await waitFor(`document.querySelector('#mic')?.dataset.phase === 'recording'`, 8000); await sleep(1500);
+    await click('#mic');
+    await waitFor(`document.querySelector('#mic')?.dataset.phase === 'idle'`, 15000); await sleep(300);
+    const v7 = await voiceNow();
+    check(`${s} voice input: a tapped question after it is not marked as spoken; a recording with no words in it gives one plain sentence and leaves the field alone (one more request, counted)`,
+      /^· nothing left this computer/.test(v6) && /Nothing was heard/.test(v7.line) && v7.q === 'Do you need the toilet?' && ai.calls.length === 2 && /2 recordings of a spoken question/.test(v7.bytes), JSON.stringify({ v6, v7, calls: ai.calls.length }));
+    // no connection: nothing is recorded, and the line says why
+    await send('Network.enable');
+    await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+    await sleep(300);
+    await click('#mic'); await sleep(400);
+    const v8 = await voiceNow();
+    await send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+    check(`${s} voice input: with no connection nothing is recorded and the line says voice input needs one`, v8.phase === 'idle' && /Voice input needs a connection/.test(v8.line) && ai.calls.length === 2, JSON.stringify(v8));
+    // the microphone blocked by the browser: a plain sentence, no exception
+    await js(`(() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error('denied'), { name: 'NotAllowedError' })); return true; })()`);
+    await sleep(300);
+    await click('#mic'); await sleep(500);
+    const v9 = await js(`({ line: document.querySelector('#voice').innerText, phase: document.querySelector('#mic').dataset.phase, errors: window.__errors })`);
+    check(`${s} voice input: a blocked microphone gives one plain sentence, no error, and no request`, /The microphone is blocked for this page/.test(v9.line) && v9.phase === 'idle' && v9.errors.length === 0 && ai.calls.length === 2, JSON.stringify(v9));
+    // a browser that cannot record: no button, no line, and the page works as before
+    const none2 = await send('Page.addScriptToEvaluateOnNewDocument', { source: `Object.defineProperty(window, 'MediaRecorder', { value: undefined, configurable: true });` });
     await send('Page.reload'); await sleep(600);
     await nav('#/demo');
     await waitFor('!!document.querySelector(".chip")'); await sleep(300);
     await chip('Do you want coffee or tea?');
-    const v8 = await js(`({ mic: !!document.querySelector('#mic'), line: document.querySelector('#voice')?.hidden, tiles: document.querySelectorAll('#person .tile').length, errors: window.__errors, form: [...document.querySelector('#ask').children].map((e) => e.id) })`);
-    check(`${s} voice input: in a browser without speech recognition there is no microphone button, no error, and the question form is as it was`, v8.mic === false && v8.line === true && v8.tiles === 3 && v8.errors.length === 0 && JSON.stringify(v8.form) === '["q","make"]', JSON.stringify(v8));
+    const v10 = await js(`({ mic: !!document.querySelector('#mic'), line: document.querySelector('#voice')?.hidden, tiles: document.querySelectorAll('#person .tile').length, errors: window.__errors, form: [...document.querySelector('#ask').children].map((e) => e.id) })`);
+    check(`${s} voice input: in a browser that cannot record there is no microphone button, no error, and the question form is as it was`, v10.mic === false && v10.line === true && v10.tiles === 3 && v10.errors.length === 0 && JSON.stringify(v10.form) === '["q","make"]', JSON.stringify(v10));
     await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: none2.result.identifier });
+    await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: errs.result.identifier });
+    await send('Fetch.disable');
+    ws.removeEventListener('message', onPaused);
     await send('Page.reload'); await sleep(600);
   }
   ws.close();

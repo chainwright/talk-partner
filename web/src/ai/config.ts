@@ -2,7 +2,7 @@
 // Every value is read as a direct `import.meta.env.X` so Vite replaces it statically. Do NOT alias import.meta.env
 // to a variable: Vite then inlines the whole env object, and the debug token would ship in production
 // (caught on 11 Nov 2026; scripts/check-dist.mjs guards it).
-import type { WebConfig } from './firebaseEngine';
+import type { WebConfig } from './app';
 
 export function webConfig(): WebConfig | null {
   const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;

@@ -10,8 +10,15 @@
 //   stripped   PREFER_IN_CLOUD   question with About-me words swapped out     no profile data, so falling back to the device
 //                                                                             when offline is safe.
 //
-// Two steps, two models. There is no third: pictures are bundled, and the picture-generation model this file once
-// defined and never called was removed on 17 Nov 2026.
+//   voice      ONLY_IN_CLOUD     a recording of the partner's spoken          makes no card: it types the question into the
+//                                question (WAV, at most 15 s), after a yes     field. The SDK's on-device step (firebase 13.3.0)
+//                                to a notice; nothing from About me            takes text and JPEG / PNG only, so a request with
+//                                                                             sound never runs on the device in any mode; the
+//                                                                             mode says what happens, and the app says it first.
+//
+// Two steps make cards, and a third turns a spoken question into text. Pictures are bundled: the picture-generation
+// model this file once defined and never called was removed on 17 Nov 2026. The browser's own speech recognition
+// (Web Speech API), used for a few hours on 17 Nov, is gone: it was AI inference outside Firebase AI Logic.
 //
 // inferenceSource is read on every response. The private leg treats anything but on-device as an error.
 //
@@ -20,16 +27,17 @@
 // (measured in devlog/ondevice_proof_1/). The cloud leg runs on the default app, with App Check, started on the first
 // cloud call only.
 
-import { initializeApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
+import { initializeApp } from 'firebase/app';
 import {
   getAI, getGenerativeModel, GoogleAIBackend, InferenceMode, InferenceSource, type GenerativeModel,
 } from 'firebase/ai';
-import type { DeviceStatus, Engine, ModelResult } from '../../../core/engine';
+import type { AudioClip, DeviceStatus, Engine, ModelResult } from '../../../core/engine';
 import { CLOUD_TEXT_MODEL } from '../../../core/models';
-import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, SYSTEM_PROMPT, cloudPrompt } from '../../../core/prompt';
+import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, SYSTEM_PROMPT, TRANSCRIBE_PROMPT, TRANSCRIBE_SCHEMA, TRANSCRIBE_SYSTEM_PROMPT, cloudPrompt } from '../../../core/prompt';
 import { cloudTextRequest } from '../../../core/requests';
-import { defaultApp } from './app';
+import { appCheckConfigured, appWithAppCheck, type WebConfig } from './app';
+
+export type { WebConfig };
 
 const IO = {
   expectedInputs: [{ type: 'text' as const, languages: ['en'] }],
@@ -42,16 +50,8 @@ const sys = (text: string) => [{ role: 'system' as const, content: [{ type: 'tex
  * One console line per answered model call: which leg, its mode, and the SDK's own `inferenceSource` value as it came
  * back. No prompt and no answer text is logged. The run logs in devlog/ quote these lines.
  */
-function report(leg: 'private' | 'stripped', mode: string, inferenceSource: unknown, ms: number) {
+function report(leg: 'private' | 'stripped' | 'voice', mode: string, inferenceSource: unknown, ms: number) {
   console.info(`[ai-logic] leg=${leg} mode=${mode} inferenceSource=${String(inferenceSource)} ms=${ms}`);
-}
-
-export interface WebConfig {
-  firebase: FirebaseOptions;
-  /** Local development only (never in a production build): an App Check debug token registered in the console. */
-  appCheckDebugToken?: string;
-  /** Deployed site: the reCAPTCHA Enterprise site key registered as the App Check provider. */
-  recaptchaEnterpriseSiteKey?: string;
 }
 
 export class FirebaseEngine implements Engine {
@@ -60,12 +60,13 @@ export class FirebaseEngine implements Engine {
   readonly modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
   private privateModel: GenerativeModel | null = null;
   private cloudModel: GenerativeModel | null = null;
+  private voiceModel: GenerativeModel | null = null;
   /** The cloud text model in use: the in-code default until Remote Config gives a checked name (core/models.ts). */
   private textModel = CLOUD_TEXT_MODEL;
   private cloudAi: ReturnType<typeof getAI> | null = null;
 
   constructor(private cfg: WebConfig) {
-    this.cloudConfigured = !!(cfg.recaptchaEnterpriseSiteKey || cfg.appCheckDebugToken);
+    this.cloudConfigured = appCheckConfigured(cfg);
   }
 
   /** The private leg: its own Firebase app, no App Check, so starting it and running it contact no host. */
@@ -79,22 +80,18 @@ export class FirebaseEngine implements Engine {
   }
 
   /** The cloud leg: the default Firebase app with App Check (Firebase AI Logic requires it before the first cloud request). */
+  private get ai(): ReturnType<typeof getAI> {
+    // the app, App Check (ai/app.ts) and the AI Logic instance are started once; only the models are built again
+    // when Remote Config names another cloud model (setCloudModel).
+    // Limited-use App Check tokens for the cloud steps: the SDK asks App Check for a fresh short-lived token per
+    // request instead of reusing the session token (it is what replay protection consumes, once that is switched on
+    // for the project). The private leg has no App Check at all, so this does not touch it.
+    return (this.cloudAi ??= getAI(appWithAppCheck(this.cfg), { backend: new GoogleAIBackend(), useLimitedUseAppCheckTokens: true }));
+  }
+
   private get cloud(): GenerativeModel {
     if (this.cloudModel) return this.cloudModel;
-    const cfg = this.cfg;
-    // the app, App Check and the AI Logic instance are started once; only the model is built again when Remote
-    // Config names another cloud model (setCloudModel)
-    if (!this.cloudAi) {
-      const app: FirebaseApp = defaultApp(cfg.firebase);
-      if (cfg.appCheckDebugToken) (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = cfg.appCheckDebugToken;
-      const siteKey = cfg.recaptchaEnterpriseSiteKey || (cfg.appCheckDebugToken ? 'debug-provider-in-use' : '');
-      if (siteKey) initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(siteKey), isTokenAutoRefreshEnabled: true });
-      // limited-use App Check tokens for the cloud step: the SDK asks App Check for a fresh short-lived token per
-      // request instead of reusing the session token (it is what replay protection consumes, once that is switched on
-      // for the project). The private leg has no App Check at all, so this does not touch it.
-      this.cloudAi = getAI(app, { backend: new GoogleAIBackend(), useLimitedUseAppCheckTokens: true });
-    }
-    const ai = this.cloudAi;
+    const ai = this.ai;
     return (this.cloudModel = getGenerativeModel(ai, {
       mode: InferenceMode.PREFER_IN_CLOUD,
       inCloudParams: {
@@ -152,6 +149,7 @@ export class FirebaseEngine implements Engine {
     if (model === this.textModel) return;
     this.textModel = model;
     this.cloudModel = null;
+    this.voiceModel = null;
   }
 
   cloudRequest(strippedQuestion: string) {
@@ -172,6 +170,37 @@ export class FirebaseEngine implements Engine {
     return { text: r.response.text(), source, ms };
   }
 
+  /**
+   * The voice step: the same cloud model as the stripped step, on the same app (App Check), in ONLY_IN_CLOUD. The
+   * SDK's on-device adapter refuses any inline data that is not JPEG or PNG, so sound cannot run on this computer
+   * through Firebase AI Logic today; a hybrid mode here would only hide that.
+   */
+  private get voice(): GenerativeModel {
+    return (this.voiceModel ??= getGenerativeModel(this.ai, {
+      mode: InferenceMode.ONLY_IN_CLOUD,
+      inCloudParams: {
+        model: this.textModel,
+        systemInstruction: TRANSCRIBE_SYSTEM_PROMPT,
+        generationConfig: { responseMimeType: 'application/json', responseJsonSchema: TRANSCRIBE_SCHEMA as any, temperature: 0 },
+      },
+    }));
+  }
+
+  /**
+   * One recording of the partner's spoken question -> one model call -> `{"transcript": "…"}` as text. Called only
+   * after the partner said yes to the notice (web/src/main.ts). The source is what the SDK reports, never assumed.
+   */
+  async transcribe(clip: AudioClip): Promise<ModelResult> {
+    if (!this.cloudConfigured) throw Object.assign(new Error('voice input is not set up (App Check)'), { notSent: true });
+    const t0 = performance.now();
+    const r = await this.voice.generateContent([{ type: 'inlineData', inlineData: { mimeType: clip.mimeType, data: clip.base64 } }, TRANSCRIBE_PROMPT]).catch((e: Error) => {
+      throw Object.assign(e, { notSent: typeof navigator !== 'undefined' && navigator.onLine === false });
+    });
+    const source = r.response.inferenceSource === InferenceSource.ON_DEVICE ? 'on-device' : 'in-cloud';
+    const ms = Math.round(performance.now() - t0);
+    report('voice', 'ONLY_IN_CLOUD', r.response.inferenceSource, ms);
+    return { text: r.response.text(), source, ms };
+  }
 }
 
 /**
@@ -186,7 +215,7 @@ export class LazyFirebaseEngine implements Engine {
   private inner: FirebaseEngine | null = null;
   private textModel = CLOUD_TEXT_MODEL;
   constructor(private cfg: WebConfig) {
-    this.cloudConfigured = !!(cfg.recaptchaEnterpriseSiteKey || cfg.appCheckDebugToken);
+    this.cloudConfigured = appCheckConfigured(cfg);
   }
   private get e(): FirebaseEngine {
     if (!this.inner) { this.inner = new FirebaseEngine(this.cfg); this.inner.setCloudModel(this.textModel); }
@@ -205,4 +234,5 @@ export class LazyFirebaseEngine implements Engine {
   runDevice(prompt: string) { return this.e.runDevice(prompt); }
   cloudRequest(strippedQuestion: string) { return cloudTextRequest(strippedQuestion, this.textModel); }
   runCloud(strippedQuestion: string) { return this.e.runCloud(strippedQuestion); }
+  transcribe(clip: AudioClip) { return this.e.transcribe(clip); }
 }

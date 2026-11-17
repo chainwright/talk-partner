@@ -392,3 +392,9 @@ main.welcome::after { transform-origin: left center; animation: ts-turn 1s .3s c
 .voice[hidden] { display: none; }
 .voice-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .dot.rec { background: var(--warn); }
+.mic.busy { opacity: 0.55; }
+/* the recording's time limit, as a line that fills once: what is left is seen, not read */
+.rec-bar { display: block; height: 4px; margin-top: 8px; border-radius: 2px; background: var(--field); overflow: hidden; }
+.rec-bar::after { content: ''; display: block; height: 100%; width: 100%; background: var(--warn); transform-origin: left; animation: rec-fill var(--rec-s, 15s) linear both; }
+@keyframes rec-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .rec-bar { display: none; } }

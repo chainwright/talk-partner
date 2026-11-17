@@ -139,39 +139,43 @@ const COPY = {
     painQuestion: 'Where does it hurt?',
   },
 
-  // Voice input for the partner's own question (web/src/voice.ts): the browser's speech recognition, started by a
-  // press on the microphone, never by itself. The person's speech is never recognised. What is said here about where
-  // the audio goes is all the app knows: with the browser's default service it may leave this computer, and every line
-  // that says "nothing left this computer" gives way to one of these once a question was spoken that way.
+  // Voice input for the partner's own question (web/src/voice.ts): a short recording, started by a press on the
+  // microphone and never by itself, turned into text by Gemini through Firebase AI Logic. The person's speech is never
+  // recorded. The recording goes to Google's cloud (the SDK cannot run sound on the device), so the notice says that
+  // before the first use, and every line that says "nothing left this computer" gives way to one of these once a
+  // recording was handed over. `MAX` is core/models.ts VOICE_MAX_SECONDS, passed in by the caller.
   voice: {
     button: 'Speak your question',
-    stop: 'Stop listening',
-    /** Before the first use, and the button's hover text. `local`: the browser reports on-device recognition and the app asks for it. */
-    notice: (local: boolean) => local
-      ? 'Voice input uses your browser\'s speech recognition, not this app\'s. This browser reports that it can turn English speech into text on this computer, and the app asks it to do that. For your question only: their speech is never recognised.'
-      : 'Voice input uses your browser\'s speech recognition, not this app\'s. In Chrome, your speech may be sent to Google to be turned into text, with any names you say; other browsers use their own service. For your question only: their speech is never recognised.',
+    stop: 'Stop recording',
+    /** Before the first use, and the button's hover text. */
+    notice: (maxSeconds: number) =>
+      `Voice input records your question (up to ${maxSeconds} seconds) and sends the recording to Google's cloud, where an AI model turns it into text. It is your voice as it is, with any names you say: the name swap cannot be applied to sound. It needs a connection. For your question only: their speech is never recorded.`,
     ok: 'Use the microphone',
     cancel: 'Not now',
-    listening: (local: boolean) => local
-      ? 'Listening. Say your question. The browser is asked to turn it into text on this computer.'
-      : 'Listening. Say your question. Your browser may send the sound to its speech service (in Chrome: Google).',
+    asking: 'Waiting for the microphone. Your browser may ask you to allow it.',
+    recording: (maxSeconds: number) => `Recording. Say your question, then press the microphone again. It stops by itself after ${maxSeconds} seconds.`,
+    working: 'Turning your recording into text in Google\'s cloud…',
     heard: 'Check the words and change them if needed. Then make the card.',
+    /** If the SDK ever reports that a recording was turned into text on this computer (it cannot today). */
+    heardHere: 'Turned into text on this computer. Check the words and change them if needed. Then make the card.',
     errors: {
       blocked: 'The microphone is blocked for this page. Type the question, or allow the microphone in the browser.',
       'no-speech': 'Nothing was heard. Press the microphone and try again, or type the question.',
       'no-mic': 'No microphone was found. Type the question.',
-      network: 'Speech recognition could not reach its service. Type the question.',
-      language: 'This browser cannot recognise English speech the way it was asked to. Type the question.',
+      offline: 'Voice input needs a connection: the recording is turned into text in Google\'s cloud. Type the question.',
+      busy: 'Voice input is busy just now (this free project may make 15 requests a minute, for everyone). Type the question, or try again in a minute.',
       failed: 'Voice input did not work this time. Type the question.',
     },
-    /** In place of "nothing left this computer" on a card whose question was spoken through the browser's default service. */
-    tailKept: 'nothing sent by this app · the question was spoken: your browser\'s speech recognition may have sent the sound',
+    /** In place of "nothing left this computer" on a card whose question was spoken. */
+    tailKept: 'the question was spoken: its recording went to Google\'s cloud to be turned into text · nothing else left this computer',
     /** After the tail of a card whose spoken question also went to cloud help. */
-    tailAlso: 'the question was spoken: your browser\'s speech recognition may have sent the sound',
+    tailAlso: 'the question was spoken: its recording went to Google\'s cloud too',
     /** Under "What was sent" on such a card. */
-    sentNote: 'That is what this app sent. The question was spoken: your browser\'s speech recognition may have sent the sound to its service, which this app neither sees nor counts.',
-    /** After the line "Your questions … stay on this computer", once a question was spoken that way. */
-    privacy: 'Spoken questions went through your browser\'s speech recognition, which may be a cloud service.',
+    sentNote: 'The question was spoken: before this card was made, its recording went to Google\'s cloud to be turned into text, as you said it, names included. That request is counted in the session\'s figure, not in this card\'s.',
+    /** In "How this is counted", once a recording was handed over. */
+    counted: 'Recordings of spoken questions are counted at the size this app handed to the SDK (a 16 kHz WAV file as base64 text), whether the cloud answered or the request failed after being handed over.',
+    /** After the line "Your questions … stay on this computer", once a recording was handed over. */
+    privacy: 'Except what you spoke into the microphone: those recordings went to Google\'s cloud to be turned into text.',
   },
 
   // The two ends of the number line on a pain card (under the numbers on the person's card).
@@ -324,10 +328,10 @@ const COPY = {
     heading: 'How this works',
     /** The routing in one line, first on the screen: which data goes to which Firebase AI Logic mode, and what the badges are read from. */
     routing: 'Where the AI runs: family data → ONLY_ON_DEVICE (Gemini Nano on this computer reads About me; it never falls back to the cloud). The stripped question → PREFER_IN_CLOUD, which falls back to Gemini Nano when offline. The SDK\'s inferenceSource for each call drives every AI badge.',
-    intro: 'The model only proposes; code decides. Every model call that makes a card goes through Firebase AI Logic. (The microphone is not one of them: it is your browser\'s own speech recognition, and it only types your question into the field.) The two AI badges ("On this computer", "Cloud help") come from what the SDK reports for that call; "No AI needed", "Made in code (AI answer not used)" and "No card" come from the card rules.',
+    intro: 'The model only proposes; code decides. All AI inference in this app goes through Firebase AI Logic: the two steps that make cards, and the microphone, which sends a recording of your question to Gemini in Google\'s cloud to be turned into text and only types it into the field. The two AI badges ("On this computer", "Cloud help") come from what the SDK reports for that call; "No AI needed", "Made in code (AI answer not used)" and "No card" come from the card rules.',
     legs: 'The two steps',
     columns: { step: 'step', mode: 'mode', gets: 'gets', why: 'why' },
-    legNames: { private: 'private card', stripped: 'stripped card' },
+    legNames: { private: 'private card', stripped: 'stripped card', voice: 'voice input (your question as text)' },
     // The settings Firebase Remote Config may change (core/models.ts), with where each value in use came from.
     settings: {
       heading: 'Settings from Firebase Remote Config',
@@ -527,23 +531,32 @@ const COPY = {
        * Once the cloud has answered, the number is what the app handed over, and it is called that: the app does not
        * see what the SDK adds on the wire. A request that failed is never counted as kept.
        */
-      number: (n: { cards: number; cardsLeft: number; bodyBytes: number; namesWithheld: number; otherWithheld: number; attempts: number; attemptBytes: number }, settingsAsked = false, voice = false) => {
-        // `voice`: a question was spoken through the browser's default speech recognition this session. The app
-        // neither sees nor counts that sound, so the line stops saying "left this computer" and says what it counts.
-        const spoken = voice ? ' Not counted: questions spoken into the microphone, which your browser\'s speech recognition may have sent to its service as sound.' : '';
+      number: (n: { cards: number; cardsLeft: number; bodyBytes: number; namesWithheld: number; otherWithheld: number; attempts: number; attemptBytes: number }, settingsAsked = false, voice: { clips: number; bytes: number } | null = null) => {
+        // `voice`: recordings of a spoken question that this app handed to the SDK for the cloud this session (those
+        // the cloud answered and those that failed after being handed over), and their size as sent (base64 of the
+        // WAV file). Once there is one, the line never says "0 bytes" or "left this computer" without them: the
+        // figure is everything the app handed over, sound included.
         const bytes = (b: number) => `${b.toLocaleString('en-US')} byte${b === 1 ? '' : 's'}`;
         const cards = `${n.cards} card${n.cards === 1 ? '' : 's'}`;
         const maybe = n.attempts ? `${n.attempts} cloud request${n.attempts === 1 ? '' : 's'} failed after being handed over` : '';
+        const notCounted = `What the SDK adds on the wire is not counted${settingsAsked ? ', nor is the settings request (no question in it)' : ''}.`;
+        const maybeNote = maybe ? ` Not in the number: ${maybe} and may have left (up to ${bytes(n.attemptBytes)}).` : '';
+        if (voice?.clips) {
+          const sound = `${voice.clips} recording${voice.clips === 1 ? '' : 's'} of a spoken question (${bytes(voice.bytes)} of sound, as you said it, no name swap)`;
+          const text = n.cardsLeft ? ` and ${n.cardsLeft} card request${n.cardsLeft === 1 ? '' : 's'}, the question only (${bytes(n.bodyBytes)})` : '';
+          return {
+            state: 'sent' as const, figure: bytes(voice.bytes + n.bodyBytes), label: 'handed to Google\'s cloud by this app',
+            scope: `${sound}${text}; ${cards} this session. ${notCounted}${maybeNote}`,
+          };
+        }
         if (n.cardsLeft) {
           return {
             state: 'sent' as const, figure: bytes(n.bodyBytes), label: 'handed to cloud help',
-            scope: `in ${n.cardsLeft} request${n.cardsLeft === 1 ? '' : 's'}, the question only (${n.namesWithheld + n.otherWithheld} About me word${n.namesWithheld + n.otherWithheld === 1 ? '' : 's'} swapped out first); ${cards} this session. What the SDK adds on the wire is not counted${settingsAsked ? ', nor is the settings request (no question in it)' : ''}.` +
-              (maybe ? ` Not in the number: ${maybe} and may have left (up to ${bytes(n.attemptBytes)}).` : '') + spoken,
+            scope: `in ${n.cardsLeft} request${n.cardsLeft === 1 ? '' : 's'}, the question only (${n.namesWithheld + n.otherWithheld} About me word${n.namesWithheld + n.otherWithheld === 1 ? '' : 's'} swapped out first); ${cards} this session. ${notCounted}${maybeNote}`,
           };
         }
-        if (n.attempts) return { state: 'maybe' as const, figure: `up to ${bytes(n.attemptBytes)}`, label: 'may have left this computer', scope: `${maybe}; ${cards} this session.${settingsAsked ? ' The settings request (no question in it) is not counted.' : ''}${spoken}` };
+        if (n.attempts) return { state: 'maybe' as const, figure: `up to ${bytes(n.attemptBytes)}`, label: 'may have left this computer', scope: `${maybe}; ${cards} this session.${settingsAsked ? ' The settings request (no question in it) is not counted.' : ''}` };
         // with cloud help on, the app has asked Remote Config for its settings: a request, though none for a card
-        if (voice) return { state: 'none' as const, figure: bytes(0), label: 'handed to cloud help by this app', scope: `${cards} this session · page load ${settingsAsked ? 'and the settings request (no question in it) ' : ''}not counted.${spoken}` };
         return { state: 'none' as const, figure: bytes(0), label: settingsAsked ? 'of any question left this computer' : 'left this computer', scope: `${cards} this session · page load ${settingsAsked ? 'and the settings request (no question in it) ' : ''}not counted` };
       },
       howHeading: 'How this is counted',

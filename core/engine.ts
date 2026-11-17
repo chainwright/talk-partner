@@ -40,7 +40,16 @@ export interface Engine {
   cloudRequest(strippedQuestion: string): unknown;
   /** Cloud step: receives only the stripped question. Throws if the cloud is not configured. */
   runCloud(strippedQuestion: string): Promise<ModelResult>;
+  /**
+   * Optional: voice input. One recording of the PARTNER's spoken question (never the person's) goes to the model
+   * through Firebase AI Logic and comes back as JSON `{"transcript": string}`. `source` is the SDK's report of where
+   * it ran. An engine without it (a copy with no project settings) has no microphone button.
+   */
+  transcribe?(clip: AudioClip): Promise<ModelResult>;
 }
+
+/** A short recording as it is handed to the SDK: base64 of a WAV file. */
+export interface AudioClip { mimeType: string; base64: string }
 
 /**
  * The engine of a copy with no project settings (a bare clone, no `.env.local`): no model can run here, on the device
