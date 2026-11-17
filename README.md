@@ -3,7 +3,11 @@
 About 2 million people in the United States live with aphasia[^1], and the people who talk with them every day are
 rarely taught how: when practising speech-language pathologists sent in samples of their therapy goals, fewer than 3%
 involved any communication partner training, although 97% of those surveyed said they do some with families, mostly
-without a written goal[^2].
+without a written goal[^2]. What that leaves at stake, in the words of the Aphasia Institute's page on Supported
+Conversation: aphasia "masks a person's inherent competence", and people with aphasia "need others to believe they
+are competent and have more understanding and social skills than may be apparent"[^3]. A partner who answers for
+the person, or tests them, is the everyday way that competence stays hidden (the last sentence is our reading, not
+the Institute's words).
 
 After a stroke, many adults with aphasia understand what is said but can't find the words to answer.
 Talk Partner helps **the partner** ask the way a speech therapist would: it turns the partner's own question into a
@@ -278,6 +282,7 @@ Without `.env.local` the same cards work and open questions get no card.
 ## Sources for the first lines
 [^1]: National Institute on Deafness and Other Communication Disorders, "Aphasia" (page last updated 16 Apr 2025): "About 2 million people in the United States are living with aphasia, according to the National Aphasia Association." <https://www.nidcd.nih.gov/health/aphasia>, read 16 Nov 2026.
 [^2]: Haley KL, Hardy LE. "Is Communication Training for Significant Others a Reasonable Rehabilitation Goal in Aphasia Therapy?" *American Journal of Speech-Language Pathology* 2025;34(2):782-797. <https://doi.org/10.1044/2024_AJSLP-24-00472>. Abstract read in the PubMed record (PMID 39913273) on 16 Nov 2026: "less than 3% [of the goal samples] involved any form of communication partner training"; "Almost all SLPs (97%) reported engaging in CPT with family members ... most explained that CPT was typically handled without goal setting" (156 speech-language pathologists in the United States). A survey of clinicians, not a count of families.
+[^3]: Aphasia Institute, "Communication Tools: Communicative Access & Supported Conversation for Adults With Aphasia (SCA™)", <https://www.aphasia.ca/communication-tools-communicative-access-sca/>, read 17 Nov 2026: "Aphasia is a language problem that masks a person's inherent competence, and most dramatically affects conversational interaction (talking and understanding), as well as the ability to read and write."; under "Acknowledge Competence": "People with aphasia need others to believe they are competent and have more understanding and social skills than may be apparent." This is the premise of the method, stated by its authors; it is not a measured harm, and we have found no figure for one that we could read at its source.
 
 ## Licence
 Apache-2.0. Pre-existing work is listed in `DISCLOSURE.md`.
