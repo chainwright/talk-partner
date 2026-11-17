@@ -62,6 +62,14 @@ export function splitQuestion(q: string): [string, string | null] {
     // subject ("is your back", "can Tyler"). "do / have + the ..." is left alone: "go and do the shopping" is one question.
     /\s+and\s+(?:then\s+|also\s+)?(?=(?:are|is|was|were|do|does|did|would|will|can|could|should|shall|have|has)\s+(?:you|I|we|it|they|he|she|there|that|this)\b|(?:are|is|was|were|would|will|can|could|should|shall)\s+(?:the|your|my|our|his|her|[A-Z][a-z]+)\b|(?:what|where|who|when|which|how|why)(?:'s\b|\s+(?:do|does|did|would|will|is|are|was|should|shall|can|could|about)\b))/,
   ];
+  // "Do you want to go out today, and if so where?": the second question is one word. It is asked in full, with the
+  // first question's own words ("Where do you want to go out today?"); set E, 16 Nov: the two stayed one yes / no card
+  // and "where" was never asked.
+  const cond = /^(.*\S)\s*,?\s+and\s+(?:if\s+so|if\s+you\s+do|if\s+yes)\s*,?\s*(where|when)(?:\s+to)?\s*\?\s*$/i.exec(s);
+  if (cond && AUX_START.test(cond[1]) && !/\bor\b/i.test(cond[1]) && cond[1].split(' ').length >= 3) {
+    const first = cond[1].replace(/[\s,?]+$/, '');
+    return [`${first}?`, `${capitalize(lc(cond[2]))} ${first.charAt(0).toLowerCase()}${first.slice(1)}?`];
+  }
   for (const re of patterns) {
     const m = re.exec(s);
     if (!m) continue;
@@ -552,7 +560,7 @@ function isTimeLike(side: string): boolean {
 
 /**
  * "Do you want your pills now or after you eat?": the second side says when, so the first option is the time the
- * left side ends with ("now"), not its last words counted off ("pills now"). Set E, 17 Nov: such a question had no
+ * left side ends with ("now"), not its last words counted off ("pills now"). set E, 16 Nov: such a question had no
  * card without a model, and with one only in some runs.
  */
 function timePair(q: string): [string, string] | null {
@@ -586,7 +594,7 @@ function loosePair(q: string): [string, string] | null {
  * The code parser's pair after the same label check as the model's options. Several readings are tried, the strict
  * one first: short sides counted off around "or"; a time against a time clause; each side as a clause; and last the
  * same without the one-axis demand. The first that passes the label check is the pair, so a question that names its
- * two options gets a card from them whatever a model made of it (set E, 17 Nov: "No good choices came out" on some
+ * two options gets a card from them whatever a model made of it (set E, 16 Nov: "No good choices came out" on some
  * runs of "… now or after you eat?", no card at all without a model).
  */
 export function codePair(q: string, profile?: Profile): [string, string] | null {
@@ -665,6 +673,43 @@ export function orList(q: string, profile?: Profile): string[] | null {
   const checked = checkSides(items, q, profile, true);
   if (!checked) return null;
   return none ? [...checked, lc(none[1]).replace(/\s+/g, ' ')] : checked;
+}
+
+const NOTICE = /^(?:oh,?\s+)?(?:(?:is|was)\s+(?:that|this)\s+(?!(?:better|ok|okay|alright|all|enough|too|comfortable|comfy|sore|painful|warm|cold|hot|right|good|nice|fine|what|where|who|how|why)\b)(?:the\s+|a\s+|an\s+|your\s+|my\s+|our\s+)?[\p{L}'’-]+(?:\s+[\p{L}'’-]+){0,3}|(?:did\s+you\s+|do\s+you\s+|can\s+you\s+)?(?:hear|see|smell)\s+that|(?:you\s+)?know\s+what|guess\s+what)\s*\?$/iu;
+/**
+ * "Is that the phone? Do you want to answer it?": the first question only points at something both can hear or see;
+ * the one that wants an answer is the second. Returns the pointing part (kept in the line to say) and the question;
+ * null when the text does not open that way. Set E, 16 Nov: it was split in two, and on the first card "no" read as
+ * "that is not the phone".
+ */
+export function noticeLead(q: string): { context: string; q: string } | null {
+  const m = /^(.+?\?)\s+(\S.*)$/.exec(q.replace(/\s+/g, ' ').trim());
+  if (!m || !NOTICE.test(stripVocative(m[1])) || m[2].split(/\s+/).length < 2) return null;
+  return { context: m[1], q: normalizeQuestion(m[2]) };
+}
+
+/**
+ * "Where does it hurt? Head, back, stomach?", "What shall I put on? The radio or a record?": an open question and
+ * then the answers the partner offers for it. One question, and its options are exactly the ones named. Returns the
+ * question and the options after the label check; null when what follows is a question of its own ("… Is it your
+ * head?"), a single word, or anything longer than a short list. Set E, 16 Nov: the list was split off as a second
+ * question and lost an item, and the first card showed parts of the body nobody had named.
+ */
+export function listedAnswers(q: string, profile?: Profile): { q: string; options: string[] } | null {
+  const m = /^(.+?\?)\s+(\S[^?]*?)\s*[?.]?\s*$/.exec(q.replace(/\s+/g, ' ').trim());
+  if (!m) return null;
+  const first = normalizeQuestion(m[1]);
+  if (!/^(?:what|where|which|who|whom|when|how)\b/i.test(stripVocative(first))) return null;
+  const rest = m[2].trim();
+  let items = rest.split(/\s*,\s*(?:or\s+)?|\s+or\s+/i).map((x) => x.trim()).filter(Boolean);
+  if (items.length < 2 || items.some((x) => x.split(/\s+/).length > 3 || QUESTION_LEAD.test(x) || LABEL_BAD.test(x))) return null;
+  const none = NONE_OPTION.exec(items[items.length - 1]);
+  if (none) items = items.slice(0, -1);
+  items = items.map((x) => x.replace(/^(?:maybe\s+|perhaps\s+)?(?:your|my|the|a|an|some)\s+/i, ''));
+  if (items.length < 2) return null;
+  const checked = checkSides(items, `${rest}?`, profile, true, false);
+  if (!checked) return null;
+  return { q: first, options: none ? [...checked, lc(none[1]).replace(/\s+/g, ' ')] : checked };
 }
 
 /** The options code reads from the question: a list of three or more, else the either-or pair. */
@@ -1201,7 +1246,7 @@ const OWN_EXPERIENCE = /\bwhen\s+did\s+(?:the|your|that|this|it|you)\b[^?]*\b(?:
 
 /**
  * "Can you tell me who the president is?", "Do you know what month it is?", "Tell me what you had for lunch?": a test
- * asked politely is still a test (set E, 17 Nov: it became a yes / no card, and "no" read as "I don't know" from a
+ * asked politely is still a test (set E, 16 Nov: it became a yes / no card, and "no" read as "I don't know" from a
  * man who knew and could not say it). Returns the plain questions such a sentence wraps ("Who is the president?"),
  * so each can be checked like a question asked straight; empty when the sentence is not of that shape.
  */
@@ -1240,7 +1285,7 @@ const UNSEEN_CONTACT = /\bon\s+the\s+(?:phone|telephone|line)\b|\bat\s+the\s+doo
 /**
  * "Who was that on the phone with you?", "Who were you talking to?", "Who came by while I was out?": someone the
  * person was in touch with and the partner was not. The partner does not know the answer, so it is not a test (set
- * E, 17 Nov: refused with "You know this one"). Not a wish ("Who shall we ring?") and not a face on a screen or in a
+ * E, 16 Nov: refused with "You know this one"). Not a wish ("Who shall we ring?") and not a face on a screen or in a
  * photo.
  */
 export function isUnseenContact(q: string): boolean {

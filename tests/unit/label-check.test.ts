@@ -76,7 +76,7 @@ describe('both sources go through the same check', () => {
     expect(codePair('Raglan beach or the garden centre this weekend?')).toEqual(['Raglan beach', 'garden centre']);
     expect(codePair('Do you want the cottage up at the lake or a hotel?', LAKE)).toEqual(['cottage up at the lake', 'hotel']);
     expect(codePair('Tired or sleepy?')).toBeNull();
-    // a thing against a time fails the strict check; since set E (17 Nov) the partner's own two options still make
+    // a thing against a time fails the strict check; since set E (16 Nov) the partner's own two options still make
     // the card, read as clauses (before: no card, or a cloud call for options that are in the question)
     expect(checkPair(['hospital', 'Thursday'], 'Shall we try the hospital, or Thursday?')).toBeNull();
     expect(codePair('Shall we try the hospital, or Thursday?')).toEqual(['try the hospital', 'Thursday']);
@@ -102,7 +102,7 @@ const labels = (c: { choices: { label: string }[] }) => c.choices.map((x) => x.l
 
 describe('on a card', () => {
   it('a pair the model copied badly is never shown as is: the card is the two options read in code, and nothing is sent', async () => {
-    // (until set E, 17 Nov, this question went to the cloud, or had no card with cloud help off: the options are in it)
+    // (until set E, 16 Nov, this question went to the cloud, or had no card with cloud help off: the options are in it)
     const q = 'Shall we try the hospital, or Thursday?';
     const e = new Fake({ topic: 'x', kind: 'choice', choices: ['yes', 'no'], options: ['the hospital', 'Thursday'] }, { topic: 'appointment', kind: 'choice', choices: ['hospital', 'Thursday'] });
     const on = await makeCard(q, env(e));

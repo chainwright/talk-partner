@@ -11,7 +11,7 @@ import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   contactPool, dropGenericWho, fromAboutMe, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
-  codeOptions, leadIn, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
+  codeOptions, leadIn, listedAnswers, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
 import type { BodyRegion, Card, CardWhy, Choice, ModelOutput, Profile, Source, StepTrace, SupportLevel } from './types';
@@ -218,7 +218,7 @@ function fixedWhy(o: ModelOutput | null, step: 'private' | 'stripped', decided: 
 export function assemble(
   asked: string, pending: string | null, o: ModelOutput | null, profile: Profile, support: SupportLevel,
   source: Source, ms = 0, pairIn: string[] | null = null, useRules = true,
-  meta: { step?: 'private' | 'stripped'; pairFrom?: 'model' | 'code'; routing?: { moodWords: number; minChoices: number } } = {},
+  meta: { step?: 'private' | 'stripped'; pairFrom?: 'model' | 'code'; routing?: { moodWords: number; minChoices: number }; listed?: boolean } = {},
 ): Card {
   const step = meta.step ?? 'private';
   // §2.16: the model's topic is a headline only when it names an idea (not one function word, not a placeholder,
@@ -239,7 +239,9 @@ export function assemble(
     card.why = fixedWhy(o, step, W.decidedBy.quiz, W.headlineFrom.question);
     return card;
   }
-  if (isPainLevel(asked)) {
+  // `meta.listed`: the partner named the answers after the question ("Where does it hurt? Head, back, stomach?"), so
+  // the card is exactly those (pairIn), not a fixed scale, the body map or a list of people
+  if (!meta.listed && isPainLevel(asked)) {
     // the headline of a fixed card is fixed too: nothing of a model's answer is on it
     const scale = numberScale(asked);
     const line = scale ? painNumbers(scale) : null;
@@ -255,13 +257,13 @@ export function assemble(
     card.why = fixedWhy(o, step, W.decidedBy.pain, W.headlineFrom.fixed);
     return card;
   }
-  if (isBodyWhere(asked)) {
+  if (!meta.listed && isBodyWhere(asked)) {
     const card = paged({ ...base, source: 'code', topic: 'where it hurts', kind: 'body', bodyStep: 1 }, [...BODY_REGIONS], 'somewhere else', profile, support);
     for (let c: Card | null | undefined = card; c; c = c.nextPage) c.why = fixedWhy(o, step, W.decidedBy.body, W.headlineFrom.fixed);
     return card;
   }
 
-  const people = unseenPeople(asked, profile);
+  const people = meta.listed ? null : unseenPeople(asked, profile);
   if (people) {
     // "Who was that on the phone with you?": only the person knows, and the app cannot guess. The card is the people
     // About me names (never whoever lives here, never the person), paged; no model is asked, so it is the same card
@@ -288,6 +290,7 @@ export function assemble(
   if (isFeelingQuestion(asked)) kind = 'feeling';
   else if (kind === 'feeling') kind = 'choice';
   if (pair) kind = 'choice';
+  if (meta.listed && pair) kind = 'choice';
 
   // §2.18: a code-determined card is identical in every engine state, so its headline comes from the question, not the
   // model, and its badge says "No AI needed" even when a model ran: nothing of the model's answer is on the card
@@ -317,7 +320,7 @@ export function assemble(
     // are the model's too: a card read in code says "No AI needed", so nothing of a model's answer may be on it
     headline = orHeadline(asked, pair, profile, pairFrom === 'model' ? o?.topic : '');
     headlineFrom = W.headlineFrom.pair;
-    decided = pairFrom === 'model' ? W.decidedBy.pairModel : W.decidedBy.pairCode;
+    decided = meta.listed ? W.decidedBy.listed : pairFrom === 'model' ? W.decidedBy.pairModel : W.decidedBy.pairCode;
     if (o) {
       // the model's own options that failed the check, and its loose choices: neither is on an either-or card
       if (pairFrom === 'code') for (const x of o.options ?? []) track.dropped.push({ label: x, rule: W.rules.optionsFailed });
@@ -535,8 +538,25 @@ function finishTrace(trace: StepTrace[], card: Card): StepTrace[] {
 }
 
 async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]): Promise<Card> {
-  const [typed0, pending] = splitQuestion(input);
   const { profile, support, engine } = env;
+  // "Is that the phone? Do you want to answer it?": the first part points at something, the second is the question.
+  // One card, when code can decide it; the line to say keeps both sentences.
+  const notice = noticeLead(input);
+  if (notice && codeDetermined(plainQuestion(notice.q)?.q ?? notice.q, profile)) {
+    const card = await makeCardInner(notice.q, env, trace);
+    const say = card.kind === 'no-quiz' || card.blocked || !card.say.startsWith(card.asked) ? card.say : `${notice.context} ${card.say}`;
+    return { ...card, say, notes: [...card.notes, N.noticeLead] };
+  }
+  // "Where does it hurt? Head, back, stomach?": a question, then the answers the partner offers. One card with
+  // exactly those; no model, nothing sent. A memory question stays one whatever follows it.
+  const listed = listedAnswers(input, profile);
+  // (a test with answers offered after it, "What day is it? Monday or Tuesday?", is still a test: no second card)
+  if (listed && isQuiz(listed.q, profile)) return makeCardInner(listed.q, env, trace);
+  if (listed) {
+    const card = assemble(listed.q, null, null, profile, support, 'code', 0, listed.options, true, { pairFrom: 'code', listed: true });
+    return { ...card, notes: [...card.notes, N.listedByYou] };
+  }
+  const [typed0, pending] = splitQuestion(input);
   // "Tyler's got a game Saturday, do you want to go watch?": a statement, then a question code can decide (yes / no,
   // either-or, feeling, pain…). The card asks the question; the statement stays in the line to say. Only then: an
   // open question keeps its lead-in, because a model may need it to offer anything sensible.

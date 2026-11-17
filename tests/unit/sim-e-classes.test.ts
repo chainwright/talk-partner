@@ -7,7 +7,7 @@ import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
-import { codePair, quizKind, quizRephrase } from '../../core/rules';
+import { codePair, listedAnswers, noticeLead, quizKind, quizRephrase, splitQuestion } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -166,5 +166,95 @@ describe('E-3. "Who was that on the phone?": the partner does not know, so it is
     for (const q of ['Who was that man in the photo?', 'Who was the first man on the moon?', 'Who was that on the telly last night?']) expect(quizKind(q, PROFILE)).not.toBeNull();
     const wish = await ask('Who shall we ring tonight?', new Scripted({ topic: 'call', kind: 'choice', choices: ['Grace', 'Leo'] }));
     expect(wish.source).toBe('on-device');
+  });
+});
+
+describe('E-4. only a real two-question turn is split', () => {
+  describe('a first question that only points at something is not a question to answer', () => {
+    // set E: "Is that the phone? Do you want to answer it?" was split, and "no" on the first card read as "not the phone"
+    const TURNS: [string, string][] = [
+      ['Was that the doorbell? Shall I get it?', 'Shall I get it?'],
+      ['Is that the kettle? Do you want a cup of tea?', 'Do you want a cup of tea?'],
+      ['Is that Grace at the door? Do you want to see her?', 'Do you want to see her?'],
+      ['Did you hear that? Shall I go and look?', 'Shall I go and look?'],
+      ['Is this your blue cardigan? Do you want it on?', 'Do you want it on?'],
+    ];
+    for (const [state, engine] of STATES) {
+      it.each(TURNS)(`${state}: %s`, async (q, second) => {
+        const e = engine();
+        const card = await ask(q, e);
+        expect(card.asked).toBe(second);
+        expect(card.pending).toBeNull();
+        expect(card.kind).toBe('yesno');
+        expect(card.coach ?? null).toBeNull();
+        // the partner still says both sentences
+        expect(card.say.startsWith(q)).toBe(true);
+        expect(e.calls).toEqual([]);
+      });
+    }
+    it('two real questions are still two', async () => {
+      for (const q of ['Are you warm enough? Do you want the window shut?', 'Is that better? Do you want another pillow?', 'Is that too tight? Shall I loosen it?', 'Did you sleep? Are you hungry?']) {
+        expect(noticeLead(q)).toBeNull();
+        const card = await ask(q, new Scripted(null));
+        expect(card.pending).not.toBeNull();
+        expect(card.coach).toBe(COPY.coach.twoQuestions);
+      }
+    });
+  });
+
+  describe('answers offered after an open question are its options: one card, exactly those', () => {
+    // set E: "Where does it hurt? Head, back, stomach?" showed "chest", which nobody named, and lost "stomach"
+    const TURNS: [string, string[], string][] = [
+      ['Where is it sore? Your knee, your hip, your ankle?', ['knee', 'hip', 'ankle'], 'somewhere else'],
+      ['Where does it hurt? Your shoulder or your neck?', ['shoulder', 'neck'], 'somewhere else'],
+      ['What shall I put on? The radio, a record, or nothing?', ['radio', 'record', 'nothing'], 'something else'],
+      ['Which drawer is it in? Top, middle, bottom?', ['top', 'middle', 'bottom'], 'something else'],
+      ['Who was that at the door? Grace or Leo?', ['Grace', 'Leo'], 'someone else'],
+      ['What do you fancy? Toast, porridge?', ['toast', 'porridge'], 'something else'],
+    ];
+    for (const [state, engine] of STATES) {
+      it.each(TURNS)(`${state}: %s`, async (q, want, escape) => {
+        const e = engine();
+        const card = await ask(q, e);
+        expect(card.blocked ?? null).toBeNull();
+        expect(card.kind).toBe('choice');
+        expect(card.pending).toBeNull();
+        expect(answers(card)).toEqual(want);
+        expect(card.nextPage ?? null).toBeNull();
+        expect(card.choices.find((c) => c.role === 'escape')?.label).toBe(escape);
+        expect(card.asked).toBe(q.slice(0, q.indexOf('?') + 1));
+        expect(e.calls).toEqual([]);
+      });
+    }
+    it('a question of its own after the first is still a second question; a test stays a test', async () => {
+      expect(listedAnswers('Where does it hurt? Is it your head?', PROFILE)).toBeNull();
+      expect(listedAnswers('Did you eat? Toast or cereal?', PROFILE)).toBeNull();
+      const quiz = await ask('What month is it? October or November?', new Scripted(null));
+      expect(quiz.kind).toBe('no-quiz');
+      expect(quiz.pending).toBeNull();
+      // the body map is still the card when no parts are named
+      expect((await ask('Where does it hurt?', new Scripted(null))).kind).toBe('body');
+    });
+  });
+
+  describe('"…, and if so where?" is two questions, and the second is asked in full', () => {
+    // set E: "Do you want to go out today, and if so where?" was one yes / no card; "where" was never asked
+    it.each([
+      ['Do you want to go for a drive this afternoon, and if so where?', 'Do you want to go for a drive this afternoon?', 'Where do you want to go for a drive this afternoon?'],
+      ['Do you want Grace to visit, and if so when?', 'Do you want Grace to visit?', 'When do you want Grace to visit?'],
+      ['Shall we eat out tonight and if so, where?', 'Shall we eat out tonight?', 'Where shall we eat out tonight?'],
+      ['Do you fancy a trip at the weekend, and if you do, where to?', 'Do you fancy a trip at the weekend?', 'Where do you fancy a trip at the weekend?'],
+    ])('%s', async (q, first, second) => {
+      expect(splitQuestion(q)).toEqual([first, second]);
+      const card = await ask(q, new Scripted(null));
+      expect(card.kind).toBe('yesno');
+      expect(card.pending).toBe(second);
+      expect(card.coach).toBe(COPY.coach.twoQuestions);
+    });
+    it('on this computer the second half is a where-card with the family\'s places', async () => {
+      const second = await ask('Where do you want to go for a drive this afternoon?', new Scripted({ topic: 'drive', kind: 'choice', choices: ['allotment', 'library'] }));
+      expect(answers(second)).toEqual(['allotment', 'library']);
+      expect(second.choices.find((c) => c.role === 'escape')?.label).toBe('somewhere else');
+    });
   });
 });
