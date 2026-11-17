@@ -78,10 +78,14 @@ describe('the recording on screen: labelled, shown only where the step cannot ru
     expect(act).toContain('state.recorded = !state.recorded; patchRecorded();');
     expect(act).not.toMatch(/makeCard|make\(|engine|cloudHelp|saveSettings|render\(/);
   });
-  it('cloud help is still turned on in one place only: the consent screen, with the box ticked', () => {
+  it('cloud help is turned on in two places only, each a press after reading what is sent: the consent screen with the box ticked, and "Yes" on the simple view\'s consent sheet', () => {
     const on = main.split('\n').filter((l) => /state\.settings\.cloudHelp = true/.test(l));
-    expect(on).toHaveLength(1);
-    expect(on[0]).toContain("case 'cloud-on': if (state.consentChecked) {");
+    expect(on).toHaveLength(2);
+    expect(on.some((l) => l.includes("case 'cloud-on': if (state.consentChecked) {"))).toBe(true);
+    // the sheet (17 Nov 2026): its "Yes" is the only other switch, and the sheet is drawn only for a card that holds what would be sent
+    const yes = main.split("case 'sheet-yes':")[1]?.split('break;')[0] ?? '';
+    expect(yes).toContain('state.settings.cloudHelp = true; saveSettings(); askSettings(); void make(state.lastQuestion);');
+    expect(main).toContain("if (!state.sheet || !c?.unsentPayload) return screen;");
     // with cloud help off the recording only links to the consent screen
     expect(block).toContain('`${R.cloudOff} <a href="#/cloud">${R.cloudLink}</a>`');
     expect(main).toContain('<button class="primary" data-act="cloud-on" ${state.consentChecked ? \'\' : \'disabled\'}>');

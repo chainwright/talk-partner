@@ -3,9 +3,10 @@
 // Every string a person reads comes from core/copy.ts.
 
 import './styles.css';
+import './simple.css';
 import './fonts.css';
 import { partnerActions } from '../../core/actions';
-import { COPY } from '../../core/copy';
+import { COPY, copyDevice, deviceKindFrom, deviceWords, setCopyDevice } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
 import { EMAIL_MAX, FEEDBACK_MAX, FEEDBACK_ROLES, feedbackDoc, type FeedbackError } from '../../core/feedback';
 import { addAnswer, answerCounts, lastAnswer, topQuestions, whenText, type Answered } from '../../core/history';
@@ -16,12 +17,14 @@ import { RECORDED_STEP } from '../../core/recorded';
 import { badgeKind, countSwaps, sentLine, sessionReceipt, sessionTally } from '../../core/receipt';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS, SAMPLE_STEP } from '../../core/sample';
+import { madeWhere, privacyLines, sheetWanted, tryNote, whereLine } from '../../core/simple';
 import { stripQuestion } from '../../core/strip';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
 import { pickEngine } from './ai/pick';
 import { fetchSettings } from './ai/remoteConfig';
 import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile } from './pictos';
+import { aboutSimple, answeredScreen, cardScreen, consentSheet, homeScreen, type AboutRow } from './simple';
 import { kvClear, kvGet, kvSet } from './store';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
@@ -29,7 +32,15 @@ import { createVoice, transcriptFrom, type VoiceView } from './voice';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+// "this phone" / "this tablet" / "this computer": the device is named once, before anything is drawn, and every string
+// in core/copy.ts follows (setCopyDevice changes them in place, so the card pipeline's notes say the same word).
+setCopyDevice(deviceKindFrom({
+  userAgent: navigator.userAgent, platform: navigator.platform, maxTouchPoints: navigator.maxTouchPoints,
+  mobile: (navigator as Navigator & { userAgentData?: { mobile?: boolean } }).userAgentData?.mobile,
+}));
 const C = COPY;
+/** A string that is not in core/copy.ts (the sample questions' hover text, the diagram), with this device's word. */
+const dw = (text: string) => deviceWords(text, copyDevice());
 
 /** 'trial' is the hidden stopwatch for devlog/TRIAL_PROTOCOL.md: reachable only by typing #/trial, never linked. */
 type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'feedback' | 'trial';
@@ -44,6 +55,12 @@ interface Settings {
    * of 17 Nov) does not count: it was a yes to something else.
    */
   voiceOk?: 'cloud' | 'local' | 'remote';
+  /**
+   * Which view "/" opens: the simple one (the default: one screen, one thing to do) or the full one (every fold, the
+   * receipt, the links to judge mode). "See how it works inside" sets 'full', "Simple view" sets it back; the choice is
+   * kept in this browser. Judge mode (#/demo) is always the full view and does not change this.
+   */
+  view?: 'simple' | 'full';
 }
 
 interface State {
@@ -86,6 +103,10 @@ interface State {
   saved: boolean;
   /** Judge mode, no on-device model in this browser: the recording of the on-device step is open (recordedBlock). */
   recorded: boolean;
+  /** Simple view: the consent sheet is over the screen (a question needs online help and cloud help is off). */
+  sheet: boolean;
+  /** Simple view, About them: the row that is open. */
+  aboutRow: AboutRow | null;
 }
 
 const cfg = webConfig();
@@ -117,7 +138,13 @@ const state: State = {
   consentChecked: false,
   saved: false,
   recorded: false,
+  sheet: false,
+  aboutRow: null,
 };
+/** When this page was opened: the simple view's "Today" list holds the answers confirmed since then. */
+const pageStart = Date.now();
+/** The simple view is what "/" shows unless the partner went inside (kept), or judge mode is on. */
+const simpleView = () => !state.demo && state.settings.view !== 'full';
 
 // ---------------------------------------------------------------- routing
 function route(): Route {
@@ -131,7 +158,8 @@ function route(): Route {
   if (h === 'how') return 'how';
   if (h === 'feedback') return 'feedback';
   if (h === 'trial') return 'trial';
-  if (h === 'welcome' || (!state.settings.welcomed && !state.demo)) return 'welcome';
+  // the simple view has no first-run screen: its first screen is the product
+  if (h === 'welcome' || (!state.settings.welcomed && !state.demo && !simpleView())) return 'welcome';
   return 'partner';
 }
 /** Changes the hash (the hashchange event draws the screen); draws directly when the hash is already there. */
@@ -174,7 +202,7 @@ async function leaveDemo() {
   resetCard();
   go('');
 }
-function resetCard() { state.card = null; state.first = false; state.before = null; state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.recapDone = false; state.waitStart = null; }
+function resetCard() { state.sheet = false; state.card = null; state.first = false; state.before = null; state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.recapDone = false; state.waitStart = null; }
 /**
  * Every new card the person is shown (a made card, a body-map step, the next page, the override) bumps this counter.
  * The render keys the entrance animation on it and on the route, so an animation plays once per real event and never
@@ -208,12 +236,14 @@ function nav(): string {
     <a class="brand" href="#/">${C.app.name}</a>
     <button class="needs-open" data-act="needs" title="${esc(C.needs.openTitle)}">${C.needs.open}</button>
     <nav aria-label="Sections">
+      <button type="button" class="pill" data-act="simple">${SIGN_BACK}${C.simple.backSimple}</button>
       <a href="#/about">${esc(C.app.nav.about(name))}</a>
       <a href="#/cloud">${C.app.nav.cloud}: ${cloud}</a>
       <a href="#/how">${C.app.nav.how}</a>
       ${state.demo ? `<button class="link" data-act="leave-demo">${C.judge.exit}</button>` : `<a href="#/demo">${C.app.nav.judge}</a>`}
     </nav></header>`;
 }
+const SIGN_BACK = '<svg viewBox="0 0 96 96" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M56 20L28 48l28 28"/></svg>';
 const footer = () => `<footer>${C.footer}</footer>`;
 
 function statusLine(): string {
@@ -428,8 +458,8 @@ function settingsPanel(): string {
 
 function diagram(): string {
   // three boxes: the question; the private step on this computer (About me stays here); the cloud step (question only)
-  return `<svg class="diagram" viewBox="0 0 640 170" role="img" aria-label="The question stays on this computer with About me; only a stripped question may go to the cloud">
-    <rect x="8" y="30" width="180" height="110" rx="12"/><text x="98" y="62" text-anchor="middle">this computer</text><text x="98" y="88" text-anchor="middle">question + About me</text><text x="98" y="112" text-anchor="middle" class="mode">ONLY_ON_DEVICE</text>
+  return `<svg class="diagram" viewBox="0 0 640 170" role="img" aria-label="${dw('The question stays on this computer with About me; only a stripped question may go to the cloud')}">
+    <rect x="8" y="30" width="180" height="110" rx="12"/><text x="98" y="62" text-anchor="middle">${dw('this computer')}</text><text x="98" y="88" text-anchor="middle">question + About me</text><text x="98" y="112" text-anchor="middle" class="mode">ONLY_ON_DEVICE</text>
     <rect x="230" y="30" width="180" height="110" rx="12"/><text x="320" y="62" text-anchor="middle">rules in code</text><text x="320" y="88" text-anchor="middle">model proposes,</text><text x="320" y="112" text-anchor="middle">code decides</text>
     <rect x="452" y="30" width="180" height="110" rx="12" stroke-dasharray="6 5"/><text x="542" y="62" text-anchor="middle">cloud help</text><text x="542" y="88" text-anchor="middle">question only, Person A</text><text x="542" y="112" text-anchor="middle" class="mode">PREFER_IN_CLOUD</text>
     <path d="M188 85h42M410 85h42"/><path d="M224 79l6 6-6 6M446 79l6 6-6 6"/>
@@ -483,6 +513,7 @@ const voice = createVoice({
     voiceSent.clips++; voiceSent.bytes += bytes;
     const b = document.querySelector('#bytes'); if (b) b.outerHTML = bytesLine();
     const p = document.querySelector('#privacy'); if (p) p.innerHTML = privacyLine();
+    const sp = document.querySelector('#s-privacy span'); if (sp) sp.textContent = simplePrivacy().join(' ');
   },
   maxSeconds: VOICE_MAX_SECONDS,
   onChange: onVoice,
@@ -545,7 +576,7 @@ function chipGroups(): string {
   // the chip whose question is on screen (or being made) is lit, so the card can be traced back to its question
   const on = (q: string) => q === state.lastQuestion && (!!state.card || state.busy);
   return `<div class="chipgroups">${(Object.keys(G) as (keyof typeof G)[]).map((g) =>
-    `<div class="chips group"><span class="gl">${G[g]}</span><span class="gc">${SAMPLE_QUESTIONS.filter((s) => s.group === g).map((s) => `<button class="chip${on(s.q) ? ' on' : ''}" ${on(s.q) ? 'aria-current="true" ' : ''}data-q="${esc(s.q)}" title="${esc(s.q)} — ${esc(s.shows)}">${esc(s.short)}</button>`).join('')}</span></div>`).join('')}</div>`;
+    `<div class="chips group"><span class="gl">${G[g]}</span><span class="gc">${SAMPLE_QUESTIONS.filter((s) => s.group === g).map((s) => `<button class="chip${on(s.q) ? ' on' : ''}" ${on(s.q) ? 'aria-current="true" ' : ''}data-q="${esc(s.q)}" title="${esc(s.q)} — ${esc(dw(s.shows))}">${esc(s.short)}</button>`).join('')}</span></div>`).join('')}</div>`;
 }
 
 /**
@@ -629,17 +660,7 @@ function cardPanel(c: Card): string {
   }
   let answered = '';
   if (state.recapDone) answered = `<p class="done">${C.person.recapLine} ${esc(recapText())}</p>`;
-  else if (state.confirmed && state.picked) {
-    const p = state.picked;
-    // a repair tile is a way to try, not an answer: the partner gets the next move for that way
-    // a confirmed need: the partner's next move, on the partner's side only; after "pain", one tap asks where (a card made in code)
-    const where = p.label === 'pain' ? `<p><button class="chip" data-q="${esc(C.needs.painQuestion)}">${esc(C.needs.painQuestion)}</button></p><p class="safety">${C.safety}</p>` : '';
-    answered = p.role === 'repair'
-      ? `<p class="done">${esc(C.card.choseRepair(p.label))}</p><p class="say">${esc(C.repair.lines[p.label] ?? '')}</p>`
-      : c.kind === 'needs'
-      ? `<p class="done">${esc(p.role === 'escape' ? C.card.choseRepair(p.label) : C.card.chose(p.label))}</p><p class="say need-line">${esc(needLine(p.label))}</p>${where}`
-      : `<p class="done">${p.role === 'escape' ? esc(C.card.choseEscape(p.label)) : esc(C.card.chose(p.label))}</p>`;
-  }
+  else if (state.confirmed && state.picked) answered = `<p class="done">${esc(choseLine(c, state.picked))}</p>${afterAnswer(c, state.picked, 'chip')}`;
   // judge mode: under every card, the one it opens with included, the panels are folded behind one summary line (who
   // decided, how many choices were kept, added and dropped), and one click opens all three; the receipt below is
   // closed. (Until review round 5 the first card had them open: a wall of text on a phone before anything was asked.)
@@ -650,6 +671,24 @@ function cardPanel(c: Card): string {
     : `<details class="made" id="made"><summary>${C.card.made}</summary>${madePanels(c)}${receiptPanel(false)}</details>`;
   return `${badgeLine(c)}${coach}${last}${main}${answered}${actions ? `<div class="actions">${actions}</div>` : ''}${safety}${notes}
     ${made}`;
+}
+
+/** What they chose, in one sentence for the partner. */
+function choseLine(c: Card, p: Choice): string {
+  if (p.role === 'repair') return C.card.choseRepair(p.label);
+  if (c.kind === 'needs') return p.role === 'escape' ? C.card.choseRepair(p.label) : C.card.chose(p.label);
+  return p.role === 'escape' ? C.card.choseEscape(p.label) : C.card.chose(p.label);
+}
+/**
+ * The partner's next move after a confirmed tile, on the partner's side only: a repair tile is a way to try, not an
+ * answer; a confirmed need gets its line, and after "pain" one tap asks where (a card made in code). '' for a plain
+ * answer. `button` is the class of the one-tap question (a chip in the full view, a button in the simple one).
+ */
+function afterAnswer(c: Card, p: Choice, button: string): string {
+  if (p.role === 'repair') return `<p class="say">${esc(C.repair.lines[p.label] ?? '')}</p>`;
+  if (c.kind !== 'needs') return '';
+  const where = p.label === 'pain' ? `<p><button class="${button}" data-q="${esc(C.needs.painQuestion)}">${esc(C.needs.painQuestion)}</button></p><p class="safety">${C.safety}</p>` : '';
+  return `<p class="say need-line">${esc(needLine(p.label))}</p>${where}`;
 }
 
 const recapText = () => state.answers.map((a) => `${a.topic}, ${a.label}`).join('; ') + '. Right?';
@@ -876,6 +915,62 @@ async function submitFeedback() {
 // the connection coming or going changes what the form can do: say so at once
 for (const ev of ['online', 'offline']) window.addEventListener(ev, () => { if (route() === 'feedback' && fb.status === 'idle') render(); });
 
+// ---------------------------------------------------------------- the simple view
+/** What has left this session, for the simple view's privacy line: the receipt's own counts, never estimated. */
+function simplePrivacy(): string[] {
+  const r = sessionReceipt(state.made, state.profile);
+  return privacyLines({
+    cloudOn: state.settings.cloudHelp, settingsAsked,
+    sent: r.cardsLeft, maybe: r.perCard.filter((x) => x.attempted && !x.left).length, clips: voiceSent.clips,
+  });
+}
+const aboutName = () => C.about.heading(state.profile.personName);
+const whereInput = () => ({ configured: !!cfg, device: state.device, cloudOn: state.settings.cloudHelp, about: aboutName() });
+const simpleTries = () => C.simple.tries.map((q, i) => ({ q, note: tryNote(i === C.simple.tries.length - 1, whereInput()) }));
+const simpleMade = (c: Card) => madeWhere(c, { spoken: voiceCards.has(c), about: aboutName() });
+
+/**
+ * "/" in the simple view: the first screen, the card-ready screen or the answered screen, by the same state the full
+ * view reads. The consent sheet is drawn over it when a question needs online help (state.sheet).
+ */
+function simpleScreen(): string {
+  const c = state.card;
+  const name = state.profile.personName;
+  let screen: string;
+  if (c && state.confirmed && state.picked && !state.recap && !state.recapDone) {
+    const next = partnerActions(c, { less: false, hasAnswers: false }).find((a) => a.act === 'next' && !!c.pending) ?? null;
+    screen = answeredScreen({
+      name, label: state.picked.label, next, hasAnswers: state.answers.length > 0,
+      afterHtml: (state.picked.role === 'escape' && c.kind !== 'needs' ? `<p class="tip">${esc(C.card.choseEscape(state.picked.label))}</p>` : '') + afterAnswer(c, state.picked, 'btn'),
+      today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
+      made: simpleMade(c), privacy: simplePrivacy(),
+    });
+  } else if (c && !state.busy) {
+    const prev = c.blocked || c.kind === 'repair' || c.kind === 'needs' ? null : lastAnswer(state.history, c.asked, state.cardAt);
+    screen = cardScreen({
+      name, card: c, less: state.less, recap: state.recap, recapDone: state.recapDone, recapText: recapText(),
+      actions: partnerActions(c, { less: state.less, hasAnswers: state.answers.length > 0 }),
+      made: simpleMade(c), personHtml: personView(false),
+      canAskOnline: sheetWanted(c, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured }),
+      lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '',
+    });
+  } else {
+    screen = homeScreen({
+      name, about: aboutName(), hasProfile: !!(name || state.profile.people.length || state.profile.foods.length || state.profile.places.length),
+      busy: state.busy, error: state.error, question: state.lastQuestion, tries: simpleTries(),
+      privacy: simplePrivacy(), where: whereLine(whereInput()), micHtml: voiceButton(), voiceHtml: voiceLine(),
+    });
+  }
+  if (!state.sheet || !c?.unsentPayload) return screen;
+  return `${screen.replace('<main class="simple', '<main inert aria-hidden="true" class="simple')}${consentSheet({ about: aboutName(), line: sentLine(c.unsentPayload).text, deviceThere: state.device === 'available' })}`;
+}
+/** The simple view's lines that depend on the device check, updated in place when it answers (no redraw). */
+function patchSimple() {
+  const w = document.querySelector('#s-where'); if (w) w.textContent = whereLine(whereInput());
+  const notes = document.querySelectorAll('.try .ready small');
+  simpleTries().forEach((t, i) => { if (notes[i]) notes[i].textContent = t.note; });
+}
+
 // ---------------------------------------------------------------- render
 let timer: ReturnType<typeof setInterval> | null = null;
 let lastKey = '';
@@ -885,14 +980,19 @@ function render(lifted = false) {
   const app = $('#app');
   // the route goes on #app with a prefix: a bare "person" or "welcome" class made #app pick up the card pane's frame
   // and the welcome padding (the thin frame around the full-screen card, DESIGN_DIRECTIONS "must fix")
-  app.className = `route-${r}`;
+  const simple = simpleView() && (r === 'partner' || r === 'about');
+  app.className = `route-${r}${simple ? ' view-simple' : ''}`;
+  // the simple view has its own light look (dark by the system setting); the full view and the person's card do not change
+  document.documentElement.dataset.view = simple ? 'simple' : r === 'person' ? 'person' : 'full';
   if (r !== 'partner') voice.cancel(); // the microphone records on the partner screen only: leaving it ends the go
   // entrance animations play once per real event (a new route or a new card), not on every redraw
   const key = `${r}|${cardSeq}`;
   // the card judge mode opens with is simply there: no entrance, so the very first frame is a finished card
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? partnerScreen() : r === 'person' ? personScreen() : r === 'about' ? aboutScreen() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved }) : aboutScreen()) : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
+  // the sheet is a dialog: the keyboard starts on its heading, and the screen under it is inert
+  if (simple && state.sheet) document.querySelector<HTMLElement>('#sheet-h')?.focus();
   if (r === 'trial') {
     timer = setInterval(() => { const el = document.querySelector('#elapsed'); const c = trialClock(); if (el && c) el.textContent = c; }, 100);
   }
@@ -932,6 +1032,7 @@ function patchDevice() {
   const s = document.querySelector('#status'); if (s) s.innerHTML = statusLine();
   const d = document.querySelector('#device'); if (d) d.innerHTML = welcomeDevice();
   patchRecorded();
+  patchSimple();
   const n = document.querySelector<HTMLElement>('#nodevice'); if (n) n.hidden = state.device === 'available' || state.device === 'checking';
 }
 /**
@@ -1052,6 +1153,8 @@ async function make(q: string) {
     if (spoken) voiceCards.add(card);
     if (seq !== makeSeq) return; // a later question was asked meanwhile: its card is the one to show
     setCard(card);
+    // simple view: a question that needs online help, with cloud help off, brings up the consent sheet (never a page)
+    state.sheet = simpleView() && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
   } catch (e) {
     if (seq !== makeSeq) return;
     state.card = null; state.error = (e as Error).message;
@@ -1107,6 +1210,26 @@ function act(el: HTMLElement) {
   const i = Number(el.dataset.person ?? -1);
   switch (a) {
     case 'show': lift = true; go('person'); break;
+    // ---- the simple view
+    case 'new': state.lastQuestion = ''; state.error = null; dictated = false; resetCard(); render(); document.querySelector<HTMLInputElement>('#q')?.focus({ preventScroll: true }); break;
+    case 'inside': case 'inside-card': case 'inside-about':
+      // into the full view, and it stays the view of this browser until "Simple view" is pressed
+      state.settings.view = 'full'; state.settings.welcomed = true; state.sheet = false; saveSettings();
+      if (a === 'inside-about') { go('about'); break; }
+      go('');
+      if (a === 'inside-card') { const m = document.querySelector<HTMLDetailsElement>('#made'); if (m) { m.open = true; m.scrollIntoView({ block: 'nearest' }); } }
+      break;
+    case 'simple':
+      state.settings.view = 'simple'; saveSettings();
+      if (state.demo) void leaveDemo(); else go('');
+      break;
+    case 'sheet': if (state.card?.unsentPayload) { state.sheet = true; render(); } break;
+    case 'sheet-no': state.sheet = false; render(); break;
+    case 'sheet-yes':
+      // the same switch as the consent page's, turned on by one button; the question is then asked again at once
+      state.sheet = false; state.settings.cloudHelp = true; saveSettings(); askSettings(); void make(state.lastQuestion);
+      break;
+    case 'row': { const row = el.dataset.row as AboutRow; state.aboutRow = state.aboutRow === row ? null : row; render(); break; }
     case 'less': state.less = !state.less; render(); break;
     case 'next':
       if (state.card?.pending) void make(state.card.pending);
@@ -1149,7 +1272,8 @@ function act(el: HTMLElement) {
     // the recording of the on-device step: shown or hidden in place; no card, no engine call, no setting changed
     case 'recorded': state.recorded = !state.recorded; patchRecorded(); break;
     case 'leave-demo': void leaveDemo(); break;
-    case 'welcome-setup': state.settings.welcomed = true; saveSettings(); go('about'); break;
+    // the first-run screen belongs to the full view (the simple view has none): setting up from it stays in the full view
+    case 'welcome-setup': state.settings.welcomed = true; state.settings.view = 'full'; saveSettings(); go('about'); break;
     case 'welcome-sample': state.settings.welcomed = true; saveSettings(); go('demo'); break;
     case 'cloud-on': if (state.consentChecked) { state.settings.cloudHelp = true; saveSettings(); askSettings(); render(); } break;
     case 'cloud-off': state.settings.cloudHelp = false; state.consentChecked = false; saveSettings(); render(); break;
@@ -1242,6 +1366,8 @@ app.addEventListener('pointerup', cancelHold);
 app.addEventListener('pointercancel', cancelHold);
 app.addEventListener('pointerleave', cancelHold, true);
 window.addEventListener('hashchange', () => draw());
+// the consent sheet: Escape is its "No"
+window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && state.sheet) { state.sheet = false; render(); } });
 
 // Opened straight on judge mode: the first card is made before the first draw, so there is no empty frame before it.
 void Promise.all([load(), loadTrial()]).then(async () => {
