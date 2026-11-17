@@ -7,8 +7,10 @@ without a written goal[^2].
 
 After a stroke, many adults with aphasia understand what is said but can't find the words to answer.
 Talk Partner helps **the partner** ask the way a speech therapist would: it turns the partner's own question into a
-written-choice card (a keyword, two choices with pictures, an escape every time, a tick/cross check) and gives the
-partner the exact line to say. It never guesses the person's answer.
+written-choice card (a keyword, two choices, pictured where we have drawn a picture, an escape every time, a
+tick/cross check) and gives the partner the exact line to say. It never picks or confirms the person's answer: only
+their tap does. Pictures today: yes / no, feelings, the body map, people (a photo or an initial), coffee and tea, the
+ways out. The family's own places and foods ("lake", "pot roast") are words for now (`PICTOGRAMS.md`).
 
 Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a therapy, not a diagnosis.
 
@@ -206,7 +208,7 @@ under `@firebase/firestore`, which this app does not import.
   the size of the request; the exact request handed to the SDK, or what would have been sent, is one click further) and "Where each step ran".
   "Show to person" lifts the card: the white pane grows into the whole screen in a quarter of a second (a view
   transition on the card itself; none under reduced-motion settings or where the browser has no view transitions).
-- **Person screen** (`#/person`): only the keyword, two or three big tiles with pictures, one way out, then "So: lake. Right?"
+- **Person screen** (`#/person`): only the keyword, two or three big tiles (with a picture where one is drawn, the word alone otherwise), one way out, then "So: lake. Right?"
   with yes / change. The exit is top-right and needs a press-and-hold. "We're stuck" replaces the card with the fixed
   repair card (show me / write it / draw / later / change topic); a tap gives the partner the next move for that way.
 - **About me** (`#/about`): names, people (name, relation, lives here, photo, nickname), foods, places, TV, music, other.
