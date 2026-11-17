@@ -132,5 +132,6 @@ the table.
 | 109 | `3018251` | `21198db` | 2026-11-17 09:15 | scripts/live-voice-feedback.py: voice input and the feedback form in two real browsers (… |
 | 110 | `209aee5` | `2d1120d` | 2026-11-17 09:23 | Feedback: the form's own message for a broken email address (the browser's built-in chec… |
 | 111 | `40fedec` | `8e9c1b8` | 2026-11-17 09:23 | Wording on "How this works": with cloud help off the page contacts no host but its own u… |
+| 112 | `77011fe` | `c51bb14` | 2026-11-17 11:06 | Docs after voice moved to Firebase AI Logic and feedback to Firestore: README, CLAIMS rows… |
 
-Rows 100–106 and 107–111 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row).
+Rows 100–106, 107–111 and 112 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row).
