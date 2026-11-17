@@ -11,17 +11,20 @@ foods are only in About me, which only the on-device step sees.
 
 | On the 18 open questions | Rules alone | On-device model (Gemini Nano through Firebase AI Logic, `ONLY_ON_DEVICE`, cloud help off) |
 |---|---|---|
-| a card was made | 0 | 18 |
-| the card matched our label | 0 | **16** |
-| …and it offers the family's own entries from About me (a personal card) | 0 | **13** |
-| the card is wrong by our label | 0 | 2 (questions 52 and 57) |
+| a card was made | 0 | 18 in every run |
+| the card matched our label | 0 | **16, 16, 16, 15** |
+| …and it offers the family's own entries from About me (a personal card) | 0 | **13, 13, 13, 12** |
+| the card is wrong by our label | 0 | 2, 2, 2, 3 (questions 52 and 57 every time; 56 in the fourth run) |
 
-Three runs of the real app on a clean working tree at commit `8ca45b5`, the same four counts in each
-(`devlog/evidence_r3/heldout_at_8ca45b5/run_a`, `run_b`, `run_c`; rules alone: `heldout_r2_rules.md` next to them).
+Four runs of the real app on 16 Nov 2026, each on a clean working tree: three at commit `8ca45b5`
+(`devlog/evidence_r3/heldout_at_8ca45b5/run_a`, `run_b`, `run_c`; rules alone: `heldout_r2_rules.md` next to them)
+and one at `8251484` (`devlog/evidence_r3/heldout_at_8251484/`). Between the two commits no card rule changed. In
+the fourth run question 56, "What do you want to watch tonight?", gave *Packers / Wheel of Fortune*: "Packers" alone
+is not the About-me entry "Packers games", so it counts as a miss. That is the size of the run-to-run movement.
 `inferenceSource=on_device` was reported for 27 of the 60 cards in each run; the other 33 ran no model. No request
 left the app's host. Open cards took about 3.1–3.3 s at the median and 5.4 s at the slowest.
 
-On the 42 questions the rules decide alone: 36 matched with rules alone; 37, 38 and 37 in the three runs with the
+On the 42 questions the rules decide alone: 36 matched with rules alone; 37, 38, 37 and 38 in the four runs with the
 model (it can copy the two options out of a long either-or that the parser cannot read; that copy varies).
 
 ## What we no longer say
@@ -44,15 +47,15 @@ third appeared in the re-run. The labels only forbade what we had thought of in 
 
 `eval/heldout_r2_amendments.json` now forbids those answers for the two questions. The sealed set is not edited (its
 checksum is in every run log); the scorer applies the amendments on top and each report also gives the count with the
-labels as first sealed (18 of 18 open cards in these three runs). Both cards come from the model reaching for
+labels as first sealed (18, 18, 18 and 17 of 18 open cards in the four runs). Both cards come from the model reaching for
 About-me entries of the wrong kind, and code lets them through. Not fixed: fixing rules against this set would turn
 it into a tuning set.
 
-## The other misses (every run)
+## The other misses
 - 8. "Shall we ring Tyler or Jenny first?" → *ring Tyler / Jenny first*: the parser kept the verb and the trailing word.
 - 11. "Is it too hot or too cold in here?" → *hot / cold in here*: the trailing phrase stayed on the second option.
 - 12. "Shall I make chili, or would you rather have pot roast?" → *make chili / pot roast* with rules alone and in two
-  of three model runs; no card for question 10 with rules alone.
+  of four model runs; no card for question 10 with rules alone.
 - 35. "How bad is your headache right now?" → a model card *a little / some*, not the fixed pain scale: the pain rule
   does not know "headache".
 - 42. "What did you have for breakfast?" → a choice card (*cereal / toast*, *eggs / toast*): a memory question the

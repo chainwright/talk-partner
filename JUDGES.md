@@ -23,12 +23,12 @@ two steps of the hybrid give different cards.
 | Your copy | "this weekend?" and "for dinner?" show |
 |---|---|
 | a bare clone, no `.env.local` | "No card", with the reason. Rows 3 to 5 of the table above work. This is expected, not a fault |
-| `.env.local` with a Firebase web config, a browser without Gemini Nano | "No card" and an offer of cloud help. Turn it on (top bar → read, tick, **Turn on cloud help**), ask again: the cloud gets the bare question and has never seen About me, so the choices are general (*stay home / go out*, *chicken / fish* in our recorded runs; the words vary). Badge **Cloud help (question only)**; **What was sent** shows the request the app handed to the SDK |
+| `.env.local` with a Firebase web config, a browser without Gemini Nano | "No card" and an offer of cloud help. Turn it on (top bar → read, tick, **Turn on cloud help**), ask again: the cloud gets the bare question and has never seen About me, so the choices are general (*stay home / go out*, *meat / fish* in our recorded runs; the words vary). Badge **Cloud help (question only)**; **What was sent** shows the request the app handed to the SDK |
 | the same, in desktop Chrome with Gemini Nano downloaded | the private step runs on this computer with the About-me lists: *lake / church*, *pot roast / chili*. Nothing is sent |
 
 The second and third rows are the same question answered by the two steps: general choices from the cloud, the
 family's own from this computer. On our labelled set of 60 questions, 18 are open like these: rules alone make no card
-for any of them, and the on-device step made a matching card for 16, 13 of them with the family's own entries
+for any of them, and the on-device step made a matching card for 15 or 16 (four runs), 12 or 13 of them with the family's own entries
 (`devlog/evidence_r2/heldout_r2_NOTES.md`; our labels, not a trial with people).
 
 **who to call tonight?** (the third chip) reads *Jenny / Tyler* with either step: with cloud help only, the cloud says

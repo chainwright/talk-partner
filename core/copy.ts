@@ -239,7 +239,7 @@ const COPY = {
     columns: { step: 'step', mode: 'mode', gets: 'gets', why: 'why' },
     legNames: { private: 'private card', stripped: 'stripped card', pictures: 'pictures' },
     scoresHeading: 'Measured results',
-    scoresNone: 'One measurement so far, and it is ours: 60 questions we wrote and labelled ourselves (16 Nov 2026). 18 of them are open (who, where, what): the choices are not in the question. Rules alone make no card for any of the 18. The helper on this computer made a card matching our label for 16, and 13 of those offered the family\'s own people, places or foods (three runs, the same counts). The other 42 are decided by code with no model; 36 to 38 matched. That is how often the card is the one we meant, not whether it helps anyone. The timed pad-versus-card trial with people (two sealed sets of 10 questions, two or three pairs) has not been run.',
+    scoresNone: 'One measurement so far, and it is ours: 60 questions we wrote and labelled ourselves (16 Nov 2026). 18 of them are open (who, where, what): the choices are not in the question. Rules alone make no card for any of the 18. In four runs on 16 Nov 2026 the helper on this computer made a card matching our label for 15 or 16 of them, and 12 or 13 of those offered the family\'s own people, places or foods. The other 42 are decided by code with no model; 36 to 38 matched. That is how often the card is the one we meant, not whether it helps anyone. The timed pad-versus-card trial with people (two sealed sets of 10 questions, two or three pairs) has not been run.',
     traceHeading: 'Where each step ran for this card',
     tallyHeading: 'This session',
     tally: (n: { device: number; cloud: number; code: number; none: number; failed: number }) =>
