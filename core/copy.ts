@@ -644,10 +644,16 @@ const COPY = {
     holdUpTwo: 'The real options are not known: hold up two and point to each as you ask.',
     ranOffline: 'Ran on this computer (offline). Nothing was sent.',
     personalKept: 'Every choice on this card is from About me, so cloud help is not asked: it never sees About me.',
-    cloudFailed: (msg: string, kept: boolean) => `Cloud step failed (${msg})${kept ? '; the card made on this computer is kept' : ''}.`,
+    /**
+     * One plain sentence for the partner. The service's or the SDK's own message is not in it (17 Nov: a card on the
+     * hosted copy read "Cloud step failed (AppCheck: Requests throttled…"); the step trace keeps that message whole.
+     */
+    cloudFailed: (reason: 'busy' | 'check' | 'down', kept: boolean) =>
+      `${{ busy: 'Cloud help was busy (too many requests this minute)', check: 'Cloud help could not confirm this browser (App Check)', down: 'Cloud help did not answer' }[reason]}${kept ? ', so the card made on this computer is kept' : ''}; the service's own words are under "Where each step ran".`,
     cloudRetried: 'Cloud help did not answer the first time and was asked once more. The first request may have left this computer too; the receipt counts it under "may have left".',
     cloudBusyBlocked: 'Cloud help is busy right now (too many requests this minute), so there is no card. Try again in a moment, or just ask normally and give time.',
     cloudDownBlocked: 'Cloud help did not answer, so there is no card. Try again, or just ask normally and give time.',
+    cloudCheckBlocked: 'Cloud help could not confirm this browser, so there is no card. Reload the page and try again, or just ask normally and give time.',
     moreOnNext: (labels: string, escape: string) => `More on the next page: ${labels}. "${escape}" on the card, or "Next: more choices", shows the next page.`,
     lastPage: 'The rest of the choices for this question.',
     feelingMore: (labels: string, escape: string) => `If none of the three fits: "${escape}" on the card, or "Next: more choices", shows ${labels}.`,

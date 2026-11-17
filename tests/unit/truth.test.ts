@@ -84,7 +84,7 @@ describe('2. the session line counts a failed step on a card that ended as "no c
 describe('3. "kept" is said only when a card made on this computer exists', () => {
   it('cloud failed, no device card: the note does not say a card was kept', async () => {
     const c = await makeCard(OPEN, env(new E('error-after-send')));
-    expect(c.notes.join(' ')).toMatch(/Cloud step failed \(too many requests this minute, HTTP 429\)\./);
+    expect(c.notes.join(' ')).toContain(COPY.notes.cloudFailed('busy', false));
     expect(c.notes.join(' ')).not.toMatch(/kept/);
   });
   it('cloud failed, a weak device card exists: the note says it is kept, and it is on screen', async () => {

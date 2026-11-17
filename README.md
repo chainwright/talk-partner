@@ -167,7 +167,7 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:75` | `getAI(` | the AI Logic instance of the private step: its own Firebase app with no App Check, so a card made on this computer contacts no host |
 | `web/src/ai/firebaseEngine.ts:76` | `getGenerativeModel(` | private step model |
 | `web/src/ai/firebaseEngine.ts:77` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
-| `web/src/ai/firebaseEngine.ts:89` | `getAI(` | the AI Logic instance of the cloud step (Gemini Developer API backend), with `useLimitedUseAppCheckTokens: true`: a fresh short-lived App Check token per cloud request |
+| `web/src/ai/firebaseEngine.ts:89` | `getAI(` | the AI Logic instance of the cloud step (Gemini Developer API backend), on the app that has App Check; it uses the App Check session token (limited-use tokens per request were tried on 17 Nov and taken out the same day, see "Where the AI runs, in detail") |
 | `web/src/ai/firebaseEngine.ts:95` | `getGenerativeModel(` | stripped step model |
 | `web/src/ai/firebaseEngine.ts:96` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
 | `web/src/ai/firebaseEngine.ts:123` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
@@ -181,9 +181,9 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:199` | `inferenceSource === InferenceSource.ON_DEVICE` | where the recording was turned into text, from the SDK's report |
 | `web/src/ai/firebaseEngine.ts:221` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
 | `web/src/ai/app.ts:32` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started by the first cloud call (a card, a recording) or the first feedback note, never at page load |
-| `core/pipeline.ts:690` | `ran: r.source` | the private step's trace line is the engine's report |
-| `core/pipeline.ts:805` | `ran: r.source` | the stripped step's trace line is the engine's report |
-| `core/pipeline.ts:833` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
+| `core/pipeline.ts:697` | `ran: r.source` | the private step's trace line is the engine's report |
+| `core/pipeline.ts:812` | `ran: r.source` | the stripped step's trace line is the engine's report |
+| `core/pipeline.ts:840` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
 | `web/src/main.ts:280` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
@@ -214,8 +214,15 @@ body map, memory questions) run no model. The model only proposes; code decides.
 The private step runs on its own Firebase app instance with no App Check, so a card made on this computer contacts no
 host at all (in the recorded runs, on localhost and on the hosted copy: 0 requests outside the app's own host for
 every on-device card). App Check starts
-with the first cloud call, and the cloud step asks it for a limited-use token per request (`useLimitedUseAppCheckTokens`;
-replay protection for the project is a console setting we have not switched on). One availability probe (`LanguageModel.availability`, a capability query, no inference) is
+with the first cloud call and gives the cloud step its session token. For most of 17 Nov the cloud step asked for a
+limited-use token per request instead (`useLimitedUseAppCheckTokens`). That evening reCAPTCHA Enterprise refused our
+test browsers after many automated runs (HTTP 403, "App attestation failed") and, with limited-use tokens, the SDK
+then throws before it sends anything: the hosted copy made no cloud card (`e2e-cloud.mjs --url` 16 or 17 of 27, three
+runs; the organiser of our fifth review saw 17/27 and 26/28). With the session token one attestation serves the
+session, and when it fails the SDK still sends the request (`@firebase/app-check` 0.13.1, `getToken`: "always
+resolves"), which the service accepts while App Check is not enforced for the project. It is not enforced, and replay
+protection, the only thing limited-use tokens add, is a console setting we have not switched on. Once enforcement is
+on, a browser reCAPTCHA refuses gets no cloud card in either mode; the card then says so in one sentence. One availability probe (`LanguageModel.availability`, a capability query, no inference) is
 the only direct touch of Chrome's API. Firebase's own guide to hybrid inference on the web checks the same flag
 (`await LanguageModel.availability();` in its setup steps, <https://firebase.google.com/docs/ai-logic/hybrid/web/get-started>,
 read 17 Nov 2026), and the one availability method in the SDK we have installed (`ChromeAdapter.isAvailable`,

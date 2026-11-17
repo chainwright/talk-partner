@@ -98,12 +98,14 @@ describe('FirebaseEngine: the stripped leg', () => {
     expect(m.params.onDeviceParams.createOptions.initialPrompts[0].content[0].value).toBe(CLOUD_SYSTEM_PROMPT);
     expect(m.params.onDeviceParams.createOptions.initialPrompts[0].content[0].value).not.toContain('ABOUT lists');
   });
-  // 17 Nov 2026: the cloud step asks for limited-use App Check tokens; the private leg has no App Check and no such option
-  it('the AI Logic instance of the cloud step uses limited-use App Check tokens; the private one does not', async () => {
+  // 17 Nov 2026, evening: limited-use tokens are gone again. With them the SDK makes a new reCAPTCHA attestation for
+  // every cloud request and throws before sending when one fails (live: 403 "App attestation failed", then no card).
+  // With the session token a failed attestation still sends the request, and one attestation serves the session.
+  it('the AI Logic instance of the cloud step uses the App Check session token, not a limited-use token per request', async () => {
     const e = new LazyFirebaseEngine(CFG);
     await e.runCloud('x');
     await e.runDevice('y');
-    expect(rec.ais.find((a) => a.app === '[DEFAULT]')?.options.useLimitedUseAppCheckTokens).toBe(true);
+    expect(rec.ais.find((a) => a.app === '[DEFAULT]')?.options.useLimitedUseAppCheckTokens).toBeFalsy();
     expect(rec.ais.find((a) => a.app === 'private-on-device')?.options.useLimitedUseAppCheckTokens).toBeUndefined();
     expect(rec.ais).toHaveLength(2);
   });
@@ -164,7 +166,7 @@ describe('FirebaseEngine: the voice step', () => {
     expect(rec.apps).toEqual(['[DEFAULT]']);
     expect(rec.appChecks).toEqual(['[DEFAULT]']);
     expect(rec.ais).toHaveLength(1);
-    expect(rec.ais[0].options.useLimitedUseAppCheckTokens).toBe(true);
+    expect(rec.ais[0].options.useLimitedUseAppCheckTokens).toBeFalsy();
     const m = rec.models[0];
     expect(m.mode).toBe('only_in_cloud');
     expect(m.params.inCloudParams.systemInstruction).toBe(TRANSCRIBE_SYSTEM_PROMPT);

@@ -553,12 +553,14 @@ export interface PipelineEnv {
  * How long to wait before asking the cloud once more, or null when a second try is pointless or would take too long.
  * Retried: "too many requests" (HTTP 429: the free tier allows 15 requests a minute), a busy or unavailable service
  * (500 / 502 / 503 / 504) and a network error. When the service names its own wait ("retry in 37s") and it is over
- * 3 s, there is no second try: the partner is told now, not after a long silence. Never retried: a request that
- * certainly did not leave (the browser is offline, cloud help is not set up) or was refused for another reason.
+ * 3 s, there is no second try: the partner is told now, not after a long silence. Also retried, once: an App Check
+ * error (the token exchange failed, or the service refused the token): the hosted copy, 17 Nov. Never retried: a
+ * request that certainly did not leave (the browser is offline, cloud help is not set up) or was refused for another reason.
  */
 export function cloudRetryWait(e: unknown): number | null {
   if ((e as CloudError)?.notSent) return null;
   const msg = String((e as Error)?.message ?? e);
+  if (CLOUD_APPCHECK.test(msg)) return 1200;
   if (!CLOUD_BUSY.test(msg) && !CLOUD_NETWORK.test(msg)) return null;
   const named = /retry\s*(?:in|after|delay)["':\s]*([\d.]+)\s*(ms|s)?/i.exec(msg);
   if (named) {
@@ -569,6 +571,11 @@ export function cloudRetryWait(e: unknown): number | null {
 }
 const CLOUD_BUSY = /\b429\b|quota|resource[_ -]?exhausted|rate[ -]?limit|too many requests|\b50[0234]\b|unavailable|overloaded|try again later/i;
 const CLOUD_NETWORK = /failed to fetch|fetch failed|error fetching|network|timed? ?out|econn|socket|load failed/i;
+const CLOUD_APPCHECK = /app[ -]?check/i;
+/** True when App Check stood in the way: its own error, or the service refusing the token. */
+export function cloudWasAppCheck(e: unknown): boolean {
+  return CLOUD_APPCHECK.test(String((e as Error)?.message ?? e));
+}
 /** True when the cloud refused for load, not for the question: the partner is told "busy", and that a retry may work. */
 export function cloudWasBusy(e: unknown): boolean {
   return /\b429\b|quota|resource[_ -]?exhausted|rate[ -]?limit|too many requests/i.test(String((e as Error)?.message ?? e));
@@ -846,12 +853,13 @@ async function cloudCard(
     // me by code alone does not know the question (set D, 16 Nov: after a 429, "Where do you want to sit?" offered the
     // lake and church under the badge "No AI needed"). The partner is told that cloud help failed, and can try again.
     const kept = !!fallback && !fallback.blocked && fallback.choices.filter((c) => c.role === 'answer').length >= 2;
-    // the note says it in a few words; the step trace ("where each step ran") keeps the service's full message
-    const note = N.cloudFailed(cloudWasBusy(e) ? 'too many requests this minute, HTTP 429' : (e as Error).message.slice(0, 160), kept);
+    // the note is one plain sentence; the step trace ("where each step ran") keeps the service's full message
+    const reason = cloudWasAppCheck(e) ? 'check' : cloudWasBusy(e) ? 'busy' : 'down';
+    const note = N.cloudFailed(reason, kept);
     const base: Card = kept ? fallback! : {
       ...(fallback ?? assemble(asked, pending, null, env.profile, env.support, 'code')),
       source: 'code', kind: 'choice', choices: [], nextPage: null, say: N.justAsk(asked),
-      blocked: cloudWasBusy(e) ? N.cloudBusyBlocked : N.cloudDownBlocked,
+      blocked: reason === 'check' ? N.cloudCheckBlocked : reason === 'busy' ? N.cloudBusyBlocked : N.cloudDownBlocked,
       // the question to ask again, both halves when it was two in one
       retry: pending ? `${asked} ${pending}` : asked,
       why: { proposed: null, decided: W.decidedBy.blockedCloud, kept: [], added: [], dropped: [], headline: W.headlineFrom.question },

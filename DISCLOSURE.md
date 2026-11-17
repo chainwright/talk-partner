@@ -89,7 +89,7 @@ See `git log` for dates. Day by day: `devlog/`.
   (`tests/unit/truth.test.ts`); `devlog/DAY7.md`.
 
 - 17 Nov 2026, after our fourth internal review: a recording of the on-device step for judges whose browser cannot run it
-  (`core/recorded.ts`), limited-use App Check tokens for the cloud step, and the picture-generation step removed: it had
+  (`core/recorded.ts`), limited-use App Check tokens for the cloud step (taken out again the same evening), and the picture-generation step removed: it had
   been carried over from the prototype's engine file (`ONLY_IN_CLOUD`, see the table above), was never called in this
   build, and every picture is bundled. `devlog/DAY12.md`.
 

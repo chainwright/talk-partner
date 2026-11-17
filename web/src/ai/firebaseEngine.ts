@@ -83,10 +83,10 @@ export class FirebaseEngine implements Engine {
   private get ai(): ReturnType<typeof getAI> {
     // the app, App Check (ai/app.ts) and the AI Logic instance are started once; only the models are built again
     // when Remote Config names another cloud model (setCloudModel).
-    // Limited-use App Check tokens for the cloud steps: the SDK asks App Check for a fresh short-lived token per
-    // request instead of reusing the session token (it is what replay protection consumes, once that is switched on
-    // for the project). The private leg has no App Check at all, so this does not touch it.
-    return (this.cloudAi ??= getAI(appWithAppCheck(this.cfg), { backend: new GoogleAIBackend(), useLimitedUseAppCheckTokens: true }));
+    // The App Check session token, not a limited-use token per request (tried 17 Nov, taken out the same day): with
+    // limited-use tokens every cloud request needs a new attestation and the SDK throws before sending when one fails
+    // (live: 403, then no card for a day's backoff); a session token is fetched once and a failure still sends the request.
+    return (this.cloudAi ??= getAI(appWithAppCheck(this.cfg), { backend: new GoogleAIBackend() }));
   }
 
   private get cloud(): GenerativeModel {
