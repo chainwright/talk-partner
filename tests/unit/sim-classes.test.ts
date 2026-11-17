@@ -396,8 +396,9 @@ describe('11. the time of something already fixed is a memory question in every 
 
 describe('12. "No AI needed" means nothing of a model\'s answer is on the card', () => {
   it('an either-or read in code is the same card whether or not a model ran, headline included', async () => {
-    // a comma keeps this from being a "plain" either-or, so the on-device model is asked; its options fail the check
-    const q = 'When shall we go to the library, this morning or after lunch?';
+    // the first side breaks off before "for a while", so the on-device model is asked; its options fail the check
+    // (until 17 Nov a comma was enough for that; now a pair the code reads whole runs no model: sim-e2-classes, E2-1)
+    const q = 'Shall we sit out in the garden for a while, or would you rather stay in?';
     const none = await ask(q, new Scripted(null));
     const e = new Scripted({ topic: 'books', kind: 'choice', choices: ['books'], options: ['shall we go', 'lunch'] });
     const withModel = await ask(q, e);

@@ -92,10 +92,10 @@ describe('a card of About-me answers from the private step stays on this compute
 });
 
 describe('needsNoModel: where a model call would only add a wait', () => {
-  it.each(['Do you want coffee or tea?', 'Should we ring Jen or Tyler?', 'Do you need the toilet?', 'How was therapy today?', 'Where does it hurt?', 'How bad is the pain?', 'What year did we get married?', 'Do you want tea or not?'])('%s runs no model', (q) => {
+  it.each(['Do you want coffee or tea?', 'Should we ring Jen or Tyler?', 'Do you need the toilet?', 'How was therapy today?', 'Where does it hurt?', 'How bad is the pain?', 'What year did we get married?', 'Do you want tea or not?', 'Do you want to walk to the shops or stay in the warm?', 'Shall I tell Jenny about it now, or wait?'])('%s runs no model', (q) => {
     expect(needsNoModel(q, SAMPLE_PROFILE)).toBe(true);
   });
-  it.each(['What do you want to do this weekend?', 'Who should we call tonight?', 'Which shirt for the doctor?', 'Nina Simone, or would you rather have the Antiques Roadshow on?', 'Do you want to walk to the shops or stay in the warm?', 'Do you want soup, a sandwich, or would you rather wait for tea?'])('%s asks the model', (q) => {
+  it.each(['What do you want to do this weekend?', 'Who should we call tonight?', 'Which shirt for the doctor?', 'Nina Simone, or would you rather have the Antiques Roadshow on?', 'Shall we sit out in the garden for a while, or would you rather stay in?', 'Do you want soup, a sandwich, or would you rather wait for tea?'])('%s asks the model', (q) => {
     expect(needsNoModel(q, SAMPLE_PROFILE)).toBe(false);
   });
   it('plainPair: short, no comma, one or two words a side', () => {

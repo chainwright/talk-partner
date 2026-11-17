@@ -464,7 +464,7 @@ export function validateOptions(options: unknown, q: string, profile?: Profile):
  * a particle, a preposition or its object ("turn the TV" + "on", "try" + "it yourself", "Honey to sit" + "with you").
  * Set E, 16 Nov: such tiles came from the on-device model's copy and passed the check; now the pair read in code is used.
  */
-function clipped(option: string, q: string): boolean {
+function clipped(option: string, q: string, strict = false): boolean {
   const ow = words(option);
   const qw = words(q);
   const same = (a: string, b: string) => a === b || stem(a) === stem(b);
@@ -488,10 +488,42 @@ function clipped(option: string, q: string): boolean {
   const ends_ = (w: string) => /^(?:or|and|than|then|but|please|instead|too|either|now|later|soon|today|tonight|tomorrow|first|again|this|next|morning|afternoon|evening|weekend)$/.test(w) || new RegExp(`^${DAYRE}$`).test(w) || ADDRESS.has(w) || (!verb && /^(?:on|off)$/.test(w))
     // after two or more words a place or company phrase may follow ("stay in" + "by the fire"); after one word it is
     // the rest of the option ("coffee" + "with milk")
-    || (ow.length >= 2 && !verb && /^(?:by|with|at|in|near|from|for|to)$/.test(w));
+    || (!strict && ow.length >= 2 && !verb && /^(?:by|with|at|in|near|from|for|to)$/.test(w));
   // "Honey to sit": a name and the start of what they would do is a piece of a clause, never an option
   if (/^[A-Z][\p{L}'-]+\s+to\s+[a-z]+$/u.test(option.trim())) return true;
-  return ends.every((k) => k < qw.length && !ends_(qw[k]));
+  // (strict: what is left of the question after the side may also be a time both sides share: "… for the night?")
+  const sharedTime = (k: number) => strict && qw.length - k <= 4 && /^(?:for|at|in|on|by|before|after|until|till)$/.test(qw[k]) && isTimeLike(qw.slice(/^(?:before|after|until|till)$/.test(qw[k]) ? k : k + 1).join(' '));
+  return ends.every((k) => k < qw.length && !ends_(qw[k]) && !sharedTime(k));
+}
+
+/**
+ * True when every side of a pair the code read stands in the question as a whole phrase: right after it comes "or",
+ * the end of the question, or a word both sides share (a time, the person spoken to). Then the code stands by its
+ * reading and no model is asked to copy the options: the card is made at once. A side the label check rewrote ("your
+ * right" -> "your right hand", "is Maria watching her programme" -> "Maria's programme") counts as whole when the
+ * part that is the question's own words is. A side that breaks off ("put the radio" + "on for you", "walk down" +
+ * "to the library") or is the tail of a name ("Roadshow" of "the Antiques Roadshow") is not: there the on-device
+ * model is still asked for its copy, and the card says so if the copy is not used.
+ */
+export function wholePair(pair: string[], q: string): boolean {
+  const text = stripAddress(q);
+  const whole = (side: string): boolean => {
+    if (isNoneOption(side)) return true;
+    const ws = side.split(/\s+/).filter(Boolean);
+    if (!ws.length) return false;
+    // the tail of a name: the word before the side has a capital in mid-sentence and so has the side
+    const at = text.search(new RegExp(`(?<![\\p{L}\\p{N}])${esc(side)}(?![\\p{L}\\p{N}])`, 'u'));
+    if (at > 0 && /^[A-Z]/.test(ws[0]) && /(?<=\s)[A-Z][\p{L}'-]*\s+(?:of\s+|the\s+)?$/u.test(text.slice(0, at))) return false;
+    if (!clipped(side, text, true)) return true;
+    // rewritten by the label check: the question's own part of it is whole
+    const stands = (x: string) => new RegExp(`(?<![\\p{L}\\p{N}])${words(x).map(esc).join("[\\s,]+(?:(?:and|or|of|the|a|an|on|with|by|in|at|for)\\s+)?")}(?![\\p{L}\\p{N}])`, 'iu').test(lc(text));
+    if (stands(side) || ws.length < 2) return false;
+    return [ws.slice(1).join(' '), ws.slice(0, -1).join(' ')].some((part) => stands(part) && !clipped(part, text, true));
+  };
+  // "do the buttons for you, or have a go yourself": one side that opens with a preposition is the tail of a clause
+  const prep = pair.filter((x) => !isNoneOption(x) && !isTimeLike(x) && /^(?:for|to|with|at|from|about|of|in|on|by)\s/i.test(x)).length;
+  if (prep > 0 && prep < pair.filter((x) => !isNoneOption(x)).length) return false;
+  return pair.every(whole);
 }
 
 // ---------------------------------------------------------------- rule 3: the label check (build spec §2.5)
@@ -724,25 +756,36 @@ function surePair(q: string, profile?: Profile): [string, string] | null {
   return np ? checkPair(np, q, profile) : null;
 }
 
-export function codePair(q: string, profile?: Profile): [string, string] | null {
+/**
+ * How the code parser read a pair: 'sure' (a time against a time clause, a name against a name), 'short' (short sides
+ * counted off around "or"), 'clause' (each side a clause, both on one axis), or 'loose' (the last reading, with no
+ * demand that the sides sit on one axis). The first three are readings the code stands by: the card is made at once,
+ * and no model is asked to copy the options. Only a 'loose' reading still asks the on-device model for its copy.
+ */
+export type PairReading = 'sure' | 'short' | 'clause' | 'loose';
+export function codePairRead(q: string, profile?: Profile): { pair: [string, string]; how: PairReading } | null {
   const same = (x: [string, string] | null, y: [string, string] | null) => !!x && !!y && x[0] === y[0] && x[1] === y[1];
   // "… now or after you eat?", "… before supper or once the news is over?": when the second side says when and the
   // first ends with a time, those two are the options, whatever else could be counted off
   const sure = surePair(q, profile);
-  if (sure) return sure;
+  if (sure) return { pair: sure, how: 'sure' };
   const rx = orPair(q);
   const strict = rx ? checkPair(rx, q, profile) : null;
-  if (strict) return strict;
+  if (strict) return { pair: strict, how: 'short' };
   // "…, or not?" and "…, or is that a no?" are one proposal, never a pair
   if (isOrNot(q) || optOutTrim(q)) return null;
   const cp = clausePair(q);
   const clause = cp && !same(cp, rx) ? checkPair(cp, q, profile) : null;
-  if (clause) return clause;
+  if (clause) return { pair: clause, how: 'clause' };
   for (const cand of [cp, loosePair(q)]) {
     const loose = cand ? checkSides(cand, q, profile, false, false) : null;
-    if (loose) return [loose[0], loose[1]];
+    if (loose) return { pair: [loose[0], loose[1]], how: 'loose' };
   }
   return null;
+}
+
+export function codePair(q: string, profile?: Profile): [string, string] | null {
+  return codePairRead(q, profile)?.pair ?? null;
 }
 
 const QUESTION_LEAD = new RegExp(`^(?:${AUX}|want|wanna|fancy|shall|should|would|will|need|up for|you|what|where|who|when|which|how|why|let's)\\b`, 'i');

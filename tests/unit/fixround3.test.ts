@@ -62,21 +62,32 @@ describe('validateOptions: the model copies, code checks', () => {
 
 describe('either-or cards: one on-device call with options; validated, else the cloud', () => {
   it('device options pass: they become the card, whatever the regex would cut', async () => {
+    // (the default family: without the show in About me the code reads only "Roadshow", the tail of a name, so the
+    // model is asked; with it there, the code reads the pair whole and since 17 Nov no model runs: next test)
     const e = new Fake(yesno, ['Nina Simone', 'Antiques Roadshow']);
-    const c = await makeCard('Nina Simone, or would you rather have the Antiques Roadshow on?', env(e, TV));
+    const c = await makeCard('Nina Simone, or would you rather have the Antiques Roadshow on?', env(e));
     expect(labels(c)).toEqual(['Nina Simone', 'Antiques Roadshow', 'something else']);
     expect(c.notes.join(' ')).toMatch(/copied from the question by the on-device model/);
+    const e2 = new Fake(yesno, ['Nina Simone', 'Antiques Roadshow']);
+    const c2 = await makeCard('Nina Simone, or would you rather have the Antiques Roadshow on?', env(e2, TV));
+    expect(labels(c2)).toEqual(['Nina Simone', 'Antiques Roadshow', 'something else']);
+    expect(e2.optionCalls).toHaveLength(0);
     expect(e.cloudCalls).toHaveLength(0);
   });
 
   // Changed 11 Nov 2026 (build spec §1.4 step 3, the coffee/tea bug): the pre-period behaviour sent this card to the
   // cloud. A valid code pair is now never thrown away because a model ran, so the card is the same in every engine state.
   it('device options fail the check: the code pair from the question is used, no cloud call', async () => {
-    const e = new Fake(yesno, ['want to walk', 'stay'], { topic: 'out', kind: 'choice', choices: ['shops', 'stay in'], options: ['walk to the shops', 'stay in the warm'] });
-    const c = await makeCard('Do you want to walk to the shops or stay in the warm?', env(e));
+    const e = new Fake(yesno, ['want to sit', 'stay'], { topic: 'out', kind: 'choice', choices: ['garden', 'stay in'], options: ['sit out in the garden', 'stay in'] });
+    const c = await makeCard('Shall we sit out in the garden for a while, or would you rather stay in?', env(e));
     expect(e.cloudCalls).toHaveLength(0);
     expect(c.notes.join(' ')).toMatch(/did not pass the check; the options were read from the question in code/);
-    expect(labels(c)).toEqual(['walk to the shops', 'stay in the warm', 'something else']);
+    expect(labels(c)).toEqual(['sit out in the garden', 'stay in', 'something else']);
+    // a pair the code reads whole asks no model at all (17 Nov): the same kind of card, at once
+    const e2 = new Fake(yesno, ['want to walk', 'stay']);
+    const c2 = await makeCard('Do you want to walk to the shops or stay in the warm?', env(e2));
+    expect(e2.optionCalls).toHaveLength(0);
+    expect(labels(c2)).toEqual(['walk to the shops', 'stay in the warm', 'something else']);
   });
 
   it('device options fail and the code parser finds no pair either: the card goes to the cloud', async () => {
@@ -101,13 +112,13 @@ describe('either-or cards: one on-device call with options; validated, else the 
     expect(labels(c)).toEqual(['soup', 'sandwich', 'something else']);
   });
 
-  it('every card is one on-device call, either-or or not', async () => {
+  it('a card that needs the model is one on-device call, either-or or not', async () => {
     const e = new Fake({ topic: 'tea', kind: 'choice', choices: ['stew', 'pie'] }, ['stew', 'pie']);
     const c = await makeCard("What's for tea tonight?", env(e));
     expect(e.optionCalls).toHaveLength(1);
     expect(labels(c)).toEqual(['stew', 'pie', 'something else']); // options on a non-either-or question are ignored
     const e2 = new Fake(yesno, ['Nina Simone', 'Antiques Roadshow']);
-    await makeCard('Nina Simone, or would you rather have the Antiques Roadshow on?', env(e2, TV));
+    await makeCard('Nina Simone, or would you rather have the Antiques Roadshow on?', env(e2));
     expect(e2.optionCalls).toHaveLength(1);
   });
 });

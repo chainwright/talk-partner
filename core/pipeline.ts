@@ -8,8 +8,8 @@ import type { CloudError, Engine } from './engine';
 import { pictureFor } from './pictures';
 import { cloudPrompt, devicePrompt } from './prompt';
 import {
-  BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
-  heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
+  BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
+  heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, wholePair, codePairRead, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   contactPool, dropGenericWho, fromAboutMe, isUnguessable, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
   besideOwnFilter, codeOptions, contactFirst, dropWhichOne, fillerFilter, whenChoices, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
@@ -38,15 +38,17 @@ export function parseModelOutput(text: string): ModelOutput | null {
 
 /**
  * Questions that never run a model: the card is fixed by code and identical in every engine state, so a model call
- * would only add a wait (about 3 s on device). An either-or the parser cannot read plainly, or options it cannot find,
- * still go to the model, which copies the options out of the question for the label check.
+ * would only add a wait (about 3 s on device). That includes every either-or whose two options the code reads whole
+ * (rules.ts, wholePair): set E, second run, 17 Nov: 12 such cards waited for the on-device model and then showed the
+ * pair read in code. Only an either-or whose reading breaks off, or options the code cannot find, still go to the
+ * model, which copies the options out of the question for the label check.
  */
 export function needsNoModel(q: string, profile?: Profile): boolean {
   if (isUnguessable(q) || isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || unseenPeople(q, profile) || whenChoices(q, profile)) return true;
   // three or more options named in the question: all of them are read in code, so no model is asked to copy them
   if (orList(q, profile)) return true;
-  const pair = codePair(q, profile);
-  if (pair) return plainPair(q, pair);
+  const read = codePairRead(q, profile);
+  if (read) return read.how === 'sure' || plainPair(q, read.pair) || wholePair(read.pair, q);
   if (offersOptions(q)) return false;
   return isAuxYesNo(q) || isOrNot(q) || isFeelingQuestion(q);
 }

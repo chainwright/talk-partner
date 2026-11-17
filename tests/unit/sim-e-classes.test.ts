@@ -343,7 +343,8 @@ describe('E-6. the partner\'s name in the question means someone else is asking:
     expect(card.choices.find((c) => c.role === 'escape')?.label).toBe('someone else');
   });
   it('a model that copies the options keeps her name too, with its possessive', async () => {
-    const card = await ask("Do you want the cricket on, or shall we leave Maria's programme on?", new Scripted({ topic: 'telly', kind: 'choice', choices: [], options: ['cricket', "Maria's programme"] }));
+    // (the question ends "… for a bit": the code's reading breaks off there, so the model is asked for its copy)
+    const card = await ask("Do you want the cricket on, or shall we leave Maria's programme on for a bit?", new Scripted({ topic: 'telly', kind: 'choice', choices: [], options: ['cricket', "Maria's programme"] }));
     expect(answers(card)).toEqual(['cricket', "Maria's programme"]);
     expect(card.say).toContain("Maria's programme");
   });
@@ -465,10 +466,11 @@ describe('E-9. who to call: every person About me names is on the card, with a n
 
 describe('E-10. "No AI needed" only when no model was called; when one was asked and code made the card, the badge says so', () => {
   // set D and set E: "No AI needed" on cards that had waited about 3 s for the on-device model
-  // (a comma or a long question keeps these from being "plain" either-ors, so the on-device model is asked)
+  // (in each of these a side of the code's reading breaks off, so the on-device model is asked for its copy; since
+  // 17 Nov a pair the code reads whole asks no model at all: tests/unit/sim-e2-classes.test.ts, group E2-1)
   const QUESTIONS = [
-    'When shall I run your bath, before the news or after it?',
-    'Do you want the big blue blanket from the cupboard or the tartan one?',
+    'Well, shall I put the radio on for you or keep it peaceful?',
+    'Shall I turn the heating up a notch or leave it as it is?',
     'Shall we sit out in the garden for a while, or would you rather stay in?',
   ];
   it.each(QUESTIONS)('a model was asked, its options failed, code made the card: %s', async (q) => {

@@ -94,7 +94,8 @@ describe('the step trace reports only what the engine reported (never claims on-
   });
   it('a longer either-or still asks the model to copy the options, and says so when the code pair is used instead', async () => {
     const e = new E('ready', 'ok', { topic: 'out', kind: 'choice', choices: ['now', 'later'], options: ['want to walk', 'or'] });
-    const card = await makeCard('Do you want to walk to the shops or stay in the warm?', env(e, 'ready', 'ok'));
+    // (since 17 Nov a pair the code reads whole runs no model; here the first side breaks off before "for a while")
+    const card = await makeCard('Shall we sit out in the garden for a while, or would you rather stay in?', env(e, 'ready', 'ok'));
     expect(e.deviceCalls).toBe(1);
     expect(card.source).toBe('code');
     expect(step(card, 'private').ran).toBe('on-device');
