@@ -140,5 +140,13 @@ the table.
 | 117 | `30db57a` | `b7dfe32` | 2026-11-17 12:36 | "How are you?" card: a fixed headline ("feeling", "feeling today"); README section on wh… |
 | 118 | `4d7edee` | `2378ef4` | 2026-11-17 12:43 | Runs at 30db57a saved; README and CLAIMS say the hosted copy does not have the 17 Nov fi… |
 | 119 | `03a43fe` | `1aa258e` | 2026-11-17 13:07 | The hosted copy has the second-rehearsal fixes: deploy of 17 Nov 19:05 UTC, live cloud 2… |
+| 120 | `5e63be4` | `a41e8b2` | 2026-11-17 14:28 | Cloud step: the App Check session token again, not a limited-use token per request; an A… |
+| 121 | `93a6965` | `43fe710` | 2026-11-17 14:29 | Documents: voice input is Gemini through Firebase AI Logic (ONLY_IN_CLOUD) wherever a li… |
+| 122 | `2aeb1d0` | `f1ffed7` | 2026-11-17 14:31 | Judge mode: under the first card too, why / where each step ran / what was sent are one … |
+| 123 | `749d122` | `99adab1` | 2026-11-17 14:40 | The labelled set on the on-device model, run three times at 2aeb1d0, after the rule chan… |
+| 124 | `bbcb075` | `30ee2fd` | 2026-11-17 14:40 | Judge path and claims after the fifth review: "who to call tonight?" off the 60-second p… |
+| 125 | `7dd16a1` | `8290109` | 2026-11-17 14:49 | A cloud call that fails while App Check has no token for this browser is named as that: … |
+| 126 | `2c5673e` | `aa94410` | 2026-11-17 14:55 | The labelled set at 7dd16a1, the last commit that changes code: 15, 16, 15 of 18 and 12,… |
+| 127 | `0e358dd` | `c878249` | 2026-11-17 15:20 | The hosted copy is the build of 2c5673e (17 Nov, 20:55 UTC): needs 12/12, two browsers w… |
 
-Rows 100–106, 107–111, 112 and 113–119 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
+Rows 100–106, 107–111, 112, 113–119 and 120–127 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
