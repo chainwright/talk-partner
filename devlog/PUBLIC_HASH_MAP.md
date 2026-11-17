@@ -120,3 +120,12 @@ the table.
 | 97 | `89fb06a` | `1848d76` | 2026-11-17 01:02 | The on-device run log no longer calls a hosted copy "the dev server of this commit" |
 | 98 | `6796d7a` | `d300b84` | 2026-11-17 01:06 | Evidence at deebc94, every log made again on a clean tree; the deploy, and the cloud and… |
 | 99 | `7c0bccf` | `7bdb3cd` | 2026-11-17 05:18 | For the public repository: its address on the first line of JUDGES.md; the first on-devic… |
+| 100 | `7080ebf` | `50c48dd` | 2026-11-17 07:43 | Quick needs: a fixed board of everyday needs, one tap from the partner screen (toilet, d… |
+| 101 | `a1e1b2d` | `7343160` | 2026-11-17 07:45 | Voice input for the partner's question: a microphone button next to the field (the brows… |
+| 102 | `8810f8f` | `e9ed8a7` | 2026-11-17 07:50 | Wording: "Every model call that makes a card goes through Firebase AI Logic" on "How thi… |
+| 103 | `0eeca4e` | `402ec3c` | 2026-11-17 07:54 | scripts/e2e-needs.mjs: the quick-needs board with the network switched off after the pag… |
+| 104 | `20d2b19` | `bcabbeb` | 2026-11-17 07:55 | Hosting: the page at "/" is sent with Cache-Control no-cache, like /index.html; it had m… |
+| 105 | `faebade` | `965d8b3` | 2026-11-17 08:00 | README, CLAIMS (rows 40 and 41, and what they change for rows 3, 4, 22 and 36), JUDGES, … |
+| 106 | `c4d08e0` | `8b58934` | 2026-11-17 08:04 | Voice: SpeechRecognition.available() is asked only from Chrome 157 on; Chromium 148 cras… |
+
+Rows 100–106 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row).
