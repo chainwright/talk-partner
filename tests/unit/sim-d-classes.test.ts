@@ -6,10 +6,11 @@ import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { partnerActions } from '../../core/actions';
-import { cloudRetryWait, makeCard } from '../../core/pipeline';
+import { cloudRetryWait, makeCard, quizOverrideCard } from '../../core/pipeline';
 import { cardReceipt, sentLine } from '../../core/receipt';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
 import { findLeaks, restoreNames, stripQuestion } from '../../core/strip';
+import { quizKind, quizRephrase } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -41,7 +42,6 @@ const ask = (q: string, e: Scripted, support: SupportLevel = 'more', profile: Pr
   makeCard(q, { profile, support, engine: e, allowCloud: e.cloudConfigured, deviceReady: e['dev' as keyof Scripted] !== null, ...extra });
 const answers = (c: Card) => c.choices.filter((x) => x.role === 'answer').map((x) => x.label);
 const everyPage = (c: Card) => { const out: string[] = []; for (let p: Card | null | undefined = c; p; p = p.nextPage) out.push(...answers(p)); return out; };
-void everyPage; // used by the groups below
 
 describe('D-a. a name that is not in About me never reaches the cloud request as typed', () => {
   // names the fixture family does not list, in the positions set D found open: after a title, opening the sentence
@@ -127,7 +127,7 @@ describe('D-b. a failed cloud call (HTTP 429 on the free tier, a network error) 
   const ABOUT = [...PROFILE.places, ...PROFILE.foods, ...PROFILE.tv, ...PROFILE.music, ...PROFILE.people.map((p) => p.name)];
   const waits: number[] = [];
   const sleep = async (ms: number) => { waits.push(ms); };
-  const OPEN = ['Where shall I put your slippers?', 'Where do you want the lamp to go?', 'What did the plumber leave behind?', 'What shall we take to the neighbours?', 'Where would you like your chair?'];
+  const OPEN = ['Where shall I put your slippers?', 'Where do you want the lamp to go?', 'What does the plumber need from us?', 'What shall we take to the neighbours?', 'Where would you like your chair?'];
 
   it.each(OPEN)('429 with a long wait named: no second try, no card, an honest reason and a way out: %s', async (q) => {
     waits.length = 0;
@@ -181,10 +181,10 @@ describe('D-b. a failed cloud call (HTTP 429 on the free tier, a network error) 
   it('a network error is retried once too; when it fails again the card says cloud help did not answer', async () => {
     const e = new Scripted(null, ANY);
     e.fail = [NET(), NET()];
-    const card = await ask('What did the plumber leave behind?', e, 'more', PROFILE, { sleep });
+    const card = await ask('What does the plumber need from us?', e, 'more', PROFILE, { sleep });
     expect(e.calls).toEqual(['cloud', 'cloud']);
     expect(card.blocked).toBe(COPY.notes.cloudDownBlocked);
-    expect(card.retry).toBe('What did the plumber leave behind?');
+    expect(card.retry).toBe('What does the plumber need from us?');
   });
 
   it('a request that certainly did not leave (offline) is not retried and is not counted as "may have left"', async () => {
@@ -229,5 +229,88 @@ describe('D-b. a failed cloud call (HTTP 429 on the free tier, a network error) 
     expect(cloudRetryWait(new Error('[400 ] API key not valid.'))).toBeNull();
     expect(cloudRetryWait(new Error('cloud answer was not valid JSON'))).toBeNull();
     expect(cloudRetryWait(Object.assign(new Error('Failed to fetch'), { notSent: true }))).toBeNull();
+  });
+});
+
+/** The three engine states a card can be made in: rules alone, the on-device model, cloud help only. */
+const STATES: [string, () => Scripted][] = [['rules alone', () => new Scripted(null)], ['on-device model', () => new Scripted(ANY)], ['cloud help only', () => new Scripted(null, ANY)]];
+const ABOUT_WORDS = [...PROFILE.places, ...PROFILE.foods, ...PROFILE.tv, ...PROFILE.music, ...PROFILE.people.map((p) => p.name)].map((w) => w.replace(/^the\s+/i, '').toLowerCase());
+const noAboutMe = (text: string, q: string) => { for (const w of ABOUT_WORDS) if (!q.toLowerCase().includes(w)) expect(text.toLowerCase(), `${q} / ${w}`).not.toMatch(new RegExp(`\\b${w}\\b`)); };
+
+describe('D-1. a question that tests where they are, or what happened earlier, is caught: no card, no invented tiles', () => {
+  const ORIENTATION = [
+    'Do you know where you are?', 'Where are you right now, Alan?', 'Can you tell me where we are?', 'What town are we in?',
+    'What building is this?', 'So where are we?', 'What season is it?', "Who's the president now?", 'Where do you live?',
+  ];
+  const RECALL = [
+    'What did you have for lunch at the centre?', 'What did you do at physio this morning?', 'What have you eaten today?',
+    'What did the nurse tell you?', 'What did Grace say on the phone?', 'So what did you watch last night?', 'Alan, what did you buy at the market?',
+  ];
+  for (const [state, engine] of STATES) {
+    it.each([...ORIENTATION, ...RECALL])(`${state}: %s`, async (q) => {
+      const e = engine();
+      const card = await ask(q, e);
+      expect(card.kind).toBe('no-quiz');
+      expect(card.choices).toEqual([]);
+      expect(card.nextPage ?? null).toBeNull();
+      expect(e.calls).toEqual([]); // no model is asked to make up choices, and nothing is sent
+      expect(card.say.startsWith(COPY.notes.tellPrefix)).toBe(true);
+      noAboutMe(card.say, q);
+    });
+  }
+  it('which kind it is decides what the partner is told', () => {
+    for (const q of ORIENTATION) expect(quizKind(q, PROFILE), q).toBe('place');
+    for (const q of RECALL) expect(quizKind(q, PROFILE), q).toBe('recall');
+    expect(quizRephrase('Do you know where you are?', 'Maria', new Date(), PROFILE)).toBe('Say where you are: "We\'re at …".');
+    expect(quizRephrase('What did the nurse tell you?', 'Maria', new Date(), PROFILE)).toMatch(/ask yes \/ no about one real thing at a time/);
+  });
+  it('a recall question is not called "you know this one": the partner may not know either', async () => {
+    const recall = await ask('What did you do at physio this morning?', new Scripted(null));
+    expect(recall.coach).toBe(COPY.coach.recall);
+    const place = await ask('What town are we in?', new Scripted(null));
+    expect(place.coach).toBe(COPY.coach.test);
+  });
+  it('"make a card anyway" has nothing real to offer for these, so it makes none (never About-me places or foods)', () => {
+    for (const q of ['Do you know where you are?', 'What did you have for lunch at the pub?', 'What town are we in?']) {
+      const c = quizOverrideCard(q, PROFILE, 'more');
+      expect(c.blocked, q).toBe(COPY.memory.overrideNone);
+      expect(c.choices, q).toEqual([]);
+    }
+  });
+  it.each([
+    'What did you want for supper?', 'What did you think of the sermon?', 'What did you fancy doing later?', 'Where are we going on Saturday?',
+    'Where are you sore?', 'What did you enjoy most about the trip?', 'Where would you like to live?',
+  ])('not a test: %s', (q) => {
+    expect(quizKind(q, PROFILE)).toBeNull();
+  });
+  it('a recall question that names real options is a choice card with exactly those options', async () => {
+    for (const [, engine] of STATES) {
+      const card = await ask('What did you have at the cafe, the soup or the pie?', engine());
+      expect(card.kind).toBe('choice');
+      expect(answers(card)).toEqual(['soup', 'pie']);
+    }
+  });
+});
+
+describe('D-1b. the line to say never reads options that are not on the screen', () => {
+  const OPEN = ['Where shall we keep the spare keys?', 'What do you fancy watching?', 'What shall we cook on Sunday?', 'Who shall we ask to drive on Friday?', 'What should I get from the chemist?'];
+  it.each(OPEN)('rules alone, no card: %s', async (q) => {
+    const card = await ask(q, new Scripted(null));
+    expect(card.blocked).toBeTruthy();
+    expect(card.choices).toEqual([]);
+    expect(card.say).toBe(COPY.notes.justAsk(q));
+    noAboutMe(card.say, q);
+    expect(card.say).not.toMatch(/or some(?:thing|one|where) else/i);
+  });
+  it('a model answered and nothing usable came out: the same', async () => {
+    const e = new Scripted({ topic: 'keys', kind: 'choice', choices: ['yes'] });
+    const card = await ask('Where shall we keep the spare keys?', e);
+    if (card.blocked) {
+      expect(card.say).toBe(COPY.notes.justAsk('Where shall we keep the spare keys?'));
+      noAboutMe(card.say, 'Where shall we keep the spare keys?');
+    } else {
+      // every option read aloud is on the card or on its next page
+      for (const a of everyPage(card)) expect(card.say.toLowerCase() + (card.nextPage?.say.toLowerCase() ?? '')).toContain(a.toLowerCase());
+    }
   });
 });

@@ -9,7 +9,7 @@ import { pictureFor } from './pictures';
 import { cloudPrompt, devicePrompt } from './prompt';
 import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
-  heuristicTopic, householdFilter, isQuiz, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
+  heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   dropGenericWho, fromAboutMe, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
   codeOptions, numberScale, orList, painBands, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
@@ -224,7 +224,7 @@ export function assemble(
     const card: Card = {
       ...base, source: 'code', kind: 'no-quiz', choices: [],
       say: `${N.tellPrefix}${quizRephrase(asked, profile.partnerName, new Date(), profile)}`,
-      blocked: N.memoryBlocked,
+      blocked: N.memoryBlocked, quiz: quizKind(asked, profile) ?? undefined,
     };
     card.why = fixedWhy(o, step, W.decidedBy.quiz, W.headlineFrom.question);
     return card;
@@ -454,7 +454,9 @@ export async function makeCard(input: string, env: PipelineEnv): Promise<Card> {
   const trace: StepTrace[] = [];
   const card = noEscapeOnly(await makeCardInner(input, env, trace));
   // §2.13: a blocked card is never shown to the person, so it carries no choices (not even an escape)
-  const out: Card = { ...(card.blocked ? { ...card, choices: [] } : card), trace: finishTrace(trace, card) };
+  // …and the line to say never reads options that are not on the screen (set D, 16 Nov: with no model, a blocked
+  // "Where are we right now?" still read "Lake, church, or somewhere else?")
+  const out: Card = { ...(card.blocked ? { ...card, choices: [], nextPage: null, say: card.kind === 'no-quiz' ? card.say : N.justAsk(card.asked) } : card), trace: finishTrace(trace, card) };
   // later pages of the same card (more choices, the body map) carry the same record of where it was made and what left
   for (let p = out.nextPage; p; p = p.nextPage) {
     Object.assign(p, { trace: out.trace, source: out.source, route: out.route, cloudPayload: out.cloudPayload, cloudSwaps: out.cloudSwaps, cloudAttempted: out.cloudAttempted, cloudAttempts: out.cloudAttempts, unsentPayload: out.unsentPayload, ranOffline: out.ranOffline });
@@ -468,7 +470,8 @@ export async function makeCard(input: string, env: PipelineEnv): Promise<Card> {
  * a memory test (rule 9), or options the screen cannot know ("which jumper": hold two up).
  */
 function coachFor(card: Card): string | undefined {
-  if (card.kind === 'no-quiz') return COPY.coach.test;
+  // a recall question may be one the partner cannot answer either: then "you know this one" would be wrong
+  if (card.kind === 'no-quiz') return card.quiz === 'recall' ? COPY.coach.recall : COPY.coach.test;
   const negative = card.notes.includes(N.negativeAsked);
   if (card.pending) return negative ? `${COPY.coach.twoQuestions} ${COPY.coach.negative}` : COPY.coach.twoQuestions;
   if (negative) return COPY.coach.negative;

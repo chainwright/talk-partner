@@ -136,6 +136,8 @@ export interface Card {
   cloudAttempts?: number;
   /** What WOULD have been sent if the cloud were on/configured (shown as "not sent"). */
   unsentPayload?: string | null;
+  /** On a 'no-quiz' card: which kind of test the question was (rules.ts, quizKind). */
+  quiz?: 'now' | 'identity' | 'remember' | 'fact' | 'place' | 'recall';
   /** Set when no card could be made without a step the partner has to allow (e.g. cloud consent). */
   blocked?: string | null;
   /**

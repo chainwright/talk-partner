@@ -69,11 +69,11 @@ describe('P0 privacy: no About-me term in any cloud payload', () => {
     'What should we plant at the allotment this year?',
     "What would you like with your shepherd's pie?",
     'What goes best with kippers on toast?',
-    'What did Bev say about the Eccles cakes?',
+    'What should we tell Bev about the Eccles cakes?', // (was "What did Bev say…": a recall question since 16 Nov, never sent)
     'What should I tell Martin and Aisha about Sunday?',
     'What present would Ruby like from us?',
     'What should I ask your granddaughter to bring?',
-    'What did the physio show you today?',
+    'What will the physio show you today?', // (was "What did the physio show…": a recall question since 16 Nov)
     'What happened on Coronation Street last night?',
     'What did you think of the darts final?',
     'What was on Antiques Roadshow?',

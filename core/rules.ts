@@ -80,6 +80,12 @@ const AUX_START = /^\s*(did|do|does|are|is|am|was|were|can|could|should|shall|wi
 const OFFER_START = /^\s*(?:you\s+)?(?:want|wanna|fancy|need|like|feel like|up for|ready for|hungry for|keen on)\b|^\s*you\s+(?:hungry|thirsty|cold|warm|tired|sleepy|comfy|comfortable|ok|okay|alright|all right|ready|sure)\b/i;
 /** "Ma, you want coffee?": a leading address word or name followed by a comma is not part of the question's shape. */
 const VOCATIVE = /^\s*(?:[A-Z][\p{L}'-]+|ma|mum|mom|mam|dad|pa|love|hen|pet|mate|dear|darling|hon|honey|sweetheart|duck|lovey|chuck|sweetie|luv),\s*/iu;
+/** "…, Frank?", "…, hon?": the person being spoken to, at the end of the question. */
+const VOCATIVE_END = /\s*,\s*(?:[A-Z][\p{L}'-]+|ma|mum|mom|mam|dad|pa|love|hen|pet|mate|dear|darling|hon|honey|sweetheart|duck|lovey|chuck|sweetie|luv)\s*\?\s*$/u;
+/** The question without the address word at either end. */
+export function stripAddress(q: string): string {
+  return stripVocative(q).replace(VOCATIVE_END, '?');
+}
 /** The question without a leading "Ma, " / "Eileen, ": the shape checks below look at what comes after it. */
 export function stripVocative(q: string): string {
   return q.replace(VOCATIVE, '');
@@ -959,7 +965,11 @@ const SYNONYMS = [
 //   remember  any question that asks them to remember or recall ("Do you remember ...", "Remember when ...?")
 //   fact      a past or personal fact with a single right answer: a year, a date, an age, a name, "when did ...",
 //             "how long ago", "how many ... have we got"
-export type QuizKind = 'now' | 'identity' | 'remember' | 'fact';
+//   place     where they are now, the season, who is in charge: an orientation test ("Where are we right now?")
+//   recall    what happened earlier today or lately ("What did you have for breakfast?", "What did he say?"): the
+//             answer has to be retrieved, the app cannot know it either, and any tile would be made up. Only "what
+//             did … / what have you had …"; a "who" or "where" question about the past still gets a card
+export type QuizKind = 'now' | 'identity' | 'remember' | 'fact' | 'place' | 'recall';
 const KIN = 'wife|husband|son|daughter|sister|brother|mother|father|mum|mom|dad|grandson|granddaughter|grandchild|grandchildren|grandkids|niece|nephew|aunt|auntie|uncle|cousin|children|kids|doctor|gp|carer|nurse|neighbour|neighbor';
 
 const NOW_Q = /\bwhat\s+(?:day|date|month|year|time)\s+(?:is\s+it|it\s+is)\b|\bwhat(?:'s|\s+is)\s+(?:today'?s|the)\s+(?:date|day)\b|\bwhat\s+day\s+(?:is\s+)?(?:it\s+)?today\b|\bwhat(?:'s|\s+is)\s+the\s+time\b/i;
@@ -989,6 +999,25 @@ const FACT_TARGET = [
   /\bwho\s+(?:was|were)\s+(?:that|the|those)\b/i,
 ];
 
+// Set D of the rehearsal (16 Nov): "Where are we right now?" became a card of About-me places, "What did you have for
+// breakfast?" a card of invented foods.
+const PLACE_Q = [
+  /^\s*(?:so\s+|now\s+|and\s+)?where\s+(?:are|'re)\s+(?:we|you)(?:\s+(?:right\s+now|now|today|at\s+the\s+moment|at|just\s+now))?\s*\?\s*$/i,
+  /\b(?:do\s+you\s+know|can\s+you\s+tell\s+me|tell\s+me|any\s+idea)\s+where\s+(?:we|you)\s+are\b/i,
+  /\bwhat\s+(?:place|town|city|state|country|county|building|floor|room|street|hospital|season)\s+(?:is\s+(?:this|it)|are\s+(?:we|you)\s+(?:in|on|at)|(?:we|you)\s+are\s+(?:in|on|at))\b/i,
+  /\bwhat(?:'s|\s+is)\s+this\s+(?:place|building|room|town|city)\b/i,
+  /\bwhere\s+do\s+(?:you|we)\s+live\b/i,
+  /\bwhat(?:'s|\s+is)\s+(?:your|our)\s+(?:address|phone\s+number)\b/i,
+  /\bwho(?:'s|\s+is)\s+the\s+(?:president|prime\s+minister|king|queen|governor|mayor)\b/i,
+];
+/** "did you want …" is a polite way to ask what they want now; "what did you think of / enjoy / remember most …" asks them to share, not to retrieve. */
+const NOT_RECALL = '(?:want|need|mean|think|like|fancy|prefer|decide|make\\s+of|feel|have\\s+in\\s+mind|hope|expect|say\\s+you\\s+(?:want|need)|remember|recall|enjoy|love|miss)\\b';
+const RECALL_SUBJ = "(?:you|we|he|she|they|the\\s+[a-z]+|your\\s+[a-z]+|[A-Z][\\p{L}'-]+)";
+const RECALL_Q = [
+  // (no "i" flag: a capital marks a name as the subject, "What did Tyler say?")
+  new RegExp(`^\\s*(?:[Ss]o\\s+|[Aa]nd\\s+|[Tt]hen\\s+)?[Ww]hat\\s+did\\s+${RECALL_SUBJ}\\s+(?!${NOT_RECALL})`, 'u'),
+  /^\s*(?:so\s+|and\s+)?what\s+(?:have|had)\s+you\s+(?:had|eaten|done|been\s+doing|watched|seen|drunk)\b/i,
+];
 export function quizKind(q: string, profile?: Profile): QuizKind | null {
   if (!/\?\s*$/.test(q)) return null;
   if (NOW_Q.test(q)) return 'now';
@@ -998,7 +1027,11 @@ export function quizKind(q: string, profile?: Profile): QuizKind | null {
   if (who && profile && (findPerson(who[1], profile) || isPartnerName(who[1], profile))) return 'identity';
   // "What do you remember about the trip?" asks them to share, not to retrieve one right answer: a normal card
   if (REMEMBER_Q.test(q) && !/\bwhat\s+(?:do|did)\s+you\s+(?:remember|recall)\s+(?:about|of|most|best)\b/i.test(q)) return 'remember';
+  const s = stripAddress(q);
+  if (PLACE_Q.some((re) => re.test(s))) return 'place';
   if (FACT_TARGET.some((re) => re.test(q))) return 'fact';
+  // a recall question in which the partner names real options ("…, soup or a sandwich?") is a choice, not a test
+  if (RECALL_Q.some((re) => re.test(s)) && !codeOptions(q, profile)) return 'recall';
   return null;
 }
 /** Rule 9: a question that asks the person to retrieve a fact, a name or the date is a test, not a conversation. */
@@ -1053,6 +1086,8 @@ export function quizRephrase(q: string, partnerName: string, now = new Date(), p
     const date = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
     return `It's ${day} today, ${date}.`;
   }
+  if (k === 'place') return /\b(?:president|prime\s+minister|king|queen|governor|mayor|season|address|phone\s+number|live)\b/i.test(q) ? "Say it yourself: \"It's …\"." : "Say where you are: \"We're at …\".";
+  if (k === 'recall') return "If you know, say it: \"You …\". If you don't know either, ask yes / no about one real thing at a time: \"Was it …?\"";
   if (k === 'remember' && !FACT_TARGET.some((re) => re.test(q)) && !/\b(?:who|what|which|where|how)\b/i.test(q.replace(/^.*?\b(?:remember|recall)\b/i, ''))) {
     // reminiscence: share the memory instead of asking whether they have it
     const m = /\b(?:remember|recall|mind)\s+(.*?)\s*[?,]*\s*$/i.exec(q);
@@ -1299,6 +1334,8 @@ const IDENTITY_Q_LOOSE = /\bwho(?:'s|\s+is)\s+(?:this|that)\b|\bwho\s+am\s+i\b|\
  */
 export function recognitionPool(q: string, profile: Profile): { items: string[]; source: string } | null {
   const s = stripVocative(q);
+  // where they are now, or what happened earlier: nothing in About me is the answer, so there is no safe pool
+  if (['place', 'recall'].includes(quizKind(q, profile) ?? '')) return null;
   if (/\b(?:year|date|month|day|time|how\s+old|how\s+long|how\s+many|birthday|anniversary)\b/i.test(s)) return null;
   if (/^\s*(?:who|whom)\b/i.test(s) || /\bwho\s+(?:was|were|is|are|came|rang|phoned|visited)\b/i.test(s) || IDENTITY_Q_LOOSE.test(s)) {
     return { items: profile.people.map((p) => p.name).filter(Boolean), source: 'people from About me' };
