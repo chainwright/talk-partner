@@ -118,6 +118,8 @@ All AI inference goes through Firebase AI Logic. The code is in **`web/src/ai/fi
 | Stripped card | the question with every About-me word swapped for "Person A", "Place A"… and any other capitalised word (a name the family didn't list) swapped for "Name A" | `PREFER_IN_CLOUD` | Holds no profile data, so an offline fall-back to the device is safe. |
 | Pictures | one generic word | `ONLY_IN_CLOUD` | Not used in this build: pictures are bundled. |
 
+**Why `gemini-3.5-flash-lite` for the cloud step** (`core/models.ts`): the stripped question needs a topic and two or three words back, so the smallest current stable model is enough. It is not on the Firebase AI Logic list of models "no longer recommended" (release note of 5 Oct 2026: `gemini-3.5-flash`, `3.6-flash` and `3.7-flash`, not the Lite model), and from 1 Dec 2026 Firebase routes `gemini-2.5-flash` requests to it (release note of 2 Nov 2026). Read at <https://firebase.google.com/support/releases> on 16 Nov 2026.
+
 `inferenceSource` is read on every response: the AI badges come from it, and the private step rejects any
 answer that didn't run on the device. Questions that code can answer alone (yes / no, a plain either-or, feeling, pain,
 body map, memory questions) run no model. The model only proposes; code decides.
