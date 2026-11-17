@@ -1,0 +1,1246 @@
+[
+ {
+  "id": 1,
+  "q": "Would you like toast or cereal?",
+  "type": "either-or",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: either-or: the two options read from the question in code · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "toast",
+   "cereal"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 268,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 2,
+  "q": "Shall I open the window or the door?",
+  "type": "either-or",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: either-or: the two options read from the question in code · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "window",
+   "door"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 254,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 3,
+  "q": "Do you want to sit inside or outside?",
+  "type": "either-or",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: either-or: the two options read from the question in code · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "inside",
+   "outside"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 255,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 4,
+  "q": "Should we go today or tomorrow?",
+  "type": "either-or",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: either-or: the two options read from the question in code · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "today",
+   "tomorrow"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 256,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 5,
+  "q": "Red jumper or the green one?",
+  "type": "either-or",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: either-or: the two options read from the question in code · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "red jumper",
+   "green jumper"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 263,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 6,
+  "q": "Frank, do you want the big spoon or the small spoon?",
+  "type": "either-or",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: spoon · choice · big spoon, small spoon · either-or options: big spoon / small spoon · Kept: big spoon, small spoon · Decided by: either-or: the two options the model copied out of the question, passed the label check · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "big spoon",
+   "small spoon"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3904,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device",
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 7,
+  "q": "Do you want to watch Wheel of Fortune or the Packers game?",
+  "type": "either-or",
+  "ok": false,
+  "okWithSealedLabel": false,
+  "why": "The private step proposed: Packers game · choice · Packers game, Wheel of Fortune · either-or options: Packers game / Wheel of Fortune · Kept: Packers game, Wheel of Fortune · From About me (never sent): Wheel of Fortune · Decided by: either-or: the two options the model copied out of the question, passed the label check · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Packers game",
+   "Wheel of Fortune"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3709,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 8,
+  "q": "Shall we ring Tyler or Jenny first?",
+  "type": "either-or",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · From About me (never sent): Tyler, Jenny · Decided by: either-or: the two options read from the question in code · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Tyler",
+   "Jenny"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 259,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 9,
+  "q": "Would you rather have a bath or a shower tonight?",
+  "type": "either-or",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: bath shower · choice · bath, shower · Kept: bath, shower · Decided by: either-or: the two options read from the question in code · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "bath",
+   "shower"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "Made in code (AI answer not used)",
+  "ms": 3302,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 10,
+  "q": "Do you want your tablets now or after lunch?",
+  "type": "either-or",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: either-or: the two options read from the question in code · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "now",
+   "after lunch"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 263,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 11,
+  "q": "Is it too hot or too cold in here?",
+  "type": "either-or",
+  "ok": false,
+  "okWithSealedLabel": false,
+  "why": "The private step proposed: temperature · choice · too hot, too cold · Kept: hot, cold in here · Dropped: too hot (either-or: only the two options the question names), too cold (either-or: only the two options the question names) · Decided by: either-or: the two options read from the question in code · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "hot",
+   "cold in here"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "Made in code (AI answer not used)",
+  "ms": 3098,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 12,
+  "q": "Shall I make chili, or would you rather have pot roast?",
+  "type": "either-or",
+  "ok": false,
+  "okWithSealedLabel": false,
+  "why": "The private step proposed: pot roast · choice · chili, pot roastθρω, lake · Kept: make chili, have pot roast · Dropped: chili (either-or: only the two options the question names), pot roastθρω (either-or: only the two options the question names), lake (either-or: only the two options the question names) · Decided by: either-or: the two options read from the question in code · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "make chili",
+   "have pot roast"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "Made in code (AI answer not used)",
+  "ms": 3306,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 13,
+  "q": "Do you want me to drive, or shall we take the bus?",
+  "type": "either-or",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: drive · yesno · yes, no · either-or options: drive / take the bus · Kept: drive, take the bus · Dropped: yes (either-or: only the two options the question names), no (either-or: only the two options the question names) · Decided by: either-or: the two options the model copied out of the question, passed the label check · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "drive",
+   "take the bus"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3303,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 14,
+  "q": "Soup or a sandwich for lunch?",
+  "type": "either-or",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: either-or: the two options read from the question in code · Headline: the shared topic of the two options",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "soup",
+   "sandwich"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 258,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 15,
+  "q": "Are you cold?",
+  "type": "yes-no",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a yes / no question: a fixed card, whatever the model said · Headline: the question's own words",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 263,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 16,
+  "q": "Do you want the light off?",
+  "type": "yes-no",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a yes / no question: a fixed card, whatever the model said · Headline: the question's own words",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 260,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 17,
+  "q": "Is the telly too loud?",
+  "type": "yes-no",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a yes / no question: a fixed card, whatever the model said · Headline: the question's own words",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 259,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 18,
+  "q": "Did you sleep well?",
+  "type": "yes-no",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a yes / no question: a fixed card, whatever the model said · Headline: the question's own words",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 261,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 19,
+  "q": "Shall we go out or not?",
+  "type": "yes-no",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a yes / no question: a fixed card, whatever the model said · Headline: the question's own words",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 259,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 20,
+  "q": "Have you taken your tablets?",
+  "type": "yes-no",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a yes / no question: a fixed card, whatever the model said · Headline: the question's own words",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 260,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 21,
+  "q": "Can I get you a drink?",
+  "type": "yes-no",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a yes / no question: a fixed card, whatever the model said · Headline: the question's own words",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 260,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 22,
+  "q": "Would you like a blanket?",
+  "type": "yes-no",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a yes / no question: a fixed card, whatever the model said · Headline: the question's own words",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 260,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 23,
+  "q": "Are you tired, love?",
+  "type": "yes-no",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a yes / no question: a fixed card, whatever the model said · Headline: the question's own words",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 258,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 24,
+  "q": "Do you want Jenny to come on Sunday?",
+  "type": "yes-no",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a yes / no question: a fixed card, whatever the model said · Headline: the question's own words",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 258,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 25,
+  "q": "How are you feeling this morning?",
+  "type": "feeling",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a feeling question: a fixed scale, whatever the model said · Headline: the question's own words",
+  "kind": "feeling",
+  "blocked": false,
+  "answers": [
+   "good",
+   "so-so",
+   "bad"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 260,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 26,
+  "q": "How was the physio?",
+  "type": "feeling",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a feeling question: a fixed scale, whatever the model said · Headline: the question's own words",
+  "kind": "feeling",
+  "blocked": false,
+  "answers": [
+   "good",
+   "so-so",
+   "bad"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 257,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 27,
+  "q": "How did you sleep?",
+  "type": "feeling",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a feeling question: a fixed scale, whatever the model said · Headline: the question's own words",
+  "kind": "feeling",
+  "blocked": false,
+  "answers": [
+   "good",
+   "so-so",
+   "bad"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 259,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 28,
+  "q": "How was your lunch?",
+  "type": "feeling",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a feeling question: a fixed scale, whatever the model said · Headline: the question's own words",
+  "kind": "feeling",
+  "blocked": false,
+  "answers": [
+   "tasty",
+   "plain"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 258,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 29,
+  "q": "How do you feel about moving the bed downstairs?",
+  "type": "feeling",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a feeling question: a fixed scale, whatever the model said · Headline: the question's own words",
+  "kind": "feeling",
+  "blocked": false,
+  "answers": [
+   "good",
+   "so-so",
+   "bad"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 261,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 30,
+  "q": "How was the visit with Tyler?",
+  "type": "feeling",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a feeling question: a fixed scale, whatever the model said · Headline: the question's own words",
+  "kind": "feeling",
+  "blocked": false,
+  "answers": [
+   "good",
+   "so-so",
+   "bad"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 260,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 31,
+  "q": "How's the new chair?",
+  "type": "feeling",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a feeling question: a fixed scale, whatever the model said · Headline: the question's own words",
+  "kind": "feeling",
+  "blocked": false,
+  "answers": [
+   "good",
+   "so-so",
+   "bad"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 262,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 32,
+  "q": "How was church today?",
+  "type": "feeling",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a feeling question: a fixed scale, whatever the model said · Headline: the question's own words",
+  "kind": "feeling",
+  "blocked": false,
+  "answers": [
+   "good",
+   "so-so",
+   "bad"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 260,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 33,
+  "q": "How bad is the pain?",
+  "type": "pain",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a pain level: a fixed scale, never a model · Headline: fixed for this kind of card",
+  "kind": "pain",
+  "blocked": false,
+  "answers": [
+   "a little",
+   "a lot"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 260,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 34,
+  "q": "How much does it hurt?",
+  "type": "pain",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a pain level: a fixed scale, never a model · Headline: fixed for this kind of card",
+  "kind": "pain",
+  "blocked": false,
+  "answers": [
+   "a little",
+   "a lot"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 260,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 35,
+  "q": "How bad is your headache right now?",
+  "type": "pain",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a pain level: a fixed scale, never a model · Headline: fixed for this kind of card",
+  "kind": "pain",
+  "blocked": false,
+  "answers": [
+   "a little",
+   "a lot"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 259,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 36,
+  "q": "Where is the pain?",
+  "type": "body",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a body question: the fixed body map, never a model · Headline: fixed for this kind of card",
+  "kind": "body",
+  "blocked": false,
+  "answers": [
+   "head",
+   "chest"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 261,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 37,
+  "q": "Where does it hurt today?",
+  "type": "body",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a body question: the fixed body map, never a model · Headline: fixed for this kind of card",
+  "kind": "body",
+  "blocked": false,
+  "answers": [
+   "head",
+   "chest"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 260,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 38,
+  "q": "Where is it sore?",
+  "type": "body",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a body question: the fixed body map, never a model · Headline: fixed for this kind of card",
+  "kind": "body",
+  "blocked": false,
+  "answers": [
+   "head",
+   "chest"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "badge": "No AI needed",
+  "ms": 260,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 39,
+  "q": "What day is it today?",
+  "type": "memory",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a memory question: no card, a line to say instead · Headline: the question's own words",
+  "kind": "no-quiz",
+  "blocked": true,
+  "answers": [],
+  "escape": null,
+  "coach": "You know this one: tell, don't test.",
+  "badge": "No card",
+  "ms": 263,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 40,
+  "q": "Do you remember when Tyler was born?",
+  "type": "memory",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a memory question: no card, a line to say instead · Headline: the question's own words",
+  "kind": "no-quiz",
+  "blocked": true,
+  "answers": [],
+  "escape": null,
+  "coach": "You know this one: tell, don't test.",
+  "badge": "No card",
+  "ms": 260,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 41,
+  "q": "What's my name?",
+  "type": "memory",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a memory question: no card, a line to say instead · Headline: the question's own words",
+  "kind": "no-quiz",
+  "blocked": true,
+  "answers": [],
+  "escape": null,
+  "coach": "You know this one: tell, don't test.",
+  "badge": "No card",
+  "ms": 258,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 42,
+  "q": "What did you have for breakfast?",
+  "type": "memory",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "No model answer reached the rules · Decided by: a memory question: no card, a line to say instead · Headline: the question's own words",
+  "kind": "no-quiz",
+  "blocked": true,
+  "answers": [],
+  "escape": null,
+  "coach": "Tell, don't test: say it if you know it. If you don't know either, ask yes / no about one real thing at a time.",
+  "badge": "No card",
+  "ms": 259,
+  "sdk": [],
+  "outside": []
+ },
+ {
+  "id": 43,
+  "q": "Who do you want to ring this afternoon?",
+  "type": "who",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: ring · choice · Jenny, Tyler, Carol · Kept: Jenny, Tyler · Dropped: Carol (lives here: never offered for a call or a visit) · From About me (never sent): Jenny, Tyler · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3700,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 44,
+  "q": "Who should we invite for Sunday dinner?",
+  "type": "who",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: sunday dinner · choice · Jenny, Tyler, Mom · Kept: Jenny, Tyler · Dropped: Mom (a name that is not in About me) · From About me (never sent): Jenny, Tyler · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3298,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 45,
+  "q": "Who would you like to visit this week?",
+  "type": "who",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: visit · choice · Jenny, Tyler, Carol · Kept: Jenny, Tyler · Dropped: Carol (lives here: never offered for a call or a visit) · From About me (never sent): Jenny, Tyler · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3299,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 46,
+  "q": "Who shall I text about the appointment?",
+  "type": "who",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: text · choice · Jenny, Tyler, doctor · Kept: Jenny, Tyler · Dropped: doctor (on the next page: this card shows two at a time) · From About me (never sent): Jenny, Tyler · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3092,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 47,
+  "q": "Who do you want to sit with at the wedding?",
+  "type": "who",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: wedding · choice · Jenny, Tyler, Carol · Kept: Jenny, Tyler · Dropped: Carol (on the next page: this card shows two at a time) · From About me (never sent): Jenny, Tyler · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3296,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 48,
+  "q": "Who should drive us on Friday?",
+  "type": "who",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: drive Friday · choice · Carol, Jenny, Tyler · Kept: you, Jenny · Dropped: Tyler (on the next page: this card shows two at a time) · From About me (never sent): Jenny · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "you",
+   "Jenny"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3295,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 49,
+  "q": "Where do you want to go this afternoon?",
+  "type": "where",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: go today · choice · the lake, church, hardware store · Kept: the lake, church · Dropped: hardware store (on the next page: this card shows two at a time) · From About me (never sent): the lake, church · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "the lake",
+   "church"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3098,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 50,
+  "q": "Where shall we go on Saturday?",
+  "type": "where",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: Saturday · choice · the lake, church, hardware store · Kept: the lake, church · Dropped: hardware store (on the next page: this card shows two at a time) · From About me (never sent): the lake, church · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "the lake",
+   "church"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3095,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 51,
+  "q": "Where would you like to sit?",
+  "type": "where",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: sit down · choice · chair, sofa, floor · Kept: chair, sofa · Dropped: floor (on the next page: this card shows two at a time) · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "chair",
+   "sofa"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3096,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 52,
+  "q": "Where do you want to eat your dinner?",
+  "type": "where",
+  "ok": false,
+  "okWithSealedLabel": false,
+  "why": "The private step proposed: dinner · choice · pot roast, chili · Added by code: lake (places from About me), church (places from About me) · Dropped: pot roast (an About me entry of another kind than the question asks for), chili (an About me entry of another kind than the question asks for) · From About me (never sent): lake, church · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "church"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3097,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 53,
+  "q": "Where should we go for a walk?",
+  "type": "where",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: walk · choice · the lake, church, hardware store · Kept: the lake, church · Dropped: hardware store (on the next page: this card shows two at a time) · From About me (never sent): the lake, church · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "the lake",
+   "church"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3093,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 54,
+  "q": "Where would you like to go for your birthday?",
+  "type": "where",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: birthday · choice · lake, church, hardware store · Kept: lake, church · Dropped: hardware store (on the next page: this card shows two at a time) · From About me (never sent): lake, church · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "church"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3295,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 55,
+  "q": "What would you like for supper?",
+  "type": "what",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: supper · choice · pot roast, chili · Kept: pot roast, chili · From About me (never sent): pot roast, chili · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "pot roast",
+   "chili"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3091,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 56,
+  "q": "What do you want to watch tonight?",
+  "type": "what",
+  "ok": false,
+  "okWithSealedLabel": false,
+  "why": "The private step proposed: watch tonight · choice · Packers, Wheel of Fortune, Johnny Cash · Kept: Packers, Wheel of Fortune · Dropped: Johnny Cash (an About me entry of another kind than the question asks for) · From About me (never sent): Wheel of Fortune · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Packers",
+   "Wheel of Fortune"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3302,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 57,
+  "q": "What music shall I put on?",
+  "type": "what",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: music · choice · Johnny Cash, Packers games, Wheel of Fortune · Kept: Johnny Cash · Added by code: radio (music from About me and the radio) · Dropped: Packers games (an About me entry of another kind than the question asks for), Wheel of Fortune (an About me entry of another kind than the question asks for) · From About me (never sent): Johnny Cash · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Johnny Cash",
+   "radio"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3295,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 58,
+  "q": "What do you want to do tomorrow morning?",
+  "type": "what",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: tomorrow morning · choice · lake, church, hardware store · Kept: lake, church · Dropped: hardware store (on the next page: this card shows two at a time) · From About me (never sent): lake, church · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "church"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3096,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 59,
+  "q": "What should we get Tyler for his birthday?",
+  "type": "what",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: Tyler birthday · choice · book, game, Packers game · either-or options: book / game / Packers game · Kept: book, game · Dropped: Packers game (overlaps another choice) · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "book",
+   "game"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3496,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ },
+ {
+  "id": 60,
+  "q": "What do you fancy for breakfast?",
+  "type": "what",
+  "ok": true,
+  "okWithSealedLabel": true,
+  "why": "The private step proposed: breakfast · choice · cereal, toast, eggs · Kept: cereal, toast · Dropped: eggs (on the next page: this card shows two at a time) · Decided by: the model proposed; code checked every choice · Headline: the model's topic",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "cereal",
+   "toast"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "badge": "On this computer",
+  "ms": 3296,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outside": []
+ }
+]

@@ -41,8 +41,9 @@ so a model has to propose them. They are where the two steps of the hybrid give 
 
 The second and third rows are the same question answered by the two steps: general choices from the cloud, the
 family's own from this computer. On our labelled set of 60 questions, 18 are open like these: rules alone make no card
-for any of them, and the on-device step made a matching card for 15 or 16 (four runs), 12 or 13 of them with the family's own entries
-(`devlog/evidence_r2/heldout_r2_NOTES.md`; our labels, not a trial with people).
+for any of them, and the on-device step made a matching card for 16 of them in each of three runs at commit `c346d3d`
+(17 Nov), 13 of them with the family's own entries (`devlog/evidence_r8/heldout_at_c346d3d/`; our labels, not a trial
+with people, and the rules have been changed since the questions were written, so it is not a held-out set).
 
 **who to call tonight?** (the third chip) reads *Jenny / Tyler* with either step: with cloud help only, the cloud says
 "family / a friend" and code on this computer puts in the people About me names. It is a rule doing the work there,
@@ -56,7 +57,8 @@ has the same two questions answered by the cloud alone) and, earlier, `devlog/on
 **If you have five minutes more**
 - `npm run check` (lint, types, 1703 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings).
 - `npm run eval`: the labelled set of 60 questions against the rules alone (it writes its report to a new folder under
-  `devlog/eval_runs/`). What the on-device model adds on the 18 open questions, and our reading of the cards:
+  `devlog/eval_runs/`): 40 of 42 code-decided questions, 0 of 18 open. What the on-device model adds on the 18 open
+  questions: `devlog/evidence_r8/heldout_at_c346d3d/` (three runs); our reading of the cards of the first runs:
   `devlog/evidence_r2/heldout_r2_NOTES.md`.
 - `CLAIMS.md`: every claim we make, with its status. `EVIDENCE.md`: where each one is proved.
 - `DISCLOSURE.md`: what existed before the contest period.
