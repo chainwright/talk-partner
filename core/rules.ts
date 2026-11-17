@@ -147,6 +147,10 @@ export function positiveForm(q: string): string | null {
   return null;
 }
 
+/** "nothing", "neither", "just quiet", "no one": a real choice at the end of a list of things, shown as its own tile. */
+const NONE_OPTION = /^(?:just\s+|maybe\s+)?(nothing|neither|none|no\s+one|nobody|quiet|peace\s+and\s+quiet|silence|nowhere)(?:\s+(?:at\s+all|for\s+now|of\s+them|of\s+those|of\s+these|today|tonight|yet|just\s+yet|right\s+now|now))?$/i;
+/** True for the "nothing / neither / quiet" tile of a list. */
+export const isNoneOption = (label: string): boolean => NONE_OPTION.test(label.trim());
 const OPT_OUT = /\s*,?\s+or\s+(?:is\s+that\s+a\s+no|would\s+you\s+rather\s+not|(?:do|would)\s+you\s+not|don't\s+you|not\s+really|not\s+bothered|are\s+you\s+(?:fine|ok|okay|alright|all\s+right|good|happy|sorted|set)(?:\s+(?:as\s+you\s+are|for\s+now|as\s+it\s+is|without|without\s+one))?|is\s+it\s+(?:fine|ok|okay|alright|all\s+right)(?:\s+as\s+it\s+is)?|shall\s+i\s+leave\s+it|should\s+i\s+leave\s+it|leave\s+it|never\s+mind|nothing(?:\s+for\s+now)?)\s*\?\s*$/i;
 /**
  * "Do you want to rest, or is that a no?", "Something to drink, or are you fine?": one proposal and a way to decline,
@@ -159,6 +163,9 @@ export function optOutTrim(q: string): string | null {
   if (!m) return null;
   const first = s.slice(0, m.index).replace(/[\s,]+$/, '');
   if (first.split(/\s+/).length < 2 || /\bor\b/i.test(first)) return null;
+  // "the radio on, the TV on, or nothing?": two things are offered and "nothing" is the third choice, not a "no" to
+  // one proposal (set D, 16 Nov: it became a yes / no card about the radio)
+  if (NONE_OPTION.test(m[0].replace(/^[\s,]*or\s+/i, '').replace(/\s*\?\s*$/, '')) && first.split(/\s*,\s*/).filter((x) => x && !ADDRESS.has(lc(x))).length >= 2) return null;
   const t = stripVocative(first);
   return AUX_START.test(t) || OFFER_START.test(t) ? `${first}?` : null;
 }
@@ -383,6 +390,19 @@ function expandFromQuestion(label: string, q: string): string {
   return /^[a-z]/.test(label) && /^[A-Z][a-z]/.test(m[0]) ? m[0].charAt(0).toLowerCase() + m[0].slice(1) : m[0];
 }
 
+/**
+ * A label takes the capitals the question gave it in mid-sentence ("Wheel of Fortune", "Jenny did it"): shortening a
+ * side lowers its first letter, which is right for the word that only opens the sentence and wrong for a name.
+ */
+function questionCase(label: string, q: string): string {
+  if (!/^[a-z]/.test(label)) return label;
+  const m = new RegExp(`(?<![\\p{L}\\p{N}])${esc(label)}(?![\\p{L}\\p{N}])`, 'iu').exec(q);
+  if (!m || m[0] === label) return label;
+  // the capital of the first word of the question (or of a sentence in it) is not the word's own
+  const before = q.slice(0, m.index);
+  return /(?:^|[.?!:;])\s*["'“‘(-]*\s*$/.test(before) || VOCATIVE.test(before) && !before.replace(VOCATIVE, '').trim() ? label : m[0];
+}
+
 /** "I paid it" / "you paid it" flip when the partner reads them aloud: use the names when About me has them. */
 function personSide(label: string, profile?: Profile): string {
   if (!profile) return label;
@@ -418,6 +438,7 @@ function checkSide(side: string, q: string, tail: string | null, profile?: Profi
   if (!s) return null;
   if (LABEL_BAD.test(s) || LEFTOVER_START.test(s) || LEFTOVER_END.test(s) || PRONOUN_ONLY.test(s) || NEG.test(s)) return null;
   s = expandFromQuestion(s, q);
+  s = questionCase(s, q);
   if (profile) s = snapToQuestionItem(s, q, profile);
   s = personSide(s, profile);
   if (s.split(/\s+/).length > 5) return null;
@@ -459,7 +480,7 @@ export function codePair(q: string, profile?: Profile): [string, string] | null 
 }
 
 const QUESTION_LEAD = new RegExp(`^(?:${AUX}|want|wanna|fancy|shall|should|would|will|need|up for|you|what|where|who|when|which|how|why|let's)\\b`, 'i');
-const LIST_VERB = /^(?:put\s+on|put|watch|make|cook|have|get|wear|play|listen\s+to|go\s+to|visit|ring|call|phone|try|read|eat|drink|take|bring|buy|use|see|find|fetch|do|pick)\s+(?:you\s+|us\s+|me\s+)?(?:the\s+|a\s+|an\s+|some\s+)?/i;
+const LIST_VERB = /^(?:put\s+on|put|watch|make|cook|have|get|wear|play|listen\s+to|go\s+to|visit|ring|call|phone|text|ask|invite|message|email|tell|order|try|read|eat|drink|take|bring|buy|use|see|find|fetch|do|pick)\s+(?:you\s+|us\s+|me\s+)?(?:the\s+|a\s+|an\s+|some\s+)?/i;
 const LIST_LEAD = new RegExp(`^(?:${AUX}|want|wanna|fancy|shall|should|would|will|need|up for)\\b`, 'i');
 /**
  * Three or more options named in the question ("Soup, a sandwich, or leftovers for lunch?", "Tea, coffee or juice?"):
@@ -483,7 +504,12 @@ export function orList(q: string, profile?: Profile): string[] | null {
   if (isOrNot(s) || optOutTrim(s)) return null;
   const m = /^(.*\S)\s*,?\s+or\s+([^,?]+?)\s*\?\s*$/i.exec(s);
   if (!m) return null;
-  let head = m[1].replace(/,\s*$/, '').split(/\s*,\s*/).map((x) => x.trim()).filter(Boolean);
+  // the last item may be "nothing" / "neither" / "just quiet": a real choice, kept as its own tile (set D, 16 Nov:
+  // "Jen or Tyler, or neither?" lost "neither", "…, or just quiet?" lost an option)
+  const none = NONE_OPTION.exec(m[2].trim());
+  // "X, or Y, or Z": each "or" only joins the list. "X or Y, or neither": the first piece holds two of the options.
+  let head = m[1].replace(/,\s*$/, '').split(/\s*,\s*/).map((x) => x.trim().replace(/^or\s+/i, '')).filter(Boolean);
+  if (head.length === 1 && none) head = head[0].split(/\s+or\s+/i).map((x) => x.trim()).filter(Boolean);
   // a lead-in before the question itself ("For lunch, do you want soup, …") is not an option
   let k = -1;
   head.forEach((x, i) => { if (LIST_LEAD.test(x)) k = i; });
@@ -492,14 +518,21 @@ export function orList(q: string, profile?: Profile): string[] | null {
   // a list is short, verbless pieces; "Shall we walk, or stay in, or …" clauses are not read here
   if (!head.slice(1).every((x) => x.split(/\s+/).length <= 4 && !ASIDE.test(x) && !LIST_LEAD.test(x) && !/\bor\b/i.test(x))) return null;
   if (LIST_LEAD.test(m[2]) || LABEL_BAD.test(m[2])) return null;
-  const items = [...head, m[2]].map((x) => clauseOption(x));
+  const items = [...head, ...(none ? [] : [m[2]])].map((x) => clauseOption(x));
   // the verb the whole list hangs on is not part of the first option ("Shall I put on cricket, westerns, or …")
   const bare = items[0].replace(LIST_VERB, '');
   if (bare && !items.slice(1).some((x) => LIST_VERB.test(x))) items[0] = bare;
   // nor is a tail that belongs to all of them part of the last ("… or ice cream with it?")
   items[items.length - 1] = items[items.length - 1].replace(/\s+(?:with|for|on|in|to)\s+(?:it|that|them|this|you|me|us)$/i, '');
+  // "the radio on, the TV on": "on" says the thing is switched on; the option is the thing ("turn it on" keeps it)
+  for (let i = 0; i < items.length; i++) {
+    const w = items[i].split(/\s+/);
+    if (w.length > 1 && /^(?:on|off)$/i.test(w[w.length - 1]) && !PHRASAL.has(lc(w[w.length - 2]))) items[i] = w.slice(0, -1).join(' ');
+  }
   if (items.some((x) => !x || x.split(/\s+/).length > 4)) return null;
-  return checkSides(items, q, profile, true);
+  const checked = checkSides(items, q, profile, true);
+  if (!checked) return null;
+  return none ? [...checked, lc(none[1]).replace(/\s+/g, ' ')] : checked;
 }
 
 /** The options code reads from the question: a list of three or more, else the either-or pair. */
@@ -547,9 +580,12 @@ export function validTopic(t: string | undefined, options: string[] = []): strin
  * words left once the two sides are removed ("this weekend", "lunch"); a category both sides belong to ("drink");
  * the model's topic when it names neither side; the pair itself when short; else "which one".
  */
-export function orHeadline(q: string, pair: string[], profile?: Profile, modelTopic = ''): string {
+export function orHeadline(q: string, all: string[], profile?: Profile, modelTopic = ''): string {
   let s = q.replace(/[?.!]+$/, '');
-  for (const side of pair) {
+  // the "nothing / neither" tile of a list is taken out of the question like any side, but the topic is what the
+  // other sides share
+  const pair = all.some(isNoneOption) ? all.filter((x) => !isNoneOption(x)) : all;
+  for (const side of all) {
     const re = new RegExp(`\\b${esc(side)}(?:'s|s|es)?\\b`, 'i');
     if (re.test(s)) s = s.replace(re, ' ');
     else for (const w of words(side)) s = s.replace(new RegExp(`\\b${esc(w)}(?:'s|s|es)?\\b`, 'gi'), ' ');
@@ -756,7 +792,8 @@ export function escapeFor(q: string, answers: string[] = [], profile?: Profile):
   q = stripVocative(q);
   if (/^\s*(who|whom)\b/i.test(q) || /^\s*which\s+(person|one of them)\b/i.test(q)) return 'someone else';
   if (/^\s*where\b/i.test(q)) return 'somewhere else';
-  if (profile && answers.length >= 2 && answers.every((a) => findPerson(a, profile) || isPartnerName(a, profile))) return 'someone else';
+  const real = answers.filter((a) => !NONE_OPTION.test(a));
+  if (profile && real.length >= 2 && real.every((a) => findPerson(a, profile) || isPartnerName(a, profile))) return 'someone else';
   return 'something else';
 }
 

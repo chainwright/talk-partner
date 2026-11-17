@@ -284,7 +284,7 @@ export function assemble(
     answers = [...pair]; // rule 3: exactly the options the partner offered
     // §2.5: the shared topic, never one of the options. The model's topic may be the headline only when the options
     // are the model's too: a card read in code says "No AI needed", so nothing of a model's answer may be on it
-    headline = orHeadline(asked, pair, profile, pairFrom === 'model' ? o?.topic : ''); 
+    headline = orHeadline(asked, pair, profile, pairFrom === 'model' ? o?.topic : '');
     headlineFrom = W.headlineFrom.pair;
     decided = pairFrom === 'model' ? W.decidedBy.pairModel : W.decidedBy.pairCode;
     if (o) {

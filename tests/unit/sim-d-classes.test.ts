@@ -10,7 +10,7 @@ import { cloudRetryWait, makeCard, quizOverrideCard } from '../../core/pipeline'
 import { cardReceipt, sentLine } from '../../core/receipt';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
 import { findLeaks, restoreNames, stripQuestion } from '../../core/strip';
-import { quizKind, quizRephrase } from '../../core/rules';
+import { optOutTrim, orList, quizKind, quizRephrase } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -340,5 +340,52 @@ describe('D-2. "when did it start, A or B?" about what only the person can feel 
   });
   it.each(['When did we move to this house, 1980 or 1985?', 'When did Leo start school?', 'When did we get the cat?', "When is Grace's birthday, May or June?"])('a fact the partner knows is still a test: %s', (q) => {
     expect(quizKind(q, PROFILE)).toBe('fact');
+  });
+});
+
+describe('D-3. three options where the last is "nothing / neither / quiet" keep all three; never a yes / no card', () => {
+  const LISTS: [string, string[], string][] = [
+    ['Shall I put on cricket, a western, or nothing?', ['cricket', 'western', 'nothing'], 'something else'],
+    ['Do you want Elvis on, the radio on, or just quiet?', ['Elvis', 'radio', 'quiet'], 'something else'],
+    ['Should I text Grace or Leo, or neither?', ['Grace', 'Leo', 'neither'], 'someone else'],
+    ['Would you like the window open, the heater on, or neither?', ['window open', 'heater', 'neither'], 'something else'],
+    ['Tea, or cocoa, or nothing for now?', ['tea', 'cocoa', 'nothing'], 'something else'],
+    ['Shall we ask Peter, Grace, or no one?', ['Peter', 'Grace', 'no one'], 'someone else'],
+    ['Do you want the opera on, or the cooking shows, or just quiet?', ['opera', 'cooking shows', 'quiet'], 'something else'],
+  ];
+  for (const [state, engine] of STATES) {
+    it.each(LISTS)(`${state}: %s`, async (q, want, escape) => {
+      const e = engine();
+      const card = await ask(q, e);
+      expect(card.kind).toBe('choice');
+      expect(answers(card)).toEqual(want);
+      expect(card.choices.filter((c) => c.role === 'escape').map((c) => c.label)).toEqual([escape]);
+      expect(e.calls).toEqual([]); // read in code: no model, nothing sent
+      // the line to say names every tile, in order, and the question is said as typed (no "or …" cut off)
+      expect(card.say.startsWith(q)).toBe(true);
+      for (const w of want) expect(card.say.toLowerCase()).toContain(w.toLowerCase());
+      expect(card.notes).not.toContain(COPY.notes.optOutAsked);
+    });
+  }
+  it('at the largest tiles two are shown and the third, also "nothing", waits on the next page', async () => {
+    const card = await ask('Shall I put on cricket, a western, or nothing?', new Scripted(null), 'most');
+    expect(answers(card)).toEqual(['cricket', 'western']);
+    expect(everyPage(card)).toEqual(['cricket', 'western', 'nothing']);
+  });
+  it('the headline is about the things offered, never the "nothing" tile', async () => {
+    const card = await ask('Tea, or cocoa, or nothing for now?', new Scripted(null));
+    expect(card.topic).toBe('drink');
+  });
+  it.each([
+    ['Do you want a jumper, or nothing?', 'Do you want a jumper?'],
+    ['Shall I fetch the paper, or is that a no?', 'Shall I fetch the paper?'],
+    ['Something to eat, love, or nothing?', null],
+  ])('one thing offered and a way to decline is still one yes / no question: %s', async (q, plain) => {
+    if (plain) {
+      expect(optOutTrim(q)).toBe(plain);
+      const card = await ask(q, new Scripted(null));
+      expect(card.kind).toBe('yesno');
+    }
+    expect(orList(q, PROFILE)).toBeNull();
   });
 });
