@@ -357,6 +357,7 @@ function partnerScreen(): string {
 <main class="layout${state.first ? ' first' : ''}">
   <section class="partner" aria-label="Partner">
     <p class="tagline">${C.app.tagline}</p>
+    <p class="tagline-sub">${C.app.taglineSub}</p>
     <p id="status" class="status">${statusLine()}</p>
     ${state.demo ? `<p class="sample">${C.app.sample}</p>` : ''}
     <form id="ask"><input id="q" autocomplete="off" placeholder="${C.ask.placeholder}" aria-label="${C.ask.label}" value="${esc(state.lastQuestion)}"><button id="make" type="submit" ${state.busy ? 'disabled' : ''}>${state.busy ? C.ask.making : C.ask.make}</button></form>

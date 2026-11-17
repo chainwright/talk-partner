@@ -201,6 +201,42 @@ describe('5. the one number of the receipt says "0 bytes left this computer" onl
   });
 });
 
+describe('6. the opening line: "It corrects how you ask. It never answers for them."', () => {
+  it('is the line on the partner screen, with what the app does every time under it', () => {
+    expect(COPY.app.tagline).toBe('It corrects how you ask. It never answers for them.');
+    expect(COPY.app.taglineSub).toMatch(/written choices they can point to/);
+  });
+  it('corrects how you ask: two questions in one and a memory test each get their coaching line, read in code', async () => {
+    const two = await makeCard('How was therapy today, and did you eat?', env(new E('unconfigured')));
+    expect(two.coach).toBe(COPY.coach.twoQuestions);
+    const quiz = await makeCard('What year did we get married?', env(new E('unconfigured')));
+    expect(quiz.coach).toBe(COPY.coach.test);
+    // and a question with nothing to correct gets no coaching line: the correction is never decoration
+    expect((await makeCard('Do you want coffee or tea?', env(new E('unconfigured')))).coach ?? null).toBeNull();
+  });
+  it('the correction is for the partner: nothing the person reads corrects them', () => {
+    const personLines = JSON.stringify(COPY.person);
+    expect(personLines).not.toMatch(/wrong|mistake|try again|incorrect|correct/i);
+    expect(Object.values(COPY.coach).join(' ')).not.toMatch(/\b(?:they|them|he|she)\b.*\b(?:wrong|mistake)\b/i);
+  });
+  it('never answers for them: only a tap on the card picks a choice, and only a tap on the tick confirms it', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const main = readFileSync(join(__dirname, '..', '..', 'web/src/main.ts'), 'utf8');
+    const tap = main.slice(main.indexOf('function onPersonTap('), main.indexOf('async function addPhoto('));
+    const outside = main.replace(tap, '');
+    // outside the tap handler a choice is only ever cleared, and nothing is ever confirmed
+    expect([...outside.matchAll(/state\.picked = ([^;]+);/g)].map((m) => m[1]).filter((v) => v !== 'null')).toEqual([]);
+    expect(outside).not.toMatch(/state\.confirmed = true/);
+    expect([...outside.matchAll(/\bconfirmed: (\w+)/g)].map((m) => m[1]).filter((v) => v !== 'false' && v !== 'boolean')).toEqual([]);
+    // inside it, the one assignment is the tile that was tapped, and the confirmation hangs on the tick
+    expect([...tap.matchAll(/state\.picked = ([^;]+);/g)].map((m) => m[1]).sort()).toEqual(['ch', 'null']);
+    expect(tap).toMatch(/if \(t\.dataset\.confirm === 'yes'\) \{\s*state\.confirmed = true;/);
+    // and what they chose last time is a line for the partner, never a tile that is already chosen
+    expect(COPY.card.lastTime('yesterday', 'lake')).toMatch(/today's answer is theirs/);
+  });
+});
+
 describe('the welcome screen', () => {
   it('does not say that everything runs on this computer', () => {
     expect(COPY.welcome.local).not.toMatch(/everything/i);

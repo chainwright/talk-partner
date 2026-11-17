@@ -8,7 +8,11 @@
 const COPY = {
   app: {
     name: 'Talk Partner',
-    tagline: 'Turn your question into big written choices they can point to.',
+    // The opening line. First half: the coaching lines below (`coach`), shown where a rule can tell (two questions in
+    // one, a memory test, options that are not on the screen). Second half: no code picks or confirms a choice; only a
+    // tap on the card does (tests/unit/truth.test.ts pins both). The line under it says what the app does every time.
+    tagline: 'It corrects how you ask. It never answers for them.',
+    taglineSub: 'Turn your question into big written choices they can point to.',
     sample: 'Sample family: made up (Frank, and Carol asking).',
     nav: { about: (name: string) => (name ? `About ${name}` : 'About me'), cloud: 'Cloud help', how: 'How this works', judge: 'Judge mode', home: 'Back' },
   },
