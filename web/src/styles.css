@@ -273,6 +273,7 @@ details td, details th, .screen td, .screen th { border-top: 1px solid var(--lin
    Plays once per real event: main.ts puts `enter` on #app for the first draw after a new route or a new card and takes
    it off for every other redraw, so a status update or a tap never replays an entrance. The person's full-screen card
    only gets a short (280 ms) fade on white: motion there must never compete with reading.
+   - "Show to person": the card lifts off the desk to the whole screen (a view transition, at the end of this block).
    No decorative motion (the brand glyph is still). prefers-reduced-motion switches every animation off. */
 #app:not(.enter) *, #app:not(.enter) *::before, #app:not(.enter) *::after { animation-duration: 0s !important; animation-delay: 0s !important; }
 @keyframes tp-fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
@@ -294,6 +295,18 @@ main.welcome::after { transform-origin: left center; animation: ts-turn 1s .3s c
 .trace li:nth-child(3).used { animation-delay: .6s, .9s; } .trace li:nth-child(2).used { animation-delay: .3s, .6s; } .trace li:nth-child(1).used { animation-delay: 0s, .3s; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* "Show to person": lift the card. The white pane on the desk grows into the whole screen (and comes back down on the
+   way out) as a view transition on that one element; the desk fades under it. 250 ms, once per press. main.ts names
+   the card only while the transition runs, and does not start one at all under prefers-reduced-motion or in a browser
+   without view transitions: the screen then simply changes. */
+:root[data-lift] #person { view-transition-name: tp-card; }
+::view-transition-group(tp-card) { animation-duration: .25s; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
+::view-transition-old(tp-card), ::view-transition-new(tp-card) { animation-duration: .25s; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .25s; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
 
 /* while a card is being made: a plain line for the partner; on the person's side the ear, breathing slowly */

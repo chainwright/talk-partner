@@ -147,7 +147,15 @@ try {
       check('phone judge mode: the whole card (headline and every tile) is within the first two screens', pc.n >= 2 && pc.tiles <= 2 * 844, `lowest tile ends at ${pc.tiles}px of ${pc.page}px`);
     }
     // full-screen person view, then a tap and the confirm step
-    await click('[data-act="show"]');
+    // "Show to person" lifts the card: a view transition on the card itself, about 250 ms, then the full-screen card
+    const lifted = await js(`(async () => { const root = document.documentElement, t0 = performance.now(); document.querySelector('[data-act="show"]').click();
+      let seen = false, named = '', pseudo = 0, ms = -1;
+      for (let i = 0; i < 120; i++) { await new Promise((r) => requestAnimationFrame(r));
+        if (root.dataset.lift === '1') { seen = true; named = getComputedStyle(document.querySelector('#person')).viewTransitionName; pseudo = Math.max(pseudo, document.getAnimations().filter((a) => (a.effect?.pseudoElement ?? '').includes('view-transition')).length); }
+        else if (seen) { ms = Math.round(performance.now() - t0); break; } }
+      return { seen, named, pseudo, ms, full: !!document.querySelector('.person.full'), enter: document.querySelector('#app').classList.contains('enter') }; })()`);
+    check(`${s} "Show to person" lifts the card: a view transition on the card itself, over within half a second, ending on the full-screen card`,
+      lifted.seen && lifted.named === 'tp-card' && lifted.pseudo > 0 && lifted.ms > 0 && lifted.ms <= 500 && lifted.full && !lifted.enter, JSON.stringify(lifted));
     await waitFor('!!document.querySelector(".person.full")');
     await shot('05-person-choices');
     await js('document.querySelector("#person .tile[data-i=\\"0\\"]").click()');
@@ -204,7 +212,13 @@ try {
     await click('[data-act="stuck"]');
     await waitFor('!!document.querySelector(".tiles.repair")');
     await shot('20-stuck-partner');
-    await click('[data-act="show"]');
+    // the same press under prefers-reduced-motion: no transition is started, the screen simply changes
+    await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+    const calm = await js(`(async () => { const root = document.documentElement; document.querySelector('[data-act="show"]').click(); let seen = false;
+      for (let i = 0; i < 30; i++) { await new Promise((r) => requestAnimationFrame(r)); if (root.dataset.lift === '1') seen = true; }
+      return { seen, full: !!document.querySelector('.person.full'), pseudo: document.getAnimations().filter((a) => (a.effect?.pseudoElement ?? '').includes('view-transition')).length }; })()`);
+    check(`${s} "Show to person" under prefers-reduced-motion: no transition, the full-screen card is simply there`, !calm.seen && calm.full && calm.pseudo === 0, JSON.stringify(calm));
+    await send('Emulation.setEmulatedMedia', { features: [] });
     await waitFor('!!document.querySelector(".person.full .tiles.repair")');
     await shot('21-repair-person');
     await nav('#/demo');

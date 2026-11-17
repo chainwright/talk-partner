@@ -104,7 +104,7 @@ const state: State = {
 // ---------------------------------------------------------------- routing
 function route(): Route {
   const h = location.hash.replace(/^#\/?/, '');
-  if (h === 'demo') { if (!state.demo) void enterDemo().then(render); return 'partner'; }
+  if (h === 'demo') { if (!state.demo) void enterDemo().then(() => render()); return 'partner'; }
   if (h === 'about') return 'about';
   if (h === 'cloud') return 'cloud';
   if (h === 'person') return 'person';
@@ -116,7 +116,7 @@ function route(): Route {
 /** Changes the hash (the hashchange event draws the screen); draws directly when the hash is already there. */
 function go(r: Route | 'demo' | '') {
   const h = r ? `#/${r}` : '';
-  if (location.hash.replace(/^#\/?$/, '') === h) render(); else location.hash = h;
+  if (location.hash.replace(/^#\/?$/, '') === h) draw(); else location.hash = h;
 }
 
 function enterDemo(): Promise<void> {
@@ -579,7 +579,8 @@ function howScreen(): string {
 // ---------------------------------------------------------------- render
 let timer: ReturnType<typeof setInterval> | null = null;
 let lastKey = '';
-function render() {
+/** `lifted`: this draw is the new state of a "lift the card" view transition, which is its own entrance. */
+function render(lifted = false) {
   const r = route();
   const app = $('#app');
   // the route goes on #app with a prefix: a bare "person" or "welcome" class made #app pick up the card pane's frame
@@ -588,7 +589,7 @@ function render() {
   // entrance animations play once per real event (a new route or a new card), not on every redraw
   const key = `${r}|${cardSeq}`;
   // the card judge mode opens with is simply there: no entrance, so the very first frame is a finished card
-  if (key !== lastKey) { lastKey = key; if (!(r === 'partner' && state.first)) app.classList.add('enter'); }
+  if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
   app.innerHTML = r === 'partner' ? partnerScreen() : r === 'person' ? personScreen() : r === 'about' ? aboutScreen() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   if (r === 'trial') {
@@ -600,6 +601,24 @@ function render() {
     tick();
     timer = setInterval(tick, 1000);
   }
+}
+
+/**
+ * "Show to person" lifts the card: the white pane on the desk grows into the whole screen (and comes back down when
+ * the partner leaves the person's screen), as a view transition on that one element (styles.css, `tp-card`), 250 ms.
+ * It is the gesture the product is built on: the card is held up to the person. Where the browser has no view
+ * transitions, or the system asks for reduced motion, the screen simply changes, as it did before.
+ */
+let lift = false;
+function draw() {
+  const lifting = lift && 'startViewTransition' in document && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  lift = false;
+  if (!lifting) { render(); return; }
+  const root = document.documentElement;
+  root.dataset.lift = '1'; // names the card for the transition only while it runs
+  try {
+    void document.startViewTransition(() => render(true)).finished.finally(() => { delete root.dataset.lift; });
+  } catch { delete root.dataset.lift; render(); }
 }
 
 // ---------------------------------------------------------------- actions
@@ -709,7 +728,7 @@ function act(el: HTMLElement) {
   const a = el.dataset.act;
   const i = Number(el.dataset.person ?? -1);
   switch (a) {
-    case 'show': go('person'); break;
+    case 'show': lift = true; go('person'); break;
     case 'less': state.less = !state.less; render(); break;
     case 'next':
       if (state.card?.pending) void make(state.card.pending);
@@ -815,13 +834,13 @@ app.addEventListener('pointerdown', (ev) => {
   const t = (ev.target as HTMLElement).closest('#exit');
   if (!t) return;
   t.classList.add('holding');
-  hold = setTimeout(() => { hold = null; go(''); }, 600);
+  hold = setTimeout(() => { hold = null; lift = true; go(''); }, 600);
 });
 const cancelHold = () => { if (hold) { clearTimeout(hold); hold = null; } document.querySelector('#exit')?.classList.remove('holding'); };
 app.addEventListener('pointerup', cancelHold);
 app.addEventListener('pointercancel', cancelHold);
 app.addEventListener('pointerleave', cancelHold, true);
-window.addEventListener('hashchange', render);
+window.addEventListener('hashchange', () => draw());
 
 // Opened straight on judge mode: the first card is made before the first draw, so there is no empty frame before it.
 void Promise.all([load(), loadTrial()]).then(async () => {

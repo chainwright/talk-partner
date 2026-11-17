@@ -50,6 +50,6 @@ describe('the card judge mode opens with', () => {
   it('the web client makes it before the first draw and draws it without an entrance', () => {
     const main = readFileSync(join(__dirname, '..', '..', 'web/src/main.ts'), 'utf8');
     expect(main).toMatch(/=== 'demo'\) await enterDemo\(\);\s*\n\s*render\(\);/);
-    expect(main).toContain("if (!(r === 'partner' && state.first)) app.classList.add('enter');");
+    expect(main).toContain("if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter');");
   });
 });

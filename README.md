@@ -156,6 +156,8 @@ under `@firebase/firestore`, which this app does not import.
 - **Partner screen** (`#/`): the question, the coaching line when a rule found one, the line to say, "Show to person",
   "Hide the choices", "Next", "Recap", "We're stuck", the badge, "Why this card", "What was sent" (the request handed to the SDK, or what
   would have been sent) and "Where each step ran".
+  "Show to person" lifts the card: the white pane grows into the whole screen in a quarter of a second (a view
+  transition on the card itself; none under reduced-motion settings or where the browser has no view transitions).
 - **Person screen** (`#/person`): only the keyword, two or three big tiles with pictures, one way out, then "So: lake. Right?"
   with yes / change. The exit is top-right and needs a press-and-hold. "We're stuck" replaces the card with the fixed
   repair card (show me / write it / draw / later / change topic); a tap gives the partner the next move for that way.
