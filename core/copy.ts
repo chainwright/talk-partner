@@ -376,7 +376,7 @@ const COPY = {
         refused: (raw: string) => `default in the code (Remote Config sent "${raw}", which did not pass the check)`,
       },
       none: 'This copy has no project settings, so Remote Config is not asked. The values below are the defaults in the code.',
-      off: 'Not asked: cloud help is off. These settings concern the cloud step only, and a page with cloud help off contacts no host but its own, so Remote Config is asked only once cloud help is on. The values below are the defaults in the code.',
+      off: 'Not asked: cloud help is off. These settings concern the cloud step only, and a page with cloud help off contacts no host but its own (until you use the microphone or send feedback, each after its own notice), so Remote Config is asked only once cloud help is on. The values below are the defaults in the code.',
       asking: 'Asking Remote Config now. The defaults in the code run meanwhile: no card waits for the answer.',
       fetched: (time: string) => `Remote Config answered at ${time}. Each row says whether its value came from there.`,
       failed: (why: string) => `Remote Config did not answer (${why}). The defaults in the code are in use, and no card waited for it.`,
