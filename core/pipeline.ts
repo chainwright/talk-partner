@@ -11,7 +11,7 @@ import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   dropGenericWho, fromAboutMe, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
-  codeOptions, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
+  codeOptions, leadIn, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
 import type { BodyRegion, Card, CardWhy, Choice, ModelOutput, Profile, Source, StepTrace, SupportLevel } from './types';
@@ -511,11 +511,25 @@ function finishTrace(trace: StepTrace[], card: Card): StepTrace[] {
 }
 
 async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]): Promise<Card> {
-  const [typed, pending] = splitQuestion(input);
+  const [typed0, pending] = splitQuestion(input);
+  const { profile, support, engine } = env;
+  // "Tyler's got a game Saturday, do you want to go watch?": a statement, then a question code can decide (yes / no,
+  // either-or, feeling, pain…). The card asks the question; the statement stays in the line to say. Only then: an
+  // open question keeps its lead-in, because a model may need it to offer anything sensible.
+  const lead = codeDetermined(plainQuestion(typed0)?.q ?? typed0, profile) ? null : leadIn(typed0);
+  const useLead = !!lead && codeDetermined(plainQuestion(lead.q)?.q ?? lead.q, profile);
+  const typed = useLead ? lead!.q : typed0;
+  if (useLead) {
+    const card = await makeCardInner(pending ? `${typed} ${pending}` : typed, env, trace);
+    // the line to say is the partner's own sentence, then the options; a "tell, don't test" line stays as it is
+    // (after a comma the question goes on in lower case, as typed; after a full stop it keeps its capital)
+    const rest = /[.]$/.test(lead!.context) ? card.say : `${card.say.charAt(0).toLowerCase()}${card.say.slice(1)}`;
+    const say = card.kind === 'no-quiz' || card.blocked || !card.say.startsWith(card.asked) ? card.say : `${lead!.context} ${rest}`;
+    return { ...card, say, notes: [...card.notes, N.leadIn] };
+  }
   // a negative question is asked the plain way, a proposal without its "or is that a no?" (rules.ts, plainQuestion)
   const plain = plainQuestion(typed);
   const asked = plain?.q ?? typed;
-  const { profile, support, engine } = env;
   const fixed = codeDetermined(asked, profile);
 
   let o: ModelOutput | null = null;

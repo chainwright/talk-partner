@@ -494,6 +494,7 @@ const COPY = {
     negativeAsked: 'Your question had a "not" in it. The card asks it the plain way, so yes means yes.',
     optOutAsked: 'Asked as one yes / no question: the "or …?" at the end is the "no" on the card.',
     listedAll: 'You named three, so all three are on the card.',
+    leadIn: 'The first part tells them something; the card asks the question that follows it.',
     painLine: 'The scale you named is on the card as a line of numbers. Run your finger along it as you ask, then wait.',
     painLineSay: (lo: number, hi: number) => `Point to a number: ${lo} is ${lo === 0 ? 'no pain' : 'hardly any'}, ${hi} is the worst.`,
     hiddenSubject: (word: string) => `Not sent: this question turns on "${word}" from About me, and cloud help never sees About me, so it could only guess.`,

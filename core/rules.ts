@@ -96,6 +96,31 @@ export function isAuxYesNo(q: string): boolean {
   return (AUX_START.test(s) || OFFER_START.test(s)) && !/\bor\b/i.test(s);
 }
 
+const Q_OPENER = /^(?:did|do|does|are|is|am|was|were|can|could|should|shall|will|would|have|has|had|may|might|must|what|where|who|whom|when|which|why|how|want|wanna|fancy|need|don't|doesn't|didn't|aren't|isn't|won't|wouldn't|can't|couldn't|shouldn't|haven't|hasn't)\b/i;
+/**
+ * "Tyler's got a game Saturday, do you want to go watch?": something the partner says, then the question. Returns the
+ * statement (as typed, up to its comma) and the question after it; null when the text does not open with a statement.
+ * Set D, 16 Nov: such a question was not read as yes / no (no card without a model; with one, a card of TV shows).
+ * The statement is at least two words (one word and a comma is the person being spoken to), is not a question or an
+ * offer itself, and what follows the comma starts like a question.
+ */
+export function leadIn(q: string): { context: string; q: string } | null {
+  const s = q.trim();
+  for (const m of s.matchAll(/\s*[,;:–-]\s+|\.\s+/g)) {
+    const context = s.slice(0, m.index).trim();
+    const rest = s.slice(m.index! + m[0].length).trim();
+    if (context.includes('?')) return null;
+    if (!Q_OPENER.test(rest)) continue;
+    if (context.split(/\s+/).length < 2 || rest.split(/\s+/).length < 2) return null;
+    const c = stripVocative(context);
+    if (Q_OPENER.test(c) || OFFER_START.test(c) || /\bor\b/i.test(context)) return null;
+    // a title's full stop ("Dr. Patel's office called, …") is not the end of the statement
+    if (m[0].startsWith('.') && /\b(?:dr|mr|mrs|ms|st|rev|prof)$/i.test(context)) continue;
+    return { context: s.slice(0, m.index! + m[0].length).trimEnd(), q: capitalize(rest) };
+  }
+  return null;
+}
+
 /** Rule 2 (part). "..., or not (yet)?" offers no second option: it is a yes / no question. */
 export function isOrNot(q: string): boolean {
   return /,?\s+or\s+(?:not|no)\b(?:\s+(?:yet|really|now|today))?\s*\?\s*$/i.test(q);
@@ -802,7 +827,8 @@ export function escapeFor(q: string, answers: string[] = [], profile?: Profile):
 }
 
 // ---------------------------------------------------------------- rule 9
-const CONTACT = /\b(call|calls|ring|phone|visit|visits|invite|invites|text|message|write\s+to)\b/i;
+// (with the -ing and past forms since set D of 16 Nov: "Who do you think was calling just now?" offered "you", the partner)
+const CONTACT = /\b(call|calls|calling|called|ring|rings|ringing|rang|phone|phones|phoning|phoned|visit|visits|visiting|visited|invite|invites|inviting|invited|text|texting|texted|message|messaging|messaged|write\s+to|at\s+the\s+door|knocking|knocked)\b/i;
 const GENERIC_PERSON = /\b(another person|someone|somebody|other person|a friend)\b/i;
 const SEE = /\b(see|seeing|meet|meeting|have\s+(?:over|round|around)|come\s+(?:over|round|around|by)|drop\s+in|pop\s+(?:in|round|over)|talk\s+to|speak\s+to|chat\s+(?:to|with)|catch\s+up\s+with|hear\s+from|skype|facetime)\b/i;
 const ON_SCREEN = /\b(tv|telly|television|film|movie|show|programme|program|match|game|win|play|sing|stage|concert)\b/i;
@@ -1289,8 +1315,17 @@ export function yesNoTopic(q: string, profile?: Profile): string {
 }
 
 // ---------------------------------------------------------------- open questions: allowed sources (§2.6)
-const EAT_Q = /\b(?:eat|food|dinner|lunch|breakfast|supper|cook|meal|hungry|fancy for tea|have for tea)\b/i;
-const WATCH_Q = /\b(?:watch|telly|tv|television|programme|program|show|film|movie)\b/i;
+const EAT_Q = /\b(?:eat|eating|food|dinner|lunch|breakfast|supper|cook|cooking|meal|hungry|for\s+(?:your\s+|our\s+)?tea)\b/i;
+// (set D, 16 Nov: "What do you feel like watching?" was not read as a TV question, so Johnny Cash stood on its next page)
+const WATCH_Q = /\b(?:watch|watching|telly|tv|television|programme|program|show|film|movie)\b/i;
+/** A food question About me cannot answer: its foods are meals the person likes, not desserts, snacks or what is in the cupboard. */
+const FOOD_OTHER = /\b(?:dessert|pudding|afters|sweet|snack|breakfast|drink|pantry|larder|cupboard|fridge|freezer|grocer\w*|shopping|list|run\s+out|out\s+of|buy|pick\s+up)\b/i;
+/** A "where" question about the two of them going somewhere: only then is a place from About me an answer ("Where shall we hang this?" and "Where do you want the lamp to go?" are not). */
+const GO_Q = /\b(?:we|you|i)\s+(?:(?:want|like|fancy|wish|need|rather|prefer|love|feel\s+like|going|gonna|would|should|shall|could|can|to|just|maybe|all|both|ever|usually|still)\s+)*(?:go|going|gone|visit|visiting|drive|driving|walk|walking|head|heading|pop|eat|eating|meet|meeting|spend|spending|stop\s+(?:off|by)|be|have\s+(?:lunch|dinner|tea|coffee|a\s+drink|a\s+day\s+out))\b|\b(?:trip|outing|day\s+out|holiday)\b|\btake\s+(?:you|us)\b/i;
+/** "What do you want to do today?", "Any plans for the weekend?": places, TV and music from About me all fit. */
+const DO_Q = /\bwhat\b[^?]*\b(?:to|we|you|i)\s+do\b|\bwhat\b[^?]*\b(?:doing|up\s+to)\b|\bplans?\b/i;
+/** "What shall we talk about?", "What are you thinking about?": anything in About me may be the answer. */
+const TALK_Q = /\b(?:talk|chat)\s+about\b|\b(?:remember|recall)\b|\bthinking\s+(?:about|of)\b|\bon\s+your\s+mind\b|\bmiss(?:ing)?\b|\blooking\s+forward\b|\bfavou?rite\b|\blike\s+best\b/i;
 const LISTEN_Q = /\b(?:listen|listening|music|song|songs|record|records|radio|put on|play)\b/i;
 /** Without the two words that also fit the telly ("put on", "play"): only then is a TV entry certainly the wrong kind. */
 const LISTEN_ONLY = /\b(?:listen|listening|music|song|songs|record|records|radio|sing|tune|tunes|album)\b/i;
@@ -1307,6 +1342,8 @@ const GENERIC_WHERE = /^(?:go out|stay (?:home|in|here)|out|in|inside|outside|no
  * Returns the filled list and which source was used, or null when no source of the right kind exists.
  */
 export function sourceFill(answers: string[], q: string, profile: Profile, cap: number): { answers: string[]; source: string } | null {
+  // a question that names its own options is never completed from a list: the options are in the question
+  if (offersOptions(q)) return null;
   const t = questionType(q);
   let pool: string[] = [];
   let source = '';
@@ -1315,8 +1352,13 @@ export function sourceFill(answers: string[], q: string, profile: Profile, cap: 
     if (!isContactQ(q) || PAST_LIFE.test(q)) return null;
     pool = contactPool(profile);
     source = 'people from About me';
-  } else if (t === 'where') { pool = profile.places; source = 'places from About me'; }
-  else if (t === 'what' && EAT_Q.test(q)) { pool = profile.foods; source = 'foods from About me'; }
+  } else if (t === 'where') {
+    // only where the question is about going somewhere (set D, 16 Nov: "Where do you want to sit?" was completed
+    // with the lake and church)
+    if (!GO_Q.test(q)) return null;
+    pool = profile.places; source = 'places from About me';
+  }
+  else if (t === 'what' && EAT_Q.test(q) && !FOOD_OTHER.test(q)) { pool = profile.foods; source = 'foods from About me'; }
   else if (t === 'what' && WATCH_Q.test(q)) { pool = profile.tv; source = 'TV from About me'; }
   else if (t === 'what' && LISTEN_Q.test(q)) {
     // About me may hold one artist only: the radio is the one general choice that is always true, and no second
@@ -1351,25 +1393,58 @@ function aboutList(label: string, profile: Profile): string | null {
 /**
  * An About-me entry of another kind than the question asks for is not an answer: a TV show is not music, a place is
  * not a food (simulation 16.11: "What do you feel like listening to?" offered "Packers" and "Wheel of Fortune").
- * Only for questions whose kind is certain (eat / watch / listen, and not two of them at once). An entry under
- * "other" (a pet, a team, a hobby) goes too: what the family listens to is in the music list. Returns the kept
- * choices and the dropped ones.
+ * Since set D of 16 Nov the check is the other way round: an entry stays only where the question invites its list
+ * (see aboutFit below). Returns the kept choices and the dropped ones.
  */
 export function wrongListFilter(choices: string[], q: string, profile: Profile): { kept: string[]; dropped: string[] } {
-  const kinds: string[] = [];
-  if (questionType(q) === 'what') {
-    if (EAT_Q.test(q)) kinds.push('foods');
-    if (WATCH_Q.test(q)) kinds.push('TV');
-    if (LISTEN_ONLY.test(q)) kinds.push('music');
-  }
-  if (kinds.length !== 1) return { kept: choices, dropped: [] };
+  const fits = aboutFit(q);
+  if (!fits) return { kept: choices, dropped: [] };
   const kept: string[] = [];
   const dropped: string[] = [];
   for (const c of choices) {
     const list = aboutList(c, profile);
-    (list && list !== kinds[0] ? dropped : kept).push(c);
+    // an entry the partner named in the question is theirs to offer, whatever its list ("… about Scarborough?")
+    const named = new RegExp(`(?<![\\p{L}\\p{N}])${esc(c.trim().replace(/^the\s+/i, ''))}(?![\\p{L}\\p{N}])`, 'iu').test(q);
+    (list && list !== 'people' && !fits.has(list) && !named ? dropped : kept).push(c);
   }
   return { kept, dropped };
+}
+
+/**
+ * Which About-me lists a question invites answers from, or null when the check does not apply (a who / when / what-
+ * to-say question: other rules decide there). Set D, 16 Nov: the on-device model put the family's dinners on a
+ * dessert card, on the pantry and on the grocery list, and a place from About me under "Where do you want to sit?".
+ * An About-me entry is a good answer only where the question asks for that kind of thing:
+ *   foods   a meal question (eat, dinner, lunch, cook…), not dessert / snack / breakfast / drink / shopping
+ *   places  a "where" question about going somewhere; "what shall we do"
+ *   TV      watch / telly / film; "what shall we do"; "put on" / "play" (with music)
+ *   music   listen / music / radio; "what shall we do"; "put on" / "play"
+ *   other   (a pet, a team, a hobby) wherever the kind of the question is not certain, as before
+ * and anything from About me on "what shall we talk about / what are you thinking about".
+ */
+export function aboutFit(q: string): Set<string> | null {
+  const t = questionType(q);
+  if (t !== 'what' && t !== 'where') return null;
+  if (TALK_Q.test(q)) return new Set(['places', 'foods', 'TV', 'music', 'other']);
+  const fits = new Set<string>();
+  if (t === 'where') {
+    if (GO_Q.test(q)) fits.add('places');
+    return fits;
+  }
+  const eat = EAT_Q.test(q) && !FOOD_OTHER.test(q);
+  const watch = WATCH_Q.test(q);
+  const listenOnly = LISTEN_ONLY.test(q);
+  const listen = LISTEN_Q.test(q);
+  if (eat) fits.add('foods');
+  if (watch) fits.add('TV');
+  if (listenOnly) fits.add('music');
+  // "put on" / "play" fit the telly and the record player alike
+  if (listen && !listenOnly && !watch) { fits.add('TV'); fits.add('music'); }
+  if (DO_Q.test(q) && !FOOD_OTHER.test(q)) { fits.add('places'); fits.add('TV'); fits.add('music'); fits.add('other'); }
+  // an entry under "other" goes only where the kind is certain (what the family listens to is in the music list)
+  const certain = [eat, watch, listenOnly].filter(Boolean).length === 1;
+  if (!certain) fits.add('other');
+  return fits;
 }
 
 const PLACE_NOUN = /\b(?:where|hotel|street|road|house|town|village|city|shop|pub|church|chapel|beach|school|place|cottage|caravan|park|hospital|club|café|cafe|restaurant)\b/i;

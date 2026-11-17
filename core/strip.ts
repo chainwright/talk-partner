@@ -102,6 +102,9 @@ const GENERIC = new Set([
   'music', 'food', 'tv', 'telly', 'show', 'shows', 'programme', 'programmes', 'film', 'films', 'place', 'places', 'thing', 'things',
   'tea', 'dinner', 'lunch', 'breakfast', 'supper', 'meal', 'drink', 'old', 'new', 'big', 'little', 'small', 'good', 'nice', 'best',
   'one', 'ones', 'some', 'any', 'bit', 'day', 'days', 'time', 'week', 'weekend', 'today', 'tonight', 'sunday', 'saturday',
+  // words that name a whole kind of thing: "a game" is not the family's "Packers games", "the store" not their "hardware store"
+  // (set D, 16 Nov: "Tyler's got a game Saturday" went as "a Show A Saturday")
+  'game', 'games', 'match', 'store', 'shop', 'shops',
   // function words: never a key on their own ("is" in "The Price Is Right", "up" in "the cottage up at the lake")
   'is', 'are', 'was', 'were', 'be', 'been', 'am', 'do', 'does', 'did', 'have', 'has', 'had', 'will', 'would', 'can', 'could',
   'it', 'its', 'he', 'she', 'we', 'they', 'i', 'me', 'you', 'him', 'them', 'us', 'their', 'this', 'that', 'these', 'those',

@@ -37,7 +37,6 @@ class Scripted implements Engine {
   async picture() { return null; }
 }
 const ANY: ModelOutput = { topic: 'thing', kind: 'choice', choices: ['one thing', 'another thing', 'a third thing'] };
-const YES: ModelOutput = { topic: 'visit', kind: 'yesno', choices: ['yes', 'no'] };
 const ask = (q: string, e: Scripted, support: SupportLevel = 'more', profile: Profile = PROFILE, extra: object = {}) =>
   makeCard(q, { profile, support, engine: e, allowCloud: e.cloudConfigured, deviceReady: e['dev' as keyof Scripted] !== null, ...extra });
 const answers = (c: Card) => c.choices.filter((x) => x.role === 'answer').map((x) => x.label);
@@ -100,8 +99,9 @@ describe('D-a. a name that is not in About me never reaches the cloud request as
     expect(stripQuestion(q, PROFILE).text).toBe(q);
   });
   it('the request the engine gets, the "Sent" line and the receipt are the same text, and none of them holds the name', async () => {
-    for (const q of ['Dr. Okafor rang back, do you want to talk to her?', 'Brenda from the choir says hello, do you want her to come in?', 'What should we send aunt winnie for the wedding?']) {
-      const e = new Scripted(null, q.startsWith('What') ? ANY : YES);
+    // open questions: these reach the cloud step (a yes / no after a statement is decided in code and sends nothing)
+    for (const q of ['What should I tell Dr. Okafor about the tablets?', 'Brenda is coming on Sunday, what shall we cook?', 'What should we send aunt winnie for the wedding?']) {
+      const e = new Scripted(null, ANY);
       const card = await ask(q, e);
       expect(e.sent, q).toHaveLength(1);
       const wire = e.sent[0];
@@ -438,5 +438,101 @@ describe('D-4. asking after a part of the body, or for a number, gets the pain c
   });
   it.each(["How's your day going?", "How's your sister?", "How's your back garden looking?", "How's your head for heights?", 'Rate your sleep for me, one to ten.', 'How was your walk?', 'Where is your knee sore, 0 to 10?'])('not the pain card: %s', (q) => {
     expect(isPainLevel(q)).toBe(false);
+  });
+});
+
+describe('D-5. an About-me word stands on a card only where the question asks for that kind of thing', () => {
+  const dev = (choices: string[]) => new Scripted({ topic: 'thing', kind: 'choice', choices });
+  it.each([
+    // [question, what the on-device model proposed, About-me words that must not be on any page]
+    ['What do you want for pudding?', ['lamb', 'rice', 'ice cream'], ['lamb', 'rice']],
+    ['What are we short of in the cupboard?', ['omelette', 'salad', 'teabags'], ['omelette', 'salad']],
+    ['What should go on the shopping list?', ['lamb', 'washing powder', 'rice'], ['lamb', 'rice']],
+    ['What would you like for a snack?', ['salad', 'a biscuit', 'omelette'], ['salad', 'omelette']],
+    ['Where shall I put the post?', ['library', 'market', 'on the table'], ['library', 'market']],
+    ['Where do you want your slippers?', ['pub', 'by the bed', 'allotment'], ['pub', 'allotment']],
+    ['What do you feel like watching?', ['cricket', 'westerns', 'Elvis'], ['Elvis']],
+    ['What would cheer you up?', ['lamb', 'a walk', 'pub'], ['lamb', 'pub']],
+    ['What do you want to listen to this evening?', ['opera', 'cricket', 'lamb'], ['cricket', 'lamb']],
+  ] as [string, string[], string[]][])('%s', async (q, proposed, never) => {
+    for (const support of ['more', 'mild'] as SupportLevel[]) {
+      const card = await ask(q, dev(proposed), support);
+      const shown = everyPage(card);
+      for (const w of never) expect(shown, `${q} (${support})`).not.toContain(w);
+      for (const w of never) expect(card.say.toLowerCase(), `${q} (${support})`).not.toMatch(new RegExp(`\\b${w.toLowerCase()}\\b`));
+      // and the dropped word is in "why this card", with its rule
+      if (!card.blocked) for (const w of never) expect(card.why!.dropped.map((d) => d.label)).toContain(w);
+    }
+  });
+  it.each([
+    ['What shall we cook tonight?', ['lamb', 'rice', 'omelette']],
+    ['Where would you like to go on Saturday?', ['allotment', 'library', 'market']],
+    ['What do you want to do this weekend?', ['allotment', 'cricket', 'Elvis']],
+    ['What shall we talk about?', ['Leeds United', 'allotment', 'lamb']],
+    ['What do you fancy watching tonight?', ['cricket', 'westerns', 'cooking shows']],
+    ['What do you remember about the allotment?', ['allotment', 'the shed', 'the roses']],
+  ] as [string, string[]][])('still offered where it fits: %s', async (q, proposed) => {
+    const card = await ask(q, dev(proposed), 'mild');
+    expect(everyPage(card)).toEqual(proposed);
+  });
+  it('a card completed by code takes places only for a question about going somewhere, foods only for a meal', async () => {
+    // cloud help only, and its one usable answer leaves the card short
+    const short = (choice: string) => new Scripted(null, { topic: 'x', kind: 'choice', choices: [choice] });
+    for (const q of ['Where shall I put the post?', 'Where do you want the lamp to go?', 'What do you want for pudding?', 'What should go on the shopping list?']) {
+      const card = await ask(q, short('this one here'));
+      for (const p of [...PROFILE.places, ...PROFILE.foods]) expect(everyPage(card), q).not.toContain(p);
+      expect(card.notes.join(' '), q).not.toMatch(/completed from/);
+    }
+    const go = await ask('Where shall we go on Sunday afternoon?', short('out'));
+    expect(everyPage(go).some((a) => PROFILE.places.includes(a))).toBe(true);
+    const meal = await ask('What shall we have for dinner?', short('something hot'));
+    expect(everyPage(meal).some((a) => PROFILE.foods.includes(a))).toBe(true);
+  });
+  it.each(['Who do you think rang just now?', 'Who was calling earlier, do you think?', "Who's that at the door?", 'Who phoned while I was out?'])('the partner and the people who live here are not offered as the caller: %s', async (q) => {
+    const card = await ask(q, dev(['Grace', 'Maria', 'Sam']), 'mild');
+    const shown = everyPage(card);
+    expect(shown).not.toContain('you');
+    expect(shown).not.toContain('Maria');
+    expect(shown).not.toContain('Sam');
+    expect(shown).toContain('Grace');
+  });
+});
+
+describe('D-6. something said, then a question code can decide: the card asks the question', () => {
+  const YESNO: [string, string][] = [
+    ["Leo's got football on Sunday, do you want to go and watch?", 'Do you want to go and watch?'],
+    ['The chemist rang, shall I go and collect it?', 'Shall I go and collect it?'],
+    ['Grace is on the phone, do you want to talk to her?', 'Do you want to talk to her?'],
+    ["It's nearly nine. Are you ready for bed?", 'Are you ready for bed?'],
+    ['Dr. Okafor has a free slot on Friday, shall I book it?', 'Shall I book it?'],
+    ["Peter's outside with the car - do you need a hand?", 'Do you need a hand?'],
+  ];
+  for (const [state, engine] of STATES) {
+    it.each(YESNO)(`${state}: %s`, async (q, asked) => {
+      const e = engine();
+      const card = await ask(q, e);
+      expect(card.kind).toBe('yesno');
+      expect(card.asked).toBe(asked);
+      expect(answers(card)).toEqual(['yes', 'no']);
+      expect(e.calls).toEqual([]); // no model, and nothing sent: the name in the statement stays here
+      // the partner says the whole sentence as typed, then the choices
+      expect(card.say.startsWith(q)).toBe(true);
+      expect(card.notes).toContain(COPY.notes.leadIn);
+      for (const w of ABOUT_WORDS) if (!q.toLowerCase().includes(w)) expect(answers(card).join(' ').toLowerCase()).not.toContain(w);
+    });
+  }
+  it('an either-or after the statement keeps its two options', async () => {
+    const card = await ask("The plumber's coming tomorrow, do you want to stay in or go out?", new Scripted(null));
+    expect(answers(card)).toEqual(['stay in', 'go out']);
+  });
+  it('an open question keeps its lead-in: a model may need it', async () => {
+    const q = 'Grace is coming on Sunday, what shall we cook?';
+    const card = await ask(q, new Scripted({ topic: 'sunday', kind: 'choice', choices: ['lamb', 'rice'] }));
+    expect(card.asked).toBe(q);
+    expect(card.notes).not.toContain(COPY.notes.leadIn);
+  });
+  it.each(['Alan, shall I put the kettle on?', 'Do you want soup, or would you rather wait?', 'Lamb, rice, or an omelette?', 'If you are cold, do you want a blanket or a jumper?'])('not a statement and a question: %s', async (q) => {
+    const card = await ask(q, new Scripted(null));
+    expect(card.notes).not.toContain(COPY.notes.leadIn);
   });
 });
