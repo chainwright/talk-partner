@@ -314,3 +314,31 @@ describe('D-1b. the line to say never reads options that are not on the screen',
     }
   });
 });
+
+describe('D-2. "when did it start, A or B?" about what only the person can feel is a two-option card, not a memory test', () => {
+  const PAIRS: [string, string[]][] = [
+    ['When did your shoulder start hurting, yesterday or today?', ['yesterday', 'today']],
+    ['When did the dizziness come on, before lunch or after lunch?', ['before lunch', 'after lunch']],
+    ['When did the headache start, on Monday or on Tuesday?', ['Monday', 'Tuesday']],
+    ['When did you last eat, at breakfast or at lunch?', ['at breakfast', 'at lunch']],
+    ['When did you start feeling sick, in the night or this morning?', ['night', 'this morning']],
+    ['When did it come on, last night or this morning?', ['last night', 'this morning']],
+  ];
+  for (const [state, engine] of STATES) {
+    it.each(PAIRS)(`${state}: %s`, async (q, want) => {
+      const e = engine();
+      const card = await ask(q, e);
+      expect(card.kind).toBe('choice');
+      expect(card.blocked ?? null).toBeNull();
+      expect(answers(card)).toEqual(want);
+      expect(card.choices.filter((c) => c.role === 'escape')).toHaveLength(1);
+      expect(card.coach ?? null).toBeNull();
+    });
+  }
+  it.each(['When did the rash start?', 'When did you last have a drink?', 'When did your knee start aching?', 'When was your last tablet?'])('with no options named it is an open question, not a test: %s', (q) => {
+    expect(quizKind(q, PROFILE)).toBeNull();
+  });
+  it.each(['When did we move to this house, 1980 or 1985?', 'When did Leo start school?', 'When did we get the cat?', "When is Grace's birthday, May or June?"])('a fact the partner knows is still a test: %s', (q) => {
+    expect(quizKind(q, PROFILE)).toBe('fact');
+  });
+});

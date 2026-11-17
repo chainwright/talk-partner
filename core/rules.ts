@@ -360,7 +360,7 @@ export function validateOptions(options: unknown, q: string, profile?: Profile):
 
 // ---------------------------------------------------------------- rule 3: the label check (build spec §2.5)
 const LINKERS = '(?:and|or|of|the|a|an|on|with|by|in|at|for)';
-const TIME_ONLY = /^(?:now|later|soon|today|tonight|tomorrow|morning|afternoon|evening|night|teatime|lunchtime|bedtime|weekend|week|month|monday|tuesday|wednesday|thursday|friday|saturday|sunday|this|next|last|the|on|at|in|after|before|early|late|first|thing|\d+(?::\d+)?|am|pm|o'clock|half|quarter|past|to)$/i;
+const TIME_ONLY = /^(?:now|later|soon|today|tonight|tomorrow|yesterday|morning|afternoon|evening|night|teatime|lunchtime|bedtime|weekend|week|month|monday|tuesday|wednesday|thursday|friday|saturday|sunday|this|next|last|the|on|at|in|after|before|early|late|first|thing|\d+(?::\d+)?|am|pm|o'clock|half|quarter|past|to)$/i;
 const FEMALE = /^(?:wife|daughter|sister|mother|mum|mom|granddaughter|niece|aunt|auntie|grandmother|gran|nan|girlfriend|daughter-in-law|sister-in-law|mother-in-law)$/i;
 const MALE = /^(?:husband|son|brother|father|dad|grandson|nephew|uncle|grandfather|grandad|grandpa|boyfriend|son-in-law|brother-in-law|father-in-law)$/i;
 
@@ -888,7 +888,7 @@ export function hasNegative(choice: string): boolean {
   return NEG.test(choice);
 }
 
-const TIME_WORD = /\b(now|later|soon|today|tonight|tomorrow|morning|afternoon|evening|night|lunchtime|teatime|bedtime|weekend|week|month|monday|tuesday|wednesday|thursday|friday|saturday|sunday|o'clock|half past|quarter|noon|midday|early|late|after|before|\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\b/i;
+const TIME_WORD = /\b(now|later|soon|today|tonight|tomorrow|yesterday|ago|morning|afternoon|evening|night|lunchtime|teatime|bedtime|weekend|week|month|monday|tuesday|wednesday|thursday|friday|saturday|sunday|o'clock|half past|quarter|noon|midday|early|late|after|before|\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\b/i;
 const PERSONISH = /\b(friend|mate|neighbou?r|carer|nurse|doctor|gp|therapist|physio|driver|boss|family|someone|somebody|nobody|everyone|brother|sister|mum|dad|mother|father|son|daughter|uncle|aunt|cousin|wife|husband|grandson|granddaughter|grandchild|grandchildren|vicar|priest|teacher|colleague|workmate|postman|postie|cleaner|hairdresser|barber|chemist|pharmacist|dentist|optician|plumber|builder|landlord|butcher|milkman|manager|coach|captain|team|people|kids|children|grandkids|partner|pal|lads?|girls|boys|man|woman|lady|bloke|guy|minister|councillor|vet)\b/i;
 const PAST_LIFE = /\b(used to|when you were|back then|years ago|growing up|at school|at work|in the army|in the war|on the buses|best (?:mate|friend|pal)|old (?:mate|friend|pal|boss|job)|first (?:job|car|house|love|boss))\b/i;
 const SAY_Q = /^\s*what\b.*\b(say|tell|write|text|message)\b/i;
@@ -1018,6 +1018,13 @@ const RECALL_Q = [
   new RegExp(`^\\s*(?:[Ss]o\\s+|[Aa]nd\\s+|[Tt]hen\\s+)?[Ww]hat\\s+did\\s+${RECALL_SUBJ}\\s+(?!${NOT_RECALL})`, 'u'),
   /^\s*(?:so\s+|and\s+)?what\s+(?:have|had)\s+you\s+(?:had|eaten|done|been\s+doing|watched|seen|drunk)\b/i,
 ];
+/**
+ * A "when did" question about what only the person can feel or know ("When did the pain start?", "When did you last
+ * eat?") is not a test: the partner does not know the answer and needs it (set D, 16 Nov: "When did the pain start,
+ * this morning or last night?" was refused as a memory test).
+ */
+const OWN_EXPERIENCE = /\bwhen\s+did\s+(?:the|your|that|this|it|you)\b[^?]*\b(?:pain|pains|ache|aches|aching|hurt|hurting|sore|soreness|headache|dizz\w+|sick\w*|nausea|itch\w*|rash|swelling|cough\w*|fever|bleed\w*|numb\w*|tingl\w+|cramp\w*|feel\w*|notice)\b|\bwhen\s+did\s+(?:it|this|that)\s+(?:start|begin|come\s+on|get\s+(?:bad|worse))\b|\bwhen\s+did\s+you\s+last\b|\bwhen\s+(?:was|were)\s+(?:your|the)\s+last\b/i;
+
 export function quizKind(q: string, profile?: Profile): QuizKind | null {
   if (!/\?\s*$/.test(q)) return null;
   if (NOW_Q.test(q)) return 'now';
@@ -1029,6 +1036,7 @@ export function quizKind(q: string, profile?: Profile): QuizKind | null {
   if (REMEMBER_Q.test(q) && !/\bwhat\s+(?:do|did)\s+you\s+(?:remember|recall)\s+(?:about|of|most|best)\b/i.test(q)) return 'remember';
   const s = stripAddress(q);
   if (PLACE_Q.some((re) => re.test(s))) return 'place';
+  if (OWN_EXPERIENCE.test(q)) return null;
   if (FACT_TARGET.some((re) => re.test(q))) return 'fact';
   // a recall question in which the partner names real options ("…, soup or a sandwich?") is a choice, not a test
   if (RECALL_Q.some((re) => re.test(s)) && !codeOptions(q, profile)) return 'recall';
