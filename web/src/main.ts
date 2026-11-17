@@ -664,6 +664,7 @@ function howScreen(): string {
   const last = state.made[state.made.length - 1];
   return `${nav()}<main class="screen">
     <h1>${H.heading}</h1>
+    <p class="routing"><b>${H.routing}</b></p>
     <p>${H.intro}</p>
     ${diagram()}
     <h2>${H.legs}</h2>${legsTable()}

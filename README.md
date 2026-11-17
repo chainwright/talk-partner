@@ -12,6 +12,22 @@ partner the exact line to say. It never guesses the person's answer.
 
 Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a therapy, not a diagnosis.
 
+## Where the AI runs (Firebase AI Logic hybrid inference)
+**Family data → `ONLY_ON_DEVICE`; the stripped question → `PREFER_IN_CLOUD`, which falls back to Gemini Nano when
+offline; `inferenceSource` drives every badge.** All AI inference goes through Firebase AI Logic. The code is in
+**`web/src/ai/firebaseEngine.ts`**.
+
+| Step | Gets | Mode | Why |
+|---|---|---|---|
+| Private card | question + the family's About-me lists | `ONLY_ON_DEVICE` | Family data must never fall back to the cloud. `PREFER_ON_DEVICE` would send this prompt to the cloud while Gemini Nano is missing or downloading. |
+| Stripped card | the question with every About-me word swapped for "Person A", "Place A"… and a word that looks like a name the family didn't list (a capitalised word, the word after a title such as "Dr.", a lowercase word that is not an everyday English word) swapped for "Name A" | `PREFER_IN_CLOUD` | Holds no profile data, so an offline fall-back to the device is safe. |
+| Pictures | one generic word | `ONLY_IN_CLOUD` | Not used in this build: pictures are bundled. |
+
+The same question through the two steps, in our recorded run: "What do you want to do this weekend?" gives
+*lake / church* on this computer (the family's own places, read from About me by Gemini Nano; nothing sent) and
+*stay home / go out* from the cloud, which gets the question only. The details are under
+[Where the AI runs, in detail](#where-the-ai-runs-in-detail).
+
 Built for #BuildHybridAI 2026. Status: early. Six build sessions on 11 Nov 2026 (card rules, the five screens, consent flow, judge mode with a privacy receipt, "why this card", the coaching line, the repair card, the folded partner screen), a design commit on 16 Nov (direction C "Two Sides": a dark desk for the partner, a white card held up for the person, fonts self-hosted), and on 16 Nov the first real run of the on-device step, a truth pass over the lines our review marked false, and a first measurement on a labelled set of 60 partner questions that we wrote ourselves. **What it shows: on the 18 open questions (who, where, what), where the choices are not in the question, rules alone make no card at all (0 of 18); the on-device model, reading About me on this computer, made a card that matched our label for 15 or 16 of 18, and 12 or 13 of those offer the family's own people, places or foods.** Four runs on a clean tree on 16 Nov: 16, 16, 16 and 15 matched (`devlog/evidence_r2/heldout_r2_NOTES.md`); the model's answers vary a little from run to run. The other 42 questions are decided by code with no model; 36 to 38 of those matched. Later the same evening, seven changes to the first screen from a design review (`devlog/DAY9.md`): none of them touches a card rule or that number. Then, that night, a rehearsal of the trial with questions written for it showed thirteen kinds of mistake in the rules; they are fixed, Firebase Remote Config was added, and judge mode's first step now runs by itself on the on-device model (`devlog/DAY10.md`). One run of the labelled set after those changes gave 17 of 18 open questions matched (14 with the family's own entries) and 39 of the 42 others; we keep quoting the four earlier runs, because the rules were changed after the set had been run. Two more sets of the rehearsal, kept sealed until the fixes before them were committed, found further kinds of mistake; what the last one found (fifteen kinds, two of them in the privacy swap) and what was done about each, with what is still open, is in `devlog/DAY11.md`. Our labels, not a user trial; two labels were made stricter after the first run, and every miss is listed. Deployed to Firebase Hosting on 16 Nov (<https://talk-partner.web.app>); no video yet, no trial with people yet. Judges: `JUDGES.md` (60 seconds), `CLAIMS.md` (every claim with its status), `EVIDENCE.md` (claim → file, command, saved output). See `devlog/`.
 
 It also corrects **the partner**, quietly, where a rule can tell: two questions in one become "One thing at a time: showing the first"; a memory question becomes "You know this one: tell, don't test."; a "you don't want …, do you?" question is asked the plain way ("Do you want …?"), so that a yes on the card means yes. The person is never corrected. The partner screen opens on that: "It corrects how you ask. It never answers for them." (the limits of both halves are in `CLAIMS.md`, row 11).
@@ -110,14 +126,8 @@ Checked on the primary pages on 11 Nov 2026 (the same list is on `#/how`). None 
 
 Not verified by us and therefore not quoted: a 14 Oct 2026 interview in which Tobii Dynavox is reported to say it keeps generative AI out of its language systems.
 
-## Where the AI runs (Firebase AI Logic hybrid inference)
-All AI inference goes through Firebase AI Logic. The code is in **`web/src/ai/firebaseEngine.ts`**.
-
-| Step | Gets | Mode | Why |
-|---|---|---|---|
-| Private card | question + the family's About-me lists | `ONLY_ON_DEVICE` | Family data must never fall back to the cloud. `PREFER_ON_DEVICE` would send this prompt to the cloud while Gemini Nano is missing or downloading. |
-| Stripped card | the question with every About-me word swapped for "Person A", "Place A"… and a word that looks like a name the family didn't list (a capitalised word, the word after a title such as "Dr.", a lowercase word that is not an everyday English word) swapped for "Name A" | `PREFER_IN_CLOUD` | Holds no profile data, so an offline fall-back to the device is safe. |
-| Pictures | one generic word | `ONLY_IN_CLOUD` | Not used in this build: pictures are bundled. |
+## Where the AI runs, in detail
+The routing table is at the top of this file. The rest of what is true about the two steps:
 
 **Why `gemini-3.5-flash-lite` for the cloud step** (`core/models.ts`): the stripped question needs a topic and two or three words back, so the smallest current stable model is enough. It is not on the Firebase AI Logic list of models "no longer recommended" (release note of 5 Oct 2026: `gemini-3.5-flash`, `3.6-flash` and `3.7-flash`, not the Lite model), and from 1 Dec 2026 Firebase routes `gemini-2.5-flash` requests to it (release note of 2 Nov 2026). Read at <https://firebase.google.com/support/releases> on 16 Nov 2026.
 
