@@ -10,6 +10,7 @@ import { makeCard } from '../../core/pipeline';
 import { badgeKind, modelAsked, sessionTally } from '../../core/receipt';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
 import { codeOptions, codePair, dropWhichOne, validateOptions, whenChoices, isUnguessable, listedAnswers, noticeLead, quizKind, quizRephrase, splitQuestion } from '../../core/rules';
+import { findLeaks, restoreNames, stripQuestion } from '../../core/strip';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -634,5 +635,78 @@ describe('E-13. no filler tile on the next page', () => {
     // on a "who to call" card a role after the family is a real choice (E-9)
     const who = await ask('Who shall I ring for you?', new Scripted({ topic: 'call', kind: 'choice', choices: ['Grace', 'doctor'] }));
     expect(everyPage(who)).toContain('doctor');
+  });
+});
+
+describe('E-14. a name About me does not list never goes to the cloud as typed: lowercase names, and names that are also words', () => {
+  // set E (checked with the swap alone, off the network): "did you want me to call mike back" and "Did May call today?" kept the name
+  const has = (text: string, name: string) => new RegExp(`(?<![\\p{L}])${name}(?![\\p{L}])`, 'i').test(text);
+  const UNLISTED = ['brenda', 'okafor', 'stan', 'nguyen', 'hank', 'delgado', 'wendy', 'kowalczyk', 'priya', 'mike'];
+  const LOWER: ((n: string) => string)[] = [
+    (n) => `can you ring ${n} about friday`,
+    (n) => `did ${n} say when the scan is`,
+    (n) => `what should we send ${n} for the wedding`,
+    (n) => `is ${n} coming for lunch`,
+    (n) => `do you want ${n} to drive you to the clinic`,
+    (n) => `${n} wants to pop in later is that ok`,
+    (n) => `shall i tell ${n}'s mum you said hello`,
+    (n) => `what did the nurse say to ${n}`,
+  ];
+  it('a lowercase name that is not an English word is swapped wherever it stands, and comes back on this computer', () => {
+    for (const n of UNLISTED) for (const t of LOWER) {
+      const q = t(n);
+      const out = stripQuestion(q, PROFILE);
+      expect(has(out.text, n), `${q} -> ${out.text}`).toBe(false);
+      expect(out.text).toContain('Name A');
+      expect(restoreNames(out.text, out.map)).toBe(q);
+      expect(findLeaks(out.text, PROFILE)).toEqual([]);
+    }
+  });
+  // first names that are also words; none is in the fixture's About me
+  const WORDS = ['may', 'june', 'april', 'bill', 'rose', 'mark', 'pat', 'dawn', 'frank', 'penny', 'holly', 'will', 'joy', 'hope'];
+  const FRAMES: ((n: string) => string)[] = [
+    (n) => `did ${n} ring this morning`,
+    (n) => `can you call ${n} back`,
+    (n) => `what shall we get ${n} for christmas`,
+    (n) => `is ${n} coming on sunday`,
+    (n) => `ask ${n} about the keys`,
+    (n) => `shall I text ${n} that we are late`,
+    (n) => `${n} called, do you want to ring back?`,
+    (n) => `Did ${n.charAt(0).toUpperCase()}${n.slice(1)} say when she is coming?`,
+    (n) => `${n.charAt(0).toUpperCase()}${n.slice(1)} called, do you want to ring back?`,
+    (n) => `Shall we ask ${n.charAt(0).toUpperCase()}${n.slice(1)} to stay for tea?`,
+  ];
+  it('a word that is also a first name is swapped where it stands like a name, in lower case and with a capital', () => {
+    for (const n of WORDS) for (const t of FRAMES) {
+      const q = t(n);
+      const out = stripQuestion(q, PROFILE);
+      expect(has(out.text, n), `${q} -> ${out.text}`).toBe(false);
+      expect(restoreNames(out.text, out.map)).toBe(q);
+    }
+  });
+  it('the same words used as words go as typed', () => {
+    for (const q of ['did you pay the gas bill', 'shall we go in may', 'you may sit down now', 'will you have a rose in the vase', 'I hope it stops raining', 'Is your birthday in June?', 'May I take your plate?', 'Will you eat a bit more?', 'what a joy to see you eat', 'do you want honey on your toast', 'is it on the 3rd of April']) {
+      expect(stripQuestion(q, PROFILE).text).toBe(q);
+    }
+  });
+  it('on a question that goes to cloud help, the request, the "Sent" line and the tiles agree', async () => {
+    const e = new Scripted(null, { topic: 'present', kind: 'choice', choices: ['a book for Name A', 'flowers'] });
+    const card = await ask('what should we get june for her birthday', e);
+    expect(e.sent).toEqual(['What should we get Name A for her birthday?']);
+    expect(card.cloudPayload).toContain('What should we get Name A for her birthday?');
+    expect(card.cloudPayload).not.toMatch(/june/i);
+    expect(answers(card)).toEqual(['a book for june', 'flowers']);
+    const e2 = new Scripted(null, { topic: 'message', kind: 'choice', choices: ['thank you', 'see you soon'] });
+    await ask('what should we cook when mike from the club comes over', e2);
+    expect(e2.sent[0]).not.toMatch(/mike/i);
+  });
+  it('the limits, pinned: what is still sent as typed, and what is swapped although it is a word', () => {
+    // a word-name after "with" / "for" that is more often a word than a name stays (the safe side stops here)
+    expect(stripQuestion('did you sit with joy at the club', PROFILE).text).toBe('did you sit with joy at the club');
+    expect(stripQuestion('is that cake for hope', PROFILE).text).toBe('is that cake for hope');
+    // an English word the list does not have is swapped: a label too many, never a name too many
+    expect(stripQuestion('did you try the zumba class', PROFILE).text).toBe('did you try the Name A class');
+    // "it was dawn when you woke" is read as a person: over-replacement, accepted
+    expect(stripQuestion('was dawn here when you woke', PROFILE).text).toBe('was Name A here when you woke');
   });
 });

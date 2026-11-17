@@ -234,7 +234,7 @@ const COPY = {
     heading: 'Cloud help',
     intro: 'Cloud help is for open questions when the private helper on this computer is missing, or when its card is weak.',
     whatHeading: 'What is sent',
-    what: "When the private helper can't make a good card, cloud help sends the question you typed to Google's Gemini (through Firebase). Before it's sent, names, places, foods and other words from About me are swapped for labels like \"Person A\". Anything else you type is sent as written, so leave out health details or names you don't want sent.",
+    what: "When the private helper can't make a good card, cloud help sends the question you typed to Google's Gemini (through Firebase). Before it's sent, names, places, foods and other words from About me are swapped for labels like \"Person A\". A word that looks like a name you have not listed (a word with a capital, or one that is not an everyday English word) is swapped for \"Name A\" too; that is a guess by the shape of the word, and it can miss a name. Anything else you type is sent as written, so leave out health details or names you don't want sent.",
     exampleHeading: 'Your last question would be sent like this:',
     exampleNone: 'Type a question first and this shows exactly what would be sent.',
     whoHeading: 'Who receives it',

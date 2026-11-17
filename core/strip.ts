@@ -5,6 +5,7 @@
 // The profile itself is never part of a cloud payload; findLeaks() is the last check before anything is sent.
 
 import type { Profile } from './types';
+import { isKnownWord, WORD_NAMES } from './words';
 
 export interface Stripped {
   text: string;
@@ -93,9 +94,35 @@ const AFTER_TITLE_NOT_NAME = new Set((
   'sent wrote texted emailed left arrived is was will would can could should has had does did might may must and or but who that which when if so ' +
   'about again today tomorrow tonight yesterday now later soon here there too also still never always just really appointment visit office surgery ' +
   'practice clinic call said\'s').split(/\s+/));
-/** Names that are also ordinary capitalised words (a month, an auxiliary): a name only where the next word says so. */
-const NAME_OR_WORD = new Set(['will', 'may', 'june', 'april', 'august']);
+/** What follows a name that opens a sentence: "May called", "Bill is coming", "Rose's here". */
 const NAME_CONTEXT = /^(?:['’]s\b|\s+(?:is|was|has|had|says|said|called|calls|rang|phoned|wants|wanted|came|comes|and|from)\b)/i;
+/** Months that are also first names. With a capital in mid-sentence they are a name unless the words around them make a date. */
+const MONTH_NAMES = new Set(['may', 'june', 'april', 'august']);
+const DATE_BEFORE = new Set(['in', 'on', 'of', 'by', 'until', 'till', 'since', 'before', 'after', 'during', 'last', 'next', 'this', 'every', 'early', 'late', 'mid', 'end', 'from', 'to', 'through', 'for', 'and', 'or']);
+/** A word before a thing, not before a name: "the bill", "a rose", "your will". */
+const THING_BEFORE = new Set([...DETERMINER, 'these', 'those', 'each', 'of', 'such', 'whose', 'more', 'much', 'little', 'bit', 'good', 'bad', 'nice', 'big', 'small', 'new', 'old', 'red', 'white', 'last', 'next', 'in', 'on', 'at', 'by', 'to', 'for', 'with', 'from']);
+/** Verbs of getting in touch: a word-name right after one is the person ("call bill back", "ask rose"). */
+const CONTACT_BEFORE = new Set(['call', 'calling', 'called', 'ring', 'ringing', 'rang', 'phone', 'phoning', 'phoned', 'text', 'texting', 'texted', 'tell', 'telling', 'told', 'ask', 'asking', 'asked', 'invite', 'inviting', 'invited', 'visit', 'visiting', 'visited', 'thank', 'thanking', 'email', 'emailing', 'message', 'messaging', 'meet', 'meeting', 'met', 'see', 'seeing', 'saw']);
+/** "did may call?", "is rose coming?", "has bill rung?": an auxiliary, the word-name as its subject, then what the person does. */
+const AUX_BEFORE = new Set(['did', 'does', 'has', 'is', 'was', 'will', 'can', 'could', 'should', 'would', 'might']);
+const DOES_AFTER = new Set(['call', 'called', 'calling', 'ring', 'rang', 'rung', 'phone', 'phoned', 'come', 'came', 'coming', 'say', 'said', 'want', 'wants', 'wanted', 'know', 'knew', 'bring', 'brought', 'visit', 'visited', 'text', 'texted', 'send', 'sent', 'write', 'wrote', 'tell', 'told', 'ask', 'asked', 'leave', 'left', 'take', 'took', 'drop', 'dropped', 'pick', 'picked', 'pop', 'popped', 'stay', 'stayed', 'get', 'got', 'go', 'went', 'going', 'gone', 'need', 'like', 'still', 'back', 'here', 'home', 'ok', 'okay', 'alright', 'mind', 'drive', 'drove', 'help', 'helped', 'look', 'sit', 'eat', 'feed', 'walk']);
+/** Verbs of giving: "what shall we get june for her birthday?", "send bill a card". */
+const GIVE_BEFORE = new Set(['get', 'getting', 'give', 'giving', 'buy', 'buying', 'send', 'sending', 'bring', 'bringing', 'help', 'helping', 'thank', 'drive', 'driving', 'take', 'taking', 'fetch', 'tell']);
+/**
+ * Word-names that are hardly ever anything but a first name in the talk of a home ("bob", "sue", "jack", "carol"): in
+ * lower case they are swapped wherever they stand, unless a word like "the" or "a" stands before them.
+ */
+const ALWAYS_NAMES = new Set(('june april jack nick pat sue bob rob don ray carol jean tom ted josh matt max lee jay dean drew gene rex victor warren bonnie noel flo bea barb curt mo wade woody ' +
+  'hunter mason carter cooper tanner taylor parker flora pierce rocky sonny missy dolly goldie birdie').split(/\s+/));
+/**
+ * Word-names that are also everyday things ("rose", "bill", "mark", "daisy"): swapped after a verb of getting in touch or
+ * of giving, as the subject of what a person does, and after "with / from / and / or / about / for / like" ("go with
+ * rose", "a card from bill"). Not after "the / a / your" and not as part of a thing ("the gas bill").
+ */
+const WITH_BEFORE = new Set(['with', 'from', 'and', 'or', 'about', 'for', 'like']);
+const MOSTLY_NAMES = new Set([...ALWAYS_NAMES, ...('rose bill mark daisy holly ivy lily iris violet amber ruby pearl heather hazel poppy penny dawn frank robin kit earl herb lance miles norm dot peg rod ' +
+  'cliff dale glen heath brook fern kitty bunny jade crystal opal').split(/\s+/)]);
+const SAYS_AFTER = new Set(['called', 'rang', 'phoned', 'said', 'says', 'wants', 'wanted', 'came', 'texted', 'wrote', 'emailed', 'visited', 'asked']);
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const lc = (s: string) => s.toLowerCase();
@@ -275,7 +302,32 @@ export function stripQuestion(q: string, profile: Profile): Stripped {
   // its case ("Dr. Patel", "aunt linda"). It goes as "Name A" and comes back on the device.
   const nameTerm: Term = { kind: 'Name', entry: '', keys: new Set(), words: new Set() };
   const all = tokens(text);
-  const ordinary = (w: string) => ORDINARY_OPENERS.has(w) || GENERIC.has(w) || (w.length > 3 && ORDINARY_OPENERS.has(w.replace(/(?:es|s)$/, '')));
+  // an everyday English word, in any regular form: the lists of this file, and the word list of words.ts
+  const ordinary = (w: string) => ORDINARY_OPENERS.has(w) || GENERIC.has(w) || COMMON_CAPS.has(w) || isKnownWord(w);
+  // the word next to token i, when only spaces (or a possessive) lie between: nothing is read across a comma or a full stop
+  const near = (i: number, d: 1 | -1): string => {
+    const a = d === 1 ? all[i] : all[i - 1];
+    const b = d === 1 ? all[i + 1] : all[i];
+    return a && b && /^(?:['’]s?)?\s+$/.test(text.slice(a.end, b.start)) ? (d === 1 ? b.w : a.w) : '';
+  };
+  // A word that is also a first name ("may", "bill", "rose"): does it stand where a name stands? After a verb of
+  // getting in touch ("call bill back"), as the subject between an auxiliary and what the person does ("did may
+  // call?", "is rose coming?"), or right before "called / said / wants". Never after a word that goes before a thing
+  // ("the bill", "a rose", "in may").
+  const likeName = (i: number): boolean => {
+    const w = all[i].w;
+    const before = near(i, -1);
+    const after = near(i, 1);
+    if (MONTH_NAMES.has(w) && (DATE_BEFORE.has(before) || /^\d/.test(after) || /^\d/.test(before))) return false;
+    if (ALWAYS_NAMES.has(w)) return !DETERMINER.has(before);
+    if (WITH_BEFORE.has(before) && MOSTLY_NAMES.has(w)) return true;
+    if (THING_BEFORE.has(before)) return false;
+    // "may i …", "will you …": the auxiliary, not a name
+    if ((w === 'may' || w === 'will') && /^(?:i|we|you|he|she|they|it|there|be|have|not)$/.test(after)) return false;
+    if (CONTACT_BEFORE.has(before) || GIVE_BEFORE.has(before)) return true;
+    if (AUX_BEFORE.has(before) && before !== w && DOES_AFTER.has(after)) return true;
+    return SAYS_AFTER.has(after) || /^['’]s\b/.test(text.slice(all[i].end));
+  };
   const names = all.filter((tk, i) => {
     const raw = text.slice(tk.start, tk.end);
     if (/\p{N}/u.test(raw)) return false;
@@ -291,15 +343,29 @@ export function stripQuestion(q: string, profile: Profile): Stripped {
       const before = i > 1 ? lc(text.slice(all[i - 2].start, all[i - 2].end)) : '';
       return !TITLE_CAPS_ONLY.has(title) && !DETERMINER.has(before) && !ordinary(low) && !ordinary(tk.w) && !AFTER_TITLE_NOT_NAME.has(low) && !COMMON_CAPS.has(low);
     }
-    if (!cap || TITLES.has(low)) return false;
-    if (/^\p{Lu}+$/u.test(raw) && raw.length <= 4 && low !== 'i') { if (COMMON_CAPS.has(low) || raw.length <= 3) return false; } // an acronym (TV, GP, NHS) stays
-    // (a plural counts as its word: "Mondays")
-    if (COMMON_CAPS.has(low) || COMMON_CAPS.has(tk.w) || (low.length > 4 && low.endsWith('s') && COMMON_CAPS.has(low.slice(0, -1)))) {
-      // "Will's coming over", "May called": a name where the next word says so; else the ordinary word
-      return NAME_OR_WORD.has(low) && NAME_CONTEXT.test(text.slice(tk.end)) && !/^\s+(?:you|we|i|it|they|he|she|there|the|a|an|your|my|our)\b/i.test(text.slice(tk.end));
+    if (TITLES.has(low)) return false;
+    if (!cap) {
+      // A lowercase word (typed without capitals, or from speech-to-text). Not an English word the lists know: it
+      // is taken for a name ("call mike back", "ask kowalski"). A word that is also a first name: only where it
+      // stands like one. When the code cannot tell, it swaps: a label too many, never a name too many.
+      if (tk.w.length < 2) return false;
+      if (!ordinary(tk.w) && !ordinary(low)) return true;
+      return WORD_NAMES.has(tk.w) && likeName(i);
     }
-    // the word that opens a sentence: a name unless it is a word partners open questions with
-    if (SENTENCE_START.test(text.slice(0, tk.start))) return !ordinary(low) && !ordinary(tk.w);
+    if (/^\p{Lu}+$/u.test(raw) && raw.length <= 4 && low !== 'i') { if (COMMON_CAPS.has(low) || raw.length <= 3) return false; } // an acronym (TV, GP, NHS) stays
+    const opens = SENTENCE_START.test(text.slice(0, tk.start));
+    // the word that opens a sentence: a name unless it is an English word; a word that is also a first name ("May
+    // called…", "Bill is coming…", "Will's here") is one where the next word says so
+    if (opens) {
+      if (!ordinary(low) && !ordinary(tk.w)) return true;
+      return WORD_NAMES.has(tk.w) && NAME_CONTEXT.test(text.slice(tk.end)) && !/^\s+(?:you|we|i|it|they|he|she|there|the|a|an|your|my|our)\b/i.test(text.slice(tk.end));
+    }
+    // "Did May call today?", "Is Will coming?": a month or "will" with a capital is a name, unless the words around a
+    // month make a date ("in May", "May 5")
+    if (MONTH_NAMES.has(tk.w)) return !(DATE_BEFORE.has(near(i, -1)) || /^\d/.test(near(i, 1)) || /^\d/.test(near(i, -1)));
+    if (tk.w === 'will') return true;
+    // (a plural counts as its word: "Mondays")
+    if (COMMON_CAPS.has(low) || COMMON_CAPS.has(tk.w) || (low.length > 4 && low.endsWith('s') && COMMON_CAPS.has(low.slice(0, -1)))) return false;
     return true;
   });
   // labels in reading order (the first unknown name is "Name A"), replaced from the end so offsets stay valid
