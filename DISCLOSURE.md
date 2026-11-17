@@ -7,7 +7,7 @@ with any pre-existing code or work disclosed. This file lists exactly what exist
 ## What existed before 11 Nov 2026
 On 9–10 Nov 2026 we built a throwaway prototype of Talk Partner in a separate local repository (never published).
 It called Chrome's built-in model directly, had no Firebase project, and its cloud step never ran. It also held an unrun Firebase engine file (see the last row of the table and the note under it).
-We took these files from it **verbatim**, in this repository's first commit (`949e8ec`, tagged **`pre-contest`**), so the
+We took these files from it **verbatim**, in this repository's first commit (`6518315`, tagged **`pre-contest`**), so the
 history shows exactly what was carried over: `git diff pre-contest..HEAD` is the work of the submission period.
 
 | File | What it is |
