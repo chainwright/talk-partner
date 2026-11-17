@@ -1275,7 +1275,7 @@ function act(el: HTMLElement) {
     // the first-run screen belongs to the full view (the simple view has none): setting up from it stays in the full view
     case 'welcome-setup': state.settings.welcomed = true; state.settings.view = 'full'; saveSettings(); go('about'); break;
     case 'welcome-sample': state.settings.welcomed = true; saveSettings(); go('demo'); break;
-    case 'cloud-on': if (state.consentChecked) { state.settings.cloudHelp = true; saveSettings(); askSettings(); render(); } break;
+    case 'cloud-on': if (state.consentChecked) { state.settings.cloudHelp = true; state.sheet = false; saveSettings(); askSettings(); render(); } break;
     case 'cloud-off': state.settings.cloudHelp = false; state.consentChecked = false; saveSettings(); render(); break;
     case 'person-add': state.profile.people.push({ id: `p${Date.now().toString(36)}`, name: '', relation: '', household: false }); saveProfile(); render(); break;
     case 'person-remove': state.profile.people.splice(i, 1); saveProfile(); render(); break;

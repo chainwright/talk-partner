@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Talk Partner turns a partner's question into a supported-conversation card for an adult with aphasia." />
     <title>Talk Partner</title>
+    <!-- the look of the first frame: the bare address opens the simple view (light), any other the full view (dark);
+         main.ts sets it again on every draw, from the view actually shown -->
+    <script>document.documentElement.dataset.view = location.hash.replace(/^#\/?/, '') ? 'full' : 'simple';</script>
   </head>
   <body>
     <div id="app"></div>
