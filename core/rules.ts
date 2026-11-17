@@ -1142,6 +1142,8 @@ export function escapeFor(q: string, answers: string[] = [], profile?: Profile):
   if (/^\s*where\b/i.test(q)) return 'somewhere else';
   const real = answers.filter((a) => !NONE_OPTION.test(a));
   if (profile && real.length >= 2 && real.every((a) => findPerson(a, profile) || isPartnerName(a, profile))) return 'someone else';
+  // "Honey or Carol": a name About me knows next to one it does not is still a choice between people
+  if (profile && real.length >= 2 && real.every((a) => /^[A-Z][\p{L}'-]+$/u.test(a.trim())) && real.some((a) => findPerson(a, profile) || isPartnerName(a, profile))) return 'someone else';
   return 'something else';
 }
 

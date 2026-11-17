@@ -339,6 +339,11 @@ describe('E-6. the partner\'s name in the question means someone else is asking:
       for (const c of card.choices) expect(c.label).not.toMatch(/^you\b/i);
     });
   }
+  it('a choice between a person About me knows and one it does not has "someone else" as its way out', async () => {
+    const card = await ask('Do you want Winnie to sit with you this evening, or Maria?', new Scripted(null));
+    expect(answers(card)).toEqual(['Winnie', 'Maria']);
+    expect(card.choices.find((c) => c.role === 'escape')?.label).toBe('someone else');
+  });
   it('a model that copies the options keeps her name too, with its possessive', async () => {
     const card = await ask("Do you want the cricket on, or shall we leave Maria's programme on?", new Scripted({ topic: 'telly', kind: 'choice', choices: [], options: ['cricket', "Maria's programme"] }));
     expect(answers(card)).toEqual(['cricket', "Maria's programme"]);
