@@ -167,6 +167,28 @@ try {
   const cloudNav = await c.js(`[...document.querySelectorAll('header nav a')].map((a) => a.innerText).find((t) => t.startsWith('Cloud help'))`);
   check('cloud help is off', cloudNav === 'Cloud help: off', cloudNav);
 
+  log(`\n## 1b. Judge mode's first step, with no click`);
+  log(`The first frame is a card made in code (coffee or tea). When the model is ready the app itself asks "What do you want to do this weekend?"; nothing below was clicked or typed.`);
+  const tStep = Date.now();
+  const stepDone = await c.waitFor(`document.querySelector('#status .step')?.dataset.step === 'done' && document.querySelector('#result .badge')?.innerText === 'On this computer'`, 60000);
+  await sleep(800);
+  const st = await c.js(`({ status: document.querySelector('#status').innerText, badge: document.querySelector('#result .badge')?.innerText ?? '', tail: document.querySelector('#result .badge-line .tail')?.innerText ?? '',
+    tiles: [...document.querySelectorAll('#person .tile span')].map((e) => e.innerText), lit: document.querySelector('.chip.on')?.dataset.q ?? '', sentHead: document.querySelector('#sent p')?.innerText ?? '',
+    trace: [...document.querySelectorAll('.trace li')].map((e) => e.innerText.replace(/\\n/g, ' — ')), bytes: document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? '' })`);
+  log(`- the card appeared ${stepDone < 0 ? 'not at all in 60 s' : `${Math.round((Date.now() - tStep) / 100) / 10} s after "Ready"`}`);
+  log(`- status line: "${st.status}"`);
+  log(`- badge line: ${st.badge} ${st.tail}`);
+  log(`- tiles on the person's card: ${st.tiles.join(' / ') || '(none)'}; chip lit: "${st.lit}"`);
+  for (const t of st.trace) log(`- trace: ${t}`);
+  log(`- what was sent: ${st.sentHead}; under the chips: ${st.bytes}`);
+  log(`- SDK report (console), warm-up and this card: ${c.aiLines().map((l) => `\`${l}\``).join(', ')}`);
+  log(`- requests to hosts other than ${APP_HOST} since page load: ${c.outside().length ? c.outside().map((r) => r.host).join(', ') : 'none'}`);
+  check('the first step ran by itself: a card for the weekend question, badge "On this computer", its chip lit', stepDone >= 0 && st.badge === 'On this computer' && st.lit === 'What do you want to do this weekend?', `${st.badge}; lit: ${st.lit}`);
+  check('the SDK reported inferenceSource=on_device for it (the second on-device call of the page, after the warm-up)', c.aiLines().length === 2 && c.aiLines().every((l) => ON_DEVICE.test(l)), c.aiLines().join(' | '));
+  check('its choices are the family\'s own, from About me, and the card says so', fromAbout(st.tiles).length >= 2 && /nothing left this computer/.test(st.tail) && /from About me/.test(st.tail), `${st.tiles.join(' / ')} ${st.tail}`);
+  check('nothing was sent for it and no other host was contacted', c.outside().length === 0 && /Nothing sent/.test(st.sentHead) && /^0 bytes left this computer/.test(st.bytes), `${c.outside().length} outside requests; ${st.bytes.slice(0, 60)}`);
+  await c.shot('00-first-step-on-device');
+
   log(`\n## 2. Cloud help OFF: the private step, with About me, on this computer`);
   const cases = [
     ['Who should we call tonight?', 'people'],

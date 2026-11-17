@@ -78,6 +78,14 @@ try {
   await sleep(1500);
   const status = await js(`document.querySelector('#status').innerText`);
   console.log(`device status line: ${status}`);
+  // judge mode's first step needs the on-device model. This browser has none: the status line must say so plainly
+  // (once the check stands, a few seconds) and the first card, made in code, must stay as it is.
+  await waitFor(`/Gemini Nano (?:in this browser|is not downloaded)/.test(document.querySelector('#status').innerText)`, 12000);
+  const noNano = await js(`({ status: document.querySelector('#status').innerText, tiles: [...document.querySelectorAll('#person .tile span')].map(e => e.innerText), badge: document.querySelector('#result .badge')?.innerText ?? '', lit: document.querySelector('.chip.on')?.dataset.q ?? '' })`);
+  console.log(`status line once the check stands: ${noNano.status}`);
+  check('no on-device model in this browser: the status line says so plainly, and the first card (made in code) stays',
+    // (a browser that could run the model but has not downloaded it says that instead: a throwaway profile on a capable machine)
+    /(?:No Gemini Nano in this browser, so the on-device step can't run here|Gemini Nano is not downloaded in this browser, so the on-device step can't run yet)\. The card shown is made in code\./.test(noNano.status) && JSON.stringify(noNano.tiles) === JSON.stringify(['coffee', 'tea', 'something else']) && noNano.badge === 'No AI needed' && noNano.lit === 'Do you want coffee or tea?', JSON.stringify(noNano));
 
   // page load with cloud help OFF: which hosts did loading the app contact?
   const loadHosts = [...hosts.entries()].map(([h, n]) => `${h}×${n}`).join(', ');

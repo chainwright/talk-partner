@@ -58,7 +58,9 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
 @media (max-width: 520px) {
   .layout:not(.first):has(#result > .badge-line) .partner > .tagline, .layout:not(.first):has(#result > .badge-line) .partner > .sample { order: 2; }
   .layout:has(#result > .badge-line) .partner > .tagline-sub { order: 2; margin: 0; } /* the second line gives way to any card, the first one included */
-  .layout:not(.first):has(#result > .badge-line) .partner > .status { padding: 6px 10px; font-size: 12.5px; line-height: 1.4; }
+  /* the status line is smaller under any card, the first one included: in judge mode it also says where the first
+     step stands, or that this browser has no on-device model to show, and the card must still start in the first screen */
+  .layout:has(#result > .badge-line) .partner > .status { padding: 6px 10px; font-size: 12.5px; line-height: 1.4; }
 }
 .partner { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .tagline { margin: 0; font-size: 21px; color: var(--ink); font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }

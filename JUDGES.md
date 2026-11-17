@@ -8,13 +8,22 @@ npm install && npm run dev        # then open http://localhost:5179/#/demo
 
 `#/demo` loads a made-up family (Frank; his wife Carol is asking) and opens with one card already made: "Do you want
 coffee or tea?", read in code, with no model and nothing sent. It is there so the first frame shows what the person
-sees; it is not the AI part. Under the question box are one-tap questions. The
-first two are open questions: the choices are not in the question, so a model has to propose them. They are where the
-two steps of the hybrid give different cards.
+sees; it is not the AI part.
+
+**What happens next depends on your browser, and the status line at the top says which.** In desktop Chrome with
+Gemini Nano the first step runs by itself, with no click: when the model has loaded (a few seconds; up to about 20 s
+right after the browser starts) the app asks "What do you want to do this weekend?" and the model on this computer
+makes the card from the family's About me: *lake / church / something else*, badge **On this computer**, taken from
+the SDK's `inferenceSource`. Nothing is sent, and this step is made with cloud help left out whatever the setting. In
+any other browser the status line reads "No Gemini Nano in this browser, so the on-device step can't run here. The
+card shown is made in code." and nothing runs by itself.
+
+Under the question box are one-tap questions. The first two are open questions: the choices are not in the question,
+so a model has to propose them. They are where the two steps of the hybrid give different cards.
 
 | Second | Do | You should see |
 |---|---|---|
-| 0–15 | click **this weekend?** | depends on your copy, see the table below. With Gemini Nano: *lake / church / something else*, badge **On this computer**, "nothing left this computer · lake, church from About me". The places are the family's own, read on this computer |
+| 0–15 | with Gemini Nano: watch the first step run by itself; without it: click **this weekend?** | depends on your copy, see the table below. With Gemini Nano: *lake / church / something else*, badge **On this computer**, "nothing left this computer · lake, church from About me". The places are the family's own, read on this computer |
 | 15–25 | click **for dinner?** | with Gemini Nano: *pot roast / chili / something else*, the family's own foods, nothing sent |
 | any time | look at the figure under the chips | "0 bytes left this computer" until a cloud request is made; after one, the size of what the app handed to cloud help. The same count as the privacy receipt below the card |
 | 25–35 | open **Why this card** and **Where each step ran** under the card | one line: what the model proposed, what code kept, added and dropped and by which rule; and which step ran where, from the SDK's `inferenceSource` |

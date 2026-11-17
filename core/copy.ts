@@ -372,6 +372,20 @@ const COPY = {
     intro: 'A made-up family, one-tap questions of each kind, and per card: where each step ran, and why this card.',
     noDevice: "This browser has no private helper, so the private step shows as \"did not run\" on every card. Cloud help can make the open cards: it gets the question only, and the sample family is made up.",
     exit: 'Leave judge mode',
+    /**
+     * Judge mode's first step, in the status line. The instant first card is made in code; as soon as the on-device
+     * model is ready the app itself asks one open question, and the card that follows carries the badge the SDK's
+     * report gives it. Where there is no on-device model, the line says so plainly and nothing else changes.
+     */
+    step: {
+      waiting: (q: string) => `When it is ready, the first step runs by itself: Gemini Nano on this computer makes the card for "${q}" from About me. Nothing is sent.`,
+      running: (q: string) => `First step, running by itself: Gemini Nano on this computer is making the card for "${q}" from About me. A few seconds; nothing is sent.`,
+      done: 'The card shown was made by Gemini Nano on this computer, from About me: its badge comes from what the SDK reported.',
+      failed: 'The step on this computer did not give a card this time, so the card made in code stays. The first chip asks it again.',
+      none: "No Gemini Nano in this browser, so the on-device step can't run here. The card shown is made in code.",
+      notDownloaded: "Gemini Nano is not downloaded in this browser, so the on-device step can't run yet. The card shown is made in code.",
+      downloadSize: '(several GB, once)',
+    },
     /** The one-tap questions, grouped by what the judge sees happen (core/sample.ts gives each question its group). */
     groups: { model: 'Open question: a model proposes', coach: 'The app corrects the partner', code: 'Read in code, no AI' },
     receipt: {

@@ -12,7 +12,7 @@ import { DEFAULT_SETTINGS, LEGS, REMOTE_KEYS, defaultReport, type RuntimeSetting
 import { bodyDetailCard, makeCard, quizOverrideCard, repairCard } from '../../core/pipeline';
 import { countSwaps, sentLine, sessionReceipt, sessionTally } from '../../core/receipt';
 import { BODY_REGIONS } from '../../core/rules';
-import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS } from '../../core/sample';
+import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS, SAMPLE_STEP } from '../../core/sample';
 import { stripQuestion } from '../../core/strip';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
@@ -108,7 +108,7 @@ const state: State = {
 // ---------------------------------------------------------------- routing
 function route(): Route {
   const h = location.hash.replace(/^#\/?/, '');
-  if (h === 'demo') { if (!state.demo) void enterDemo().then(() => render()); return 'partner'; }
+  if (h === 'demo') { if (!state.demo) void enterDemo().then(() => { render(); judgeStep(); }); return 'partner'; }
   if (h === 'about') return 'about';
   if (h === 'cloud') return 'cloud';
   if (h === 'person') return 'person';
@@ -200,15 +200,26 @@ const footer = () => `<footer>${C.footer}</footer>`;
 
 function statusLine(): string {
   if (!cfg) return `<span class="dot off"></span>${C.status.noConfig}`;
-  if (state.warming) return `<span class="dot wait"></span>${C.status.warming}`;
+  // judge mode: the same line also says where the first step stands (judgeStep), and says plainly when this browser
+  // has no on-device model to show
+  const J = state.demo ? C.judge.step : null;
+  const stepPending = J && step === 'waiting' && state.first;
+  if (state.warming) return `<span class="dot wait"></span>${C.status.warming}${stepPending ? ` ${esc(J.waiting(SAMPLE_STEP))}` : ''}`;
   switch (state.device) {
     case 'checking': return `<span class="dot wait"></span>${C.status.checking}`;
-    case 'available': return `<span class="dot ok"></span>${C.status.ready}`;
+    case 'available': {
+      const more = !J ? '' : step === 'running' ? J.running(SAMPLE_STEP) : step === 'failed' && state.first ? J.failed : stepCard && state.card === stepCard ? J.done : '';
+      return `<span class="dot ok"></span>${C.status.ready}${more ? ` <span class="step" data-step="${step}">${esc(more)}</span>` : ''}`;
+    }
     case 'downloading': return `<span class="dot wait"></span>${C.status.downloading(state.downloading !== null ? `: ${Math.round(state.downloading * 100)}%` : '')}`;
-    case 'downloadable': return `<span class="dot wait"></span>${C.status.notDownloaded} <button class="link" data-act="download">${C.status.download}</button>`;
+    case 'downloadable': return stepPending
+      ? `<span class="dot wait"></span>${esc(J.notDownloaded)} <button class="link" data-act="download">${C.status.download}</button> ${J.downloadSize}`
+      : `<span class="dot wait"></span>${C.status.notDownloaded} <button class="link" data-act="download">${C.status.download}</button>`;
     default: {
       const tail = state.settings.cloudHelp ? C.status.unavailableCloudOn : `${C.status.unavailableCloudOff} <a href="#/cloud">${C.blocked.turnOn}</a>`;
-      return `<span class="dot off"></span>${C.status.unavailable} ${tail}`;
+      // judge mode says "no Gemini Nano here" only once that answer stands; until then it is still checking
+      if (stepPending && !deviceFinal) return `<span class="dot wait"></span>${C.status.checking}`;
+      return `<span class="dot off"></span>${stepPending ? esc(J.none) : C.status.unavailable} ${tail}`;
     }
   }
 }
@@ -685,6 +696,8 @@ function patchDevice() {
  * twice (after 2 s and 6 s) before it stands. A capability query only: no inference, no network.
  */
 let recheck = 0;
+/** True once the answer stands (an "unavailable" that was asked again twice, or any other answer). */
+let deviceFinal = false;
 let probing: Promise<void> | null = null;
 function refreshDevice(): Promise<void> {
   return (probing ??= (async () => {
@@ -692,7 +705,8 @@ function refreshDevice(): Promise<void> {
       state.device = await state.engine.deviceStatus();
       patchDevice();
       void warm();
-      if (state.device === 'unavailable' && cfg && recheck < 2) setTimeout(() => void refreshDevice(), recheck++ ? 4000 : 2000);
+      if (state.device === 'unavailable' && cfg && recheck < 2) setTimeout(() => void refreshDevice().then(() => judgeStep()), recheck++ ? 4000 : 2000);
+      else { deviceFinal = true; patchDevice(); }
     } finally { probing = null; }
   })());
 }
@@ -702,12 +716,47 @@ function refreshDevice(): Promise<void> {
  * line says "getting ready" meanwhile; questions can be asked during it.
  */
 let warmed = false;
+let warmOk = false;
 async function warm() {
   if (warmed || state.device !== 'available' || !state.engine.warmDevice) return;
   warmed = true;
   state.warming = true; patchDevice();
-  try { await state.engine.warmDevice(); } catch { /* the first real question will report the failure in its trace */ }
+  try { await state.engine.warmDevice(); warmOk = true; } catch { /* the first real question will report the failure in its trace */ }
   state.warming = false; patchDevice();
+  judgeStep();
+}
+
+/**
+ * Judge mode's first step, run by the app itself, once per page load. The first frame is a card made in code (it has
+ * to be instant, and it has to be there on a copy with no model). What follows it, with no click, is the part a judge
+ * came for: as soon as the on-device model has loaded, the app asks one open, personal question (`SAMPLE_STEP`) and
+ * Gemini Nano makes the card from About me, on this computer. The card's badge is the one every card gets, from the
+ * SDK's `inferenceSource`: "On this computer".
+ *
+ * Kept safe on purpose: cloud help is left out of this step whatever the setting, so nothing can be sent by a step
+ * the judge did not click; it runs only while the first card is still untouched (any question asked or typed first
+ * cancels it); the first card stays on screen while the model works; and if the model gives no card on this
+ * computer, the first card simply stays and the status line says so. Where there is no on-device model, nothing runs
+ * and the status line says that plainly (`statusLine`).
+ */
+let step: 'waiting' | 'running' | 'done' | 'failed' | 'cancelled' = 'waiting';
+let stepCard: Card | null = null;
+let makeSeq = 0;
+function judgeStep() {
+  if (step !== 'waiting' || !state.demo || !state.first || state.busy) return;
+  if (location.hash.replace(/^#\/?/, '') !== 'demo' || state.device !== 'available' || state.warming || !warmOk) return;
+  step = 'running'; patchDevice();
+  const seq = ++makeSeq;
+  void makeCard(SAMPLE_STEP, { profile: SAMPLE_PROFILE, support: state.settings.support, engine: state.engine, allowCloud: false, deviceReady: true, routing: routing() })
+    .then((card) => {
+      state.made.push(card); // a card that was made is counted, shown or not
+      const untouched = seq === makeSeq && state.demo && state.first && !state.busy && location.hash.replace(/^#\/?/, '') === 'demo';
+      if (!untouched) { step = 'cancelled'; return; }
+      if (card.blocked || card.source !== 'on-device') { step = 'failed'; patchDevice(); return; }
+      step = 'done'; stepCard = card;
+      state.lastQuestion = SAMPLE_STEP; resetCard(); setCard(card); state.waitStart = Date.now(); render();
+    })
+    .catch(() => { step = 'failed'; patchDevice(); });
 }
 
 /**
@@ -735,6 +784,8 @@ const routing = () => ({ moodWords: state.remote.values.routeMoodWords, minChoic
 
 async function make(q: string) {
   if (!q.trim()) return;
+  if (step === 'waiting') step = 'cancelled'; // the judge asked something first: the automatic step stands down
+  const seq = ++makeSeq;
   useSettings();
   state.busy = true; state.error = null; state.lastQuestion = q; resetCard(); render();
   // a question asked before the capability check has answered waits for it: the card must not be made as if this
@@ -745,9 +796,11 @@ async function make(q: string) {
       profile: state.profile, support: state.settings.support, engine: state.engine,
       allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available', routing: routing(),
     });
-    setCard(card);
     state.made.push(card);
+    if (seq !== makeSeq) return; // a later question was asked meanwhile: its card is the one to show
+    setCard(card);
   } catch (e) {
+    if (seq !== makeSeq) return;
     state.card = null; state.error = (e as Error).message;
   }
   state.busy = false; state.waitStart = Date.now(); useSettings(); render();
@@ -886,7 +939,7 @@ app.addEventListener('change', (ev) => {
 });
 app.addEventListener('input', (ev) => {
   const t = ev.target as HTMLInputElement | HTMLTextAreaElement;
-  if (t.id === 'q') { state.lastQuestion = t.value; return; }
+  if (t.id === 'q') { state.lastQuestion = t.value; if (step === 'waiting') step = 'cancelled'; return; }
   if (t.id.startsWith('trial-') && t instanceof HTMLInputElement) { trialInput(t); return; }
   if (t instanceof HTMLTextAreaElement && t.dataset.list) { state.profile[t.dataset.list as 'foods'] = t.value.split('\n').map((x) => x.trim()).filter(Boolean); saveProfile(); return; }
   if (t instanceof HTMLInputElement && t.dataset.field && t.dataset.field !== 'household') {
@@ -914,6 +967,6 @@ window.addEventListener('hashchange', () => draw());
 // Opened straight on judge mode: the first card is made before the first draw, so there is no empty frame before it.
 void Promise.all([load(), loadTrial()]).then(async () => {
   if (location.hash.replace(/^#\/?/, '') === 'demo') await enterDemo();
-  render(); void refreshDevice();
+  render(); void refreshDevice().then(() => judgeStep());
   askSettings(); // only if cloud help was already on in this browser; otherwise when it is turned on
 });

@@ -42,3 +42,10 @@ export const SAMPLE_QUESTIONS: { q: string; short: string; group: SampleGroup; s
  * first card needs no model and sends nothing on any copy (tests/unit/first-card.test.ts).
  */
 export const SAMPLE_FIRST = 'Do you want coffee or tea?';
+
+/**
+ * The first step of judge mode after that card, run by the app itself when the on-device model is ready: an open,
+ * personal question (the first chip), so the first thing that follows the instant card is a card only the model on
+ * this computer can make, from About me. It is asked with cloud help left out, whatever the setting.
+ */
+export const SAMPLE_STEP = SAMPLE_QUESTIONS[0].q;
