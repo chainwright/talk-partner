@@ -362,7 +362,7 @@ const COPY = {
       },
     },
     lookalikesHeading: 'Look-alikes, named',
-    lookalikesIntro: 'What is closest to Talk Partner, checked on the primary pages on 11 Nov 2026, and where it differs.',
+    lookalikesIntro: 'What is closest to Talk Partner, checked on the primary pages on 11 Nov 2026 (Livox on 17 Nov 2026), and where it differs. Two of them also start from the question the partner asks, so that step alone is not new.',
     lookalikes: [
       {
         name: 'Lingraphica Conversations (24 Jun 2026)', url: 'https://lingraphica.com/resources/introducing-conversations/',
@@ -378,6 +378,11 @@ const COPY = {
         name: 'AACessTalk (CHI 2025)', url: 'https://arxiv.org/abs/2409.09641',
         does: 'Real-time guides to the parent of a minimally verbal autistic child, and recommended vocabulary cards to the child; 11 pairs over two weeks.',
         ours: "Adults with aphasia; the partner's own question is rewritten (split, de-quizzed) and shown as choices; the answer is never written for the person.",
+      },
+      {
+        name: 'Livox, a student project at Worcester Polytechnic Institute (2020)', url: 'https://sites.google.com/view/livox-mqp/home',
+        does: 'Livox is "a pictogram-based alternative communication application"; the project "incorporated a ML and NLP-based classifier to detect specific questions and present the most relevant pictograms to users".',
+        ours: 'The same starting point, a question someone asks. Talk Partner is for adults with aphasia and works on the partner\'s side: written choices with a way out on every card, the line to say, coaching when the question itself is the problem, and the family\'s own entries read on this computer.',
       },
       {
         name: 'Tobii Dynavox TD Snap Aphasia', url: 'https://us.tobiidynavox.com/pages/td-snap-aphasia',
