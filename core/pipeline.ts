@@ -11,7 +11,7 @@ import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   contactPool, dropGenericWho, fromAboutMe, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
-  codeOptions, leadIn, listedAnswers, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
+  codeOptions, dropWhichOne, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
 import type { BodyRegion, Card, CardWhy, Choice, ModelOutput, Profile, Source, StepTrace, SupportLevel } from './types';
@@ -339,7 +339,6 @@ export function assemble(
     // a choice over the limit is not thrown away, it goes to the next page (below)
     for (const a of answers.slice(choiceCap(support))) track.dropped.push({ label: a, rule: W.rules.overCap });
   }
-  if (pair) for (const a of answers.slice(pair.length >= 3 && support !== 'most' ? 3 : choiceCap(support))) track.dropped.push({ label: a, rule: W.rules.overCap });
   const r = route('choice', asked, answers, !!pair, meta.routing);
   if (!pair && offersOptions(asked)) rejected.push('either-or options not found');
   if (!pair) for (const why of rejected) if (!r.reasons.includes(why)) r.reasons.push(why);
@@ -363,8 +362,15 @@ export function assemble(
   // Three options the partner named stand on one card, also at "2 at a time": the spoken line names all three, and a
   // tile that is missing reads as "not offered" (simulation 16.11). At the largest tiles two are shown and the third
   // waits on the next page; a fourth always does.
-  const cap = pair && pair.length >= 3 && support !== 'most' ? 3 : choiceCap(support);
-  const rest = answers.slice(cap);
+  // "nothing" / "not at all" / "the same" the partner named is never moved off the first page: it is the person's
+  // way to decline, and on a next page it reads as not offered (set E, 16 Nov: "Tea, coffee, or water, or nothing?")
+  const capReal = pair && pair.length >= 3 && support !== 'most' ? 3 : choiceCap(support);
+  const noneAt = pair ? answers.findIndex(isNoneOption) : -1;
+  const real = noneAt >= 0 ? answers.filter((_, i) => i !== noneAt) : answers;
+  const rest = real.slice(capReal);
+  answers = noneAt >= 0 ? [...real.slice(0, capReal), answers[noneAt]] : answers;
+  const cap = noneAt >= 0 ? Math.min(real.length, capReal) + 1 : capReal;
+  if (pair) for (const a of rest) track.dropped.push({ label: a, rule: W.rules.overCap });
   if (pair && pair.length >= 3 && cap > choiceCap(support)) notes.push(N.listedAll);
   if (rest.length) notes.push(N.moreOnNext(rest.join(', '), escape));
   const card = finish({ ...base, notes, topic: headline, kind: 'choice', route: r }, answers, [escape], profile, support, cap);
@@ -537,8 +543,10 @@ function finishTrace(trace: StepTrace[], card: Card): StepTrace[] {
   return [{ ...priv, used: privUsed }, { ...strip, used: stripUsed }, code];
 }
 
-async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]): Promise<Card> {
+async function makeCardInner(input0: string, env: PipelineEnv, trace: StepTrace[]): Promise<Card> {
   const { profile, support, engine } = env;
+  // "…, or rest. Which one?": the closing "which one?" is not part of the last option
+  const input = dropWhichOne(input0);
   // "Is that the phone? Do you want to answer it?": the first part points at something, the second is the question.
   // One card, when code can decide it; the line to say keeps both sentences.
   const notice = noticeLead(input);
@@ -609,7 +617,7 @@ async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]
   let pairFrom: 'model' | 'code' = 'code';
   let useRules = !o;
   if (o && offersOptions(asked)) {
-    devicePair = validateOptions(o.options ?? [], asked, profile);
+    devicePair = withSame(validateOptions(o.options ?? [], asked, profile));
     if (devicePair) {
       pairFrom = 'model';
       notes.push(N.optionsCopied);
@@ -715,7 +723,7 @@ async function cloudCard(
     o.choices = o.choices.map((c) => restoreNames(c, stripped.map));
     o.options = (o.options ?? []).map((c) => restoreNames(c, stripped.map));
     // either-or: the cloud's copied options pass the same check as the device's; the rules parser is not used here
-    const cloudPair = offersOptions(asked) ? validateOptions(o.options, asked, env.profile) : null;
+    const cloudPair = offersOptions(asked) ? withSame(validateOptions(o.options, asked, env.profile)) : null;
     let card = assemble(asked, pending, o, env.profile, env.support, r.source, r.ms, cloudPair, false, { step: 'stripped', pairFrom: 'model' });
     const cloudNotes: string[] = [];
     if (card.kind === 'choice' && card.choices.filter((c) => c.role === 'answer').length < 2) {

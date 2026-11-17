@@ -367,10 +367,12 @@ describe('D-3. three options where the last is "nothing / neither / quiet" keep 
       expect(card.notes).not.toContain(COPY.notes.optOutAsked);
     });
   }
-  it('at the largest tiles two are shown and the third, also "nothing", waits on the next page', async () => {
+  it('at the largest tiles two things are shown and a third waits on the next page; "nothing" never waits (since set E)', async () => {
     const card = await ask('Shall I put on cricket, a western, or nothing?', new Scripted(null), 'most');
-    expect(answers(card)).toEqual(['cricket', 'western']);
-    expect(everyPage(card)).toEqual(['cricket', 'western', 'nothing']);
+    expect(answers(card)).toEqual(['cricket', 'western', 'nothing']);
+    const four = await ask('Shall I put on cricket, a western, the news, or nothing?', new Scripted(null), 'most');
+    expect(answers(four)).toEqual(['cricket', 'western', 'nothing']);
+    expect(everyPage(four)).toEqual(['cricket', 'western', 'nothing', 'news']);
   });
   it('the headline is about the things offered, never the "nothing" tile', async () => {
     const card = await ask('Tea, or cocoa, or nothing for now?', new Scripted(null));

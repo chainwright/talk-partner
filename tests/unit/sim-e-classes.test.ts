@@ -7,7 +7,7 @@ import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
-import { codePair, listedAnswers, noticeLead, quizKind, quizRephrase, splitQuestion } from '../../core/rules';
+import { codeOptions, codePair, dropWhichOne, listedAnswers, noticeLead, quizKind, quizRephrase, splitQuestion } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -256,5 +256,63 @@ describe('E-4. only a real two-question turn is split', () => {
       expect(answers(second)).toEqual(['allotment', 'library']);
       expect(second.choices.find((c) => c.role === 'escape')?.label).toBe('somewhere else');
     });
+  });
+});
+
+describe('E-5. three options, a "nothing" at the end, words before and after the list', () => {
+  const everyPage = (c: Card) => { const out: string[] = []; for (let p: Card | null | undefined = c; p; p = p.nextPage) out.push(...answers(p)); return out; };
+  // set E: tiles "so we could go" / "rest Which one"; a tile "for lunch"; "nothing" on the next page; "not at all" lost
+  const LISTS: [string, string[]][] = [
+    ['We could play cards, or have a nap, or sit outside. What do you fancy?', ['play cards', 'have a nap', 'sit outside']],
+    ['So you can ring Grace, or write to her, or wait. Which one?', ['ring Grace', 'write to her', 'wait']],
+    ['For supper, an omelette, soup, or beans on toast?', ['omelette', 'soup', 'beans on toast']],
+    ['Tonight, cricket, a western, or the news?', ['cricket', 'western', 'news']],
+    ['Juice, milk, or squash, or nothing?', ['juice', 'milk', 'squash', 'nothing']],
+    ['Do you want to see Leo on Saturday or Sunday, or not this week?', ['Saturday', 'Sunday', 'not this week']],
+    ['Shall I ring the surgery this morning or after lunch, or not at all?', ['this morning', 'after lunch', 'not at all']],
+    ['Is your knee better or worse than last week?', ['better', 'worse', 'the same']],
+    ['Is the cough any easier or harder today?', ['easier', 'harder', 'the same']],
+  ];
+  for (const [state, engine] of STATES) {
+    it.each(LISTS)(`${state}: %s`, async (q, want) => {
+      const e = engine();
+      const card = await ask(q, e);
+      expect(card.blocked ?? null).toBeNull();
+      expect(card.kind).toBe('choice');
+      // every option on the first page, at "2 at a time" too; nothing waits behind the way out
+      expect(answers(card)).toEqual(want);
+      expect(card.nextPage ?? null).toBeNull();
+      expect(card.choices.filter((c) => c.role === 'escape')).toHaveLength(1);
+      expect(e.calls).not.toContain('cloud');
+    });
+  }
+  it('no tile holds the words before the list or the "which one" after it', async () => {
+    for (const [q] of LISTS) {
+      const card = await ask(q, new Scripted(null));
+      for (const a of answers(card)) expect(a).not.toMatch(/^(?:so|we|you|for|tonight)\b|which|what|fancy/i);
+      expect(card.say).not.toMatch(/Which one\?|What do you fancy\?/);
+    }
+  });
+  it('the closing question goes, the options stay', () => {
+    expect(dropWhichOne('Porridge or toast? Which would you like?')).toBe('Porridge or toast?');
+    expect(dropWhichOne('Shall we sit in the garden, or the front room. Which one?')).toBe('Shall we sit in the garden, or the front room?');
+    // a second question that is not about choosing stays where it is
+    expect(dropWhichOne('Porridge or toast? And are you warm enough?')).toBe('Porridge or toast? And are you warm enough?');
+    expect(dropWhichOne('Which one do you want?')).toBe('Which one do you want?');
+  });
+  it('"nothing" is on the first page at every level; a fourth thing is what waits', async () => {
+    for (const support of ['mild', 'more', 'most'] as const) {
+      const card = await ask('Juice, milk, or squash, or nothing?', new Scripted(null), support);
+      expect(answers(card)).toContain('nothing');
+      expect(everyPage(card).sort()).toEqual(['juice', 'milk', 'nothing', 'squash']);
+    }
+  });
+  it('"the same" joins only a pair of opposite comparatives; "or not today" after one thing is still yes / no', async () => {
+    expect(codeOptions('Do you want the big one or the small one?', PROFILE)).toEqual(['big one', 'small one']);
+    expect(codeOptions('Is it better or just different?', PROFILE)).toEqual(['better', 'just different']);
+    expect((await ask('Do you want a blanket, or not today?', new Scripted(null))).kind).toBe('yesno');
+    // a model that copies the two ends gets the middle too
+    const viaModel = await ask('Is your knee better or worse than last week?', new Scripted({ topic: 'knee', kind: 'choice', choices: ['better', 'worse'], options: ['better', 'worse'] }));
+    expect(answers(viaModel)).toEqual(['better', 'worse', 'the same']);
   });
 });

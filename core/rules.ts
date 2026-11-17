@@ -193,7 +193,8 @@ export function positiveForm(q: string): string | null {
 }
 
 /** "nothing", "neither", "just quiet", "no one": a real choice at the end of a list of things, shown as its own tile. */
-const NONE_OPTION = /^(?:just\s+|maybe\s+)?(nothing|neither|none|no\s+one|nobody|quiet|peace\s+and\s+quiet|silence|nowhere)(?:\s+(?:at\s+all|for\s+now|of\s+them|of\s+those|of\s+these|today|tonight|yet|just\s+yet|right\s+now|now))?$/i;
+// (since set E, 16 Nov, also "not at all", "not today", "no thanks" and, after a pair like "better or worse", "the same")
+const NONE_OPTION = /^(?:just\s+|maybe\s+)?(nothing|neither|none|no\s+one|nobody|quiet|peace\s+and\s+quiet|silence|nowhere|not\s+at\s+all|not\s+(?:today|tonight|now|yet|just\s+yet|right\s+now|this\s+(?:week|time|morning|afternoon|evening|weekend))|no\s+thanks|no\s+thank\s+you|(?:about\s+)?the\s+same|same)(?:\s+(?:at\s+all|for\s+now|of\s+them|of\s+those|of\s+these|today|tonight|yet|just\s+yet|right\s+now|now))?$/i;
 /** True for the "nothing / neither / quiet" tile of a list. */
 export const isNoneOption = (label: string): boolean => NONE_OPTION.test(label.trim());
 const OPT_OUT = /\s*,?\s+or\s+(?:is\s+that\s+a\s+no|would\s+you\s+rather\s+not|(?:do|would)\s+you\s+not|don't\s+you|not\s+really|not\s+bothered|are\s+you\s+(?:fine|ok|okay|alright|all\s+right|good|happy|sorted|set)(?:\s+(?:as\s+you\s+are|for\s+now|as\s+it\s+is|without|without\s+one))?|is\s+it\s+(?:fine|ok|okay|alright|all\s+right)(?:\s+as\s+it\s+is)?|shall\s+i\s+leave\s+it|should\s+i\s+leave\s+it|leave\s+it|never\s+mind|nothing(?:\s+for\s+now)?)\s*\?\s*$/i;
@@ -228,7 +229,8 @@ export function plainQuestion(q: string): { q: string; why: 'negative' | 'optOut
 
 // ---------------------------------------------------------------- rule 3
 const LEAD =/^(?:is it|is the room too|is the room|do you want to|do you want|would you like to|would you like|shall we|should we|go to|me to|to|the|on)\s+/i;
-const TRAIL = /\s+(?:that|which|who|for)\b.*$/i;
+// ("than this morning" after "better or worse" belongs to both sides)
+const TRAIL = /\s+(?:that|which|who|for|than)\b.*$/i;
 const FRAME = new Set(['you', 'like', 'want', 'to', 'we', 'i', 'me', 'would', 'do', 'does', 'shall', 'should', 'is', 'are', 'it', 'the', 'a', 'an', 'some', 'too', 'prefer', 'rather', 'have', 'could', 'can', 'will', 'be']);
 
 function cleanSide(x: string): string {
@@ -262,7 +264,10 @@ export function orPair(q: string): [string, string] | null {
   if (/,\s*or\s/i.test(q)) return commaOrPair(q);
   const m = /([\p{L}\p{N}' -]+?)\s+or\s+([\p{L}\p{N}' -]+?)\s*\?\s*$/u.exec(q);
   if (!m) return clausePair(q);
-  const bw = cleanSide(m[2]).split(/\s+/).filter(Boolean);
+  // a time both sides share ("… easier or harder today?") is not part of the second, so it is not counted off the first
+  const st = sharedTail(q);
+  const right = st && m[2].trim().split(/\s+/).length > st.split(/\s+/).length ? m[2].replace(new RegExp(`\\s+${esc(st)}\\s*$`, 'i'), '') : m[2];
+  const bw = cleanSide(right).split(/\s+/).filter(Boolean);
   // "Is morning or afternoon better?": the word both sides share is not part of the second
   while (bw.length > 1 && SHARED_END.test(bw[bw.length - 1])) bw.pop();
   // "Bus or taxi to the clinic?", "Cocoa or tea before bed?": where or when both happen is not part of the second
@@ -310,6 +315,8 @@ export function orPair(q: string): [string, string] | null {
 const AUX = '(?:is|was|are|were|am|do|does|did|would|will|can|could|should|shall|have|has|had)';
 const SUBJ = '(?:it|that|this|you|we|i|they|he|she|there)';
 const CLAUSE_LEAD = [
+  // "So we could go for a walk, or …": what the partner puts before the first of the things on offer
+  /^(?:so\s+|well\s+|now\s+|ok\s+|okay\s+)?(?:we|you|i)\s+(?:could|can|might)\s+(?:either\s+|just\s+|always\s+)?/i,
   new RegExp(`^(?:are\\s+you\\s+|you\\s+)?up\\s+for\\s+`, 'i'),
   new RegExp(`^(?:did|do|would|will)\\s+you\\s+(?:mean|want|like|prefer|rather|fancy|need)\\s+(?:to\\s+)?`, 'i'),
   new RegExp(`^(?:would|do|will)\\s+you\\s+`, 'i'),
@@ -343,8 +350,10 @@ function clauseOption(x: string, other = ''): string {
   const some = new RegExp(`^${AUX}\\s+(something|anything)\\s+(.*)$`, 'i').exec(s);
   if (some) s = `${some[1]} ${some[2]}`.replace(/\byou\b/gi, 'me');
   // "Is the soup alright" / "Has Pickles got enough seed": an aux + subject is not part of the option
-  const aux = new RegExp(`^(?!do\\s+(?:it|that|this)\\b)${AUX}\\s+(?:(?:the|your|my|our|that|this)\\s+\\w+|[A-Z][\\p{L}']+|(?:Person|Thing|Place|Food|Show|Music) [A-Z])\\s+`, 'iu').exec(s);
-  if (aux && s.slice(aux[0].length).trim()) s = s.slice(aux[0].length);
+  // (the name is matched with its capital: without that, "do your exercises" lost "do your")
+  const auxWord = new RegExp(`^(?!do\\s+(?:it|that|this)\\b)${AUX}\\s+`, 'i').exec(s);
+  const subj = auxWord ? /^(?:(?:[Tt]he|[Yy]our|[Mm]y|[Oo]ur|[Tt]hat|[Tt]his)\s+\w+|[A-Z][\p{L}']+|(?:Person|Thing|Place|Food|Show|Music) [A-Z])\s+/u.exec(s.slice(auxWord[0].length)) : null;
+  if (auxWord && subj && s.slice(auxWord[0].length + subj[0].length).trim()) s = s.slice(auxWord[0].length + subj[0].length);
   s = s.replace(CUT, '');
   for (let i = 0; i < 4; i++) {
     const y = s.replace(TAIL, '').replace(FUNC_END, '');
@@ -568,8 +577,14 @@ function timePair(q: string): [string, string] | null {
   if (!m) return null;
   const right = m[2].trim().replace(/^(?:maybe|just|else|perhaps|rather)\s+/i, '').replace(new RegExp(`^on\\s+(?=${DAYRE}$)`, 'i'), '');
   if (!isTimeLike(right)) return null;
-  const tail = new RegExp(`\\b((?:right\\s+)?now|later(?:\\s+on)?|soon|today|tonight|tomorrow|first|straight\\s+away|(?:this|tomorrow|in\\s+the)\\s+(?:morning|afternoon|evening)|${DAYRE}|at\\s+\\d{1,2}(?::\\d{2})?(?:\\s*[ap]m)?|(?:before|after|with)\\s+(?:lunch|dinner|tea|breakfast|supper|bed|church|work|school|the\\s+\\w+))$`, 'i').exec(m[1].replace(/[\s,]+$/, ''));
-  return tail ? [tail[1], right] : null;
+  const tail = timeTail(m[1]);
+  return tail ? [tail, right] : null;
+}
+
+/** The time a clause ends with ("… call Tyler this morning" -> "this morning"), or null. */
+function timeTail(clause: string): string | null {
+  const tail = new RegExp(`\\b((?:right\\s+)?now|later(?:\\s+on)?|soon|today|tonight|tomorrow|first|straight\\s+away|(?:this|tomorrow|in\\s+the)\\s+(?:morning|afternoon|evening)|${DAYRE}|at\\s+\\d{1,2}(?::\\d{2})?(?:\\s*[ap]m)?|(?:before|after|with)\\s+(?:lunch|dinner|tea|breakfast|supper|bed|church|work|school|the\\s+\\w+))$`, 'i').exec(clause.replace(/[\s,]+$/, ''));
+  return tail ? tail[1] : null;
 }
 
 /**
@@ -621,7 +636,10 @@ export function codePair(q: string, profile?: Profile): [string, string] | null 
 
 const QUESTION_LEAD = new RegExp(`^(?:${AUX}|want|wanna|fancy|shall|should|would|will|need|up for|you|what|where|who|when|which|how|why|let's)\\b`, 'i');
 const LIST_VERB = /^(?:put\s+on|put|watch|make|cook|have|get|wear|play|listen\s+to|go\s+to|visit|ring|call|phone|text|ask|invite|message|email|tell|order|try|read|eat|drink|take|bring|buy|use|see|find|fetch|do|pick)\s+(?:you\s+|us\s+|me\s+)?(?:the\s+|a\s+|an\s+|some\s+)?/i;
-const LIST_LEAD = new RegExp(`^(?:${AUX}|want|wanna|fancy|shall|should|would|will|need|up for)\\b`, 'i');
+/** An item that is something to do, by its first word. */
+const ACTION_START = /^(?:wait|rest|sit|stay|go|walk|sleep|write|leave|lie|stand|come|run|drive|play|try|watch|listen|talk|speak|stop|start|carry|keep|turn|switch|open|close|shut|wash|cook|make|help|send|pay|check|hold|move|look|think|finish|skip|nap|relax|give|have|do|let|just)\b/i;
+/** A piece of a list that starts a question: an auxiliary with its subject ("do you …"), or an offer. "do your exercises" and "have a rest" are things to do. */
+const LIST_Q = new RegExp(`^(?:(?:is|was|are|were|am|do|does|did|can|could|have|has|had)\\s+(?:you|we|i|it|they|he|she|that|this|there)\\b|want|wanna|fancy|shall|should|would|will|need|up for)\\b`, 'i');
 /**
  * Three or more options named in the question ("Soup, a sandwich, or leftovers for lunch?", "Tea, coffee or juice?"):
  * every one of them is an option. Simulation 16.11: such a list was read as a pair and the first option was lost.
@@ -641,9 +659,12 @@ export function orList(q: string, profile?: Profile): string[] | null {
     const cannotTell = !profile?.personName && !rest.includes(',');
     if (spokenTo || cannotTell || QUESTION_LEAD.test(rest)) s = rest;
   }
-  if (isOrNot(s) || optOutTrim(s)) return null;
   const m = /^(.*\S)\s*,?\s+or\s+([^,?]+?)\s*\?\s*$/i.exec(s);
   if (!m) return null;
+  // "…, or not?" after one proposal is a yes / no; after two or more things ("this morning or tonight, or not today?")
+  // it is the last of the choices
+  const several = /\bor\b/i.test(m[1]) || m[1].split(/\s*,\s*/).filter((x) => x && !ADDRESS.has(lc(x))).length >= 2;
+  if ((isOrNot(s) && !several) || optOutTrim(s)) return null;
   // the last item may be "nothing" / "neither" / "just quiet": a real choice, kept as its own tile (set D, 16 Nov:
   // "Jen or Tyler, or neither?" lost "neither", "…, or just quiet?" lost an option)
   const none = NONE_OPTION.exec(m[2].trim());
@@ -652,16 +673,24 @@ export function orList(q: string, profile?: Profile): string[] | null {
   if (head.length === 1 && none) head = head[0].split(/\s+or\s+/i).map((x) => x.trim()).filter(Boolean);
   // a lead-in before the question itself ("For lunch, do you want soup, …") is not an option
   let k = -1;
-  head.forEach((x, i) => { if (LIST_LEAD.test(x)) k = i; });
+  head.forEach((x, i) => { if (LIST_Q.test(x)) k = i; });
   if (k > 0) head = head.slice(k);
+  // nor is a first piece that only says what for or when ("For lunch, soup, a sandwich, or leftovers?", "Tonight,
+  // pasta, pizza or a salad?"), when none of the things after it is of that shape (set E, 16 Nov: a tile "for lunch")
+  const sets = (x: string) => /^(?:for|at|on|in|after|before|with|about|by|during)\s+\S/i.test(x) || isTimeOnly(x) || /^(?:so|well|now|ok|okay|right|then|as\s+for\s+\S+)$/i.test(x);
+  if (head.length >= 2 && sets(head[0]) && ![...head.slice(1), m[2]].some(sets) && head.length + (none ? 0 : 1) >= 3) head = head.slice(1);
   if (head.length < 2) return null;
-  // a list is short, verbless pieces; "Shall we walk, or stay in, or …" clauses are not read here
-  if (!head.slice(1).every((x) => x.split(/\s+/).length <= 4 && !ASIDE.test(x) && !LIST_LEAD.test(x) && !/\bor\b/i.test(x))) return null;
-  if (LIST_LEAD.test(m[2]) || LABEL_BAD.test(m[2])) return null;
-  const items = [...head, ...(none ? [] : [m[2]])].map((x) => clauseOption(x));
+  // a list is short pieces; a piece that starts a question of its own ("…, or do you want …") is not read here
+  if (!head.slice(1).every((x) => x.split(/\s+/).length <= 4 && !ASIDE.test(x) && !LIST_Q.test(x) && !/\bor\b/i.test(x))) return null;
+  if (LIST_Q.test(m[2]) || LABEL_BAD.test(m[2])) return null;
+  const last = none ? [] : [m[2]];
+  // "… call Tyler this morning or tonight, or not at all?": when every other item says when, so does the first
+  const when = [...head.slice(1), ...last].every(isTimeLike) ? timeTail(head[0]) : null;
+  const items = [when ?? clauseOption(head[0]), ...[...head.slice(1), ...last].map((x) => clauseOption(x))];
   // the verb the whole list hangs on is not part of the first option ("Shall I put on cricket, westerns, or …")
+  // (only when the others are things: in "ring Grace, or write to her, or wait" each item has its own verb)
   const bare = items[0].replace(LIST_VERB, '');
-  if (bare && !items.slice(1).some((x) => LIST_VERB.test(x))) items[0] = bare;
+  if (bare && !items.slice(1).some((x) => LIST_VERB.test(x) || ACTION_START.test(x))) items[0] = bare;
   // nor is a tail that belongs to all of them part of the last ("… or ice cream with it?")
   items[items.length - 1] = items[items.length - 1].replace(/\s+(?:with|for|on|in|to)\s+(?:it|that|them|this|you|me|us)$/i, '');
   // "the radio on, the TV on": "on" says the thing is switched on; the option is the thing ("turn it on" keeps it)
@@ -714,7 +743,27 @@ export function listedAnswers(q: string, profile?: Profile): { q: string; option
 
 /** The options code reads from the question: a list of three or more, else the either-or pair. */
 export function codeOptions(q: string, profile?: Profile): string[] | null {
-  return orList(q, profile) ?? codePair(q, profile);
+  return orList(q, profile) ?? withSame(codePair(q, profile));
+}
+
+const OPPOSITES: [string, string][] = [['better', 'worse'], ['more', 'less'], ['easier', 'harder'], ['stronger', 'weaker'], ['warmer', 'cooler'], ['warmer', 'colder'], ['hotter', 'colder'], ['louder', 'quieter'], ['faster', 'slower'], ['higher', 'lower'], ['bigger', 'smaller'], ['tighter', 'looser'], ['lighter', 'heavier'], ['brighter', 'darker'], ['lighter', 'darker'], ['longer', 'shorter']];
+/**
+ * "Is the hip any better or worse than this morning?" names two ends and leaves out the middle. A pair of opposite
+ * comparatives gets "the same" as a third tile (set E, 16 Nov: "about the same" could only go through the way out).
+ */
+export function withSame<T extends string[] | null>(pair: T): T | string[] {
+  if (!pair || pair.length !== 2) return pair;
+  const [a, b] = pair.map((x) => lc(x).replace(/^(?:any|a\s+bit|a\s+little|much|getting|feeling)\s+/, ''));
+  return OPPOSITES.some(([x, y]) => (a === x && b === y) || (a === y && b === x)) ? [...pair, 'the same'] : pair;
+}
+
+/**
+ * "…, or rest. Which one?", "Tea or coffee? Which would you like?": the words that only ask the person to choose are
+ * not part of the last option. Returns the question without them (set E, 16 Nov: a tile "rest Which one").
+ */
+export function dropWhichOne(q: string): string {
+  const m = /^(.*\bor\b.*?)\s*[.?!,;:–-]\s*(?:so\s+|now\s+)?(?:which\s+(?:one|is\s+it|would\s+you\s+(?:like|prefer|rather)|do\s+you\s+(?:want|fancy|prefer)|sounds\s+(?:good|best|better)|will\s+it\s+be|shall\s+it\s+be)|what\s+do\s+you\s+(?:think|reckon|say|fancy)|what\s+would\s+you\s+like|what\s+will\s+it\s+be|what'll\s+it\s+be|what's\s+it\s+to\s+be|your\s+(?:choice|pick|call)|you\s+(?:choose|pick|decide))[^?]*[?.!]*\s*$/i.exec(q.replace(/[’]/g, "'").replace(/\s+/g, ' ').trim());
+  return m ? `${m[1].replace(/[\s,.;:]+$/, '')}?` : q;
 }
 
 /**
@@ -769,7 +818,7 @@ export function orHeadline(q: string, all: string[], profile?: Profile, modelTop
   }
   s = s.replace(/\s+/g, ' ').trim();
   const time = /\b((?:this|next|on|for)\s+(?:weekend|morning|afternoon|evening|week|month|year|lunch|dinner|tea|breakfast|supper|christmas|easter|birthday|monday|tuesday|wednesday|thursday|friday|saturday|sunday|arvo|avo)|tonight|today|tomorrow)\b/i.exec(s);
-  if (time) return time[1].replace(/^(?:for|on)\s+/i, '');
+  if (time) return time[1].replace(/^(?:for|on)\s+/i, '').replace(/^(?:Tonight|Today|Tomorrow|This|Next)\b/, (w) => lc(w));
   // what is left of a clause that belonged to one side ("… or wait till she calls us?" -> "till she calls us") is no
   // topic: simulation 16.11, headline "till calls"
   s = s.replace(CUT, '');
