@@ -143,6 +143,10 @@ try {
     const num = await js(`(() => { const b = document.querySelector('#bytes'), r = b?.getBoundingClientRect(), c = document.querySelector('.receipt .counted'); return { text: b?.innerText.replace(/\\s+/g, ' ') ?? '', size: b ? parseFloat(getComputedStyle(b.querySelector('b')).fontSize) : 0, bottom: r ? Math.round(r.bottom) : -1, howOpen: c ? c.open : null, howSeen: c ? c.querySelector('p').checkVisibility() : null }; })()`);
     check(`${s} judge mode: one number at display size ("0 bytes left this computer")${s === 'desktop' ? ' in the first screen' : ''}; "How this is counted" is folded behind one link`,
       /^0 bytes left this computer/.test(num.text) && num.size >= 28 && (s !== 'desktop' || num.bottom <= 800) && num.howOpen === false && num.howSeen === false, JSON.stringify(num));
+    // review round 5: under the card judge mode opens with, the panels are one closed line too, and the receipt is closed
+    const fold0 = await js(`(() => { const m = document.querySelector('#result #made'), r = document.querySelector('.receipt'); return { made: m ? m.open : null, line: m?.querySelector('summary').innerText.slice(0, 40), seen: ['.why', '.trace', '#sent'].map((q) => !!m?.querySelector(q)?.checkVisibility()), receipt: r ? r.open : null }; })()`);
+    check(`${s} judge mode, first frame: "How this card was made" is one closed summary line under the first card and the receipt is closed`,
+      fold0.made === false && fold0.receipt === false && /^How this card was made: /.test(fold0.line ?? '') && fold0.seen.every((v) => v === false), JSON.stringify(fold0));
     await shot('03-judge-mode');
     await chip('Do you want coffee or tea?');
     await shot('04-partner-card-coffee-tea');

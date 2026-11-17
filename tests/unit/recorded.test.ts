@@ -103,15 +103,18 @@ describe('"How this works" names every badge', () => {
   });
 });
 
-// 17 Nov 2026 (review round 4): judge mode stacked four open panels under every card. Under the card it opens with
-// they still stand open; under every later card they are one summary line, and the receipt is closed.
-describe('judge mode: one summary line under every card after the first', () => {
-  it('the first card keeps its panels open; later cards fold them into #made with the summary line', () => {
-    expect(main).toContain("? (state.first ? madePanels(c) : `<details class=\"made\" id=\"made\"><summary>${esc(line)}</summary>${madePanels(c)}</details>`)");
+// 17 Nov 2026 (review round 4): judge mode stacked four open panels under every card; they became one summary line
+// under every card but the first. Review round 5, the same day: the first card had them open still, a wall of text
+// on a phone before anything was asked. Now every card in judge mode has the one closed line, the first included,
+// and the receipt is closed under every card.
+describe('judge mode: one closed summary line under every card, the first included', () => {
+  it('every card folds its panels into #made with the summary line; the receipt is closed', () => {
+    expect(main).toContain("? `<details class=\"made\" id=\"made\"><summary>${esc(line)}</summary>${madePanels(c)}</details>`");
+    expect(main).not.toContain('state.first ? madePanels(c)');
     expect(main).toContain('const line = c.why ? C.judge.madeLine(c.why.decided, c.why.kept.length, c.why.added.length, c.why.dropped.length) : C.judge.madeLineNoWhy;');
-    expect(main).toContain("${state.demo ? receiptPanel(state.first, false) : ''}");
+    expect(main).toContain("${state.demo ? receiptPanel(false, false) : ''}");
   });
-  it('nothing is removed: the fold holds the same three panels the first card shows', () => {
+  it('nothing is removed: the fold holds the same three panels', () => {
     const panels = main.split('function madePanels(c: Card): string {')[1]?.split('\n}')[0] ?? '';
     for (const p of ['whyPanel(c, true)', 'traceList(c.trace)', 'sentPanel(c)']) expect(panels).toContain(p);
   });

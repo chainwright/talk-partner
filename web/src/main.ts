@@ -356,8 +356,8 @@ function whyPanel(c: Card, open: boolean): string {
 
 /**
  * How this card was made, in the order a judge reads it: why this card → where each step ran → what was sent. The same
- * three panels, open, in both modes. In judge mode they stand under the first card and sit behind one summary line
- * under every later one (`#made`, cardPanel); on the partner screen they sit inside one closed disclosure (`#made`)
+ * three panels, open, in both modes. In judge mode they sit behind one summary line under every card (`#made`,
+ * cardPanel); on the partner screen they sit inside one closed disclosure (`#made`)
  * with the privacy receipt (folded, it is long) after them: one click shows all three, and nothing is removed, only
  * folded.
  */
@@ -564,9 +564,8 @@ function againChips(): string {
 
 /**
  * The partner screen. Judge mode (#/demo) is ordered for a 60-second read: the chips under the question box, then the
- * card. Under the card judge mode opens with, the panels stand open (badge → why → where each step ran → what was
- * sent) with the privacy receipt open after them; under every later card they are one summary line and the receipt
- * is closed (cardPanel). Then one compact session line (tally; the intro and the no-helper note fold under it). Outside judge mode the panels and
+ * card. Under every card, the one judge mode opens with included, the panels (why → where each step ran → what was
+ * sent) are one closed summary line and the privacy receipt after them is closed (cardPanel). Then one compact session line (tally; the intro and the no-helper note fold under it). Outside judge mode the panels and
  * the receipt are folded into "How this card was made" inside the card panel, so above the fold there is only the
  * question, the coaching line, the line to say, the card and the actions.
  */
@@ -586,7 +585,7 @@ function partnerScreen(): string {
     ${state.demo ? chipGroups() : ''}
     ${state.demo ? bytesLine() : ''}
     <div id="result" aria-live="polite">${state.busy ? `<p class="making" role="status"><span class="dot wait"></span>${C.ask.makingCard} <small>${C.ask.makingHint}</small></p>` : c ? cardPanel(c) : state.error ? `<p class="warn">${esc(state.error)}</p>` : ''}</div>
-    ${state.demo ? receiptPanel(state.first, false) : ''}
+    ${state.demo ? receiptPanel(false, false) : ''}
     ${judgeLine}
     <div class="settings">
       <label>${C.support.label} <select id="support">${(['mild', 'more', 'most'] as const).map((v) => `<option value="${v}" ${state.settings.support === v ? 'selected' : ''}>${C.support.options[v]}</option>`).join('')}</select></label>
@@ -641,13 +640,13 @@ function cardPanel(c: Card): string {
       ? `<p class="done">${esc(p.role === 'escape' ? C.card.choseRepair(p.label) : C.card.chose(p.label))}</p><p class="say need-line">${esc(needLine(p.label))}</p>${where}`
       : `<p class="done">${p.role === 'escape' ? esc(C.card.choseEscape(p.label)) : esc(C.card.chose(p.label))}</p>`;
   }
-  // judge mode: under the card it opens with, the panels stand open in reading order, so the first frame shows what
-  // there is to read; under every card after it they are folded behind one summary line (who decided, how many
-  // choices were kept, added and dropped), and one click opens all three. Partner screen: one closed fold holds them
-  // and the receipt. Nothing is removed in either mode, only folded.
+  // judge mode: under every card, the one it opens with included, the panels are folded behind one summary line (who
+  // decided, how many choices were kept, added and dropped), and one click opens all three; the receipt below is
+  // closed. (Until review round 5 the first card had them open: a wall of text on a phone before anything was asked.)
+  // Partner screen: one closed fold holds them and the receipt. Nothing is removed in either mode, only folded.
   const line = c.why ? C.judge.madeLine(c.why.decided, c.why.kept.length, c.why.added.length, c.why.dropped.length) : C.judge.madeLineNoWhy;
   const made = state.demo
-    ? (state.first ? madePanels(c) : `<details class="made" id="made"><summary>${esc(line)}</summary>${madePanels(c)}</details>`)
+    ? `<details class="made" id="made"><summary>${esc(line)}</summary>${madePanels(c)}</details>`
     : `<details class="made" id="made"><summary>${C.card.made}</summary>${madePanels(c)}${receiptPanel(false)}</details>`;
   return `${badgeLine(c)}${coach}${last}${main}${answered}${actions ? `<div class="actions">${actions}</div>` : ''}${safety}${notes}
     ${made}`;
