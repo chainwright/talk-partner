@@ -85,6 +85,7 @@ const COPY = {
     recall: "Tell, don't test: say it if you know it. If you don't know either, ask yes / no about one real thing at a time.",
     holdUp: 'The real options are not on the screen: hold two up and point to each as you ask.',
     negative: 'Asked the plain way: to a "not" question, a yes can mean either thing.',
+    unguessable: 'No list can hold this answer, so the card does not guess: it gives them ways to get it across.',
   },
 
   // The "we're stuck" card. Wording from the Aphasia Institute SCA tip sheet (devlog/DAY2_sources.md): "Ask the person
@@ -96,6 +97,9 @@ const COPY = {
     headline: 'another way',
     tiles: { showMe: 'show me', writeIt: 'write it', draw: 'draw', later: 'later', changeTopic: 'change topic' },
     note: 'A fixed card for a stuck moment. Three ways to get the message out, and two ways to leave it for now.',
+    /** The same five tiles as the card for a question nobody can guess the answer to. */
+    ownHeadline: 'your way',
+    ownNote: 'Only they know what they meant, so there are no guesses on this card: three ways to get it across, and two ways to leave it for now.',
     tip: 'Read the five aloud, pointing to each. Then wait.',
     lines: {
       'show me': 'Say: "Show me." Let them point, gesture, or take you to it.',
@@ -316,6 +320,7 @@ const COPY = {
         blocked: 'no card: fewer than two choices survived',
         repair: 'a fixed card for a stuck moment, never a model',
         recognition: 'a recognition card from About me only, nothing made up',
+        unguessable: 'a question only they can answer, in their own way: the fixed ways to get a message across, never a guess',
         listed: 'the answers the partner named after the question, read in code',
         people: 'a question about who it was, which only they know: the people About me names, nothing made up',
       },

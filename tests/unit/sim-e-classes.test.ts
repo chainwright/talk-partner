@@ -5,9 +5,10 @@
 import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
+import { partnerActions } from '../../core/actions';
 import { makeCard } from '../../core/pipeline';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
-import { codeOptions, codePair, dropWhichOne, listedAnswers, noticeLead, quizKind, quizRephrase, splitQuestion } from '../../core/rules';
+import { codeOptions, codePair, dropWhichOne, isUnguessable, listedAnswers, noticeLead, quizKind, quizRephrase, splitQuestion } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -372,5 +373,49 @@ describe('E-7. a feeling scale has a middle at every support level', () => {
     const card = await ask('How are you doing this morning?', new Scripted(null));
     expect(card.choices[1].picture).toEqual({ type: 'builtin', id: 'okay' });
     expect(answers(await ask('What do you think of the new carer?', new Scripted(null)))).toEqual(['like them', 'okay', 'unhappy']);
+  });
+});
+
+describe('E-8. a question nobody can guess the answer to gets no guesses: the card is ways to get it across', () => {
+  // set E: "What was that you were trying to tell me earlier?" -> problem / joke / news (on-device), family / pain / home (cloud)
+  const QUESTIONS = [
+    'What were you going to say just then?',
+    'What did you want to tell me this morning?',
+    'What do you mean, love?',
+    'What are you trying to show me?',
+    'Sorry, what did you say?',
+    'What were you asking me before the phone went?',
+  ];
+  const TILES = ['show me', 'write it', 'draw', 'later', 'change topic'];
+  for (const [state, engine] of STATES) {
+    it.each(QUESTIONS)(`${state}: %s`, async (q) => {
+      const e = engine({ topic: 'news', kind: 'choice', choices: ['problem', 'joke', 'news'] }, { topic: 'topic', kind: 'choice', choices: ['family', 'pain', 'home'] });
+      const card = await ask(q, e);
+      expect(isUnguessable(q)).toBe(true);
+      expect(card.blocked ?? null).toBeNull();
+      expect(card.kind).toBe('repair');
+      expect(card.choices.map((c) => c.label)).toEqual(TILES);
+      // none of them is an answer, so a tap never enters the recap, and none is a topic somebody made up
+      expect(card.choices.every((c) => c.role === 'repair')).toBe(true);
+      expect(card.say.startsWith(q)).toBe(true);
+      expect(card.coach).toBe(COPY.coach.unguessable);
+      expect(card.source).toBe('code');
+      expect(e.calls).toEqual([]);
+      // it is the card for the question, not a detour: no "Back to the choices"
+      expect(partnerActions(card, { less: false, hasAnswers: false }).map((a) => a.act)).toEqual(['show']);
+    });
+  }
+  it('options the partner offers herself are the card; a question about what somebody else said is still a recall question', async () => {
+    const offered = await ask('What do you want to say to Grace, thank you or sorry?', new Scripted(null));
+    expect(answers(offered)).toEqual(['thank you', 'sorry']);
+    expect(isUnguessable('What did the doctor say?')).toBe(false);
+    expect((await ask('What did the doctor say?', new Scripted(null))).kind).toBe('no-quiz');
+    expect(isUnguessable('What do you want to do today?')).toBe(false);
+  });
+  it('two in one: the second question is still reachable', async () => {
+    const card = await ask('What were you going to say just then, and do you want your tea?', new Scripted(null));
+    expect(card.kind).toBe('repair');
+    expect(card.pending).toBe('Do you want your tea?');
+    expect(partnerActions(card, { less: false, hasAnswers: false }).map((a) => a.act)).toEqual(['show', 'next']);
   });
 });

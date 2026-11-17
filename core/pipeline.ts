@@ -10,7 +10,7 @@ import { cloudPrompt, devicePrompt } from './prompt';
 import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
-  contactPool, dropGenericWho, fromAboutMe, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
+  contactPool, dropGenericWho, fromAboutMe, isUnguessable, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
   codeOptions, dropWhichOne, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
@@ -42,7 +42,7 @@ export function parseModelOutput(text: string): ModelOutput | null {
  * still go to the model, which copies the options out of the question for the label check.
  */
 export function needsNoModel(q: string, profile?: Profile): boolean {
-  if (isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || unseenPeople(q, profile)) return true;
+  if (isUnguessable(q) || isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || unseenPeople(q, profile)) return true;
   // three or more options named in the question: all of them are read in code, so no model is asked to copy them
   if (orList(q, profile)) return true;
   const pair = codePair(q, profile);
@@ -53,7 +53,7 @@ export function needsNoModel(q: string, profile?: Profile): boolean {
 
 /** Questions where code alone fixes the choices (the model only adds a topic). */
 export function codeDetermined(q: string, profile?: Profile): boolean {
-  return isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || !!unseenPeople(q, profile) || !!codeOptions(q, profile) || isAuxYesNo(q) || isOrNot(q) || isFeelingQuestion(q);
+  return isUnguessable(q) || isQuiz(q, profile) || isPainLevel(q) || isBodyWhere(q) || !!unseenPeople(q, profile) || !!codeOptions(q, profile) || isAuxYesNo(q) || isOrNot(q) || isFeelingQuestion(q);
 }
 
 /**
@@ -235,6 +235,16 @@ export function assemble(
   topic ||= heuristicTopic(asked, profile);
   const base = { asked, pending, topic, source, ms, cloudPayload: null, notes: [] as string[], route: { to: 'device' as const, reasons: [] as string[] } };
 
+  if (!meta.listed && isUnguessable(asked)) {
+    // "What were you trying to tell me?": no tile could be anything but a guess. The card is the fixed ways to get a
+    // message across (the "we're stuck" tiles), asked with the partner's own question; never a model, nothing sent.
+    const R = COPY.repair;
+    const tiles = [R.tiles.showMe, R.tiles.writeIt, R.tiles.draw, R.tiles.later, R.tiles.changeTopic];
+    const choices: Choice[] = tiles.map((label) => ({ label, spoken: label, role: 'repair', picture: pictureFor(label, profile) }));
+    const card: Card = { ...base, source: 'code', topic: R.ownHeadline, kind: 'repair', unguessable: true, choices, say: spokenLine(asked, tiles), notes: [R.ownNote] };
+    card.why = fixedWhy(o, step, W.decidedBy.unguessable, W.headlineFrom.fixed);
+    return card;
+  }
   if (isQuiz(asked, profile)) {
     // KB §7 rule 9: never a quiz. No card; the partner gets a statement to say instead. No rule number on screen (§2.10).
     const card: Card = {
@@ -521,6 +531,7 @@ function coachFor(card: Card): string | undefined {
   // a recall question may be one the partner cannot answer either: then "you know this one" would be wrong
   if (card.kind === 'no-quiz') return card.quiz === 'recall' ? COPY.coach.recall : COPY.coach.test;
   const negative = card.notes.includes(N.negativeAsked);
+  if (card.unguessable) return card.pending ? `${COPY.coach.twoQuestions} ${COPY.coach.unguessable}` : COPY.coach.unguessable;
   if (card.pending) return negative ? `${COPY.coach.twoQuestions} ${COPY.coach.negative}` : COPY.coach.twoQuestions;
   if (negative) return COPY.coach.negative;
   if (card.notes.includes(N.holdUpTwo)) return COPY.coach.holdUp;

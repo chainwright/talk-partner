@@ -419,7 +419,8 @@ const stem = (w: string) => lc(w).replace(/'s$/, '').replace(/(?:ing|ed|es|s)$/,
 const LEFTOVER_START = new RegExp(`^(?:is|was|are|were|am|do|does|did|would|will|can|could|should|shall|want|wanna|like|rather|prefer|fancy|mean|need|shall|should|would|will|could|can|going|gonna)\\b`, 'i');
 // ("you" is not here: "help you", "come with you" are whole options; a leftover "do you" is caught by its first word)
 const LEFTOVER_END = /\b(?:to|for|at|with|of|the|a|an|and|or|have|be|going|get|do|is|are|was|were|your|i|we|my)$/i;
-const PRONOUN_ONLY = /^(?:it|that|this|one|ones|them|those|these|either|both|something|anything)$/i;
+// (a bare "you" is what is left of "thank you" or "help you" when a side is counted off one word short)
+const PRONOUN_ONLY = /^(?:it|that|this|one|ones|them|those|these|either|both|something|anything|you)$/i;
 
 /**
  * Validate options the on-device model copied out of an either-or question: exactly two, each 1-4 words, every
@@ -598,7 +599,9 @@ function loosePair(q: string): [string, string] | null {
   if (!m || /\bor\b/i.test(m[1])) return null;
   const segs = m[1].split(/\s*,\s*/).filter(Boolean);
   // a list in front ("soup, a sandwich, or would you rather …") is three options, not a pair
-  if (segs.slice(1).some((x) => x.split(/\s+/).length <= 2 && !ASIDE.test(x))) return null;
+  // (after a wh-question the comma only sets the options apart: "What shall I say to her, thank you or sorry?")
+  const wh = /^(?:what|which|who|whom|where|when|how)\b/i.test(stripVocative(segs[0] ?? ''));
+  if (!(wh && segs.length === 2) && segs.slice(1).some((x) => x.split(/\s+/).length <= 2 && !ASIDE.test(x))) return null;
   const a = clauseOption(segs[segs.length - 1] ?? '');
   const b = clauseOption(m[2].split(/\s*,\s*/)[0]);
   if (!a || !b || a.split(/\s+/).length > 5 || b.split(/\s+/).length > 5) return null;
@@ -1349,9 +1352,25 @@ export function isUnseenContact(q: string): boolean {
     && !/\b(?:yesterday|last\s+(?:night|week|month|year|time)|ago|the\s+other\s+(?:day|week)|back\s+then)\b/i.test(s);
 }
 
+const UNGUESSABLE = [
+  /\bwhat\b[^?]*\b(?:trying|tried|want|wanted|wanting|going|meant|mean|about)\s+to\s+(?:tell|say|ask|show)\b/i,
+  /\bwhat\s+(?:do|did)\s+you\s+mean\b/i,
+  /\bwhat\s+(?:are|were)\s+you\s+(?:saying|telling\s+me|asking(?:\s+me)?|on\s+about|getting\s+at)\b/i,
+  /^\s*(?:sorry,?\s+|pardon,?\s+)?(?:what\s+was\s+that|what\s+did\s+you\s+(?:just\s+)?say|what\s+is\s+it|what's\s+that)(?:\s+(?:again|just\s+now|just\s+then))?\s*\?\s*$/i,
+];
+/**
+ * "What were you trying to tell me earlier?", "What do you mean?", "What did you say?": the answer is whatever is in
+ * the person's head, and no list could hold it. Any tile would be a guess (set E, 16 Nov: "problem / joke / news"
+ * from the on-device model, "family / pain / home" from the cloud). Not when the partner offers options herself.
+ */
+export function isUnguessable(q: string): boolean {
+  const s = stripAddress(q).replace(/[’]/g, "'");
+  return /\?\s*$/.test(s) && !offersOptions(s) && UNGUESSABLE.some((re) => re.test(s));
+}
+
 function quizKindOf(q: string, profile?: Profile): QuizKind | null {
   if (!/\?\s*$/.test(q)) return null;
-  if (isUnseenContact(q)) return null;
+  if (isUnseenContact(q) || isUnguessable(q)) return null;
   if (NOW_Q.test(q)) return 'now';
   if (IDENTITY_Q.test(q)) return 'identity';
   // "Who is Tyler?": asking who a person in About me is
