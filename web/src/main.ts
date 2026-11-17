@@ -20,9 +20,10 @@ import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, t
 import { webConfig } from './ai/config';
 import { pickEngine } from './ai/pick';
 import { fetchSettings } from './ai/remoteConfig';
-import { CROSS, TICK, builtinPicto, monogram, photoTile } from './pictos';
+import { CROSS, MIC, TICK, builtinPicto, monogram, photoTile } from './pictos';
 import { kvClear, kvGet, kvSet } from './store';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
+import { createVoice, localAvailable, recognitionCtor, type VoiceView } from './voice';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -35,6 +36,8 @@ interface Settings {
   cloudHelp: boolean;
   support: SupportLevel;
   welcomed: boolean;
+  /** The partner has read where spoken words go and said yes to the microphone, for that kind of recognition (voiceNotice). */
+  voiceOk?: 'local' | 'remote';
 }
 
 interface State {
@@ -288,6 +291,8 @@ function badgeLine(c: Card): string {
   else if (c.cloudAttempted) tail = T.attempted;
   // a card made on this computer that offers About-me entries says so: the cloud step could not have offered them
   else if (c.source === 'on-device' && !c.blocked && c.why?.personal?.length) tail = `${T.kept} · ${T.personal(c.why.personal.join(', '))}`;
+  // a question spoken through the browser's default speech recognition: the sound may have left, so this line never says "nothing left"
+  if (voiceCards.has(c)) tail = tail.startsWith(T.kept) ? tail.replace(T.kept, C.voice.tailKept) : `${tail} · ${C.voice.tailAlso}`;
   return `<p class="badge-line">${badge(c)}<span class="tail">· ${esc(tail)}</span></p>`;
 }
 
@@ -297,16 +302,17 @@ function badgeLine(c: Card): string {
  * (model, mode, fixed instructions, answer format), is one click further, under "Show the exact request".
  */
 function sentPanel(c: Card): string {
+  const spoken = voiceCards.has(c) ? `<p class="muted">${esc(C.voice.sentNote)}</p>` : '';
   const swaps = c.cloudSwaps?.length ? `<p class="swaps">${C.sent.swaps}<br>${c.cloudSwaps.map(esc).join('<br>')}</p>` : '';
   const body = (label: string, payload: string) => {
     const s = sentLine(payload);
     return `<p>${label}</p><p class="sent-line"><code>${esc(s.text)}</code><span>${esc(C.sent.size(s.bytes))}</span></p>${swaps}
-      <details class="exact"><summary>${C.sent.exact}</summary><pre>${esc(payload)}</pre></details>`;
+      <details class="exact"><summary>${C.sent.exact}</summary><pre>${esc(payload)}</pre></details>${spoken}`;
   };
   if (c.cloudPayload) return body(c.source === 'in-cloud' ? C.sent.sentFor : C.sent.notUsed, c.cloudPayload);
   if (c.cloudAttempted) return body(C.sent.attempted, c.cloudAttempted);
   if (c.unsentPayload) return body(state.settings.cloudHelp ? C.sent.notSentOn : C.sent.notSent, c.unsentPayload);
-  return `<p>${C.sent.nothing}</p>`;
+  return `<p>${C.sent.nothing}</p>${spoken}`;
 }
 
 function traceList(t: StepTrace[] | undefined): string {
@@ -369,7 +375,7 @@ function legsTable(): string {
  * In judge mode it stands under the chips; elsewhere it opens the receipt.
  */
 function bytesLine(): string {
-  const n = C.judge.receipt.number(sessionReceipt(state.made, state.profile), settingsAsked);
+  const n = C.judge.receipt.number(sessionReceipt(state.made, state.profile), settingsAsked, spokenRemote);
   return `<p class="bytes ${n.state}" id="bytes"><b>${esc(n.figure)}</b> <span>${esc(n.label)}</span><small>${esc(n.scope)}</small></p>`;
 }
 
@@ -381,7 +387,7 @@ function receiptPanel(open: boolean, withNumber = true): string {
   const rows = r.perCard.map((x, i) => `<tr><td data-l="${K.card}">${i + 1}. ${esc(x.asked)}</td><td data-l="${K.left}">${x.left ? R.leftYes : x.attempted ? R.leftMaybe : x.offline ? R.leftOffline : R.leftNo}</td><td data-l="${K.bytes}">${x.left ? `${x.bodyBytes} (${x.questionBytes})` : x.attempted ? `(${x.attemptBytes})` : '0'}</td><td data-l="${K.withheld}">${x.left ? esc(R.withheld(x.namesWithheld, x.otherWithheld)) : x.attempted ? '—' : R.kept}</td><td data-l="${K.check}">${x.left ? (x.leaksFound || x.photoFound ? esc(R.checkBad(x.leaksFound, x.photoFound)) : R.checkOk) : '—'}</td></tr>`).join('');
   const table = r.cards ? `<table><tr><th>${R.columns.card}</th><th>${R.columns.left}</th><th>${R.columns.bytes}</th><th>${R.columns.withheld}</th><th>${R.columns.check}</th></tr>${rows}</table>` : '';
   return `<details class="receipt" ${open ? 'open' : ''}><summary><b>${R.heading}</b></summary>${withNumber ? bytesLine() : ''}${table}
-    <details class="counted"><summary>${R.howHeading}</summary><p>${esc(R.summary(r))}</p><p class="muted">${esc(R.how)}${settingsAsked ? ` ${esc(R.settingsNote)}` : ''}</p></details>
+    <details class="counted"><summary>${R.howHeading}</summary><p>${esc(R.summary(r))}</p><p class="muted">${esc(R.how)}${settingsAsked ? ` ${esc(R.settingsNote)}` : ''}${spokenRemote ? ` ${esc(C.voice.privacy)}` : ''}</p></details>
     <div class="actions"><button data-act="export-receipt" ${r.cards ? '' : 'disabled'}>${R.exportButton}</button></div></details>`;
 }
 
@@ -432,9 +438,78 @@ function diagram(): string {
 function openNeeds() {
   if (step === 'waiting') step = 'cancelled'; // judge mode's automatic step stands down, as for a typed question
   makeSeq++;
+  voiceAsk = false; voiceHeard = false; dictated = false; voice.cancel();
   state.busy = false; state.error = null; state.lastQuestion = ''; resetCard();
   const card = needsCard();
   setCard(card); state.made.push(card); state.waitStart = Date.now();
+}
+
+// ---------------------------------------------------------------- voice input (the partner's question only)
+/**
+ * The microphone next to the question field (web/src/voice.ts): the browser's speech recognition, for the partner's
+ * own question. Words show in the field as they are heard; nothing is submitted. The button is not drawn where the
+ * browser has no speech recognition. The first press opens a notice of where spoken words go, and listening starts
+ * only after a yes. With the browser's default service the sound may leave this computer, so from the first such
+ * start the session's byte line and the privacy line say so, and a card made from a spoken question says so too.
+ */
+let voiceAsk = false;
+let voiceHeard = false;
+/** A question was spoken through the browser's default (not on-device) recognition this session. */
+let spokenRemote = false;
+/** The question now in the field was spoken that way. */
+let dictated = false;
+const voiceCards = new WeakSet<Card>();
+const voice = createVoice({ ctor: recognitionCtor(window), onChange: onVoice });
+/** The notice was agreed to for the kind of recognition that would run now (a yes to on-device does not cover the default service). */
+const voiceAgreed = () => state.settings.voiceOk === 'remote' || (state.settings.voiceOk === 'local' && voice.view().local);
+function voiceButton(): string {
+  const v = voice.view();
+  if (!v.supported) return '';
+  const V = C.voice;
+  return `<button type="button" id="mic" class="mic${v.listening ? ' on' : ''}" data-act="mic" aria-pressed="${v.listening}" aria-label="${v.listening ? V.stop : V.button}" title="${esc(v.listening ? V.stop : `${V.button}. ${V.notice(v.local)}`)}">${MIC}</button>`;
+}
+function voiceNote(): string {
+  const v = voice.view();
+  const V = C.voice;
+  if (!v.supported) return '';
+  if (voiceAsk) return `${esc(V.notice(v.local))} <span class="voice-acts"><button class="primary" data-act="voice-ok">${V.ok}</button><button data-act="voice-no">${V.cancel}</button></span>`;
+  if (v.listening) return `<span class="dot rec"></span>${esc(V.listening(v.local))}`;
+  if (v.error) return esc(V.errors[v.error]);
+  return voiceHeard ? esc(V.heard) : '';
+}
+/** One line under the question field, there only while there is something to say (the notice, listening, an error). */
+function voiceLine(): string {
+  const t = voiceNote();
+  return `<p id="voice" class="voice" role="status" ${t ? '' : 'hidden'}>${t}</p>`;
+}
+function patchVoice() {
+  const b = document.querySelector('#mic'); if (b) b.outerHTML = voiceButton();
+  const n = document.querySelector<HTMLElement>('#voice'); if (n) { const t = voiceNote(); n.innerHTML = t; n.hidden = !t; }
+}
+function privacyLine(): string {
+  return `${state.settings.cloudHelp ? C.consent.isOn : C.privacy.cloudOff}${spokenRemote ? ` ${C.voice.privacy}` : ''}`;
+}
+function startVoice() {
+  if (step === 'waiting') step = 'cancelled'; // speaking a question is asking one: judge mode's automatic step stands down
+  voiceHeard = false;
+  if (!voice.view().local) {
+    spokenRemote = true;
+    const b = document.querySelector('#bytes'); if (b) b.outerHTML = bytesLine();
+    const p = document.querySelector('#privacy'); if (p) p.innerHTML = privacyLine();
+  }
+  voice.start();
+}
+/** Every change of the voice state: the heard words go into the question field (never further), the button and the line follow. */
+function onVoice(v: VoiceView) {
+  const q = document.querySelector<HTMLInputElement>('#q');
+  if (v.text) {
+    state.lastQuestion = v.text;
+    if (q) q.value = v.text;
+    if (!v.local) dictated = true;
+  }
+  voiceHeard = v.final;
+  patchVoice();
+  if (v.final && q) q.focus(); // the words are there to be read and changed; "Make card" is the partner's press
 }
 
 // ---------------------------------------------------------------- partner screen
@@ -480,7 +555,8 @@ function partnerScreen(): string {
     <p id="status" class="status">${statusLine()}</p>
     <div id="recorded">${recordedBlock()}</div>
     ${state.demo ? `<p class="sample">${C.app.sample}<span id="rec-link">${recordedLink()}</span></p>` : againChips()}
-    <form id="ask"><input id="q" autocomplete="off" placeholder="${C.ask.placeholder}" aria-label="${C.ask.label}" value="${esc(state.lastQuestion)}"><button id="make" type="submit" ${state.busy ? 'disabled' : ''}>${state.busy ? C.ask.making : C.ask.make}</button></form>
+    <form id="ask"><input id="q" autocomplete="off" placeholder="${C.ask.placeholder}" aria-label="${C.ask.label}" value="${esc(state.lastQuestion)}">${voiceButton()}<button id="make" type="submit" ${state.busy ? 'disabled' : ''}>${state.busy ? C.ask.making : C.ask.make}</button></form>
+    ${voiceLine()}
     ${state.demo ? chipGroups() : ''}
     ${state.demo ? bytesLine() : ''}
     <div id="result" aria-live="polite">${state.busy ? `<p class="making" role="status"><span class="dot wait"></span>${C.ask.makingCard} <small>${C.ask.makingHint}</small></p>` : c ? cardPanel(c) : state.error ? `<p class="warn">${esc(state.error)}</p>` : ''}</div>
@@ -488,7 +564,7 @@ function partnerScreen(): string {
     ${judgeLine}
     <div class="settings">
       <label>${C.support.label} <select id="support">${(['mild', 'more', 'most'] as const).map((v) => `<option value="${v}" ${state.settings.support === v ? 'selected' : ''}>${C.support.options[v]}</option>`).join('')}</select></label>
-      <span class="privacy">${state.settings.cloudHelp ? C.consent.isOn : C.privacy.cloudOff}</span>
+      <span class="privacy" id="privacy">${privacyLine()}</span>
     </div>
   </section>
   <section id="person" class="person" aria-label="Card for the person" data-kind="${c ? c.kind : ''}" data-blocked="${c?.blocked ? '1' : ''}">${personView(false)}</section>
@@ -732,6 +808,7 @@ function render(lifted = false) {
   // the route goes on #app with a prefix: a bare "person" or "welcome" class made #app pick up the card pane's frame
   // and the welcome padding (the thin frame around the full-screen card, DESIGN_DIRECTIONS "must fix")
   app.className = `route-${r}`;
+  if (r !== 'partner') voice.cancel(); // the microphone listens on the partner screen only: leaving it ends the go
   // entrance animations play once per real event (a new route or a new card), not on every redraw
   const key = `${r}|${cardSeq}`;
   // the card judge mode opens with is simply there: no entrance, so the very first frame is a finished card
@@ -882,6 +959,8 @@ async function make(q: string) {
   if (step === 'waiting') step = 'cancelled'; // the judge asked something first: the automatic step stands down
   const seq = ++makeSeq;
   useSettings();
+  // was this question spoken through the browser's default speech recognition? (the card then says so, onVoice)
+  const spoken = dictated; dictated = false; voiceHeard = false; voiceAsk = false; voice.cancel();
   state.busy = true; state.error = null; state.lastQuestion = q; resetCard(); render();
   // a question asked before the capability check has answered waits for it: the card must not be made as if this
   // computer could not run the private step
@@ -892,6 +971,7 @@ async function make(q: string) {
       allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available', routing: routing(),
     });
     state.made.push(card);
+    if (spoken) voiceCards.add(card);
     if (seq !== makeSeq) return; // a later question was asked meanwhile: its card is the one to show
     setCard(card);
   } catch (e) {
@@ -968,7 +1048,7 @@ function act(el: HTMLElement) {
       break;
     case 'export-receipt': {
       const r = sessionReceipt(state.made, state.profile);
-      downloadFile(C.judge.receipt.exportName, JSON.stringify({ app: C.app.name, exportedAt: new Date().toISOString(), page: location.origin, sampleFamily: state.demo, settings: state.remote, receipt: r }, null, 2), 'application/json');
+      downloadFile(C.judge.receipt.exportName, JSON.stringify({ app: C.app.name, exportedAt: new Date().toISOString(), page: location.origin, sampleFamily: state.demo, settings: state.remote, voiceInput: spokenRemote ? C.voice.privacy : 'not used through a speech service this session', receipt: r }, null, 2), 'application/json');
       break;
     }
     case 'show-sent': {
@@ -978,6 +1058,14 @@ function act(el: HTMLElement) {
     }
     case 'download': void download(); break;
     case 'needs': openNeeds(); lift = true; go('needs'); break;
+    case 'mic': {
+      if (voice.view().listening) { voice.stop(); break; }
+      // the first press shows where spoken words go; listening starts only after a yes to that
+      if (!voiceAgreed()) { voiceAsk = !voiceAsk; patchVoice(); break; }
+      startVoice(); break;
+    }
+    case 'voice-ok': state.settings.voiceOk = voice.view().local ? 'local' : 'remote'; saveSettings(); voiceAsk = false; startVoice(); break;
+    case 'voice-no': voiceAsk = false; patchVoice(); break;
     // the recording of the on-device step: shown or hidden in place; no card, no engine call, no setting changed
     case 'recorded': state.recorded = !state.recorded; patchRecorded(); break;
     case 'leave-demo': void leaveDemo(); break;
@@ -1024,6 +1112,7 @@ app.addEventListener('click', (ev) => {
   const t = (ev.target as HTMLElement).closest<HTMLElement>('button, [data-act]');
   if (!t) return;
   if (t.dataset.act) { act(t); return; }
+  if (t.dataset.q) dictated = false; // a tapped question was not spoken, whatever the field held
   if (t.dataset.q) { state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
   if (t.closest('#person')) onPersonTap(t);
 });
@@ -1041,6 +1130,8 @@ app.addEventListener('change', (ev) => {
 });
 app.addEventListener('input', (ev) => {
   const t = ev.target as HTMLInputElement | HTMLTextAreaElement;
+  // typing takes over from the microphone; an emptied field holds no spoken question any more
+  if (t.id === 'q') { if (voice.view().listening) voice.cancel(); if (!t.value.trim()) dictated = false; }
   if (t.id === 'q') { state.lastQuestion = t.value; if (step === 'waiting') step = 'cancelled'; return; }
   if (t.id.startsWith('trial-') && t instanceof HTMLInputElement) { trialInput(t); return; }
   if (t instanceof HTMLTextAreaElement && t.dataset.list) { state.profile[t.dataset.list as 'foods'] = t.value.split('\n').map((x) => x.trim()).filter(Boolean); saveProfile(); return; }
@@ -1070,5 +1161,7 @@ window.addEventListener('hashchange', () => draw());
 void Promise.all([load(), loadTrial()]).then(async () => {
   if (location.hash.replace(/^#\/?/, '') === 'demo') await enterDemo();
   render(); void refreshDevice().then(() => judgeStep());
+  // a capability query, no sound: can this browser recognise English on the device? Until it answers, the notice is the cautious one
+  void localAvailable(recognitionCtor(window)).then((local) => { voice.setLocal(local); patchVoice(); });
   askSettings(); // only if cloud help was already on in this browser; otherwise when it is turned on
 });

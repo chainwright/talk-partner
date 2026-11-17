@@ -129,6 +129,9 @@ const P: Record<string, string> = {
   'call someone': '<path d="M24 14l12-2 8 20-10 8c4 10 12 18 22 22l8-10 20 8-2 12c-1 6-6 10-12 10C40 80 16 56 14 26c0-6 4-11 10-12z"/><path d="M58 30a12 12 0 0110 10M60 16a26 26 0 0122 22" stroke="var(--accent)" stroke-width="4"/>',
 };
 
+/** The microphone on the partner's "speak your question" button. A control, not a choice picture: it is never on a card. */
+export const MIC = svg('<rect x="36" y="10" width="24" height="44" rx="12"/><path d="M22 44a26 26 0 0052 0M48 70v16M34 86h28"/>', 'microphone');
+
 /** Every bundled pictogram id (for the provenance check in tests and PICTOGRAMS.md). */
 export const PICTO_IDS = [...Object.keys(P), ...BODY_PARTS.map((b) => `body:${b}`), 'monogram'];
 

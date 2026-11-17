@@ -95,6 +95,9 @@ else was drawn in the submission period.
 | body:right leg | body figure, the person's right leg (viewer's left) highlighted | 9–10 Nov 2026 | Apache-2.0 |
 | monogram | a named person's initial in a soft circle (letters allowed only here) | 9–10 Nov 2026 | Apache-2.0 |
 
+Also in `web/src/pictos.ts`, and not a choice picture: `MIC`, the microphone on the partner's "speak your question"
+button (drawn 17 Nov 2026, Apache-2.0). It is a control on the partner's side and is never on a card.
+
 Not yet drawn (batch 2, planned): particular foods and drinks (beyond coffee, tea and the general "food" and "drink"
 of the quick-needs board), places, activities, things, time words (§3.1). Until then those labels show as word-only
 tiles, never an empty frame.

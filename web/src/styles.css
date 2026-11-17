@@ -353,7 +353,7 @@ main.welcome::after { transform-origin: left center; animation: ts-turn 1s .3s c
 @media (prefers-reduced-motion: reduce) { .listening.thinking svg { animation: none; } }
 .welcome .who { margin: 0 0 6px; font-size: 19px; color: var(--ink); }
 
-/* ================================================================== QUICK NEEDS (17 Nov 2026)
+/* ================================================================== QUICK NEEDS AND VOICE INPUT (17 Nov 2026)
    Quick needs: one button in the top bar, on the brand's row, so it costs the partner screen no height; it opens a
    fixed board on the person's screen. The board is one screen: eight needs, each a picture and its word, four across
    (two on a phone), and the way out on a row of its own. Tiles are far above the 64 px a pointing hand needs. */
@@ -381,3 +381,14 @@ main.welcome::after { transform-origin: left center; animation: ts-turn 1s .3s c
 }
 /* the partner's next move after a confirmed need: the line to act on, a little smaller than the line to say */
 .say.need-line { font-size: 20px; }
+
+/* Voice input: a square microphone button between the question field and "Make card"; lit while listening. The line
+   under the field is there only while there is something to say (where spoken words go, listening, an error). */
+.mic { flex: none; width: 54px; min-height: 54px; padding: 0; border-color: var(--field); }
+.mic svg { width: 28px; height: 28px; }
+@media (max-width: 520px) { .mic { width: 46px; } }
+.mic.on { background: var(--warn); border-color: var(--warn); color: #1a1205; }
+.voice { margin: 0; padding: 8px 12px; border: 1px solid var(--field); border-radius: 12px; background: var(--panel); font-size: 14px; line-height: 1.45; }
+.voice[hidden] { display: none; }
+.voice-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.dot.rec { background: var(--warn); }

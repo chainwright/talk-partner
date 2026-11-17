@@ -1,7 +1,7 @@
 // Screenshots of every screen at phone (390 × 844) and desktop (1280 × 900) widths, with layout checks:
 // no horizontal scroll, and "Show to person" above the fold on the phone (build spec §5.3).
 // Uses its own headless Chrome with a throwaway profile; makes only code cards (no model, no cloud call).
-// Since 17 Nov it also opens the quick-needs board.
+// Since 17 Nov it also opens the quick-needs board and runs voice input against a scripted recognition object.
 //
 // Usage: npm run dev (in another shell), then  node scripts/shots.mjs [--url http://localhost:5179/] [--out devlog/shots_day3]
 // A subset: --only 03,04,05 (the flow still runs in full)
@@ -310,6 +310,64 @@ try {
     const pside = await js(`({ line: document.querySelector('#result .need-line').innerText, pane: document.querySelector('#person').innerText.replace(/\\s+/g, ' ').trim() })`);
     check(`${s} quick-needs board: the partner's line is on the partner's side only`, pside.line === 'Go now. The rest can wait.' && pside.pane === 'I need toilet', JSON.stringify(pside));
     await shot('29-needs-partner-side');
+
+    // 17 Nov: voice input for the partner's question, wired in a real page against a scripted recognition object (no
+    // sound and no speech service in this run): the notice before the first use, interim words in the field, the final
+    // words, nothing submitted, what the lines say once a question was spoken, an error, and a browser without the API.
+    const fake = await send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => { window.__recs = [];
+      class FakeSR { constructor() { window.__recs.push(this); this.calls = []; } start() { this.calls.push('start'); } stop() { this.calls.push('stop'); } abort() { this.calls.push('abort'); } }
+      FakeSR.available = () => Promise.resolve('downloadable'); FakeSR.prototype.processLocally = false;
+      Object.defineProperty(window, 'SpeechRecognition', { value: FakeSR, configurable: true }); Object.defineProperty(window, 'webkitSpeechRecognition', { value: FakeSR, configurable: true }); })();` });
+    await send('Page.reload'); await sleep(600);
+    await nav('#/demo');
+    await waitFor('!!document.querySelector(".chip")'); await sleep(300);
+    const cardsMade = () => js(`Number((document.querySelector('#bytes')?.innerText ?? '').match(/(\\d+) cards? this session/)?.[1] ?? -1)`);
+    const v0 = await js(`({ mic: !!document.querySelector('#mic'), hidden: document.querySelector('#voice').hidden, label: document.querySelector('#mic')?.getAttribute('aria-label'), w: Math.round(document.querySelector('#mic')?.getBoundingClientRect().width ?? 0), h: Math.round(document.querySelector('#mic')?.getBoundingClientRect().height ?? 0) })`);
+    await click('#mic');
+    const v1 = await js(`({ text: document.querySelector('#voice').innerText.replace(/\\s+/g, ' '), hidden: document.querySelector('#voice').hidden, recs: window.__recs.length })`);
+    check(`${s} voice input: a microphone button (at least 44 px) next to the question field; the first press shows where spoken words go and starts nothing`,
+      v0.mic && v0.hidden && v0.label === 'Speak your question' && v0.w >= 44 && v0.h >= 44 && !v1.hidden && /In Chrome, your speech may be sent to Google/.test(v1.text) && v1.recs === 0, JSON.stringify({ v0, v1 }));
+    await shot('30-voice-notice');
+    const before = await cardsMade();
+    await click('[data-act="voice-ok"]');
+    const v2 = await js(`(() => { const r = window.__recs[0]; return { calls: r?.calls, lang: r?.lang, interim: r?.interimResults, continuous: r?.continuous, local: r?.processLocally, pressed: document.querySelector('#mic').getAttribute('aria-pressed'), line: document.querySelector('#voice').innerText.replace(/\\s+/g, ' '), bytes: document.querySelector('#bytes').innerText.replace(/\\s+/g, ' ') }; })()`);
+    check(`${s} voice input: after the yes it listens (en-US, interim results, one question), the button is lit, and the session line stops saying "left this computer"`,
+      JSON.stringify(v2.calls) === '["start"]' && v2.lang === 'en-US' && v2.interim === true && v2.continuous === false && v2.local === false && v2.pressed === 'true' && /^Listening\./.test(v2.line) && /may send the sound/.test(v2.line) && /^0 bytes handed to cloud help by this app/.test(v2.bytes) && /Not counted: questions spoken into the microphone/.test(v2.bytes), JSON.stringify(v2));
+    await shot('31-voice-listening');
+    await js(`(() => { window.__recs[0].onresult({ results: [{ isFinal: false, 0: { transcript: 'do you want' } }] }); return true; })()`);
+    const v3 = await js(`document.querySelector('#q').value`);
+    await js(`(() => { const r = window.__recs[0]; r.onresult({ results: [{ isFinal: true, 0: { transcript: 'do you want coffee or tea' } }] }); r.onend(); return true; })()`);
+    await sleep(300);
+    const v4 = await js(`({ q: document.querySelector('#q').value, pressed: document.querySelector('#mic').getAttribute('aria-pressed'), line: document.querySelector('#voice').innerText, busy: document.querySelector('#make').disabled, focus: document.activeElement?.id })`);
+    check(`${s} voice input: interim words show in the field, the final words fill it as a question, and nothing is submitted (no new card; the field has the focus for changes)`,
+      v3 === 'do you want' && v4.q === 'Do you want coffee or tea?' && v4.pressed === 'false' && /Check the words/.test(v4.line) && !v4.busy && v4.focus === 'q' && (await cardsMade()) === before, JSON.stringify({ v3, v4, before, after: await cardsMade() }));
+    await js(`(() => { document.querySelector('#ask').requestSubmit(); return true; })()`);
+    await waitFor(`document.querySelector('#make') && !document.querySelector('#make').disabled && !!document.querySelector('#result .badge')`); await sleep(300);
+    const v5 = await js(`({ tiles: [...document.querySelectorAll('#person .tile span')].map((e) => e.innerText), tail: document.querySelector('#result .badge-line .tail').innerText, privacy: document.querySelector('#privacy').innerText, person: document.querySelector('#person').innerText })`);
+    check(`${s} voice input: the card made from the spoken question is the usual one, and its line says the sound may have left ("nothing sent by this app · the question was spoken …"), never "nothing left this computer"`,
+      JSON.stringify(v5.tiles) === JSON.stringify(['coffee', 'tea', 'something else']) && /nothing sent by this app · the question was spoken/.test(v5.tail) && !/nothing left this computer/.test(v5.tail) && /Spoken questions went through your browser's speech recognition/.test(v5.privacy) && !/spoken|speech|microphone/i.test(v5.person), JSON.stringify(v5));
+    await shot('32-voice-card');
+    // a typed question after it is not marked as spoken
+    await chip('Do you need the toilet?');
+    const v6 = await js(`document.querySelector('#result .badge-line .tail').innerText`);
+    // the microphone blocked by the browser: a plain sentence, the field untouched, no exception
+    await click('#mic');
+    await js(`(() => { const r = window.__recs[window.__recs.length - 1]; r.onerror({ error: 'not-allowed' }); r.onend(); return true; })()`);
+    await sleep(200);
+    const v7 = await js(`({ line: document.querySelector('#voice').innerText, q: document.querySelector('#q').value, pressed: document.querySelector('#mic').getAttribute('aria-pressed'), recs: window.__recs.length })`);
+    check(`${s} voice input: a tapped question after it is not marked as spoken; a blocked microphone gives one plain sentence and leaves the field alone (the second press listened at once: the notice was agreed to)`,
+      /^· nothing left this computer/.test(v6) && /The microphone is blocked for this page/.test(v7.line) && v7.q === 'Do you need the toilet?' && v7.pressed === 'false' && v7.recs === 2, JSON.stringify({ v6, v7 }));
+    // a browser with no speech recognition: no button, no line, and the page works as before
+    await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: fake.result.identifier });
+    const none2 = await send('Page.addScriptToEvaluateOnNewDocument', { source: `Object.defineProperty(window, 'SpeechRecognition', { value: undefined, configurable: true }); Object.defineProperty(window, 'webkitSpeechRecognition', { value: undefined, configurable: true }); window.__errors = []; addEventListener('error', (e) => window.__errors.push(String(e.message))); addEventListener('unhandledrejection', (e) => window.__errors.push(String(e.reason)));` });
+    await send('Page.reload'); await sleep(600);
+    await nav('#/demo');
+    await waitFor('!!document.querySelector(".chip")'); await sleep(300);
+    await chip('Do you want coffee or tea?');
+    const v8 = await js(`({ mic: !!document.querySelector('#mic'), line: document.querySelector('#voice')?.hidden, tiles: document.querySelectorAll('#person .tile').length, errors: window.__errors, form: [...document.querySelector('#ask').children].map((e) => e.id) })`);
+    check(`${s} voice input: in a browser without speech recognition there is no microphone button, no error, and the question form is as it was`, v8.mic === false && v8.line === true && v8.tiles === 3 && v8.errors.length === 0 && JSON.stringify(v8.form) === '["q","make"]', JSON.stringify(v8));
+    await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: none2.result.identifier });
+    await send('Page.reload'); await sleep(600);
   }
   ws.close();
 } catch (e) {

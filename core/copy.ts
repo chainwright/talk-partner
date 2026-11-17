@@ -139,6 +139,41 @@ const COPY = {
     painQuestion: 'Where does it hurt?',
   },
 
+  // Voice input for the partner's own question (web/src/voice.ts): the browser's speech recognition, started by a
+  // press on the microphone, never by itself. The person's speech is never recognised. What is said here about where
+  // the audio goes is all the app knows: with the browser's default service it may leave this computer, and every line
+  // that says "nothing left this computer" gives way to one of these once a question was spoken that way.
+  voice: {
+    button: 'Speak your question',
+    stop: 'Stop listening',
+    /** Before the first use, and the button's hover text. `local`: the browser reports on-device recognition and the app asks for it. */
+    notice: (local: boolean) => local
+      ? 'Voice input uses your browser\'s speech recognition, not this app\'s. This browser reports that it can turn English speech into text on this computer, and the app asks it to do that. For your question only: their speech is never recognised.'
+      : 'Voice input uses your browser\'s speech recognition, not this app\'s. In Chrome, your speech may be sent to Google to be turned into text, with any names you say; other browsers use their own service. For your question only: their speech is never recognised.',
+    ok: 'Use the microphone',
+    cancel: 'Not now',
+    listening: (local: boolean) => local
+      ? 'Listening. Say your question. The browser is asked to turn it into text on this computer.'
+      : 'Listening. Say your question. Your browser may send the sound to its speech service (in Chrome: Google).',
+    heard: 'Check the words and change them if needed. Then make the card.',
+    errors: {
+      blocked: 'The microphone is blocked for this page. Type the question, or allow the microphone in the browser.',
+      'no-speech': 'Nothing was heard. Press the microphone and try again, or type the question.',
+      'no-mic': 'No microphone was found. Type the question.',
+      network: 'Speech recognition could not reach its service. Type the question.',
+      language: 'This browser cannot recognise English speech the way it was asked to. Type the question.',
+      failed: 'Voice input did not work this time. Type the question.',
+    },
+    /** In place of "nothing left this computer" on a card whose question was spoken through the browser's default service. */
+    tailKept: 'nothing sent by this app · the question was spoken: your browser\'s speech recognition may have sent the sound',
+    /** After the tail of a card whose spoken question also went to cloud help. */
+    tailAlso: 'the question was spoken: your browser\'s speech recognition may have sent the sound',
+    /** Under "What was sent" on such a card. */
+    sentNote: 'That is what this app sent. The question was spoken: your browser\'s speech recognition may have sent the sound to its service, which this app neither sees nor counts.',
+    /** After the line "Your questions … stay on this computer", once a question was spoken that way. */
+    privacy: 'Spoken questions went through your browser\'s speech recognition, which may be a cloud service.',
+  },
+
   // The two ends of the number line on a pain card (under the numbers on the person's card).
   scale: { low: 'no pain', lowFromOne: 'hardly any', high: 'the worst' },
 
@@ -492,7 +527,10 @@ const COPY = {
        * Once the cloud has answered, the number is what the app handed over, and it is called that: the app does not
        * see what the SDK adds on the wire. A request that failed is never counted as kept.
        */
-      number: (n: { cards: number; cardsLeft: number; bodyBytes: number; namesWithheld: number; otherWithheld: number; attempts: number; attemptBytes: number }, settingsAsked = false) => {
+      number: (n: { cards: number; cardsLeft: number; bodyBytes: number; namesWithheld: number; otherWithheld: number; attempts: number; attemptBytes: number }, settingsAsked = false, voice = false) => {
+        // `voice`: a question was spoken through the browser's default speech recognition this session. The app
+        // neither sees nor counts that sound, so the line stops saying "left this computer" and says what it counts.
+        const spoken = voice ? ' Not counted: questions spoken into the microphone, which your browser\'s speech recognition may have sent to its service as sound.' : '';
         const bytes = (b: number) => `${b.toLocaleString('en-US')} byte${b === 1 ? '' : 's'}`;
         const cards = `${n.cards} card${n.cards === 1 ? '' : 's'}`;
         const maybe = n.attempts ? `${n.attempts} cloud request${n.attempts === 1 ? '' : 's'} failed after being handed over` : '';
@@ -500,11 +538,12 @@ const COPY = {
           return {
             state: 'sent' as const, figure: bytes(n.bodyBytes), label: 'handed to cloud help',
             scope: `in ${n.cardsLeft} request${n.cardsLeft === 1 ? '' : 's'}, the question only (${n.namesWithheld + n.otherWithheld} About me word${n.namesWithheld + n.otherWithheld === 1 ? '' : 's'} swapped out first); ${cards} this session. What the SDK adds on the wire is not counted${settingsAsked ? ', nor is the settings request (no question in it)' : ''}.` +
-              (maybe ? ` Not in the number: ${maybe} and may have left (up to ${bytes(n.attemptBytes)}).` : ''),
+              (maybe ? ` Not in the number: ${maybe} and may have left (up to ${bytes(n.attemptBytes)}).` : '') + spoken,
           };
         }
-        if (n.attempts) return { state: 'maybe' as const, figure: `up to ${bytes(n.attemptBytes)}`, label: 'may have left this computer', scope: `${maybe}; ${cards} this session.${settingsAsked ? ' The settings request (no question in it) is not counted.' : ''}` };
+        if (n.attempts) return { state: 'maybe' as const, figure: `up to ${bytes(n.attemptBytes)}`, label: 'may have left this computer', scope: `${maybe}; ${cards} this session.${settingsAsked ? ' The settings request (no question in it) is not counted.' : ''}${spoken}` };
         // with cloud help on, the app has asked Remote Config for its settings: a request, though none for a card
+        if (voice) return { state: 'none' as const, figure: bytes(0), label: 'handed to cloud help by this app', scope: `${cards} this session · page load ${settingsAsked ? 'and the settings request (no question in it) ' : ''}not counted.${spoken}` };
         return { state: 'none' as const, figure: bytes(0), label: settingsAsked ? 'of any question left this computer' : 'left this computer', scope: `${cards} this session · page load ${settingsAsked ? 'and the settings request (no question in it) ' : ''}not counted` };
       },
       howHeading: 'How this is counted',

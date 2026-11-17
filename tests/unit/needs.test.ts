@@ -75,7 +75,7 @@ describe('the quick-needs board: no AI and nothing sent', () => {
   });
   it('the web client opens it without any engine call: openNeeds builds the card and makes no card through the pipeline', () => {
     const main = read('web/src/main.ts');
-    const open = main.slice(main.indexOf('function openNeeds()'), main.indexOf('// ---------------------------------------------------------------- partner screen'));
+    const open = main.slice(main.indexOf('function openNeeds()'), main.indexOf('// ---------------------------------------------------------------- voice input'));
     expect(open).toContain('const card = needsCard();');
     expect(open).not.toMatch(/makeCard|state\.engine|await |fetch\(/);
     // one tap from the partner screen (the top bar), and by its own address
