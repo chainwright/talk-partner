@@ -1199,7 +1199,44 @@ const RECALL_Q = [
  */
 const OWN_EXPERIENCE = /\bwhen\s+did\s+(?:the|your|that|this|it|you)\b[^?]*\b(?:pain|pains|ache|aches|aching|hurt|hurting|sore|soreness|headache|dizz\w+|sick\w*|nausea|itch\w*|rash|swelling|cough\w*|fever|bleed\w*|numb\w*|tingl\w+|cramp\w*|feel\w*|notice)\b|\bwhen\s+did\s+(?:it|this|that)\s+(?:start|begin|come\s+on|get\s+(?:bad|worse))\b|\bwhen\s+did\s+you\s+last\b|\bwhen\s+(?:was|were)\s+(?:your|the)\s+last\b/i;
 
+/**
+ * "Can you tell me who the president is?", "Do you know what month it is?", "Tell me what you had for lunch?": a test
+ * asked politely is still a test (set E, 17 Nov: it became a yes / no card, and "no" read as "I don't know" from a
+ * man who knew and could not say it). Returns the plain questions such a sentence wraps ("Who is the president?"),
+ * so each can be checked like a question asked straight; empty when the sentence is not of that shape.
+ */
+const ASK_WRAPPER = /^\s*(?:so\s+|now\s+|and\s+|ok\s+|okay\s+)?(?:(?:can|could|will|would)\s+you\s+(?:please\s+|just\s+)?(?:tell|remind|show)\s+me|(?:do|did)\s+you\s+(?:happen\s+to\s+|still\s+)?know|(?:have\s+you\s+)?(?:got\s+)?any\s+idea|(?:please\s+)?(?:tell|remind)\s+me|are\s+you\s+able\s+to\s+(?:tell|say)(?:\s+me)?|i\s+wonder\s+if\s+you\s+(?:know|can\s+tell\s+me))\s+(?=(?:who|what|where|when|which|how)\b)/i;
+function directForms(q: string): string[] {
+  const w = ASK_WRAPPER.exec(q);
+  if (!w) return [];
+  const inner = q.slice(w[0].length).replace(/[?.!\s]+$/, '').trim();
+  const out = [`${capitalize(inner)}?`];
+  // "who the president is" -> "Who is the president?"; "what month it is" -> "What month is it?"
+  const be = /^((?:who|what|where|when|which|how\s+old)(?:\s+(?:day|date|month|year|time|season|town|city|place|floor|room|building))?)\s+(.+?)\s+(is|are|was|were|am)((?:\s+(?:today|now|right\s+now|at\s+the\s+moment|tonight|again|in\s+the\s+(?:photo|picture)))*)$/i.exec(inner);
+  if (be) out.push(`${capitalize(be[1])} ${be[3]} ${be[2]}${be[4]}?`);
+  // "what you had for lunch" -> "What did you had for lunch?" (only its shape is read, not its grammar)
+  const did = /^what\s+(you|we|he|she|they)\s+((?:had|ate|did|watched|saw|drank|said|told|bought|cooked|made|read)\b.*)$/i.exec(inner);
+  if (did) out.push(`What did ${did[1]} ${did[2]}?`);
+  return out;
+}
+
+/** The kind of test a question is, and the question as it reads when asked straight (itself, unless it was wrapped). */
+function quizForm(q: string, profile?: Profile): { kind: QuizKind; q: string } | null {
+  if (!/\?\s*$/.test(q)) return null;
+  // the wrapped question first: its kind is the more exact one ("… tell me what my name is?" is about who I am)
+  for (const d of directForms(stripAddress(q))) {
+    const kind = quizKindOf(d, profile);
+    if (kind) return { kind, q: d };
+  }
+  const straight = quizKindOf(q, profile);
+  return straight ? { kind: straight, q } : null;
+}
+
 export function quizKind(q: string, profile?: Profile): QuizKind | null {
+  return quizForm(q, profile)?.kind ?? null;
+}
+
+function quizKindOf(q: string, profile?: Profile): QuizKind | null {
   if (!/\?\s*$/.test(q)) return null;
   if (NOW_Q.test(q)) return 'now';
   if (IDENTITY_Q.test(q)) return 'identity';
@@ -1254,8 +1291,11 @@ function factLine(q: string, profile?: Profile): string {
  * What the partner says instead. Only a "now" question gets today's date or time; a past event ("What year did
  * we marry?") never does. "Do you remember our trip?" becomes "I was thinking about our trip."
  */
-export function quizRephrase(q: string, partnerName: string, now = new Date(), profile?: Profile): string {
-  const k = quizKind(q, profile);
+export function quizRephrase(asked: string, partnerName: string, now = new Date(), profile?: Profile): string {
+  // a test asked politely ("Can you tell me when …?") gets the line of the plain question it wraps
+  const form = quizForm(asked, profile);
+  const k = form?.kind ?? null;
+  const q = form?.q ?? asked;
   if (k === 'identity' && /\bmy\s+name\b|\bwho\s+am\s+i\b|who\s+i\s+am\b/i.test(q)) return `It's me, ${partnerName || 'your partner'}.`;
   const named = /^\s*who(?:'s|\s+is)\s+([\p{L}'-]+)\s*\?\s*$/iu.exec(stripVocative(q));
   const person = named && profile ? findPerson(named[1], profile) : undefined;

@@ -3,10 +3,11 @@
 // file: none is a sentence of set E, so that set is not the only check that the class is fixed. The family is the
 // test fixture (Alan; Maria asking), not the sample family the run used.
 import { describe, expect, it } from 'vitest';
+import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
-import { codePair } from '../../core/rules';
+import { codePair, quizKind, quizRephrase } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -81,5 +82,45 @@ describe('E-1. options named in the question always make a card, from the questi
     expect(codePair('Do you want a rest, or is that a no?', PROFILE)).toBeNull();
     // a list in front is three options, not a pair read off its last two pieces
     expect(codePair('Do you want toast, an egg, or would you rather wait for lunch?', PROFILE)).toBeNull();
+  });
+});
+
+describe('E-2. a test asked politely ("Can you tell me who …?") is still a test: no card, tell-don\'t-test', () => {
+  // set E: "Can you tell me who the president is?" became yes / no, and "no" read as "I don't know"
+  const TESTS: [string, string][] = [
+    ['Could you tell me who the prime minister is?', 'place'],
+    ['Can you tell me what year it is?', 'now'],
+    ['Tell me what day it is today?', 'now'],
+    ['Do you know who the mayor is?', 'place'],
+    ['Can you tell me where we are?', 'place'],
+    ['Could you tell me what my name is?', 'identity'],
+    ['Can you remind me when Leo\'s birthday is?', 'fact'],
+    ['Any idea how old Grace is?', 'fact'],
+    ['Can you tell me what you had for lunch?', 'recall'],
+    ['Would you tell me what town this is?', 'place'],
+  ];
+  for (const [state, engine] of STATES) {
+    it.each(TESTS)(`${state}: %s`, async (q, kind) => {
+      const e = engine();
+      const card = await ask(q, e);
+      expect(quizKind(q, PROFILE)).toBe(kind);
+      expect(card.kind).toBe('no-quiz');
+      expect(card.choices).toEqual([]);
+      expect(card.coach).toMatch(/tell, don't test/i);
+      expect(card.say.startsWith(COPY.notes.tellPrefix)).toBe(true);
+      // no model is asked to make tiles for it
+      expect(e.calls).toEqual([]);
+    });
+  }
+  it('the line to say is the one for the plain question', () => {
+    expect(quizRephrase("Can you remind me when Leo's birthday is?", 'Maria', new Date(), PROFILE)).toContain("It's on");
+    expect(quizRephrase('Could you tell me what my name is?', 'Maria', new Date(), PROFILE)).toBe("It's me, Maria.");
+    expect(quizRephrase('Can you tell me what year it is?', 'Maria', new Date(2026, 10, 17), PROFILE)).toBe("It's 2026.");
+  });
+  it('the same opening before a real question is not a test', async () => {
+    for (const q of ['Can you tell me what you want for supper?', 'Do you know where your glasses are?', 'Can you tell me which one you like?', 'Could you show me where it hurts?', 'Can you tell me how you feel?']) {
+      expect(quizKind(q, PROFILE)).toBeNull();
+      expect((await ask(q, new Scripted(null))).kind).not.toBe('no-quiz');
+    }
   });
 });
