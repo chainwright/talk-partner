@@ -7,6 +7,9 @@
 //   options: --set FILE  --out DIR (default: a new folder devlog/eval_runs/<time>, so no saved run is overwritten)
 //            --url http://localhost:5179/
 //
+// The set was held out when it was first run (16 Nov 2026). The card rules have been changed since, some of them after
+// reading its misses, so it is a labelled regression set now; the report says so and counts the rule commits from git.
+//
 // What is measured: whether the card matches the label we wrote for the question (the scoring rules are in the set's
 // "about" block). The labels are the authors'. It is not a user trial. Exit code 0 when the run completed, whatever
 // the score; 1 when it could not run.
@@ -54,6 +57,12 @@ const CODE = ['either-or', 'yes-no', 'feeling', 'pain', 'body', 'memory'];
 const isOpen = (item) => !CODE.includes(item.type);
 // read once, before anything is written: whether the tree was clean when the run started
 const TREE = git('status --porcelain');
+// Held out, or not any more: the commit that added the set, and how many commits have changed the card rules since.
+// Read from git at run time, so a report can never again say "no rule was changed" when one was.
+const RULE_FILES = ['core/rules.ts', 'core/pipeline.ts', 'core/strip.ts', 'core/prompt.ts'];
+const SET_COMMIT = (() => { const c = git(`log --diff-filter=A --format=%h -1 -- "${SET}"`); return /^[0-9a-f]{7,40}$/.test(c) ? c : null; })();
+const RULE_COMMITS = (() => { if (!SET_COMMIT) return null; const n = Number(git(`rev-list --count ${SET_COMMIT}..HEAD -- ${RULE_FILES.join(' ')}`)); return Number.isInteger(n) ? n : null; })();
+const HELD = RULE_COMMITS === 0 ? 'held out so far' : 'no longer held out';
 
 /**
  * One observation -> { ok, why }. `obs`: { kind, blocked, answers: string[], escape: string|null, coach: string }.
@@ -199,7 +208,16 @@ function report(title, rows, withModel, extra = []) {
   L.push(`- set: \`${SET.replace(`${ROOT}/`, '')}\`, ${set.questions.length} questions, sha256 \`${sha}\``);
   if (amendSha) L.push(`- label amendments (stricter, written after the first runs): \`${AMEND_FILE.replace(`${ROOT}/`, '')}\`, questions ${Object.keys(amendments.amend).join(', ')}, sha256 \`${amendSha}\``);
   L.push(`- command: \`node scripts/eval-heldout.mjs${PORT ? ` --port ${PORT}` : ''}\``, ...extra, '');
-  L.push('**What this is.** ' + set.about.what, '');
+  // The set's own "about" text was written before its first run and ends "no rule was changed after that run". That
+  // was true of the first run only, and the sealed file is not edited (its checksum is in every report). So the
+  // report no longer copies that sentence: it says what the set is, and counts from git how many commits have
+  // changed the card rules since the set was committed.
+  L.push(`**What this is.** A labelled set of ${set.questions.length} partner questions with the card we expect for each, written by the project authors on 16 Nov 2026 and committed before its first run${SET_COMMIT ? ` (\`${SET_COMMIT}\`)` : ''}. The labels are ours. This is not a user trial and says nothing about people living with aphasia.`, '');
+  L.push(`**${RULE_COMMITS === 0 ? 'Held out so far' : 'No longer held out'}.** ${RULE_COMMITS === null
+    ? 'How many commits changed the card rules after the set was committed could not be read from git here; take it that they have, and read the score as a regression check, not as a held-out result.'
+    : RULE_COMMITS === 0
+      ? 'No commit has changed the card rules since the set was committed.'
+      : `The card rules have changed since the set was committed: ${RULE_COMMITS} commit${RULE_COMMITS === 1 ? '' : 's'} to ${RULE_FILES.join(', ')} (\`git log ${SET_COMMIT}..HEAD -- core/\`), some of them made after reading this set's own misses (question 42). The set is therefore no longer held out from the rules. Read the score as "how often the card is the one we meant, on questions the rules have since been changed around", not as a test on unseen questions.`}`, '');
   L.push('## Result', '');
   L.push(`### Open questions (who, where, what): ${o.n} of the ${rows.length}`, '');
   L.push('These are the questions the rules cannot answer: the choices are not in the question. A model is needed, and the family\'s own names, places and foods are only in About me, which only the on-device step sees.', '');
@@ -245,14 +263,14 @@ try {
   if (PORT) {
     const { rows, status, version } = await devicePass();
     const f = join(OUT, `${stem}_ondevice.md`);
-    const rep = report('Held-out set, the real app with the on-device model (cloud help off)', rows, true, [`- browser: ${version}, attached on port ${PORT}; status line: "${status}"`, `- app: ${URL_} (the dev server of this commit), judge mode`]);
+    const rep = report(`Labelled set (first run 16 Nov 2026; ${HELD}), the real app with the on-device model (cloud help off)`, rows, true, [`- browser: ${version}, attached on port ${PORT}; status line: "${status}"`, `- app: ${URL_} (the dev server of this commit), judge mode`]);
     writeFileSync(f, rep.text);
     writeFileSync(join(OUT, `${stem}_ondevice.json`), `${JSON.stringify(rows.map((r) => ({ id: r.item.id, q: r.item.q, type: r.item.type, ok: r.ok, okWithSealedLabel: r.sealedOk, why: r.why, ...r.obs })), null, 1)}\n`);
     console.log(`\nopen questions: ${rep.o.matched}/${rep.o.n} cards matched the label, ${rep.o.personal}/${rep.o.n} personal; rules-decided: ${rep.closedOk}/${rep.closedN} -> ${f.replace(`${ROOT}/`, '')}`);
   } else {
     const rows = await rulesPass();
     const f = join(OUT, `${stem}_rules.md`);
-    const rep = report('Held-out set, rules alone (no model, no network)', rows, false);
+    const rep = report(`Labelled set (first run 16 Nov 2026; ${HELD}), rules alone (no model, no network)`, rows, false);
     writeFileSync(f, rep.text);
     console.log(`open questions: ${rep.o.made}/${rep.o.n} cards made (rules alone make none); rules-decided: ${rep.closedOk}/${rep.closedN} -> ${f.replace(`${ROOT}/`, '')}`);
   }

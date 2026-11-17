@@ -3,6 +3,16 @@
 `eval/heldout_r2.json` is 60 partner questions we wrote and labelled ourselves, committed before its first run. This
 note was rewritten after an outside review of that first run. What changed, and why, is at the end.
 
+**Added 17 Nov 2026: the set is no longer held out.** It was when the four runs below were made. Since the evening
+of 16 Nov, fixes that followed the rehearsals changed rules this set covers, and one of them was made after reading
+a miss listed here (question 42, "What did you have for breakfast?", is caught since `148a211`). The code-decided
+score moved with them (36 to 38, then 39, then 40 of 42), so it is not a held-out number any more, and the
+sentence "Not fixed: fixing rules against this set would turn it into a tuning set" further down was true on the
+day it was written and is not true now. Reports made before 17 Nov carry the line "no rule was changed after that
+run" from the set's own description; that was true of the first run only. `scripts/eval-heldout.mjs` now counts
+the rule commits from git and writes "no longer held out" itself. The numbers at the current commit are in
+`devlog/DAY12.md`.
+
 ## The number to quote: the 18 open questions
 42 of the 60 questions carry their own answers ("coffee or tea?", "are you cold?") or have a fixed card (feeling,
 pain, body map, memory). Code decides those and no model is needed. The other 18 are open (who, where, what): the
