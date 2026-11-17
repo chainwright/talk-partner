@@ -419,3 +419,41 @@ describe('E-8. a question nobody can guess the answer to gets no guesses: the ca
     expect(partnerActions(card, { less: false, hasAnswers: false }).map((a) => a.act)).toEqual(['show', 'next']);
   });
 });
+
+describe('E-9. who to call: every person About me names is on the card, with a next page, whichever step answered', () => {
+  const everyPage = (c: Card) => { const out: string[] = []; for (let p: Card | null | undefined = c; p; p = p.nextPage) out.push(...answers(p)); return out; };
+  // set E: with cloud help only "Who should I call for you?" read doctor / Jenny; Tyler was gone and there was no next page
+  const QUESTIONS = ['Who shall I ring for you?', 'Who would you like to invite on Sunday?', 'Who do you want me to phone?', 'Who should we visit this week?'];
+  const CLOUD: ModelOutput[] = [
+    { topic: 'call', kind: 'choice', choices: ['doctor', 'family', 'a friend'] },
+    { topic: 'call', kind: 'choice', choices: ['family', 'friend', 'doctor'] },
+    { topic: 'call', kind: 'choice', choices: ['doctor', 'nurse'] },
+  ];
+  it.each(QUESTIONS)('cloud help only: %s', async (q) => {
+    for (const out of CLOUD) {
+      const e = new Scripted(null, out);
+      const card = await ask(q, e);
+      expect(answers(card)).toEqual(['Grace', 'Leo']);
+      // Peter is not lost, and the cloud's role word comes after the family
+      expect(everyPage(card).slice(0, 4)).toEqual(['Grace', 'Leo', 'Peter', 'doctor']);
+      expect(card.nextPage).toBeTruthy();
+      for (const label of everyPage(card)) expect(['Maria', 'Sam', 'Alan']).not.toContain(label);
+      // the cloud got the question alone: no name, no label, no count of people
+      expect(e.sent).toEqual([q]);
+    }
+  });
+  it.each(QUESTIONS)('on this computer the card is the same: %s', async (q) => {
+    const viaCloud = await ask(q, new Scripted(null, CLOUD[0]));
+    for (const dev of [{ topic: 'call', kind: 'choice' as const, choices: ['Grace', 'doctor'] }, { topic: 'call', kind: 'choice' as const, choices: ['Leo', 'Grace', 'doctor'] }, { topic: 'call', kind: 'choice' as const, choices: ['doctor', 'Maria', 'Peter'] }]) {
+      const card = await ask(q, new Scripted(dev));
+      expect(everyPage(card)).toEqual(everyPage(viaCloud));
+      expect(card.source).toBe('on-device');
+    }
+  });
+  it('more people than two pages hold are all reachable; a question that names its own two is left alone', async () => {
+    const big: Profile = { ...PROFILE, people: [...PROFILE.people, { id: 'p6', name: 'Nora', relation: 'niece', household: false }, { id: 'p7', name: 'Hal', relation: 'friend', household: false }] };
+    const card = await ask('Who shall I ring for you?', new Scripted(null, CLOUD[0]), 'more', big);
+    expect(everyPage(card)).toEqual(['Grace', 'Leo', 'Peter', 'Nora', 'Hal', 'doctor']);
+    expect(answers(await ask('Shall I ring Grace or Leo?', new Scripted(null)))).toEqual(['Grace', 'Leo']);
+  });
+});

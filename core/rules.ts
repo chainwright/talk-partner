@@ -1780,6 +1780,20 @@ export function dropGenericWho(answers: string[], q: string, profile: Profile): 
   });
 }
 
+/**
+ * On a "who shall we call / visit / invite" question the people About me names (who do not live here) all stand on
+ * the card, first and in About-me order; a specific role a model offered ("doctor") comes after them. Set E, 16 Nov:
+ * with cloud help only the card read "doctor / Jenny": the cloud's role word had taken a place, Tyler was gone and
+ * there was no next page, while on this computer the same question gave Jenny / Tyler and then doctor.
+ */
+export function contactFirst(answers: string[], q: string, profile: Profile): string[] {
+  if (questionType(q) !== 'who' || !isContactQ(q) || PAST_LIFE.test(q) || offersOptions(q)) return answers;
+  const pool = contactPool(profile);
+  if (pool.length < 2) return answers;
+  const others = answers.filter((a) => !findPerson(a, profile) && !isPartnerName(a, profile));
+  return [...pool, ...others];
+}
+
 export function cleanTopic(t: string): string {
   return t.replace(/[^\w\s'-]/g, '').replace(/\s+/g, ' ').trim().split(' ').slice(0, 4).join(' ');
 }

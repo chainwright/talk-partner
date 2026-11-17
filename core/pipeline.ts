@@ -11,7 +11,7 @@ import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   contactPool, dropGenericWho, fromAboutMe, isUnguessable, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
-  codeOptions, dropWhichOne, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
+  codeOptions, contactFirst, dropWhichOne, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
 import type { BodyRegion, Card, CardWhy, Choice, ModelOutput, Profile, Source, StepTrace, SupportLevel } from './types';
@@ -182,6 +182,12 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
   if (named2.length < answers.length) droppedGeneric = true;
   diff(answers, named2, R.genericWho);
   answers = named2;
+  // who to call / visit / invite: every person About me names for it is on the card, before any role word a model
+  // offered; the ones the level has no room for wait on the next pages
+  const people = contactFirst(answers, asked, profile);
+  let peopleAdded = false;
+  for (const a of people) if (!answers.some((b) => lc(b) === lc(a))) { why.added.push({ label: a, from: 'people from About me' }); peopleAdded = true; }
+  answers = people;
   if (negs.length && answers.length < 2) rejected.push('negative wording');
   // §2.6: fewer than two answers -> fill from the About-me list of the same kind, or the fixed set for the question type
   let filled: string | null = null;
@@ -193,6 +199,7 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
       filled = f.source;
     }
   }
+  if (peopleAdded && !filled) filled = 'people from About me';
   if (droppedGeneric && !filled) rejected.push("a choice didn't fit the question");
   return { answers, rejected: [...new Set(rejected)], filled };
 }
@@ -394,9 +401,17 @@ export function assemble(
   const card = finish({ ...base, notes, topic: headline, kind: 'choice', route: r }, answers, [escape], profile, support, cap);
   card.why = whyFor(card, proposal(o, step), decided, headlineFrom, track, profile);
   if (rest.length) {
-    // A good choice the support level has no room for is kept for a second page, reached by the way-out tile or the
-    // partner's "Next: more choices" (the body map pages the same way). Before, it was dropped without a word.
-    card.nextPage = { ...finish({ ...base, notes: [N.lastPage], topic: headline, kind: 'choice', route: r }, rest, [escape], profile, support), why: card.why };
+    // A good choice the support level has no room for is kept for a next page, reached by the way-out tile or the
+    // partner's "Next: more choices" (the body map pages the same way). Before, it was dropped without a word. As
+    // many pages as it takes: nothing that passed the rules is lost behind the last one.
+    const per = choiceCap(support);
+    let next: Card | null = null;
+    for (let i = Math.floor((rest.length - 1) / per) * per; i >= 0; i -= per) {
+      const page: Card = { ...finish({ ...base, notes: [N.lastPage], topic: headline, kind: 'choice', route: r }, rest.slice(i, i + per), [escape], profile, support), why: card.why };
+      page.nextPage = next;
+      next = page;
+    }
+    card.nextPage = next;
   }
   return card;
 }

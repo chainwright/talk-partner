@@ -52,10 +52,12 @@ describe('a "who to call" card made with cloud help offers the people About me n
     for (const w of ['Jenny', 'Jen ', 'Tyler', 'Carol']) expect(c.cloudPayload).not.toContain(w);
     expect(c.cloudPayload).toBe(JSON.stringify(cloudTextRequest('Who should we call tonight?'), null, 2));
   });
-  it('a named person the cloud could not know is never there; a specific role the cloud offers stays', async () => {
+  it('a named person the cloud could not know is never there; a specific role the cloud offers stays, after the family', async () => {
+    // (until set E, 16 Nov, the role took a place on the first page and Tyler was left off)
     const e = new CloudOnly({ topic: 'call', kind: 'choice', choices: ['the doctor', 'a friend'] });
     const c = await makeCard('Who should we ring about the tablets?', env(e));
-    expect(answers(c)).toEqual(['the doctor', 'Jenny']);
+    expect(answers(c)).toEqual(['Jenny', 'Tyler']);
+    expect(c.nextPage?.choices.filter((x) => x.role === 'answer').map((x) => x.label)).toEqual(['the doctor']);
   });
   it('a bare relation word of someone listed counts as general', () => {
     expect(dropGenericWho(['daughter', 'Grace', 'the nurse'], 'Who shall we invite on Sunday?', PROFILE)).toEqual(['Grace', 'the nurse']);

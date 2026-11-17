@@ -98,7 +98,10 @@ describe('device card', () => {
   it('household members are not offered for a visit', async () => {
     const e = new FakeEngine(true, { topic: 'visit', kind: 'choice', choices: ['Sam', 'Grace', 'Peter'] });
     const c = await makeCard('Who should visit at the weekend?', env(e));
-    expect(labels(c)).toEqual(['Grace', 'Peter', 'someone else']);
+    // (since set E, 16 Nov: everyone About me names for a visit, in About-me order; who does not fit waits on the next page)
+    expect(labels(c)).toEqual(['Grace', 'Leo', 'someone else']);
+    expect(c.nextPage?.choices.map((x) => x.label)).toEqual(['Peter', 'someone else']);
+    for (let p: typeof c | null | undefined = c; p; p = p.nextPage) expect(p.choices.map((x) => x.label)).not.toContain('Sam');
   });
 
   it('"more support" shows two answers and one escape', async () => {
