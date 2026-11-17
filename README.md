@@ -31,17 +31,19 @@ No account, no sign-in. What you get depends on what the copy has:
 
 There is no hosted URL yet.
 
-`#/demo` loads a made-up family (Frank; Carol asking) and one-tap questions under the question box, in three groups (read in code / the app corrects the partner / a model proposes); each chip shows the short form, the hover text has the full question and what to look for. Under every card, in reading order: the badge with what left this computer, the coaching line if any, the line to say, the card on the right, then **Why this card**, **Where each step ran**, **What was sent**, the **privacy receipt** and the session line. Click these, in order:
+`#/demo` loads a made-up family (Frank; Carol asking) and one-tap questions under the question box, in three groups (open question: a model proposes / the app corrects the partner / read in code, no AI); each chip shows the short form, the hover text has the full question and what to look for. Under every card, in reading order: the badge with what left this computer, the coaching line if any, the line to say, the card on the right, then **Why this card**, **Where each step ran**, **What was sent**, the **privacy receipt** and the session line. Click these, in order:
 
 | Click | What you see | Badge |
 |---|---|---|
+| **What do you want to do this weekend?** (the first chip) | an open question: the choices are not in the question, so a model has to propose them. **With Gemini Nano in this Chrome:** the private step runs on this computer with the About-me lists and the card offers the family's own places ("lake / church" in the recorded runs); the badge line names them: "nothing left this computer · lake, church from About me". **Without Gemini Nano:** no card, and an offer to use cloud help with the question only | On this computer, or No card |
+| **What would you like for dinner?** | the same on this computer: the family's own foods, "pot roast / chili" | On this computer, or No card |
+| **Cloud help: off** (top bar) → read the consent screen, tick, **Turn on cloud help**, then the weekend and dinner questions again (in a browser without Gemini Nano, or the card stays on this computer) | the stripped question goes to Gemini through Firebase AI Logic (`PREFER_IN_CLOUD`), which has never seen About me: the choices are general ("stay home / go out", "chicken / fish" in the recorded runs; the words vary). This is the difference between the two steps, on one question; "What was sent" shows the exact request; the **privacy receipt** below the judge box shows the bytes that left and the names withheld | Cloud help (question only) |
+| **Who should we call tonight?** | *Jenny / Tyler / someone else*; Carol lives there, so she is not offered. This card looks the same with either step: on this computer the model reads the names in About me; with cloud help only, the cloud answers "family / a friend" and code on this computer puts the names in. It shows the rule, not the model | On this computer, or Cloud help (question only) |
 | **Do you want coffee or tea?** | the card is read from the question in code; the pane on the right is what the person sees ("Show to person" makes it full screen). Under it, **Why this card**: one line with what the model proposed (nothing here: no model needed), what code kept, added or dropped and by which rule, and who decided | No AI needed |
 | **How was therapy today, and did you eat?** | the coaching line "One thing at a time: showing the first"; the first question is a feeling scale; **Next: second question** shows "Did you eat?" as yes / no | No AI needed |
 | **We're stuck** (on any card) | the fixed repair card on the person's side: show me / write it / draw / later / change topic, and the partner line "Let's try another way"; a tap gives the partner the next move for that way; "Back to the choices" returns | No AI needed |
 | **Where does it hurt?** | body map, two steps, never AI; "your left arm" is the person's own left | No AI needed |
 | **What year did we get married?** | no card: a memory question is never a quiz; the coaching line "You know this one: tell, don't test" and the line to say instead | No card |
-| **What do you want to do this weekend?** | open question. With Gemini Nano in this Chrome: the private step runs on this computer with the About-me lists and the card offers the family's own places ("lake / church" in the recorded run, `devlog/ondevice_proof_1/RUN_LOG.md`); the badge line names them: "lake, church from About me". Without Gemini Nano: no card, and an offer to use cloud help with the question only | On this computer, or No card |
-| **Cloud help: off** (top bar) → read the consent screen, tick, **Turn on cloud help**, then the weekend question again | the stripped question goes to Gemini through Firebase AI Logic (`PREFER_IN_CLOUD`); "What was sent" shows the exact request; the **privacy receipt** below the judge box shows the bytes that left and the names withheld | Cloud help (question only) |
 | **Should we ring Jen or Tyler?** | the either-or is read in code and nothing is sent; "Jen" is a nickname from About me, so the tile gets the person picture. (The swap of a name for `Person A` shows only when a question with a name goes to cloud help: type "What should we get Jenny for her birthday?" with cloud help on and no Gemini Nano; recorded in `devlog/ondevice_proof_1/RUN_LOG.md` §5) | No AI needed |
 
 **What each badge means.** The two AI badges ("On this computer", "Cloud help") and the offline one come from the SDK's `inferenceSource` for that call; "No AI needed" and "No card" come from the card rules:
@@ -59,7 +61,7 @@ Under every card, **"Where each step ran"** lists the private step, the cloud st
 
 **Why this card** (every card; one line, open in judge mode and on `#/how`, inside "How this card was made" on the partner screen): the model's parsed proposal (topic, kind, choices, copied options) and which step made it, the labels code kept, the labels code added and where from ("people from About me"), every proposed choice that is not on the card with the rule that removed it ("negative wording", "lives here: never offered for a call or a visit", "over the limit at this support level"), who decided, and where the headline came from. `Card.why` is written in `core/pipeline.ts` at the moment each rule runs, on the values it ran on; `tests/unit/day5.test.ts` checks that every kept or added label is on the card and every dropped one is not.
 
-**States you can force:** cloud leg = turn on cloud help (`#/cloud`); no-model state = any browser without Gemini Nano shows the private step as "did not run" on every open card; offline fall-back (needs Gemini Nano in this Chrome) = with cloud help on, switch the network off and ask "Which shirt for the doctor?": the badge reads "Ran on this computer (offline)". Without Gemini Nano there is nothing to fall back to: the cloud step shows as failed and there is no card.
+**States you can force:** cloud leg = turn on cloud help (`#/cloud`); no-model state = any browser without Gemini Nano shows the private step as "did not run" on every open card; offline fall-back (needs Gemini Nano in this Chrome) = with cloud help on, switch the network off and type "Which shirt for the doctor?": the badge reads "Ran on this computer (offline)". Without Gemini Nano there is nothing to fall back to: the cloud step shows as failed and there is no card.
 
 **Honesty notes.** The on-device step was first run on 16 Nov 2026 (Gemini Nano in desktop Chrome 157, through Firebase AI Logic `ONLY_ON_DEVICE`); the recorded run, with the SDK's `inferenceSource` per call, the hosts contacted and screenshots, is in `devlog/ondevice_proof_1/RUN_LOG.md`, made at the git tag **`ondevice-proof-1`** by `scripts/e2e-ondevice.mjs`. It is one machine and one made-up family, not a measurement of card quality. The sample family is made up. The pre-period prototype is listed in `DISCLOSURE.md`; the git tag **`pre-contest`** marks the import commit that holds exactly the carried-over files.
 
@@ -124,13 +126,16 @@ with the first cloud call. One availability probe (`LanguageModel.availability`,
 the only direct touch of Chrome's API; the SDK has no public call for it on the web.
 
 **What the on-device step does that the cloud step cannot.** It is the only step that sees About me. In the recorded
-run "What would you like for dinner?" gives *pot roast / chili* on this computer and *meat / fish* from the cloud, and
-"Who should we call tonight?" gave *Jenny / Tyler* against *family / friend*. A card whose every answer is an About-me
-entry stays on this computer even when cloud help is on.
+runs "What would you like for dinner?" gives *pot roast / chili* on this computer and general foods from the cloud
+(*meat / fish*, *chicken / fish*; the cloud's words vary), and "What do you want to do this weekend?" gives
+*lake / church* on this computer and *stay home / go out* from the cloud. A card whose every answer is an About-me
+entry stays on this computer even when cloud help is on. On our labelled set this is the whole difference: 13 of 18
+open questions got a matching card with the family's own entries on this computer, and rules alone made none.
 
-Since that run, one kind of cloud card is completed on this computer: on a call / visit / invite question the cloud's
+One kind of cloud card is completed on this computer: on a call / visit / invite question the cloud's
 general words ("family", "a friend") are replaced in code by the people About me names, minus whoever lives here, so
-with cloud help only the same question now reads *Jenny / Tyler* too. The cloud still gets the question alone: no name,
+with cloud help only "Who should we call tonight?" reads *Jenny / Tyler* too. That is why the judge path does not
+open on that question: it shows a rule, not the model. The cloud still gets the question alone: no name,
 no label, no count of people (`dropGenericWho` in `core/rules.ts`, `tests/unit/who-and-more.test.ts`). And when a
 card shows two choices at a time, a third good one is no longer dropped: it waits on a next page, reached by the
 way-out tile or "Next: more choices".

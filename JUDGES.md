@@ -6,23 +6,34 @@ Nothing here needs an account. There is no hosted URL yet, so this path starts f
 npm install && npm run dev        # then open http://localhost:5179/#/demo
 ```
 
-`#/demo` loads a made-up family (Frank; his wife Carol is asking). Under the question box are one-tap questions.
+`#/demo` loads a made-up family (Frank; his wife Carol is asking). Under the question box are one-tap questions. The
+first two are open questions: the choices are not in the question, so a model has to propose them. They are where the
+two steps of the hybrid give different cards.
 
 | Second | Do | You should see |
 |---|---|---|
-| 0–10 | click **coffee or tea?** | the card on the right (on a phone: right under the buttons): *drink*, coffee, tea, something else. Badge **No AI needed · nothing left this computer**. The line to say is above it |
-| 10–20 | click **therapy today, and did you eat?** | the app corrects the partner, not the person: "One thing at a time: showing the first." A feeling scale; **Next: second question** gives yes / no |
-| 20–30 | click **what year did we marry?** | no card. "You know this one: tell, don't test", and a sentence to say instead |
-| 30–45 | click **who to call tonight?** | depends on the copy, see below. With Gemini Nano: *Jenny / Tyler / someone else*, badge **On this computer**, "nothing left this computer · Jenny, Tyler from About me". Carol lives there, so she is not offered |
-| 45–60 | open **Why this card** and **Where each step ran** under the card | one line: what the model proposed, what code kept, added and dropped and by which rule; and which step ran where, from the SDK's `inferenceSource` |
+| 0–15 | click **this weekend?** | depends on your copy, see the table below. With Gemini Nano: *lake / church / something else*, badge **On this computer**, "nothing left this computer · lake, church from About me". The places are the family's own, read on this computer |
+| 15–25 | click **for dinner?** | with Gemini Nano: *pot roast / chili / something else*, the family's own foods, nothing sent |
+| 25–35 | open **Why this card** and **Where each step ran** under the card | one line: what the model proposed, what code kept, added and dropped and by which rule; and which step ran where, from the SDK's `inferenceSource` |
+| 35–45 | click **therapy today, and did you eat?** | the app corrects the partner, not the person: "One thing at a time: showing the first." A feeling scale; **Next: second question** gives yes / no. No AI |
+| 45–60 | click **what year did we marry?**, then **coffee or tea?** | no card for the first: "You know this one: tell, don't test", and a sentence to say instead. The second is read in code: *drink*, coffee, tea, something else, badge **No AI needed · nothing left this computer** |
 
 **What your copy can do.** Be sure which one you have before you judge the AI part:
 
-| Your copy | "who to call tonight?" shows |
+| Your copy | "this weekend?" and "for dinner?" show |
 |---|---|
-| a bare clone, no `.env.local` | "No card", with the reason. Every other row of the table above works. This is expected, not a fault |
-| `.env.local` with a Firebase web config, any browser | "No card" and an offer of cloud help. Turn it on (top bar → read, tick, **Turn on cloud help**), ask again: the cloud gets the bare question, and code on this computer puts in the people About me names (for example *Jenny / Tyler*; the cloud's own answer varies, see `devlog/evidence_r2/at_head_2/e2e-cloud.txt`). **What was sent** shows the exact request |
-| the same, in desktop Chrome with Gemini Nano downloaded | the private step runs on this computer with the About-me lists. Nothing is sent |
+| a bare clone, no `.env.local` | "No card", with the reason. Rows 3 to 5 of the table above work. This is expected, not a fault |
+| `.env.local` with a Firebase web config, a browser without Gemini Nano | "No card" and an offer of cloud help. Turn it on (top bar → read, tick, **Turn on cloud help**), ask again: the cloud gets the bare question and has never seen About me, so the choices are general (*stay home / go out*, *chicken / fish* in our recorded runs; the words vary). Badge **Cloud help (question only)**; **What was sent** shows the request |
+| the same, in desktop Chrome with Gemini Nano downloaded | the private step runs on this computer with the About-me lists: *lake / church*, *pot roast / chili*. Nothing is sent |
+
+The second and third rows are the same question answered by the two steps: general choices from the cloud, the
+family's own from this computer. On our labelled set of 60 questions, 18 are open like these: rules alone make no card
+for any of them, and the on-device step made a matching card for 16, 13 of them with the family's own entries
+(`devlog/evidence_r2/heldout_r2_NOTES.md`; our labels, not a trial with people).
+
+**who to call tonight?** (the third chip) reads *Jenny / Tyler* with either step: with cloud help only, the cloud says
+"family / a friend" and code on this computer puts in the people About me names. It is a rule doing the work there,
+so we do not open the path on it.
 
 We cannot give you the third row without the model on your machine, and the second needs our project settings, which
 are not in the repository. What we recorded on ours, with the SDK's own report per call and screenshots:

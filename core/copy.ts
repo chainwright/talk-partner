@@ -336,7 +336,7 @@ const COPY = {
     noDevice: "This browser has no private helper, so the private step shows as \"did not run\" on every card. Cloud help can make the open cards: it gets the question only, and the sample family is made up.",
     exit: 'Leave judge mode',
     /** The one-tap questions, grouped by what the judge sees happen (core/sample.ts gives each question its group). */
-    groups: { code: 'Read in code', coach: 'The app corrects the partner', model: 'A model proposes' },
+    groups: { model: 'Open question: a model proposes', coach: 'The app corrects the partner', code: 'Read in code, no AI' },
     receipt: {
       heading: 'Privacy receipt',
       summary: (n: { cards: number; cardsLeft: number; bodyBytes: number; questionBytes: number; namesWithheld: number; otherWithheld: number; leaksFound: number; photosFound: number; offlineRuns: number; attempts: number; attemptBytes: number }) =>

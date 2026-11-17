@@ -15,7 +15,8 @@
 //      question only (`inferenceSource=in_cloud`);
 //   4. network OFF: the question-only step falls back to the device (`PREFER_IN_CLOUD` -> `inferenceSource=on_device`);
 //   5. the same questions in a Chrome WITHOUT the model (a throwaway profile), cloud help on: what the cloud alone
-//      offers, and a name in a question swapped for "Person A" before it is sent.
+//      offers (general choices, where section 2 gave the family's own), and a name in a question swapped for
+//      "Person A" before it is sent.
 // Every source in the log is the SDK's own `inferenceSource`, printed by the engine as `[ai-logic] …` console lines.
 // Exit code 0 only if every check passes.
 import { spawn, execSync } from 'node:child_process';
@@ -159,9 +160,11 @@ try {
     ['Where shall we go on Sunday?', 'places'],
   ];
   let n = 0;
+  const onDevice = {}; // question -> the answers offered on this computer, compared in section 5 with the cloud's
   for (const [q, kind] of cases) {
     const r = await c.ask(q);
     n++;
+    onDevice[q] = r.tiles.slice(0, -1);
     const mine = fromAbout(r.tiles);
     check(`"${q}": badge "On this computer"`, r.badge === 'On this computer', r.badge);
     check(`"${q}": the SDK reported inferenceSource=on_device for the private step`, r.ai.length === 1 && ON_DEVICE.test(r.ai[0]), r.ai.join(' '));
@@ -216,10 +219,17 @@ try {
   await d.waitFor(`!!document.querySelector('.chip')`); await sleep(1500);
   log(`- status line: "${await d.js(`document.querySelector('#status').innerText`)}"`);
   await d.setCloud(true);
-  for (const q of ['Who should we call tonight?', 'What would you like for dinner?']) {
+  for (const q of ['What do you want to do this weekend?', 'What would you like for dinner?', 'Who should we call tonight?']) {
     const r = await d.ask(q);
     check(`without the model, "${q}" is answered by the cloud step, which has no About me`, r.badge === 'Cloud help (question only)' && r.ai.every((l) => /inferenceSource=in_cloud/.test(l)) && !/Jenny|Tyler|pot roast|chili|lake/.test(r.sentQuestion), `${r.badge}; sent: ${r.sentQuestion}`);
     if (q.startsWith('Who')) await d.shot('06-no-model-cloud-who-to-call');
+    else {
+      // the open questions the judge path opens on: the cloud step has never seen About me, the step on this computer has
+      const cloudMine = fromAbout(r.tiles);
+      log(`- same question, the two steps: on this computer ${onDevice[q].join(' / ')}; from the cloud ${r.tiles.slice(0, -1).join(' / ')}`);
+      check(`"${q}": the two steps give different cards (About-me entries on this computer, none from the cloud)`, fromAbout(onDevice[q]).length >= 2 && cloudMine.length === 0, `on this computer: ${onDevice[q].join(' / ')}; cloud: ${r.tiles.slice(0, -1).join(' / ')}`);
+      if (q.includes('weekend')) await d.shot('08-no-model-cloud-weekend');
+    }
   }
   const named = await d.ask('What should we get Jenny for her birthday?');
   check('a name in the question is swapped before it is sent: "Person A", not "Jenny"', named.badge === 'Cloud help (question only)' && /Person A/.test(named.sentQuestion) && !/Jenny|Jen\b/.test(named.sentQuestion) && /1 name/.test(named.tail), `${named.sentQuestion}; ${named.tail}`);
