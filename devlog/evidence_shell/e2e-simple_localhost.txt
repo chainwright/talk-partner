@@ -1,0 +1,103 @@
+url: http://localhost:5179/
+browser: Chromium 148.0.7778.96 (headless)
+PASS  "/" on a first visit is the simple first screen, not the first-run page and not judge mode
+PASS  the simple view carries its own look (data-view="simple")
+PASS  first screen: one sentence of purpose, the field, "Make a card", three ready questions, quick needs
+PASS  first screen, on a phone: says "this phone" and never "this computer"
+PASS  first screen: where the AI runs is said in one line (rules on this phone; open questions need online help, asked first)
+PASS  first screen: the open ready question says it needs online help
+PASS  first screen: "See how it works inside" is on it
+PASS  first screen: nothing technical (no status box, badge, byte count or judge mode)
+PASS  first screen: every control is at least 24 x 24 px
+PASS  first screen: every button and stand-alone link is at least 44 px tall
+PASS  first screen: the main button is at least 60 px tall
+PASS  first screen: nothing runs off the side of the screen
+PASS  card ready: "1 Say this out loud" with the line, then "2 Show them the card" with the card and the main button
+PASS  card ready: "We're stuck" is on this screen, before any answer
+PASS  card ready: the screen itself says where the card was made (rules on this phone, no AI, nothing sent)
+PASS  card ready: "How was this card made?" leads inside
+PASS  card ready: every control is at least 24 x 24 px
+PASS  card ready: every button and stand-alone link is at least 44 px tall
+PASS  card ready: the main button is at least 60 px tall
+PASS  card ready: nothing runs off the side of the screen
+PASS  We're stuck, pressed before any answer: the repair card is up, with the way back to the choices
+PASS  the repair card: every control is at least 24 x 24 px
+PASS  the repair card: every button and stand-alone link is at least 44 px tall
+PASS  the repair card: the main button is at least 60 px tall
+PASS  the repair card: nothing runs off the side of the screen
+PASS  the person's card takes the whole screen, white, with three tiles
+PASS  the person's card: every control is at least 24 x 24 px
+PASS  the person's card: every button and stand-alone link is at least 44 px tall
+PASS  the person's card: nothing runs off the side of the screen
+PASS  answered: "They chose and said yes to tea", "Ask another question", and today's answers
+PASS  answered: says the answers are kept on this phone only, and where the card was made
+PASS  answered: every control is at least 24 x 24 px
+PASS  answered: every button and stand-alone link is at least 44 px tall
+PASS  answered: the main button is at least 60 px tall
+PASS  answered: nothing runs off the side of the screen
+PASS  an open question on a phone with online help off brings up the consent sheet (a dialog over an inert screen)
+PASS  the sheet shows the exact line that would go
+PASS  the sheet says what is sent (the line and the fixed instructions; names can be missed), what is never sent, and the data use; never "nothing else"
+PASS  the sheet: "Yes" and "No" are the same size, at least 60 px tall, and both are on the screen without scrolling
+PASS  showing the sheet asked nothing of any other host
+PASS  the consent sheet: every control is at least 24 x 24 px
+PASS  the consent sheet: every button and stand-alone link is at least 44 px tall
+PASS  the consent sheet: the main button is at least 60 px tall
+PASS  the consent sheet: nothing runs off the side of the screen
+PASS  Escape is "No": the sheet closes, there is no card, and the screen says so and what to do
+PASS  still nothing asked of any other host
+PASS  no card: every control is at least 24 x 24 px
+PASS  no card: every button and stand-alone link is at least 44 px tall
+PASS  no card: nothing runs off the side of the screen
+PASS  "Use online help for this question" brings the sheet back; "No, not for this question" closes it again
+PASS  "Yes" asks the question again at once, through cloud help (other hosts are asked only now)
+PASS  with every other host refused, cloud help fails: no card, and the line does not say "nothing was sent"
+PASS  the first screen then no longer says "Nothing you asked has left this phone"; online help shows as on
+PASS  quick needs: one tap opens the board full screen, nine tiles
+PASS  quick needs board: every control is at least 24 x 24 px
+PASS  quick needs board: every button and stand-alone link is at least 44 px tall
+PASS  quick needs board: nothing runs off the side of the screen
+PASS  back from the board: the card screen, made by rules, nothing sent
+PASS  quick needs, partner side: every control is at least 24 x 24 px
+PASS  quick needs, partner side: every button and stand-alone link is at least 44 px tall
+PASS  quick needs, partner side: the main button is at least 60 px tall
+PASS  quick needs, partner side: nothing runs off the side of the screen
+PASS  About them: four rows, "Everything here stays on this phone.", nothing required
+PASS  About them, a row open: every control is at least 24 x 24 px
+PASS  About them, a row open: every button and stand-alone link is at least 44 px tall
+PASS  About them, a row open: the main button is at least 60 px tall
+PASS  About them, a row open: nothing runs off the side of the screen
+PASS  About them: the rows show what was typed
+PASS  the first screen now names the person ("with Frank", "About Frank")
+PASS  the card screen names the person: "Show Frank the card"
+PASS  "How was this card made?" opens the full view on the same card, its fold open
+PASS  the full view has the way back on it ("Simple view")
+PASS  the full view is remembered across a reload
+PASS  every inner page of the full view has the way back
+PASS  "Simple view" goes back, and that is remembered too; About them is kept
+PASS  /#/demo opens the full judge view directly, whatever view was chosen
+PASS  "Simple view" in judge mode leaves it: the simple first screen, with the family's own About them
+PASS  the first-run page is still there by its address
+PASS  phone: no page error in the whole run
+PASS  desktop, 1440 x 900: the first screen says "this computer"
+PASS  desktop, 1440 x 900: the card says "Made by the app's rules on this computer"
+PASS  desktop, 1440 x 900, card ready: every control is at least 24 x 24 px
+PASS  desktop, 1440 x 900, card ready: every button and stand-alone link is at least 44 px tall
+PASS  desktop, 1440 x 900, card ready: the main button is at least 60 px tall
+PASS  desktop, 1440 x 900, card ready: nothing runs off the side of the screen
+PASS  desktop, 1440 x 900: the sheet says "This computer has no AI of its own"
+PASS  desktop, 1440 x 900: the sheet's two buttons are on the screen
+PASS  desktop, 1440 x 900: the full view uses the same word
+PASS  desktop, 1440 x 900: no page error
+PASS  tablet, 800 x 1280: the first screen says "this tablet"
+PASS  tablet, 800 x 1280: the card says "Made by the app's rules on this tablet"
+PASS  tablet, 800 x 1280, card ready: every control is at least 24 x 24 px
+PASS  tablet, 800 x 1280, card ready: every button and stand-alone link is at least 44 px tall
+PASS  tablet, 800 x 1280, card ready: the main button is at least 60 px tall
+PASS  tablet, 800 x 1280, card ready: nothing runs off the side of the screen
+PASS  tablet, 800 x 1280: the sheet says "This tablet has no AI of its own"
+PASS  tablet, 800 x 1280: the sheet's two buttons are on the screen
+PASS  tablet, 800 x 1280: the full view uses the same word
+PASS  tablet, 800 x 1280: no page error
+
+99 of 99 checks passed
