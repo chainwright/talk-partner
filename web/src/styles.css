@@ -10,6 +10,7 @@
   --bg: #111823; --ink: #e8eef5; --muted: #a9b6c6; --line: #2c3a4b; --panel: #1a2431;
   --accent: #5fe0b5; --accent-soft: #163a30; --cloud: #8cc8ff; --cloud-soft: #13283d; --on-accent: #06231a;
   --yes: #5fe0b5; --no: #ff8a80; --warn: #ffc266; --radius: 18px; color-scheme: dark;
+  --field: #7a8a9e; /* the edge of a field you type or choose in: 4.4:1 on the panel, 5.1:1 on the desk (--line is 1.4:1 and stays for dividers) */
   --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
 * { box-sizing: border-box; }
@@ -67,7 +68,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
 .judge p:last-child { margin: 0; } .judge summary { display: block; font-family: var(--mono); font-size: 14px; } .judge p:first-of-type { margin-top: 6px; }
 .judge summary b { color: var(--accent); }
 #ask { display: flex; gap: 8px; }
-#ask input { flex: 1; min-width: 0; min-height: 54px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+#ask input { flex: 1; min-width: 0; min-height: 54px; padding: 8px 12px; border: 1px solid var(--field); border-radius: 14px; background: var(--panel); }
 #ask input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 button, .button { min-height: 44px; padding: 8px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
 #make, .primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
@@ -89,7 +90,7 @@ button.danger, .danger { color: var(--no); border-color: var(--no); }
   .chips.group .gl { flex: 0 0 auto; } .chips.group .gc { display: contents; }
 }
 .settings { display: flex; gap: 10px 16px; flex-wrap: wrap; align-items: center; font-size: 14px; }
-.settings select { min-height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+.settings select { min-height: 36px; border-radius: 8px; border: 1px solid var(--field); background: var(--panel); color: var(--ink); }
 .settings .privacy { color: var(--muted); }
 
 #result { display: grid; gap: 6px; }

@@ -181,6 +181,20 @@ describe('the cross on the white card is readable', () => {
     expect(ratio(no!, '#ffffff')).toBeGreaterThanOrEqual(3);
     expect(ratio('#ff8a80', '#ffffff')).toBeLessThan(3); // the desk colour it used to inherit
   });
+  it('the edge of the question field and of the choices selector is at least 3:1 on the desk and on the panel', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const css = readFileSync(join(__dirname, '..', '..', 'web/src/styles.css'), 'utf8');
+    const root = css.slice(css.indexOf(':root {'), css.indexOf('}', css.indexOf(':root {')));
+    const v = (name: string) => new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`, 'i').exec(root)?.[1] ?? '';
+    expect(v('field'), 'a --field colour is defined').toBeTruthy();
+    for (const bg of [v('bg'), v('panel')]) expect(ratio(v('field'), bg)).toBeGreaterThanOrEqual(3);
+    expect(ratio(v('line'), v('panel'))).toBeLessThan(3); // the divider colour the fields used to have
+    for (const sel of ['#ask input {', '.settings select {']) {
+      const rule = css.slice(css.indexOf(`\n${sel}`), css.indexOf('}', css.indexOf(`\n${sel}`)));
+      expect(rule, sel).toMatch(/border: 1px solid var\(--field\)/);
+    }
+  });
 });
 
 describe('the first screen and the wait', () => {
