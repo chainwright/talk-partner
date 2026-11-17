@@ -5,7 +5,7 @@ The claims we make about Talk Partner in the README, on screen and in the submis
 after it on 17 Nov (the quick-needs board and voice input), and four older rows (3, 4, 22, 36) say what those two
 change for them. `EVIDENCE.md` says which runs were made again at the commits of the two features and which were
 not. Rows 1, 2, 14, 31 and 34 were changed and rows 43 and 44 added later on 17 Nov, after a second rehearsal run
-(commits `4e27d1e` to `30db57a`); they are checked on localhost only, and the hosted copy does not have them yet. **True** = you can reproduce it from a clone. **True, recorded** = it needs our project
+(commits `4e27d1e` to `30db57a`); they were checked on localhost at `30db57a` and, after the deploy of 17 Nov, 19:05 UTC, on the hosted copy (`devlog/evidence_live/e2e-cloud_live_2026-11-17_4d7edee.txt` 28/28, `e2e-needs_live_2026-11-17_4d7edee.txt` 12/12). **True** = you can reproduce it from a clone. **True, recorded** = it needs our project
 settings or the on-device model, so we give the saved run instead. **Partial** = true with a limit, stated. **Not
 claimed** = things we are sometimes assumed to claim and do not. Proof for each row is in `EVIDENCE.md` under the same
 number.

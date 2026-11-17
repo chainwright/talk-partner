@@ -14,3 +14,4 @@ devlog/eval_runs/
 
 # written by the Firestore emulator (npm run test:rules)
 firestore-debug.log
+firebase-debug.log

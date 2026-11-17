@@ -101,9 +101,7 @@ tests; none of them is a sentence of that set). What changed, with the limit of 
 
 Checked at commit `30db57a` on localhost: unit tests (1858), `e2e:noconfig` 25/25, `e2e-cloud.mjs` 28/28,
 `e2e-ondevice.mjs` 43/43 in a Chrome with Gemini Nano, `shots.mjs` 139/139 (`devlog/evidence_r10/`); five of the new cards were also
-asked by a script in Chromium 148 and Chrome 157 at `66c4574`, with no page error (not saved as a log). **The hosted copy does not have these changes yet:** the
-deploy of 17 Nov, 18:42 UTC, stopped at the Firebase sign-in (`deploy_attempt_2026-11-17_30db57a.txt` there), and
-<https://talk-partner.web.app> still serves the build it served before. The classes were found by a simulation and
+asked by a script in Chromium 148 and Chrome 157 at `66c4574`, with no page error (not saved as a log). **The hosted copy has them since 17 Nov, 19:05 UTC** (the first attempt at 18:42 UTC stopped at the Firebase sign-in, `deploy_attempt_2026-11-17_30db57a.txt`): <https://talk-partner.web.app> serves the same bundle as a local build of `4d7edee`, `e2e-cloud.mjs --url` 28/28 and `e2e-needs.mjs --url` 12/12 there (`devlog/evidence_live/`), and the page loads in Chromium 148 and Chrome 157 with no crash and no page error. The classes were found by a simulation and
 fixed by the people who read its results; a new sealed set would be the real test.
 
 It also corrects **the partner**, quietly, where a rule can tell: two questions in one become "One thing at a time: showing the first"; a memory question becomes "You know this one: tell, don't test."; a "you don't want …, do you?" question is asked the plain way ("Do you want …?"), so that a yes on the card means yes. The person is never corrected. The partner screen opens on that: "It corrects how you ask. It never answers for them." (the limits of both halves are in `CLAIMS.md`, row 11).
