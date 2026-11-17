@@ -357,7 +357,16 @@ function clauseOption(x: string, other = ''): string {
   // (the name is matched with its capital: without that, "do your exercises" lost "do your")
   const auxWord = new RegExp(`^(?!do\\s+(?:it|that|this)\\b)${AUX}\\s+`, 'i').exec(s);
   const subj = auxWord ? /^(?:(?:[Tt]he|[Yy]our|[Mm]y|[Oo]ur|[Tt]hat|[Tt]his)\s+\w+|[A-Z][\p{L}']+|(?:Person|Thing|Place|Food|Show|Music) [A-Z])\s+/u.exec(s.slice(auxWord[0].length)) : null;
-  if (auxWord && subj && s.slice(auxWord[0].length + subj[0].length).trim()) s = s.slice(auxWord[0].length + subj[0].length);
+  // "is Carol watching her show", "is your sister using her cushion": what is offered is that person's thing, so the
+  // option is "Carol's show", never a piece of the clause with a "her" that points at nobody (set E, second run, 17
+  // Nov: the tile read "watching her show")
+  const own = auxWord && subj ? /^(?:[a-z]+ing\s+(?:to\s+|with\s+|on\s+|at\s+)?)?(?:her|his|their)\s+(?:own\s+)?(\S.*)$/i.exec(s.slice(auxWord[0].length + subj[0].length).trim()) : null;
+  let whose = '';
+  if (own && subj) {
+    whose = `${subj[0].trim().replace(/^(?:The|Your|My|Our)\b/, (w) => lc(w))}'s `;
+    s = own[1];
+  // ("have the westerns on": there "have" is the verb and "on" all that would be left, so nothing is taken off)
+  } else if (auxWord && subj && s.slice(auxWord[0].length + subj[0].length).trim() && !/^(?:on|off|in|out|up|down|back|over|round|ready)$/i.test(s.slice(auxWord[0].length + subj[0].length).trim())) s = s.slice(auxWord[0].length + subj[0].length);
   s = s.replace(CUT, '');
   for (let i = 0; i < 4; i++) {
     const y = s.replace(TAIL, '').replace(FUNC_END, '');
@@ -379,6 +388,7 @@ function clauseOption(x: string, other = ''): string {
   }
   s = s.replace(/^(?:a|an)\s+/i, '').trim();
   void other;
+  if (whose && s) return `${whose}${s}`;
   return /^[A-Z][a-z]/.test(s) && !/^(?:[A-Z][a-z]+\s+){0,2}[A-Z][a-z]+$/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s;
 }
 
@@ -792,6 +802,8 @@ const QUESTION_LEAD = new RegExp(`^(?:${AUX}|want|wanna|fancy|shall|should|would
 const LIST_VERB = /^(?:put\s+on|put|watch|make|cook|have|get|wear|play|listen\s+to|go\s+to|visit|ring|call|phone|text|ask|invite|message|email|tell|order|try|read|eat|drink|take|bring|buy|use|see|find|fetch|do|pick)\s+(?:you\s+|us\s+|me\s+)?(?:the\s+|a\s+|an\s+|some\s+)?/i;
 /** An item that is something to do, by its first word. */
 const ACTION_START = /^(?:wait|rest|sit|stay|go|walk|sleep|write|leave|lie|stand|come|run|drive|play|try|watch|listen|talk|speak|stop|start|carry|keep|turn|switch|open|close|shut|wash|cook|make|help|send|pay|check|hold|move|look|think|finish|skip|nap|relax|give|have|do|let|just)\b/i;
+/** More first words of something to do, for the headline of a card whose options share no word. */
+const TO_DO = /^(?:tell|ask|ring|call|phone|text|read|eat|drink|take|bring|buy|wear|cut|manage|carry|put|get|see|find|fetch|pick|order|cook|visit|invite|message|email|use|change|clean|tidy|pop|head|nip|book|cancel|answer|handle|sort|fix|mend|feed|water)\b/i;
 /** A piece of a list that starts a question: an auxiliary with its subject ("do you …"), or an offer. "do your exercises" and "have a rest" are things to do. */
 const LIST_Q = new RegExp(`^(?:(?:is|was|are|were|am|do|does|did|can|could|have|has|had)\\s+(?:you|we|i|it|they|he|she|that|this|there)\\b|want|wanna|fancy|shall|should|would|will|need|up for)\\b`, 'i');
 /**
@@ -997,6 +1009,9 @@ export function orHeadline(q: string, all: string[], profile?: Profile, modelTop
   if (shared && pair.length >= 2 && pair.every((p) => words(p).length > 1)) return shared;
   const joined = pair.length === 2 ? `${pair[0]} or ${pair[1]}` : '';
   if (joined && joined.split(/\s+/).length <= 5) return joined;
+  // "switch the lamp on / leave it dark", "have a lie down / do your stretches / sit with me": the sides share no
+  // word, and what they share is that each is something to do (set E, second run, 17 Nov: "which one" over eight cards)
+  if (pair.length >= 2 && pair.every((p) => ACTION_START.test(p) || LIST_VERB.test(`${p} x`) || TO_DO.test(p))) return 'what to do';
   return 'which one';
 }
 
@@ -1710,6 +1725,9 @@ const YN_FRAME = [
   /^(?:do|did|does|would|will|can|could|should|shall|may|might|must|have|has|had|are|is|am|was|were)\s+/i,
   /^you\s+/i,
   /^(?:you|we|it|they|he|she)(?:'ve|'re|'s|'ll|'d)\s+/i,
+  // "That's the one you liked, isn't it?", "This is the jumper, right?", "There's enough milk, isn't there?": the
+  // word that only points is not part of the proposal (set E, second run, 17 Nov: headline "that's one you liked")
+  /^(?:that|this|there|these|those)(?:'s|'ll|'d|\s+(?:is|are|was|were|will|would))?\s+/i,
   /^(?:want|wanna|need|like|fancy|feel\s+like|mind|care)\s+(?:to\s+|for\s+|if\s+)?/i,
   /^(?:me|us)\s+to\s+/i,
   /^(?:just|still|really|maybe|perhaps|also)\s+/i,
@@ -1741,11 +1759,12 @@ export function yesNoTopic(q: string, profile?: Profile): string {
   ws = phrase.split(/\s+/).filter(Boolean);
   // too long: first the time it ends with goes ("this morning", "on Friday"), then the small words
   for (let i = 0; i < 3 && ws.length > 4; i++) { phrase = ws.join(' ').replace(TAIL, ''); ws = phrase.split(/\s+/).filter(Boolean); }
-  if (ws.length > 4) ws = ws.filter((w) => !YN_DET.test(w));
+  // ("the one you liked" keeps its "the": "one you liked" reads as a number)
+  if (ws.length > 4) ws = ws.filter((w, i) => !YN_DET.test(w) || /^ones?$/i.test(ws[i + 1] ?? ''));
   cut = ws.length > 4;
   ws = ws.slice(0, 4);
   trimEnd();
-  while (ws.length > 1 && YN_DET.test(ws[0])) ws.shift();
+  while (ws.length > 1 && YN_DET.test(ws[0]) && !/^ones?$/i.test(ws[1])) ws.shift();
   phrase = ws.join(' ');
   // the capital that only opens the sentence goes; a name keeps its own
   if (phrase && start.startsWith(phrase.split(' ')[0]) && /^[A-Z][a-z]/.test(phrase) && !(profile && findPerson(phrase.split(' ')[0], profile))) phrase = phrase.charAt(0).toLowerCase() + phrase.slice(1);
