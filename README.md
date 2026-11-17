@@ -153,7 +153,9 @@ when cloud help is on, and the consent screen says so. `npm audit` reports 4 hig
 under `@firebase/firestore`, which this app does not import.
 
 ## Screens
-- **Partner screen** (`#/`): the question, the coaching line when a rule found one, the line to say, "Show to person",
+- **Partner screen** (`#/`): above the question field, up to three one-tap chips with the questions answered most
+  often ("Asked before:", read from "Answers so far" on this computer; none until an answer has been confirmed, and
+  not in judge mode, where the sample chips stand and answers are not kept); then the question, the coaching line when a rule found one, the line to say, "Show to person",
   "Hide the choices", "Next", "Recap", "We're stuck", the badge, "Why this card", "What was sent" (one line: the question after the swap, and
   the size of the request; the exact request handed to the SDK, or what would have been sent, is one click further) and "Where each step ran".
   "Show to person" lifts the card: the white pane grows into the whole screen in a quarter of a second (a view
@@ -167,6 +169,8 @@ under `@firebase/firestore`, which this app does not import.
   same question is asked again the partner sees one quiet line ("Last time (yesterday) they chose "lake". Ask again
   all the same: today's answer is theirs."); the person's card never shows it and no model ever gets it
   (`core/history.ts`, `tests/unit/history.test.ts`). With the sample family it lasts until judge mode is left.
+  The same list feeds the "Asked before" chips on the partner screen: a chip holds the question only, and a tap asks
+  it again like a typed question (so with cloud help on, an open question goes the usual way; the earlier answers do not).
 - **Cloud help** (`#/cloud`): off by default. The consent screen shows what is sent (the last question in the exact
   payload form), who receives it, what is never sent, and the data-use terms; one checkbox turns it on, one tap turns it off.
 - **Judge mode** (`#/demo`): a made-up family, a first card already on screen (coffee or tea, read in code), one-tap questions of each kind, and per card a "where each step ran" line

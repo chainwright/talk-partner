@@ -31,6 +31,7 @@ number.
 | 20 | Based on Supported Conversation for Adults with Aphasia (SCA) principles | Partial | Our reading of published SCA materials. We have no review or endorsement to cite, from the Aphasia Institute or from a speech-language pathologist |
 | 21 | Judge mode opens with one card already on screen ("Do you want coffee or tea?"), made in code: no model runs and nothing is sent, on any copy | True | It is a code-decided card, shown first so the screen is not empty. It does not show the on-device or the cloud step; the first two chips do |
 | 22 | The figure under the chips reads "0 bytes left this computer" until a cloud request is handed to the SDK | True | It is this session's count for the cards made, from the same record as the receipt (row 9). Loading the page is not counted: on localhost nothing leaves at all; a hosted copy would fetch its own files. After a cloud answer it shows the bytes the app handed over, not the wire size; a failed request shows as "may have left" |
+| 23 | Outside judge mode the partner screen offers the questions answered most often as one-tap chips above the question field | True | Up to three, from the confirmed answers kept on this computer; none before the first confirmed answer. A chip carries the question, never an answer; a tap asks it again through the same pipeline as a typed question. Not shown in judge mode |
 
 ## Not claimed
 - That Talk Partner helps people with aphasia or their partners. No one living with aphasia has used it. The timed

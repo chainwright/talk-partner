@@ -243,6 +243,19 @@ try {
     await click('[data-act="show-sent"]');
     const opened = await js('(() => { const m = document.querySelector("#made"), s = document.querySelector("#sent"); return !!m && m.open && !!s && s.open && s.checkVisibility(); })()');
     check(`${s} partner screen: "Show what would be sent" opens the fold and the panel inside it`, opened === true, String(opened));
+    // the partner's own usual questions: confirmed answers put up to three one-tap chips above the question field
+    const none = await js('document.querySelectorAll(".chips.again .chip").length');
+    const answer = async (q) => { await ask(q); await js('document.querySelector("#person .tile[data-i=\\"0\\"]").click()'); await sleep(400); await click('[data-confirm="yes"]'); };
+    await answer('Do you need the toilet?'); await answer('Do you want coffee or tea?'); await answer('do you want coffee or tea');
+    const again = await js(`(() => { const c = [...document.querySelectorAll('.chips.again .chip')]; return { chips: c.map((x) => x.innerText), titles: c.map((x) => x.title), above: c.length ? c[0].getBoundingClientRect().bottom <= document.querySelector('#q').getBoundingClientRect().top : false, wide: document.documentElement.scrollWidth }; })()`);
+    check(`${s} partner screen: no chips before any answer; after three confirmed answers the two questions sit above the field, the one answered twice first`,
+      none === 0 && JSON.stringify(again.chips) === JSON.stringify(['Do you want coffee or tea?', 'Do you need the toilet?']) && /^Answered 2 times/.test(again.titles[0]) && again.above && again.wide <= SIZES[s].width, JSON.stringify(again));
+    await click('.chips.again .chip:nth-child(2)');
+    await waitFor('!!document.querySelector("#result .badge")'); await sleep(300);
+    const reasked = await js(`({ q: document.querySelector('#q').value, tiles: [...document.querySelectorAll('#person .tile span')].map((e) => e.innerText), picked: !!document.querySelector('#person .confirm-pic, #person .answered'), last: document.querySelector('#result .last')?.innerText ?? '' })`);
+    check(`${s} partner screen: a tap on a chip asks that question again; the card is fresh (no choice made), and "last time" is a line for the partner only`,
+      reasked.q === 'Do you need the toilet?' && reasked.tiles.length === 3 && !reasked.picked && /Last time/.test(reasked.last), JSON.stringify(reasked));
+    await shot('26-asked-before');
     await nav('#/demo');
     await waitFor('!!document.querySelector(".chip")');
     // About me with the sample family, cloud help consent, how this works

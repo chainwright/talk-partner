@@ -39,6 +39,9 @@ const COPY = {
     makingCard: 'Making the card…',
     makingHint: 'A few seconds. Nothing is on their screen yet.',
     label: 'Your question',
+    /** One-tap chips above the field: the questions answered most often, from the list kept on this computer. */
+    again: 'Asked before:',
+    againTitle: (times: number) => `Answered ${times} time${times === 1 ? '' : 's'} on this computer. Tap to ask it again.`,
   },
 
   /** The support setting, named by what the person sees (it read backwards as "Support: more (2 choices)"). */

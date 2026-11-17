@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
-import { addAnswer, answerCounts, lastAnswer, questionKey, whenText, type Answered } from '../../core/history';
+import { addAnswer, answerCounts, lastAnswer, questionKey, topQuestions, whenText, type Answered } from '../../core/history';
 
 const ROOT = join(__dirname, '..', '..');
 const DAY = 86400000;
@@ -45,6 +45,32 @@ describe('confirmed answers, kept on this computer', () => {
   });
   it('the partner line never presents last time as the answer', () => {
     expect(COPY.card.lastTime('yesterday', 'lake')).toBe('Last time (yesterday) they chose "lake". Ask again all the same: today\'s answer is theirs.');
+  });
+});
+
+describe('the questions asked most often, for the one-tap chips above the question field', () => {
+  it('most often first, in the wording last used; the more recent first when level; three at most', () => {
+    expect(topQuestions(h)).toEqual([
+      { q: 'Where do you want to go this afternoon?', times: 3, last: NOW - 3600000 },
+      { q: 'What would you like for dinner?', times: 1, last: NOW - 2 * DAY },
+    ]);
+    const more = [...h, { q: 'Tea?', topic: 'tea', label: 'yes', at: NOW }, { q: 'Shall we ring Jen?', topic: 'call', label: 'yes', at: NOW - 60000 }];
+    expect(topQuestions(more).map((t) => t.q)).toEqual(['Where do you want to go this afternoon?', 'Tea?', 'Shall we ring Jen?']);
+    expect(topQuestions(more, 1)).toHaveLength(1);
+    expect(topQuestions([])).toEqual([]);
+  });
+  it('the chips carry the question only: no answer, no count of answers per choice', () => {
+    expect(Object.keys(topQuestions(h)[0]).sort()).toEqual(['last', 'q', 'times']);
+    expect(COPY.ask.againTitle(2)).toBe('Answered 2 times on this computer. Tap to ask it again.');
+    expect(COPY.ask.againTitle(1)).toBe('Answered 1 time on this computer. Tap to ask it again.');
+  });
+  it('the web client shows them outside judge mode only, and a tap goes through the same pipeline as a typed question', () => {
+    const main = readFileSync(join(ROOT, 'web/src/main.ts'), 'utf8');
+    expect(main).toContain("${state.demo ? `<p class=\"sample\">${C.app.sample}</p>` : againChips()}");
+    const chips = main.slice(main.indexOf('function againChips()'), main.indexOf('function partnerScreen()'));
+    expect(chips).toContain('topQuestions(state.history, 3)');
+    expect(chips).not.toMatch(/label|lastAnswer|answerCounts/); // the chip never carries what was answered
+    expect(main).toContain("if (t.dataset.q) { state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }");
   });
 });
 

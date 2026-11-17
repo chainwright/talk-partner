@@ -85,6 +85,10 @@ button.danger, .danger { color: var(--no); border-color: var(--no); }
 .chip:hover { border-color: var(--accent); }
 /* the chip whose question is on screen */
 .chip.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+/* the partner screen: the questions asked most often, one tap each, above the question field (from "Answers so far") */
+.chips.again { display: grid; gap: 2px; }
+.chips.again .chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; line-height: 26px; }
+@media (max-width: 520px) { .chips.again { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; padding-bottom: 0; } .chips.again .gl { flex: 0 0 auto; } .chips.again .gc { display: contents; } .chips.again .chip { max-width: 78vw; } }
 /* judge mode: the chips in three groups. Desktop: a small caption above each row; phone: the caption starts the scroll row */
 .chipgroups { display: grid; gap: 6px; }
 .chips.group { display: grid; gap: 2px; }

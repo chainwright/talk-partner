@@ -6,7 +6,7 @@ import './styles.css';
 import './fonts.css';
 import { COPY } from '../../core/copy';
 import type { DeviceStatus, Engine } from '../../core/engine';
-import { addAnswer, answerCounts, lastAnswer, whenText, type Answered } from '../../core/history';
+import { addAnswer, answerCounts, lastAnswer, topQuestions, whenText, type Answered } from '../../core/history';
 import { LEGS } from '../../core/models';
 import { bodyDetailCard, makeCard, quizOverrideCard, repairCard } from '../../core/pipeline';
 import { countSwaps, sentLine, sessionReceipt, sessionTally } from '../../core/receipt';
@@ -354,6 +354,20 @@ function chipGroups(): string {
 }
 
 /**
+ * Outside judge mode: the three questions answered most often, as one-tap chips above the question field, so the
+ * empty field is the fallback and not the front door. They are read from "Answers so far" (kept on this computer);
+ * a tap asks the question again through the same pipeline as a typed one, and no earlier answer is filled in.
+ * Judge mode has its own sample chips, and the sample family's answers are not kept.
+ */
+function againChips(): string {
+  const top = topQuestions(state.history, 3);
+  if (!top.length) return '';
+  const on = (q: string) => q === state.lastQuestion && (!!state.card || state.busy);
+  return `<div class="chips again"><span class="gl">${C.ask.again}</span><span class="gc">${top.map((t) =>
+    `<button class="chip${on(t.q) ? ' on' : ''}" ${on(t.q) ? 'aria-current="true" ' : ''}data-q="${esc(t.q)}" title="${esc(C.ask.againTitle(t.times))}">${esc(t.q)}</button>`).join('')}</span></div>`;
+}
+
+/**
  * The partner screen. Judge mode (#/demo) is ordered for a 60-second read: the chips under the question box, then the
  * card with its panels open (badge → why → where each step ran → what was sent), the privacy receipt right after, and
  * one compact session line (tally; the intro and the no-helper note fold under it). Outside judge mode the panels and
@@ -369,7 +383,7 @@ function partnerScreen(): string {
     <p class="tagline">${C.app.tagline}</p>
     <p class="tagline-sub">${C.app.taglineSub}</p>
     <p id="status" class="status">${statusLine()}</p>
-    ${state.demo ? `<p class="sample">${C.app.sample}</p>` : ''}
+    ${state.demo ? `<p class="sample">${C.app.sample}</p>` : againChips()}
     <form id="ask"><input id="q" autocomplete="off" placeholder="${C.ask.placeholder}" aria-label="${C.ask.label}" value="${esc(state.lastQuestion)}"><button id="make" type="submit" ${state.busy ? 'disabled' : ''}>${state.busy ? C.ask.making : C.ask.make}</button></form>
     ${state.demo ? chipGroups() : ''}
     ${state.demo ? bytesLine() : ''}

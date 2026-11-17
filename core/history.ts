@@ -42,6 +42,23 @@ export function answerCounts(history: Answered[], q: string, before = Infinity):
   return [...m.entries()].map(([label, n]) => ({ label, n })).sort((a, b) => b.n - a.n);
 }
 
+/**
+ * The questions answered most often, most often first (the more recent one first when two are level), each in the
+ * wording it was last asked in. For the one-tap chips above the question field: the partner's own usual questions,
+ * read from the list on this computer. A tap asks the question again, the usual way; no answer is filled in.
+ */
+export function topQuestions(history: Answered[], n = 3): { q: string; times: number; last: number }[] {
+  const m = new Map<string, { q: string; times: number; last: number }>();
+  for (const h of history) {
+    const k = questionKey(h.q);
+    if (!k) continue;
+    const e = m.get(k);
+    if (!e) m.set(k, { q: h.q, times: 1, last: h.at });
+    else { e.times++; if (h.at >= e.last) { e.last = h.at; e.q = h.q; } }
+  }
+  return [...m.values()].sort((a, b) => b.times - a.times || b.last - a.last).slice(0, Math.max(0, n));
+}
+
 /** "today", "yesterday" or a short date, by this computer's calendar days. */
 export function whenText(at: number, now: number): string {
   const day = (t: number) => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
