@@ -127,5 +127,10 @@ the table.
 | 104 | `20d2b19` | `bcabbeb` | 2026-11-17 07:55 | Hosting: the page at "/" is sent with Cache-Control no-cache, like /index.html; it had m… |
 | 105 | `faebade` | `965d8b3` | 2026-11-17 08:00 | README, CLAIMS (rows 40 and 41, and what they change for rows 3, 4, 22 and 36), JUDGES, … |
 | 106 | `c4d08e0` | `8b58934` | 2026-11-17 08:04 | Voice: SpeechRecognition.available() is asked only from Chrome 157 on; Chromium 148 cras… |
+| 107 | `27abd80` | `a02b2c0` | 2026-11-17 08:53 | Voice input goes through Firebase AI Logic: the microphone records one short clip of the… |
+| 108 | `98e78da` | `acd826b` | 2026-11-17 09:15 | Send feedback, kept in Cloud Firestore: a small form on the partner's side and on "How t… |
+| 109 | `3018251` | `21198db` | 2026-11-17 09:15 | scripts/live-voice-feedback.py: voice input and the feedback form in two real browsers (… |
+| 110 | `209aee5` | `2d1120d` | 2026-11-17 09:23 | Feedback: the form's own message for a broken email address (the browser's built-in chec… |
+| 111 | `40fedec` | `8e9c1b8` | 2026-11-17 09:23 | Wording on "How this works": with cloud help off the page contacts no host but its own u… |
 
-Rows 100–106 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row).
+Rows 100–106 and 107–111 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row).
