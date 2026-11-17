@@ -21,9 +21,9 @@ live site on 17 Nov 2026.
 
 | Tag | Where it is used | Honest note |
 |---|---|---|
-| `firebase-ai-logic` | `web/src/ai/firebaseEngine.ts`: every model call, two `getGenerativeModel` modes (`ONLY_ON_DEVICE` for the step that reads About me, `PREFER_IN_CLOUD` for the stripped question) | the only path to any model that makes a card (the partner's microphone, added 17 Nov, is the browser's own speech recognition and is not listed as a tag: it is not part of the hybrid and makes no card); a third mode for pictures was defined and never called, and was removed on 17 Nov |
+| `firebase-ai-logic` | `web/src/ai/firebaseEngine.ts`: every model call, three `getGenerativeModel` modes (`ONLY_ON_DEVICE` for the step that reads About me, `PREFER_IN_CLOUD` for the stripped question, `ONLY_IN_CLOUD` for the partner's recorded question) | the only path to any model in the app, voice input included (17 Nov; the on-device model takes no sound, so that step is cloud only); a third mode for pictures was defined and never called, and was removed on 17 Nov |
 | `gemini-nano` | the private step, `ONLY_ON_DEVICE`; the offline fall-back of the stripped step | recorded with the SDK's `inferenceSource=on_device` per call: `devlog/evidence_r8/final/ondevice/RUN_LOG.md` (the current build); first run on 16 Nov 2026: the run saved in `devlog/ondevice_proof_1/` (`RUN_LOG.md` there) |
-| `gemini` | the stripped step in the cloud, `gemini-3.5-flash-lite` (`core/models.ts`; the name can be changed through Remote Config) | recorded on the live site: `devlog/evidence_live/` (`inferenceSource=in_cloud`) |
+| `gemini` | the stripped step in the cloud and voice input (`ONLY_IN_CLOUD`, one call per recording), `gemini-3.5-flash-lite` (`core/models.ts`; the name can be changed through Remote Config) | recorded on the live site: `devlog/evidence_live/` (`inferenceSource=in_cloud`) |
 | `firebase-app-check` | `initializeAppCheck` in the engine: reCAPTCHA Enterprise on the hosted copy, a debug token on localhost; the cloud step asks for a limited-use token per request | **registered, not enforced yet.** The provider is registered and the hosted copy sends App Check tokens with its cloud requests (the live log shows `content-firebaseappcheck.googleapis.com`). Enforcement for the AI Logic API has not been switched on in the Firebase console: that is the owner's step, not done as of 17 Nov 2026, and there is no console screenshot. Do not write "enforced" on the page until it is |
 | `firebase-hosting` | `firebase.json`; <https://talk-partner.web.app> | live since 16 Nov 2026; every deploy is followed by `node scripts/e2e-cloud.mjs --url https://talk-partner.web.app/`, logs in `devlog/evidence_live/` |
 | `firebase-remote-config` | `web/src/ai/remoteConfig.ts`, `core/models.ts`, `remoteconfig.template.json`: the cloud model's name and two routing thresholds | in use, asked only when cloud help is on. The three published values equal the defaults in the code today, so it changes nothing yet: say so if it is mentioned |
@@ -32,9 +32,9 @@ live site on 17 Nov 2026.
 | `vitest` | unit, property and matrix tests (`npm run check` prints the count) | |
 | `indexeddb` | `web/src/store.ts`: About me, settings, photos, the trial log; nothing synced | |
 | `svg` | every pictogram, hand-drawn (`PICTOGRAMS.md`) | family places and foods have no pictogram yet: those tiles are words |
-| `web-speech-api` (only if the form has such a tag; otherwise leave it out) | `web/src/voice.ts`: the microphone for the partner's question | the browser's speech recognition, not Firebase and not ours; in Chrome the sound may go to Google. Never describe it as on-device or private: on our machine on-device recognition was not available, and recognition with a real voice was not tested |
+| `cloud-firestore` | `web/src/feedback.ts`, `core/feedback.ts`, `firestore.rules`: feedback notes only, create-only rules | rules tested on the emulator (37) and against the deployed rules (25 refusals), 17 Nov 2026; one test note from the live site |
 
-**Not to add until they are real:** `firestore` / `firebase-auth` (the two-screen relay). Neither is imported anywhere.
+**Not to add until it is real:** `firebase-auth` (a two-screen relay). It is imported nowhere. Firestore is used for feedback notes only, not for a relay.
 Adding them early would be the "demo mode that simulates" trap our review of the field warns about.
 
 **Platform to select on the form:** Web (Chrome). There is no Android or iOS client.

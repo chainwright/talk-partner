@@ -50,11 +50,12 @@ them yet):
   too hot, too cold, call someone, something else, each a picture and its word. Tap one: "So: toilet. Right?" with a
   tick and a cross. Press and hold the cross (top right) to come back: the partner's side has one short line for that need. No model,
   nothing sent; switch your network off after the page has loaded and it still works.
-- **The microphone** next to the question field (browsers with speech recognition only): the first press tells you
-  where the sound goes, and it is not "on this computer": it is your browser's speech recognition, which in Chrome
-  may be Google's. After a yes, your question is typed into the field as you speak and waits there for "Make card".
-  It is for the partner's question only; the person's speech is never recognised. It is not part of the hybrid
-  inference and makes no card.
+- **The microphone** next to the question field: the first press tells you the recording goes to Google's cloud
+  (through Firebase AI Logic, Gemini, `ONLY_IN_CLOUD`; the on-device model cannot take sound). After a yes, say your
+  question, press again, and the words appear in the field and wait there for "Make card". It is for the partner's
+  question only; the person's speech is never recorded. The session figure counts the sound sent.
+- **Send feedback** (partner side and "How this works"): a short note to Cloud Firestore. The rules allow adding a
+  note only; nobody can read notes back from the app.
 
 **What your copy can do.** Be sure which one you have before you judge the AI part:
 

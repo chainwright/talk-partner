@@ -21,10 +21,9 @@ Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a 
 
 ## Where the AI runs (Firebase AI Logic hybrid inference)
 **Family data → `ONLY_ON_DEVICE`; the stripped question → `PREFER_IN_CLOUD`, which falls back to Gemini Nano when
-offline; `inferenceSource` drives every badge.** Every model call that makes a card goes through Firebase AI Logic. The
-code is in **`web/src/ai/firebaseEngine.ts`**. (One thing on the partner's side is not ours and not Firebase: the
-optional microphone uses the browser's own speech recognition to type the partner's question. It makes no card; see
-[Two things that need no AI of ours](#two-things-that-need-no-ai-of-ours-17-nov).)
+offline; `inferenceSource` drives every badge.** Every model call goes through Firebase AI Logic, the
+optional microphone included (it sends the partner's recorded question to Gemini, `ONLY_IN_CLOUD`, for its words). The
+code is in **`web/src/ai/firebaseEngine.ts`**. See [Added on 17 Nov](#added-on-17-nov-quick-needs-voice-input-feedback).
 
 | Step | Gets | Mode | Why |
 |---|---|---|---|
@@ -37,13 +36,13 @@ The same question through the two steps, in our recorded run: "What do you want 
 [Where the AI runs, in detail](#where-the-ai-runs-in-detail).
 
 Built for #BuildHybridAI 2026. Status on 17 Nov 2026, in three lines:
-- **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo>. It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI) and a microphone for the partner's question (the browser's speech recognition, not ours), both untried by anyone they are for.
+- **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo>. It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI), a microphone for the partner's question (through Firebase AI Logic, in the cloud) and a feedback form (Cloud Firestore), all untried by anyone they are for.
 - **One number, at commit `c346d3d`:** on the 18 open questions of our own labelled set, rules alone make no card (0 of 18); the on-device model made a card matching our label for 16 of 18 in each of three runs, 13 of them with the family's own people, places or foods. Our labels and a set the rules have since been changed around: not a held-out test, not a trial with people.
 - **Every claim with its status:** `CLAIMS.md` (and `JUDGES.md` for the 60-second path, `EVIDENCE.md` for claim → file, command, saved output). No video yet, no trial with people yet. How it got here, day by day: `devlog/` (the long form of this paragraph is kept in `devlog/DAY12.md`).
 
-## Two things that need no AI of ours (17 Nov)
-Both were added on 17 Nov 2026. **No carer and no person with aphasia has used either**; what is tested is the code
-(`CLAIMS.md` rows 40 and 41).
+## Added on 17 Nov: quick needs, voice input, feedback
+All three were added on 17 Nov 2026. **No carer and no person with aphasia has used any of them**; what is tested is
+the code and the live site (`CLAIMS.md` rows 40, 41 and 42).
 
 **Quick needs.** One button in the top bar of every partner screen (or the address `#/needs`) puts a fixed board on
 the person's screen: *toilet, drink, food, pain, tired, too hot, too cold, call someone*, and *something else*. Each
@@ -56,23 +55,24 @@ it works with no connection **once the page is open**. There is no offline insta
 is reloaded with no network, does not open. Nine tiles is more than the two or three of a card; that is our choice
 for needs that cannot wait for a question to be typed, not something the sources measured.
 
-**Voice input, for the partner's question only.** Where the browser has speech recognition (the Web Speech API), a
-microphone button sits between the question field and "Make card". The words appear in the field as they are heard
-and stay there: nothing is submitted until the partner has read them and pressed "Make card". Where the browser has
-no speech recognition the button is not drawn. The app never tries to recognise the person's speech.
-**Where the sound goes is the browser's business, and we say what we know:** in Chrome, speech recognition may send
-the sound to Google's servers to be turned into text, names included; other browsers use their own service. The app
-shows that sentence on the first press and listens only after a yes. The Chrome we checked (157) also has an
-on-device option (`processLocally`, with `SpeechRecognition.available` to ask about it): the app asks the browser
-whether on-device recognition is available for US English and uses it only then, without ever installing a language
-pack. **We have not seen that path run:** on our machine that Chrome answers "downloadable", not "available", so
-every real use there would go through the default service, and the on-device branch is covered by unit tests with a
-scripted recognition object only. We have not tested recognition
-with a real voice at all (no microphone in the automated runs): what is tested is the wiring. Once a question has
-been spoken through the default service, the lines that say "nothing left this computer" give way: the card reads
-"nothing sent by this app · the question was spoken: your browser's speech recognition may have sent the sound", and
-the session figure reads "0 bytes handed to cloud help by this app" and names the sound as not counted. The receipt
-cannot count it: the app never sees it.
+**Voice input, for the partner's question only, through Firebase AI Logic.** A microphone button sits between the
+question field and "Make card". A press records one short clip (15 seconds at most; a second press stops it). The
+clip is made into a 16 kHz WAV in the browser and sent once to Gemini through `firebase/ai` (`ONLY_IN_CLOUD`, asked
+only for the words). The words fill the field and stay there: nothing is submitted until the partner has read them
+and pressed "Make card". The app never records or recognises the person's speech. **The sound goes to Google's
+cloud, names included:** the on-device model cannot take sound, so the notice on the first press says "cloud" and
+the app records only after a yes. The session figure counts every byte of sound handed over, and a card made from a
+spoken question says so. There is no other speech recognition in the app (the browser's Web Speech API, tried for a
+few hours on 17 Nov 2026, was removed because it is AI outside Firebase AI Logic; a test fails the build if it comes
+back). Checked on the live site with a recorded question in Chrome 157 and Chromium 148:
+`devlog/evidence_live/voice-feedback_live_2026-11-17_40fedec/`. No partner or carer has used it yet.
+
+**Feedback, kept in Cloud Firestore.** A small "Send feedback" form on the partner's side and on "How this works":
+a note of up to 1000 characters, an optional role and email, and the line "Please don't include patient details".
+One document per note, with the server's time, the app version and the commit. `firestore.rules` allow create only,
+with every field checked again on the server; nobody can read, change or delete notes from a client (the owners read
+them in the Firebase console). Rules tested on the emulator (`npm run test:rules`, 37 cases) and against the deployed
+rules (`node scripts/rules-check.mjs --live`, 25 refusals).
 
 It also corrects **the partner**, quietly, where a rule can tell: two questions in one become "One thing at a time: showing the first"; a memory question becomes "You know this one: tell, don't test."; a "you don't want …, do you?" question is asked the plain way ("Do you want …?"), so that a yes on the card means yes. The person is never corrected. The partner screen opens on that: "It corrects how you ask. It never answers for them." (the limits of both halves are in `CLAIMS.md`, row 11).
 
@@ -85,7 +85,7 @@ No account, no sign-in. What you get depends on what the copy has:
 
 | This copy has | What works |
 |---|---|
-| nothing (a bare clone, no `.env.local`) | every card that code decides alone: coffee or tea, yes / no, the feeling scale, the body map, the memory coaching, "We're stuck". An open question gets an honest "No card". Also the quick-needs board, and the microphone where the browser has speech recognition. The page contacts no host but the app's own (`npm run e2e:noconfig`, 25 checks, the board with the network switched off); the one exception is not the page's doing: a partner who uses the microphone hands the sound to the browser's speech recognition, which in Chrome may be Google's |
+| nothing (a bare clone, no `.env.local`) | every card that code decides alone: coffee or tea, yes / no, the feeling scale, the body map, the memory coaching, "We're stuck". An open question gets an honest "No card". Also the quick-needs board (the microphone and the feedback form need project settings and are not there). The page contacts no host but the app's own (`npm run e2e:noconfig`, 25 checks, the board with the network switched off); the one exception is not the page's doing: a partner who uses the microphone hands the sound to the browser's speech recognition, which in Chrome may be Google's |
 | the Firebase web config in `.env.local` (see **Run**) | the above, plus cloud help for open questions once you turn it on |
 | the config and desktop Chrome with Gemini Nano | the above, plus the private step on this computer: open questions answered with the family's own names and places, nothing sent |
 
@@ -250,7 +250,7 @@ under `@firebase/firestore`, which this app does not import.
 
 ## Screens
 - **Partner screen** (`#/`): in the top bar, **Quick needs** (the board below, in one tap); next to the question
-  field, where the browser has speech recognition, a microphone for the partner's own question (the words go into the
+  field, where the browser can record, a microphone for the partner's own question (through Firebase AI Logic) (the words go into the
   field and wait there). Above the question field, up to three one-tap chips with the questions answered most
   often ("Asked before:", read from "Answers so far" on this computer; none until an answer has been confirmed, and
   not in judge mode, where the sample chips stand and answers are not kept); then the question, the coaching line when a rule found one, the line to say, "Show to person",
@@ -285,15 +285,15 @@ under `@firebase/firestore`, which this app does not import.
 - `web/`: the web client. `web/src/ai/` is the only place that imports `firebase/ai` (`firebaseEngine.ts`) and
   `firebase/remote-config` (`remoteConfig.ts`). `pictos.ts` holds the hand-drawn
   pictograms (provenance and licence per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper;
-  `voice.ts` is the microphone's state machine around the browser's speech recognition (no DOM, so it is tested with
-  a scripted recognition object). `core/needs.ts` is the quick-needs board.
+  `voice.ts` is the microphone's state machine (record, stop, send the clip once through the engine; no DOM, so it
+  is tested with a scripted microphone, recorder and engine); `mic.ts` is the browser's side; `feedback.ts` the form. `core/needs.ts` is the quick-needs board.
 - `tests/unit/`: unit, property and matrix tests, plus a guard that fails on any direct model API call.
   `engine-matrix.test.ts` runs seven card shapes through every combination of on-device model state and cloud
   state; `card.property.test.ts` and `strip.property.test.ts` are seeded property tests over random questions,
   model output and About-me profiles.
 - `tests/unit/needs.test.ts`, `tests/unit/voice.test.ts`: the board (tiles, pictures, no engine, whose side says
-  what) and the microphone (start, interim words, final words, each error, no speech recognition, on-device only
-  where reported, what the app says about where the sound goes).
+  what) and the microphone (notice, record, stop, the 15 s limit, an empty clip sends nothing, each error, what the app says
+  about where the sound goes).
 - `scripts/e2e-cloud.mjs`: an end-to-end check of the cloud step against the real Firebase project.
   `scripts/e2e-ondevice.mjs`: the same for the on-device step, in a Chrome that has Gemini Nano (it wrote
   `devlog/ondevice_proof_1/`). `scripts/e2e-noconfig.mjs`: a copy with no settings at all.
