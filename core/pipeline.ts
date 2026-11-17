@@ -235,7 +235,8 @@ export function assemble(
   const pair: [string, string] | null = pairIn ?? (useRules ? codePair(asked, profile) : null);
   const pairFrom = meta.pairFrom ?? (pairIn && o ? 'model' : 'code');
   let kind: Card['kind'] = o?.kind ?? 'choice';
-  if (isAuxYesNo(asked) || isOrNot(asked)) kind = 'yesno';
+  const codeYesNo = isAuxYesNo(asked) || isOrNot(asked);
+  if (codeYesNo) kind = 'yesno';
   // a question that offers options ("..., or would you rather ...?") is never a plain yes / no card
   if (kind === 'yesno' && offersOptions(asked) && !isOrNot(asked)) kind = 'choice';
   // §2.4: yes / no is for a single proposal only; a wh-question is never yes / no whatever the model says
@@ -247,7 +248,9 @@ export function assemble(
   // §2.18: a code-determined card is identical in every engine state, so its headline comes from the question, not the
   // model, and its badge says "No AI needed" even when a model ran: nothing of the model's answer is on the card
   if (kind === 'yesno') {
-    const card = finish({ ...base, source: 'code', topic: heuristicTopic(asked, profile), kind }, ['yes', 'no'], ['not sure'], profile, support);
+    // simulation 16.11 (H09, C09): when only the model saw a yes / no ("You don't want…, do you?"), the model decided the
+    // card, so the badge names the engine that ran, never "No AI needed"
+    const card = finish({ ...base, source: codeYesNo ? 'code' : source, topic: heuristicTopic(asked, profile), kind }, ['yes', 'no'], ['not sure'], profile, support);
     card.why = fixedWhy(o, step, W.decidedBy.yesno, W.headlineFrom.question);
     return card;
   }

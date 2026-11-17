@@ -89,9 +89,9 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:154` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
 | `web/src/ai/firebaseEngine.ts:165` | `generateContent(` | pictures call (unused in this build) |
 | `web/src/ai/firebaseEngine.ts:185` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app contacts no Google host |
-| `core/pipeline.ts:466` | `ran: r.source` | the private step's trace line is the engine's report |
-| `core/pipeline.ts:553` | `ran: r.source` | the stripped step's trace line is the engine's report |
-| `core/pipeline.ts:581` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
+| `core/pipeline.ts:469` | `ran: r.source` | the private step's trace line is the engine's report |
+| `core/pipeline.ts:556` | `ran: r.source` | the stripped step's trace line is the engine's report |
+| `core/pipeline.ts:584` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
 | `web/src/main.ts:212` | `function badge(` | the badge is drawn from `card.source` only |
 
 ## One documented cut
