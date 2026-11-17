@@ -109,7 +109,7 @@ export class FirebaseEngine implements Engine {
 
   /**
    * Whether this browser can run the on-device model. This is a capability query only (no inference):
-   * Firebase AI Logic has no public availability call on web, so we read Chrome's flag for the same model.
+   * the SDK's own availability method is marked "should not be called directly", so we read Chrome's flag, as Firebase's web guide does.
    */
   async deviceStatus(): Promise<DeviceStatus> {
     const lm = (globalThis as any).LanguageModel;

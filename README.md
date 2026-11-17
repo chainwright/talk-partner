@@ -135,7 +135,7 @@ Not verified by us and therefore not quoted: a 14 Oct 2026 interview in which To
 ## Where the AI runs, in detail
 The routing table is at the top of this file. The rest of what is true about the two steps:
 
-**Why `gemini-3.5-flash-lite` for the cloud step** (`core/models.ts`): the stripped question needs a topic and two or three words back, so the smallest current stable model is enough. It is not on the Firebase AI Logic list of models "no longer recommended" (release note of 5 Oct 2026: `gemini-3.5-flash`, `3.6-flash` and `3.7-flash`, not the Lite model), and from 1 Dec 2026 Firebase routes `gemini-2.5-flash` requests to it (release note of 2 Nov 2026). Read at <https://firebase.google.com/support/releases> on 16 Nov 2026.
+**Why `gemini-3.5-flash-lite` for the cloud step** (`core/models.ts`): the stripped question needs a topic and two or three words back, so a small current stable model is enough. It is not on the Firebase AI Logic list of models "no longer recommended" (release note of 5 Oct 2026: `gemini-3.5-flash`, `3.6-flash` and `3.7-flash`, not the Lite model), and from 1 Dec 2026 Firebase routes `gemini-2.5-flash` requests to it (release note of 2 Nov 2026). Read at <https://firebase.google.com/support/releases> on 16 Nov 2026.
 
 `inferenceSource` is read on every response: the AI badges come from it, and the private step rejects any
 answer that didn't run on the device. Questions that code can answer alone (yes / no, a plain either-or, feeling, pain,
@@ -145,7 +145,10 @@ The private step runs on its own Firebase app instance with no App Check, so a c
 host at all (in the recorded run: 0 requests outside the app's own host for every on-device card). App Check starts
 with the first cloud call, and the cloud step asks it for a limited-use token per request (`useLimitedUseAppCheckTokens`;
 replay protection for the project is a console setting we have not switched on). One availability probe (`LanguageModel.availability`, a capability query, no inference) is
-the only direct touch of Chrome's API; the SDK has no public call for it on the web.
+the only direct touch of Chrome's API. Firebase's own guide to hybrid inference on the web checks the same flag
+(`await LanguageModel.availability();` in its setup steps, <https://firebase.google.com/docs/ai-logic/hybrid/web/get-started>,
+read 17 Nov 2026), and the one availability method in the SDK we have installed (`ChromeAdapter.isAvailable`,
+`@firebase/ai` 3.1.0) is documented with "These methods should not be called directly by the user".
 
 **What the on-device step does that the cloud step cannot.** It is the only step that sees About me. In the recorded
 runs "What would you like for dinner?" gives *pot roast / chili* on this computer and general foods from the cloud

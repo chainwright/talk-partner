@@ -50,6 +50,10 @@ pass). The one earlier run rows 5 and 10 also point at is in `devlog/evidence_r5
 | 33 | `core/rules.ts` (`isUnguessable`), `core/pipeline.ts` (`assemble`), `core/actions.ts` | the same file, group E-8 | in `check.txt` |
 | 34 | `core/rules.ts` (`FEELING_SCALES`) | the same file, group E-7 | in `check.txt` |
 | 35 | `core/pipeline.ts` (`toChoices`) | the same file, group E-6 | in `check.txt` |
+| 36 | `core/pictures.ts` (`BUILTIN`, `pictureFor`), `web/src/pictos.ts`, `PICTOGRAMS.md` | `npx vitest run tests/unit/day3.test.ts tests/unit/pipeline.test.ts` | in `check.txt`; word-only tiles on an on-device card: `ondevice/00-first-step-on-device.png` |
+| 37 | `web/src/ai/firebaseEngine.ts`, `web/src/ai/remoteConfig.ts`, `firebase.json`; `devlog/SUBMISSION_NOTES.md` | `node scripts/e2e-cloud.mjs --url https://talk-partner.web.app/` | `devlog/evidence_live/`: the App Check and Remote Config hosts in the live log. Enforcement: nothing saved, because it is not switched on |
+| 38 | `core/copy.ts` (`judge.step.none`, `judge.step.notDownloaded`), `web/src/main.ts` (`statusLine`) | `npx vitest run tests/unit/first-card.test.ts`; `node scripts/e2e-cloud.mjs` | in `check.txt`; `e2e-cloud.txt`: "no on-device model in this browser: the status line says so plainly" |
+| 39 | `core/recorded.ts`, `web/src/main.ts` (`recordedBlock`) | `npx vitest run tests/unit/recorded.test.ts`; `node scripts/e2e-cloud.mjs`; `npm run e2e:noconfig`; `node scripts/e2e-ondevice.mjs --port 9335` | in `check.txt` (every value of the recording is in `devlog/evidence_r7/final/ondevice/RUN_LOG.md`); `e2e-cloud.txt`: the two "recording" lines; `cloud_shots/00-recording-of-the-on-device-step.png`; `ondevice/RUN_LOG.md`: no recording is offered where the model is |
 
 The badge "Made in code (AI answer not used)" (row 2): `core/receipt.ts` (`badgeKind`, `modelAsked`), `tests/unit/sim-e-classes.test.ts`, group E-10.
 

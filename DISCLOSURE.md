@@ -33,8 +33,9 @@ Research that informed the rules (aphasia knowledge base, five blind held-out qu
 Its numbers came from the prototype's direct Chrome path, not from this build, and we do not claim them as results of this submission.
 
 ## What was NOT carried over
-- The prototype's direct Chrome engine (`ChromeDirectEngine`). This build has no direct model call anywhere:
-  every model call goes through Firebase AI Logic, and `tests/unit/no-direct-model-calls.test.ts` fails the build otherwise.
+- The prototype's direct Chrome engine (`ChromeDirectEngine`). This build makes no direct inference call: the only
+  direct touch of Chrome's model API is one availability query (`LanguageModel.availability`, no inference). Every
+  model call goes through Firebase AI Logic, and `tests/unit/no-direct-model-calls.test.ts` fails the build otherwise.
 - The prototype's UI, storage and end-to-end tests.
 
 ## Built during the submission period (from 11 Nov 2026)
