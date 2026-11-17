@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "license": "Apache-2.0",
-  "description": "Talk Partner turns a partner's question into a supported-conversation card for an adult with aphasia. All AI runs through Firebase AI Logic hybrid inference: on-device Gemini Nano for anything that reads the family's lists; the cloud only for the stripped question, and only if the partner turns it on.",
+  "description": "Talk Partner turns a partner's question into a supported-conversation card for an adult with aphasia. Every model call that makes a card runs through Firebase AI Logic hybrid inference: on-device Gemini Nano for anything that reads the family's lists; the cloud only for the stripped question, and only if the partner turns it on.",
   "type": "module",
   "scripts": {
     "dev": "vite",

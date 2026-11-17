@@ -7,8 +7,8 @@
 //
 // Where the sound goes is the browser's business, not this app's, and the app says so (core/copy.ts, `voice`). With
 // the browser's default service the sound may leave the computer (in Chrome: to Google). Where the browser reports
-// that it can recognise the language on the device (`SpeechRecognition.available({ processLocally: true })`, Chrome
-// 139 and later) the app sets `processLocally`, which asks the browser to keep the sound on the device and to fail
+// that it can recognise the language on the device (`SpeechRecognition.available({ processLocally: true })`; the
+// Chrome 157 we checked has it) the app sets `processLocally`, which asks the browser to keep the sound on the device and to fail
 // rather than send it; `local` in the view says which of the two was asked for. The app never installs a language
 // pack and never falls back from on-device to the default service by itself.
 //
