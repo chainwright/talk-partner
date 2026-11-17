@@ -90,6 +90,8 @@ async function attach(port) {
     await waitFor(`document.querySelector('#make') && !document.querySelector('#make').disabled`, 120000);
     const ms = Date.now() - t0;
     await sleep(1200); // let late requests show up in the log
+    // judge mode folds the panels of every card after the first behind one line: opened here, so they can be read
+    await js(`(() => { const m = document.querySelector('#made'); if (m) m.open = true; return true; })()`);
     const v = await js(`({ badge: document.querySelector('#result .badge')?.innerText ?? '', tail: document.querySelector('#result .badge-line .tail')?.innerText ?? '',
       tiles: [...document.querySelectorAll('#person .tile span')].map((e) => e.innerText), why: document.querySelector('.why p')?.innerText ?? '',
       trace: [...document.querySelectorAll('.trace li')].map((e) => e.innerText.replace(/\\n/g, ' — ')), notes: document.querySelector('.notes')?.innerText ?? '',
@@ -166,13 +168,14 @@ try {
   check('loading the app and warming the model contacted no host but the app itself', c.outside().length === 0, c.outside().map((r) => r.host).join(', ') || `${c.s.reqs.length} requests, all to ${APP_HOST}`);
   const cloudNav = await c.js(`[...document.querySelectorAll('header nav a')].map((a) => a.innerText).find((t) => t.startsWith('Cloud help'))`);
   check('cloud help is off', cloudNav === 'Cloud help: off', cloudNav);
-  check('with the on-device model in this browser no recording is offered: the step itself runs', !(await c.js(`!!document.querySelector('#recorded [data-act="recorded"]')`)), await c.js(`document.querySelector('#recorded')?.innerHTML ?? 'no slot'`));
+  check('with the on-device model in this browser no recording is offered: the step itself runs', !(await c.js(`!!document.querySelector('[data-act="recorded"]')`)), await c.js(`document.querySelector('.sample')?.innerText ?? 'no sample line'`));
 
   log(`\n## 1b. Judge mode's first step, with no click`);
   log(`The first frame is a card made in code (coffee or tea). When the model is ready the app itself asks "What do you want to do this weekend?"; nothing below was clicked or typed.`);
   const tStep = Date.now();
   const stepDone = await c.waitFor(`document.querySelector('#status .step')?.dataset.step === 'done' && document.querySelector('#result .badge')?.innerText === 'On this computer'`, 60000);
   await sleep(800);
+  const stFold = await c.js(`(() => { const m = document.querySelector('#result #made'); if (!m) return null; const r = { open: m.open, line: m.querySelector('summary').innerText }; m.open = true; return r; })()`);
   const st = await c.js(`({ status: document.querySelector('#status').innerText, badge: document.querySelector('#result .badge')?.innerText ?? '', tail: document.querySelector('#result .badge-line .tail')?.innerText ?? '',
     tiles: [...document.querySelectorAll('#person .tile span')].map((e) => e.innerText), lit: document.querySelector('.chip.on')?.dataset.q ?? '', sentHead: document.querySelector('#sent p')?.innerText ?? '',
     trace: [...document.querySelectorAll('.trace li')].map((e) => e.innerText.replace(/\\n/g, ' — ')), bytes: document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? '' })`);
@@ -185,6 +188,7 @@ try {
   log(`- SDK report (console), warm-up and this card: ${c.aiLines().map((l) => `\`${l}\``).join(', ')}`);
   log(`- requests to hosts other than ${APP_HOST} since page load: ${c.outside().length ? c.outside().map((r) => r.host).join(', ') : 'none'}`);
   check('the first step ran by itself: a card for the weekend question, badge "On this computer", its chip lit', stepDone >= 0 && st.badge === 'On this computer' && st.lit === 'What do you want to do this weekend?', `${st.badge}; lit: ${st.lit}`);
+  check('under that card the panels are one summary line ("How this card was made: …"), closed until clicked', !!stFold && stFold.open === false && /^How this card was made: /.test(stFold.line), JSON.stringify(stFold));
   check('the SDK reported inferenceSource=on_device for it (the second on-device call of the page, after the warm-up)', c.aiLines().length === 2 && c.aiLines().every((l) => ON_DEVICE.test(l)), c.aiLines().join(' | '));
   check('its choices are the family\'s own, from About me, and the card says so', fromAbout(st.tiles).length >= 2 && /nothing left this computer/.test(st.tail) && /from About me/.test(st.tail), `${st.tiles.join(' / ')} ${st.tail}`);
   check('nothing was sent for it and no other host was contacted', c.outside().length === 0 && /Nothing sent/.test(st.sentHead) && /^0 bytes left this computer/.test(st.bytes), `${c.outside().length} outside requests; ${st.bytes.slice(0, 60)}`);

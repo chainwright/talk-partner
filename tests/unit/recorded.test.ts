@@ -14,7 +14,7 @@ const ROOT = join(__dirname, '..', '..');
 const read = (p: string) => readFileSync(join(ROOT, p), 'utf8');
 const log = read(D.log);
 const main = read('web/src/main.ts');
-const block = main.split('function recordedBlock(): string {')[1]?.split('\nfunction badge(')[0] ?? '';
+const block = main.split('function recordedCan(): boolean {')[1]?.split('\nfunction badge(')[0] ?? '';
 
 describe('the recording of the on-device step: every value is in the saved run log', () => {
   // the log's entry for the question, asked by a click with cloud help off (section 2)
@@ -64,18 +64,18 @@ describe('the recording on screen: labelled, shown only where the step cannot ru
     expect(R.sdk(D.inferenceSource)).toContain('inferenceSource=on_device');
   });
   it('it is drawn in judge mode only, and only when this browser cannot run the on-device step', () => {
-    expect(block).toContain("if (!state.demo) return '';");
-    expect(block).toContain("const cannot = !cfg || state.device === 'downloadable' || state.device === 'downloading' || (state.device === 'unavailable' && deviceFinal);");
-    expect(block).toContain("if (!cannot) return '';");
-    // closed until the link is clicked
-    expect(block).toContain('if (!state.recorded) return `<button class="link" data-act="recorded">${R.link}</button>`;');
+    expect(block).toContain('if (!state.demo) return false;');
+    expect(block).toContain("return !cfg || state.device === 'downloadable' || state.device === 'downloading' || (state.device === 'unavailable' && deviceFinal);");
+    // closed until the link is clicked: the link stands alone, the recording only once it was asked for
+    expect(block).toContain('return recordedCan() && !state.recorded ? ` <button class="link" data-act="recorded">${C.judge.recorded.link}</button>` : \'\';');
+    expect(block).toContain("if (!recordedCan() || !state.recorded) return '';");
     // tag, label, badge marked as a recording, the SDK line
     for (const piece of ['${R.tag}', 'R.label(D.date, D.commit, D.browser)', 'class="badge device rec"', 'R.sdk(D.inferenceSource)', 'esc(D.sdk)']) expect(block).toContain(piece);
   });
   it('showing it makes no card, calls no engine and changes no setting', () => {
     expect(block).not.toMatch(/makeCard|state\.engine\.(?:run|prepare|warm)|state\.made|setCard|saveSettings|cloudHelp\s*=[^=]/);
     const act = main.split("case 'recorded':")[1]?.split('\n')[0] ?? '';
-    expect(act).toContain('state.recorded = !state.recorded;');
+    expect(act).toContain('state.recorded = !state.recorded; patchRecorded();');
     expect(act).not.toMatch(/makeCard|make\(|engine|cloudHelp|saveSettings|render\(/);
   });
   it('cloud help is still turned on in one place only: the consent screen, with the box ticked', () => {
@@ -100,5 +100,24 @@ describe('"How this works" names every badge', () => {
     for (const b of [COPY.badge.code, COPY.badge.codeAsked, COPY.badge.none, COPY.badge.device]) expect(intro).toContain(`"${b}"`);
     expect(intro).toContain('"Cloud help"');
     expect(COPY.badge.cloud.startsWith('Cloud help')).toBe(true);
+  });
+});
+
+// 17 Nov 2026 (review round 4): judge mode stacked four open panels under every card. Under the card it opens with
+// they still stand open; under every later card they are one summary line, and the receipt is closed.
+describe('judge mode: one summary line under every card after the first', () => {
+  it('the first card keeps its panels open; later cards fold them into #made with the summary line', () => {
+    expect(main).toContain("? (state.first ? madePanels(c) : `<details class=\"made\" id=\"made\"><summary>${esc(line)}</summary>${madePanels(c)}</details>`)");
+    expect(main).toContain('const line = c.why ? C.judge.madeLine(c.why.decided, c.why.kept.length, c.why.added.length, c.why.dropped.length) : C.judge.madeLineNoWhy;');
+    expect(main).toContain("${state.demo ? receiptPanel(state.first, false) : ''}");
+  });
+  it('nothing is removed: the fold holds the same three panels the first card shows', () => {
+    const panels = main.split('function madePanels(c: Card): string {')[1]?.split('\n}')[0] ?? '';
+    for (const p of ['whyPanel(c, true)', 'traceList(c.trace)', 'sentPanel(c)']) expect(panels).toContain(p);
+  });
+  it('the line says who decided and what the rules did, and what a click opens', () => {
+    const l = COPY.judge.madeLine('the model proposed; code checked every choice', 2, 0, 1);
+    expect(l).toBe('How this card was made: the model proposed; code checked every choice · 2 kept, 0 added, 1 dropped by a rule. Open for why, where each step ran, what was sent.');
+    expect(COPY.judge.madeLineNoWhy).toMatch(/^How this card was made\./);
   });
 });

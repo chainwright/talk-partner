@@ -234,14 +234,20 @@ function statusLine(): string {
  * judge mode's first open question (core/recorded.ts, copied from a saved run log). It is a recording and says so:
  * the date, the commit, the SDK's own console line. No card is made for it, no engine is called and nothing is sent;
  * it changes no setting. The cloud step is offered next to it and stays behind the consent screen.
+ * The link sits at the end of the "Sample family" line (no extra row above the card); the recording opens under the
+ * status line.
  */
+function recordedCan(): boolean {
+  if (!state.demo) return false;
+  return !cfg || state.device === 'downloadable' || state.device === 'downloading' || (state.device === 'unavailable' && deviceFinal);
+}
+function recordedLink(): string {
+  return recordedCan() && !state.recorded ? ` <button class="link" data-act="recorded">${C.judge.recorded.link}</button>` : '';
+}
 function recordedBlock(): string {
-  if (!state.demo) return '';
-  const cannot = !cfg || state.device === 'downloadable' || state.device === 'downloading' || (state.device === 'unavailable' && deviceFinal);
-  if (!cannot) return '';
+  if (!recordedCan() || !state.recorded) return '';
   const R = C.judge.recorded;
   const D = RECORDED_STEP;
-  if (!state.recorded) return `<button class="link" data-act="recorded">${R.link}</button>`;
   const next = !state.engine.cloudConfigured ? R.noCloud
     : state.settings.cloudHelp ? `${R.cloudOn} <button class="chip" data-q="${esc(D.question)}">${R.askNow}</button>`
     : `${R.cloudOff} <a href="#/cloud">${R.cloudLink}</a>`;
@@ -333,9 +339,10 @@ function whyPanel(c: Card, open: boolean): string {
 
 /**
  * How this card was made, in the order a judge reads it: why this card → where each step ran → what was sent. The same
- * three panels, open, in both modes. In judge mode they stand under the card; on the partner screen they sit inside one
- * closed disclosure (`#made`) with the privacy receipt (folded, it is long) after them: one click shows all three, and
- * nothing is removed, only folded.
+ * three panels, open, in both modes. In judge mode they stand under the first card and sit behind one summary line
+ * under every later one (`#made`, cardPanel); on the partner screen they sit inside one closed disclosure (`#made`)
+ * with the privacy receipt (folded, it is long) after them: one click shows all three, and nothing is removed, only
+ * folded.
  */
 function madePanels(c: Card): string {
   return `${whyPanel(c, true)}
@@ -438,8 +445,9 @@ function againChips(): string {
 
 /**
  * The partner screen. Judge mode (#/demo) is ordered for a 60-second read: the chips under the question box, then the
- * card with its panels open (badge → why → where each step ran → what was sent), the privacy receipt right after, and
- * one compact session line (tally; the intro and the no-helper note fold under it). Outside judge mode the panels and
+ * card. Under the card judge mode opens with, the panels stand open (badge → why → where each step ran → what was
+ * sent) with the privacy receipt open after them; under every later card they are one summary line and the receipt
+ * is closed (cardPanel). Then one compact session line (tally; the intro and the no-helper note fold under it). Outside judge mode the panels and
  * the receipt are folded into "How this card was made" inside the card panel, so above the fold there is only the
  * question, the coaching line, the line to say, the card and the actions.
  */
@@ -453,12 +461,12 @@ function partnerScreen(): string {
     <p class="tagline-sub">${C.app.taglineSub}</p>
     <p id="status" class="status">${statusLine()}</p>
     <div id="recorded">${recordedBlock()}</div>
-    ${state.demo ? `<p class="sample">${C.app.sample}</p>` : againChips()}
+    ${state.demo ? `<p class="sample">${C.app.sample}<span id="rec-link">${recordedLink()}</span></p>` : againChips()}
     <form id="ask"><input id="q" autocomplete="off" placeholder="${C.ask.placeholder}" aria-label="${C.ask.label}" value="${esc(state.lastQuestion)}"><button id="make" type="submit" ${state.busy ? 'disabled' : ''}>${state.busy ? C.ask.making : C.ask.make}</button></form>
     ${state.demo ? chipGroups() : ''}
     ${state.demo ? bytesLine() : ''}
     <div id="result" aria-live="polite">${state.busy ? `<p class="making" role="status"><span class="dot wait"></span>${C.ask.makingCard} <small>${C.ask.makingHint}</small></p>` : c ? cardPanel(c) : state.error ? `<p class="warn">${esc(state.error)}</p>` : ''}</div>
-    ${state.demo ? receiptPanel(true, false) : ''}
+    ${state.demo ? receiptPanel(state.first, false) : ''}
     ${judgeLine}
     <div class="settings">
       <label>${C.support.label} <select id="support">${(['mild', 'more', 'most'] as const).map((v) => `<option value="${v}" ${state.settings.support === v ? 'selected' : ''}>${C.support.options[v]}</option>`).join('')}</select></label>
@@ -505,8 +513,14 @@ function cardPanel(c: Card): string {
       ? `<p class="done">${esc(C.card.choseRepair(p.label))}</p><p class="say">${esc(C.repair.lines[p.label] ?? '')}</p>`
       : `<p class="done">${p.role === 'escape' ? esc(C.card.choseEscape(p.label)) : esc(C.card.chose(p.label))}</p>`;
   }
-  // judge mode: the panels stand open in reading order; partner screen: one closed fold holds them and the receipt
-  const made = state.demo ? madePanels(c) : `<details class="made" id="made"><summary>${C.card.made}</summary>${madePanels(c)}${receiptPanel(false)}</details>`;
+  // judge mode: under the card it opens with, the panels stand open in reading order, so the first frame shows what
+  // there is to read; under every card after it they are folded behind one summary line (who decided, how many
+  // choices were kept, added and dropped), and one click opens all three. Partner screen: one closed fold holds them
+  // and the receipt. Nothing is removed in either mode, only folded.
+  const line = c.why ? C.judge.madeLine(c.why.decided, c.why.kept.length, c.why.added.length, c.why.dropped.length) : C.judge.madeLineNoWhy;
+  const made = state.demo
+    ? (state.first ? madePanels(c) : `<details class="made" id="made"><summary>${esc(line)}</summary>${madePanels(c)}</details>`)
+    : `<details class="made" id="made"><summary>${C.card.made}</summary>${madePanels(c)}${receiptPanel(false)}</details>`;
   return `${badgeLine(c)}${coach}${last}${main}${answered}${actions ? `<div class="actions">${actions}</div>` : ''}${safety}${notes}
     ${made}`;
 }
@@ -732,7 +746,7 @@ function draw() {
 function patchDevice() {
   const s = document.querySelector('#status'); if (s) s.innerHTML = statusLine();
   const d = document.querySelector('#device'); if (d) d.innerHTML = welcomeDevice();
-  const rc = document.querySelector('#recorded'); if (rc) rc.innerHTML = recordedBlock();
+  patchRecorded();
   const n = document.querySelector<HTMLElement>('#nodevice'); if (n) n.hidden = state.device === 'available' || state.device === 'checking';
 }
 /**
@@ -746,6 +760,10 @@ let recheck = 0;
 /** True once the answer stands (an "unavailable" that was asked again twice, or any other answer). */
 let deviceFinal = false;
 let probing: Promise<void> | null = null;
+function patchRecorded() {
+  const rc = document.querySelector('#recorded'); if (rc) rc.innerHTML = recordedBlock();
+  const rl = document.querySelector('#rec-link'); if (rl) rl.innerHTML = recordedLink();
+}
 function refreshDevice(): Promise<void> {
   return (probing ??= (async () => {
     try {
@@ -927,7 +945,7 @@ function act(el: HTMLElement) {
     }
     case 'download': void download(); break;
     // the recording of the on-device step: shown or hidden in place; no card, no engine call, no setting changed
-    case 'recorded': { state.recorded = !state.recorded; const rc = document.querySelector('#recorded'); if (rc) rc.innerHTML = recordedBlock(); break; }
+    case 'recorded': state.recorded = !state.recorded; patchRecorded(); break;
     case 'leave-demo': void leaveDemo(); break;
     case 'welcome-setup': state.settings.welcomed = true; saveSettings(); go('about'); break;
     case 'welcome-sample': state.settings.welcomed = true; saveSettings(); go('demo'); break;

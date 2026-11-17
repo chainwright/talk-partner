@@ -73,7 +73,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
 /* The recording of the on-device step (judge mode, a browser that cannot run it): a dashed frame and a tag, so it is
    never taken for a card made here. */
 #recorded:empty { display: none; }
-#recorded > .link { font-size: 15px; padding: 0; }
+.sample:has(.link) { font-size: 13px; } .sample .link { font: inherit; font-weight: 500; padding: 0 0 0 2px; white-space: nowrap; } /* one row with the sample line on a desktop */
 .recorded { border: 2px dashed var(--muted); border-radius: 14px; padding: 10px 12px; display: grid; gap: 6px; font-size: 14px; }
 .recorded p { margin: 0; }
 .rec-tag { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; padding: 1px 8px; border-radius: 6px; background: var(--warn); color: #1a1205; margin-right: 4px; }

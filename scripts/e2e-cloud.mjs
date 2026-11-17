@@ -90,8 +90,8 @@ try {
   // the recording of the on-device step (judge mode, no on-device model here): one link under the status line; behind
   // it a card labelled as a recording, with its date and the SDK's report. Opening it makes no card, contacts no
   // host and leaves cloud help off: the cloud step still needs the consent screen.
-  const recLink = await js(`document.querySelector('#recorded [data-act="recorded"]')?.innerText ?? ''`);
-  await js(`document.querySelector('#recorded [data-act="recorded"]')?.click()`); await sleep(300);
+  const recLink = await js(`document.querySelector('[data-act="recorded"]')?.innerText ?? ''`);
+  await js(`document.querySelector('[data-act="recorded"]')?.click()`); await sleep(300);
   const rec = await js(`({ text: document.querySelector('#recorded .recorded')?.innerText.replace(/\\s+/g, ' ') ?? '', tag: document.querySelector('#recorded .rec-tag')?.innerText ?? '', tiles: [...document.querySelectorAll('#recorded .rec-tiles span')].map(e => e.innerText),
     consent: document.querySelector('#recorded a[href="#/cloud"]')?.innerText ?? '', nav: [...document.querySelectorAll('header nav a')].map((a) => a.innerText).find((t) => t.startsWith('Cloud help')),
     card: [...document.querySelectorAll('#person .tile span')].map(e => e.innerText), badge: document.querySelector('#result .badge')?.innerText ?? '', bytes: document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? '' })`);
@@ -177,6 +177,12 @@ try {
   const notes = await js(`document.querySelector('.notes')?.innerText ?? ''`);
   console.log(`open question -> badge "${badge2}", tiles ${JSON.stringify(tiles2)}, ${ms} ms\nnotes: ${notes}`);
   check('open question answered by the cloud leg (inferenceSource in_cloud)', badge2 === 'Cloud help (question only)', badge2);
+  // judge mode, a card after the first: the panels are folded behind one summary line, and one click opens all three
+  const fold = await js(`(() => { const m = document.querySelector('#result #made'); if (!m) return null; const all = (f) => ['.why', '.trace', '#sent'].every((s) => f(m.querySelector(s)));
+    const r = { open: m.open, line: m.querySelector('summary').innerText, hidden: all((e) => !!e && !e.checkVisibility()), receiptOpen: document.querySelector('.receipt')?.open };
+    m.querySelector('summary').click(); r.after = m.open && all((e) => !!e && e.checkVisibility()); return r; })()`);
+  check('judge mode, a card after the first: why / where each step ran / what was sent are behind one summary line, the receipt is closed, and one click opens all three',
+    !!fold && fold.open === false && fold.hidden && fold.receiptOpen === false && fold.after === true && /^How this card was made: .+ · \d+ kept, \d+ added, \d+ dropped by a rule\./.test(fold.line), JSON.stringify(fold));
   check('the card has at least two answers plus one escape', (tiles2?.length ?? 0) >= 3, JSON.stringify(tiles2));
   const sent = await js(`document.querySelector('#sent').innerText`);
   const payload = await js(`document.querySelector('#sent pre')?.textContent ?? ''`);
@@ -219,6 +225,7 @@ try {
   await sleep(300);
   await waitFor(`document.querySelector('#make') && !document.querySelector('#make').disabled && !!document.querySelector('#result .badge')`, 60000);
   const tiles3 = await js(`[...document.querySelectorAll('#person .tile span')].map(e => e.innerText)`);
+  await js(`(() => { const m = document.querySelector('#made'); if (m) m.open = true; return true; })()`);
   const payload3 = await js(`document.querySelector('#sent pre')?.textContent ?? ''`);
   const why3 = await js(`document.querySelector('#result .why p')?.innerText ?? ''`);
   const report3 = consoleLines.filter((l) => l.startsWith('[ai-logic]'));

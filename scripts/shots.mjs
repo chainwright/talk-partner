@@ -149,8 +149,8 @@ try {
       // judge mode on a phone: the person's card follows the actions, before the panels (it was at 3714 of 4216 px)
       const pc = await js(`(() => { const y = (s, k) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect()[k] + scrollY) : -1; };
         const tiles = [...document.querySelectorAll('#person .tile')].map((t) => t.getBoundingClientRect().bottom + scrollY);
-        return { card: y('#person', 'top'), headline: y('#person .headline', 'top'), tiles: Math.round(Math.max(...tiles)), n: tiles.length, actions: y('#result .actions', 'bottom'), why: y('#result .why', 'top'), page: document.documentElement.scrollHeight }; })()`);
-      check('phone judge mode: the person\'s card starts in the first screen, right after the actions and before "Why this card"', pc.n >= 2 && pc.card >= pc.actions && pc.card <= 844 && pc.tiles < pc.why, JSON.stringify(pc));
+        return { card: y('#person', 'top'), headline: y('#person .headline', 'top'), tiles: Math.round(Math.max(...tiles)), n: tiles.length, actions: y('#result .actions', 'bottom'), why: y('#result #made', 'top'), page: document.documentElement.scrollHeight }; })()`);
+      check('phone judge mode: the person\'s card starts in the first screen, right after the actions and before "How this card was made"', pc.n >= 2 && pc.card >= pc.actions && pc.card <= 844 && pc.tiles < pc.why, JSON.stringify(pc));
       check('phone judge mode: the whole card (headline and every tile) is within the first two screens', pc.n >= 2 && pc.tiles <= 2 * 844, `lowest tile ends at ${pc.tiles}px of ${pc.page}px`);
     }
     // full-screen person view, then a tap and the confirm step
@@ -207,9 +207,13 @@ try {
         const y = (s) => Math.round(document.querySelector(s).getBoundingClientRect().top + scrollY); const r = { card: y('#person'), headline: y('#person .headline'), statusLines: Math.round(st.getBoundingClientRect().height) }; st.innerHTML = keep; return r; })()`);
       check('phone judge mode, the same card under the longest status line: card and headline still above the fold', worst.card <= 844 && worst.headline <= 844, JSON.stringify(worst));
     }
-    // day 6: judge mode reads badge → why this card → where each step ran → privacy receipt, all open, top to bottom
+    // 17 Nov: under a card after the first, the panels are one summary line and the receipt is closed
+    const folded2 = await js(`(() => { const m = document.querySelector('#result #made'); if (!m) return { missing: true }; const r = { open: m.open, line: m.querySelector('summary').innerText.slice(0, 40), lineHeight: Math.round(m.getBoundingClientRect().height), receiptOpen: document.querySelector('.receipt').open };
+      m.open = true; document.querySelector('.receipt').open = true; return r; })()`);
+    check(`${s} judge mode, a card after the first: "How this card was made" is one closed summary line and the receipt is closed`, folded2.open === false && folded2.receiptOpen === false && /^How this card was made: /.test(folded2.line ?? '') && folded2.lineHeight <= (s === 'phone' ? 150 : 90), JSON.stringify(folded2));
+    // day 6: once opened, judge mode reads badge → why this card → where each step ran → privacy receipt, top to bottom
     const order = await js(`(() => { const y = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().top) : undefined; }; return ['#result .badge', '#result .why[open]', '#result details[open] .trace', '.receipt[open]'].map(y); })()`);
-    check(`${s} judge mode: badge → why this card → where each step ran → privacy receipt, each open, in that order`, order.every((v, i) => v !== undefined && (i === 0 || v > order[i - 1])), order.join(' < '));
+    check(`${s} judge mode, the fold and the receipt opened: badge → why this card → where each step ran → privacy receipt, in that order`, order.every((v, i) => v !== undefined && (i === 0 || v > order[i - 1])), order.join(' < '));
     const groups = await js('document.querySelectorAll(".chips.group").length');
     check(`${s} judge mode: the sample questions sit in groups above the card; the session line is one line under the receipt`, groups === 3 && (await js('document.querySelector(".chips.group").getBoundingClientRect().top < document.querySelector("#result .badge-line").getBoundingClientRect().top && document.querySelector(".judge").getBoundingClientRect().top > document.querySelector(".receipt").getBoundingClientRect().top && !document.querySelector(".judge").open')), `${groups} groups`);
     // the one-frame wow (field review, item ★2): the partner's question and the correction on the left, the person's card on the right

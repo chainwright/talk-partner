@@ -66,7 +66,8 @@ describe('the questions asked most often, for the one-tap chips above the questi
   });
   it('the web client shows them outside judge mode only, and a tap goes through the same pipeline as a typed question', () => {
     const main = readFileSync(join(ROOT, 'web/src/main.ts'), 'utf8');
-    expect(main).toContain("${state.demo ? `<p class=\"sample\">${C.app.sample}</p>` : againChips()}");
+    // (17 Nov 2026: in judge mode the sample line also holds the link to the recording of the on-device step)
+    expect(main).toContain("${state.demo ? `<p class=\"sample\">${C.app.sample}<span id=\"rec-link\">${recordedLink()}</span></p>` : againChips()}");
     const chips = main.slice(main.indexOf('function againChips()'), main.indexOf('function partnerScreen()'));
     expect(chips).toContain('topQuestions(state.history, 3)');
     expect(chips).not.toMatch(/label|lastAnswer|answerCounts/); // the chip never carries what was answered

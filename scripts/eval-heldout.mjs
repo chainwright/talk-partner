@@ -151,7 +151,7 @@ async function devicePass() {
     await waitFor(`document.querySelector('#make') && !document.querySelector('#make').disabled`, 120000);
     const ms = Date.now() - t0;
     await sleep(300);
-    const obs = await js(`(() => { const p = document.querySelector('#person'); const t = [...p.querySelectorAll('.tile')];
+    const obs = await js(`(() => { const m = document.querySelector('#made'); if (m) m.open = true; const p = document.querySelector('#person'); const t = [...p.querySelectorAll('.tile')];
       return { kind: p.dataset.kind, blocked: !!p.dataset.blocked, answers: t.filter((x) => !x.classList.contains('escape')).map((x) => x.querySelector('span').innerText),
         escape: t.find((x) => x.classList.contains('escape'))?.querySelector('span').innerText ?? null, coach: document.querySelector('#result .coach')?.innerText ?? '',
         badge: document.querySelector('#result .badge')?.innerText ?? '', why: document.querySelector('#result .why p')?.innerText ?? '' }; })()`);

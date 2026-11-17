@@ -398,6 +398,13 @@ const COPY = {
     noDevice: "This browser has no private helper, so the private step shows as \"did not run\" on every card. Cloud help can make the open cards: it gets the question only, and the sample family is made up.",
     exit: 'Leave judge mode',
     /**
+     * Judge mode, every card after the one it opens with: the panels (why this card, where each step ran, what was
+     * sent) and the receipt are folded, and this one line stands for them. A click opens all three panels.
+     */
+    madeLine: (decided: string, kept: number, added: number, dropped: number) =>
+      `How this card was made: ${decided} · ${kept} kept, ${added} added, ${dropped} dropped by a rule. Open for why, where each step ran, what was sent.`,
+    madeLineNoWhy: 'How this card was made. Open for where each step ran and what was sent.',
+    /**
      * Judge mode's first step, in the status line. The instant first card is made in code; as soon as the on-device
      * model is ready the app itself asks one open question, and the card that follows carries the badge the SDK's
      * report gives it. Where there is no on-device model, the line says so plainly and nothing else changes.

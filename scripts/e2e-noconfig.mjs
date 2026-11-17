@@ -87,7 +87,7 @@ try {
   console.log(`status line: ${status}`);
   check('the copy really has no project settings', /no project settings/.test(status ?? ''), status);
   // judge mode on a copy with no settings: the recording of the on-device step is one link away, labelled, and nothing is contacted for it
-  await js(`document.querySelector('#recorded [data-act="recorded"]')?.click()`); await sleep(200);
+  await js(`document.querySelector('[data-act="recorded"]')?.click()`); await sleep(200);
   const rec = await js(`document.querySelector('#recorded .recorded')?.innerText.replace(/\\s+/g, ' ') ?? ''`);
   check('the recording of the on-device step opens from its link and is labelled as a recording; no cloud step is offered on this copy', /^recording Recorded on our machine on 17 Nov 2026/i.test(rec) && /Not made in this browser/.test(rec) && /inferenceSource=on_device/.test(rec) && /no project settings, so the cloud step cannot run here either/.test(rec) && !(await js(`!!document.querySelector('#recorded a[href="#/cloud"]')`)), rec.slice(0, 120));
 
