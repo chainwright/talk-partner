@@ -1,0 +1,147 @@
+PASS  320px  simple: first screen
+PASS  320px  simple: first screen, the microphone notice open
+PASS  320px  simple: card ready
+PASS  320px  simple: card ready, choices hidden
+PASS  320px  simple: We're stuck (the repair card, partner side)
+PASS  320px  simple: the person's card, full screen
+PASS  320px  simple: the person's card, the check (So: tea. Right?)
+PASS  320px  simple: answered
+PASS  320px  simple: going over the answers
+PASS  320px  simple: card ready, a long either-or question
+PASS  320px  simple: card ready, a yes / no question
+PASS  320px  simple: a memory question (a line to say, no card)
+PASS  320px  simple: card ready, the body map
+PASS  320px  simple: the consent sheet
+PASS  320px  simple: no card for an open question
+PASS  320px  simple: quick needs, full screen
+PASS  320px  simple: quick needs, partner side
+PASS  320px  simple: About them, rows closed
+PASS  320px  simple: About them, a person being added
+PASS  320px  simple: About them, places open, long names in the rows
+PASS  320px  simple: first screen with a long name
+PASS  320px  simple: card ready with a long name
+PASS  360px  simple: first screen
+PASS  360px  simple: first screen, the microphone notice open
+PASS  360px  simple: card ready
+PASS  360px  simple: card ready, choices hidden
+PASS  360px  simple: We're stuck (the repair card, partner side)
+PASS  360px  simple: the person's card, full screen
+PASS  360px  simple: the person's card, the check (So: tea. Right?)
+PASS  360px  simple: answered
+PASS  360px  simple: going over the answers
+PASS  360px  simple: card ready, a long either-or question
+PASS  360px  simple: card ready, a yes / no question
+PASS  360px  simple: a memory question (a line to say, no card)
+PASS  360px  simple: card ready, the body map
+PASS  360px  simple: the consent sheet
+PASS  360px  simple: no card for an open question
+PASS  360px  simple: quick needs, full screen
+PASS  360px  simple: quick needs, partner side
+PASS  360px  simple: About them, rows closed
+PASS  360px  simple: About them, a person being added
+PASS  360px  simple: About them, places open, long names in the rows
+PASS  360px  simple: first screen with a long name
+PASS  360px  simple: card ready with a long name
+PASS  360px  first run (welcome)
+PASS  360px  judge mode, the card it opens with
+PASS  360px  judge mode, the recording of the on-device step open
+PASS  360px  judge mode, a yes / no card
+PASS  360px  judge mode, every fold under the card open
+PASS  360px  judge mode, two questions in one (coaching line, Next)
+PASS  360px  judge mode, a memory test (no card)
+PASS  360px  judge mode, an open question with no model here
+PASS  360px  judge mode, We're stuck
+PASS  360px  the person's screen, the repair card
+PASS  360px  the person's screen, quick needs
+PASS  360px  #/about (sample family)
+PASS  360px  #/cloud (sample family)
+PASS  360px  #/how (sample family)
+PASS  360px  #/feedback (sample family)
+PASS  360px  About me, empty
+PASS  360px  partner screen, no card yet
+PASS  360px  partner screen, a long either-or question
+PASS  360px  partner screen, every fold open
+PASS  390px  simple: first screen
+PASS  390px  simple: first screen, the microphone notice open
+PASS  390px  simple: card ready
+PASS  390px  simple: card ready, choices hidden
+PASS  390px  simple: We're stuck (the repair card, partner side)
+PASS  390px  simple: the person's card, full screen
+PASS  390px  simple: the person's card, the check (So: tea. Right?)
+PASS  390px  simple: answered
+PASS  390px  simple: going over the answers
+PASS  390px  simple: card ready, a long either-or question
+PASS  390px  simple: card ready, a yes / no question
+PASS  390px  simple: a memory question (a line to say, no card)
+PASS  390px  simple: card ready, the body map
+PASS  390px  simple: the consent sheet
+PASS  390px  simple: no card for an open question
+PASS  390px  simple: quick needs, full screen
+PASS  390px  simple: quick needs, partner side
+PASS  390px  simple: About them, rows closed
+PASS  390px  simple: About them, a person being added
+PASS  390px  simple: About them, places open, long names in the rows
+PASS  390px  simple: first screen with a long name
+PASS  390px  simple: card ready with a long name
+PASS  390px  first run (welcome)
+PASS  390px  judge mode, the card it opens with
+PASS  390px  judge mode, the recording of the on-device step open
+PASS  390px  judge mode, a yes / no card
+PASS  390px  judge mode, every fold under the card open
+PASS  390px  judge mode, two questions in one (coaching line, Next)
+PASS  390px  judge mode, a memory test (no card)
+PASS  390px  judge mode, an open question with no model here
+PASS  390px  judge mode, We're stuck
+PASS  390px  the person's screen, the repair card
+PASS  390px  the person's screen, quick needs
+PASS  390px  #/about (sample family)
+PASS  390px  #/cloud (sample family)
+PASS  390px  #/how (sample family)
+PASS  390px  #/feedback (sample family)
+PASS  390px  About me, empty
+PASS  390px  partner screen, no card yet
+PASS  390px  partner screen, a long either-or question
+PASS  390px  partner screen, every fold open
+PASS  412px  simple: first screen
+PASS  412px  simple: first screen, the microphone notice open
+PASS  412px  simple: card ready
+PASS  412px  simple: card ready, choices hidden
+PASS  412px  simple: We're stuck (the repair card, partner side)
+PASS  412px  simple: the person's card, full screen
+PASS  412px  simple: the person's card, the check (So: tea. Right?)
+PASS  412px  simple: answered
+PASS  412px  simple: going over the answers
+PASS  412px  simple: card ready, a long either-or question
+PASS  412px  simple: card ready, a yes / no question
+PASS  412px  simple: a memory question (a line to say, no card)
+PASS  412px  simple: card ready, the body map
+PASS  412px  simple: the consent sheet
+PASS  412px  simple: no card for an open question
+PASS  412px  simple: quick needs, full screen
+PASS  412px  simple: quick needs, partner side
+PASS  412px  simple: About them, rows closed
+PASS  412px  simple: About them, a person being added
+PASS  412px  simple: About them, places open, long names in the rows
+PASS  412px  simple: first screen with a long name
+PASS  412px  simple: card ready with a long name
+PASS  412px  first run (welcome)
+PASS  412px  judge mode, the card it opens with
+PASS  412px  judge mode, the recording of the on-device step open
+PASS  412px  judge mode, a yes / no card
+PASS  412px  judge mode, every fold under the card open
+PASS  412px  judge mode, two questions in one (coaching line, Next)
+PASS  412px  judge mode, a memory test (no card)
+PASS  412px  judge mode, an open question with no model here
+PASS  412px  judge mode, We're stuck
+PASS  412px  the person's screen, the repair card
+PASS  412px  the person's screen, quick needs
+PASS  412px  #/about (sample family)
+PASS  412px  #/cloud (sample family)
+PASS  412px  #/how (sample family)
+PASS  412px  #/feedback (sample family)
+PASS  412px  About me, empty
+PASS  412px  partner screen, no card yet
+PASS  412px  partner screen, a long either-or question
+PASS  412px  partner screen, every fold open
+
+145 of 145 checks passed

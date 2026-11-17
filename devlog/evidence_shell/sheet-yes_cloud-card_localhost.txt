@@ -1,0 +1,7 @@
+other hosts asked before the yes: []
+other hosts asked after the yes: ['content-firebaseappcheck.googleapis.com', 'firebaseinstallations.googleapis.com', 'firebaseremoteconfig.googleapis.com', 'firebasevertexai.googleapis.com', 'www.google.com', 'www.gstatic.com']
+made-where: cloud sent | Made with online help: Google's AI suggested the choices. Sent to Google: your question, with any names you listed swapped out, and the app's fixed instructions. Nothing from About me.
+tiles: ['stay home', 'go out', 'something else']
+say: What do you want to do this weekend? Stay home, go out, or something else?
+first screen foot: 1 question went to Google's online AI this session, with any names you listed swapped out. Online help is on, so the app asked for its settings online (no question in that). Simple questions: the app's rules make the card on this phone, no AI. Open questions go to Google's online AI, with any names you listed swapped out; it never sees About me. Online help is on. See how it works inside →
+page errors: []

@@ -1,0 +1,63 @@
+date: 2026-11-17T23:04:35Z
+commit: 188f03bd4a974d384b83cde0de677c93ccca884f (clean working tree)
+command: npx -y firebase-tools@15.36.0 deploy --only hosting --project talk-partner --non-interactive
+
+
+=== Deploying to 'talk-partner'...
+
+i  deploying hosting
+Running command: npm run build:hosting
+
+> talk-partner@0.2.0 build:hosting
+> node scripts/check-deploy.mjs && npm run build
+
+deploy settings present: Firebase web config and the reCAPTCHA Enterprise site key
+
+> talk-partner@0.2.0 build
+> tsc --noEmit && vite build && node scripts/check-dist.mjs
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 59 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     0.85 kB │ gzip:   0.50 kB
+dist/assets/index-LN6IYczF.css     40.59 kB │ gzip:   8.55 kB
+dist/assets/feedback-CDKToPwN.js   79.27 kB │ gzip:  26.71 kB
+dist/assets/index-BLlTut7L.js     390.11 kB │ gzip: 131.65 kB
+
+✓ built in 125ms
+dist is clean: no App Check debug token
+✔  hosting: Finished running predeploy script.
+i  hosting[talk-partner]: beginning deploy...
+i  hosting[talk-partner]: found 14 files in dist
+i  hosting: uploading new files [0/4] (0%)
+i  hosting: uploading new files [0/4] (0%)
+i  hosting: upload complete
+✔  hosting[talk-partner]: file upload complete
+i  hosting[talk-partner]: finalizing version...
+✔  hosting[talk-partner]: version finalized
+i  hosting[talk-partner]: releasing new version...
+✔  hosting[talk-partner]: release complete
+
+✔  Deploy complete!
+
+Project Console: https://console.firebase.google.com/project/talk-partner/overview
+Hosting URL: https://talk-partner.web.app
+
+served files against the local build (SHA-256), 2026-11-17T23:05:01Z:
+same  assets/feedback-CDKToPwN.js  0db17d783285988167c46cb69197753f07d64d685c94992a3d49eb0df4727b33
+same  assets/index-BLlTut7L.js  8c56808b2f672af70db1b04dd12f96e5d55577f390a54634c82df5e7dc5bdade
+same  assets/index-LN6IYczF.css  0f76c5114ede2ef5b6134334fed25a8f00f55861794e90458821a343a7e10980
+same  fonts/atkinson-hyperlegible-next/atkinson-hyperlegible-next-latin-400-normal.woff2  5cb240a4d99ab7e6fc3a4d4e6d11d89789fdffe9c86a8384000d662c53283f6f
+same  fonts/atkinson-hyperlegible-next/atkinson-hyperlegible-next-latin-700-normal.woff2  0dbe07ed7679407db9d90f747d5ca3bd1b2bb7ccbcbe41c8246cfc6d2c7bc3bc
+same  fonts/atkinson-hyperlegible-next/LICENSE.txt  474a034e99845062f661855caaa505880d0e9009deddc2727a92795eab374955
+same  fonts/ibm-plex-mono/ibm-plex-mono-latin-400-normal.woff2  08949f728dc52d528e69b1667d15c89a5686a4ee9a296ff90983985f99c380f7
+same  fonts/ibm-plex-mono/ibm-plex-mono-latin-600-normal.woff2  0d1f0b8d0722224e32e9f28261bdc86c79115be73444ae5eceb73976a1bcdf83
+same  fonts/ibm-plex-mono/LICENSE.txt  23b0a9d0c6d3f140a0b77e483c5cfa6bba574325ef5cb189ed9f2fec4884533f
+same  fonts/instrument-sans/instrument-sans-latin-400-normal.woff2  9a91efaa3599a6ef01b2f49e9ec670e3a2f39baeef09c73198f1052cf3bb0850
+same  fonts/instrument-sans/instrument-sans-latin-600-normal.woff2  efb770916eda95a0e31d80cccde9651d4e8617010b21220e9f227c4820d675da
+same  fonts/instrument-sans/instrument-sans-latin-700-normal.woff2  bcf650536cae57403741af193e1e237c245f8929b936f03601279079a64fd699
+same  fonts/instrument-sans/LICENSE.txt  c27a3c53c3beed7f5c26853afa15991478ff7145d3754a36b0382f84e10c0d03
+same  index.html  d19b2972cb871cec5b4482ff706503e0237cf1fd874aab1b03b770737f8c6884
+14 the same, 0 different

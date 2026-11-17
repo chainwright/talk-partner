@@ -186,6 +186,11 @@ def phone(browser, url, live):
         foot = text(page, '.foot')
         check('the first screen then no longer says "Nothing you asked has left this phone"; online help shows as on', 'Nothing you asked has left' not in foot and ('may have left this phone' in foot if maybe else 'No question has left this phone.' in foot) and 'Uses online help' in text(page, '.try'), foot)
 
+    else:
+        page.locator('[data-act=new]').click()
+        page.wait_for_selector('main.simple.home')
+        check('--live: "Yes" was never pressed, so this run asked nothing of any other host for a card', len(outside) == before, str(outside[before:]))
+
     # quick needs
     page.locator('[data-act=needs]').click()
     page.wait_for_selector('main.person.full .tiles.needs')
