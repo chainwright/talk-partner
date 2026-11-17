@@ -516,8 +516,8 @@ async function makeCardInner(input: string, env: PipelineEnv, trace: StepTrace[]
   // "Tyler's got a game Saturday, do you want to go watch?": a statement, then a question code can decide (yes / no,
   // either-or, feeling, pain…). The card asks the question; the statement stays in the line to say. Only then: an
   // open question keeps its lead-in, because a model may need it to offer anything sensible.
-  const lead = codeDetermined(plainQuestion(typed0)?.q ?? typed0, profile) ? null : leadIn(typed0);
-  const useLead = !!lead && codeDetermined(plainQuestion(lead.q)?.q ?? lead.q, profile);
+  const lead = leadIn(typed0);
+  const useLead = !!lead && codeDetermined(plainQuestion(lead.q)?.q ?? lead.q, profile) && !isQuiz(typed0, profile);
   const typed = useLead ? lead!.q : typed0;
   if (useLead) {
     const card = await makeCardInner(pending ? `${typed} ${pending}` : typed, env, trace);

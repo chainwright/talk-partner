@@ -10,7 +10,7 @@ import { cloudRetryWait, makeCard, quizOverrideCard } from '../../core/pipeline'
 import { cardReceipt, sentLine } from '../../core/receipt';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
 import { findLeaks, restoreNames, stripQuestion } from '../../core/strip';
-import { isPainLevel, optOutTrim, orList, quizKind, quizRephrase } from '../../core/rules';
+import { isAuxYesNo, isPainLevel, optOutTrim, orList, quizKind, quizRephrase } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -534,5 +534,64 @@ describe('D-6. something said, then a question code can decide: the card asks th
   it.each(['Alan, shall I put the kettle on?', 'Do you want soup, or would you rather wait?', 'Lamb, rice, or an omelette?', 'If you are cold, do you want a blanket or a jumper?'])('not a statement and a question: %s', async (q) => {
     const card = await ask(q, new Scripted(null));
     expect(card.notes).not.toContain(COPY.notes.leadIn);
+  });
+});
+
+describe('D-7. a tile holds the whole option and nothing but the option', () => {
+  const PAIRS: [string, string[], string | null][] = [
+    // [question, the two tiles, the headline (null = not checked)]
+    ['Hot chocolate or tea before bed?', ['hot chocolate', 'tea'], null],
+    ['Do you want orange juice or milk?', ['orange juice', 'milk'], 'drink'],
+    ['Fish fingers or beans on toast?', ['fish fingers', 'beans on toast'], null],
+    ['Tablets with water or milk?', ['water', 'milk'], 'drink'],
+    ['Toast with jam or marmalade?', ['jam', 'marmalade'], null],
+    ['Bus or taxi to the clinic, Alan?', ['bus', 'taxi'], null],
+    ['Stew or soup for supper, love?', ['stew', 'soup'], 'supper'],
+    ['Is Tuesday or Thursday easier?', ['Tuesday', 'Thursday'], 'when'],
+    ['Do you want the big red blanket or the quilt?', ['big red blanket', 'quilt'], null],
+    ['Shall I ring the surgery or would you rather Grace did it?', ['ring the surgery', 'Grace did it'], null],
+    ['Shall we lie down or go to the lounge?', ['lie down', 'go to the lounge'], null],
+  ];
+  it.each(PAIRS)('%s', async (q, want, headline) => {
+    const card = await ask(q, new Scripted(null));
+    expect(answers(card)).toEqual(want);
+    if (headline) expect(card.topic).toBe(headline);
+    // the line to say is the question as typed, then the tiles
+    expect(card.say.startsWith(q)).toBe(true);
+  });
+  it.each(['Is it more of a burning feeling or a tight one?', 'Is it more a stabbing pain or a steady ache?', 'What kind do you want, white or brown?'])('the headline is never a leftover word ("more", "kind"): %s', async (q) => {
+    const card = await ask(q, new Scripted(null));
+    expect(card.blocked ?? null).toBeNull();
+    expect(card.topic).not.toMatch(/^(?:more|kind|sort|type|better)$/);
+    expect(answers(card)).toHaveLength(2);
+  });
+  it('a name keeps its capital on a tile; the capital that only opens the sentence goes', async () => {
+    expect(answers(await ask('Slippers or shoes?', new Scripted(null)))).toEqual(['slippers', 'shoes']);
+    expect(answers(await ask('Grace or Leo?', new Scripted(null)))).toEqual(['Grace', 'Leo']);
+    expect(answers(await ask('Whitby or Scarborough this summer?', new Scripted(null)))).toEqual(['Whitby', 'Scarborough']);
+  });
+});
+
+describe('D-8. a statement with a tag is one yes / no question, in code', () => {
+  const TAGS: [string, string][] = [
+    ["You've had your breakfast, haven't you?", 'breakfast'],
+    ["It's too loud, isn't it?", 'too loud'],
+    ["You're coming to church, right?", 'coming to church'],
+    ["Grace rang this morning, didn't she?", 'Grace rang this morning'],
+    ["We've got enough milk, haven't we?", 'got enough milk'],
+  ];
+  for (const [state, engine] of STATES) {
+    it.each(TAGS)(`${state}: %s`, async (q, headline) => {
+      const e = engine();
+      const card = await ask(q, e);
+      expect(card.kind).toBe('yesno');
+      expect(answers(card)).toEqual(['yes', 'no']);
+      expect(card.topic).toBe(headline);
+      expect(card.asked).toBe(q); // nothing to turn round: yes already means yes
+      expect(e.calls).toEqual([]);
+    });
+  }
+  it.each(['You like the lamb or the rice, right?', "What's on, isn't it?", 'Come and sit down, love.'])('not a tag question: %s', (q) => {
+    expect(isAuxYesNo(q)).toBe(false);
   });
 });

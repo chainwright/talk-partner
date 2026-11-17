@@ -76,6 +76,12 @@ const ORDINARY_OPENERS = new Set((
   'morning afternoon evening night weekend week month birthday holiday home outside inside upstairs downstairs somewhere anywhere nowhere'
 ).split(/\s+/));
 
+/** True for a word partners open questions with ("Coffee", "Shower"): its capital there is the sentence's, not its own. */
+export function isOrdinaryOpener(word: string): boolean {
+  const w = lc(word);
+  return ORDINARY_OPENERS.has(w) || (w.length > 3 && ORDINARY_OPENERS.has(w.replace(/(?:es|s)$/, '')));
+}
+
 /** A word before a name: "Dr. Patel", "Aunt Linda", "Pastor Dave". The title stays; the word after it is swapped. */
 const TITLES = new Set(['dr', 'doctor', 'mr', 'mrs', 'ms', 'miss', 'mx', 'aunt', 'auntie', 'aunty', 'uncle', 'pastor', 'father', 'fr', 'reverend', 'rev', 'sister', 'brother', 'nurse', 'prof', 'professor', 'cousin', 'grandma', 'grandpa', 'granny', 'nana', 'coach', 'officer', 'deacon', 'rabbi', 'bishop', 'minister', 'judge', 'captain', 'sergeant', 'sgt', 'sir', 'lady', 'lord']);
 /** Titles that are also everyday words in lower case ("did you miss lunch", "sir"): a lowercase word after them is left alone. */

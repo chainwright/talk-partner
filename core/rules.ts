@@ -14,6 +14,7 @@
 // 11 route                >=2 mood words / comparative echoed / duplicate head noun -> cloud
 // plus overlapFilter      category next to its member, relation next to its named person
 
+import { isOrdinaryOpener } from './strip';
 import type { BodyRegion, FeelingSubtype, Person, Profile, RouteDecision } from './types';
 
 const lc = (s: string) => s.toLowerCase();
@@ -81,7 +82,7 @@ const OFFER_START = /^\s*(?:you\s+)?(?:want|wanna|fancy|need|like|feel like|up f
 /** "Ma, you want coffee?": a leading address word or name followed by a comma is not part of the question's shape. */
 const VOCATIVE = /^\s*(?:[A-Z][\p{L}'-]+|ma|mum|mom|mam|dad|pa|love|hen|pet|mate|dear|darling|hon|honey|sweetheart|duck|lovey|chuck|sweetie|luv),\s*/iu;
 /** "…, Frank?", "…, hon?": the person being spoken to, at the end of the question. */
-const VOCATIVE_END = /\s*,\s*(?:[A-Z][\p{L}'-]+|ma|mum|mom|mam|dad|pa|love|hen|pet|mate|dear|darling|hon|honey|sweetheart|duck|lovey|chuck|sweetie|luv)\s*\?\s*$/u;
+const VOCATIVE_END = /\s*,\s*(?!(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\b|(?:January|February|March|April|June|July|August|September|October|November|December)\b)(?:[A-Z][\p{L}'-]+|ma|mum|mom|mam|dad|pa|love|hen|pet|mate|dear|darling|hon|honey|sweetheart|duck|lovey|chuck|sweetie|luv)\s*\?\s*$/u;
 /** The question without the address word at either end. */
 export function stripAddress(q: string): string {
   return stripVocative(q).replace(VOCATIVE_END, '?');
@@ -93,8 +94,15 @@ export function stripVocative(q: string): string {
 /** Rule 2. An aux-verb question (or a subject-less offer) with no "or" becomes yes / no / not sure. */
 export function isAuxYesNo(q: string): boolean {
   const s = stripVocative(q);
-  return (AUX_START.test(s) || OFFER_START.test(s)) && !/\bor\b/i.test(s);
+  const tag = TAG_Q.test(s.replace(/[’]/g, "'")) && !/^(?:what|where|who|whom|when|which|why|how)\b/i.test(s);
+  return (AUX_START.test(s) || OFFER_START.test(s) || tag) && !/\bor\b/i.test(s);
 }
+/**
+ * "You've taken your morning pills, haven't you?", "It's warm enough in here, isn't it?", "You're coming, right?":
+ * a plain statement with a tag is one proposal, so yes / no (set D, 16 Nov: no card without a model). A statement
+ * with "not" in it is turned round first (positiveForm), so here yes always means yes.
+ */
+const TAG_Q = /^(?:you|we|it|he|she|they|that|this|there|[A-Z][a-z]+|(?:the|your|my|our)\s+[a-z]+)(?:'ve|'re|'s|'ll|'d)?\s+(?!(?:not|never)\b)[^?]*?,\s*(?:(?:haven't|hasn't|hadn't|don't|doesn't|didn't|aren't|isn't|wasn't|weren't|won't|wouldn't|can't|couldn't|shouldn't)\s+(?:you|we|it|he|she|they|there)|right|yeah|eh|huh)\s*\?\s*$/;
 
 const Q_OPENER = /^(?:did|do|does|are|is|am|was|were|can|could|should|shall|will|would|have|has|had|may|might|must|what|where|who|whom|when|which|why|how|want|wanna|fancy|need|don't|doesn't|didn't|aren't|isn't|won't|wouldn't|can't|couldn't|shouldn't|haven't|hasn't)\b/i;
 /**
@@ -112,8 +120,12 @@ export function leadIn(q: string): { context: string; q: string } | null {
     if (context.includes('?')) return null;
     if (!Q_OPENER.test(rest)) continue;
     if (context.split(/\s+/).length < 2 || rest.split(/\s+/).length < 2) return null;
+    // "…, do you?", "…, isn't it?": a tag belongs to the sentence before it
+    if (/^[\p{L}'’]+\s+(?:you|we|it|he|she|they|there|i)\s*\?\s*$/iu.test(rest)) return null;
     const c = stripVocative(context);
     if (Q_OPENER.test(c) || OFFER_START.test(c) || /\bor\b/i.test(context)) return null;
+    // "For lunch, …", "If you're cold, …", "Later on, …" belong to the question: only a statement is set apart
+    if (/^(?:for|at|on|in|after|before|if|when|since|as|while|because|so|then|now|later|today|tonight|tomorrow|well|ok|okay|right|and|but|with|about|by)\b/i.test(c)) return null;
     // a title's full stop ("Dr. Patel's office called, …") is not the end of the statement
     if (m[0].startsWith('.') && /\b(?:dr|mr|mrs|ms|st|rev|prof)$/i.test(context)) continue;
     return { context: s.slice(0, m.index! + m[0].length).trimEnd(), q: capitalize(rest) };
@@ -223,6 +235,11 @@ function cleanSide(x: string): string {
 }
 
 const DET = new Set(['the', 'a', 'an', 'your', 'my', 'our', 'his', 'her', 'some']);
+/** Words that describe the thing after them and so belong to an option: "ice cream", "hot chocolate", "big blue cup". */
+const MODIFIER = new Set(('ice iced hot cold warm orange apple tomato chicken beef fish cheese peanut french fried scrambled boiled poached mashed baked roast ' +
+  'green black white brown red blue grey gray pink yellow purple navy new old big small little long short thick thin sharp dull fresh sweet plain sparkling ' +
+  'decaf herbal fruit chocolate vanilla strawberry lemon mint clean dry wet front top bottom brown wholemeal soft hard light dark heavy').split(' '));
+const SHARED_END = /^(?:better|best|easier|nicer|okay|ok|alright|instead|then)$/i;
 const PREP = new Set(['by', 'at', 'of', 'in', 'near', 'with', 'from', 'on']);
 const PARTICLE = new Set(['on', 'off', 'in', 'out', 'up', 'down']);
 /** Verbs that own the particle after them ("turn on", "carry on"): there the particle is part of the option. */
@@ -231,14 +248,26 @@ const NEG = /\b(?:not|no|never|none|nothing|nobody|neither|nor)\b|n't\b|\bdont\b
 
 /** Rule 3. "... X or Y?" with short alternatives -> [X, Y]; null when the sides are not short phrases. */
 export function orPair(q: string): [string, string] | null {
-  q = stripVocative(q);
+  // "…, Frank?" at the end is the person being spoken to, not part of the second option (set D, 16 Nov: "card for the
+  // barber")
+  q = stripAddress(q);
   if (/,\s*or\s/i.test(q)) return commaOrPair(q);
   const m = /([\p{L}\p{N}' -]+?)\s+or\s+([\p{L}\p{N}' -]+?)\s*\?\s*$/u.exec(q);
   if (!m) return clausePair(q);
   const bw = cleanSide(m[2]).split(/\s+/).filter(Boolean);
+  // "Is morning or afternoon better?": the word both sides share is not part of the second
+  while (bw.length > 1 && SHARED_END.test(bw[bw.length - 1])) bw.pop();
+  // "Bus or taxi to the clinic?", "Cocoa or tea before bed?": where or when both happen is not part of the second
+  // thing. Only after one word that is a thing, not a movement ("go to the lounge" stays whole), and only when the
+  // first side has no such phrase of its own.
+  if (bw.length > 2 && /^(?:before|after|until|till|to)$/i.test(bw[1]) && (lc(bw[1]) !== 'to' || /^(?:the|my|your|our)$/i.test(bw[2]))
+    && !/^(?:go|come|walk|stay|sit|lie|drive|head|pop|move|get|run|nip|back|out|up|down|over|listen|talk|speak|wait)$/i.test(bw[0])
+    && !new RegExp(`\\b${lc(bw[1])}\\b`, 'i').test(m[1])) bw.length = 1;
   if (!bw.length) return null;
   // a long or clause-like second option ("or stay here with the dog?"): parse both sides as clauses
   if (bw.length > 4 || (['give', 'stay', 'go', 'keep', 'leave', 'wait'].includes(lc(bw[0])) && bw.length > 2)) return clausePair(q);
+  // the same when the lead words taken off the second side were its verb ("… or go to the lounge?" is not "lounge")
+  if (/^(?:go|stay|sit|come|walk|wait)\s+(?:to|in|at|on|with|by)\s+\S+\s+\S/i.test(m[2].trim())) return clausePair(q);
   const n = bw.length;
   const left = m[1].split(/\s+/).filter(Boolean);
   // "The snooker on or Pointless?": "on" says the telly is on; the option is "snooker"
@@ -249,10 +278,14 @@ export function orPair(q: string): [string, string] | null {
   let start = Math.max(0, left.length - n);
   while (start > 0 && DET.has(lc(left[start - 1]))) start--;
   // keep the whole noun phrase ("the park by the canal", not "canal") when it opens the question or follows "the"
-  if (start > 1 && PREP.has(lc(left[start - 1])) && (start - 2 === 0 || DET.has(lc(left[start - 3])))) {
+  // (not after "with" / "from" / "on": "Pills with juice or water?" offers juice or water, not "pills with juice")
+  if (start > 1 && PREP.has(lc(left[start - 1])) && !/^(?:with|from|on)$/i.test(left[start - 1]) && (start - 2 === 0 || DET.has(lc(left[start - 3])))) {
     start -= 2;
     while (start > 0 && DET.has(lc(left[start - 1]))) start--;
   }
+  // "ice cream or fruit", "red wine or white": a word that describes the thing belongs to the option (set D, 16 Nov:
+  // the tile read "cream")
+  for (let i = 0; i < 2 && start > 0 && left.length - start < 4 && MODIFIER.has(lc(left[start - 1])); i++) start--;
   let aw = cleanSide(left.slice(start).join(' ')).split(/\s+/).filter(Boolean);
   // "Would you like cocoa or hot milk?": a two-word right side must not pull "like" into the left option
   while (aw.length > 1 && FRAME.has(lc(aw[0]))) aw = aw.slice(1);
@@ -346,7 +379,7 @@ const LABEL_BAD = new RegExp(`^(?:${AUX}\\s+(?:you|i|we|it|that|this|there|he|sh
  */
 export function clausePair(q: string): [string, string] | null {
   if (isOrNot(q)) return null;
-  const m = /^(.*\S)\s*,?\s+or\s+(.*?)\s*\?\s*$/i.exec(q.trim());
+  const m = /^(.*\S)\s*,?\s+or\s+(.*?)\s*\?\s*$/i.exec(q.trim().replace(VOCATIVE_END, '?'));
   if (!m) return null;
   const left = leftClause(m[1]);
   if (!left) return null;
@@ -438,7 +471,7 @@ function personSide(label: string, profile?: Profile): string {
 
 /** The time phrase the question ends with, shared by both sides ("...or the garden centre this weekend?"). */
 function sharedTail(q: string): string | null {
-  const m = /\b((?:this|next|on|for|by|at)\s+(?:weekend|morning|afternoon|evening|night|week|month|lunch|dinner|tea|breakfast|supper|bedtime|teatime|christmas|easter|monday|tuesday|wednesday|thursday|friday|saturday|sunday|arvo|avo)|in the (?:morning|afternoon|evening)|tonight|today|tomorrow|later|now)\s*\?\s*$/i.exec(q);
+  const m = /\b((?:this|next|on|for|by|at)\s+(?:weekend|morning|afternoon|evening|night|week|month|year|spring|summer|autumn|fall|winter|lunch|dinner|tea|breakfast|supper|bedtime|teatime|christmas|easter|monday|tuesday|wednesday|thursday|friday|saturday|sunday|arvo|avo)|in the (?:morning|afternoon|evening)|tonight|today|tomorrow|later|now)\s*\?\s*$/i.exec(q);
   return m ? m[1] : null;
 }
 
@@ -472,7 +505,7 @@ function checkSide(side: string, q: string, tail: string | null, profile?: Profi
 
 /** The label check for two or more sides: every side passes, no two are the same or synonyms, all on one axis. */
 function checkSides(sides: string[], q: string, profile?: Profile, list = false): string[] | null {
-  const tail = sharedTail(q);
+  const tail = sharedTail(stripAddress(q));
   const out: string[] = [];
   for (const side of sides) {
     const s = checkSide(side, q, tail, profile);
@@ -493,6 +526,12 @@ function checkSides(sides: string[], q: string, profile?: Profile, list = false)
     && !(profile && (findPerson(first, profile) || snapToQuestionItem(first, q, profile) !== first
       // an About-me entry keeps the capital only when About me writes it with one ("Elvis", not "lamb")
       || [...profile.foods, ...profile.places, ...profile.tv, ...profile.music, ...(profile.other ?? [])].some((e) => e.replace(/^the\s+/i, '') === first)))) {
+    out[0] = first.charAt(0).toLowerCase() + first.slice(1);
+  }
+  // A pair: the first label loses the sentence's capital when its first word is an everyday opening word ("Coffee or
+  // tea?", "Red wine or white?"); any other capital may be a name and stays.
+  if (!list && /^[A-Z][a-z]+(?:\s+[a-z']+)*$/.test(first) && isOrdinaryOpener(first.split(/\s+/)[0]) && new RegExp(`^\\s*${esc(first.split(/\s+/)[0])}\\b`).test(stripVocative(q))
+    && !(profile && (findPerson(first, profile) || [...profile.foods, ...profile.places, ...profile.tv, ...profile.music, ...(profile.other ?? [])].some((e) => e.replace(/^the\s+/i, '') === first)))) {
     out[0] = first.charAt(0).toLowerCase() + first.slice(1);
   }
   return out;
@@ -516,7 +555,7 @@ export function orList(q: string, profile?: Profile): string[] | null {
   // "Soup, a sandwich, or leftovers?" opens like "Graham, coffee or tea?": a capitalised word and a comma. The first
   // word is someone being spoken to only when it is an address word, a name About me knows, or a question follows it;
   // otherwise it is the first option. (This is where the simulation's "Soup" was lost: it was taken for a name.)
-  let s = q.trim();
+  let s = q.trim().replace(VOCATIVE_END, '?');
   const v = VOCATIVE.exec(s);
   if (v) {
     const word = v[0].replace(/[,\s]+$/, '').trim();
@@ -581,7 +620,7 @@ const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** Words a partner uses to address the person: never part of a headline or a label. */
 export const ADDRESS = new Set(['ma', 'mum', 'mom', 'mam', 'dad', 'pa', 'love', 'hen', 'pet', 'mate', 'dear', 'darling', 'hon', 'honey', 'sweetheart', 'duck', 'lovey', 'chuck', 'sweetie', 'luv']);
 const ADVERB_ONLY = new Set(['again', 'already', 'then', 'still', 'yet', 'just', 'really', 'also', 'too', 'ever', 'never', 'anyway', 'else', 'instead', 'maybe', 'perhaps']);
-const NOT_A_TOPIC = new Set([...ADVERB_ONLY, 'bit', 'while', 'moment', 'minute', 'rather', 'something', 'anything', 'both', 'either', 'one', 'ones', 'thing', 'things', 'way', 'lot']);
+const NOT_A_TOPIC = new Set([...ADVERB_ONLY, 'more', 'kind', 'sort', 'type', 'better', 'best', 'easier', 'bit', 'while', 'moment', 'minute', 'rather', 'something', 'anything', 'both', 'either', 'one', 'ones', 'thing', 'things', 'way', 'lot']);
 const PAIR_CATEGORY: [string, string[]][] = [
   ['drink', ['tea', 'coffee', 'water', 'juice', 'milk', 'cocoa', 'hot milk', 'hot chocolate', 'squash', 'beer', 'wine', 'cuppa', 'cup of tea', 'brew']],
   ['clothes', ['shirt', 'jumper', 'sweater', 'cardigan', 'jacket', 'coat', 'trousers', 'dress', 'skirt', 'socks', 'shoes', 'slippers', 'hat', 'scarf', 'blue one', 'red one']],
@@ -1272,6 +1311,7 @@ const YN_FRAME = [
   /^(?:do|did|does|would|will|can|could|should|shall|may|might|must|have|has|had|are|is|am|was|were)\s+(?:you|we|i|it|they|he|she|there|that|this)\s+/i,
   /^(?:do|did|does|would|will|can|could|should|shall|may|might|must|have|has|had|are|is|am|was|were)\s+/i,
   /^you\s+/i,
+  /^(?:you|we|it|they|he|she)(?:'ve|'re|'s|'ll|'d)\s+/i,
   /^(?:want|wanna|need|like|fancy|feel\s+like|mind|care)\s+(?:to\s+|for\s+|if\s+)?/i,
   /^(?:me|us)\s+to\s+/i,
   /^(?:just|still|really|maybe|perhaps|also)\s+/i,
