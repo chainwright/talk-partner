@@ -427,6 +427,8 @@ const COPY = {
         listed: 'the answers the partner named after the question, read in code',
         people: 'a question about who it was, which only they know: the people About me names, nothing made up',
       },
+      /** Where a family entry that replaced a model's general word came from. */
+      ownKind: (general: string) => `About me: the family's own, in place of "${general}"`,
       headlineFrom: {
         model: "the model's topic",
         pair: 'the shared topic of the two options',
@@ -456,6 +458,7 @@ const COPY = {
         optionsFailed: 'failed the label check',
         filler: 'not a choice: a filler word, or a phrase that breaks off',
         besideOwn: "a model's guess is not put beside the family's own entries",
+        ownSpecific: "a general word: About me has the family's own kind of it",
         cloudUnfit: "the cloud's choices did not hold up; the card made on this computer is kept",
       },
     },
@@ -650,6 +653,7 @@ const COPY = {
     negativeAsked: 'Your question had a "not" in it. The card asks it the plain way, so yes means yes.',
     optOutAsked: 'Asked as one yes / no question: the "or …?" at the end is the "no" on the card.',
     listedAll: 'You named three, so all three are on the card.',
+    ownAll: 'All three are the family\'s own, from About me, so they share one card.',
     leadIn: 'The first part tells them something; the card asks the question that follows it.',
     noticeLead: 'The first part points at something; the card asks the question that follows it.',
     listedByYou: 'You named the answers after the question, so exactly those are on the card.',

@@ -10,7 +10,7 @@ import { cloudPrompt, devicePrompt } from './prompt';
 import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, wholePair, codePairRead, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
-  contactPool, dropGenericWho, fromAboutMe, isUnguessable, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
+  contactPool, dropGenericWho, fromAboutMe, ownFirst, ownSpecific, placesFirst, isUnguessable, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
   besideOwnFilter, codeOptions, contactFirst, dropWhichOne, fillerFilter, whenChoices, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
@@ -135,6 +135,11 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
     }
   };
   let answers = raw.map((c) => snapToProfile(c.replace(/[.!?]+$/, '').trim(), profile)).filter(Boolean);
+  // a general word gives way to the family's own kind of it, when About me has exactly one ("chair" -> "recliner")
+  const own = ownSpecific(answers, asked, profile);
+  for (const sw of own.swapped) { drop(sw.from, R.ownSpecific); why.added.push({ label: sw.to, from: W.ownKind(sw.from) }); }
+  answers = own.answers;
+  const ownKept = new Set(own.swapped.map((sw) => lc(sw.to)));
   let next = answers.filter((c) => lc(c) !== lc(topic));
   diff(answers, next, R.sameAsTopic); answers = next;
   const seen = new Set<string>();
@@ -161,7 +166,7 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
   const fill = fillerFilter(answers, asked);
   for (const d of fill.dropped) drop(d, R.filler);
   answers = fill.kept;
-  const kind = wrongListFilter(answers, asked, profile);
+  const kind = wrongListFilter(answers, asked, profile, ownKept);
   if (kind.dropped.length) rejected.push("a choice didn't fit the question");
   for (const d of kind.dropped) drop(d, R.wrongList);
   answers = kind.kept;
@@ -176,9 +181,11 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
     answers = [];
   }
   next = overlapFilter(answers, profile); diff(answers, next, R.overlap); answers = next;
-  const own = besideOwnFilter(answers, asked, profile);
-  for (const d of own.dropped) drop(d, R.besideOwn);
-  answers = own.kept;
+  const beside = besideOwnFilter(answers, asked, profile);
+  for (const d of beside.dropped) drop(d, R.besideOwn);
+  answers = beside.kept;
+  // the family's own entries first: a model's general word never pushes one of them to the next page
+  answers = ownFirst(answers, profile);
   next = answers.slice(0, 3); diff(answers, next, R.overThree); answers = next;
   // §2.6: a generic "stay home / go out" is not a place when About me has places to offer instead
   const placed = dropGenericWhere(answers, asked, profile);
@@ -196,6 +203,11 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
   let peopleAdded = false;
   for (const a of people) if (!answers.some((b) => lc(b) === lc(a))) { why.added.push({ label: a, from: 'people from About me' }); peopleAdded = true; }
   answers = people;
+  // where to go: the places About me names stand first, a model's general places after them
+  const places = placesFirst(answers, asked, profile);
+  let placesAdded = false;
+  for (const a of places) if (!answers.some((b) => lc(b.replace(/^the\s+/i, '')) === lc(a))) { why.added.push({ label: a, from: 'places from About me' }); placesAdded = true; }
+  answers = places;
   if (negs.length && answers.length < 2) rejected.push('negative wording');
   // §2.6: fewer than two answers -> fill from the About-me list of the same kind, or the fixed set for the question type
   let filled: string | null = null;
@@ -208,6 +220,7 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
     }
   }
   if (peopleAdded && !filled) filled = 'people from About me';
+  if (placesAdded && !filled) filled = 'places from About me';
   if (droppedGeneric && !filled) rejected.push("a choice didn't fit the question");
   return { answers, rejected: [...new Set(rejected)], filled };
 }
@@ -359,6 +372,7 @@ export function assemble(
   let filled: string | null = null;
   let headline = topic;
   let decided: string;
+  let ownAll = false;
   if (pair) {
     answers = [...pair]; // rule 3: exactly the options the partner offered
     // §2.5: the shared topic, never one of the options. The model's topic may be the headline only when the options
@@ -380,9 +394,13 @@ export function assemble(
       headlineFrom = W.headlineFrom.question;
       if (answers.some((a) => lc(a) === lc(headline))) headline = 'choices';
     }
+    // Exactly three of the family's own entries share one card, also at "2 at a time" (not at the largest tiles, and
+    // not people, who are paged two at a time): set E, second run, 17 Nov, an About-me place stood on the next page
+    // of a card that showed two of the three. Four or more are paged as before.
+    ownAll = support !== 'most' && questionType(asked) !== 'who' && answers.length >= 3 && answers.slice(0, 3).every((a) => !!fromAboutMe(a, profile)) && !fromAboutMe(answers[3] ?? '', profile);
     // the support level's limit (the same cut finish() makes), recorded here so the why says which choice it moved:
     // a choice over the limit is not thrown away, it goes to the next page (below)
-    for (const a of answers.slice(choiceCap(support))) track.dropped.push({ label: a, rule: W.rules.overCap });
+    for (const a of answers.slice(ownAll ? 3 : choiceCap(support))) track.dropped.push({ label: a, rule: W.rules.overCap });
   }
   const r = route('choice', asked, answers, !!pair, meta.routing);
   if (!pair && offersOptions(asked)) rejected.push('either-or options not found');
@@ -397,7 +415,7 @@ export function assemble(
   }
   // A card from the private step whose every answer is an About-me entry stays on this computer: the cloud step never
   // sees About me, so its card could only be a generic one. What the rules dropped on the way is still in the "why".
-  const shown = answers.slice(0, choiceCap(support));
+  const shown = answers.slice(0, ownAll ? 3 : choiceCap(support));
   if (!pair && o && step === 'private' && r.to === 'cloud' && shown.length >= 2 && shown.every((a) => !!fromAboutMe(a, profile))) {
     notes.push(N.personalKept);
     r.to = 'device';
@@ -409,7 +427,7 @@ export function assemble(
   // waits on the next page; a fourth always does.
   // "nothing" / "not at all" / "the same" the partner named is never moved off the first page: it is the person's
   // way to decline, and on a next page it reads as not offered (set E, 16 Nov: "Tea, coffee, or water, or nothing?")
-  const capReal = pair && pair.length >= 3 && support !== 'most' ? 3 : choiceCap(support);
+  const capReal = (pair && pair.length >= 3 && support !== 'most') || ownAll ? 3 : choiceCap(support);
   const noneAt = pair ? answers.findIndex(isNoneOption) : -1;
   const real = noneAt >= 0 ? answers.filter((_, i) => i !== noneAt) : answers;
   const rest = real.slice(capReal);
@@ -417,6 +435,7 @@ export function assemble(
   const cap = noneAt >= 0 ? Math.min(real.length, capReal) + 1 : capReal;
   if (pair) for (const a of rest) track.dropped.push({ label: a, rule: W.rules.overCap });
   if (pair && pair.length >= 3 && cap > choiceCap(support)) notes.push(N.listedAll);
+  if (ownAll && cap > choiceCap(support)) notes.push(N.ownAll);
   if (rest.length) notes.push(N.moreOnNext(rest.join(', '), escape));
   const card = finish({ ...base, notes, topic: headline, kind: 'choice', route: r }, answers, [escape], profile, support, cap);
   card.why = whyFor(card, proposal(o, step), decided, headlineFrom, track, profile);

@@ -1853,7 +1853,7 @@ function aboutList(label: string, profile: Profile): string | null {
  * Since set D of 16 Nov the check is the other way round: an entry stays only where the question invites its list
  * (see aboutFit below). Returns the kept choices and the dropped ones.
  */
-export function wrongListFilter(choices: string[], q: string, profile: Profile): { kept: string[]; dropped: string[] } {
+export function wrongListFilter(choices: string[], q: string, profile: Profile, keep: Set<string> = new Set()): { kept: string[]; dropped: string[] } {
   const fits = aboutFit(q);
   if (!fits) return { kept: choices, dropped: [] };
   const kept: string[] = [];
@@ -1862,9 +1862,84 @@ export function wrongListFilter(choices: string[], q: string, profile: Profile):
     const list = aboutList(c, profile);
     // an entry the partner named in the question is theirs to offer, whatever its list ("… about Scarborough?")
     const named = new RegExp(`(?<![\\p{L}\\p{N}])${esc(c.trim().replace(/^the\s+/i, ''))}(?![\\p{L}\\p{N}])`, 'iu').test(q);
-    (list && list !== 'people' && !fits.has(list) && !named ? dropped : kept).push(c);
+    // (`keep`: an entry code put in for a general word the model offered for this very question, see ownSpecific)
+    (list && list !== 'people' && !fits.has(list) && !named && !keep.has(lc(c)) ? dropped : kept).push(c);
   }
   return { kept, dropped };
+}
+
+/** A general word, and the last word(s) of an About-me entry that is a kind of it. Short on purpose: everyday things only. */
+const KIND_OF: [RegExp, RegExp][] = [
+  [/^(?:chair|seat|my chair)$/i, /\b(?:recliner|rocker|rocking\s+chair|armchair|easy\s+chair|wheelchair|wing\s+chair)$/i],
+  [/^(?:paper|read|reading|read\s+(?:a\s+|the\s+|my\s+|some\s+)?(?:book|books|paper|news|something))$/i, /\b(?:newspaper|paper|magazine|crossword|bible|journal|gazette|times|herald|post|tribune|mail|telegraph|guardian|echo|news|digest)$/i],
+  [/^(?:shop|shops|store|stores|shopping|go\s+shopping)$/i, /\b(?:store|shop|market|supermarket|mall)$/i],
+  [/^(?:in\s+)?(?:pain|sore|ache|aches|hurts|hurting)$/i, new RegExp(`\\b${BODY_PARTS}$`, 'i')],
+];
+
+/**
+ * A general word a model offered gives way to the family's own kind of it, when About me holds exactly one: "jacket"
+ * to "tweed jacket" (the entry ends with the word), "chair" to "rocking chair", "read book" to the paper they take,
+ * "pain" to the knee that is the trouble (the short table above). Set E, second run, 17 Nov: "chair" where the man
+ * wanted his recliner, "shirt" for the flannel shirt. Code never guesses between two entries, and an entry found by
+ * its last word alone is put in only where the question invites its list (aboutFit): "eggs" stays "eggs" at
+ * breakfast, although the family's dinners hold "scrambled eggs". Returns the new list and what was swapped.
+ */
+export function ownSpecific(choices: string[], q: string, profile: Profile): { answers: string[]; swapped: { from: string; to: string }[] } {
+  const entries = [...profile.foods, ...profile.places, ...profile.tv, ...profile.music, ...(profile.other ?? [])].map((e) => e.replace(/^the\s+/i, '').trim()).filter(Boolean);
+  const swapped: { from: string; to: string }[] = [];
+  if (!entries.length || offersOptions(q)) return { answers: choices, swapped };
+  const fits = aboutFit(q);
+  const out: string[] = [];
+  for (const c of choices) {
+    const b = lc(c).replace(/^(?:the|a|an|my|your|our|some)\s+/, '').trim();
+    const bw = words(b);
+    // a name is no general word, and a word the partner used in the question is hers to offer as she said it
+    const asked = new RegExp(`(?<![\\p{L}\\p{N}])${esc(b)}(?![\\p{L}\\p{N}])`, 'iu').test(q);
+    if (!bw.length || /\p{Lu}/u.test(c) || asked || fromAboutMe(c, profile) || findPerson(c, profile) || isPartnerName(c, profile)) { out.push(c); continue; }
+    const byKind = entries.filter((e) => lc(e) !== b && KIND_OF.some(([general, kind]) => general.test(b) && kind.test(e)));
+    const byHead = bw.length <= 2 && bw.every((w) => w.length > 2 && !STOP.has(w)) ? entries.filter((e) => {
+      const ew = words(e);
+      const list = fromAboutMe(e, profile);
+      return ew.length > bw.length && bw.every((w, i) => stem(ew[ew.length - bw.length + i]) === stem(w)) && (!fits || (!!list && fits.has(list)));
+    }) : [];
+    const hits = [...new Set([...byKind, ...byHead])];
+    if (hits.length !== 1) { out.push(c); continue; }
+    swapped.push({ from: c, to: hits[0] });
+    if (!out.some((o) => lc(o.replace(/^the\s+/i, '')) === lc(hits[0]))) out.push(hits[0]);
+  }
+  // the entry itself, offered next to its general word, is on the list once
+  const seen = new Set<string>();
+  return { answers: out.filter((o) => { const k = lc(o.replace(/^the\s+/i, '')); return !seen.has(k) && !!seen.add(k); }), swapped };
+}
+
+/** The family's own entries before a model's general words, each group in the order it came. */
+export function ownFirst(choices: string[], profile: Profile): string[] {
+  const own = choices.filter((c) => !!fromAboutMe(c, profile));
+  return own.length && own.length < choices.length ? [...own, ...choices.filter((c) => !fromAboutMe(c, profile))] : choices;
+}
+
+/** What a "where shall we go" question is for, when it is not just going out: then the family's places are no answer. */
+const NOT_AN_OUTING = /\b(?:holidays?|vacation|honeymoon|abroad|travel\w*|trip|cruise|retire\w*|move|live|eat|eating|lunch|dinner|breakfast|supper|coffee|tea|drink|meal|bite|shop|shops|shopping|buy|get\s+(?:a|an|some|your|my|the|you|me)|haircut|hair|doctor|dentist|appointment|sit|sleep|bed|park\s+the|put|hang|keep|next\s+year|one\s+day|if\s+you\s+could|ever)\b/i;
+/** "Where do you want to go today?", "Where shall we head off to?": an open question about going out, nothing more. */
+export function isOutingWhere(q: string): boolean {
+  return questionType(q) === 'where' && !offersOptions(q) && GO_Q.test(q) && !NOT_AN_OUTING.test(q) && !PAST_LIFE.test(q) && !isQuiz(q);
+}
+/**
+ * On an open "where shall we go" question the places About me names all stand on the card, first and in About-me
+ * order; a place a model offered comes after them. Set E, second run, 17 Nov: with cloud help only, the second half
+ * of "…, and if so where?" read "park / cafe": the cloud never sees About me, and its two general places were enough
+ * to keep the family's own off the card (they were put in only when the cloud's words were dropped). The cloud still
+ * gets the question alone. Not for a question that asks more than that (lunch, a holiday, shopping, where to sit).
+ * The same on this computer when the model there offered no About-me place at all.
+ */
+export function placesFirst(answers: string[], q: string, profile: Profile): string[] {
+  const pool = profile.places.map((p) => p.replace(/^the\s+/i, '').trim()).filter(Boolean);
+  if (pool.length < 2 || !isOutingWhere(q)) return answers;
+  // a step that saw About me and chose among the places (the on-device model) keeps its choice: the places are put
+  // in only where the answer holds none of them, which is every answer of the cloud step
+  const have = new Set(pool.map(lc));
+  if (answers.some((a) => have.has(lc(a.replace(/^the\s+/i, '').trim())))) return answers;
+  return [...pool, ...answers];
 }
 
 /**

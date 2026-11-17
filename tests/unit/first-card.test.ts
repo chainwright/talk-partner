@@ -78,7 +78,9 @@ describe('the first step judge mode runs by itself after that card', () => {
     expect(e.calls).toEqual(['device']);
     expect(c.source).toBe('on-device');
     expect(c.blocked).toBeFalsy();
-    expect(c.why?.personal).toEqual(['the lake', 'church']);
+    // (since 17 Nov the three places the model named share the card; before, the third stood on the next page)
+    expect(c.why?.personal).toEqual(['the lake', 'church', 'hardware store']);
+    expect(c.nextPage ?? null).toBeNull();
     expect(c.trace?.find((t) => t.step === 'private')).toMatchObject({ ran: 'on-device', used: true });
     expect(cardReceipt(c, SAMPLE_PROFILE).left).toBe(false);
   });

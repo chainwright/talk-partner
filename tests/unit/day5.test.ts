@@ -109,7 +109,8 @@ describe('"why this card" is written from the values the rules worked on', () =>
     const c = await makeCard('Where would you like to go on Saturday?', env(new Fake(dev)));
     consistent(c, dev);
     expect(c.why!.dropped).toEqual([{ label: 'stay home', rule: W.rules.genericWhere }, { label: 'go out', rule: W.rules.genericWhere }]);
-    expect(c.why!.added.map((a) => a.label)).toEqual(['lake', 'church']);
+    // (since 17 Nov all three of the family's places stand on the card, not the first two)
+    expect(c.why!.added.map((a) => a.label)).toEqual(['lake', 'church', 'hardware store']);
     expect(c.why!.kept).toEqual([]);
   });
   it('either-or: the model\'s copied options are kept and its loose choices dropped', async () => {

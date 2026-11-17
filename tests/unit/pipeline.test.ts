@@ -103,9 +103,12 @@ describe('device card', () => {
   });
 
   it('"more support" shows two answers and one escape', async () => {
-    const e = new FakeEngine(true, { topic: 'tea', kind: 'choice', choices: ['lamb', 'rice', 'salad'] });
+    const e = new FakeEngine(true, { topic: 'tea', kind: 'choice', choices: ['lamb', 'soup', 'pasta'] });
     const c = await makeCard('What would you like for tea tonight?', env(e, { support: 'more' }));
-    expect(labels(c)).toEqual(['lamb', 'rice', 'something else']);
+    expect(labels(c)).toEqual(['lamb', 'soup', 'something else']);
+    // since 17 Nov: exactly three of the family's own About-me entries share one card at this level
+    const own = await makeCard('What would you like for tea tonight?', env(new FakeEngine(true, { topic: 'tea', kind: 'choice', choices: ['lamb', 'rice', 'salad'] }), { support: 'more' }));
+    expect(labels(own)).toEqual(['lamb', 'rice', 'salad', 'something else']);
   });
 
   it('"most support" shows two answers and one escape', async () => {

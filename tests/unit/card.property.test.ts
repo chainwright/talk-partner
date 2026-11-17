@@ -6,7 +6,7 @@ import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { pictureFor } from '../../core/pictures';
 import { makeCard } from '../../core/pipeline';
 import { cloudTextRequest } from '../../core/requests';
-import { codePair, hasNegative } from '../../core/rules';
+import { codePair, fromAboutMe, hasNegative } from '../../core/rules';
 import { findLeaks, hasPlaceholder, isGenericWord } from '../../core/strip';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 
@@ -123,7 +123,9 @@ describe('property: card invariants over random questions, model output and engi
         expect(ans.length, ctx).toBeGreaterThanOrEqual(2);
         // (a feeling scale keeps its middle at every level: three steps on one line)
         // (so does the fixed line of three times an open "when" question gets)
-        expect(ans.length, ctx).toBeLessThanOrEqual(card.kind === 'feeling' || card.notes.includes(COPY.notes.timeLine) ? 3 : cap(support));
+        // (and, since 17 Nov, exactly three of the family's own About-me entries: they share one card, and the card says so)
+        expect(ans.length, ctx).toBeLessThanOrEqual(card.kind === 'feeling' || card.notes.includes(COPY.notes.timeLine) || card.notes.includes(COPY.notes.ownAll) ? 3 : cap(support));
+        if (card.notes.includes(COPY.notes.ownAll)) { expect(support, ctx).not.toBe('most'); for (const a of ans) expect(fromAboutMe(a.label, PROFILE), ctx).toBeTruthy(); }
       }
       // no negative words (the yes / no card's own "no" is the one exception), no "both" (no body sides in these
       // questions), no placeholder, never the headline

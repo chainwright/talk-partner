@@ -33,7 +33,8 @@ describe('§2.6: allowed sources for an open question', () => {
     expect(dropGenericWhere(['stay home', 'go out'], 'Where would you like to go on Saturday?', { ...SAMPLE_PROFILE, places: [] })).toEqual(['stay home', 'go out']);
     const e = new Fake(choice(['stay home', 'go out'], 'Saturday'));
     const c = await makeCard('Where would you like to go on Saturday?', env(e));
-    expect(labels(c)).toEqual(['lake', 'church', 'somewhere else']);
+    // (since 17 Nov: all three of the family's places, on one card)
+    expect(labels(c)).toEqual(['lake', 'church', 'hardware store', 'somewhere else']);
     expect(c.route.to).toBe('device');
     expect(e.cloudCalls).toHaveLength(0);
     expect(c.notes.join(' ')).toMatch(/completed from places from About me/);
