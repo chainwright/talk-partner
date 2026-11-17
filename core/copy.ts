@@ -354,6 +354,8 @@ const COPY = {
         fixed: 'a fixed card: the model\'s choices are not used',
         orOnly: 'either-or: only the two options the question names',
         optionsFailed: 'failed the label check',
+        filler: 'not a choice: a filler word, or a phrase that breaks off',
+        besideOwn: "a model's guess is not put beside the family's own entries",
         cloudUnfit: "the cloud's choices did not hold up; the card made on this computer is kept",
       },
     },

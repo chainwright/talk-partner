@@ -1929,6 +1929,39 @@ export function whenChoices(q: string, profile?: Profile): string[] | null {
   return ['now', 'in a while', 'later today'];
 }
 
+const FILLER = /^(?:(?:the|some|any|an?)\s+)?(?:other|others|another|something|anything|everything|else|etc|misc|miscellaneous|more|stuff|things?|none|various|whatever|house|home|items?|options?|choices?|n\/a|unknown|other\s+(?:things?|stuff|options?|items?))$/i;
+const BREAKS_OFF = /\s(?:about|to|for|with|of|the|a|an|and|or|at|on|from|by|into)$/i;
+/**
+ * Words a model adds to make up the number, which are no choice at all: "other", "something", "things", or a phrase
+ * that breaks off ("talk about"). Set E, 16 Nov: the next page of a dinner card held "cheese", "house", "other".
+ * ("house" / "home" are fillers only where the question is not about a place.)
+ */
+export function fillerFilter(choices: string[], q: string): { kept: string[]; dropped: string[] } {
+  const where = questionType(q) === 'where';
+  const kept: string[] = [];
+  const dropped: string[] = [];
+  for (const c of choices) {
+    const t = c.trim();
+    const filler = (FILLER.test(t) && !(where && /^(?:(?:the|at)\s+)?(?:house|home)$/i.test(t))) || (BREAKS_OFF.test(t) && !PHRASAL.has(lc(t.split(/\s+/).slice(-2)[0] ?? '')));
+    (filler ? dropped : kept).push(c);
+  }
+  return { kept, dropped };
+}
+
+/**
+ * When the card already holds two or more of the family's own entries for this kind of question (their foods on a
+ * meal question, their places, shows, music), a general word a model put after them is dropped: it was the model's
+ * third guess, not something the family listed, and on the next page it reads as if it were theirs. People are the
+ * exception: on a "who to call" card a role ("doctor") after the family is a real choice.
+ */
+export function besideOwnFilter(choices: string[], q: string, profile: Profile): { kept: string[]; dropped: string[] } {
+  const own = choices.filter((c) => { const l = fromAboutMe(c, profile); return !!l && l !== 'people'; });
+  if (own.length < 2 || questionType(q) === 'who') return { kept: choices, dropped: [] };
+  const named = (c: string) => new RegExp(`(?<![\\p{L}\\p{N}])${esc(c.trim().replace(/^the\s+/i, ''))}(?![\\p{L}\\p{N}])`, 'iu').test(q);
+  const kept = choices.filter((c) => !!fromAboutMe(c, profile) || named(c));
+  return { kept, dropped: choices.filter((c) => !kept.includes(c)) };
+}
+
 export function cleanTopic(t: string): string {
   return t.replace(/[^\w\s'-]/g, '').replace(/\s+/g, ' ').trim().split(' ').slice(0, 4).join(' ');
 }

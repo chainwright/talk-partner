@@ -78,14 +78,24 @@ describe('"why this card" is written from the values the rules worked on', () =>
   }
 
   it('an open card at "more": two kept, the third dropped over the limit', async () => {
+    // (one of the family's own and two general foods: since set E, 16 Nov, a general word after TWO of the family's
+    // own is dropped, see the next test)
+    const dev = choice(['pot roast', 'soup', 'salad'], 'tea tonight');
+    const c = await makeCard('What shall we have for tea tonight?', env(new Fake(dev)));
+    consistent(c, dev);
+    expect(c.why!.proposed).toEqual({ step: 'private', topic: 'tea tonight', kind: 'choice', choices: ['pot roast', 'soup', 'salad'], options: [] });
+    expect(c.why!.kept).toEqual(['pot roast', 'soup']);
+    expect(c.why!.dropped).toEqual([{ label: 'salad', rule: W.rules.overCap }]);
+    expect(c.why!.decided).toBe(W.decidedBy.open);
+    expect(c.why!.headline).toBe(W.headlineFrom.model);
+  });
+  it("a model's guess after two of the family's own entries is dropped, with its rule", async () => {
     const dev = choice(['pot roast', 'chili', 'soup'], 'tea tonight');
     const c = await makeCard('What shall we have for tea tonight?', env(new Fake(dev)));
     consistent(c, dev);
-    expect(c.why!.proposed).toEqual({ step: 'private', topic: 'tea tonight', kind: 'choice', choices: ['pot roast', 'chili', 'soup'], options: [] });
     expect(c.why!.kept).toEqual(['pot roast', 'chili']);
-    expect(c.why!.dropped).toEqual([{ label: 'soup', rule: W.rules.overCap }]);
-    expect(c.why!.decided).toBe(W.decidedBy.open);
-    expect(c.why!.headline).toBe(W.headlineFrom.model);
+    expect(c.why!.dropped).toEqual([{ label: 'soup', rule: W.rules.besideOwn }]);
+    expect(c.nextPage ?? null).toBeNull();
   });
   it('a negative choice, a household member and a filled choice each carry their rule or source', async () => {
     const dev = choice(['Carol', "don't know", 'Jenny'], 'call');

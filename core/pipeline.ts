@@ -11,7 +11,7 @@ import {
   BODY_DETAIL, BODY_REGIONS, FEELING_SCALES, PAIN_LEVELS, choiceCap, codePair, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   contactPool, dropGenericWho, fromAboutMe, isUnguessable, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
-  codeOptions, contactFirst, dropWhichOne, whenChoices, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
+  besideOwnFilter, codeOptions, contactFirst, dropWhichOne, fillerFilter, whenChoices, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
 import type { BodyRegion, Card, CardWhy, Choice, ModelOutput, Profile, Source, StepTrace, SupportLevel } from './types';
@@ -156,6 +156,9 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
   if (named.length < answers.length) rejected.push('made-up options');
   diff(answers, named, R.inventedName); answers = named;
   next = selfFilter(answers, asked, profile); diff(answers, next, R.self); answers = next;
+  const fill = fillerFilter(answers, asked);
+  for (const d of fill.dropped) drop(d, R.filler);
+  answers = fill.kept;
   const kind = wrongListFilter(answers, asked, profile);
   if (kind.dropped.length) rejected.push("a choice didn't fit the question");
   for (const d of kind.dropped) drop(d, R.wrongList);
@@ -171,6 +174,9 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
     answers = [];
   }
   next = overlapFilter(answers, profile); diff(answers, next, R.overlap); answers = next;
+  const own = besideOwnFilter(answers, asked, profile);
+  for (const d of own.dropped) drop(d, R.besideOwn);
+  answers = own.kept;
   next = answers.slice(0, 3); diff(answers, next, R.overThree); answers = next;
   // §2.6: a generic "stay home / go out" is not a place when About me has places to offer instead
   const placed = dropGenericWhere(answers, asked, profile);

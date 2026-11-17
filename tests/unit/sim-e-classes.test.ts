@@ -600,3 +600,39 @@ describe('E-12. no cut or glued labels, and no headline that is a leftover or th
     }
   });
 });
+
+describe('E-13. no filler tile on the next page', () => {
+  const everyPage = (c: Card) => { const out: string[] = []; for (let p: Card | null | undefined = c; p; p = p.nextPage) out.push(...answers(p)); return out; };
+  // set E: the next page of a dinner card held "cheese", "house", "other"; a card about telling someone held "talk about"
+  it.each([
+    ['What shall we cook tonight?', ['lamb', 'rice', 'other'], ['lamb', 'rice']],
+    ['What would you like for tea?', ['lamb', 'salad', 'house'], ['lamb', 'salad']],
+    ['What shall we have for dinner?', ['omelette', 'rice', 'cheese'], ['omelette', 'rice']],
+    ['What do you fancy watching?', ['cricket', 'westerns', 'something'], ['cricket', 'westerns']],
+    ['What shall I put on to listen to?', ['Elvis', 'opera', 'stuff'], ['Elvis', 'opera']],
+    ['Where shall we go on Saturday?', ['allotment', 'library', 'somewhere nice'], ['allotment', 'library']],
+  ])('%s: a guess after two of the family\'s own is not kept', async (q, proposed, want) => {
+    for (const engine of [new Scripted({ topic: 'x', kind: 'choice', choices: proposed }), new Scripted({ topic: 'x', kind: 'choice', choices: [...proposed].reverse() })]) {
+      const card = await ask(q, engine);
+      expect(everyPage(card).sort()).toEqual([...want].sort());
+      expect(card.why?.dropped.map((d) => d.label)).toContain(proposed[2]);
+    }
+  });
+  it.each([
+    ['What shall we do about the leak?', ['ring the plumber', 'wait', 'other'], ['ring the plumber', 'wait']],
+    ['What should I say to the neighbour?', ['thank you', 'talk about', 'sorry'], ['thank you', 'sorry']],
+    ['What do you want from the shop?', ['bread', 'things', 'milk'], ['bread', 'milk']],
+  ])('%s: a filler word or a phrase that breaks off is never a tile', async (q, proposed, want) => {
+    const card = await ask(q, new Scripted({ topic: 'x', kind: 'choice', choices: proposed }));
+    expect(everyPage(card)).toEqual(want);
+  });
+  it('a real third choice still waits on the next page, and a third entry of the family\'s own too', async () => {
+    const general = await ask('What shall we do about the leak?', new Scripted({ topic: 'leak', kind: 'choice', choices: ['ring the plumber', 'wait', 'mop it up'] }));
+    expect(everyPage(general)).toEqual(['ring the plumber', 'wait', 'mop it up']);
+    const own = await ask('What shall we cook tonight?', new Scripted({ topic: 'tea', kind: 'choice', choices: ['lamb', 'rice', 'salad'] }));
+    expect(everyPage(own)).toEqual(['lamb', 'rice', 'salad']);
+    // on a "who to call" card a role after the family is a real choice (E-9)
+    const who = await ask('Who shall I ring for you?', new Scripted({ topic: 'call', kind: 'choice', choices: ['Grace', 'doctor'] }));
+    expect(everyPage(who)).toContain('doctor');
+  });
+});
