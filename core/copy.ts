@@ -314,6 +314,98 @@ const COPY = {
     exact: 'Show the exact request',
   },
 
+  // The simple view (direction A, "One screen", 17 Nov 2026): what a carer on a phone sees at "/". It draws less than
+  // the full view and computes nothing: the same pipeline makes every card. Plain words only (the copy test holds this
+  // group to the main-screen rule: no product or mode names). Every privacy line here says what is sent, never
+  // "nothing else" or "only": the request also holds the app's fixed instructions (tests/unit/simple.test.ts).
+  // `about` is the About-me heading ("About Frank" / "About me"); `name` is the person's name, or ''.
+  simple: {
+    heading: 'Ask a question. Get a card they can point to.',
+    sub: 'For family and carers of an adult with aphasia: they understand you, but the words to answer may not come.',
+    with: (name: string) => `with ${name}`,
+    field: 'Type your question',
+    make: 'Make a card',
+    making: 'Making the card…',
+    tryHeading: 'Or ask one of these',
+    /** Three ready questions: two that code decides alone, one open question (the one that shows where the AI runs). */
+    tries: ['Do you want coffee or tea?', 'Are you in pain?', 'What do you want to do this weekend?'] as const,
+    tryNote: {
+      code: 'No AI: the app makes this card by its rules',
+      openDevice: 'Made by the AI built into Chrome on this computer',
+      openCloudOn: 'Uses online help',
+      openAsk: 'Needs online help: the app asks you first',
+      openChecking: 'An open question: it needs AI',
+      openNone: 'An open question: it needs AI, and this copy has none',
+    },
+    needs: 'Quick needs',
+    needsSub: 'Toilet, drink, pain… one tap, no typing',
+    offer: 'Put their people on the cards',
+    offerGo: (has: boolean) => (has ? 'Change details' : 'Add details'),
+    offerSub: 'Their name, family and places. They stay on this computer.',
+    inside: 'See how it works inside',
+    madeLink: 'How was this card made?',
+    back: 'New question',
+    step1: 'Say this out loud',
+    step2: (name: string) => `Show ${name || 'them'} the card`,
+    tip: 'Point to each choice as you say it. Then wait. There is no rush.',
+    tipExit: (name: string) => `To come back from ${name ? `${name}'s` : 'their'} screen, press and hold the cross in the corner.`,
+    lessHint: (name: string) => `"Hide the choices" lets ${name || 'them'} try to say it first.`,
+    chose: (name: string) => `${name || 'They'} chose and said yes to`,
+    another: 'Ask another question',
+    recap: 'Go over the answers',
+    today: 'Today',
+    noCard: 'No card for this one',
+    askChoice: 'Or ask it as a choice, with both options in the question: "This, or that?"',
+    useOnline: 'Use online help for this question',
+    /** Where this card was made: one sentence for who made it, one for what left. Read from the card, never assumed. */
+    made: {
+      code: "Made by the app's rules on this computer. No AI used.",
+      codeAsked: "Made by the app's rules on this computer. An AI was asked first, and its answer was not used.",
+      device: 'Made by the AI built into Chrome on this computer.',
+      devicePersonal: (about: string) => `Made by the AI built into Chrome on this computer, from ${about}.`,
+      offline: 'Made by the AI built into Chrome on this computer: the connection was down.',
+      cloud: "Made with online help: Google's AI suggested the choices.",
+      none: 'No card was made.',
+    },
+    left: {
+      nothing: 'Nothing was sent.',
+      sent: (about: string) => `Sent to Google: your question, with any names you listed swapped out, and the app's fixed instructions. Nothing from ${about}.`,
+      maybe: 'Online help was asked and did not answer: your question may have left this computer.',
+      voice: 'You spoke this question: its recording went to Google to be typed out.',
+    },
+    /** The line at the foot of the first screen and the answered screen: by what has happened this session. */
+    privacy: {
+      none: 'Nothing you asked has left this computer.',
+      cloudOn: 'No question has left this computer.',
+      settings: 'Online help is on, so the app asked for its settings online (no question in that).',
+      sent: (n: number) => `${n} question${n === 1 ? '' : 's'} went to Google's online AI this session, with any names you listed swapped out.`,
+      maybe: (n: number) => `${n} more may have left this computer: online help was asked and did not answer.`,
+      voice: (n: number) => `${n} spoken question${n === 1 ? '' : 's'} went to Google as a recording, to be typed out.`,
+      answers: 'Answers are kept on this computer only.',
+    },
+    /** Where the AI runs, in one line on the first screen: by what this browser has and whether online help is on. */
+    where: {
+      checking: "Simple questions (yes / no, either-or, pain): the app's rules make the card on this computer, no AI.",
+      device: (about: string) => `Simple questions: the app's rules make the card, no AI. Open questions: the AI built into Chrome makes it on this computer, from ${about}. Nothing is sent for either.`,
+      deviceCloudOn: (about: string) => `Simple questions: the app's rules make the card, no AI. Open questions: the AI built into Chrome makes it on this computer, from ${about}. Online help is on: a weak card gets a second try from Google's online AI, which never sees ${about}.`,
+      cloudOff: "Simple questions (yes / no, either-or, pain): the app's rules make the card on this computer, no AI. Open questions need online help, and the app asks you first. On a computer with Chrome's built-in AI they are made there, and nothing is sent.",
+      cloudOn: (about: string) => `Simple questions: the app's rules make the card on this computer, no AI. Open questions go to Google's online AI, with any names you listed swapped out; it never sees ${about}. Online help is on.`,
+      noConfig: "This copy has no AI set up. Simple questions (yes / no, either-or, pain) still make cards, by the app's rules.",
+    },
+    about: {
+      sub: (name: string) => `${name ? `${name}'s` : 'Their'} people and places go onto the cards. On a computer with Chrome's built-in AI, their foods and favourites shape the choices too.`,
+      lock: 'Everything here stays on this computer.',
+      rows: { names: 'Their name, and yours', people: 'Family and friends', foods: 'Food and drink they like', places: 'Places, TV and music' },
+      none: 'Nothing added yet',
+      change: 'Change',
+      add: 'Add',
+      more: 'Photos, answers so far and "Delete everything" are inside:',
+      moreLink: 'Open the full page',
+    },
+    /** The way back from the full view, on every screen of it. */
+    backSimple: 'Simple view',
+  },
+
   welcome: {
     heading: 'Talk Partner',
     /** Who this is for and why, in one line, before anything else. */
@@ -348,6 +440,29 @@ const COPY = {
     turnOff: 'Turn off cloud help',
     isOn: 'Cloud help is on. One tap turns it off.',
     isOff: 'Cloud help is off.',
+    /**
+     * The same decision, asked in the simple view at the moment a question needs it (a sheet over the screen). One
+     * button turns cloud help on; the page above keeps its tick box. Everything that decides it is on the sheet, above
+     * the buttons: the line that would go, what else is in the request, what can be missed, who receives it, the data
+     * use. It never says "nothing else" or "only the question" (the request also holds the fixed instructions).
+     */
+    sheet: {
+      heading: 'This question needs online help',
+      bodyNoDevice: (about: string) => `This computer has no AI of its own for open questions. Google's Gemini, through Firebase AI Logic, can suggest general choices. It never sees ${about}.`,
+      bodyDevice: (about: string) => `The AI on this computer made no card for this one. Google's Gemini, through Firebase AI Logic, can suggest general choices. It never sees ${about}.`,
+      goes: 'This is the line that would go:',
+      sentLabel: 'Sent to Google:',
+      sent: 'that line, and the app\'s fixed instructions. Names you listed are swapped first ("Person A"). Other names are guessed and can be missed; the rest goes as you typed it, so leave out health details.',
+      neverLabel: 'Never sent:',
+      never: (about: string) => `your ${about} lists, photos, who lives at home, the answers on the cards.`,
+      dataLabel: 'Data use:',
+      data: "Google's free tier: Google may use what is sent to improve its products.",
+      yes: 'Yes, send open questions to Google',
+      no: 'No, not for this question',
+      after: 'It stays on until you turn it off (inside, under Cloud help). With it on, the app also asks Firebase once for its settings: no question is in that.',
+      exact: 'See the exact request',
+      terms: "Google's data terms",
+    },
     pictures: 'Pictures from the cloud are not part of this version: every picture is built in.',
     scope: 'This choice is kept only on this computer. "Delete everything on this computer" also resets it.',
   },
@@ -694,6 +809,75 @@ const COPY = {
     },
   },
 } as const;
+
+// ---------------------------------------------------------------- this phone / this tablet / this computer
+// The strings above say "this computer". On a phone or a tablet that is the wrong word, so the client names its
+// device once (`setCopyDevice`) and every string, and every string a copy function returns, follows. The default is
+// 'computer': the text above, unchanged (Node, the tests, a desktop browser).
+
+export type DeviceKind = 'computer' | 'phone' | 'tablet';
+
+/**
+ * Which word fits the device, from what the browser reports. Tablets first: an iPad's user agent also says "Mobile",
+ * an Android tablet's says "Android" without "Mobile", and iPadOS can pose as a Mac (then it has a touch screen).
+ */
+export function deviceKindFrom(n: { userAgent?: string; mobile?: boolean; platform?: string; maxTouchPoints?: number }): DeviceKind {
+  const ua = n.userAgent ?? '';
+  if (/iPad|Tablet|PlayBook|Silk|Kindle/i.test(ua)) return 'tablet';
+  if (/Android/i.test(ua) && !/Mobile/i.test(ua)) return 'tablet';
+  if (n.platform === 'MacIntel' && (n.maxTouchPoints ?? 0) > 1) return 'tablet';
+  if (/Mobi|iPhone|iPod|Android/i.test(ua) || n.mobile === true) return 'phone';
+  return 'computer';
+}
+
+/**
+ * One sentence that is about where Gemini Nano can run, not about the device in hand: on a phone it must not read as
+ * "Gemini Nano on this phone".
+ */
+const NOT_THIS_DEVICE: [string, string][] = [
+  ['Gemini Nano on this computer reads About me', 'Gemini Nano reads About me on the device itself, where the browser has it (desktop Chrome)'],
+];
+
+/** "this computer" → "this phone" / "this tablet" in one string. */
+export function deviceWords(text: string, kind: DeviceKind): string {
+  if (kind === 'computer') return text;
+  let out = text;
+  for (const [from, to] of NOT_THIS_DEVICE) out = out.split(from).join(to);
+  return out.replace(/\b([Tt])his computer\b/g, `$1his ${kind}`);
+}
+
+type Node = Record<string, unknown>;
+const isObject = (v: unknown): v is Node => typeof v === 'object' && v !== null;
+function snapshot(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(snapshot);
+  if (isObject(v)) return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, snapshot(x)]));
+  return v;
+}
+/** A value with the device's word in every string of it (a copy function may return a string or an object of them). */
+function worded(v: unknown, kind: DeviceKind): unknown {
+  if (typeof v === 'string') return deviceWords(v, kind);
+  if (Array.isArray(v)) return v.map((x) => worded(x, kind));
+  if (isObject(v)) return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, worded(x, kind)]));
+  return v;
+}
+const ORIGINAL = snapshot(COPY) as Node;
+let device: DeviceKind = 'computer';
+
+function apply(target: Node | unknown[], source: Node | unknown[], kind: DeviceKind) {
+  for (const [k, v] of Object.entries(source)) {
+    const t = target as Node;
+    if (typeof v === 'string') t[k] = deviceWords(v, kind);
+    else if (typeof v === 'function') t[k] = kind === 'computer' ? v : (...a: unknown[]) => worded((v as (...x: unknown[]) => unknown)(...a), kind);
+    else if (isObject(v) || Array.isArray(v)) apply(t[k] as Node, v as Node, kind);
+  }
+}
+
+/** Names the device for every string in `COPY`, in place, so every module that imported it reads the same words. */
+export function setCopyDevice(kind: DeviceKind): void {
+  device = kind;
+  apply(COPY as unknown as Node, ORIGINAL, kind);
+}
+export const copyDevice = (): DeviceKind => device;
 
 export { COPY };
 export type Copy = typeof COPY;
