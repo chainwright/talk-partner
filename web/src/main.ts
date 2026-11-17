@@ -37,7 +37,8 @@ interface Settings {
 interface State {
   /** Never null: a copy with no project settings gets the rules-only engine (ai/pick.ts), so code cards still work. */
   engine: Engine;
-  device: DeviceStatus;
+  /** 'checking' until the browser has answered the capability query: nothing is said about this computer before that. */
+  device: DeviceStatus | 'checking';
   downloading: number | null;
   warming: boolean;
   profile: Profile;
@@ -72,7 +73,7 @@ interface State {
 const cfg = webConfig();
 const state: State = {
   engine: pickEngine(cfg),
-  device: 'unavailable',
+  device: 'checking',
   downloading: null,
   warming: false,
   profile: { ...EMPTY_PROFILE },
@@ -174,6 +175,7 @@ function statusLine(): string {
   if (!cfg) return `<span class="dot off"></span>${C.status.noConfig}`;
   if (state.warming) return `<span class="dot wait"></span>${C.status.warming}`;
   switch (state.device) {
+    case 'checking': return `<span class="dot wait"></span>${C.status.checking}`;
     case 'available': return `<span class="dot ok"></span>${C.status.ready}`;
     case 'downloading': return `<span class="dot wait"></span>${C.status.downloading(state.downloading !== null ? `: ${Math.round(state.downloading * 100)}%` : '')}`;
     case 'downloadable': return `<span class="dot wait"></span>${C.status.notDownloaded} <button class="link" data-act="download">${C.status.download}</button>`;
@@ -315,7 +317,7 @@ function chipGroups(): string {
  */
 function partnerScreen(): string {
   const c = state.card;
-  const judgeLine = state.demo ? `<details class="judge"><summary><b>${C.judge.label}</b> · ${C.how.tallyHeading}: ${C.how.tallyShort(tally())}</summary><p>${C.judge.intro}</p><p id="nodevice" ${state.device === 'available' ? 'hidden' : ''}>${C.judge.noDevice}</p></details>` : '';
+  const judgeLine = state.demo ? `<details class="judge"><summary><b>${C.judge.label}</b> · ${C.how.tallyHeading}: ${C.how.tallyShort(tally())}</summary><p>${C.judge.intro}</p><p id="nodevice" ${state.device === 'available' || state.device === 'checking' ? 'hidden' : ''}>${C.judge.noDevice}</p></details>` : '';
   return `${nav()}
 <main class="layout">
   <section class="partner" aria-label="Partner">
@@ -499,6 +501,7 @@ function cloudScreen(): string {
 function welcomeDevice(): string {
   const W = C.welcome;
   if (!cfg) return `<p><span class="dot off"></span>${C.status.noConfig}</p>`;
+  if (state.device === 'checking') return `<p><span class="dot wait"></span>${C.status.checking}</p>`;
   if (state.device === 'available') return `<p><span class="dot ok"></span>${C.status.ready}</p>`;
   if (state.device === 'downloadable' || state.device === 'downloading') return `<p><span class="dot wait"></span>${statusLine().replace(/<span class="dot[^>]*><\/span>/, '')}</p>`;
   return `<p><span class="dot off"></span>${W.cantRun} ${C.status.deviceReason}</p>`;
@@ -571,12 +574,26 @@ function render() {
 function patchDevice() {
   const s = document.querySelector('#status'); if (s) s.innerHTML = statusLine();
   const d = document.querySelector('#device'); if (d) d.innerHTML = welcomeDevice();
-  const n = document.querySelector<HTMLElement>('#nodevice'); if (n) n.hidden = state.device === 'available';
+  const n = document.querySelector<HTMLElement>('#nodevice'); if (n) n.hidden = state.device === 'available' || state.device === 'checking';
 }
-async function refreshDevice() {
-  state.device = await state.engine.deviceStatus();
-  patchDevice();
-  void warm();
+/**
+ * Asks the browser whether it can run the private helper. Until the first answer the status line says "checking",
+ * never "can't run": the state used to start as 'unavailable', so a capable browser showed "This computer can't run
+ * the private helper" until the answer came, and for good if a redraw raced it. A browser that has just started can
+ * also answer "unavailable" for a moment before its model component is registered, so that answer is asked again
+ * twice (after 2 s and 6 s) before it stands. A capability query only: no inference, no network.
+ */
+let recheck = 0;
+let probing: Promise<void> | null = null;
+function refreshDevice(): Promise<void> {
+  return (probing ??= (async () => {
+    try {
+      state.device = await state.engine.deviceStatus();
+      patchDevice();
+      void warm();
+      if (state.device === 'unavailable' && cfg && recheck < 2) setTimeout(() => void refreshDevice(), recheck++ ? 4000 : 2000);
+    } finally { probing = null; }
+  })());
 }
 /**
  * Once per page load, when the private helper is there: load it into memory before the first question, so the first
@@ -595,6 +612,9 @@ async function warm() {
 async function make(q: string) {
   if (!q.trim()) return;
   state.busy = true; state.error = null; state.lastQuestion = q; resetCard(); render();
+  // a question asked before the capability check has answered waits for it: the card must not be made as if this
+  // computer could not run the private step
+  if (state.device === 'checking') await refreshDevice().catch(() => { state.device = 'unavailable'; });
   try {
     const card = await makeCard(q, {
       profile: state.profile, support: state.settings.support, engine: state.engine,
