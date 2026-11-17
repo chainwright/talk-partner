@@ -9,7 +9,7 @@ import { partnerActions } from '../../core/actions';
 import { makeCard } from '../../core/pipeline';
 import { badgeKind, modelAsked, sessionTally } from '../../core/receipt';
 import { cloudTextRequest, pictureRequestBody } from '../../core/requests';
-import { codeOptions, codePair, dropWhichOne, whenChoices, isUnguessable, listedAnswers, noticeLead, quizKind, quizRephrase, splitQuestion } from '../../core/rules';
+import { codeOptions, codePair, dropWhichOne, validateOptions, whenChoices, isUnguessable, listedAnswers, noticeLead, quizKind, quizRephrase, splitQuestion } from '../../core/rules';
 import type { Card, ModelOutput, Profile, SupportLevel } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -311,7 +311,7 @@ describe('E-5. three options, a "nothing" at the end, words before and after the
   });
   it('"the same" joins only a pair of opposite comparatives; "or not today" after one thing is still yes / no', async () => {
     expect(codeOptions('Do you want the big one or the small one?', PROFILE)).toEqual(['big one', 'small one']);
-    expect(codeOptions('Is it better or just different?', PROFILE)).toEqual(['better', 'just different']);
+    expect(codeOptions('Is it better or just different?', PROFILE)).toEqual(['better', 'different']);
     expect((await ask('Do you want a blanket, or not today?', new Scripted(null))).kind).toBe('yesno');
     // a model that copies the two ends gets the middle too
     const viaModel = await ask('Is your knee better or worse than last week?', new Scripted({ topic: 'knee', kind: 'choice', choices: ['better', 'worse'], options: ['better', 'worse'] }));
@@ -339,7 +339,7 @@ describe('E-6. the partner\'s name in the question means someone else is asking:
     });
   }
   it('a model that copies the options keeps her name too, with its possessive', async () => {
-    const card = await ask("Do you want the cricket on, or is Maria watching her programme?", new Scripted({ topic: 'telly', kind: 'choice', choices: [], options: ['cricket', "Maria's programme"] }));
+    const card = await ask("Do you want the cricket on, or shall we leave Maria's programme on?", new Scripted({ topic: 'telly', kind: 'choice', choices: [], options: ['cricket', "Maria's programme"] }));
     expect(answers(card)).toEqual(['cricket', "Maria's programme"]);
     expect(card.say).toContain("Maria's programme");
   });
@@ -552,5 +552,51 @@ describe('E-11. an open "when" question gets the same line of times in every eng
     expect(whenChoices('When shall we go, at 2 or at 4?', PROFILE)).toBeNull();
     expect(answers(await ask('When shall we go, at 2 or at 4?', new Scripted(null)))).toEqual(['at 2', 'at 4']);
     expect(whenChoices('Where shall we go this evening?', PROFILE)).toBeNull();
+  });
+});
+
+describe('E-12. no cut or glued labels, and no headline that is a leftover or the person\'s own name', () => {
+  // set E tiles: "your right", "turn the TV", "after eat", "Honey to sit", "one at Mercy Hospital", "text jen", "try"
+  // each row: the question, the tiles, and a copy of the kind the on-device model made (a piece cut out of an option)
+  const ROWS: [string, string[], string[]][] = [
+    ['Is it your right knee or your left that aches?', ['your right knee', 'your left knee'], ['right knee', 'your left']],
+    ['Shall I switch the fan on or just leave the window open?', ['switch the fan on', 'leave the window open'], ['switch the fan', 'window open']],
+    ['Do you want your eye drops before breakfast or after you wash?', ['before breakfast', 'after you wash'], ['before breakfast', 'after wash']],
+    ['Would you rather ring Grace or just write to her?', ['ring Grace', 'write to her'], ['ring grace', 'write grace']],
+    ['Should I do it for you or do you want to have a go yourself?', ['do it for you', 'have a go yourself'], ['do it', 'have']],
+    ['Do you want Peter to drive you on Friday, or Grace?', ['Peter', 'Grace'], ['Peter to drive', 'Grace']],
+    ['Do you want the chemist on Mill Lane or the one in the precinct?', ['chemist on Mill Lane', 'chemist in the precinct'], ['chemist on Mill Lane', 'one in the precinct']],
+    ['Do you want the striped shirt or the plain one?', ['striped shirt', 'plain shirt'], ['striped', 'plain one']],
+    ['Should Grace or Leo come with you to the dentist?', ['Grace', 'Leo'], ['Grace', 'come with you']],
+  ];
+  it.each(ROWS)('rules alone: %s', async (q, want) => {
+    expect(answers(await ask(q, new Scripted(null)))).toEqual(want);
+  });
+  it.each(ROWS)('a model that copies a piece of an option does not get it onto a tile: %s', async (q, want, cut) => {
+    const card = await ask(q, new Scripted({ topic: 'x', kind: 'choice', choices: cut, options: cut }));
+    expect(answers(card)).toEqual(want);
+  });
+  it('a copied option is refused when it is a piece of a longer phrase, and accepted when it is the whole of one', () => {
+    expect(validateOptions(['switch the fan', 'window'], 'Shall I switch the fan on or just leave the window open?', PROFILE)).toBeNull();
+    expect(validateOptions(['before breakfast', 'after wash'], 'Do you want your eye drops before breakfast or after you wash?', PROFILE)).toBeNull();
+    expect(validateOptions(['have', 'do it'], 'Should I do it for you or do you want to have a go yourself?', PROFILE)).toBeNull();
+    expect(validateOptions(['cricket', 'a record'], 'Do you want the cricket on, or shall I put a record on?', PROFILE)).toEqual(['cricket', 'record']);
+    expect(validateOptions(['the library', 'the market'], 'Shall we walk down to the library, or would you rather we went to the market?', PROFILE)).toEqual(['library', 'market']);
+  });
+  it('a name About me knows is written as About me writes it', async () => {
+    expect(answers(await ask('shall we ring grace or leo?', new Scripted(null)))).toEqual(['Grace', 'Leo']);
+  });
+  it('headlines: no leftover words, never the person\'s own name', async () => {
+    const tingle = await ask('Is it your right knee or your left that aches?', new Scripted(null));
+    expect(tingle.topic).toBe('aches');
+    expect((await ask('Do you wanna eat in the kitchen or the front room?', new Scripted(null))).topic).not.toMatch(/wanna/);
+    expect((await ask('Do you want the chemist on Mill Lane or the one in the precinct?', new Scripted(null))).topic).toBe('chemist');
+    // the cloud's topic for "… Person A?" comes back as the person's name: it is not a headline
+    for (const topic of ['Alan', "Alan's mind", 'Person A']) {
+      const card = await ask("What's on your mind, Alan?", new Scripted(null, { topic, kind: 'choice', choices: ['the news', 'the garden'] }));
+      expect(card.blocked ?? null).toBeNull();
+      expect(card.topic).not.toMatch(/Alan|Person A/);
+      expect(card.topic.length).toBeGreaterThan(0);
+    }
   });
 });

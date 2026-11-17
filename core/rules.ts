@@ -234,7 +234,8 @@ const TRAIL = /\s+(?:that|which|who|for|than)\b.*$/i;
 const FRAME = new Set(['you', 'like', 'want', 'to', 'we', 'i', 'me', 'would', 'do', 'does', 'shall', 'should', 'is', 'are', 'it', 'the', 'a', 'an', 'some', 'too', 'prefer', 'rather', 'have', 'could', 'can', 'will', 'be']);
 
 function cleanSide(x: string): string {
-  x = x.trim();
+  // "or just text her", "or maybe the red one": the adverb is not part of the option
+  x = x.trim().replace(/^(?:just|maybe|perhaps|else|rather)\s+(?=\S)/i, '');
   for (let i = 0; i < 4; i++) {
     const y = x.replace(LEAD, '');
     if (y === x) break;
@@ -392,7 +393,7 @@ function leftClause(left: string): string | null {
   return kept[0] ?? null;
 }
 
-const LABEL_BAD = new RegExp(`^(?:${AUX}\\s+(?:you|i|we|it|that|this|there|he|she|they|the|your)|what|where|who|when|which|how|why)\\b`, 'i');
+const LABEL_BAD = new RegExp(`^(?!do\\s+(?:it|that|this|the|your)\\b)(?:${AUX}\\s+(?:you|i|we|it|that|this|there|he|she|they|the|your)|what|where|who|when|which|how|why)\\b`, 'i');
 
 /**
  * Rule 3 (part). "A ..., or B ...?" is an either-or question even when the sides are long clauses. Each side is
@@ -405,8 +406,10 @@ export function clausePair(q: string): [string, string] | null {
   const left = leftClause(m[1]);
   if (!left) return null;
   const right = m[2].split(/\s*,\s*/)[0];
-  const a = clauseOption(left, right);
-  const b = clauseOption(right, left);
+  // "Wheel of Fortune on": "on" after a thing says it is switched on; the option is the thing ("turn the TV on" keeps it)
+  const offOn = (x: string) => { const w = x.split(/\s+/); return w.length > 1 && /^(?:on|off)$/i.test(w[w.length - 1]) && !w.slice(0, -1).some((v) => PHRASAL.has(lc(v))) ? w.slice(0, -1).join(' ') : x; };
+  const a = offOn(clauseOption(left, right));
+  const b = offOn(clauseOption(right, left));
   const aw = a.split(/\s+/).filter(Boolean);
   const bw = b.split(/\s+/).filter(Boolean);
   if (!aw.length || !bw.length || aw.length > 5 || bw.length > 5) return null;
@@ -416,7 +419,8 @@ export function clausePair(q: string): [string, string] | null {
 }
 
 const stem = (w: string) => lc(w).replace(/'s$/, '').replace(/(?:ing|ed|es|s)$/, '');
-const LEFTOVER_START = new RegExp(`^(?:is|was|are|were|am|do|does|did|would|will|can|could|should|shall|want|wanna|like|rather|prefer|fancy|mean|need|shall|should|would|will|could|can|going|gonna)\\b`, 'i');
+// ("do it for you", "do your exercises": there "do" is the verb of the option, not a question's auxiliary left over)
+const LEFTOVER_START = new RegExp(`^(?!do\\s+(?:it|that|this|your|my|the|some)\\b)(?:is|was|are|were|am|do|does|did|would|will|can|could|should|shall|want|wanna|like|rather|prefer|fancy|mean|need|shall|should|would|will|could|can|going|gonna)\\b`, 'i');
 // ("you" is not here: "help you", "come with you" are whole options; a leftover "do you" is caught by its first word)
 const LEFTOVER_END = /\b(?:to|for|at|with|of|the|a|an|and|or|have|be|going|get|do|is|are|was|were|your|i|we|my)$/i;
 // (a bare "you" is what is left of "thank you" or "help you" when a side is counted off one word short)
@@ -441,9 +445,50 @@ export function validateOptions(options: unknown, q: string, profile?: Profile):
     if (!ow.length || ow.length > 4) return null;
     if (!ow.every((w) => qw.has(w) || qs.has(stem(w)))) return null;
     if (LEFTOVER_START.test(o) || LEFTOVER_END.test(o) || PRONOUN_ONLY.test(o) || NEG.test(o)) return null;
+    if (clipped(o, q)) return null;
     out.push(o);
   }
-  return checkPair([out[0], out[1]], q, profile);
+  const pair = checkPair([out[0], out[1]], q, profile);
+  // where the code is sure of the two options (a time against a time clause, a name against a name), a copy that
+  // differs from them is not used
+  const sure = surePair(q, profile);
+  return pair && sure && (lc(pair[0]) !== lc(sure[0]) || lc(pair[1]) !== lc(sure[1])) ? null : pair;
+}
+
+/**
+ * True when a copied option is a piece cut out of a longer phrase of the question: its words do not stand together
+ * there ("after eat" of "after you eat", "text jen" of "text her"), or wherever they do stand the phrase goes on with
+ * a particle, a preposition or its object ("turn the TV" + "on", "try" + "it yourself", "Honey to sit" + "with you").
+ * Set E, 16 Nov: such tiles came from the on-device model's copy and passed the check; now the pair read in code is used.
+ */
+function clipped(option: string, q: string): boolean {
+  const ow = words(option);
+  const qw = words(q);
+  const same = (a: string, b: string) => a === b || stem(a) === stem(b);
+  // where the option's words stand together in the question (a small linking word may sit between two of them)
+  const ends: number[] = [];
+  for (let i = 0; i < qw.length; i++) {
+    let k = i;
+    let ok = true;
+    for (let n = 0; n < ow.length && ok; n++) {
+      if (n > 0 && k < qw.length && !same(qw[k], ow[n]) && new RegExp(`^${LINKERS}$`).test(qw[k])) k++;
+      if (k < qw.length && same(qw[k], ow[n])) k++; else ok = false;
+    }
+    if (ok) ends.push(k);
+  }
+  if (!ends.length) return true;
+  // The copy is whole only when the question goes on, after it, with a word that ends an option: "or", "and", a time
+  // both sides share, or nothing. Anything else continues the phrase ("striped" + "shirt", "try" + "it yourself",
+  // "Honey to sit" + "with you"). "on" / "off" after a thing ("the Antiques Roadshow on") only say it is switched on;
+  // after a verb that owns them ("turn the TV" + "on") they are part of the option.
+  const verb = ow.some((w) => PHRASAL.has(w) && !/^(?:it|them|that|this)$/.test(w));
+  const ends_ = (w: string) => /^(?:or|and|than|then|but|please|instead|too|either|now|later|soon|today|tonight|tomorrow|first|again|this|next|morning|afternoon|evening|weekend)$/.test(w) || new RegExp(`^${DAYRE}$`).test(w) || ADDRESS.has(w) || (!verb && /^(?:on|off)$/.test(w))
+    // after two or more words a place or company phrase may follow ("stay in" + "by the fire"); after one word it is
+    // the rest of the option ("coffee" + "with milk")
+    || (ow.length >= 2 && !verb && /^(?:by|with|at|in|near|from|for|to)$/.test(w));
+  // "Honey to sit": a name and the start of what they would do is a piece of a clause, never an option
+  if (/^[A-Z][\p{L}'-]+\s+to\s+[a-z]+$/u.test(option.trim())) return true;
+  return ends.every((k) => k < qw.length && !ends_(qw[k]));
 }
 
 // ---------------------------------------------------------------- rule 3: the label check (build spec §2.5)
@@ -522,16 +567,44 @@ function checkSide(side: string, q: string, tail: string | null, profile?: Profi
   if ((LABEL_BAD.test(s) && !whenClause) || LEFTOVER_START.test(s) || LEFTOVER_END.test(s) || PRONOUN_ONLY.test(s) || NEG.test(s)) return null;
   s = expandFromQuestion(s, q);
   s = questionCase(s, q);
+  // a name About me knows is written as About me writes it ("text jen" -> "text Jen")
+  if (profile) s = s.split(' ').map((w) => { const p = findPerson(w, profile); const bare = w.replace(/['’]s$/, ''); return p && bare === lc(bare) ? (lc(p.nickname ?? '') === bare ? p.nickname! : p.name) + w.slice(bare.length) : w; }).join(' ');
   if (profile) s = snapToQuestionItem(s, q, profile);
   s = personSide(s, profile);
   if (s.split(/\s+/).length > (isTimeLike(s) ? 6 : 5)) return null;
   return s;
 }
 
+/** Words that can stand for a whole thing once its noun has been said: "your left hand or your right", "red wine or white". */
+const ELLIPTIC = new Set(['left', 'right', 'other', 'red', 'blue', 'green', 'grey', 'gray', 'black', 'white', 'brown', 'pink', 'yellow', 'purple', 'navy', 'big', 'small', 'little', 'new', 'old', 'long', 'short', 'thick', 'thin', 'hot', 'cold', 'warm', 'top', 'bottom', 'front', 'first', 'second', 'upstairs', 'downstairs']);
+/**
+ * A pair in which one side leaves a word unsaid gets it back from the other side:
+ *   "your left hand" / "your right"                    -> "your right hand"
+ *   "clinic on Willow Street" / "one at Mercy Hospital" -> "clinic at Mercy Hospital"
+ * (set E, 16 Nov: tiles "your right", "one at Mercy Hospital"). Anything else is returned as it came.
+ */
+function completeEllipsis(sides: string[]): string[] {
+  if (sides.length !== 2) return sides;
+  const strip = (x: string) => x.trim().replace(/^(?:the|a|an)\s+/i, '');
+  const out = sides.map(strip);
+  for (const [i, j] of [[0, 1], [1, 0]]) {
+    const a = out[j].split(/\s+/); const b = out[i].split(/\s+/);
+    const noun = a.find((w) => !DET.has(lc(w)) && !ELLIPTIC.has(lc(w)) && !MODIFIER.has(lc(w)));
+    // "one at Mercy Hospital": "one" stands for the first thing named on the other side
+    if (lc(b[0]) === 'one' && b.length > 1 && noun && lc(noun) !== 'one' && /^[a-z]/.test(noun)) out[i] = [noun, ...b.slice(1)].join(' ');
+    // "the blue shirt or the green one": "one" at the end stands for the other side's noun
+    else if (lc(b[b.length - 1]) === 'one' && b.length >= 2 && a.length === b.length && lc(a[a.length - 1]) !== 'one' && !ELLIPTIC.has(lc(a[a.length - 1])) && /^[a-z]+$/.test(a[a.length - 1])) out[i] = [...b.slice(0, -1), a[a.length - 1]].join(' ');
+    // "your right": an adjective alone, where the other side is that kind of adjective and then its noun
+    else if (ELLIPTIC.has(lc(b[b.length - 1])) && a.length >= 2 && ELLIPTIC.has(lc(a[a.length - 2])) && !ELLIPTIC.has(lc(a[a.length - 1])) && a.length === b.length + 1) out[i] = `${out[i]} ${a[a.length - 1]}`;
+  }
+  return out;
+}
+
 /** The label check for two or more sides: every side passes, no two are the same or synonyms, all on one axis. */
-function checkSides(sides: string[], q: string, profile?: Profile, list = false, oneAxis = true): string[] | null {
+function checkSides(sides0: string[], q: string, profile?: Profile, list = false, oneAxis = true): string[] | null {
   const tail = sharedTail(stripAddress(q));
   const out: string[] = [];
+  const sides = list ? sides0 : completeEllipsis(sides0);
   for (const side of sides) {
     const s = checkSide(side, q, tail, profile);
     if (!s) return null;
@@ -615,13 +688,45 @@ function loosePair(q: string): [string, string] | null {
  * two options gets a card from them whatever a model made of it (set E, 16 Nov: "No good choices came out" on some
  * runs of "… now or after you eat?", no card at all without a model).
  */
+/**
+ * "Do you want Honey to sit with you tonight, or Carol?", "Should Maria or Grace take you?": the choice is between two
+ * people, and each option is the name alone (set E, 16 Nov: "Honey to sit" against "you"). The second side is one
+ * name; the first is the name that stands in the left clause (one About me knows, else the only capitalised word
+ * there that does not open the sentence).
+ */
+function namePair(q: string, profile?: Profile): [string, string] | null {
+  const s = stripAddress(q).trim();
+  const isName = (w: string) => /^[A-Z][\p{L}'-]+$/u.test(w) && !/^(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day$|^(?:January|February|March|April|May|June|July|August|September|October|November|December|I|TV)$/.test(w);
+  // two names side by side in the middle of the question
+  const mid = /(?<=\s)([A-Z][\p{L}'-]+)\s+or\s+([A-Z][\p{L}'-]+)(?=\s+[a-z])/u.exec(s);
+  if (mid && isName(mid[1]) && isName(mid[2]) && (!profile || findPerson(mid[1], profile) || findPerson(mid[2], profile) || isPartnerName(mid[1], profile) || isPartnerName(mid[2], profile))) return [mid[1], mid[2]];
+  const m = /^(.*\S)\s*,?\s+or\s+(?:maybe\s+|just\s+)?([A-Z][\p{L}'-]+)\s*\?\s*$/u.exec(s);
+  if (!m || !isName(m[2]) || /\bor\b/i.test(m[1])) return null;
+  const caps = (m[1].match(/(?<=\s)[A-Z][\p{L}'-]+/gu) ?? []).filter(isName);
+  // only where the left clause goes on after the name ("Honey to sit with you"): "… tea or Horlicks?" is read as before
+  const known = profile ? caps.filter((w) => findPerson(w, profile) || isPartnerName(w, profile)) : [];
+  const pick = known.length === 1 ? known[0] : caps.length === 1 ? caps[0] : null;
+  if (!pick || lc(pick) === lc(m[2])) return null;
+  const after = m[1].slice(m[1].indexOf(pick) + pick.length).trim();
+  if (!after || !(profile && (findPerson(m[2], profile) || isPartnerName(m[2], profile) || findPerson(pick, profile) || isPartnerName(pick, profile)) || /^to\s+[a-z]+/.test(after))) return null;
+  return [pick, m[2]];
+}
+
+/** The two readings the code is sure of: a time against a time clause, and one name against another. Null when neither applies. */
+function surePair(q: string, profile?: Profile): [string, string] | null {
+  const tp = isOrNot(q) ? null : timePair(q);
+  const timed = tp ? checkSides(tp, q, profile, false, false) : null;
+  if (timed) return [timed[0], timed[1]];
+  const np = namePair(q, profile);
+  return np ? checkPair(np, q, profile) : null;
+}
+
 export function codePair(q: string, profile?: Profile): [string, string] | null {
   const same = (x: [string, string] | null, y: [string, string] | null) => !!x && !!y && x[0] === y[0] && x[1] === y[1];
   // "… now or after you eat?", "… before supper or once the news is over?": when the second side says when and the
   // first ends with a time, those two are the options, whatever else could be counted off
-  const tp = isOrNot(q) ? null : timePair(q);
-  const timed = tp ? checkSides(tp, q, profile, false, false) : null;
-  if (timed) return [timed[0], timed[1]];
+  const sure = surePair(q, profile);
+  if (sure) return sure;
   const rx = orPair(q);
   const strict = rx ? checkPair(rx, q, profile) : null;
   if (strict) return strict;
@@ -785,7 +890,7 @@ const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** Words a partner uses to address the person: never part of a headline or a label. */
 export const ADDRESS = new Set(['ma', 'mum', 'mom', 'mam', 'dad', 'pa', 'love', 'hen', 'pet', 'mate', 'dear', 'darling', 'hon', 'honey', 'sweetheart', 'duck', 'lovey', 'chuck', 'sweetie', 'luv']);
 const ADVERB_ONLY = new Set(['again', 'already', 'then', 'still', 'yet', 'just', 'really', 'also', 'too', 'ever', 'never', 'anyway', 'else', 'instead', 'maybe', 'perhaps']);
-const NOT_A_TOPIC = new Set([...ADVERB_ONLY, 'more', 'kind', 'sort', 'type', 'better', 'best', 'easier', 'bit', 'while', 'moment', 'minute', 'rather', 'something', 'anything', 'both', 'either', 'one', 'ones', 'thing', 'things', 'way', 'lot']);
+const NOT_A_TOPIC = new Set([...ADVERB_ONLY, 'wanna', 'gonna', 'gotta', 'me', 'us', 'more', 'kind', 'sort', 'type', 'better', 'best', 'easier', 'bit', 'while', 'moment', 'minute', 'rather', 'something', 'anything', 'both', 'either', 'one', 'ones', 'thing', 'things', 'way', 'lot']);
 const PAIR_CATEGORY: [string, string[]][] = [
   ['drink', ['tea', 'coffee', 'water', 'juice', 'milk', 'cocoa', 'hot milk', 'hot chocolate', 'squash', 'beer', 'wine', 'cuppa', 'cup of tea', 'brew']],
   ['clothes', ['shirt', 'jumper', 'sweater', 'cardigan', 'jacket', 'coat', 'trousers', 'dress', 'skirt', 'socks', 'shoes', 'slippers', 'hat', 'scarf', 'blue one', 'red one']],
@@ -827,7 +932,8 @@ export function orHeadline(q: string, all: string[], profile?: Profile, modelTop
   s = s.replace(CUT, '');
   const name = lc(profile?.personName ?? '');
   const content = (s.match(/[A-Za-z][A-Za-z'-]*/g) ?? []).filter((w) => {
-    const l = lc(w);
+    // ("that's tingling": the contraction is its first word, which is no topic)
+    const l = lc(w).replace(/'(?:s|re|ve|ll|d)$/, '');
     return !STOP.has(l) && !ADDRESS.has(l) && !NOT_A_TOPIC.has(l) && !FRAME.has(l) && !DET.has(l) && !PREP.has(l) && !/^(?:or|and|not|no)$/.test(l) && l !== name && !/^[A-Z]/.test(w);
   });
   if (content.length) return content.slice(0, 3).join(' ');
@@ -840,6 +946,9 @@ export function orHeadline(q: string, all: string[], profile?: Profile, modelTop
   if (pair.every(isTimeOnly)) return 'when';
   const mt = validTopic(modelTopic, pair);
   if (mt) return mt;
+  // "clinic on Willow Street" / "clinic at Mercy Hospital": the thing both sides are a kind of
+  const shared = words(pair[0] ?? '').find((w) => !STOP.has(w) && !DET.has(w) && !PREP.has(w) && !NOT_A_TOPIC.has(w) && w !== name && pair.every((p) => (words(p) as string[]).includes(w)));
+  if (shared && pair.length >= 2 && pair.every((p) => words(p).length > 1)) return shared;
   const joined = pair.length === 2 ? `${pair[0]} or ${pair[1]}` : '';
   if (joined && joined.split(/\s+/).length <= 5) return joined;
   return 'which one';

@@ -238,6 +238,9 @@ export function assemble(
   // not one of its own choices: then the topic is wrong, not the choice)
   let topic = validTopic(o?.topic);
   if (topic && (o?.choices ?? []).some((c) => lc(c) === lc(topic))) topic = '';
+  // the person's own name is never the headline of their card (set E, 16 Nov: the cloud's topic for "What's
+  // bothering you, Person A?" came back as "Frank")
+  if (topic && profile.personName) topic = validTopic(topic.split(/\s+/).filter((w) => lc(w).replace(/['’]s$/, '') !== lc(profile.personName)).join(' '));
   let headlineFrom: string = topic ? W.headlineFrom.model : W.headlineFrom.question;
   topic ||= heuristicTopic(asked, profile);
   const base = { asked, pending, topic, source, ms, cloudPayload: null, notes: [] as string[], route: { to: 'device' as const, reasons: [] as string[] } };
