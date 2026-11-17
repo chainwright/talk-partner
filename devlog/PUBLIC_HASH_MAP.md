@@ -148,5 +148,14 @@ the table.
 | 125 | `7dd16a1` | `8290109` | 2026-11-17 14:49 | A cloud call that fails while App Check has no token for this browser is named as that: … |
 | 126 | `2c5673e` | `aa94410` | 2026-11-17 14:55 | The labelled set at 7dd16a1, the last commit that changes code: 15, 16, 15 of 18 and 12,… |
 | 127 | `0e358dd` | `c878249` | 2026-11-17 15:20 | The hosted copy is the build of 2c5673e (17 Nov, 20:55 UTC): needs 12/12, two browsers w… |
+| 128 | `d524f51` | `659a814` | 2026-11-17 15:41 | A 360 px phone no longer cuts the partner screen off on the right: the one-column layout… |
+| 129 | `cab8c04` | `0b18629` | 2026-11-17 16:56 | The simple-shell proposal and its two mockups are kept as reference: direction A 'One sc… |
+| 130 | `107dcc1` | `5add5c6` | 2026-11-17 16:56 | Words and decisions of the simple view, in the core: 'this phone / this tablet / this co… |
+| 131 | `e30b49e` | `eed31f9` | 2026-11-17 16:56 | The simple view is what '/' opens (direction A, 'One screen'): first screen, the card is… |
+| 132 | `4a78059` | `51462ea` | 2026-11-17 16:56 | Checks for the simple view: scripts/e2e-simple.py drives it in a browser as a phone, a d… |
+| 133 | `85b421b` | `2689fbc` | 2026-11-17 17:01 | Evidence for the simple view at localhost: the screens at 390 and 1440 px, light and dar… |
+| 134 | `aaddcfc` | `54b61c3` | 2026-11-17 17:01 | The documents follow the simple view: README (Screens, the three new scripts), JUDGES ('… |
+| 135 | `188f03b` | `0d90ec7` | 2026-11-17 17:04 | The first frame has the look of the view it opens (the bare address light, any other dar… |
+| 136 | `cdbfff6` | `2cd3365` | 2026-11-17 17:14 | The hosted copy is the build of 188f03b (17 Nov, 23:04 UTC), the simple view at the bare… |
 
-Rows 100–106, 107–111, 112, 113–119 and 120–127 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
+Rows 100–106, 107–111, 112, 113–119, 120–127 and 128–136 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
