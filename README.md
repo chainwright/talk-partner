@@ -37,7 +37,7 @@ The same question through the two steps, in our recorded run: "What do you want 
 
 Built for #BuildHybridAI 2026. Status on 17 Nov 2026, in three lines:
 - **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo>. It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI), a microphone for the partner's question (through Firebase AI Logic, in the cloud) and a feedback form (Cloud Firestore), all untried by anyone they are for.
-- **One number, at commit `c346d3d`:** on the 18 open questions of our own labelled set, rules alone make no card (0 of 18); the on-device model made a card matching our label for 16 of 18 in each of three runs, 13 of them with the family's own people, places or foods. Our labels and a set the rules have since been changed around: not a held-out test, not a trial with people.
+- **One number, at commit `2aeb1d0`:** on the 18 open questions of our own labelled set, rules alone make no card (0 of 18); the on-device model made a card matching our label for 16 of 18 in each of three runs (17 Nov, after that day's rule changes; the three runs before them, at `c346d3d`, gave the same counts), 13 of them with the family's own people, places or foods. Our labels and a set the rules have since been changed around: not a held-out test, not a trial with people.
 - **Every claim with its status:** `CLAIMS.md` (and `JUDGES.md` for the 60-second path, `EVIDENCE.md` for claim → file, command, saved output). No video yet, no trial with people yet. How it got here, day by day: `devlog/` (the long form of this paragraph is kept in `devlog/DAY12.md`).
 
 ## Added on 17 Nov: quick needs, voice input, feedback
@@ -234,8 +234,9 @@ runs "What would you like for dinner?" gives *pot roast / chili* on this compute
 *lake / church* on this computer and *stay home / go out* from the cloud. A card whose every answer is an About-me
 entry stays on this computer even when cloud help is on. On our labelled set this is the whole difference: 13 of
 18 open questions got a matching card with the family's own entries on this computer in each of three runs at commit
-`c346d3d` (16 of 18 matched in all), and rules alone made none (`devlog/evidence_r8/heldout_at_c346d3d/`; our own
-labels, and a set the rules have since been changed around).
+`2aeb1d0` (16 of 18 matched in all; range over the three runs: 16 to 16, and 13 to 13), and rules alone made none
+(`devlog/evidence_r11/heldout_at_2aeb1d0/`; the runs before the rule changes of 17 Nov are in
+`devlog/evidence_r8/heldout_at_c346d3d/`; our own labels, and a set the rules have since been changed around).
 
 One kind of cloud card is completed on this computer: on a call / visit / invite question (and "who do you want to
 see / meet / have over") the cloud's
