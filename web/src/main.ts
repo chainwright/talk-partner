@@ -597,7 +597,7 @@ function refreshDevice(): Promise<void> {
 }
 /**
  * Once per page load, when the private helper is there: load it into memory before the first question, so the first
- * open question does not wait for it (15 to 17 s after a browser start on the development machine, about 3 s afterwards). The status
+ * open question does not wait for it (15 to 20 s after a browser start on the development machine, about 3 s afterwards). The status
  * line says "getting ready" meanwhile; questions can be asked during it.
  */
 let warmed = false;
