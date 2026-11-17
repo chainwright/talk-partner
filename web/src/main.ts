@@ -10,6 +10,7 @@ import type { DeviceStatus, Engine } from '../../core/engine';
 import { addAnswer, answerCounts, lastAnswer, topQuestions, whenText, type Answered } from '../../core/history';
 import { DEFAULT_SETTINGS, LEGS, REMOTE_KEYS, defaultReport, type RuntimeSettings, type SettingsReport } from '../../core/models';
 import { bodyDetailCard, makeCard, quizOverrideCard, repairCard } from '../../core/pipeline';
+import { RECORDED_STEP } from '../../core/recorded';
 import { badgeKind, countSwaps, sentLine, sessionReceipt, sessionTally } from '../../core/receipt';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS, SAMPLE_STEP } from '../../core/sample';
@@ -73,6 +74,8 @@ interface State {
   waitStart: number | null;
   consentChecked: boolean;
   saved: boolean;
+  /** Judge mode, no on-device model in this browser: the recording of the on-device step is open (recordedBlock). */
+  recorded: boolean;
 }
 
 const cfg = webConfig();
@@ -103,6 +106,7 @@ const state: State = {
   waitStart: null,
   consentChecked: false,
   saved: false,
+  recorded: false,
 };
 
 // ---------------------------------------------------------------- routing
@@ -222,6 +226,35 @@ function statusLine(): string {
       return `<span class="dot off"></span>${stepPending ? esc(J.none) : C.status.unavailable} ${tail}`;
     }
   }
+}
+
+/**
+ * Judge mode in a browser that cannot run the on-device step (no project settings, no Gemini Nano, or the model not
+ * downloaded): a link under the status line, and behind it a recording of what that step made on our machine for
+ * judge mode's first open question (core/recorded.ts, copied from a saved run log). It is a recording and says so:
+ * the date, the commit, the SDK's own console line. No card is made for it, no engine is called and nothing is sent;
+ * it changes no setting. The cloud step is offered next to it and stays behind the consent screen.
+ */
+function recordedBlock(): string {
+  if (!state.demo) return '';
+  const cannot = !cfg || state.device === 'downloadable' || state.device === 'downloading' || (state.device === 'unavailable' && deviceFinal);
+  if (!cannot) return '';
+  const R = C.judge.recorded;
+  const D = RECORDED_STEP;
+  if (!state.recorded) return `<button class="link" data-act="recorded">${R.link}</button>`;
+  const next = !state.engine.cloudConfigured ? R.noCloud
+    : state.settings.cloudHelp ? `${R.cloudOn} <button class="chip" data-q="${esc(D.question)}">${R.askNow}</button>`
+    : `${R.cloudOff} <a href="#/cloud">${R.cloudLink}</a>`;
+  return `<section class="recorded" aria-label="${R.tag}">
+    <p class="rec-head"><span class="rec-tag">${R.tag}</span> ${esc(R.label(D.date, D.commit, D.browser))}</p>
+    <p class="rec-q">${esc(D.question)}</p>
+    <p class="badge-line"><span class="badge device rec">${esc(D.badge)}</span><span class="tail">· ${esc(D.tail)}</span></p>
+    <p class="rec-tiles">${D.tiles.map((t, i) => `<span${i === D.tiles.length - 1 ? ' class="out"' : ''}>${esc(t)}</span>`).join('')}</p>
+    <p class="rec-sdk">${esc(R.sdk(D.inferenceSource))}<br><code>${esc(D.sdk)}</code></p>
+    <p class="rec-compare">${esc(R.compare(D.cloudTiles.slice(0, -1).join(' / ')))}</p>
+    <p class="rec-next">${next}</p>
+    <p class="muted">${esc(R.source(D.log))} <button class="link" data-act="recorded">${R.hide}</button></p>
+  </section>`;
 }
 
 function badge(c: Card): string {
@@ -419,6 +452,7 @@ function partnerScreen(): string {
     <p class="tagline">${C.app.tagline}</p>
     <p class="tagline-sub">${C.app.taglineSub}</p>
     <p id="status" class="status">${statusLine()}</p>
+    <div id="recorded">${recordedBlock()}</div>
     ${state.demo ? `<p class="sample">${C.app.sample}</p>` : againChips()}
     <form id="ask"><input id="q" autocomplete="off" placeholder="${C.ask.placeholder}" aria-label="${C.ask.label}" value="${esc(state.lastQuestion)}"><button id="make" type="submit" ${state.busy ? 'disabled' : ''}>${state.busy ? C.ask.making : C.ask.make}</button></form>
     ${state.demo ? chipGroups() : ''}
@@ -697,6 +731,7 @@ function draw() {
 function patchDevice() {
   const s = document.querySelector('#status'); if (s) s.innerHTML = statusLine();
   const d = document.querySelector('#device'); if (d) d.innerHTML = welcomeDevice();
+  const rc = document.querySelector('#recorded'); if (rc) rc.innerHTML = recordedBlock();
   const n = document.querySelector<HTMLElement>('#nodevice'); if (n) n.hidden = state.device === 'available' || state.device === 'checking';
 }
 /**
@@ -890,6 +925,8 @@ function act(el: HTMLElement) {
       break;
     }
     case 'download': void download(); break;
+    // the recording of the on-device step: shown or hidden in place; no card, no engine call, no setting changed
+    case 'recorded': { state.recorded = !state.recorded; const rc = document.querySelector('#recorded'); if (rc) rc.innerHTML = recordedBlock(); break; }
     case 'leave-demo': void leaveDemo(); break;
     case 'welcome-setup': state.settings.welcomed = true; saveSettings(); go('about'); break;
     case 'welcome-sample': state.settings.welcomed = true; saveSettings(); go('demo'); break;

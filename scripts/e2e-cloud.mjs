@@ -87,6 +87,21 @@ try {
     // (a browser that could run the model but has not downloaded it says that instead: a throwaway profile on a capable machine)
     /(?:No Gemini Nano in this browser, so the on-device step can't run here|Gemini Nano is not downloaded in this browser, so the on-device step can't run yet)\. The card shown is made in code\./.test(noNano.status) && JSON.stringify(noNano.tiles) === JSON.stringify(['coffee', 'tea', 'something else']) && noNano.badge === 'No AI needed' && noNano.lit === 'Do you want coffee or tea?', JSON.stringify(noNano));
 
+  // the recording of the on-device step (judge mode, no on-device model here): one link under the status line; behind
+  // it a card labelled as a recording, with its date and the SDK's report. Opening it makes no card, contacts no
+  // host and leaves cloud help off: the cloud step still needs the consent screen.
+  const recLink = await js(`document.querySelector('#recorded [data-act="recorded"]')?.innerText ?? ''`);
+  await js(`document.querySelector('#recorded [data-act="recorded"]')?.click()`); await sleep(300);
+  const rec = await js(`({ text: document.querySelector('#recorded .recorded')?.innerText.replace(/\\s+/g, ' ') ?? '', tag: document.querySelector('#recorded .rec-tag')?.innerText ?? '', tiles: [...document.querySelectorAll('#recorded .rec-tiles span')].map(e => e.innerText),
+    consent: document.querySelector('#recorded a[href="#/cloud"]')?.innerText ?? '', nav: [...document.querySelectorAll('header nav a')].map((a) => a.innerText).find((t) => t.startsWith('Cloud help')),
+    card: [...document.querySelectorAll('#person .tile span')].map(e => e.innerText), badge: document.querySelector('#result .badge')?.innerText ?? '', bytes: document.querySelector('#bytes')?.innerText.replace(/\\s+/g, ' ') ?? '' })`);
+  console.log(`recording: ${rec.text}`);
+  check('no on-device model here: the link "See what the on-device step makes" opens a card labelled as a recording, with its date, commit and inferenceSource=on_device',
+    recLink === 'See what the on-device step makes →' && /^recording$/i.test(rec.tag) && /Recorded on our machine on 17 Nov 2026 \(UTC\), at commit 8ace9f0/.test(rec.text) && /Not made in this browser/.test(rec.text) && /inferenceSource=on_device/.test(rec.text) && JSON.stringify(rec.tiles) === JSON.stringify(['lake', 'church', 'something else']), `${recLink} · ${rec.tag} · ${rec.tiles.join(' / ')}`);
+  check('opening the recording made no card and left cloud help off: the first card stays, 0 bytes, and the cloud step is offered through the consent screen only',
+    rec.nav === 'Cloud help: off' && JSON.stringify(rec.card) === JSON.stringify(['coffee', 'tea', 'something else']) && rec.badge === 'No AI needed' && /^0 bytes left this computer 1 card this session/.test(rec.bytes) && /read and turn on/.test(rec.consent), `${rec.nav} · ${rec.card.join(' / ')} · ${rec.bytes.slice(0, 48)} · link: ${rec.consent}`);
+  await shot('00-recording-of-the-on-device-step');
+
   // page load with cloud help OFF: which hosts did loading the app contact?
   const loadHosts = [...hosts.entries()].map(([h, n]) => `${h}×${n}`).join(', ');
   console.log(`hosts contacted on page load (cloud help off): ${loadHosts}`);

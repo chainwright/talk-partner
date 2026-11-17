@@ -70,6 +70,20 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
 .dot.ok { background: var(--yes); } .dot.wait { background: var(--warn); } .dot.off { background: var(--muted); }
 .sample { margin: 0; color: var(--muted); font-size: 14px; }
+/* The recording of the on-device step (judge mode, a browser that cannot run it): a dashed frame and a tag, so it is
+   never taken for a card made here. */
+#recorded:empty { display: none; }
+#recorded > .link { font-size: 15px; padding: 0; }
+.recorded { border: 2px dashed var(--muted); border-radius: 14px; padding: 10px 12px; display: grid; gap: 6px; font-size: 14px; }
+.recorded p { margin: 0; }
+.rec-tag { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; padding: 1px 8px; border-radius: 6px; background: var(--warn); color: #1a1205; margin-right: 4px; }
+.rec-q { font-size: 16px; color: var(--ink); }
+.badge.rec { border-style: dashed; }
+.rec-tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+.rec-tiles span { background: #fff; color: #0f141a; border-radius: 10px; padding: 8px 16px; font-size: 18px; font-weight: 600; }
+.rec-tiles span.out { background: none; color: var(--muted); border: 1px solid var(--line); font-weight: 400; }
+.rec-sdk code { font-family: var(--mono); font-size: 12.5px; color: var(--accent); word-break: break-word; }
+.rec-compare { color: var(--muted); }
 .judge { border: 1px solid var(--accent); border-radius: 14px; padding: 6px 12px; font-size: 14px; background: linear-gradient(var(--accent-soft), var(--panel) 60%); }
 .judge p:last-child { margin: 0; } .judge summary { display: block; font-family: var(--mono); font-size: 14px; } .judge p:first-of-type { margin-top: 6px; }
 .judge summary b { color: var(--accent); }

@@ -166,6 +166,7 @@ try {
   check('loading the app and warming the model contacted no host but the app itself', c.outside().length === 0, c.outside().map((r) => r.host).join(', ') || `${c.s.reqs.length} requests, all to ${APP_HOST}`);
   const cloudNav = await c.js(`[...document.querySelectorAll('header nav a')].map((a) => a.innerText).find((t) => t.startsWith('Cloud help'))`);
   check('cloud help is off', cloudNav === 'Cloud help: off', cloudNav);
+  check('with the on-device model in this browser no recording is offered: the step itself runs', !(await c.js(`!!document.querySelector('#recorded [data-act="recorded"]')`)), await c.js(`document.querySelector('#recorded')?.innerHTML ?? 'no slot'`));
 
   log(`\n## 1b. Judge mode's first step, with no click`);
   log(`The first frame is a card made in code (coffee or tea). When the model is ready the app itself asks "What do you want to do this weekend?"; nothing below was clicked or typed.`);

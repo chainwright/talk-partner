@@ -404,6 +404,25 @@ const COPY = {
       notDownloaded: "Gemini Nano is not downloaded in this browser, so the on-device step can't run yet. The card shown is made in code.",
       downloadSize: '(several GB, once)',
     },
+    /**
+     * Judge mode in a browser that cannot run the on-device step: one link shows a recording of what that step made on
+     * our machine (core/recorded.ts). It is labelled as a recording everywhere it stands; nothing runs and nothing is
+     * sent for it. The cloud step can then be run here for real, through the consent screen as always.
+     */
+    recorded: {
+      link: 'See what the on-device step makes →',
+      tag: 'Recording',
+      label: (date: string, commit: string, browser: string) => `Recorded on our machine on ${date}, at commit ${commit}, in ${browser} with Gemini Nano. Not made in this browser: nothing ran here for it and nothing was sent.`,
+      sdk: (source: string) => `What the SDK reported for that call (inferenceSource=${source}):`,
+      compare: (tiles: string) => `In the same run the cloud step, which never sees About me, answered the same question with "${tiles}".`,
+      cloudOff: 'The cloud step can run here, now, and it is not a recording: read what is sent, tick the box, turn on cloud help, then ask the same question.',
+      cloudLink: 'Cloud help: read and turn on →',
+      cloudOn: 'Cloud help is on. Ask the same question here, now, and compare:',
+      askNow: 'this weekend? (cloud step, live)',
+      noCloud: 'This copy has no project settings, so the cloud step cannot run here either.',
+      source: (log: string) => `The whole run, with screenshots: ${log}.`,
+      hide: 'Hide the recording',
+    },
     /** The one-tap questions, grouped by what the judge sees happen (core/sample.ts gives each question its group). */
     groups: { model: 'Open question: a model proposes', coach: 'The app corrects the partner', code: 'Read in code, no AI' },
     receipt: {
