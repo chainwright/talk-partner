@@ -88,3 +88,10 @@ after the owner's walk". Decisions that differ from what was asked, and why:
 phone: the phone's own share sheet was never opened by us; the test replaces `navigator.share` with a stub. The
 print on paper. The two fixes on the owner's phone after the deploy (his walk found them; ours is a headless
 Chromium as a phone). Any of it with a carer, a paid carer, a family member or a clinician.
+
+**The deploy did not happen.** 12:11 UTC: `npx -y firebase-tools@15.36.0 deploy --only hosting --project talk-partner
+--non-interactive` was refused at once ("Your credentials are no longer valid. Please run firebase login --reauth");
+a read-only call (`projects:list`) was refused the same way, and the network was up. The same command had worked at
+07:05 UTC. Signing in is the owner's step, so nothing was tried around it. The hosted copy still serves the build
+before phase 6 (`assets/index-DccEBIQK.js`); the local build of `3e09079` is `assets/index-DcdnCdT0.js`. Not run for
+that reason: "live = dist", `e2e-simple.py --live`, `pwa-check.py` and `e2e-needs.mjs` against the hosted copy.

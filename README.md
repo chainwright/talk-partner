@@ -965,6 +965,14 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
+**Not deployed yet: phase 6 and the two fixes after the owner's walk (commits `1de40ca` to `3e09079`).** On 18 Nov
+2026, 12:11 UTC, `firebase-tools deploy --only hosting` was refused before anything was built or uploaded: "Your
+credentials are no longer valid. Please run firebase login --reauth" (`devlog/evidence_live/deploy_2026-11-18_3e09079.txt`).
+Signing in again is the owner's step. Until then <https://talk-partner.web.app> serves the build before phase 6 (its
+page names `assets/index-DccEBIQK.js`; the local build of `3e09079` is `assets/index-DcdnCdT0.js`), so the hosted copy
+has none of: "See the entries", sharing, the one-step Back, the new screen after "something else". Nothing of phase 6
+was run against the hosted copy; the counts above are from the production build on localhost.
+
 Last done on 18 Nov 2026, 07:05 UTC: <https://talk-partner.web.app> serves the build of commit `9d141b0` (phase 5, the
 fixes of judge round 6: "they can start", "Something new or sudden?" and the call box, the answer check's exemptions,
 the new lines of "what stands out", a fall and tablets in the diary, Read aloud, "Just this once", the photo line,
