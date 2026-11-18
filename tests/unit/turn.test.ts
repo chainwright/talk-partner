@@ -52,11 +52,15 @@ describe('the topics as a picture menu', () => {
 });
 
 describe('what in the topic it is about: one more card on the person\'s screen', () => {
-  it('People & family: "Who is it about?" with up to three of the family\'s names, each with the person\'s picture, and "someone else"', () => {
+  it('People & family: "Who is it about?": (phase 8) "me" first, then up to two of the family\'s names, each with the person\'s picture, and "someone else"', () => {
     const c = aboutCard('people', MILLER)!;
     expect(c.asked).toBe('Who is it about?');
-    expect(c.choices.map((x) => [x.label, x.role])).toEqual([['Beth', 'answer'], ['Tom', 'answer'], ['someone else', 'escape']]);
-    expect(c.choices[0].picture).toEqual({ type: 'person', personId: 'p2', initial: 'B' });
+    expect(c.choices.map((x) => [x.label, x.role])).toEqual([['me', 'answer'], ['Beth', 'answer'], ['Tom', 'answer'], ['someone else', 'escape']]);
+    expect(c.choices[0].picture).toEqual({ type: 'person', personId: null, initial: (MILLER.personName || 'M').charAt(0).toUpperCase() });
+    expect(c.choices[1].picture).toEqual({ type: 'person', personId: 'p2', initial: 'B' });
+    // the carer reads the person's own news, never "me"
+    expect(turnLead('tell', 'Frank', 'people', 'me').about).toBe("It is about: People & family, Frank's own news.");
+    expect(turnLead('tell', '', 'people', 'me').about).toBe('It is about: People & family, their own news.');
     expect(c.turn).toBe('about');
     expect(c.source).toBe('code');
   });

@@ -55,6 +55,17 @@ export function careAnswer(q: string, label = '', topic: string | null = null): 
   return (topic !== null && CARE_TOPICS.includes(topic)) || CARE_WORDS.test(q) || CARE_LABELS.test(label.trim());
 }
 
+/**
+ * Phase 8 (judge round 7, the SLP's seat): the guard also leaves drink and food questions alone, so a run of yes can
+ * never turn "Would you like something to drink? Yes" into a "less sure" drink. This is the guard's list only: the
+ * notes for other people (core/share.ts, core/passport.ts) still keep a usual yes to a drink on purpose (ed0395d), so
+ * `careAnswer` itself is unchanged.
+ */
+const DRINK_FOOD_WORDS = /\b(?:drink|drinks|drinking|thirsty|water|tea|coffee|juice|milk|squash|eat|eating|hungry|food|snack|meal|breakfast|lunch|dinner|supper)\b/i;
+export function guardExempt(q: string, label = '', topic: string | null = null): boolean {
+  return careAnswer(q, label, topic) || DRINK_FOOD_WORDS.test(q);
+}
+
 export type Flag = 'yes-run' | 'same-position';
 export interface Reliability {
   flags: Flag[];
@@ -68,7 +79,7 @@ export const RELIABLE: Reliability = { flags: [], since: null, pos: null };
 /** The answers of the history that the guard can read (the ones that recorded where the choice stood). */
 export function tapsFrom(history: { q?: string; label: string; at: number; pos?: number; of?: number; yn?: boolean; care?: boolean }[]): Tap[] {
   return history
-    .filter((h) => typeof h.pos === 'number' && typeof h.of === 'number' && !h.care && !careAnswer(h.q ?? '', h.label))
+    .filter((h) => typeof h.pos === 'number' && typeof h.of === 'number' && !h.care && !guardExempt(h.q ?? '', h.label))
     .map((h) => ({ at: h.at, yn: !!h.yn, yes: !!h.yn && h.label.trim().toLowerCase() === 'yes', pos: h.pos!, of: h.of! }))
     .sort((a, b) => a.at - b.at);
 }
@@ -101,7 +112,7 @@ export function reliability(taps: Tap[], now: number): Reliability {
 export function markLessSure<T extends { at: number; lessSure?: boolean; q?: string; label?: string; care?: boolean }>(xs: T[], r: Reliability, now: number): T[] {
   if (r.since === null) return xs;
   const since = r.since;
-  return xs.map((x) => (x.at >= since && x.at <= now && !x.lessSure && !x.care && !careAnswer(x.q ?? '', x.label ?? '') ? { ...x, lessSure: true } : x));
+  return xs.map((x) => (x.at >= since && x.at <= now && !x.lessSure && !x.care && !guardExempt(x.q ?? '', x.label ?? '') ? { ...x, lessSure: true } : x));
 }
 
 /**

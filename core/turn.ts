@@ -74,11 +74,16 @@ export function aboutCard(topic: TopicId, profile: Profile): Card | null {
   if (topic === 'people') {
     const names = awayNames(profile);
     if (!names.length) return null;
-    const choices: Choice[] = names.map((n): Choice => {
+    // (phase 8, judge round 7, the SLP's and the person's seats: the person's own news is the commonest subject, so "me"
+    // comes first, with their initial; then two names at most, and the way out: three choices and "someone else")
+    const two = names.slice(0, 2);
+    const own = profile.personName.trim();
+    const me: Choice = { label: S.me, spoken: S.me, role: 'answer', picture: { type: 'person', personId: null, initial: (own || 'M').charAt(0).toUpperCase() } };
+    const choices: Choice[] = [me, ...two.map((n): Choice => {
       const p = profile.people.find((x) => (x.nickname?.trim() || x.name.trim()) === n);
       return { label: n, spoken: n, role: 'answer', picture: { type: 'person', personId: p?.id ?? null, initial: n.charAt(0).toUpperCase() } };
-    });
-    return { ...base(S.aboutAsk.people, 'about'), choices: [...choices, escape('someone else')], say: `${S.aboutAsk.people} ${names.join(', ')}, or someone else?` };
+    })];
+    return { ...base(S.aboutAsk.people, 'about'), choices: [...choices, escape('someone else')], say: `${S.aboutAsk.people} ${[S.me, ...two].join(', ')}, or someone else?` };
   }
   if (topic === 'body' || topic === 'feel') return null;
   const labels = S.aboutChoices[topic];
@@ -100,5 +105,7 @@ export const BODY_FIRST = ['Are you in pain?', 'Are you comfortable?', 'Do you n
 export function turnLead(starter: Starter | 'else', name: string, topic: TopicId | null, what = ''): { line: string; about: string; ask: string[] } {
   const line = S.lines[starter](name);
   if (starter !== 'tell' || !topic) return { line, about: '', ask: [] };
-  return { line, about: S.about(TOPIC_BASE.find((t) => t.id === topic)!.label, what), ask: topic === 'body' ? BODY_FIRST : TELL };
+  // ("me" on the person's screen is the person: the carer reads "Frank's own news", or "their own news")
+  const who = what === S.me ? S.aboutMe(name) : what;
+  return { line, about: S.about(TOPIC_BASE.find((t) => t.id === topic)!.label, who), ask: topic === 'body' ? BODY_FIRST : TELL };
 }

@@ -124,7 +124,8 @@ describe('health notes change the thresholds', () => {
     const many = Array.from({ length: 8 }, (_, i) => logEntry('drank', when(1, `${String(8 + i).padStart(2, '0')}:00`)));
     const xs = insights([...days(0), ...many, logEntry('ate', when(2, '12:00'))], H({ fluidLimit: true }), 'week', NOW);
     expect(ids(xs)).toEqual(['no-drink', 'many-drinks']);
-    expect(xs[0].text).toBe("No drink was chosen or logged on Wed 18 Nov. A fluid limit from the doctor is noted here: go by the doctor's plan.");
+    // (phase 8, judge round 7: a fluid limit never reads as the reason for a dry day)
+    expect(xs[0].text).toBe('No drink was chosen or logged on Wed 18 Nov. A fluid limit is not "no drinks": if that is right, and not a gap in the diary, tell the doctor or nurse today.');
     expect(xs[1].text).toBe("8 drinks were entered on Tue 17 Nov. A fluid limit from the doctor is noted here: check the day against the doctor's plan.");
     expect(ids(insights([...days(0), ...many], NO_HEALTH, 'week', NOW))).toEqual(['nothing']);
   });
@@ -160,8 +161,8 @@ describe('never medical advice', () => {
       if (x.id !== 'less-sure') expect(x.base.endsWith(I.only)).toBe(true);
     }
   });
-  it('the levels are fixed words, and the strongest is "tell the doctor or nurse": the app never says what the cause is', () => {
-    expect(Object.keys(I.level)).toEqual(['tell', 'mention', 'note']);
+  it('the levels are fixed words, and (phase 8) the strongest is "call now if it is new or sudden": the app never says what the cause is', () => {
+    expect(Object.keys(I.level)).toEqual(['call', 'tell', 'mention', 'note']);
     expect(Object.values(I.level).join(' ')).not.toMatch(/emergency|urgent|danger|risk/i);
   });
 });

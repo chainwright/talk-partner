@@ -78,7 +78,7 @@ describe('worst cases: nothing in the text helps anyone dismiss pain, a need or 
     const d = [...days(0, 1, 2), ans('w', 'Where does it hurt?', 'chest', 2, '09:01'), ans('b', 'How bad is the pain?', 'very bad', 2, '09:03')];
     const t = family(d);
     expect(t.split('\n')[1]).toBe('Call 911 now if this is new or sudden: see "What stands out" below.');
-    expect(t).toContain('1. Worth mentioning to the doctor or nurse: Strong pain was chosen on Wed 18 Nov: very bad. Pain in the head or the chest was chosen on Wed 18 Nov: chest.\n   Tell the doctor or nurse. If it is new or sudden, call 911 now.\n   Call 911 now if this is new or sudden.\n   How it was counted:');
+    expect(t).toContain('1. Call now if it is new or sudden, and tell the doctor or nurse: Strong pain was chosen on Wed 18 Nov: very bad. Pain in the head or the chest was chosen on Wed 18 Nov: chest.\n   Tell the doctor or nurse. If it is new or sudden, call 911 now.\n   Call 911 now if this is new or sudden.\n   How it was counted:');
     expect(t).toContain('  09:01  Where does it hurt? chest');
     safe(t, 'chest pain');
     // the family's own number is the one named
@@ -126,14 +126,14 @@ describe('worst cases: nothing in the text helps anyone dismiss pain, a need or 
   it('a fluid limit, box ticked: the lines say it and point to the doctor\'s plan; never "more"', () => {
     const d = [...days(0, 1), log('a1', 'ate', 2, '08:00'), log('k', 'drank', 3, '08:00'), log('a3', 'ate', 3, '09:00')];
     const on = family(d, { health: H({ fluidLimit: true }) });
-    expect(on).toContain("No drink was chosen or logged on Wed 18 Nov. A fluid limit from the doctor is noted here: go by the doctor's plan.");
+    expect(on).toContain('No drink was chosen or logged on Wed 18 Nov. A fluid limit is not "no drinks": if that is right, and not a gap in the diary, tell the doctor or nurse today.');
     expect(on).toContain("Few drinks were entered on Thu 19 Nov: 1. A fluid limit from the doctor is noted here: check the day against the doctor's plan.");
     expect(on).toContain('HEALTH NOTES (as noted in the app by the family; not a medical record)\n- A fluid limit from the doctor');
     safe(on, 'fluid limit, on');
   });
   it('low mood on three days: whom to talk to, and the number', () => {
     const t = family([...days(0, 1, 2), ...[0, 1, 2].map((n) => ans(`m${n}`, 'How are you feeling today?', 'sad', n, '10:00', 'feel'))]);
-    expect(t).toContain('Talk to the GP or nurse about it. If you are worried about safety, call 911.');
+    expect(t).toContain('Talk to the GP or nurse about it. If they seem very low, or may harm themselves: call the doctor or nurse today, or a mental health helpline (you can put its number in About them, Health notes). If life is at risk, call 911 now.');
     safe(t, 'mood');
   });
   it('every worst case at once, for a week and a month, with every health note on and off: nothing suggests more to drink, advises or plays down', () => {

@@ -1173,7 +1173,7 @@ def phase4(browser, url, live):
     tap_yes(page, 'People')
     page.wait_for_selector('main.pv .pt >> text=Beth')
     who = [w.strip().split('\n')[-1] for w in page.locator('main.pv .pt').all_inner_texts()]  # (a person with no photo has their initial over the name)
-    check('his turn: after "People & family" the person is asked "Who is it about?" with the family\'s names and "someone else", still on their screen', text(page, '#person .p-ask') == 'Who is it about?' and who == ['Beth', 'Tom', 'someone else'], str(who))
+    check('his turn: after "People & family" the person is asked "Who is it about?" with (phase 8) "me" first, the family\'s names and "someone else", still on their screen', text(page, '#person .p-ask') == 'Who is it about?' and who == ['me', 'Beth', 'Tom', 'someone else'], str(who))
     fits(page, 'his turn: "Who is it about?"')
     tap_yes(page, 'Beth')
     give_back(page)
@@ -1395,7 +1395,8 @@ def diary(browser, url, live):
     page.wait_for_selector('main.simple.home')
 
     # ---- the answer check: "yes" to five yes / no questions in a row (none about pain, the toilet or a need)
-    asked = (('food', 'Are you hungry?'), ('rest', 'Are you tired?'), ('fun', 'Would you like some music on?'), ('plans', 'Would you like to go for a walk?'), ('fun', 'Would you like the radio on?'))
+    # (phase 8: a yes to a food or drink question is taken as said, like pain: "Are you hungry?" counts for nothing, so a sixth question is asked)
+    asked = (('food', 'Are you hungry?'), ('people', 'Would you like a visitor today?'), ('rest', 'Are you tired?'), ('fun', 'Would you like some music on?'), ('plans', 'Would you like to go for a walk?'), ('fun', 'Would you like the radio on?'))
     for i, (topic, q) in enumerate(asked):
         ask_topic(page, topic, q)
         if i == len(asked) - 1:
@@ -1419,7 +1420,7 @@ def diary(browser, url, live):
     check('guard: "More" says why, and that answers about pain, the body, feelings, the toilet or a need are never marked', 'nearly all "yes"' in text(page, '#guard') and 'Answers about pain, the body, feelings, the toilet or a need are never marked: take them as said.' in text(page, '#guard'), text(page, '#guard'))
     screen_checks(page, 'guard: the answered screen with the line', primary=False)
     hist = page.evaluate(KV_GET, 'history')
-    check('guard: the five answers are marked "less sure" in the answers kept here', [bool(h.get('lessSure')) for h in hist] == [True] * 5 and all(h.get('yn') and h.get('pos') == 0 for h in hist), str(hist)[:300])
+    check('guard: the five answers are marked "less sure" in the answers kept here; (phase 8) the yes to "Are you hungry?" is not', [bool(h.get('lessSure')) for h in hist] == [False] + [True] * 5 and all(h.get('yn') and h.get('pos') == 0 for h in hist), str(hist)[:300])
     # pain is never discounted: asked right now, while the check is on
     new_q(page)
     ask_topic(page, 'body', 'Are you in pain?')

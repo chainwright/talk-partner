@@ -32,7 +32,7 @@ import { backupText, makeBackup, readBackup, type Backup, type BackupPreview } f
 import { addEntry, answerEntry, diaryText, inSpan, logEntry, markDiary, needEntry, removeEntry, type DiaryEntry, type DiaryTopic, type LogKind, type Span } from '../../core/diary';
 import { within, type CloudError } from '../../core/engine';
 import { hasHealth, NO_HEALTH, cleanHealth, cloudLines, insightCloudText, insightDevicePrompt, insights, type HealthNotes, type Insight, type InsightSpan } from '../../core/insights';
-import { RELIABLE, careAnswer, markLessSure, reliability, reorder, tapsFrom } from '../../core/reliability';
+import { RELIABLE, careAnswer, guardExempt, markLessSure, reliability, reorder, tapsFrom } from '../../core/reliability';
 import { checkReworded, rewordOnDevice, type RewordSource } from '../../core/reword';
 import { addAsk, askOf, tipOfDay, type Ask } from '../../core/tip';
 import { WHERE_HURTS, topicOf } from '../../core/topics';
@@ -62,12 +62,14 @@ import { ABOUT_LEADS, aboutWhatCard, moreCard, moreChoices, moreSubject, outWays
 import { understoodBlock } from './phase7';
 import { familyText, handoverText, riskyNotes } from '../../core/share';
 import { handoverLink, shareSheet } from './phase6';
-import { fallBlock, hearButton, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenLink, suddenScreen, urgentBox } from './phase5';
+import { fallBlock, hearButton, lowHelpLine, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenLink, suddenScreen, urgentBox } from './phase5';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
 import { P8 } from '../../core/copy8';
-import { guessTopic, timeText } from '../../core/diary';
+import { LOW_MOOD, LOW_MOOD_Q, guessTopic, timeText } from '../../core/diary';
+/** Phase 8: "sad", "bad", "low" or "down" to a question about how the person feels (not a photo): the helpline line follows on the carer's side. */
+const lowMoodAnswer = (q: string, label: string) => LOW_MOOD_Q.test(q.trim().toLowerCase()) && !/\bphoto\b/i.test(q) && LOW_MOOD.test(label.trim().toLowerCase());
 import { addLater, cleanLater, laterOf, shownLater, type Later } from '../../core/later';
 import { NO_PASSPORT, OFF_UNTIL_TICKED, cleanPassport, passport, passportText, toggleLine, OWN_MAX, type PassportInput, type PassportPrefs } from '../../core/passport';
 import { addEvent, cleanLog, lessSureCount, newLog, pickedPractice, practiceFlag, practiceReport, practiceText, practiceUrgent, togglePractice, type AskedBy, type PracticeEvent, type PracticeInput, type PracticeLog, type PracticeSpan, type Via } from '../../core/practice';
@@ -788,7 +790,7 @@ function askAgain() {
 const guardNow = () => (learns() ? reliability(tapsFrom(state.history), Date.now()) : RELIABLE);
 /** The guard's line, never on a card about pain, the toilet, help or a need: such an answer is taken as said (core/reliability.ts, careAnswer). */
 const careTopic = (c: Card) => topicOf(state.chain[0] ?? c.asked, state.profile)?.id ?? topicOf(c.asked, state.profile)?.id ?? null;
-const guardHtml = (c?: Card, label = '') => (c && (c.kind === 'needs' || c.kind === 'body' || c.kind === 'pain' || c.kind === 'feeling' || careAnswer(c.asked, label, careTopic(c))) ? '' : guardBlock({ name: state.profile.personName.trim(), flags: guardNow().flags }));
+const guardHtml = (c?: Card, label = '') => (c && (c.kind === 'needs' || c.kind === 'body' || c.kind === 'pain' || c.kind === 'feeling' || guardExempt(c.asked, label, careTopic(c))) ? '' : guardBlock({ name: state.profile.personName.trim(), flags: guardNow().flags }));
 /**
  * While the guard is on, the next either-or shows its answers in a different order (none removed; the line to say
  * follows). A yes / no card, a scale and a paged list keep their order.
@@ -1766,7 +1768,7 @@ function simpleScreen(): string {
       invite: state.inviteFor === c && !state.inviteOff,
       today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
       made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),
-      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${turnHtml()}`,
+      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) ? lowHelpLine(state.profile.personName.trim(), state.health.helpline ?? '', callNumber()) : ''}${turnHtml()}`,
       outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
       // after the way out: the ways to find out what it is, in the rules' order; a step the rules make comes first
       ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),
@@ -1902,7 +1904,8 @@ function visitView(): string {
   const m = sinceModel();
   const has = !!r && r.answers.length > 0;
   const urgent = has && (urgentAny(r.answers) || m.since.urgent);
-  return visitScreen({ name: m.name, record: r, copied: state.p4.visitCopied, urgentHtml: urgent ? urgentBox(m.number, 'visit-urgent') : '', sinceHtml: has ? sinceBlock(m) : '', controlsHtml: has ? sinceControls(m) : '' });
+  const low = has && r.answers.some((a) => a.id === 'mood' && LOW_MOOD.test(a.label.trim().toLowerCase()));
+  return visitScreen({ name: m.name, record: r, copied: state.p4.visitCopied, urgentHtml: `${urgent ? urgentBox(m.number, 'visit-urgent') : ''}${low ? lowHelpLine(m.name, state.health.helpline ?? '', m.number) : ''}`, sinceHtml: has ? sinceBlock(m) : '', controlsHtml: has ? sinceControls(m) : '' });
 }
 /** The questions about the picked photo: the rules' three, and one more when the on-device model named things in it. */
 function talkQuestions(): PhotoQuestion[] {
@@ -1975,7 +1978,7 @@ function render(lifted = false) {
   const fresh = key !== lastKey;
   if (r !== 'person') stopSound();
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone })}`, numberHtml: numberField(state.health.emergency), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone })}`, numberHtml: numberField(state.health.emergency, state.health.helpline ?? ''), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   keepGuard();
   if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);
@@ -2741,6 +2744,7 @@ app.addEventListener('input', (ev) => {
   // the passport: how yes and no are shown, and the carer's own lines (kept as typed; no redraw, so the cursor stays)
   if (t instanceof HTMLInputElement && (t.dataset.pass === 'yes' || t.dataset.pass === 'no')) { p8.pass = cleanPassport({ ...p8.pass, [t.dataset.pass]: t.value }); savePassport(); return; }
   if (t instanceof HTMLInputElement && t.dataset.passOwn !== undefined) { const own = Array.from({ length: OWN_MAX }, (_, i) => (i === Number(t.dataset.passOwn) ? t.value : p8.pass.own[i] ?? '')); p8.pass = cleanPassport({ ...p8.pass, own }); savePassport(); return; }
+  if (t instanceof HTMLInputElement && t.dataset.health === 'helpline') { state.health = cleanHealth({ ...state.health, helpline: t.value }); if (!state.demo) void kvSet('health', state.health); return; }
   if (t instanceof HTMLInputElement && t.dataset.health === 'emergency') { state.health = cleanHealth({ ...state.health, emergency: t.value }); if (!state.demo) void kvSet('health', state.health); return; }
   if (t instanceof HTMLTextAreaElement && t.dataset.health === 'text') { state.health = cleanHealth({ ...state.health, text: t.value }); if (!state.demo) void kvSet('health', state.health); return; }
   // typing takes over from the microphone; an emptied field holds no spoken question any more

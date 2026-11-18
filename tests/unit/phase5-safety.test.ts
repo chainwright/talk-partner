@@ -41,7 +41,9 @@ describe('2a. "Something new or sudden?": a fixed card with a call button', () =
     const t = text(html);
     for (const k of ['Face', 'Arm', 'Speech', 'Time']) expect(t).toContain(k);
     expect(P5.sudden.fast).toHaveLength(4);
-    expect(P5.sudden.also).toHaveLength(4);
+    expect(P5.sudden.also).toHaveLength(5);
+    // (phase 8: BE-FAST's balance and sight)
+    expect(t).toContain('Sudden loss of balance, or sudden loss of sight in one or both eyes.');
     expect(t).toContain('Chest pain, or trouble breathing.');
     expect(html.match(/href="tel:911"/g)).toHaveLength(2);
     expect(t).toContain('Call emergency services: 911');
@@ -117,7 +119,7 @@ describe('2b. the boxed line: head, chest, breathing, a sudden weakness, pain ra
     expect(urgentAny([{ q: 'Are you in pain?', label: 'yes' }, { q: 'Where in the legs?', label: 'your left knee' }, { q: 'How bad is the pain?', label: 'a little' }])).toBe(false);
     const main = read('web/src/main.ts');
     expect(main).toContain('if (state.picked && urgentAnswer(c.asked, state.picked.label)) p5.urgent = true;');
-    expect(main).toContain("leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${turnHtml()}`,");
+    expect(main).toContain("leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) ? lowHelpLine(state.profile.personName.trim(), state.health.helpline ?? '', callNumber()) : ''}${turnHtml()}`,");
     expect(main).toContain("topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,");
     // the visit page of the nurse's walk: head, quite bad, at night
     const record = { startedAt: NOW, done: true, answers: [{ id: 'pain' as const, q: 'Are you in pain?', label: 'yes', at: NOW }, { id: 'where' as const, q: 'Where in the head?', label: 'top of head', at: NOW }, { id: 'bad' as const, q: 'How bad is the pain?', label: 'quite bad', at: NOW }] };
@@ -154,7 +156,7 @@ describe('2d. what stands out', () => {
     const d = [...day(0), ...day(1), ans('How bad is the pain?', 'very bad', 1), ...day(2)];
     const xs = insights(d, NO_HEALTH, 'week', NOW);
     expect(ids(xs)).toEqual(['pain-day']);
-    expect(xs[0]).toMatchObject({ level: 'mention', urgent: true, text: 'Strong pain was chosen on Tue 17 Nov: very bad.', act: 'Tell the doctor or nurse. If it is new or sudden, call 911 now.' });
+    expect(xs[0]).toMatchObject({ level: 'call', urgent: true, text: 'Strong pain was chosen on Tue 17 Nov: very bad.', act: 'Tell the doctor or nurse. If it is new or sudden, call 911 now.' });
     const chest = insights([...day(0), ans('Where in the chest?', 'middle', 0)], NO_HEALTH, 'week', NOW, '999');
     expect(chest[0].text).toBe('Pain in the head or the chest was chosen on Mon 16 Nov: chest (middle).');
     expect(chest[0].act).toContain('call 999 now');
@@ -182,7 +184,7 @@ describe('2d. what stands out', () => {
     const sad = (d: number) => ans('How are you feeling today?', d % 2 ? 'sad' : 'bad', d, '11:00', 'feel');
     const xs = insights([...day(0), sad(0), ...day(1), sad(1), ...day(3), sad(3)], NO_HEALTH, 'week', NOW);
     expect(ids(xs)).toEqual(['mood']);
-    expect(xs[0]).toMatchObject({ level: 'mention', act: 'Talk to the GP or nurse about it. If you are worried about safety, call 911.' });
+    expect(xs[0]).toMatchObject({ level: 'mention', act: 'Talk to the GP or nurse about it. If they seem very low, or may harm themselves: call the doctor or nurse today, or a mental health helpline (you can put its number in About them, Health notes). If life is at risk, call 911 now.' });
     expect(xs[0].text).toBe('"Sad", "bad" or "low" was the answer to a question about how they feel on 3 days in the last 7 days.');
     expect(JSON.stringify(xs)).not.toMatch(/depress|diagnos|screen/i);
   });

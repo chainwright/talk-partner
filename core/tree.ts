@@ -65,7 +65,7 @@ export const TELL = [TELL_NEWS, TELL_HAPPENED, TELL_WHEN];
 
 /**
  * The trees. Key: the question in lower case without its punctuation. Under it, one entry per answer the rules' card
- * for that question can give. `{them}`, `{They}` and `{their}` take the person's name from About them.
+ * for that question can give. `{them}`, `{They}` and `{their}` take the person's name from About them; "`{name}` says" is "Frank says", or "they say".
  */
 const TREE: Record<string, Node> = {
   // ---------------------------------------------------------------- food and drink
@@ -128,7 +128,8 @@ const TREE: Record<string, Node> = {
   },
   'are you in pain': {
     yes: { next: [WHERE_HURTS], end: 'Ask where it hurts, one place at a time. If the pain is new or strong, call the nurse or doctor.' },
-    no: { end: 'No pain. Good.' },
+    // (phase 8, judge round 7, the SLP's seat: self-report of pain is less reliable in aphasia; the end line keeps the carer watching)
+    no: { end: 'No pain, {name} says. Watch the face, ask again later.' },
     'not sure': { next: [COMFORTABLE], end: 'Watch {their} face and how {they} move, and ask again soon.' },
   },
   // (the card keeps the question's first part as what was asked: "Which side?")
@@ -420,7 +421,7 @@ export function after(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: st
   const raw = rawStep(card, label, profile);
   if (!raw) return { next: [], end: '' };
   const name = profile.personName.trim();
-  let end = raw.end.replace(/\{them\}/g, name || 'them').replace(/\{They\}/g, name || 'They').replace(/\{they\}/g, name || 'they').replace(/\{their\}/g, name ? `${name}'s` : 'their');
+  let end = raw.end.replace(/\{name\} says/g, name ? `${name} says` : 'they say').replace(/\{them\}/g, name || 'them').replace(/\{They\}/g, name || 'They').replace(/\{they\}/g, name || 'they').replace(/\{their\}/g, name ? `${name}'s` : 'their');
   // with a name the verb is singular: "Frank has had enough", "Frank does not want", "Frank wants to go on"
   if (name) end = end.split(`${name} `).map((part, i) => (i === 0 ? part : part.replace(/^(have|do|want|take|need|like|move|reach)\b/, (v) => SINGULAR[v]))).join(`${name} `);
   // a two-part question is kept by its first part on the card ("Which side?"): compared by that part

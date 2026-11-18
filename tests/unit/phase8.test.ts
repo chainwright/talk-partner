@@ -218,3 +218,46 @@ describe('6. Hybrid visible (P0 4): the routing chip, and Read aloud says who it
     expect(sh.indexOf('id="speak-sheet-for"')).toBeLessThan(sh.indexOf('data-act="speak-yes"'));
   });
 });
+
+// ---------------------------------------------------------------- item 7: the nurse's and the SLP's sets
+import { after } from '../../core/tree';
+import { EMPTY_PROFILE } from '../../core/types';
+import { cleanHealth } from '../../core/insights';
+import { lowHelpLine } from '../../web/src/phase5';
+
+describe('7. The nurse\'s and the SLP\'s sets (P1 19, 20)', () => {
+  it('a line with the call box has its own label and comes first, above three days of pain', () => {
+    const d = [...day(0), ...day(1), ...day(2), ans('Are you in pain?', 'yes', 0, '10:00', 'body'), ans('Are you in pain?', 'yes', 1, '10:00', 'body'), ans('Are you in pain?', 'yes', 2, '10:00', 'body'), ans('Where does it hurt?', 'chest', 3, '21:01', 'body')];
+    const xs = insights(d, NO_HEALTH, 'week', NOW, '911');
+    expect(xs[0]).toMatchObject({ id: 'pain-day', level: 'call', urgent: true });
+    expect(xs.find((x) => x.id === 'pain')!.level).toBe('tell');
+  });
+  it('a dry day under a fluid limit is never excused', () => {
+    const xs = insights([...day(0), logEntry('ate', when(1, '09:00'))], { ...NO_HEALTH, fluidLimit: true }, 'week', NOW, '911');
+    const t = xs.find((x) => x.id === 'no-drink')!.text;
+    expect(t).toContain('A fluid limit is not "no drinks"');
+    expect(t).toContain('tell the doctor or nurse today');
+    expect(t).not.toMatch(/doctor's plan/);
+  });
+  it('"No pain, [Name] says. Watch the face, ask again later." (they, with no name)', () => {
+    const c = { asked: 'Are you in pain?', kind: 'yesno' as const };
+    expect(after(c, 'no', { ...EMPTY_PROFILE, personName: 'Frank' }).end).toBe('No pain, Frank says. Watch the face, ask again later.');
+    expect(after(c, 'no', EMPTY_PROFILE).end).toBe('No pain, they say. Watch the face, ask again later.');
+    expect(after(c, 'no', EMPTY_PROFILE).end).not.toMatch(/\bGood\b/);
+  });
+  it('the visit page names the fewest drinks in one day when no day was dry', () => {
+    const d = [...day(0), ...day(1), logEntry('drank', when(2, '08:00')), logEntry('ate', when(2, '09:00'))];
+    const s = sinceLines(d, when(0, '00:00'), NOW);
+    expect(s.lines.find((l) => l.startsWith('Drinks'))).toBe('Drinks: on 0 of 3 days with entries, no drink was entered; the fewest in one day: 1 (Wed 18 Nov).');
+  });
+  it('under "sad" or "low": the helpline the family set, or none invented; the emergency number when life is at risk', () => {
+    const set = lowHelpLine('Frank', 'NHS 111 option 2', '999');
+    expect(set).toContain('If Frank seems very low, or may harm themselves: call NHS 111 option 2, any time. If life is at risk, call 999 now.');
+    const unset = lowHelpLine('', '', '911').replace(/<[^>]+>/g, '');
+    expect(unset).toContain('call the doctor or nurse today, or a mental health helpline (you can put its number in About them, Health notes)');
+    expect(unset.replace('911', '')).not.toMatch(/\d{3}/);
+    expect(cleanHealth({ helpline: '116 123<script>' }).helpline).toBe('116 123script');
+    expect(cleanHealth({ helpline: 'none' })).not.toHaveProperty('helpline');
+    expect(cleanHealth({})).not.toHaveProperty('helpline');
+  });
+});

@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
-import { MIN_CARDS, MIN_SPAN_MS, RELIABLE, SAME_POS, WINDOW_MS, YES_MIN, YES_OF, careAnswer, markLessSure, reliability, reorder, tapsFrom, type Tap } from '../../core/reliability';
+import { MIN_CARDS, MIN_SPAN_MS, RELIABLE, SAME_POS, WINDOW_MS, YES_MIN, YES_OF, careAnswer, guardExempt, markLessSure, reliability, reorder, tapsFrom, type Reliability, type Tap } from '../../core/reliability';
 import { needsCard } from '../../core/needs';
 import { answeredScreen, cardScreen, personSimple } from '../../web/src/simple';
 import { guardBlock } from '../../web/src/diary';
@@ -69,8 +69,16 @@ describe('never about pain, the toilet, help or a need; never in an ordinary fas
     expect(careAnswer('How are you feeling today?', 'in pain')).toBe(true);
     for (const q of ['Are you tired?', 'Are you hungry?', 'Would you like tea or coffee?', 'Would you like some music on?']) expect(careAnswer(q, 'yes'), q).toBe(false);
   });
+  it('(phase 8) the guard leaves drink and food questions alone too; the notes for other people still keep a usual drink (careAnswer is unchanged)', () => {
+    for (const q of ['Are you hungry?', 'Would you like something to drink?', 'Would you like tea or coffee?', 'Would you like a snack or a meal?']) expect(guardExempt(q, 'yes'), q).toBe(true);
+    for (const q of ['Would you like some music on?', 'Would you like to go for a walk?', 'Would you like the radio on?']) expect(guardExempt(q, 'yes'), q).toBe(false);
+    expect(careAnswer('Would you like tea or coffee?', '')).toBe(false);
+    const h = ['Are you hungry?', 'Would you like something to drink?', 'Would you like tea or coffee?', 'Would you like water, juice or milk?', 'Would you like a snack?'].map((q, n) => ({ q, label: 'yes', at: min(n), pos: 0, of: 2, yn: true }));
+    expect(tapsFrom(h).length).toBe(0);
+    expect(markLessSure(h, { flags: ['yes-run'], since: min(0) } as Reliability, min(5)).some((x) => (x as { lessSure?: boolean }).lessSure)).toBe(false);
+  });
   it('a "yes" to pain or the toilet does not count toward a run, and is never marked', () => {
-    const h = [['Are you tired?', 0], ['Are you in pain?', 1], ['Do you need the toilet?', 2], ['Are you hungry?', 3], ['Would you like some music on?', 4]].map(([q, n]) => ({ q: q as string, label: 'yes', at: min(n as number), pos: 0, of: 2, yn: true }));
+    const h = [['Are you tired?', 0], ['Are you in pain?', 1], ['Do you need the toilet?', 2], ['Would you like the TV on?', 3], ['Would you like some music on?', 4]].map(([q, n]) => ({ q: q as string, label: 'yes', at: min(n as number), pos: 0, of: 2, yn: true }));
     // five "yes" in a row, two of them about pain and the toilet: three count, and that is not a run
     expect(tapsFrom(h).length).toBe(3);
     expect(reliability(tapsFrom(h), min(4))).toBe(RELIABLE);

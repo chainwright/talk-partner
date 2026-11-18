@@ -10,6 +10,9 @@ const days = (n: number) => `${n} day${n === 1 ? '' : 's'}`;
 /** Phase 8: ", counting Frank's own answer above" when an own answer of the page was counted in. */
 const counted = (own: string) => (own ? `, counting ${their(own.trim())} own answer above` : '');
 
+/** Phase 8: the one line under a "sad" or "low" answer, on the carer's side only: the helpline when one is set, never a number made up. */
+const P5_HELP = (name: string, helpline: string, number: string) => `If ${name ? `${name} seems` : 'they seem'} very low, or may harm themselves: ${helpline ? `call ${helpline}, any time` : 'call the doctor or nurse today, or a mental health helpline (you can put its number in About them, Health notes)'}. If life is at risk, call ${number} now.`;
+
 export const P5 = {
   sudden: {
     link: 'Something new or sudden?',
@@ -25,13 +28,14 @@ export const P5 = {
       ['Time', 'Call now. Note the time it started: the ambulance crew will ask.'],
     ] as [string, string][],
     alsoHeading: 'Call for these as well',
-    also: ['A sudden, very bad headache.', 'Chest pain, or trouble breathing.', 'A fall with a blow to the head, or a fall and cannot get up.', 'Suddenly very drowsy or confused, or cannot be woken.'],
+    // (phase 8, judge round 7: BE-FAST adds balance and sight; FAST alone misses some strokes)
+    also: ['Sudden loss of balance, or sudden loss of sight in one or both eyes.', 'A sudden, very bad headache.', 'Chest pain, or trouble breathing.', 'A fall with a blow to the head, or a fall and cannot get up.', 'Suddenly very drowsy or confused, or cannot be woken.'],
     call: (number: string) => `Call emergency services: ${number}`,
     unsure: 'Not on this list, and you are still worried? Call. You know them best.',
     notSudden: 'Worried, and it is not sudden: call the doctor or nurse today.',
     number: (number: string) => `The button calls ${number}. The number is 911 in the US and Canada, 999 in the UK and 112 in the EU.`,
     change: 'Change the number (About them, Health notes)',
-    source: 'A fixed list: FAST (face, arm, speech, time), the public check for the signs of a stroke, and four more reasons to call. No AI wrote it, and nothing is sent. The app cannot tell what is wrong. No doctor or nurse has checked this wording.',
+    source: 'A fixed list: FAST (face, arm, speech, time), the public check for the signs of a stroke, with balance and sight (BE-FAST), and more reasons to call. No AI wrote it, and nothing is sent. The app cannot tell what is wrong. No doctor or nurse has checked this wording.',
     /** The ninth tile of the needs board, and what the carer reads when it was pointed to. */
     tile: "something's wrong",
     tileLine: 'Something is wrong. Look now for what is new or sudden. If you are not sure, call.',
@@ -40,6 +44,9 @@ export const P5 = {
     boxCall: (number: string) => `Call ${number}`,
     boxMore: 'What to look for',
     /** In About them, under Health notes. */
+    /** Phase 8: the helpline for low mood, under the emergency number. */
+    helplineField: 'Helpline for low mood',
+    helplineHint: 'A number from the doctor or nurse, or your country\'s mental health line. The app has none of its own. It is used only in the line under a "sad" or "low" answer.',
     field: 'Emergency number',
     fieldHint: '911 in the US and Canada, 999 in the UK, 112 in the EU. The "Call" buttons of this app use it. Empty means 911.',
   },
@@ -97,7 +104,8 @@ export const P5 = {
     fewDrinksFluid: (d: string, n: number, several: boolean) => `Few drinks were entered on ${d}: ${n}${several ? ' each' : ''}. A fluid limit from the doctor is noted here: check the day against the doctor's plan.`,
     mood: (n: number, span: string) => `"Sad", "bad" or "low" was the answer to a question about how they feel on ${days(n)} in the last ${span}.`,
     moodBase: (d: string) => `Days: ${d}.`,
-    moodAct: (number: string) => `Talk to the GP or nurse about it. If you are worried about safety, call ${number}.`,
+    // (phase 8, judge round 7: the crisis route, with the family's own helpline when one is set; the app invents no number)
+    moodAct: (number: string, helpline = '') => `Talk to the GP or nurse about it. ${P5_HELP('', helpline, number)}`,
     fall: (n: number, d: string) => `${n === 1 ? 'A fall was' : `${n} falls were`} logged: ${d}.`,
     fallHead: (d: string) => `A fall with a blow to the head was logged on ${d}.`,
     fallBase: 'Every "Fall" tap counts.',
@@ -116,7 +124,8 @@ export const P5 = {
     pain: (n: number, d: string, own = '') => (n ? `Pain: chosen or logged on ${days(n)} (${d})${counted(own)}.` : 'Pain: none entered.'),
     strong: (d: string) => `Strong pain, or pain in the head or the chest: ${d}.`,
     falls: (n: number, d: string) => (n ? `Falls: ${n} logged (${d}).` : 'Falls: none logged.'),
-    drinks: (dry: number, withEntries: number) => (withEntries ? `Drinks: on ${dry} of ${days(withEntries)} with entries, no drink was entered.` : 'Drinks: no full day with entries in this time yet.'),
+    /** Phase 8 (judge round 7, the nurse's seat): with no dry day, the fewest drinks entered in one day, so a low day is not hidden. */
+    drinks: (dry: number, withEntries: number, fewest?: { n: number; day: string }) => (withEntries ? `Drinks: on ${dry} of ${days(withEntries)} with entries, no drink was entered${fewest ? `; the fewest in one day: ${fewest.n} (${fewest.day})` : ''}.` : 'Drinks: no full day with entries in this time yet.'),
     mood: (n: number, d: string, own = '') => (n ? `Mood: "sad", "bad" or "low" on ${days(n)} (${d})${counted(own)}.` : 'Mood: no "sad", "bad" or "low" day entered.'),
     sleep: (n: number, d: string, own = '') => (n ? `Sleep: a bad night on ${days(n)} (${d})${counted(own)}.` : 'Sleep: no bad night entered.'),
     none: 'The diary holds nothing for this time.',
@@ -151,4 +160,6 @@ export const P5 = {
     desktop: 'Photos stay on this computer only. They are never sent anywhere. No AI looks at them, with one exception: in "Talk about a photo", when you tap "Ask the AI on this device to look at it", Chrome\'s built-in AI looks at that one photo on this computer itself, never online.',
   },
   helpers: { them, They },
+  /** Phase 8: the line under a "sad" or "low" answer. */
+  lowHelp: P5_HELP,
 } as const;

@@ -70,6 +70,9 @@ export const P4 = {
       else: (name: string) => `${They(name)} started this, and it is none of the three. Take your time together.`,
     },
     about: (topic: string, what = '') => `It is about: ${topic}${what ? `, ${what}` : ''}.`,
+    /** Phase 8: the first choice of "Who is it about?", and what the carer reads for it. */
+    me: 'me',
+    aboutMe: (name: string) => (name ? `${name}'s own news` : 'their own news'),
     /** After a topic, still on the person's screen: what in it this is about. Two or three choices and the way out. */
     aboutAsk: { people: 'Who is it about?', plans: 'Is it about today, or another day?', fun: 'Is it about TV or music?', food: 'Is it about food, or a drink?', rest: 'Is it about last night, or about now?' },
     aboutChoices: { plans: ['today', 'another day'], fun: ['TV', 'music'], food: ['food', 'a drink'], rest: ['last night', 'now'] },

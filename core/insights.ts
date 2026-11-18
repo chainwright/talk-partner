@@ -39,6 +39,8 @@ export interface HealthNotes {
   reminders: boolean;
   /** The emergency number the call buttons use, as the carer typed it ('' = 911). Not a health note: it is in no prompt and no request. */
   emergency: string;
+  /** Phase 8: a helpline for low mood, as the carer typed it from the doctor, the nurse or a national line. The app has none of its own. Kept only when set. */
+  helpline?: string;
 }
 export const NO_HEALTH: HealthNotes = { text: '', diabetes: false, swallowing: false, fluidLimit: false, reminders: false, emergency: '' };
 export const HEALTH_TEXT_MAX = 600;
@@ -47,7 +49,12 @@ export const HEALTH_TOGGLES = ['diabetes', 'swallowing', 'fluidLimit', 'reminder
 /** Whatever was stored, as health notes: unknown fields are dropped, a missing one is off. */
 export function cleanHealth(h: unknown): HealthNotes {
   const x = (h ?? {}) as Partial<HealthNotes>;
-  return { text: typeof x.text === 'string' ? x.text.slice(0, HEALTH_TEXT_MAX) : '', diabetes: x.diabetes === true, swallowing: x.swallowing === true, fluidLimit: x.fluidLimit === true, reminders: x.reminders === true, emergency: typeof x.emergency === 'string' ? x.emergency.replace(/[^\d+ ]/g, '').slice(0, 16) : '' };
+  return { text: typeof x.text === 'string' ? x.text.slice(0, HEALTH_TEXT_MAX) : '', diabetes: x.diabetes === true, swallowing: x.swallowing === true, fluidLimit: x.fluidLimit === true, reminders: x.reminders === true, emergency: typeof x.emergency === 'string' ? x.emergency.replace(/[^\d+ ]/g, '').slice(0, 16) : '', ...helplineOf(x.helpline) };
+}
+/** The helpline as it may be kept: digits, spaces, + and the words of a number ("116 123", "NHS 111 option 2"), short. */
+function helplineOf(raw: unknown): { helpline?: string } {
+  const s = typeof raw === 'string' ? raw.replace(/[^\p{L}\d+ ]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 40) : '';
+  return s && /\d/.test(s) ? { helpline: s } : {};
 }
 export const hasHealth = (h: HealthNotes) => !!h.text.trim() || h.diabetes || h.swallowing || h.fluidLimit || h.reminders;
 
@@ -65,7 +72,8 @@ export interface Source {
 }
 
 export type InsightSpan = 'week' | 'month';
-export type Level = 'tell' | 'mention' | 'note';
+/** Phase 8 (judge round 7, the nurse's seat): 'call' is the level of a line with the call box (a strong pain, the head or the chest, a fall with a blow to the head): its own label, and first. */
+export type Level = 'call' | 'tell' | 'mention' | 'note';
 export interface Insight {
   id: 'pain' | 'pain-day' | 'no-drink' | 'few-drinks' | 'many-drinks' | 'sweets' | 'no-food' | 'sleep' | 'mood' | 'fall' | 'less-sure' | 'nothing';
   /** 'tell': a red flag. 'mention': worth mentioning to the doctor or nurse. 'note': for the carer to keep in mind. */
@@ -132,7 +140,7 @@ export function thresholds(h: HealthNotes, span: InsightSpan): Thresholds {
 
 const I = COPY.simple.insights;
 const I5 = P5.insights;
-const ORDER: Record<Level, number> = { tell: 0, mention: 1, note: 2 };
+const ORDER: Record<Level, number> = { call: -1, tell: 0, mention: 1, note: 2 };
 const daysOf = (ts: number[]) => [...new Set(ts.map(dayStart))].sort((a, b) => a - b);
 const listed = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
 const names = (days: number[], max = 3) => listed(days.slice(-max).map(dayText));
@@ -213,7 +221,7 @@ function spanInsights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpa
 
   // "sad" or "bad" on three days or more: worth mentioning, with whom to talk to
   const lowDays = daysOf(entries.filter((e) => tags(e).includes('low-mood')).map((e) => e.at));
-  if (lowDays.length >= T.lowMoodDays) out.push({ id: 'mood', level: 'mention', text: I5.mood(lowDays.length, S), noted: '', base: `${I5.moodBase(names(lowDays, 7))} ${I.only}`, act: I5.moodAct(number), source: src(tagged(entries, 'low-mood')) });
+  if (lowDays.length >= T.lowMoodDays) out.push({ id: 'mood', level: 'mention', text: I5.mood(lowDays.length, S), noted: '', base: `${I5.moodBase(names(lowDays, 7))} ${I.only}`, act: I5.moodAct(number, health.helpline ?? ''), source: src(tagged(entries, 'low-mood')) });
 
   // with swallowing difficulty noted: a day with entries and no food among them
   if (T.noFoodDay) {
@@ -247,6 +255,8 @@ export function insights(diary: DiaryEntry[], health: HealthNotes, span: Insight
     const week = spanInsights(diary, health, 'week', now, number).filter((x) => x.id !== 'nothing' && !have.has(x.id)).map((x) => ({ ...x, recent: true, base: `${I5.recent} ${x.base}` }));
     if (week.length) out = [...out.filter((x) => x.id !== 'nothing'), ...week];
   }
+  // (phase 8: a line with the call box is never labelled softer than three days of mild pain: its own level, first)
+  out = out.map((x) => (x.urgent ? { ...x, level: 'call' as const } : x));
   const rank = (x: Insight) => ORDER[x.level] * 2 - (x.urgent ? 1 : 0);
   return out.map((x, i) => ({ x, i })).sort((a, b) => rank(a.x) - rank(b.x) || a.i - b.i).map((p) => p.x).slice(0, MAX_INSIGHTS);
 }

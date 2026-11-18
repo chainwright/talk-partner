@@ -613,14 +613,15 @@ const COPY = {
      */
     insights: {
       heading: { week: 'What stands out: the last 7 days', month: 'What stands out: the last 30 days' } as Record<string, string>,
-      level: { tell: 'Tell the doctor or nurse', mention: 'Worth mentioning to the doctor or nurse', note: 'To keep in mind' } as Record<string, string>,
+      level: { call: 'Call now if it is new or sudden, and tell the doctor or nurse', tell: 'Tell the doctor or nurse', mention: 'Worth mentioning to the doctor or nurse', note: 'To keep in mind' } as Record<string, string>,
       footer: 'These lines are counts of what was entered in this app, made by fixed rules. They are not medical advice and not a diagnosis. If something worries you, ask the doctor or nurse.',
       only: 'Only what was entered here.',
       span: { week: '7 days', month: '30 days' } as Record<string, string>,
       pain: (n: number, span: string) => `Pain was chosen or logged on ${n} days in the last ${span}.`,
       painBase: (days: string) => `Days with pain: ${days}.`,
       noDrink: (days: string) => `No drink was chosen or logged on ${days}. That can simply mean nobody entered one.`,
-      noDrinkFluid: (days: string) => `No drink was chosen or logged on ${days}. A fluid limit from the doctor is noted here: go by the doctor's plan.`,
+      // (phase 8, judge round 7: a fluid limit is never "no drinks", so the line never reads as if it explained a dry day)
+      noDrinkFluid: (days: string) => `No drink was chosen or logged on ${days}. A fluid limit is not "no drinks": if that is right, and not a gap in the diary, tell the doctor or nurse today.`,
       noDrinkBase: (n: number) => `Other things were entered on ${n === 1 ? 'that day' : 'those days'}, and no drink.`,
       fewDrinks: (days: string, n: number, several: boolean) => `Few drinks were entered on ${days}: ${n}${several === true ? ' each' : ''}.`,
       fewDrinksBase: (n: number, several: boolean) => `Counted ${several === true ? 'on each of those days' : 'that day'}: ${n}. Every "Drank" tap counts, and every drink chosen on a card (tea, coffee, water, juice, milk, or yes to "something to drink"); a card and a tap within 20 minutes count once.`,

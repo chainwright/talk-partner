@@ -134,7 +134,8 @@ describe('"less sure"', () => {
     const t = when(4, '19:00');
     const d = [logEntry('drank', t - 1000), ans('Are you tired?', 'yes', t), logEntry('ate', t + 1000), ans('Are you hungry?', 'yes', t + 2000)];
     const m = markDiary(d, t, t + 5000);
-    expect(m.map((e) => !!e.lessSure)).toEqual([false, true, false, true]);
+    // (phase 8: a yes to "Are you hungry?" is a need and is taken as said: the guard leaves drink and food questions alone)
+    expect(m.map((e) => !!e.lessSure)).toEqual([false, true, false, false]);
     // an answer about pain or the toilet is never marked, wherever it stands in the run
     const care = [ans('Are you in pain?', 'yes', t + 100), ans('Do you need the toilet?', 'yes', t + 200), ans('How are you feeling today?', 'in pain', t + 300), ans('Are you tired?', 'yes', t + 400)];
     expect(markDiary(care, t, t + 5000).map((e) => !!e.lessSure)).toEqual([false, false, false, true]);

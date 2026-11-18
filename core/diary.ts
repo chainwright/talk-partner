@@ -10,7 +10,7 @@
 // What a diary is not: a record of what happened. It holds only what was entered in this app. A day with no drink in
 // it may be a day when nobody logged one, and every count the app shows says so.
 
-import { careAnswer } from './reliability';
+import { guardExempt } from './reliability';
 import type { TopicId } from './topics';
 
 /** The carer's one-tap log. */
@@ -211,7 +211,7 @@ export function eventGroups(entries: DiaryEntry[], tag: Tag): EventGroup[] {
 /** The diary with every entry of the guard's run marked "less sure" (core/reliability.ts): answers only, never a log. */
 export function markDiary(diary: DiaryEntry[], since: number | null, now: number): DiaryEntry[] {
   if (since === null) return diary;
-  return diary.map((e) => (e.kind === 'answer' && e.at >= since && e.at <= now && !e.lessSure && !careAnswer(e.q ?? '', e.label, e.topic) ? { ...e, lessSure: true } : e));
+  return diary.map((e) => (e.kind === 'answer' && e.at >= since && e.at <= now && !e.lessSure && !guardExempt(e.q ?? '', e.label, e.topic) ? { ...e, lessSure: true } : e));
 }
 
 /** The span as plain text, for "Copy for a visit": day by day, a time and what was entered. No count, no advice. */

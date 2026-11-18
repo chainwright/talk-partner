@@ -53,7 +53,10 @@ export function fallBlock(m: { number: string; id: string; head: boolean }): str
 }
 
 /** The number's field in About them, under the health notes. */
-export const numberField = (raw: string) => `<label>${P5.sudden.field} <small>${P5.sudden.fieldHint}</small><input id="emergency-number" class="field" data-health="emergency" inputmode="tel" autocomplete="off" maxlength="16" value="${esc(raw)}"></label>`;
+export const numberField = (raw: string, helpline = '') => `<label>${P5.sudden.field} <small>${P5.sudden.fieldHint}</small><input id="emergency-number" class="field" data-health="emergency" inputmode="tel" autocomplete="off" maxlength="16" value="${esc(raw)}"></label>
+  <label>${P5.sudden.helplineField} <small>${esc(P5.sudden.helplineHint)}</small><input id="helpline-number" class="field" data-health="helpline" autocomplete="off" maxlength="40" value="${esc(helpline)}"></label>`;
+/** Phase 8: the line under a "sad" or "low" answer, on the carer's side only. */
+export const lowHelpLine = (name: string, helpline: string, number: string) => `<p class="tip low-help" id="low-help" role="note">${esc(P5.lowHelp(name, helpline, number))}</p>`;
 
 // ---------------------------------------------------------------- Read aloud
 export interface SpeakModel { name: string; on: boolean; online: boolean; /** This card may be read aloud (never a doctor-visit question). */ can: boolean }

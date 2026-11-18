@@ -73,6 +73,8 @@ export function sinceLines(diary: DiaryEntry[], since: number | null | undefined
   const days = byDay(entries);
   const dryDays = days.filter((d) => d.day !== dayStart(now) && events(d.entries, 'drink').length === 0);
   const dry = dryDays.length;
+  const full = days.filter((d) => d.day !== dayStart(now));
+  const least = dry ? null : full.map((d) => ({ day: d.day, n: events(d.entries, 'drink').length })).sort((a, b) => a.n - b.n || a.day - b.day)[0] ?? null;
   const low = uniqueDays([...tagged('low-mood').map((e) => e.at), ...ownDays('low')]);
   const nights = uniqueDays([...events(entries, 'bad-sleep'), ...ownDays('night')]);
   const with_ = (t: string) => (ownDays(t).length ? name || ' ' : '');
@@ -80,7 +82,7 @@ export function sinceLines(diary: DiaryEntry[], since: number | null | undefined
     [S.pain(pain.length, named(pain), with_('pain')), { ids: ids(tagged('pain')), note: '' }],
     ...(hard.length ? [[S.strong(named(hard)), { ids: ids(hardEntries), note: '' }] as [string, SinceSource]] : []),
     [S.falls(falls.length, named(uniqueDays(falls.map((e) => e.at)))), { ids: ids(falls), note: '' }],
-    [S.drinks(dry, days.filter((d) => d.day !== dayStart(now)).length), { ids: ids(dryDays.flatMap((d) => d.entries)), note: dry ? P6.source.noDrink : '' }],
+    [S.drinks(dry, full.length, least ? { n: least.n, day: dayText(least.day) } : undefined), { ids: ids(dryDays.flatMap((d) => d.entries)), note: dry ? P6.source.noDrink : '' }],
     [S.mood(low.length, named(low), with_('low')), { ids: ids(tagged('low-mood')), note: '' }],
     [S.sleep(nights.length, named(nights), with_('night')), { ids: ids(tagged('bad-sleep')), note: '' }],
   ];
