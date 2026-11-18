@@ -102,7 +102,7 @@ export interface DiaryModel {
 
 function entryLine(e: DiaryEntry): string {
   const D = COPY.simple.diary;
-  const what = e.kind === 'log' ? `<b>${D.log[e.log!]}</b>${e.label === FALL_HEAD ? ` <span class="q">${P5.fall.headNoted}</span>` : ''}` : e.kind === 'need' ? `<span class="q">${D.need}</span> <b>${esc(e.label)}</b>` : `<span class="q">${esc(e.q ?? '')}</span> <b>${esc(e.label)}</b>`;
+  const what = e.kind === 'log' ? `<b>${D.log[e.log!]}</b>${e.label === FALL_HEAD ? ` <span class="q">${P5.fall.headNoted}</span>` : e.log === 'fall' ? ` <button type="button" class="btn quiet small-btn fall-head-later" data-act="fall-head" data-id="${esc(e.id)}">${P5.fall.headLater}</button>` : ''}` : e.kind === 'need' ? `<span class="q">${D.need}</span> <b>${esc(e.label)}</b>` : `<span class="q">${esc(e.q ?? '')}</span> <b>${esc(e.label)}</b>`;
   return `<li class="de ${e.kind}" data-kind="${e.kind}"${e.lessSure ? ' data-less-sure="1"' : ''}><time>${timeText(e.at)}</time><span class="what">${what}${e.lessSure ? ` <span class="tag unsure">${COPY.simple.guard.lessSure}</span>` : ''}</span></li>`;
 }
 

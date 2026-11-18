@@ -196,7 +196,7 @@ describe('2d. what stands out', () => {
     expect(head[0].text).toContain('A fall with a blow to the head was logged on Tue 17 Nov.');
     // right after the tap: when to call, whatever was noted (the worst case is a fall nobody asked about)
     const box = fallBlock({ number: '911', id: fall.id, head: false });
-    expect(text(box)).toContain('A fall: if they hit their head, cannot get up, or have new pain, call 911 now.');
+    expect(text(box)).toContain('A fall: call 911 now if the head was hit, if getting up is not possible, or if there is new pain.');
     expect(box).toContain('href="tel:911"');
     expect(box).toContain('data-act="fall-head"');
     // "tablets taken" is a log line and nothing more

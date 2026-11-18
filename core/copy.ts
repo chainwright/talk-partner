@@ -332,7 +332,7 @@ const COPY = {
     with: (name: string) => `with ${name}`,
     /** The board for needs that cannot wait: at the top of the first screen, above everything else. */
     needs: 'Needs it now?',
-    needsSub: 'Toilet, drink, pain, too hot: one tap, then they point.',
+    needsSub: (name: string) => `Toilet, drink, pain, too hot: one tap, then ${name ? `${name} points` : 'they point'}.`,
     needsShort: 'Quick needs',
     /** The highlighted block at the top: open on the first visit, one line after the first card (remembered). */
     how: {

@@ -127,7 +127,7 @@ export function homeScreen(m: HomeModel): string {
   ${navBar({ back: false, name: m.name })}
   <div class="col">
     <h1 id="hope">${esc(S.hope(m.name))}</h1>
-    <button type="button" class="btn needs" data-act="needs">${SIGN.grid}<span><b>${S.needs}</b><small>${S.needsSub}</small></span></button>
+    <button type="button" class="btn needs" data-act="needs">${SIGN.grid}<span><b>${S.needs}</b><small>${esc(S.needsSub(m.name))}</small></span></button>
     ${m.turnHtml ?? ''}
     ${howBlock(m.name, m.howOpen)}
   </div>

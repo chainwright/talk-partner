@@ -1855,7 +1855,7 @@ def phase5(browser, url, live):
     page.locator('[data-log=fall]').click()
     page.wait_for_selector('#fall-box')
     fb = text(page, '#fall-box')
-    check('diary: after "Fall", when to call and the call button, at once: "A fall: if they hit their head, cannot get up, or have new pain, call 999 now."', 'A fall: if they hit their head, cannot get up, or have new pain, call 999 now.' in fb and page.locator('#fall-box a[href="tel:999"]').count() == 1, fb)
+    check('diary: after "Fall", when to call and the call button, at once: "A fall: call 999 now if the head was hit, if getting up is not possible, or if there is new pain."', 'A fall: call 999 now if the head was hit, if getting up is not possible, or if there is new pain.' in fb and page.locator('#fall-box a[href="tel:999"]').count() == 1, fb)
     screen_checks(page, 'diary: after a fall', primary=False)
     shot(page, '09_diary_fall_logged_when_to_call')
     page.locator('#fall-head').click()

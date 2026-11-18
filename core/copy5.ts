@@ -71,8 +71,10 @@ export const P5 = {
   },
   log: { fall: 'Fall', tablets: 'Tablets taken' } as Record<string, string>,
   fall: {
-    box: (number: string) => `A fall: if they hit their head, cannot get up, or have new pain, call ${number} now.`,
-    head: 'They hit their head',
+    box: (number: string) => `A fall: call ${number} now if the head was hit, if getting up is not possible, or if there is new pain.`,
+    head: 'The head was hit',
+    /** In the diary's timeline, on a fall logged without it: the same note, added later (role-play round 4). */
+    headLater: 'Add: the head was hit',
     headNoted: 'Noted: a blow to the head.',
   },
   insights: {
