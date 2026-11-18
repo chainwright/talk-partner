@@ -260,6 +260,28 @@ def try_ai(browser, url):
     ctx.close()
 
 
+def pictures_any_font(browser, url):
+    """Live e23b493 (18 Nov): before the web font arrives, the person's top row wrapped to two lines (44 -> 94 px) and
+    "something else" fell below the fold. Fonts refused here, as on a slow first load or with large system text."""
+    for w, h in ((360, 740), (390, 844)):
+        outside = []
+        ctx, _ = phone(browser, url, outside, w, h)
+        ctx.route('**/*.woff2', lambda r: r.abort())
+        page = ctx.new_page()
+        page.goto(url)
+        page.wait_for_selector('main.simple.home')
+        page.locator('.topic[data-topic=food]').click()
+        page.locator('.tq', has_text='water, juice or milk').click()
+        page.wait_for_selector('main.simple.card #made-where, #sheet, main.simple.nocard')
+        page.locator('[data-act=show]').click()
+        page.wait_for_selector('main.pv .pt')
+        page.wait_for_timeout(500)
+        m = page.evaluate("(() => { const de = document.documentElement; return { top: Math.round(document.querySelector('main.pv .p-top').getBoundingClientRect().height), esc: Math.round(document.querySelector('main.pv .pt.esc').getBoundingClientRect().bottom), sh: de.scrollHeight, ch: de.clientHeight }; })()")
+        check(f'{w} x {h}, no web font: the person\'s top row stays one row and three choices with "something else" stand without scrolling', m['top'] <= 50 and m['sh'] <= m['ch'] and m['esc'] <= h, str(m))
+        shot(page, f'15_pictures_no_web_font_{w}x{h}', full=False)
+        ctx.close()
+
+
 def main():
     global OUT
     ap = argparse.ArgumentParser()
@@ -275,6 +297,7 @@ def main():
         later_and_notnow(browser, url)
         insights_visit_number(browser, url)
         try_ai(browser, url)
+        pictures_any_font(browser, url)
         browser.close()
     n = len(results)
     ok = sum(results)
