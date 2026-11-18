@@ -253,18 +253,18 @@ class Slow implements Engine {
 }
 const cloudEnv = (engine: Engine, extra = {}) => ({ profile: SAMPLE_PROFILE, support: 'more' as const, engine, allowCloud: true, deviceReady: false, ...extra });
 
-describe('6. P0 the cloud wait: 3 s to "Stop waiting", 12 s to the plain line; settings never block; the latency in the trace', () => {
-  it('the limits are 3 s and 12 s (not 25 s)', () => {
+describe('6. P0 the cloud wait: 3 s to "Stop waiting", 20 s to the plain line; settings never block; the latency in the trace', () => {
+  it('the limits are 3 s and 20 s (not 25 s)', () => {
     expect(CLOUD_SLOW_MS).toBe(3000);
-    expect(CLOUD_WAIT_MS).toBe(12000);
+    expect(CLOUD_WAIT_MS).toBe(20000);
   });
-  it('worst case: online help never answers: the card says "took longer than 12 seconds", what to do instead, may have left, and the wait in ms', async () => {
+  it('worst case: online help never answers: the card says "took longer than 20 seconds", what to do instead, may have left, and the wait in ms', async () => {
     let told = 0;
     const c = await makeCard('What do you want to do this weekend?', cloudEnv(new Slow({ hang: true }), { cloudWaitMs: 25, onCloud: () => { told++; } }));
     expect(told).toBe(1);
     expect(c.blocked).toBe(COPY.notes.cloudSlowBlocked);
     expect(c.blocked).toMatch(/Ask it as a choice/);
-    expect(c.notes.join(' ')).toContain('Cloud help took longer than 12 seconds');
+    expect(c.notes.join(' ')).toContain('Cloud help took longer than 20 seconds');
     expect(c.cloudAttempted).toBeTruthy();
     const t = c.trace!.find((x) => x.step === 'stripped')!;
     expect(t).toMatchObject({ ran: 'failed' });

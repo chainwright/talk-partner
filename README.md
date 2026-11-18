@@ -712,9 +712,11 @@ gives the cloud letter step its own schema. Nothing of phase 9 is deployed; the 
 - **Handover and visit** (`810f1f5`). The handover note always prints the swallowing difficulty and the fluid limit
   ("ALWAYS ON THIS NOTE"), box ticked or not. The visit page gains Toilet and Tablets lines, two family questions, and
   "Where it hurts: chest, middle".
-- **The cloud wait** (`db00cef`, P0). From 3 s: "Online help is still working (N s)" with "Stop waiting"; at 12 s (was
-  25 s) the plain line "Cloud help took longer than 12 seconds, so there is no card. Ask it as a choice…". Each cloud
-  step's latency is in the trace, answered or failed. Remote Config is never waited for (a source test holds it).
+- **The cloud wait** (`db00cef`, P0). From 3 s: "Online help is still working (N s)" with "Stop waiting"; at 20 s (was
+  25 s; 12 s was tried first, see below) the plain line "Cloud help took longer than 20 seconds, so there is no card. Ask it as a choice…". Each cloud
+  step's latency is in the trace, answered or failed. Remote Config is never waited for (a source test holds it). 12 s
+  was the first limit; against live `ffb2521` from a phone hotspot the first real cloud card took over 12 s in 3 of 5
+  fresh headed runs (5.5 s and 9.8 s in the others), so the limit is 20 s: the carer can still stop at any moment.
 - **The hybrid moment in one tap** (`3447b47`, P0). "See the AI at work" on Home: the sample open question "What do you
   want to do this weekend?", tagged "uses Google's AI, after your yes" on a phone and "AI on this computer: nothing is
   sent" with Chrome's own model, to the card and its routing chip. It is made with an empty profile, so the question is

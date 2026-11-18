@@ -1,0 +1,24 @@
+browser: Chromium 148.0.7778.96 (headless); 2026-11-18T23:46:03+00:00
+PASS  Home: "Needs something now?"; the red card: "Signs of a new stroke, chest pain, a fall: call."
+PASS  Home after the first card: the 4 steps are one line, with "Write the key word big."
+PASS  Home at 360 x 740: the first row of topics stands above the fold
+PASS  Home at 390 x 844: the first row of topics stands above the fold
+PASS  "later": the carer reads the line to say
+PASS  Home: "Left for later: Would you like tea or coffee?, [time]" with "Ask it again" and "Done"
+PASS  "Ask it again" asks it again, and it is off Home
+PASS  visit page: with "low" and a yes to pain in Frank's own answers, no line says "none entered" or "no low day"
+PASS  visit page: under the "low" answer, the helpline line (none set: no number invented) and the emergency number
+PASS  passport: "knows what to say" and "understands most" are off, "Tick if true for Frank"
+PASS  passport: "A tired yes may not mean yes. Check it the other way. Ask about pain, drinks and the toilet every time."
+PASS  passport: no number in About them: "Emergency number: not filled in, ask the family."
+PASS  passport: the food line with diabetes noted: "Ask the family what is all right."
+PASS  therapist page, box off: "The diary of this time holds a pain answer or "something's wrong": ask the family." and nothing of the answer
+PASS  therapist page: the "less sure" count stands beside the check
+PASS  "Something new or sudden?": balance and sight (BE-FAST)
+PASS  "Who is it about?": "me" first, then the names, and "someone else"
+PASS  the carer reads "Frank's own news"
+PASS  judge mode, an open question that got no card: the card area says "No card for this question", not that a card will appear
+PASS  rules run: nothing was asked of any other host
+PASS  rules run: no page error
+
+21 of 21 checks passed

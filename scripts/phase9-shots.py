@@ -247,13 +247,13 @@ def try_ai(browser, url):
     home = e2e.text(page)
     check('"Stop waiting": the making stops, the carer reads what to do instead, and that the question may already have gone', 'You stopped waiting, so there is no card.' in home and 'may already have gone to online help' in home and page.locator('.making').count() == 0, home[:400])
     shot(page, '13_after_stop_waiting')
-    # and without "Stop waiting": the plain line at 12 s
+    # and without "Stop waiting": the plain line at 20 s
     page.locator('#try-ai [data-act=try-ai]').click()
     t0 = time.time()
-    page.wait_for_selector('main.simple.nocard, main.simple.card', timeout=20000)
+    page.wait_for_selector('main.simple.nocard, main.simple.card', timeout=30000)
     took = time.time() - t0
     t = e2e.text(page)
-    check(f'item 6: left alone, it stops by itself at about 12 s with the plain line ({took:.1f} s)', took <= 16 and ('took longer than 12 seconds' in t), t[:400])
+    check(f'item 6: left alone, it stops by itself at about 20 s with the plain line ({took:.1f} s)', took <= 24 and ('took longer than 20 seconds' in t), t[:400])
     shot(page, '14_no_card_after_12_s')
     check('item 6: the requests to Google were held, never let through', len(held) > 0, str(len(held)))
     check('items 6 and 7: no page error', not errors, '; '.join(errors))

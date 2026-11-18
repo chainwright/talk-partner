@@ -103,7 +103,7 @@ own, each only after `npm run check` exited 0. Nothing was pushed or deployed; t
 4. **The emergency number by locale** (`b6c8b5d`), with "Is this your emergency number? Change it" by every call box.
 5. **Handover and visit** (`810f1f5`): swallowing and fluid limit always on the handover note; Toilet, Tablets, two
    family questions and "chest, middle" on the visit page.
-6. **The cloud wait** (`db00cef`): 3 s to "Stop waiting", 12 s to the plain line, the latency in the trace.
+6. **The cloud wait** (`db00cef`): 3 s to "Stop waiting", 20 s to the plain line (12 s at first; raised after live runs), the latency in the trace.
 7. **The hybrid moment** (`3447b47`): "See the AI at work" on Home, made with an empty profile, kept nowhere.
 8. **The cloud letter step** (`7910b80`): its own schema and a ninth model instance. Unit runs only.
 9. **The person's "Not now"** (`e3e3db3`; moved to the top row in `f188eab` after the first full run showed it
@@ -120,7 +120,7 @@ own, each only after `npm run check` exited 0. Nothing was pushed or deployed; t
 At `f188eab` (the code; the scripts' expectations were updated after it, no app change): 2849 unit tests (`npm run check`); `e2e-simple.py` 1002/1002; `pwa-check.py` 30/30; `e2e-needs.mjs` 12/12; `overflow-check.py` 534/534; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py` 21/21; `phase9-shots.py` 37/37. The outputs are in `devlog/evidence_phase9/local/`, the screens in `devlog/evidence_phase9/shots_390/`. The first full run (at `74a5e94`) failed 8 of `e2e-simple.py`'s checks and stopped: the scripts expecting the wording before phase 9, and one real fault, fixed in `f188eab`: the person's "Not now" at the foot of the screen pushed three choices and the way out past 844 px.
 
 ## Open risks
-- The cloud legs of phase 9 (the card after "See the AI at work", the letter step's new schema, a 12 s limit against
+- The cloud legs of phase 9 (the card after "See the AI at work", the letter step's new schema, the wait limit against
   the real first-call latency) are not run against the real model: for the live runs.
 - The person's "Not now" is a word, no picture, on the top row; nobody with aphasia has tried it.
 - The locale number is a guess from a language setting; the box asks, and About them wins.

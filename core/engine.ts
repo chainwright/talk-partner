@@ -93,10 +93,12 @@ export interface SpokenResult { base64: string; mimeType: string; source: 'on-de
 
 /**
  * How long the cloud step is waited for before the card says that online help did not answer. Phase 9 (judge round
- * 8, ADV-01-5): 12 s, not 25 s. The organiser's first live cloud card ended "No card" at 25 s; a tired carer does not
- * wait that long, so after `CLOUD_SLOW_MS` the screen says it is still working and offers "Stop waiting".
+ * 8, ADV-01-5): 20 s, not 25 s. A tired carer does not wait that long, so after `CLOUD_SLOW_MS` the screen says it is
+ * still working and offers "Stop waiting": the carer can end the wait at any moment. 12 s was tried first: on live
+ * ffb2521 (a phone hotspot, 18 Nov) the first real cloud card took over 12 s in 3 of 5 fresh headed runs (5.5 and 9.8 s
+ * in the other two; 3.3 to 11.2 s on 32dd0dd), so 12 s turned working answers into "No card".
  */
-export const CLOUD_WAIT_MS = 12000;
+export const CLOUD_WAIT_MS = 20000;
 /** After this long without an answer, the carer's screen shows that online help is still working, with "Stop waiting". */
 export const CLOUD_SLOW_MS = 3000;
 /** The error `within` gives when the time is up (so the card can say "took too long", not "did not answer"). */

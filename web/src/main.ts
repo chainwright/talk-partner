@@ -2222,7 +2222,7 @@ const routing = () => ({ moodWords: state.remote.values.routeMoodWords, minChoic
 /**
  * Phase 9 (judge round 8, ADV-01-5): the cloud step of the card being made. From CLOUD_SLOW_MS (3 s) on, the
  * "making" line says that online help is still working, with the seconds and "Stop waiting"; the pipeline itself
- * gives up at CLOUD_WAIT_MS (12 s). "Stop waiting" calls the making off (its card, when it comes, is not shown; the
+ * gives up at CLOUD_WAIT_MS (20 s). "Stop waiting" calls the making off (its card, when it comes, is not shown; the
  * privacy receipt still counts the request).
  */
 /** Phase 9: the person tapped "Not now": the carer's next screen says so (and whether the question was kept). */
