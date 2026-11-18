@@ -17,7 +17,7 @@ history shows exactly what was carried over: `git diff pre-contest..HEAD` is the
 | `core/prompt.ts` | The model prompts and the JSON schema |
 | `core/pipeline.ts` | Card assembly from the question and the model's proposal |
 | `core/pictures.ts`, `core/types.ts`, `core/engine.ts`, `core/requests.ts` | Picture choice, shared types, the engine interface, the cloud request bodies |
-| `web/src/pictos.ts` | Hand-drawn line pictograms (SVG), our own work |
+| `web/src/pictos.ts` | Hand-drawn line pictograms (SVG), our own work. (In the submission period, on 18 Nov 2026, every one was redrawn as a colour picture and 39 were added; none of the pre-period line drawings is in the app now: `PICTOGRAMS.md`) |
 | `tests/unit/*.test.ts` (rules, pipeline, fixround 1–4, strip property test), `tests/unit/fixtures.ts` | Unit tests for the above |
 | **Not in the `pre-contest` commit, but pre-existing:** the design of `web/src/ai/firebaseEngine.ts` | The prototype had `src/ai/firebaseEngine.ts` (108 lines, last changed 10 Nov 2026) and model names in `src/config.ts`: a `FirebaseEngine` class with the same three `getGenerativeModel` calls (`ONLY_ON_DEVICE` with the About-me prompt, `PREFER_IN_CLOUD` with the stripped question, `ONLY_IN_CLOUD` for pictures), the `initializeAppCheck` hook, and the `inferenceSource` check on the private step. It was never executed: the prototype's Firebase config was a `null` placeholder and no project existed, so the app always took the direct Chrome engine |
 

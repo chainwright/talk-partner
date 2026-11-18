@@ -1,0 +1,34 @@
+working tree on top of 0e8dc6f  2026-11-18T02:15:25.783718+00:00  dev server on localhost (App Check debug token), Chromium headless, as a phone (no on-device model).
+The narrowing step after "something else" through the real cloud model, with the request of 18 Nov. One run; the model's answers vary between runs.
+--- Would you like tea or coffee? | the person sees: ['tea', 'coffee', 'something else']
+sheet line: Partner asks: Would you like tea or coffee? They did not want: tea, coffee. What else could it be? Do not give more of the same kind as the ones they did not want, and none of those again. Give two or three broader, different kinds of answer: a kind such as "something cold" or "something to eat", not one more single thing.
+step 1: made by the AI (online help) | maker=cloud left=sent | choices: ['something cold', 'something to eat', 'something else']
+step 2: made by the rules (the AI was asked first) | maker=codeAsked left=sent | choices: ['something sweet', 'a rest', 'help with something', 'something else']
+--- Would you like water, juice or milk? | the person sees: ['water', 'juice', 'milk', 'something else']
+step 1: made by the AI (online help) | maker=cloud left=sent | choices: ['hot drink', 'something to eat', 'something else']
+step 2: made by the rules (the AI was asked first) | maker=codeAsked left=sent | choices: ['something sweet', 'a rest', 'help with something', 'something else']
+--- Would you like to rest in the bed or the chair? | the person sees: ['bed', 'chair', 'something else']
+step 1: made by the AI (online help) | maker=cloud left=sent | choices: ['something to drink', 'stretch legs', 'go outside', 'something else']
+step 2: made by the AI (online help) | maker=cloud left=sent | choices: ['something cold', 'something to eat', 'move around', 'something else']
+--- Would you like company, or some time alone? | the person sees: ['company', 'some time alone', 'something else']
+step 1: made by the AI (online help) | maker=cloud left=sent | choices: ['rest', 'music', 'television', 'something else']
+step 2: made by the AI (online help) | maker=cloud left=sent | choices: ['something to eat', 'something to drink', 'something else']
+--- Would you like TV or music? | the person sees: ['TV', 'music', 'something else']
+step 1: made by the AI (online help) | maker=cloud left=sent | choices: ['nap', 'read', 'sit outside', 'something else']
+step 2: made by the AI (online help) | maker=cloud left=sent | choices: ['something to eat', 'something cold', 'talk', 'something else']
+--- Would you like to stay in or go out? | the person sees: ['stay in', 'go out', 'something else']
+step 1: made by the AI (online help) | maker=cloud left=sent | choices: ['rest', 'quiet activity', 'something else']
+step 2: made by the AI (online help) | maker=cloud left=sent | choices: ['something to eat', 'something to watch', 'something else']
+hosts asked: ['content-firebaseappcheck.googleapis.com', 'firebaseinstallations.googleapis.com', 'firebaseremoteconfig.googleapis.com', 'firebasevertexai.googleapis.com', 'fonts.gstatic.com', 'www.google.com', 'www.gstatic.com']
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=1826
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=872
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=960
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=898
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=965
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=909
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=913
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=898
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=1115
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=937
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=2502
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=872

@@ -1,0 +1,13 @@
+PASS  firebase.json: index.html, "/" and sw.js are served with Cache-Control: no-cache
+browser: Chromium 148.0.7778.96 (headless)
+PASS  build A is open, kept by its service worker
+PASS  reopened after the deploy: the page is build B at once (asked from the network, not from the kept copy)
+PASS  the new build's worker took over and the old build's copy is deleted
+PASS  offline after the deploy: the kept copy is build B, not A
+PASS  left open on the first screen across a deploy: coming back to it loads build C by itself
+PASS  left open on a question across a deploy: the page is NOT reloaded under the carer's hands (still build C, the question still there)
+PASS  a bar at the top says "A newer version is ready. Tap to update.", at least 44 px tall
+PASS  the person's full-screen card does not show the bar
+PASS  one tap on the bar loads build D
+PASS  no page error in the whole run
+11 of 11 checks passed

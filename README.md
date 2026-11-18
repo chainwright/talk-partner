@@ -13,9 +13,10 @@ After a stroke, many adults with aphasia understand what is said but can't find 
 Talk Partner helps **the partner** ask the way a speech therapist would: it turns the partner's own question into a
 written-choice card (a keyword, two choices, pictured where we have drawn a picture, an escape every time, a
 tick/cross check) and gives the partner the exact line to say. It never picks or confirms the person's answer: only
-their tap does. Pictures today: yes / no, feelings, the body map, people (a photo or an initial), coffee and tea, the
-ways out, and the eight needs of the quick-needs board. The family's own places and foods ("lake", "pot roast") are
-words for now (`PICTOGRAMS.md`).
+their tap does. Pictures (since 18 Nov our own colour drawings, 120 of them: `PICTOGRAMS.md`): yes / no, feelings, the body
+map, people, drinks and food, rest, TV and music, going out, the ways out, the needs of the quick-needs board. The
+family's own places and foods ("lake", "pot roast") show the family's own photo where one was added, and the word
+alone otherwise.
 
 Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a therapy, not a diagnosis.
 
@@ -28,7 +29,7 @@ code is in **`web/src/ai/firebaseEngine.ts`**. See [Added on 17 Nov](#added-on-1
 | Step | Gets | Mode | Why |
 |---|---|---|---|
 | Private card | question + the family's About-me lists | `ONLY_ON_DEVICE` | Family data must never fall back to the cloud. `PREFER_ON_DEVICE` would send this prompt to the cloud while Gemini Nano is missing or downloading. |
-| Narrowing card, after "something else" (`core/narrow.ts`) | on the device: the question, the choices that did not fit, today's answers so far, About me. In the cloud: the question and the choices that did not fit, About-me words swapped out; never the answers | the same two steps: `ONLY_ON_DEVICE` first, else `PREFER_IN_CLOUD` when the carer has turned online help on | The person chose the way out, so an AI suggests the next, broader choices (two levels at most). The same card rules check them, and the screen says an AI made this follow-up. |
+| Narrowing card, after "something else" (`core/narrow.ts`) | on the device: the question, the choices that did not fit, today's answers so far, About me. In the cloud: the question and the choices that did not fit, About-me words swapped out; never the answers | the same two steps: `ONLY_ON_DEVICE` first, else `PREFER_IN_CLOUD` when the carer has turned online help on | The person chose the way out, so an AI suggests the next, broader choices (two levels at most). The same card rules check them, and the screen says an AI made this follow-up. Since 18 Nov a proposed choice that is more of the kind already refused is dropped, and when fewer than two are left the rules make the broader choices and the card says so (`core/kinds.ts`). On the device the prompt may also hold what was learned by counting (`core/prefs.ts`); the cloud text never does. |
 | "Today in short" (`core/summary.ts`) | today's confirmed answers | `ONLY_ON_DEVICE` (`summarizeDevice`), no cloud step | Two to four sentences for the family or the therapist. The answers are personal: where the browser has no Gemini Nano, the app's rules write the summary and no model gets them. |
 | Stripped card | the question with every About-me word swapped for "Person A", "Place A"… and a word that looks like a name the family didn't list (a capitalised word, the word after a title such as "Dr.", a lowercase word that is not an everyday English word) swapped for "Name A" | `PREFER_IN_CLOUD` | Holds no profile data, so an offline fall-back to the device is safe. |
 
@@ -57,7 +58,7 @@ the code and the live site (`CLAIMS.md` rows 40, 41 and 42).
 
 **Quick needs.** One button in the top bar of every partner screen (or the address `#/needs`) puts a fixed board on
 the person's screen: *toilet, drink, food, pain, tired, too hot, too cold, call someone*, and *something else*. Each
-tile is one of our own line pictograms with its word. A tap is checked like every choice ("So: toilet. Right?" with a
+tile is one of our own pictures (colour drawings since 18 Nov) with its word. A tap is checked like every choice ("So: toilet. Right?" with a
 tick and a cross); after the tick the person's screen shows the need and nothing else, and the partner's side gets one
 short line for it ("Go now. The rest can wait."; after *pain*, one tap asks "Where does it hurt?", the body card).
 *Something else* is checked the same way and hands back to the question box and "We're stuck". The board is made in
@@ -84,6 +85,85 @@ One document per note, with the server's time, the app version and the commit. `
 with every field checked again on the server; nobody can read, change or delete notes from a client (the owners read
 them in the Firebase console). Rules tested on the emulator (`npm run test:rules`, 37 cases) and against the deployed
 rules (`node scripts/rules-check.mjs --live`, 25 refusals).
+
+## Added on 18 Nov: conversation trees, what it learns, colour pictures, the family's photos
+What changed after the owner tried the hosted copy on his phone (17 Nov, evening). Every part below is made by the
+app's rules on the device, with no AI and nothing sent, unless it says otherwise. Status and limits: `CLAIMS.md`, rows
+55 to 62. Nobody it is for has tried any of it yet.
+
+**Conversation trees (`core/tree.ts`).** Supported conversation asks one idea at a time and narrows down. Until
+18 Nov most topic questions ended on the first answer ("Are you hungry?" → yes, and then nothing). Now every answer
+to every topic question (yes, no, not sure, each choice, the way out) has a next question that narrows it down,
+or one short line that tells the carer what to do: "Are you hungry?" → yes → "Would you like a snack or a meal?" →
+snack → "Would you like something sweet or something savoury?" → something sweet → *"Bring them a sweet snack. Show
+two to pick from, if you can."* A "no" has its branch too ("Would you like something to drink?") or a natural end
+("Not hungry now. Ask again in an hour."). On the screen the next question is the main button ("Next: …"), with "Ask
+something else" under it; at the end of a path the line stands in its place ("Now: …"). A conversation is three
+questions deep at most and never asks the same question twice. What About them names is slotted in: the family's
+foods under "a meal", their people under a call and a visit, their places under going out. The table holds 48
+questions with an entry for every answer of their card, and the body map has its own rule: 49 questions and 172
+question × answer pairs with nothing in About them, 57 and 196 with the sample family; `tests/unit/tree.test.ts` walks every topic question and every answer down every path (596
+paths, 685 with the sample family) and fails on a silent end, on a next question the rules cannot make a card for, and
+on a fourth question. The lines are ours: plain household actions, and for pain "tell the nurse or doctor"; no
+clinician has read them yet.
+
+**What it learns about the person (`core/prefs.ts`).** By counting, on this device, from the answers the person
+confirmed and the needs they pointed to: no model reads them. After three confirmed answers to the same question
+with a clear lead (60 % and no tie) the carer's screen says "Usually: coffee (3 of 3)" and that choice stands first;
+no choice is removed and nothing is chosen for the person, whose screen says nothing about what is usual. Also
+counted: a pattern by time of day (three answers in each part of the day), a usual yes or no, and what was asked for
+on the needs board, how often and when. In a tree, the usual side of the next either-or is offered as a short
+question under the main button ("Would you like something sweet?"). About them lists every learned line in plain
+words with its counts, each with "Keep as a fact" and "Remove", and "Forget everything learned". It never leaves the
+device: `prefs.ts` imports nothing and no file that builds a prompt or a request imports it
+(`tests/unit/prefs.test.ts`). Two AI uses exist in code, both `ONLY_ON_DEVICE` (desktop Chrome with Gemini Nano
+only, so on no phone today): the learned lines as hints in the narrowing step's on-device prompt, and a two-sentence
+summary of them in About them. **Neither has been run against a real Gemini Nano.**
+
+**Narrowing that goes broader (`core/kinds.ts`, `core/narrow.ts`).** In the one recorded run of the narrowing step
+the cloud model answered "tea or coffee → something else" with *water / juice / milk* and then *hot chocolate / malt
+drink / herbal tea*: more drinks, twice. Now the request says in words that more of the same kind is not wanted; a
+proposed choice that is one more single thing of the refused subject is dropped; and when fewer than two choices are
+left the rules make the card themselves (*something cold / something sweet*, then *something to eat / a rest / help
+with something*) and the card says the rules made it and that an AI was asked first. On 13 fixtures written in the
+manner of that run (rows 1 and 2 are the recorded answers) the old code showed more of the same 13 of 13 times, the
+new code 0 of 13 (`devlog/evidence_phase2/narrow_before_after.txt`). The word list behind it is small and ours; a
+word it does not know is never called "the same kind". One run through the real cloud model with the new request (six
+questions, two steps each, localhost, `devlog/evidence_phase2/narrow_cloud_real_localhost.txt`): none of the 12 cards
+offered more of the refused kind; the model made 10 of them and repeated itself on 2, where the rules made the card.
+It leans on the two examples in the request ("something cold", "something to eat"), which come back often at step 2.
+One run; the model's answers vary.
+
+**Colour pictures (`web/src/pictos.ts`, `PICTOGRAMS.md`).** The black line drawings were replaced by simple,
+realistic colour drawings, all our own (no third-party set, no AI-generated image): real-object colours, one object,
+a plain background, light shading, the word under each. 120 pictures and the monogram; 39 of them are new, for the
+words the topic questions and their trees offer (all 128 choices of the 40 rule-made topic questions now have a
+picture; a word with none still shows alone). Why colour: `design/IMAGES_RESEARCH_2026-11-17.md`. The sheet at
+390 px: `devlog/evidence_pictures/pictures_390.png`.
+
+**Personal photos (`core/photos.ts`, `web/src/photo.ts`).** In About them the carer adds a photo of a person, a food
+or drink, or a place: take or choose it, frame it by hand (move and zoom a square), give it one word. A card shows it
+in place of the drawing wherever a choice **is** that word (rules: compared without capitals, "the / your", and the
+plural; never a near match). The photos are kept in IndexedDB on the device, 320 px JPEGs, 60 at most; each has
+"Delete", and there are "Delete all photos" and "Delete everything on this phone". **No AI looks at a photo and none
+is ever sent:** the file is read in the page and drawn on a canvas; nothing recognises, labels or cuts it out.
+**Not built, on purpose: background removal.** The plan was a cut-out by MediaPipe's Interactive Segmenter, on the
+device. The contest's rule is "All of your app's AI inference must go through Firebase AI Logic, so don't call other
+model APIs directly", and a segmentation model called through MediaPipe is AI inference outside Firebase AI Logic,
+even though it is not generative and would send nothing (the same reading that made us remove the browser's speech
+recognition on 17 Nov). So the photo keeps its own background, framed by hand; a test fails the build if a vision or
+segmentation package appears (`tests/unit/photos.test.ts`).
+
+**Back, Home, and a new version that arrives.** Every carer screen has "Back" (one step back in the flow) and "Talk
+Partner · Home" at the top; the phone's own back button or gesture does what "Back" does and leaves the app only
+from the first screen; the person's full-screen card keeps the carer's press-and-hold. A new deploy reaches an
+installed copy: the service worker asks the network for the page with `no-store` and keeps only its own build, the
+page asks for a newer worker every time it comes back to the front, loads it by itself on the first screen, and in the
+middle of a question shows "A newer version is ready. Tap to update." instead (`scripts/update-check.py` swaps the
+served build under an open browser: 11 checks). **Less to read:** the hand-over screen keeps two short lines ("Wait.
+Count to ten. Don't answer for them." and "Point to each choice as you say it."), the rest is behind "More tips"; the
+answer screen shows the question with its answer ("Are you tired?" — "Yes"), the next step, one line on what left, and
+"More".
 
 ## Changed on 17 Nov after the second rehearsal run
 A second run of our rehearsal set E (simulated partners and answers, not people; its numbers are not quoted anywhere)
@@ -199,7 +279,7 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `core/pipeline.ts:733` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:848` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:878` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:485` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
+| `web/src/main.ts:500` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all, and since 17 Nov neither does any either-or whose two options the code reads whole. Every cut is visible per card in "Why this card".
@@ -382,11 +462,14 @@ under `@firebase/firestore`, which this app does not import.
 - `core/`: the shared card logic (rules, privacy swap, prompts, schema, sample family, **`copy.ts`: every string a
   person reads**). Pure TypeScript, no DOM, no Firebase, so every client reuses it unchanged.
 - `web/`: the web client. `web/src/ai/` is the only place that imports `firebase/ai` (`firebaseEngine.ts`) and
-  `firebase/remote-config` (`remoteConfig.ts`). `pictos.ts` holds the hand-drawn
-  pictograms (provenance and licence per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper;
+  `firebase/remote-config` (`remoteConfig.ts`). `pictos.ts` holds the colour
+  pictures, all drawn by us (provenance and licence per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper;
   `voice.ts` is the microphone's state machine (record, stop, send the clip once through the engine; no DOM, so it
   is tested with a scripted microphone, recorder and engine); `mic.ts` is the browser's side; `feedback.ts` the form. `core/needs.ts` is the quick-needs board.
   `web/src/simple.ts` draws the simple view (the carer's screens and the person's); `web/sw.template.js` is the service worker, `web/public/manifest.webmanifest` the manifest.
+- `core/tree.ts`: the conversation trees (what comes after every answer). `core/prefs.ts`: what is learned by
+  counting. `core/photos.ts` and `web/src/photo.ts`: the family's own photos. `core/kinds.ts`: the kinds of answer the
+  narrowing card may offer.
 - `core/topics.ts`: the topics and their questions, the family's own questions, what to ask next after an answer.
   `core/narrow.ts`: the narrowing card after "something else" (AI, both steps). `core/summary.ts`: "Today in short"
   (on-device AI, or the rules).
@@ -412,10 +495,13 @@ npm run check                # lint + typecheck + unit tests
 npm run build                # production build + check that no debug token is bundled
 node scripts/e2e-cloud.mjs   # with the dev server running: real Firebase AI Logic end-to-end (cloud step)
 node scripts/e2e-noconfig.mjs # starts its own server with no settings: rules-only cards from a bare clone, and the quick-needs board with the network off
-python3 scripts/e2e-simple.py     # with `npm run build && npx vite preview` running: the simple view in a browser, as a phone, a desktop and a tablet, and with the connection off (227 checks; --live for a hosted copy: it then never presses "Yes"; --dev for the dev server, which has no service worker)
+python3 scripts/e2e-simple.py     # with `npm run build && npx vite preview` running: the simple view in a browser, as a phone, a desktop and a tablet, and with the connection off; since 18 Nov also Back / Home and the browser's back button, what the app learns, and the family's photos (342 checks; --live for a hosted copy: it then never presses "Yes"; --dev for the dev server, which has no service worker)
 python3 scripts/pwa-check.py      # the same server: the manifest as Chrome parses it, Chrome's installability check, the service worker, the app with the connection off (30 checks)
-python3 scripts/overflow-check.py # with either server running: nothing runs off the side at 320, 360, 390 and 412 px (the simple view at all four, the full view from 360)
-node scripts/contrast-check.mjs   # the simple view's colours, read from the stylesheet: text 4.5:1, controls 3:1, light and dark
+python3 scripts/overflow-check.py # with either server running: nothing runs off the side at 320, 360, 390 and 412 px (the simple view at all four, the full view from 360; 329 checks)
+python3 scripts/update-check.py   # after npm run build: serves copies of dist/ on its own port and swaps build A for B, C and D under an open browser: the new build arrives (11 checks)
+python3 scripts/picture-sheet.py  # every bundled picture on a sheet at 390 px -> devlog/evidence_pictures/
+python3 scripts/phase2-shots.py   # with the preview server running: the screens added on 18 Nov at 390 px -> devlog/evidence_phase2/
+node scripts/contrast-check.mjs   # the simple view's colours, read from the stylesheet: text 4.5:1, controls 3:1, light and dark (97 pairs)
 node scripts/e2e-needs.mjs   # with the dev server running (or --url <a hosted copy>): the quick-needs board with the network off, the microphone's notice
 node scripts/e2e-ondevice.mjs --port 9335   # with the dev server and a Chrome that has Gemini Nano on that debugging port
 node scripts/eval-heldout.mjs             # the labelled set in eval/, rules alone; add --port 9335 for the real app with the on-device model; the report goes to devlog/eval_runs/

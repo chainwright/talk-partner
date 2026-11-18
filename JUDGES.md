@@ -40,6 +40,19 @@ npm install && npm run dev        # then open http://localhost:5179/#/demo
 coffee or tea?", read in code, with no model and nothing sent. It is there so the first frame shows what the person
 sees; it is not the AI part.
 
+**Added on 18 Nov, all in the simple view, all made by the rules on the device** (`CLAIMS.md` rows 55 to 62).
+*Conversation trees:* supported conversation asks one idea at a time and narrows down, so after every answer to every
+topic question the next question is the main button ("Are you hungry?" → yes → "Next: Would you like a snack or a
+meal?" → snack → "something sweet or something savoury?"), and a path ends on one line that says what to do ("Bring
+them a sweet snack."); `core/tree.ts`, walked answer by answer in `tests/unit/tree.test.ts`. *What it learns:* after
+three confirmed answers to the same question the carer sees "Usually: coffee (3 of 3)" and that choice first; it is
+counting, not AI, it stays on the device, and About them lists every learned line with "Remove" (`core/prefs.ts`).
+*Pictures:* our own colour drawings, and the family's own photos first wherever a choice is the photo's word; no AI
+looks at a photo, and no background is removed (a segmentation model would be AI inference outside Firebase AI
+Logic, so it was not built). *Back and Home* stand at the top of every carer screen. None of this adds a model call:
+the AI is where it was, in a typed open question, the narrowing step (which now refuses "more of the same kind") and
+"Today in short".
+
 **What happens next depends on your browser, and the status line at the top says which.** In desktop Chrome with
 Gemini Nano the first step runs by itself, with no click: when the model has loaded (a few seconds; 16 to 22 s
 right after the browser starts, in the four starts we timed) the app asks "What do you want to do this weekend?" and the model on this computer
