@@ -204,5 +204,18 @@ the table.
 | 181 | `5f05b8d` | `31cc14c` | 2026-11-18 07:11 | Phase 7 after the first read and the browser run: the passport fits one A4 sheet, its li… |
 | 182 | `11fefec` | `7fb38e9` | 2026-11-18 07:34 | Phase 7: README, JUDGES, CLAIMS rows 108 to 113, EVIDENCE, the day's log and the evidenc… |
 | 183 | `ed0395d` | `d82037d` | 2026-11-18 07:41 | The note under the usual choices no longer says needs are left out: a usual yes to a dri… |
+| 184 | `2786a56` | `449551e` | 2026-11-18 12:22 | Phase 8, item 1 (safety, judge round 7 P0 6): on the visit page "Since the last visit" c… |
+| 185 | `1642088` | `bb02b95` | 2026-11-18 12:37 | Phase 8, item 2 (judge round 7 P1 11): Back goes exactly one step in every view, the ful… |
+| 186 | `9b10fb8` | `dfb15e0` | 2026-11-18 12:38 | Phase 8, item 3 (judge round 7 P1 7, 8, 9, 10): the passport's "knows what to say" and "… |
+| 187 | `659501c` | `2469c42` | 2026-11-18 12:43 | Phase 8, item 4 (judge round 7 P0 1, P1 13, 16, 17): the documents no longer say phases … |
+| 188 | `db4c0d1` | `8969ad3` | 2026-11-18 12:47 | Phase 8, item 5 (judge round 7 P1 12, 14, 15): "Needs something now?"; the red card says… |
+| 189 | `159bce4` | `2752dab` | 2026-11-18 12:49 | Phase 8, item 6 (judge round 7 P0 4, IMPROVE C): every card an AI made carries a small r… |
+| 190 | `058198f` | `0e8e785` | 2026-11-18 12:56 | Phase 8, item 7 (judge round 7 P1 19, 20, the nurse's and the SLP's sets): a line with t… |
+| 191 | `c070bc4` | `2815b07` | 2026-11-18 12:59 | Phase 8, item 8 (judge round 7 P0 5): Beth is a drawn person in the test fixtures (no re… |
+| 192 | `6785c0b` | `f8a374c` | 2026-11-18 13:02 | e2e-phase4-ai.py: the H screenshot line names the folder it was written to |
+| 193 | `e3cc1b9` | `52f284b` | 2026-11-18 13:07 | Phase 8: the passport's first screen shows the fixed line on a tired yes under the two f… |
+| 194 | `feb272d` | `a035b96` | 2026-11-18 13:18 | Phase 8, found by the full runs: "Home" from deep put the first screen back 490 px down … |
+| 195 | `1a5e79f` | `4739b26` | 2026-11-18 13:32 | Phase 8, documents: README "Added on 18 to 19 Nov, phase 8", JUDGES, CLAIMS rows 114 to … |
+| 196 | `3a9c0ce` | `b47c4de` | 2026-11-18 13:52 | Deploy of 1a5e79f (phase 8): README Deploy and JUDGES name the live build; hosted copy =… |
 
-Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172 and 173–183 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
+Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183 and 184–196 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
