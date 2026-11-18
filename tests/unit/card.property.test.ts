@@ -121,10 +121,10 @@ describe('property: card invariants over random questions, model output and engi
       else {
         expect(esc, ctx).toHaveLength(1);
         expect(ans.length, ctx).toBeGreaterThanOrEqual(2);
-        // (a feeling scale keeps its middle at every level: three steps on one line)
+        // (a feeling scale keeps its middle at every level: three steps on one line; so does the pain scale, since 17 Nov)
         // (so does the fixed line of three times an open "when" question gets)
         // (and, since 17 Nov, exactly three of the family's own About-me entries: they share one card, and the card says so)
-        expect(ans.length, ctx).toBeLessThanOrEqual(card.kind === 'feeling' || card.notes.includes(COPY.notes.timeLine) || card.notes.includes(COPY.notes.ownAll) ? 3 : cap(support));
+        expect(ans.length, ctx).toBeLessThanOrEqual(card.kind === 'feeling' || (card.kind === 'pain' && !card.scale) || card.notes.includes(COPY.notes.timeLine) || card.notes.includes(COPY.notes.ownAll) ? 3 : cap(support));
         if (card.notes.includes(COPY.notes.ownAll)) { expect(support, ctx).not.toBe('most'); for (const a of ans) expect(fromAboutMe(a.label, PROFILE), ctx).toBeTruthy(); }
       }
       // no negative words (the yes / no card's own "no" is the one exception), no "both" (no body sides in these

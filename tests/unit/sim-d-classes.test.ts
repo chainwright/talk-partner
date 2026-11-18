@@ -464,7 +464,7 @@ describe('D-4. asking after a part of the body, or for a number, gets the pain c
       const e = engine();
       const card = await ask(q, e);
       expect(card.kind).toBe('pain');
-      expect(answers(card)).toEqual(['a little', 'a lot']);
+      expect(answers(card)).toEqual(['a little', 'quite bad', 'very bad']);
       expect(e.calls).toEqual([]);
     });
   }

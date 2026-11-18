@@ -146,6 +146,12 @@ export interface Card {
    * card is the answer to that question, not a detour from another card, so there is no card behind it to go back to.
    */
   unguessable?: boolean;
+  /**
+   * The question, or a model's answer, held exactly one real option beside a way out ("Rest or something else?"):
+   * the pipeline turns such a card into a yes / no card on that option. A lone model choice with no way out beside
+   * it is not enough: that card is not made.
+   */
+  oneOption?: boolean;
   /** Set when no card could be made without a step the partner has to allow (e.g. cloud consent). */
   blocked?: string | null;
   /**

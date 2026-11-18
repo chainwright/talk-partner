@@ -195,6 +195,15 @@ export function positiveForm(q: string): string | null {
 /** "nothing", "neither", "just quiet", "no one": a real choice at the end of a list of things, shown as its own tile. */
 // (since set E, 16 Nov, also "not at all", "not today", "no thanks" and, after a pair like "better or worse", "the same")
 const NONE_OPTION = /^(?:just\s+|maybe\s+)?(nothing|neither|none|no\s+one|nobody|quiet|peace\s+and\s+quiet|silence|nowhere|not\s+at\s+all|not\s+(?:today|tonight|now|yet|just\s+yet|right\s+now|this\s+(?:week|time|morning|afternoon|evening|weekend))|no\s+thanks|no\s+thank\s+you|(?:about\s+)?the\s+same|same)(?:\s+(?:at\s+all|for\s+now|of\s+them|of\s+those|of\s+these|today|tonight|yet|just\s+yet|right\s+now|now))?$/i;
+/**
+ * A way out, not a choice: "something else", "anything else", "something different", "other". Every card has its own
+ * way out, so such a label never counts as one of its real choices, wherever it came from: the partner's own list
+ * ("Rest or something else?"), an either-or, or a model's answer. One check, used by the list and either-or readers
+ * here, the model-choice clean-up and the "at least two real choices" rule (core/pipeline.ts) and the routing.
+ * (17 Nov 2026: "What do you want? Rest or something else?" made the card rest | something else | [something else].)
+ */
+const ESCAPE_LABEL = /^(?:or\s+)?(?:(?:something|anything|someone|somebody|anyone|anybody|somewhere|anywhere)\s+(?:else|different)(?:\s+(?:entirely|altogether|instead))?|others?|another|another\s+(?:one|thing)|not\s+sure)$/i;
+export const isEscapeLabel = (label: string): boolean => ESCAPE_LABEL.test(label.replace(/[?.!]+$/, '').replace(/\s+/g, ' ').trim());
 /** True for the "nothing / neither / quiet" tile of a list. */
 export const isNoneOption = (label: string): boolean => NONE_OPTION.test(label.trim());
 const OPT_OUT = /\s*,?\s+or\s+(?:is\s+that\s+a\s+no|would\s+you\s+rather\s+not|(?:do|would)\s+you\s+not|don't\s+you|not\s+really|not\s+bothered|are\s+you\s+(?:fine|ok|okay|alright|all\s+right|good|happy|sorted|set)(?:\s+(?:as\s+you\s+are|for\s+now|as\s+it\s+is|without|without\s+one))?|is\s+it\s+(?:fine|ok|okay|alright|all\s+right)(?:\s+as\s+it\s+is)?|shall\s+i\s+leave\s+it|should\s+i\s+leave\s+it|leave\s+it|never\s+mind|nothing(?:\s+for\s+now)?)\s*\?\s*$/i;
@@ -898,6 +907,16 @@ export function listedAnswers(q: string, profile?: Profile): { q: string; option
   const rest = m[2].trim();
   let items = rest.split(/\s*,\s*(?:or\s+)?|\s+or\s+/i).map((x) => x.trim()).filter(Boolean);
   if (items.length < 2 || items.some((x) => x.split(/\s+/).length > 3 || QUESTION_LEAD.test(x) || LABEL_BAD.test(x))) return null;
+  // "… Rest or something else?": the way out the partner named is the card's own way out, not one of its choices.
+  // One real option left is returned alone: the pipeline asks it as a yes / no question (it is no choice card).
+  if (items.some(isEscapeLabel)) {
+    items = items.filter((x) => !isEscapeLabel(x));
+    if (!items.length) return null;
+    if (items.length === 1) {
+      const one = checkSides(items.map((x) => x.replace(/^(?:maybe\s+|perhaps\s+)?(?:your|my|the|a|an|some)\s+/i, '')), `${rest}?`, profile, true, false);
+      return one ? { q: first, options: one } : null;
+    }
+  }
   const none = NONE_OPTION.exec(items[items.length - 1]);
   if (none) items = items.slice(0, -1);
   items = items.map((x) => x.replace(/^(?:maybe\s+|perhaps\s+)?(?:your|my|the|a|an|some)\s+/i, ''));
@@ -909,9 +928,17 @@ export function listedAnswers(q: string, profile?: Profile): { q: string; option
 
 /** The options code reads from the question: a list of three or more, else the either-or pair. */
 export function codeOptions(q: string, profile?: Profile): string[] | null {
-  return orList(q, profile) ?? withSame(codePair(q, profile));
+  const read = orList(q, profile) ?? withSame(codePair(q, profile));
+  // "Do you want a rest or something else?": the way out is not an option. What is left may be one real option; the
+  // pipeline then asks it as a yes / no question.
+  if (read && read.some(isEscapeLabel)) { const real = read.filter((x) => !isEscapeLabel(x)); return real.length ? real : null; }
+  return read;
 }
 
+const HOT_SIDE = /^(?:too\s+)?(?:hot|warm)$/;
+const COLD_SIDE = /^(?:too\s+)?(?:cold|cool|chilly)$/;
+/** The neutral middle of a hot / cold pair. */
+export const JUST_RIGHT = 'just right';
 const OPPOSITES: [string, string][] = [['better', 'worse'], ['more', 'less'], ['easier', 'harder'], ['stronger', 'weaker'], ['warmer', 'cooler'], ['warmer', 'colder'], ['hotter', 'colder'], ['louder', 'quieter'], ['faster', 'slower'], ['higher', 'lower'], ['bigger', 'smaller'], ['tighter', 'looser'], ['lighter', 'heavier'], ['brighter', 'darker'], ['lighter', 'darker'], ['longer', 'shorter']];
 /**
  * "Is the hip any better or worse than this morning?" names two ends and leaves out the middle. A pair of opposite
@@ -920,6 +947,10 @@ const OPPOSITES: [string, string][] = [['better', 'worse'], ['more', 'less'], ['
 export function withSame<T extends string[] | null>(pair: T): T | string[] {
   if (!pair || pair.length !== 2) return pair;
   const [a, b] = pair.map((x) => lc(x).replace(/^(?:any|a\s+bit|a\s+little|much|getting|feeling)\s+/, ''));
+  // "Are you too hot or too cold?" names two ends too: a person who is comfortable gets "just right", and is not
+  // pushed to the way out for the most common answer (judges' round of 17 Nov 2026)
+  const temp = (x: string) => (HOT_SIDE.test(x) ? 1 : COLD_SIDE.test(x) ? -1 : 0);
+  if (temp(a) * temp(b) === -1) return [...pair, JUST_RIGHT];
   return OPPOSITES.some(([x, y]) => (a === x && b === y) || (a === y && b === x)) ? [...pair, 'the same'] : pair;
 }
 
@@ -955,12 +986,15 @@ const PAIR_CATEGORY: [string, string[]][] = [
   ['when', ['now', 'later', 'today', 'tonight', 'tomorrow', 'morning', 'afternoon', 'evening', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']],
 ];
 
+const GENERIC_TITLE = /^(?:(?:a|the|your|this)\s+)?(?:questions?|choices?|options?|answers?|which\s+one|topic|card|general|other|misc|unknown|n\/?a|none)$/i;
 /** A model topic that is one function word or adverb, a placeholder, or empty is no headline (§2.16). */
 export function validTopic(t: string | undefined, options: string[] = []): string {
   const c = cleanTopic(t ?? '');
   if (!c) return '';
   const l = lc(c);
   if (/\b(?:Person|Food|Place|Show|Music|Thing|Name) [A-Z]\b/.test(c)) return '';
+  // a word that only says "this is a question / a choice" is no headline (a cloud topic "question", 17 Nov 2026)
+  if (GENERIC_TITLE.test(l)) return '';
   const ws = l.split(' ');
   if (ws.length === 1 && (STOP.has(l) || ADVERB_ONLY.has(l) || ADDRESS.has(l))) return '';
   for (const o of options.map(lc)) if (l === o || l.includes(o) || o.includes(l)) return '';
@@ -970,13 +1004,15 @@ export function validTopic(t: string | undefined, options: string[] = []): strin
 /**
  * Headline for an or-pair: the shared topic, never one of the options. In order: the question's own time or topic
  * words left once the two sides are removed ("this weekend", "lunch"); a category both sides belong to ("drink");
- * the model's topic when it names neither side; the pair itself when short; else "which one".
+ * the model's topic when it names neither side; the pair itself when short; "what to do" for two actions; else no headline at all (never a generic "which one":
+ * the person's screen shows the question itself, and a word that names nothing reads as one more choice).
  */
 export function orHeadline(q: string, all: string[], profile?: Profile, modelTopic = ''): string {
   let s = q.replace(/[?.!]+$/, '');
   // the "nothing / neither" tile of a list is taken out of the question like any side, but the topic is what the
   // other sides share
-  const pair = all.some(isNoneOption) ? all.filter((x) => !isNoneOption(x)) : all;
+  const middle = (x: string) => isNoneOption(x) || lc(x) === JUST_RIGHT;
+  const pair = all.some(middle) ? all.filter((x) => !middle(x)) : all;
   for (const side of all) {
     const re = new RegExp(`\\b${esc(side)}(?:'s|s|es)?\\b`, 'i');
     if (re.test(s)) s = s.replace(re, ' ');
@@ -1012,7 +1048,7 @@ export function orHeadline(q: string, all: string[], profile?: Profile, modelTop
   // "switch the lamp on / leave it dark", "have a lie down / do your stretches / sit with me": the sides share no
   // word, and what they share is that each is something to do (set E, second run, 17 Nov: "which one" over eight cards)
   if (pair.length >= 2 && pair.every((p) => ACTION_START.test(p) || LIST_VERB.test(`${p} x`) || TO_DO.test(p))) return 'what to do';
-  return 'which one';
+  return '';
 }
 
 // ---------------------------------------------------------------- rule 10 (part): numbers as figures (§2.9)
@@ -1132,8 +1168,14 @@ export function isBodyWhere(q: string): boolean {
   return (BODY_WORD.test(q) && /\b(where|which|what)\b/i.test(q)) || /\bwhere does it hurt\b/i.test(q);
 }
 
-/** Pain level, by support: up to 3 steps at "mild", 2 at "more"/"most" (KB §7 rule 5). */
-export const PAIN_LEVELS: Record<'mild' | 'more', string[]> = { mild: ['a little', 'some', 'a lot'], more: ['a little', 'a lot'] };
+/**
+ * Pain level: three steps at every support level, and "not sure" as the way out. Until 17 Nov 2026 it was "a little /
+ * a lot" at "2 at a time": too coarse to act on, and "something else" is no answer to "how bad" (SLP and AAC seats).
+ * A scale is one idea on one line, so its three steps share one card, like the feeling scale.
+ */
+const PAIN_STEPS = ['a little', 'quite bad', 'very bad'];
+export const PAIN_LEVELS: Record<'mild' | 'more', string[]> = { mild: PAIN_STEPS, more: PAIN_STEPS };
+export const PAIN_ESCAPE = 'not sure';
 /** Step 1 of the body map: one body part per target (never "chest or stomach" on one tile). */
 export const BODY_REGIONS: BodyRegion[] = ['head', 'chest', 'stomach', 'back', 'arms', 'legs'];
 /** Step 2: where in that part. */
@@ -1712,7 +1754,7 @@ const ESCAPES = new Set(['something else', 'someone else', 'somewhere else', 'no
 export function route(kind: string, q: string, answers: string[], isOrPair: boolean, limits: { moodWords: number; minChoices: number } = { moodWords: 2, minChoices: 2 }): RouteDecision {
   const reasons: string[] = [];
   if (kind !== 'choice' || isOrPair) return { to: 'device', reasons };
-  const core = answers.map(lc).filter((c) => !ESCAPES.has(c));
+  const core = answers.map(lc).filter((c) => !ESCAPES.has(c) && !isEscapeLabel(c));
   const qw = new Set(words(q));
   // the two thresholds are settings (core/models.ts): 2 and 2 in code, changeable through Firebase Remote Config
   if (core.filter((c) => c.split(/\s+/).some((w) => MOOD_WORDS.has(w))).length >= limits.moodWords) reasons.push(limits.moodWords === 2 ? 'two or more mood words' : `${limits.moodWords} or more mood words`);
@@ -1727,11 +1769,23 @@ export function route(kind: string, q: string, answers: string[], isOrPair: bool
 const STOP = new Set(('a an the you your yours we our us me my i it its is are am was were do does did would will can could should shall have has had ' +
   'what where who whom when which why how want need like to for of on in at about with go going get got some any this that these those ' +
   'there here think feel find make made please right now so if and or but be been being he she him her his hers they them their its').split(' '));
-/** Fallback topic when no model ran: up to three content words of the question, address words and the person's name left out (§2.2). */
+/** A question made of function words only still says what it is about by its verb: "What would you like to do?" -> "what to do". */
+const FRAME_TOPIC: [RegExp, string][] = [
+  [/\bto\s+do\b|\bdoing\b/i, 'what to do'], [/\beat(?:ing)?\b/i, 'food'], [/\bdrink(?:ing)?\b/i, 'drink'], [/\bwatch(?:ing)?\b/i, 'TV'],
+  [/\bgo(?:ing)?\b/i, 'where to'], [/\bneed\b/i, 'what you need'], [/\b(?:want|like|fancy)\b/i, 'what you want'],
+];
+export function frameTopic(q: string): string {
+  return FRAME_TOPIC.find(([re]) => re.test(q))?.[1] ?? '';
+}
+/**
+ * Fallback topic when no model ran: up to three content words of the question, address words and the person's name
+ * left out (§2.2); else a title from the question's verb; else none. Never a generic word: until 17 Nov 2026 a
+ * question of function words only ("What do you want?") got the title "question", which read as one more choice.
+ */
 export function heuristicTopic(q: string, profile?: Profile): string {
   const name = lc(profile?.personName ?? '');
   const ws = (q.match(/[A-Za-z']+/g) ?? []).filter((w) => !STOP.has(lc(w)) && !ADDRESS.has(lc(w)) && lc(w) !== name);
-  return ws.slice(0, 3).join(' ').toLowerCase() || 'question';
+  return ws.slice(0, 3).join(' ').toLowerCase() || frameTopic(q);
 }
 
 const YN_FRAME = [

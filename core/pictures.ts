@@ -40,6 +40,8 @@ export const SYNONYM: Record<string, string> = {
   sleepy: 'tired', exhausted: 'tired', 'worn out': 'tired', worried: 'worried', anxious: 'worried', hurts: 'pain', hurting: 'pain', sore: 'pain',
   // the second page of "How are you feeling?" (17 Nov 2026): the frowning face, and the pain picture
   sad: 'bad', 'in pain': 'pain',
+  // the three steps of the pain scale (17 Nov 2026) share the bar pictures
+  'quite bad': 'some', 'very bad': 'a lot',
   fine: 'okay', ok: 'okay', alright: 'okay', 'all right': 'okay', 'so-so': 'okay',
 };
 

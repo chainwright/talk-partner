@@ -317,7 +317,7 @@ describe('9. a pain question gets the pain card, and a number scale stays on it'
     expect(isPainLevel(q)).toBe(true);
     const c = await ask(q, new Scripted(ANY, ANY));
     expect(c.kind).toBe('pain');
-    expect(answers(c)).toEqual(['a little', 'a lot']);
+    expect(answers(c)).toEqual(['a little', 'quite bad', 'very bad']);
     expect(c.topic).toBe('pain');
   });
   // (since set D of 16 Nov the scale is a line of every number, not two or three ranges: the number was being lost)

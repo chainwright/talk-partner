@@ -79,7 +79,7 @@ function invariants(card: Card, e: MatrixEngine, c: CloudState) {
   else {
     expect(answers(card).length).toBeGreaterThanOrEqual(2);
     expect(card.choices.filter((x) => x.role === 'escape')).toHaveLength(1);
-    expect(answers(card).length).toBeLessThanOrEqual(card.kind === 'feeling' ? 3 : 2); // support "more"; a feeling scale keeps its middle
+    expect(answers(card).length).toBeLessThanOrEqual(card.kind === 'feeling' || card.kind === 'pain' ? 3 : 2); // support "more"; a feeling scale and the pain scale keep their middle
   }
   for (const ch of card.choices) {
     expect(hasPlaceholder(ch.label)).toBe(false);
@@ -172,7 +172,7 @@ const SHAPES: { q: string; dev: ModelOutput; cloud?: ModelOutput; same: boolean;
     same: true,
     check: (card, e) => {
       expect(card.kind).toBe('pain');
-      expect(labels(card)).toEqual(['a little', 'a lot', 'something else']);
+      expect(labels(card)).toEqual(['a little', 'quite bad', 'very bad', 'not sure']);
       expect(e.deviceCalls).toHaveLength(0);
       expect(e.cloudCalls).toHaveLength(0);
     },

@@ -55,8 +55,9 @@ describe('§2.5: the headline for an or-pair is the shared topic', () => {
     // no shared topic, no category, the model's topic names a side, the pair is too long: until 17 Nov this read
     // "which one"; both sides are things to do, and the headline now says so
     expect(h).toBe('what to do');
-    // two things that share no word and are too long to name both: "which one" is still all the code can say
-    expect(orHeadline('The big tartan blanket or the little quilted throw?', ['big tartan blanket', 'little quilted throw'], PROFILE)).toBe('which one');
+    // two things that share no word and are too long to name both: no headline at all, never a generic "which one"
+    // (17 Nov: the person's screen shows the question itself, and a word that names nothing reads as one more choice)
+    expect(orHeadline('The big tartan blanket or the little quilted throw?', ['big tartan blanket', 'little quilted throw'], PROFILE)).toBe('');
     expect(orHeadline(q, pair, PROFILE, 'rest')).toBe('rest'); // a model topic that names neither side is fine
     expect(orHeadline('Do you want coffee or tea?', ['coffee', 'tea'], PROFILE, 'coffee')).toBe('drink');
   });

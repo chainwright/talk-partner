@@ -534,6 +534,7 @@ const COPY = {
         blockedNoModel: 'no card: no model answered this open question, and the rules alone cannot make its choices',
         blockedCloud: 'no card: cloud help was asked and failed, and nothing made on this computer could stand in for it',
         blocked: 'no card: fewer than two choices survived',
+        oneOption: 'one real option was left, so it is asked as a yes / no question',
         repair: 'a fixed card for a stuck moment, never a model',
         needs: 'a fixed board of everyday needs, never a model',
         recognition: 'a recognition card from About me only, nothing made up',
@@ -575,6 +576,7 @@ const COPY = {
         besideOwn: "a model's guess is not put beside the family's own entries",
         ownSpecific: "a general word: About me has the family's own kind of it",
         cloudUnfit: "the cloud's choices did not hold up; the card made on this computer is kept",
+        escapeWord: 'a way out, not a choice: every card has its own',
       },
     },
     lookalikesHeading: 'Look-alikes, named',
@@ -791,6 +793,7 @@ const COPY = {
     notReadyCloudPossible: "The private helper isn't ready on this computer, so there are no choices for this one.",
     notReadyNoCloud: "The private helper isn't ready on this computer and cloud help is not configured on this copy. Just ask normally.",
     justAsk: (q: string) => `Just ask normally: ${q}`,
+    oneOption: (label: string) => `Only one real option was there ("${label}"), so it is asked as a yes / no question. A way out such as "something else" is not counted as a choice.`,
     recognition: 'Only things from About me are on this card; nothing is made up.',
     unseenWho: 'You were not there, so only they know who it was. The card offers the people About me names, a few at a time; nothing is made up.',
     // step trace, plain words

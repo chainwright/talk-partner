@@ -9,7 +9,7 @@ import { pictureFor } from './pictures';
 import { cloudPrompt, devicePrompt } from './prompt';
 import {
   BODY_DETAIL, BODY_REGIONS, FEELING_MORE, FEELING_SCALES, isSelfFeeling, PAIN_LEVELS, choiceCap, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
-  heuristicTopic, householdFilter, isQuiz, quizKind, offersOptions, wholePair, codePairRead, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
+  heuristicTopic, householdFilter, isEscapeLabel, PAIN_ESCAPE, isQuiz, quizKind, offersOptions, wholePair, codePairRead, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   contactPool, dropGenericWho, fromAboutMe, ownFirst, ownSpecific, placesFirst, isUnguessable, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
   besideOwnFilter, codeOptions, contactFirst, dropWhichOne, fillerFilter, whenChoices, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
 } from './rules';
@@ -89,7 +89,9 @@ function toChoices(answers: string[], escapes: string[], profile: Profile, asked
 /** KB §7 rule 5: up to 3 choices at "mild", 2 at "more" and "most"; always exactly one escape. Numbers as figures (§2.9). */
 function finish(base: Omit<Card, 'choices' | 'say'>, answers: string[], escapes: string[], profile: Profile, support: SupportLevel, cap = choiceCap(support)): Card {
   const when = questionType(base.asked) === 'when';
-  const choices = toChoices(answers.slice(0, cap).map((a) => figures(a, when)), escapes.slice(0, 1), profile, base.asked);
+  // never two tiles with the same label, and never the way out among the answers (rules.ts, isEscapeLabel)
+  const real = answers.filter((a, i) => !isEscapeLabel(a) && answers.findIndex((b) => lc(b) === lc(a)) === i);
+  const choices = toChoices(real.slice(0, cap).map((a) => figures(a, when)), escapes.slice(0, 1), profile, base.asked);
   return { ...base, choices, say: spokenLine(base.asked, choices.map((c) => c.spoken)) };
 }
 
@@ -122,7 +124,7 @@ const lc = (s: string) => s.toLowerCase();
  * Every choice that leaves the list is written to `why.dropped` with the rule that removed it, at the moment it is removed;
  * every choice code puts in is written to `why.added` with where it came from.
  */
-function cleanChoices(asked: string, topic: string, raw: string[], profile: Profile, support: SupportLevel, why: WhyTrack): { answers: string[]; rejected: string[]; filled: string | null } {
+function cleanChoices(asked: string, topic: string, raw: string[], profile: Profile, support: SupportLevel, why: WhyTrack): { answers: string[]; rejected: string[]; filled: string | null; wayOut: boolean } {
   const R = W.rules;
   const rejected: string[] = [];
   const drop = (label: string, rule: string) => why.dropped.push({ label, rule });
@@ -135,6 +137,10 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
     }
   };
   let answers = raw.map((c) => snapToProfile(c.replace(/[.!?]+$/, '').trim(), profile)).filter(Boolean);
+  // a way out a model offered as a choice ("something else", "other") is not one: the card has its own
+  const noEscapes = answers.filter((c) => !isEscapeLabel(c));
+  const wayOut = noEscapes.length < answers.length;
+  diff(answers, noEscapes, R.escapeWord); answers = noEscapes;
   // a general word gives way to the family's own kind of it, when About me has exactly one ("chair" -> "recliner")
   const own = ownSpecific(answers, asked, profile);
   for (const sw of own.swapped) { drop(sw.from, R.ownSpecific); why.added.push({ label: sw.to, from: W.ownKind(sw.from) }); }
@@ -222,7 +228,7 @@ function cleanChoices(asked: string, topic: string, raw: string[], profile: Prof
   if (peopleAdded && !filled) filled = 'people from About me';
   if (placesAdded && !filled) filled = 'places from About me';
   if (droppedGeneric && !filled) rejected.push("a choice didn't fit the question");
-  return { answers, rejected: [...new Set(rejected)], filled };
+  return { answers, rejected: [...new Set(rejected)], filled, wayOut };
 }
 
 /** The proposal as the rules saw it, for the "why" record. */
@@ -300,7 +306,8 @@ export function assemble(
       card.why = fixedWhy(o, step, W.decidedBy.pain, W.headlineFrom.fixed);
       return card;
     }
-    const card = finish({ ...base, source: 'code', topic: 'pain', kind: 'pain' }, [...PAIN_LEVELS[scaleLevel(support)]], [escapeFor(asked)], profile, support);
+    const steps = [...PAIN_LEVELS[scaleLevel(support)]];
+    const card = finish({ ...base, source: 'code', topic: 'pain', kind: 'pain' }, steps, [PAIN_ESCAPE], profile, support, steps.length);
     card.why = fixedWhy(o, step, W.decidedBy.pain, W.headlineFrom.fixed);
     return card;
   }
@@ -386,6 +393,8 @@ export function assemble(
   let headline = topic;
   let decided: string;
   let ownAll = false;
+  // one real option and a way out, said by the partner or by a model: asked as a yes / no question (noEscapeOnly)
+  let wayOut = !!pair;
   if (pair) {
     answers = [...pair]; // rule 3: exactly the options the partner offered
     // §2.5: the shared topic, never one of the options. The model's topic may be the headline only when the options
@@ -400,12 +409,12 @@ export function assemble(
     }
   } else {
     decided = o ? W.decidedBy.open : W.decidedBy.openCode;
-    ({ answers, rejected, filled } = cleanChoices(asked, topic, o?.choices ?? [], profile, support, track));
+    ({ answers, rejected, filled, wayOut } = cleanChoices(asked, topic, o?.choices ?? [], profile, support, track));
     // §2.16: the headline is never one of the options (a filled answer may coincide with the model's topic)
     if (answers.some((a) => lc(a) === lc(headline))) {
       headline = heuristicTopic(asked, profile);
       headlineFrom = W.headlineFrom.question;
-      if (answers.some((a) => lc(a) === lc(headline))) headline = 'choices';
+      if (answers.some((a) => lc(a) === lc(headline))) headline = '';
     }
     // Exactly three of the family's own entries share one card, also at "2 at a time" (not at the largest tiles, and
     // not people, who are paged two at a time): set E, second run, 17 Nov, an About-me place stood on the next page
@@ -452,6 +461,7 @@ export function assemble(
   if (rest.length) notes.push(N.moreOnNext(rest.join(', '), escape));
   const card = finish({ ...base, notes, topic: headline, kind: 'choice', route: r }, answers, [escape], profile, support, cap);
   card.why = whyFor(card, proposal(o, step), decided, headlineFrom, track, profile);
+  if (wayOut && answers.length === 1) card.oneOption = true;
   if (rest.length) {
     // A good choice the support level has no room for is kept for a next page, reached by the way-out tile or the
     // partner's "Next: more choices" (the body map pages the same way). Before, it was dropped without a word. As
@@ -613,11 +623,34 @@ function coachFor(card: Card): string | undefined {
   return undefined;
 }
 
-/** A choice card left with fewer than two answers is not shown (an escape alone can't be answered): just ask normally. */
-function noEscapeOnly(card: Card): Card {
-  if (card.kind !== 'choice' || card.blocked || card.choices.filter((c) => c.role === 'answer').length >= 2) return card;
+/**
+ * A choice card needs at least two real choices: a way out ("something else") is never counted as one, whatever its
+ * role on the card (rules.ts, isEscapeLabel). With exactly one real option left beside a way out ("Rest or something
+ * else?", a cloud answer of one word and "something else": `oneOption`) the card becomes a yes / no card on that option, which is what a therapist does
+ * with one candidate. With none there is no card (an escape alone can't be answered): just ask normally.
+ */
+export function noEscapeOnly(card: Card): Card {
+  if (card.kind !== 'choice' || card.blocked) return card;
+  const real = card.choices.filter((c) => c.role === 'answer' && !isEscapeLabel(c.label));
+  if (real.length >= 2) return card;
+  if (real.length === 1 && card.oneOption) return oneOptionCard(card, real[0]);
   const why = card.why ? { ...card.why, decided: card.why.proposed ? W.decidedBy.blocked : W.decidedBy.blockedNoModel } : undefined;
-  return { ...card, choices: [], say: N.justAsk(card.asked), blocked: N.noChoicesBlocked, why };
+  return { ...card, choices: [], nextPage: null, say: N.justAsk(card.asked), blocked: N.noChoicesBlocked, why };
+}
+
+/** One real option: asked as a yes / no question on it. The line to say keeps the partner's own words first. */
+function oneOptionCard(card: Card, only: Choice): Card {
+  const label = only.label;
+  const asked = `${label.charAt(0).toUpperCase()}${label.slice(1)}?`;
+  const mk = (l: string, role: Choice['role']): Choice => ({ label: l, spoken: l, role, picture: { type: 'builtin', id: l } });
+  const choices = [mk('yes', 'answer'), mk('no', 'answer'), mk('not sure', 'escape')];
+  const said = `${asked} Yes, no, or not sure?`;
+  const why = card.why ? { ...card.why, decided: W.decidedBy.oneOption, kept: [label] } : undefined;
+  return {
+    ...card, kind: 'yesno', topic: label, asked, choices, nextPage: null,
+    say: card.asked.toLowerCase().replace(/[?.!\s]+$/, '') === label.toLowerCase() ? said : `${card.asked} ${said}`,
+    notes: [...card.notes, N.oneOption(label)], why,
+  };
 }
 
 /**
@@ -820,7 +853,7 @@ async function cloudCard(
     const cloudPair = offersOptions(asked) ? withSame(validateOptions(o.options, asked, env.profile)) : null;
     let card = assemble(asked, pending, o, env.profile, env.support, r.source, r.ms, cloudPair, false, { step: 'stripped', pairFrom: 'model' });
     const cloudNotes: string[] = [];
-    if (card.kind === 'choice' && card.choices.filter((c) => c.role === 'answer').length < 2) {
+    if (card.kind === 'choice' && !card.oneOption && card.choices.filter((c) => c.role === 'answer').length < 2) {
       // the cloud's options didn't hold up either (made up, or not fitting the question)
       const devAnswers = fallback ? fallback.choices.filter((c) => c.role === 'answer').length : 0;
       if (fallback && devAnswers >= 2) {
@@ -829,7 +862,9 @@ async function cloudCard(
         // the why stays the device card's; the cloud's rejected choices are appended with their rules
         if (cloudTried && card.why) card.why = { ...card.why, dropped: [...card.why.dropped, ...cloudTried.dropped.map((d) => ({ label: d.label, rule: `${W.rules.cloudUnfit}: ${d.rule}` }))] };
         cloudNotes.push(N.cloudOptionsUnfit);
-      } else if (/^\s*(which|what)\s+[a-z]+/i.test(asked)) {
+      } else if (/^\s*(which|what)\s+(?!(?:do|does|did|would|will|shall|should|can|could|is|are|was|were|have|has|had|about|now|if|else|next)\b)[a-z]+/i.test(asked)) {
+        // "Which jumper?", "What colour?": the real options are things in the room. Not for "What do you want?": two
+        // tiles "this one / that one" answer nothing there (17 Nov 2026), so that question gets no card.
         card = finish({ ...card, kind: 'choice' }, ['this one', 'that one'], ['something else'], env.profile, env.support);
         if (card.why) card.why = { ...card.why, kept: [], added: [{ label: 'this one', from: N.holdUpTwo }, { label: 'that one', from: N.holdUpTwo }] };
         cloudNotes.push(N.holdUpTwo);

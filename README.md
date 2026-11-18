@@ -181,9 +181,9 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:199` | `inferenceSource === InferenceSource.ON_DEVICE` | where the recording was turned into text, from the SDK's report |
 | `web/src/ai/firebaseEngine.ts:221` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
 | `web/src/ai/app.ts:32` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started by the first cloud call (a card, a recording) or the first feedback note, never at page load |
-| `core/pipeline.ts:698` | `ran: r.source` | the private step's trace line is the engine's report |
-| `core/pipeline.ts:813` | `ran: r.source` | the stripped step's trace line is the engine's report |
-| `core/pipeline.ts:841` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
+| `core/pipeline.ts:731` | `ran: r.source` | the private step's trace line is the engine's report |
+| `core/pipeline.ts:846` | `ran: r.source` | the stripped step's trace line is the engine's report |
+| `core/pipeline.ts:876` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
 | `web/src/main.ts:310` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut

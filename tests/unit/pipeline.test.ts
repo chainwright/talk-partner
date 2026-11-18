@@ -158,12 +158,13 @@ describe('split, body map, pain', () => {
     expect(c.say).toBe('Where in the legs? Your left leg, your right leg, or somewhere else?');
   });
 
-  it('pain amount: a little / a lot at "more", three steps at "mild"', async () => {
+  it('pain amount: three steps at every level, and "not sure" as the way out (17 Nov: "a little / a lot" was too coarse)', async () => {
     const e = new FakeEngine(true, { topic: 'x', kind: 'choice', choices: ['a', 'b'] });
     const c = await makeCard('How much does your knee hurt now?', env(e));
-    expect(labels(c)).toEqual(['a little', 'a lot', 'something else']);
+    expect(labels(c)).toEqual(['a little', 'quite bad', 'very bad', 'not sure']);
     const m = await makeCard('How much does your knee hurt now?', env(e, { support: 'mild' }));
-    expect(labels(m)).toEqual(['a little', 'some', 'a lot', 'something else']);
+    expect(labels(m)).toEqual(['a little', 'quite bad', 'very bad', 'not sure']);
+    expect(c.choices.slice(0, 3).map((x) => x.picture)).toEqual([{ type: 'builtin', id: 'a little' }, { type: 'builtin', id: 'some' }, { type: 'builtin', id: 'a lot' }]);
   });
 });
 
