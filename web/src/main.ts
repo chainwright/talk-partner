@@ -490,6 +490,8 @@ function backStep(from: string): string | null {
   return '';
 }
 /** The press and hold on the person's screen: the phone goes back to the last carer's screen on the stack, as it was. Null: none is there. */
+/** The person's screens on top of the stack come off, and nothing is put back. */
+function dropPerson() { while (trail.stack.length && trail.stack[trail.stack.length - 1].person) trail.stack.length--; }
 function backToCarer(): string | null {
   let at = trail.stack.length - 1;
   while (at >= 0 && trail.stack[at].person) at--;
@@ -524,6 +526,9 @@ function pushGuard(url: string) {
   history.pushState({ tpGuard: true }, '', url);
 }
 let skipPop = false;
+// (phase 8: the app sets the scroll of every screen it draws; the browser's own restore put the first screen back at
+// the scroll of an older entry when "Home" took the guard away: 490 px down after "Home" from two questions deep)
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 /** The address the screen was drawn at last: after a back press the browser has already left it. */
 let drawnAt = hashNow();
 function keepGuard() {
@@ -1825,9 +1830,12 @@ function leavePerson() {
   lift = true;
   // (phase 8) to the carer's screen the phone was handed over from, as it was: also from a needs board opened inside a
   // conversation, from the person's own start and from the alphabet's words
+  if (state.p4.visitRun || state.p4.visitEnd) { dropPerson(); state.p4.visitRun = false; state.p4.visitEnd = false; resetCard(); go('visit'); return; }
+  // an answer the person confirmed (a need on the board, held away after the tick): the carer's side of that answer,
+  // never the screen from before it, which would hide what was chosen
+  if (state.confirmed && state.picked) { dropPerson(); state.p4.letter = null; go(''); return; }
   const to = backToCarer();
   if (to !== null) { stopSound(); go(to as Route | ''); return; }
-  if (state.p4.visitRun || state.p4.visitEnd) { state.p4.visitRun = false; state.p4.visitEnd = false; resetCard(); go('visit'); return; }
   state.p4.letter = null;
   go('');
 }

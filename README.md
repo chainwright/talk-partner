@@ -607,6 +607,84 @@ print was looked at as the browser renders it for print, and as a PDF.
 about 16:52 UTC; the organiser of judge round 7 ran against it (README "Deploy"). No `--live` script of ours was run
 against that build.
 
+## Added on 18 to 19 Nov, phase 8: the fixes of judge round 7
+What the thirteen seats of judge round 7 found at the build of `45e8095`, in the order of their summary's priorities
+(`CLAIMS.md` rows 114 to 124; `devlog/evidence_phase8/`; `devlog/DAY19.md`). Everything here is rules and fixed text
+on the device, except the routing chip, which shows where Firebase AI Logic ran a card that an AI made. **No carer,
+no person with aphasia, no speech therapist and no nurse has seen any of it.**
+
+- **The visit page no longer contradicts the person (a safety P0).** "Since the last visit" counted only the diary,
+  so under Frank's own answer "low" it said "Mood: no 'sad' or 'bad' day entered", and "Pain: none entered" could
+  stand under a yes to pain. Now the person's own answers on the page count too: a "low" mood, a yes to pain, a bad
+  night are days of that kind, and the line says "counting Frank's own answer above". In the diary every question
+  about how the person feels counts, and "low" counts (a photo that makes them sad does not count as mood).
+- **Back goes exactly one step everywhere** (`web/src/main.ts`, `trackScreen` and `backStep`): in the full view and
+  with the sample family too, and the person's screens are steps. "Something new or sudden?" goes back to the screen
+  it was opened from; the needs board opened inside a conversation goes back to that answer; a doctor-visit question
+  goes back to the one before (whose answer comes off, to be given again); the person's own start, its topics and
+  "Who is it about?", the alphabet and its words go back one screen at a time. Two folds keep it a step a person
+  would call a step: the check and "Thank you" fold into the choices they confirm, and a card handed over folds into
+  the carer's question. The press and hold on the person's screen gives the phone back to the last carer's screen.
+  `scripts/e2e-simple.py --only back` walks every way back to the first screen, by the Back button and by the
+  phone's back (on a person's screen, which has no Back button by design, the phone's back).
+- **The passport says only what the family said.** "Frank knows what to say" and "Frank understands most of what you
+  say" are off until the carer ticks them ("Tick if true for Frank"). A fixed line under yes and no: "A tired yes may
+  not mean yes. Check it the other way. Ask about pain, drinks and the toilet every time." With no emergency number
+  in About them the page says "Emergency number: not filled in, ask the family" (it printed 911 before). With
+  diabetes, swallowing difficulty or a fluid limit noted, the food line ends "Ask the family what is all right" (the
+  condition is not named: the page holds no health notes). Answers the answer check marked "less sure" count for no
+  usual line anywhere, and a usual yes to an offer never goes on a page for someone else.
+- **The page for the speech therapist** shows the "less sure" count beside the yes count, with "A yes on the check
+  is not proof: when tired, a yes can mean no." With the box for the needs and pain answers off, the printed page now
+  says, only when true and with no detail, "The diary of this time holds a pain answer or 'something's wrong': ask
+  the family."
+- **The documents say what is live.** README "Deploy" and JUDGES carry "Live: the build of `LIVE_BUILD`", a
+  placeholder written at deploy; `tests/unit/docs-truth.test.ts` fails while an older build stands there, or while a
+  document says a live phase never went out. The same test walks every string of the app as a phone would show it:
+  none may say an AI reads anything on that phone (one did, under "Answers so far"). The full view's privacy line
+  names Read aloud; "Nothing you asked has left this phone" now says "since the app was opened". Alela is named
+  among the look-alikes (not opened by us). The data-use line says "Google's paid service, per Google's terms" with
+  the link: no dated record of the billing account is in this repository.
+- **Home.** "Needs something now?"; the red card says what it is for: "Signs of a new stroke, chest pain, a fall:
+  call." The 4 steps hold "Write the key word big as you say it: TEA?" and fold to one line after the first card, with
+  "Write the key word big." on it; the first row of topics then stands above the fold at 360 x 740 and 390 x 844.
+  "later" (the tile of "We're stuck", or "later" to "Do you want to tell me now or later?") keeps the question: Home
+  shows "Left for later: [question], [time]" with "Ask it again" and "Done", for a day (`core/later.ts`).
+- **Hybrid visible.** Every card an AI made carries a small chip from where the SDK ran it ("Made on this computer" /
+  "Made online, after your yes", `core/simple.ts`, `routeChip`) and why, in one line: it read About them here; the
+  connection was down; this phone has no AI of its own for such a question; the AI here made no card. Read aloud's
+  button and sheet say who it is for ("Read the cards aloud to Frank"; "Frank hears the question and the choices in a
+  calm, slow voice, so you do not have to read them out"). When Read aloud fails, the person's screen only says "No
+  sound"; the carer's screen says "Read aloud did not work for that card. Read the question out loud to Frank."
+- **The nurse's and the speech therapist's sets.** A line with the call box has its own label, "Call now if it is
+  new or sudden, and tell the doctor or nurse", and comes first. Balance and sight (BE-FAST) are on the FAST card and
+  the passport. Under a "sad" or "low" answer, and on the visit page under "low", one line on the carer's side: the
+  helpline the family put in About them (a new field; the app has no number of its own), or "the doctor or nurse
+  today, or a mental health helpline", and the emergency number if life is at risk. The visit page names the fewest
+  drinks in one day. A day with no drink under a fluid limit is no longer excused ("A fluid limit is not 'no
+  drinks'"). "No pain. Good." is now "No pain, Frank says. Watch the face, ask again later." The answer check leaves
+  drink and food questions alone too (the notes for other people still keep a usual drink, as since `ed0395d`).
+  "Who is it about?" offers "me" first.
+- **Pictures.** Beth is a drawn person in the test fixtures (no real face, no monogram), and Frank has his own
+  drawing. The on-device photo step was run again with the drawn dog for Bo (`devlog/evidence_phase8/ai_phase4/`).
+  The first-letter step now tells the model the kind of the conversation and an age band (fixed words: "The person
+  is an adult, most often 60 or older"); asked for a drink with K, the cloud model this time gave no word that passed
+  the checks, and the card said so.
+
+**Counts** (the production build on `npx vite preview`, port 5241). COUNTS_PLACEHOLDER
+
+**The cloud step at this code, five fresh profiles each** (`devlog/evidence_phase8/cloud/`). Against the preview
+(production build, no debug token in it): 19 of 27 checks in each of the five runs; App Check got no token
+("ReCAPTCHA error", headless Chromium on localhost), the card said "Cloud help could not confirm this browser", and
+everything made by rules went on. Against the dev server on port 5243, with the App Check debug token from
+`.env.local` (never committed): 28 of 28 in each of the five. Neither is the hosted copy: the live runs are for after
+the deploy.
+
+**Not built, not run.** Any of it with a carer, a speech therapist, a nurse or a person with aphasia; a real phone;
+the hosted copy (the deploy is a later step); Read aloud against the real model (`e2e-speak.py`); the person-owned "Not now"
+exit, a locale default for the emergency number, the blood-thinner fall line and the "check it another way" button
+of the answer check (all asked for by single seats, outside this brief).
+
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104
 to 107; `devlog/evidence_phase6/r1_*.png`, `r2_*.png`; `devlog/DAY17.md`). Both fixes are rules: no AI was added.
@@ -809,7 +887,7 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `core/pipeline.ts:733` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:848` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:878` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:1009` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
+| `web/src/main.ts:1014` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all, and since 17 Nov neither does any either-or whose two options the code reads whole. Every cut is visible per card in "Why this card".
