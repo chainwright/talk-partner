@@ -60,6 +60,22 @@
 .simple .more-tips { justify-self: start; }
 .simple .more-body { display: grid; gap: 14px; }
 
+/* what was learned: a small line for the carer, and its list in About them */
+.simple .usual { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: var(--ink); background: var(--accent-soft); border-radius: 12px; padding: 6px 12px; justify-self: start; }
+.simple .usual .sg { width: 18px; height: 18px; color: var(--accent); }
+.simple .shortcut { display: grid; gap: 6px; }
+.simple .shortcut .tip { display: flex; align-items: flex-start; gap: 8px; color: var(--ink); }
+.simple .shortcut .tip .sg { width: 18px; height: 18px; color: var(--accent); margin-top: 2px; }
+.simple .learned { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 10px; }
+.simple .learned h2 { font-size: 20px; line-height: 1.2; }
+.simple .learned-list { padding: 0; display: grid; gap: 8px; }
+.simple .learned-list li { list-style: none; border: 2px solid var(--field); background: var(--panel); border-radius: 14px; padding: 10px 12px; display: grid; gap: 8px; font-size: 17px; overflow-wrap: anywhere; }
+.simple .learned-list .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.simple .learned-list .acts .btn { width: auto; min-height: 44px; padding: 6px 14px; }
+.simple .learned-short { display: flex; align-items: flex-start; gap: 8px; font-size: 16px; }
+.simple .learned-short .sg { color: var(--accent); margin-top: 2px; }
+.simple .learned-short small { color: var(--muted); }
+
 /* buttons: every one at least 44 px tall; the main one 64 px */
 .simple .btn { min-height: 56px; padding: 10px 18px; border-radius: 16px; border: 2px solid var(--field); background: var(--panel); color: var(--ink); font-weight: 600; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; text-align: center; text-decoration: none; cursor: pointer; overflow-wrap: anywhere; }
 .simple .btn.primary { min-height: 64px; font-size: 21px; font-weight: 700; background: var(--accent); border-color: var(--accent); color: var(--on-accent); }

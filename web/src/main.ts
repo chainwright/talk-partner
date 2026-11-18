@@ -23,6 +23,8 @@ import { aiPlace } from '../../core/simple';
 import { daySummary, rulesSummary, todays, type DaySummary } from '../../core/summary';
 import { asksWho, awayNames, callQuestion, followUps, nextInTopic, topics, type TopicId } from '../../core/topics';
 import { after } from '../../core/tree';
+import { NOTHING_FORGOTTEN, checkedSummary, forgetAll, forgetOne, hints, keepOne, learned, learnedPrompt, shortcut, usual, usualFirst, usualHint, type Forgotten, type Need } from '../../core/prefs';
+import { spokenLine } from '../../core/rules';
 import { stripQuestion } from '../../core/strip';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
@@ -121,6 +123,14 @@ interface State {
   /** Simple view: "More tips" on the hand-over screen and "More" on the answered screen are open (closed for each new card). */
   tips: boolean;
   more: boolean;
+  /** The needs pointed to on the quick-needs board, kept on this device (IndexedDB key 'needs'): for what is learned (core/prefs.ts). Never sent. */
+  needsLog: Need[];
+  /** What the carer removed, kept or reset of what was learned (IndexedDB key 'learned'). */
+  forgotten: Forgotten;
+  /** About them: the on-device model's short summary of what was learned (where the browser has it), or null. */
+  learnedShort: string[] | null;
+  /** Simple view: the short question offered beside the tree's next question (core/prefs.ts, shortcut), while it is being asked. */
+  shortcut: { q: string; of: string; label: string } | null;
   /** Simple view: the questions asked in this conversation, in order (core/tree.ts: three at most, none twice). A question from the topics or the field starts a new one. */
   chain: string[];
   /** A newer build has taken over in this browser (the service worker changed): the bar offers to load it. */
@@ -171,6 +181,10 @@ const state: State = {
   tips: false,
   more: false,
   chain: [],
+  needsLog: [],
+  forgotten: NOTHING_FORGOTTEN,
+  learnedShort: null,
+  shortcut: null,
   updateReady: false,
   inviteFor: null,
   inviteOff: false,
@@ -337,6 +351,49 @@ async function load() {
   if (s) state.settings = { ...state.settings, ...s };
   const h = await kvGet<Answered[]>('history');
   if (Array.isArray(h)) state.history = h;
+  const n = await kvGet<Need[]>('needs');
+  if (Array.isArray(n)) state.needsLog = n;
+  const f = await kvGet<Forgotten>('learned');
+  if (f) state.forgotten = { ...NOTHING_FORGOTTEN, ...f };
+}
+
+// ---------------------------------------------------------------- what was learned (core/prefs.ts): on this device only
+/** Nothing is learned from, or shown for, the sample family of judge mode. */
+const learns = () => !state.demo;
+const saveForgotten = () => { if (!state.demo) void kvSet('learned', state.forgotten); };
+/** The person's usual answer to this card's question, for the carer's hint: null before three answers, and never for the body map, a scale or a narrowing card. */
+function usualFor(c: Card) {
+  if (!learns() || c.blocked || c.narrow || c.scale || !['choice', 'yesno', 'feeling'].includes(c.kind)) return null;
+  const u = usual(state.history, c.asked, state.forgotten);
+  return u && c.choices.some((x) => x.label.toLowerCase() === u.label.toLowerCase()) ? u : null;
+}
+/**
+ * The same card with the usual choice first among its answers (a suggestion to the carer; the person still chooses).
+ * Only for an either-or or a list on one page: a yes / no and a scale keep their fixed order. No choice is removed.
+ */
+function usualOrder(c: Card): Card {
+  const u = c.kind === 'choice' && !c.nextPage ? usualFor(c) : null;
+  if (!u) return c;
+  const answers = usualFirst(c.choices.filter((x) => x.role === 'answer'), u.label);
+  // the same card (its record in the session stays the same object): its choices in the new order, and the line to say with them
+  c.choices = [...answers, ...c.choices.filter((x) => x.role !== 'answer')];
+  c.say = spokenLine(c.asked, c.choices.map((x) => x.spoken));
+  return c;
+}
+/** The on-device model's short summary of the learned lines, where this browser has the model. ONLY_ON_DEVICE; there is no cloud step. */
+let learnedSeq = 0;
+function refreshLearnedShort() {
+  const lines = learned(state.history, state.needsLog, state.forgotten);
+  const seq = ++learnedSeq;
+  state.learnedShort = null;
+  if (!learns() || lines.length < 2 || state.device !== 'available' || !state.engine.summarizeDevice) return;
+  void state.engine.summarizeDevice(learnedPrompt(lines)).then((r) => {
+    if (seq !== learnedSeq || r.source !== 'on-device') return;
+    let sentences: unknown = null;
+    try { sentences = (JSON.parse(r.text) as { sentences?: unknown }).sentences; } catch { /* not JSON: no summary */ }
+    state.learnedShort = checkedSummary(sentences, lines);
+    if (state.learnedShort && route() === 'about') render();
+  }).catch(() => { /* no summary: the lines themselves stand */ });
 }
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 function saveProfile() {
@@ -1110,6 +1167,13 @@ async function runNarrow(i: NarrowInput) {
  */
 function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: string } {
   if (c.kind === 'needs' || c.kind === 'repair') return { follow: [], end: '' };
+  // the short question about the usual choice: a yes ends as that choice would; anything else leads to the full question
+  const sc = state.shortcut;
+  if (sc && sc.q === c.asked) {
+    if (p.label.toLowerCase() !== 'yes') return { follow: [sc.of], end: '' };
+    const viaChoice = after({ asked: sc.of, kind: 'choice' }, sc.label, state.profile, state.chain.length ? state.chain : [sc.of]);
+    return { follow: viaChoice.next, end: viaChoice.end };
+  }
   const step = after(c, p.label, state.profile, state.chain.length ? state.chain : [c.asked]);
   if (step.next.length || step.end) return { follow: step.next, end: step.end };
   return { follow: out || p.role !== 'answer' ? [] : followUps(c, p.label, state.profile), end: '' };
@@ -1127,7 +1191,12 @@ function simpleScreen(): string {
     screen = answeredScreen({
       name, label: p.label, question: c.kind === 'needs' ? '' : c.asked, more: state.more, next, out, hasAnswers: state.answers.length > 0,
       afterHtml: afterAnswer(c, p, 'btn'),
-      ...treeStep(c, p, out),
+      ...(() => {
+        const step = treeStep(c, p, out);
+        // a shorter way, as a suggestion: the usual side of the next either-or, asked first (the full question stays)
+        const sc = learns() && step.follow[0] ? shortcut(state.history, step.follow[0], state.forgotten) : null;
+        return { ...step, shortcut: sc ? { q: sc.q, line: sc.line, of: step.follow[0], label: sc.usual.label } : null };
+      })(),
       tryNext: out ? nextInTopic(state.lastQuestion, state.profile) : null,
       narrow: out ? narrowPlace(c, p.label) : null, narrowLast: out && !!c.narrow && !canNarrow(c, p.label), short: shortModel(),
       who: p.role === 'answer' && asksWho(c, p.label, state.profile),
@@ -1144,6 +1213,7 @@ function simpleScreen(): string {
       canAskOnline: sheetWanted(c, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured }),
       offline: needsInternet(c, { online: isOnline(), cloudConfigured: state.engine.cloudConfigured }),
       lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(), tips: state.tips,
+      usual: (() => { const u = usualFor(c); return u ? usualHint(u) : ''; })(),
     });
   } else {
     const p = state.profile;
@@ -1183,8 +1253,9 @@ function render(lifted = false) {
   // entrance animations play once per real event (a new route or a new card), not on every redraw
   const key = `${r}|${cardSeq}`;
   // the card judge mode opens with is simply there: no entrance, so the very first frame is a finished card
+  if (key !== lastKey && r === 'about' && simple) refreshLearnedShort();
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved }) : aboutScreen()) : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort }) : aboutScreen()) : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   keepGuard();
   if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);
@@ -1354,7 +1425,7 @@ async function make(q: string) {
     state.made.push(card);
     if (spoken) voiceCards.add(card);
     if (seq !== makeSeq) return; // a later question was asked meanwhile: its card is the one to show
-    setCard(card);
+    setCard(simpleView() ? usualOrder(card) : card);
     // simple view: a question that needs online help, with cloud help off, brings up the consent sheet (never a page)
     // (with no connection the sheet could send nothing: the screen then says the question needs the internet)
     state.sheet = simpleView() && isOnline() && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
@@ -1385,6 +1456,10 @@ function onPersonTap(t: HTMLElement) {
       if (c.kind !== 'needs') {
         state.history = addAnswer(state.history, { q: c.asked, topic: c.topic, label: state.picked.label, at: Date.now() });
         if (!state.demo) void kvSet('history', state.history);
+      } else if (learns()) {
+        // what was asked for on the board, and when: counted on this device for "What we've learned" (core/prefs.ts)
+        state.needsLog = [...state.needsLog, { label: state.picked.label, at: Date.now() }].slice(-300);
+        void kvSet('needs', state.needsLog);
       }
     }
     if (simpleView()) refreshShort();
@@ -1447,7 +1522,7 @@ function act(el: HTMLElement) {
     case 'own': state.lastQuestion = ''; state.error = null; dictated = false; resetCard(); render(); document.querySelector<HTMLInputElement>('#q')?.focus(); break;
     case 'invite-later': state.inviteOff = true; render(); break;
     // after the way out: an AI suggests the next, broader choices (two steps at most)
-    case 'narrow': if (state.card && state.picked) void runNarrow(narrowInput(state.card, todayAnswers())); break;
+    case 'narrow': if (state.card && state.picked) void runNarrow({ ...narrowInput(state.card, todayAnswers()), learned: learns() ? hints(state.history, state.needsLog, state.forgotten) : [] }); break;
     case 'copy-short': {
       const text = state.short?.sentences.join(' ') ?? '';
       const done = () => { state.shortCopied = true; patchShort(); document.querySelector<HTMLElement>('[data-act=copy-short]')?.focus(); };
@@ -1461,6 +1536,15 @@ function act(el: HTMLElement) {
       // (when the sheet came up for a narrowing step, that step is what is asked again)
       state.sheet = false; state.settings.cloudHelp = true; saveSettings(); askSettings(); if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else void make(state.lastQuestion);
       break;
+    // ---- what was learned (About them): keep a line as a fact, remove it, or forget everything learned
+    case 'learned-keep': {
+      const line = learned(state.history, state.needsLog, state.forgotten).find((l) => l.key === el.dataset.key);
+      if (line) { state.profile.other = [...(state.profile.other ?? []), line.text]; state.forgotten = keepOne(state.forgotten, line.key); saveProfile(); saveForgotten(); refreshLearnedShort(); render(); }
+      break;
+    }
+    case 'learned-remove': state.forgotten = forgetOne(state.forgotten, el.dataset.key ?? '', Date.now()); saveForgotten(); refreshLearnedShort(); render(); break;
+    case 'learned-forget': if (confirm(C.simple.learned.forgetConfirm)) { state.forgotten = forgetAll(Date.now()); state.needsLog = []; void kvSet('needs', []); saveForgotten(); refreshLearnedShort(); render(); } break;
+    case 'fact-remove': state.profile.other = (state.profile.other ?? []).filter((_, k) => k !== Number(el.dataset.fact)); saveProfile(); render(); break;
     case 'row': { const row = el.dataset.row as AboutRow; state.aboutRow = state.aboutRow === row ? null : row; render(); break; }
     case 'less': state.less = !state.less; render(); break;
     case 'next':
@@ -1518,7 +1602,7 @@ function act(el: HTMLElement) {
       break;
     case 'delete-all':
       if (confirm(C.about.deleteConfirm)) {
-        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.made = []; resetCard(); go('welcome'); });
+        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.needsLog = []; state.forgotten = NOTHING_FORGOTTEN; state.learnedShort = null; state.made = []; resetCard(); go('welcome'); });
       }
       break;
     default:
@@ -1552,7 +1636,9 @@ app.addEventListener('click', (ev) => {
   if (!t) return;
   if (t.dataset.act) { act(t); return; }
   if (t.dataset.q) dictated = false; // a tapped question was not spoken, whatever the field held
-  if (t.dataset.q) { state.chain = t.dataset.next ? [...state.chain, t.dataset.q] : [t.dataset.q]; chained = true; state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
+  if (t.dataset.q && t.dataset.short) state.shortcut = { q: t.dataset.q, of: t.dataset.of ?? '', label: t.dataset.label ?? '' };
+  if (t.dataset.q && t.dataset.short) { if (t.dataset.of && !state.chain.includes(t.dataset.of)) state.chain = [...state.chain, t.dataset.of]; chained = true; state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
+  if (t.dataset.q) { state.chain = !t.dataset.next ? [t.dataset.q] : state.chain.includes(t.dataset.q) ? state.chain : [...state.chain, t.dataset.q]; chained = true; state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
   if (t.closest('#person')) onPersonTap(t);
 });
 app.addEventListener('submit', (ev) => {

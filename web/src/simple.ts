@@ -11,6 +11,7 @@
 import type { PartnerAction } from '../../core/actions';
 import { COPY } from '../../core/copy';
 import { NARROW_LEVELS } from '../../core/narrow';
+import type { Learned } from '../../core/prefs';
 import type { MadeWhere } from '../../core/simple';
 import type { Topic, TopicId } from '../../core/topics';
 import type { Card, Choice, Profile } from '../../core/types';
@@ -256,6 +257,8 @@ export interface CardModel {
   short?: ShortModel | null;
   /** "More tips" is open: the rest of the advice, under the two lines that always show. */
   tips?: boolean;
+  /** The person's usual answer to this question, learned on this device ("Usually: tea (5 of 7)"): '' before three answers. For the carer only. */
+  usual?: string;
 }
 
 /** Where this card was made: on the screen itself, under the card, never only behind a link. */
@@ -310,7 +313,7 @@ export function cardScreen(m: CardModel): string {
   // a narrowing card says in plain words that an AI made this follow-up, and where
   const ai = c.narrow ? `<p class="ai-made" id="ai-made" data-by="${c.narrow.by ?? 'ai'}">${c.narrow.by === 'rules' ? SIGN.lock : SIGN.spark}<span>${esc(c.narrow.by === 'rules' ? S.narrow.labelRules(c.narrow.level, NARROW_LEVELS) : S.narrow.label(c.narrow.level, NARROW_LEVELS, c.source === 'in-cloud' ? 'cloud' : 'device'))}</span></p>` : '';
   return `<main class="simple wrap card" data-screen="card">${back}
-  <div class="c-say">${ai}${coach}<div class="stack">${step(1, sayLabel)}<p class="say">${esc(say)}</p></div>${m.lastTime ? `<p class="last">${esc(m.lastTime)}</p>` : ''}</div>
+  <div class="c-say">${ai}${coach}<div class="stack">${step(1, sayLabel)}<p class="say">${esc(say)}</p></div>${m.usual ? `<p class="usual" id="usual">${SIGN.person}<span>${esc(m.usual)}</span></p>` : m.lastTime ? `<p class="last">${esc(m.lastTime)}</p>` : ''}</div>
   <div class="c-go">${step(2, S.step2(m.name))}
     ${primary}
     ${primary ? waitLine(m.name) : ''}
@@ -344,6 +347,8 @@ export interface AnsweredModel {
   next: PartnerAction | null;
   /** The questions that follow from this answer (core/tree.ts): the first is the main button ("Next: …"), made by the rules. */
   follow: string[];
+  /** A shorter way, as a suggestion (core/prefs.ts): the person's usual side of the next either-or, asked first. Null when nothing is learned yet. */
+  shortcut?: { q: string; line: string; of: string; label: string } | null;
   /** The end of a path: what the carer does now, in one short line (core/tree.ts). '' while a next question is offered. */
   end: string;
   /** After the way out: the next question of the same topic to try, or null. */
@@ -403,7 +408,7 @@ export function answeredScreen(m: AnsweredModel): string {
     ${m.afterHtml}
     ${end}
     ${m.next ? `<button type="button" class="btn primary" data-act="${m.next.act}">${esc(m.next.label)}</button>` : ''}
-    ${nextBtn}${follow}
+    ${nextBtn}${lead && m.shortcut ? `<div class="shortcut" id="shortcut"><p class="tip">${SIGN.person}<span>${esc(m.shortcut.line)}</span></p><button type="button" class="btn ask-next" data-short="1" data-of="${esc(m.shortcut.of)}" data-label="${esc(m.shortcut.label)}" data-q="${esc(m.shortcut.q)}">${esc(m.shortcut.q)}</button></div>` : ''}${follow}
     ${another}
     ${outBlock}${who}
     ${invite}
@@ -450,7 +455,23 @@ export function consentSheet(m: SheetModel): string {
 export type AboutRow = 'names' | 'people' | 'foods' | 'places';
 
 /** About them, as four plain rows over the same fields as the full page: offered, never required. */
-export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved: boolean }): string {
+/**
+ * "What we've learned about them": every line the app counted from the answers on this device (core/prefs.ts), in
+ * plain words with its counts. The carer keeps a line as a fact, removes it, or forgets everything learned.
+ */
+export function learnedBlock(m: { name: string; lines: Learned[]; facts: string[]; short: string[] | null }): string {
+  const L = COPY.simple.learned;
+  const lines = m.lines.map((l) => `<li data-key="${esc(l.key)}"><span>${esc(l.text)}</span><span class="acts"><button type="button" class="btn quiet small-btn" data-act="learned-keep" data-key="${esc(l.key)}">${L.keep}</button><button type="button" class="btn quiet small-btn" data-act="learned-remove" data-key="${esc(l.key)}">${L.remove}</button></span></li>`).join('');
+  const facts = m.facts.map((f, i) => `<li><span>${esc(f)}</span><span class="acts"><button type="button" class="btn quiet small-btn" data-act="fact-remove" data-fact="${i}">${L.remove}</button></span></li>`).join('');
+  return `<section class="learned" id="learned" aria-labelledby="learned-h"><h2 id="learned-h">${esc(L.heading(m.name))}</h2>
+    <p class="lock">${SIGN.lock}<span>${L.how}</span></p>
+    ${m.short ? `<p class="learned-short" id="learned-short">${SIGN.spark}<span>${m.short.map(esc).join(' ')} <small>${L.shortBy}</small></span></p>` : ''}
+    ${lines ? `<ul class="learned-list" id="learned-list">${lines}</ul>` : `<p class="tip" id="learned-none">${L.none}</p>`}
+    ${facts ? `<p class="steplabel muted">${L.kept}</p><ul class="learned-list" id="learned-kept">${facts}</ul>` : ''}
+    ${lines ? `<button type="button" class="btn quiet" data-act="learned-forget">${L.forget}</button>` : ''}</section>`;
+}
+
+export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved: boolean; learned?: Learned[]; learnedShort?: string[] | null }): string {
   const S = COPY.simple.about;
   const A = COPY.about;
   const p = m.profile;
@@ -486,6 +507,7 @@ export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved:
   </form>
   <p id="saved" class="saved" role="status">${m.saved ? A.saved : ''}</p>
   <a class="btn primary" href="#/">${A.done}</a>
+  ${learnedBlock({ name: p.personName, lines: m.learned ?? [], facts: p.other ?? [], short: m.learnedShort ?? null })}
   <p class="small muted more">${S.more} <button type="button" class="tlink" data-act="inside-about">${S.moreLink} →</button></p>
 </main>`;
 }

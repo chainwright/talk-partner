@@ -17,6 +17,10 @@ What is checked (design/USER_FIRST.md, design/topics_2026-11-17):
   - no dead end after a "yes": pain -> where -> how bad; "is something bothering you" -> what it is about;
   - the consent sheet for an open question, quick needs, About them (the family's own questions are added, the
     generic ones stay), "How it works inside" and back, /#/demo, the device word (phone, tablet, computer);
+  - what the app learns on this device by counting: nothing before three answers, then "Usually: coffee (3 of 3)" for
+    the carer and the usual choice first (none removed, nothing chosen for the person); the list in About them with
+    "Keep as a fact", "Remove" and "Forget everything learned"; the short question in a tree;
+  - Back and Home on every carer screen, and the browser's own back button (one step back inside the app);
   - with a production build or the hosted copy (a service worker is there): the same flow with the connection off;
   - every control at least 24 px, every button at least 44 px, the main button at least 60 px, the person's choices
     at least 80 px; no page error and no sideways overflow on any screen.
@@ -673,6 +677,97 @@ def offline(browser, url):
     ctx.close()
 
 
+def learning(browser, url):
+    """What the app learns about the person, on this device, by counting: the usual choice first with a hint for the carer, the list in About them, remove and forget."""
+    host = urlparse(url).hostname
+    ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
+    outside = []
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    page = ctx.new_page()
+    errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
+    for n in (1, 2):
+        ask_topic(page, 'food', 'tea or coffee')
+        if n == 1:
+            check('learning: nothing is said before three answers (no "Usually" on the first asking; tea stands first, as asked)', page.locator('#usual').count() == 0 and page.locator('#person .pt').all_inner_texts() == ['tea', 'coffee', 'something else'])
+        answer(page, 'coffee')
+        new_q(page)
+    ask_topic(page, 'food', 'tea or coffee')
+    check('learning: after two answers still nothing', page.locator('#usual').count() == 0 and page.locator('#person .pt').all_inner_texts()[0] == 'tea')
+    answer(page, 'coffee')
+    new_q(page)
+    ask_topic(page, 'food', 'tea or coffee')
+    card = text(page)
+    check('learning: after coffee three times, the carer\'s screen says "Usually: coffee (3 of 3)"', text(page, '#usual') == 'Usually: coffee (3 of 3)', card[:200])
+    check('learning: the usual choice is first among the choices, none is removed, and the line to say follows the same order', page.locator('#person .pt').all_inner_texts() == ['coffee', 'tea', 'something else'] and 'Would you like tea or coffee? Coffee, tea, or something else?' in card, str(page.locator('#person .pt').all_inner_texts()))
+    screen_checks(page, 'learning: before handing over, with the usual choice')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    person = text(page)
+    check("learning: the person's screen shows the same choices, nothing chosen for them, and no word about what is usual", person == 'Carer: hold here to go back Point to your answer Would you like tea or coffee? coffee tea something else' and page.locator('main.pv .pt.pressed, main.pv .pt[aria-pressed=true]').count() == 0, person)
+    hold_exit(page)
+    page.wait_for_selector('main.simple.card')
+    # the needs board, three times: what, how often, when
+    new_q(page)
+    for _ in range(3):
+        page.locator('.btn.needs').click()
+        page.wait_for_selector('main.pv .p-tiles.board')
+        page.locator('main.pv .pt', has_text='drink').click()
+        page.locator('[data-confirm=yes]').click()
+        page.locator('.p-give').click()
+        page.wait_for_selector('main.simple.s-answered')
+        new_q(page)
+    # ---- About them: what was learned
+    page.locator('.foot a[href="#/about"]').click()
+    page.wait_for_selector('main.about-simple #learned')
+    lines = page.locator('#learned-list li > span:first-child').all_inner_texts()
+    check('learning: About them lists what was learned, in plain words with the counts (the usual choice, and the need asked for three times)',
+          len(lines) == 2 and lines[0] == '"Would you like tea or coffee": usually coffee (3 of 3).' and lines[1].startswith('Asked for "drink" on the needs board 3 times'), str(lines))
+    check('learning: it says how it was learned (counted on this phone, no AI, never sent, only a hint)', 'Counted on this phone from the answers they confirmed: no AI, and it is never sent anywhere.' in text(page, '#learned') and 'they always choose for themselves' in text(page, '#learned'))
+    check('learning: each line has "Keep as a fact" and "Remove", and there is "Forget everything learned"', page.locator('[data-act=learned-keep]').count() == 2 and page.locator('[data-act=learned-remove]').count() == 2 and page.locator('[data-act=learned-forget]').is_visible())
+    screen_checks(page, 'learning: About them, what was learned', primary=False)
+    page.locator('#learned-list li', has_text='drink').locator('[data-act=learned-keep]').click()
+    page.wait_for_selector('#learned-kept')
+    check('learning: "Keep as a fact" moves the line to the facts the carer kept', page.locator('#learned-list li').count() == 1 and 'Asked for "drink"' in text(page, '#learned-kept'))
+    page.locator('#learned-list [data-act=learned-remove]').click()
+    page.wait_for_timeout(300)
+    check('learning: "Remove" takes the line away', page.locator('#learned-list').count() == 0 and 'Nothing yet.' in text(page, '#learned'))
+    page.locator('[data-act=home]').click()
+    ask_topic(page, 'food', 'tea or coffee')
+    check('learning: after "Remove" the hint is gone and the choices are in the question\'s own order again', page.locator('#usual').count() == 0 and page.locator('#person .pt').all_inner_texts() == ['tea', 'coffee', 'something else'], str(page.locator('#person .pt').all_inner_texts()))
+    page.wait_for_timeout(400)
+    page.reload()
+    page.wait_for_selector('main.simple.home')
+    ask_topic(page, 'food', 'tea or coffee')
+    check('learning: the removal is remembered across a reload', page.locator('#usual').count() == 0)
+    # a shorter way through the tree
+    new_q(page)
+    for _ in range(3):
+        page.fill('#q', 'Would you like something sweet or something savoury?')
+        page.locator('#make').click()
+        page.wait_for_selector('main.simple.card #made-where')
+        answer(page, 'something sweet')
+        new_q(page)
+    page.fill('#q', 'Would you like a snack or a meal?')
+    page.locator('#make').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    answer(page, 'snack')
+    sc = text(page, '#shortcut')
+    check('learning: in a tree, the usual side of the next question is offered as a short question, under the main "Next" button, which stays',
+          sc == 'Usually picks something sweet here (3 of 3). You can ask that first: Would you like something sweet?' and nexts(page) == ['Would you like something sweet or something savoury?'] and ys(page, '#shortcut')[0][1] > ys(page, '#next-q')[0][1], sc)
+    screen_checks(page, 'learning: after an answer, with the short question')
+    page.locator('#shortcut [data-short]').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check('learning: the short question is a yes / no, made by the rules; nothing is answered for them', page.locator('#person .pt').all_inner_texts() == ['yes', 'no', 'not sure'] and page.locator('#made-where').get_attribute('data-maker') == 'code')
+    answer(page, 'yes')
+    check('learning: a yes to it ends the path as that choice would ("Bring them a sweet snack. …")', text(page, '#do-now').startswith('Now: Bring them a sweet snack.'), text(page)[:200])
+    check('learning: nothing was asked of any other host in the whole run', not outside, str(outside[:3]))
+    check('learning: no page error', not errors, '; '.join(errors))
+    ctx.close()
+
+
 def words(browser, url, ua, word, label, width, height):
     host = urlparse(url).hostname
     ctx = browser.new_context(viewport={'width': width, 'height': height}, service_workers='block', **({'user_agent': ua} if ua else {}))
@@ -723,6 +818,7 @@ def main():
         browser = p.chromium.launch()
         print(f'browser: Chromium {browser.version} (headless)')
         phone(browser, url, a.live)
+        learning(browser, url)
         if a.dev:
             print('SKIP  offline: --dev (the dev server has no service worker; run against a production build)')
         else:

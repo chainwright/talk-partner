@@ -373,6 +373,18 @@ const COPY = {
     tipsLess: 'Fewer tips',
     /** The bar at the top of every carer screen. */
     nav: { back: 'Back', home: 'Home', homeLabel: 'Talk Partner: Home, the first screen' },
+    /** About them: what the app counted from the answers on this device (core/prefs.ts). */
+    learned: {
+      heading: (name: string) => `What we've learned about ${name || 'them'}`,
+      how: 'Counted on this computer from the answers they confirmed: no AI, and it is never sent anywhere. A line appears after three answers to the same question. It is only ever a hint for you: they always choose for themselves.',
+      none: 'Nothing yet. After three answers to the same question, their usual choice shows here.',
+      keep: 'Keep as a fact',
+      remove: 'Remove',
+      kept: 'Facts you kept:',
+      forget: 'Forget everything learned',
+      forgetConfirm: 'Forget everything the app has learned from their answers on this computer? The lists you typed stay.',
+      shortBy: '(In short, by the AI built into Chrome on this computer. Nothing was sent.)',
+    },
     more: 'More',
     less: 'Less',
     /** A newer build is in this browser (web/src/main.ts): one tap loads it. Never shown on the person's screen. */

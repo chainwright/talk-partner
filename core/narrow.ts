@@ -46,6 +46,8 @@ export interface NarrowInput {
   level: number;
   /** Answers confirmed so far today, for the on-device step only. */
   sofar: { q: string; label: string }[];
+  /** What was learned about the person on this device (core/prefs.ts), as short lines: for the on-device step only, never the cloud text. */
+  learned?: string[];
 }
 
 const N = COPY.notes;
@@ -80,7 +82,8 @@ export const NARROW_TASK = 'What else could it be? Do not give more of the same 
 /** The on-device step also gets the answers confirmed so far today. This text never goes to the cloud step. */
 export function narrowDeviceAsk(i: NarrowInput): string {
   const so = i.sofar.slice(-6).map((a) => `"${a.q}" -> ${a.label}`).join('; ');
-  return `${narrowAsk(i)}${so ? ` Answered earlier today: ${so}.` : ''}`;
+  const known = (i.learned ?? []).slice(0, 6).join(' ');
+  return `${narrowAsk(i)}${so ? ` Answered earlier today: ${so}.` : ''}${known ? ` Learned on this device over time (hints only): ${known}` : ''}`;
 }
 
 /** The guards: what of a model's proposal may stand on a narrowing card. */
