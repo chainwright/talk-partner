@@ -25,6 +25,16 @@ export const P7 = {
     note: 'More choices of the same kind: a fixed list, then the words from About them. Made by the rules: no AI, nothing sent.',
     why: 'the rules: more choices of the kind that was asked about',
     next: (q: string) => `Next: ${q}`,
+    /** The line to act on once a choice from a card of more choices was confirmed (role-play after the fix: it ended with nothing to do). */
+    end: (subject: string, word: string, name: string) => {
+      const them = name || 'them';
+      const w = word.trim();
+      if (subject === 'drink') return `Bring ${them} ${w}.`;
+      if (subject === 'food') return `Offer ${them} ${w}. Check it is all right for ${them} first.`;
+      if (subject === 'people') return `It is about ${w}. Ask: "Would you like to see ${w}, or call?"`;
+      if (subject === 'place') return `It is about ${w}. Ask: "Do you want to go there, or talk about it?"`;
+      return `Help ${them} with ${w}, or ask: "Now or later?"`;
+    },
   },
   about: {
     ask: 'What is it about?',

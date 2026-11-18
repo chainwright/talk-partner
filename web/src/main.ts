@@ -1596,6 +1596,8 @@ function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: st
   if (c.aboutWhat) return { follow: out ? [] : ABOUT_LEADS[p.label] === 'body' ? [WHERE_HURTS, ...BODY_FIRST.filter((q) => q !== WHERE_HURTS)].slice(0, 3) : ABOUT_LEADS[p.label] === 'feeling' ? [FEEL_QUESTION] : [], end: '' };
   // a word the carer typed after "show me": a word about pain, the toilet or help leads on as it does for a first-letter word
   if (c.typed) return out ? { follow: [], end: '' } : letterEnd(p.spoken);
+  // a card of more choices of one kind: the confirmed choice ends with what to do ("Bring Frank juice.")
+  if (c.more) return out ? { follow: [], end: '' } : { follow: [], end: P7.more.end(c.more.subject, p.spoken || p.label, state.profile.personName.trim()) };
   // a first-letter card: the word is the answer; the menu the person started from: up to three questions of that topic
   if (c.letter) return out ? { follow: [], end: '' } : letterEnd(p.spoken);
   if (c.photoTalk && photoEnd(c.asked, p.label, state.profile.personName.trim())) return { follow: [], end: photoEnd(c.asked, p.label, state.profile.personName.trim()) };
