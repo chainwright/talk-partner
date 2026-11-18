@@ -671,7 +671,7 @@ no person with aphasia, no speech therapist and no nurse has seen any of it.**
   is an adult, most often 60 or older"); asked for a drink with K, the cloud model this time gave no word that passed
   the checks, and the card said so.
 
-**Counts** (the production build on `npx vite preview`, port 5241). COUNTS_PLACEHOLDER
+**Counts** (the production build on `npx vite preview`, port 5241). At `feb272d`: 2798 unit tests (`npm run check`, the type check and the build included); `e2e-simple.py` 1001/1001; `pwa-check.py` 30/30; `e2e-needs.mjs` 12/12; `overflow-check.py` 534/534; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py` 21/21. The outputs are in `devlog/evidence_phase8/local/`. The first full run of the same scripts (at `e3cc1b9`) failed 13 of 1001 in `e2e-simple.py` and stopped `pwa-check.py`, `e2e-needs.mjs` (11/12) and `overflow-check.py`: most were the scripts expecting the wording before phase 8, and two were real faults, fixed in `feb272d`: "Home" from two questions deep left the first screen 490 px down (the browser restored an older entry's scroll), and the press and hold after a need was ticked went to the screen before the board, hiding the need.
 
 **The cloud step at this code, five fresh profiles each** (`devlog/evidence_phase8/cloud/`). Against the preview
 (production build, no debug token in it): 19 of 27 checks in each of the five runs; App Check got no token

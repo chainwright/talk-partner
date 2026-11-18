@@ -1,0 +1,36 @@
+date: 2026-11-18T19:18:11.323Z
+commit: feb272dfc2c53c389af9115bf804c0e1078bc6a2 (uncommitted changes in 21 file(s))
+command: npm run check
+
+
+> talk-partner@0.2.0 check
+> npm run lint && npm run typecheck && npm run test
+
+
+> talk-partner@0.2.0 lint
+> eslint .
+
+
+> talk-partner@0.2.0 typecheck
+> tsc --noEmit
+
+
+> talk-partner@0.2.0 test
+> vitest run
+
+
+ RUN  v5.1.0 <repo>
+
+
+ Test Files  73 passed (73)
+      Tests  2798 passed (2798)
+   Start at  13:18:15
+   Duration  1.98s (tests 68%, import 24%, transform 6%, worker 2%)
+
+    Isolate  73 workers spawned · ~77ms startup each (spawn + environment, per file)
+             at least ~547ms faster with isolate: false — reuses workers across files instead of one per file
+
+tree walk, empty About them: 49 questions, 172 question x answer pairs, 749 steps walked, 596 paths, each ending on an action line; deepest 3
+tree walk, sample family: 58 questions, 199 question x answer pairs, 848 steps walked, 679 paths; deepest 3
+
+exit code: 0

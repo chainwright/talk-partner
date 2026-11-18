@@ -224,3 +224,28 @@ ours was made against the hosted copy (README "Deploy").
 
 Not run for phase 7: any of it with a carer, a speech therapist, a nurse or a paid carer; Share on a real phone; a
 print on paper; any run of ours against the hosted copy.
+
+## Phase 8 (18 to 19 Nov 2026): rows 114 to 124
+The fixes of judge round 7. All of it on a production build on localhost (`npx vite preview`, port 5241), except the
+two runs with a real model, which name their server. Nothing of phase 8 was deployed by us. Saved outputs are in
+`devlog/evidence_phase8/` (`local/` for the full runs, `cloud/` for the cloud step, `ai_phase4/` for the on-device
+photo and letter run).
+
+| Row | File | Command | Saved output |
+|---|---|---|---|
+| 114 | `core/since.ts`, `core/diary.ts`, `tests/unit/phase8.test.ts` | `npx vitest run tests/unit/phase8.test.ts`; `python3 scripts/phase8-shots.py --url http://localhost:5241/` | `03_visit_page_low_and_pain_counted_with_the_helpline_line.png` |
+| 115 | `web/src/main.ts` (`screenKey`, `trackScreen`, `backStep`, `backToCarer`) | `python3 scripts/e2e-simple.py --url http://localhost:5241/ --only back` (also part of the full run) | `local/e2e-simple_local.txt` (the "back," lines) |
+| 116 to 118 | `core/passport.ts`, `core/practice.ts`, `core/prefs.ts`, `core/share.ts`, `core/copy8.ts`, `web/src/care7.ts` | `npx vitest run tests/unit/phase7-passport.test.ts tests/unit/phase8.test.ts`; `scripts/phase8-shots.py`; the phase 7 part of `e2e-simple.py` | `04_*`, `05_*`, `06_*`; `local/e2e-simple_local.txt` |
+| 119, 120 | `tests/unit/docs-truth.test.ts`, `core/copy.ts`, `web/src/main.ts` | `npx vitest run tests/unit/docs-truth.test.ts` | `local/check_local.txt` |
+| 121 | `core/copy.ts`, `core/copy5.ts`, `core/later.ts`, `web/src/simple.ts` | `scripts/phase8-shots.py` (the fold measured at 360 x 740 and 390 x 844) | `01_*`, `02_*` |
+| 122 | `core/simple.ts` (`routeChip`), `web/src/simple.ts` (`chipBlock`), `web/src/phase5.ts` | `python3 scripts/phase8-shots.py --url http://localhost:5241/ --cloud-url http://localhost:5243/` (the dev server with the App Check debug token: the typed question goes to Google) | `09_routing_chip_made_online_after_your_yes.png` |
+| 123 | `core/insights.ts`, `core/copy5.ts`, `core/since.ts`, `core/tree.ts`, `core/reliability.ts`, `core/turn.ts` | `npx vitest run tests/unit/phase8.test.ts`; `scripts/phase8-shots.py` | `07_*`, `08_*` |
+| 124 | `tests/fixtures/photo-beth.jpg`, `photo-frank.jpg`, `core/prompt.ts`, `core/letter.ts` | `python3 scripts/e2e-phase4-ai.py --url http://localhost:5243/ --port 9335 --cloud --out devlog/evidence_phase8/ai_phase4` (Chrome 157 with Gemini Nano on port 9335; the dev server) | `ai_phase4/AI_RUN_LOG.md` (13 of 15: the two FAILs are the K card with no word kept, and the "X" check, which still expects online help to stay on after "Just this once"), `ai_phase4/ai_01_*` to `ai_05_*` |
+
+The cloud step at this code, `node scripts/e2e-cloud.mjs`, five fresh profiles each: against the preview
+(`cloud/e2e-cloud_preview_run1.txt` to `run5.txt`), 19 of 27 in each (App Check: "ReCAPTCHA error", no token, no
+card); against the dev server with the debug token (`cloud/e2e-cloud_devserver_debugtoken_run1.txt` to `run5.txt`),
+28 of 28 in each. No log holds the token or the API key (checked with `grep -F` against `.env.local`).
+
+Not run for phase 8: any of it with a carer, a speech therapist, a nurse or a person with aphasia; a real phone; the
+hosted copy; `e2e-speak.py` (Read aloud against the real model); `update-check.py`; `e2e-noconfig.mjs`.

@@ -94,6 +94,14 @@ these" (water, juice, milk, then tea, coffee and the family's own), or "What is 
 or, for the body and feelings, "Show me where" and the needs board. The AI's narrowing step is the last on the list.
 "Show me" goes on to "Did you understand?": the carer types the word and the person confirms it.
 
+**Added on 18 to 19 Nov, phase 8: the fixes of judge round 7** (`CLAIMS.md` rows 114 to 124; README "Added on 18
+to 19 Nov, phase 8"; `devlog/evidence_phase8/`). The visit page counts the person's own "low" and yes to pain, so no
+line says "none entered" under them. Back is one step in every view, the sample family's included, and through the
+person's own screens. The passport's two lines about understanding are off until ticked, it says a tired yes may not
+mean yes, and with no number set it names none. Every card an AI made carries a chip from where the SDK ran it:
+"Made on this computer" or "Made online, after your yes", with why. To see the chip on a phone: type "What do you want
+to do this weekend?" under "Or ask your own question" and press "Just this once" on the sheet.
+
 **Added on 18 Nov, phase 7: for the speech therapist, and "How to talk with Frank"** (`CLAIMS.md` rows 108 to 113;
 README "Added on 18 Nov, phase 7"; `devlog/evidence_phase7/`). **No AI is in this phase**: rules and fixed text on the
 device. On the hosted copy since the build of `45e8095` (18 Nov, about 16:52 UTC; README "Deploy"). Open the diary: **"For the speech therapist"** is one page of counts for the last 7 or 30 days (questions
