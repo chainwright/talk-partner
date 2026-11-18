@@ -34,6 +34,12 @@ export interface Engine {
   warmDevice?(): Promise<void>;
   /** Private step: the profile is in this prompt, so it runs ONLY on device and throws rather than fall back. */
   runDevice(prompt: string): Promise<ModelResult>;
+  /**
+   * Optional: "Today in short" (core/summary.ts). The day's answers are personal, so this step runs ONLY on device,
+   * like the private step, with its own instructions and answer format, and throws rather than fall back. An engine
+   * without it (no project settings, or a browser with no on-device model) gets the rules' own summary.
+   */
+  summarizeDevice?(prompt: string): Promise<ModelResult>;
   /** Optional: use this cloud text model from the next cloud call on (a name Remote Config gave, already checked). */
   setCloudModel?(model: string): void;
   /** The exact request body the cloud step would send for this stripped question. */

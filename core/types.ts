@@ -152,6 +152,12 @@ export interface Card {
    * it is not enough: that card is not made.
    */
   oneOption?: boolean;
+  /**
+   * A narrowing card (core/narrow.ts): the person chose the way out, and an AI suggested the next, broader choices
+   * from the question and what did not fit. `level` is 1 or 2 (there is no third); `rejected` is every choice that
+   * was offered and not taken so far, so the next level does not offer it again.
+   */
+  narrow?: { level: number; rejected: string[] };
   /** Set when no card could be made without a step the partner has to allow (e.g. cloud consent). */
   blocked?: string | null;
   /**

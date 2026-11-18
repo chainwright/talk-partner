@@ -1,15 +1,21 @@
-// The simple view's screens as markup (web/src/simple.ts draws strings, so no browser is needed): the numbered steps,
-// "We're stuck" on the card-ready screen, where the card was made on the screen itself, the consent sheet's contents,
-// the way inside on every screen. The same screens are driven in a real browser by scripts/e2e-simple.py.
+// The simple view's screens as markup (web/src/simple.ts draws strings, so no browser is needed): the first screen
+// (hope line, quick needs at the top, "How it works: 4 steps" open or folded, topics, your own question, the plain AI
+// line, one privacy line), the carer's screen before handing over (with the visible "wait" line), the person's own
+// screens (no category word; the check; the finish with its button), the screen after an answer ("Ask another
+// question" as the main button, the next step, the way out, About them offered), the consent sheet, About them.
+// The same screens are driven in a real browser by scripts/e2e-simple.py.
 import { describe, expect, it } from 'vitest';
 import { partnerActions } from '../../core/actions';
 import { COPY } from '../../core/copy';
 import { NullEngine } from '../../core/engine';
+import { needsCard } from '../../core/needs';
 import { makeCard, repairCard } from '../../core/pipeline';
 import { sentLine } from '../../core/receipt';
 import { madeWhere } from '../../core/simple';
-import { EMPTY_PROFILE, type Card } from '../../core/types';
-import { aboutSimple, answeredScreen, cardScreen, consentSheet, homeScreen, type CardModel } from '../../web/src/simple';
+import { SAMPLE_PROFILE } from '../../core/sample';
+import { topics } from '../../core/topics';
+import { EMPTY_PROFILE, type Card, type Choice } from '../../core/types';
+import { aboutSimple, answeredScreen, cardScreen, consentSheet, homeScreen, howBlock, personSimple, shortBlock, topicGrid, type AnsweredModel, type CardModel, type HomeModel, type PersonModel } from '../../web/src/simple';
 import { PROFILE } from './fixtures';
 
 const S = COPY.simple;
@@ -17,58 +23,239 @@ const make = (q: string): Promise<Card> => makeCard(q, { profile: PROFILE, suppo
 const cardModel = (c: Card, over: Partial<CardModel> = {}): CardModel => ({
   name: 'Alan', card: c, less: false, recap: false, recapText: '', recapDone: false,
   actions: partnerActions(c, { less: false, hasAnswers: false }), made: madeWhere(c, { about: 'About Alan' }),
-  personHtml: '<h2 class="headline">x</h2>', canAskOnline: false, lastTime: '', ...over,
+  personHtml: '<p class="p-do">x</p>', canAskOnline: false, offline: false, lastTime: '', ...over,
 });
 const count = (html: string, needle: string) => html.split(needle).length - 1;
+const text = (html: string) => html.replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]+>/g, ' ').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+const home = (over: Partial<HomeModel> = {}): HomeModel => ({
+  name: '', aboutLink: false, busy: false, error: null, question: '', howOpen: true, topics: topics({ ...EMPTY_PROFILE, people: [] }), topicOpen: null,
+  aiTag: S.aiTag.net, ai: [S.ai.line, S.ai.ask], privacy: [S.privacy.none], micHtml: '', voiceHtml: '', ...over,
+});
+const pic = (ch: Choice) => (ch.picture.type === 'builtin' ? `<svg data-pic="${ch.picture.id}"></svg>` : '');
+const person = (over: Partial<PersonModel>): PersonModel => ({ card: null, busy: false, less: false, picked: null, confirmed: false, recap: false, answers: [], pic, waitPic: '<svg data-pic="listen"></svg>', full: true, ...over });
 
 describe('simple view: the first screen', () => {
-  const html = homeScreen({
-    name: '', about: 'About me', hasProfile: false, busy: false, error: null, question: '',
-    tries: S.tries.map((q) => ({ q, note: S.tryNote.code })), privacy: [S.privacy.none], where: S.where.cloudOff, micHtml: '', voiceHtml: '',
+  const html = home();
+  const out = homeScreen(html);
+  it('the hope line is the header, with no default "him": "them" until About them has a name', () => {
+    expect(out).toContain("<h1 id=\"hope\">When the words won&#39;t come, let them point.</h1>");
+    expect(homeScreen(home({ name: 'Frank' }))).toContain('let Frank point.');
+    expect(text(out)).not.toMatch(/\b(?:him|his|he|her|she)\b/i);
   });
-  it('one field, one main button, three one-tap questions, quick needs, About them', () => {
-    expect(count(html, 'id="q"')).toBe(1);
-    expect(count(html, 'class="btn primary"')).toBe(1);
-    expect(html).toContain(`>${S.make}</button>`);
-    expect(count(html, 'class="btn ready"')).toBe(3);
-    for (const q of S.tries) expect(html).toContain(`data-q="${q}"`);
-    expect(html).toContain('data-act="needs"');
-    expect(html).toContain('href="#/about"');
+  it('the order: hope, quick needs, how it works, topics, your own question, the AI line, the privacy line', () => {
+    const at = (needle: string) => { const i = out.indexOf(needle); expect(i, needle).toBeGreaterThan(-1); return i; };
+    const order = [at('id="hope"'), at('data-act="needs"'), at('id="how"'), at('id="topics"'), at(S.ownHeading), at('id="q"'), at('id="make"'), at('id="ai-line"'), at('id="s-privacy"'), at('data-act="inside"')];
+    expect(order).toEqual([...order].sort((a, b) => a - b));
   });
-  it('the privacy line, where the AI runs and the way inside are on the screen', () => {
-    expect(html).toContain(S.privacy.none);
-    expect(html).toContain(S.where.cloudOff.replace(/'/g, '&#39;'));
-    expect(html).toContain(`data-act="inside">${S.inside} →`);
+  it('quick needs is at the top, above the how-to block and the topics', () => {
+    expect(out).toContain(S.needs);
+    expect(out.indexOf('data-act="needs"')).toBeLessThan(out.indexOf('id="how"'));
+    expect(out.indexOf('data-act="needs"')).toBeLessThan(out.indexOf('class="topic'));
   });
-  it('nothing technical: no status box, no badge, no mode names', () => {
-    expect(html).not.toMatch(/ONLY_ON_DEVICE|PREFER_IN_CLOUD|Firebase|Gemini|class="badge|id="status"|Judge mode|bytes/);
+  it('one main button, "Show them the choices"; the own question comes second, after the topics', () => {
+    expect(count(out, 'class="btn primary"')).toBe(1);
+    expect(out).toContain('>Show them the choices</button>');
+    expect(homeScreen(home({ name: 'Frank' }))).toContain('>Show Frank the choices</button>');
+    expect(out.indexOf('class="topic')).toBeLessThan(out.indexOf('id="q"'));
   });
-  it('while a card is being made the button is off and the screen says so', () => {
-    const busy = homeScreen({ name: 'Alan', about: 'About Alan', hasProfile: true, busy: true, error: null, question: 'x', tries: [], privacy: [], where: '', micHtml: '', voiceHtml: '' });
+  it('no empty video slot, no walkthrough, no About-them form and no ready-made example rows', () => {
+    expect(out).not.toMatch(/video|Watch how|walkthrough|Skip|class="walk|class="dim|role="dialog"/i);
+    expect(out).not.toContain('href="#/about"');
+    expect(out).not.toMatch(/class="btn ready"|class="offer"/);
+  });
+  it('one plain AI line and one small privacy line; nothing technical', () => {
+    expect(count(out, 'id="ai-line"')).toBe(1);
+    expect(text(out)).toContain(`${S.ai.line} ${S.ai.ask}`);
+    expect(count(out, 'class="lock"')).toBe(1);
+    expect(out).toContain(S.privacy.none);
+    expect(out).toContain(`data-act="inside">${S.inside} →`);
+    expect(out).not.toMatch(/ONLY_ON_DEVICE|PREFER_IN_CLOUD|Firebase|Gemini|class="badge|id="status"|Judge mode|bytes|No AI: the app makes/);
+    expect(text(out)).not.toMatch(/\bcard\b/i);
+  });
+  it('the link to About them appears once there is something in it, or after the first card', () => {
+    expect(homeScreen(home({ aboutLink: true }))).toContain('<a class="tlink" href="#/about">About them →</a>');
+    expect(homeScreen(home({ aboutLink: true, name: 'Frank' }))).toContain('About Frank →');
+  });
+  it('while the choices are being made the button is off and the screen says so', () => {
+    const busy = homeScreen(home({ name: 'Alan', busy: true, question: 'x' }));
     expect(busy).toMatch(/id="make"[^>]*disabled/);
     expect(busy).toContain(S.making);
     expect(busy).toContain('with Alan');
   });
 });
 
-describe('simple view: the card is ready', () => {
-  it('1 "Say this out loud", 2 "Show <name> the card", the card, the main button', async () => {
+describe('simple view: "How it works: 4 steps"', () => {
+  it('open: the title, four numbered steps each with a picture, and the visible "wait" line under step 3', () => {
+    const html = howBlock('', true);
+    expect(html).toContain('<h2 id="how-h">How it works: 4 steps</h2>');
+    expect(count(html, '<li>')).toBe(4);
+    expect(count(html, 'class="num"')).toBe(4);
+    expect(count(html, '<svg')).toBe(4);
+    for (const line of S.how.steps('')) expect(text(html)).toContain(line);
+    expect(html).toContain('<b class="wait">Wait. Count to ten. Don&#39;t answer for them.</b>');
+    expect(html.indexOf('class="wait"')).toBeGreaterThan(html.indexOf('They point at the answer'));
+    expect(html.indexOf('class="wait"')).toBeLessThan(html.indexOf('Check:'));
+    expect(html).toContain(`data-act="how" aria-expanded="true">${S.how.hide}</button>`);
+  });
+  it('with a name the steps use it', () => {
+    const t = text(howBlock('Rosa', true));
+    expect(t).toContain('Turn the computer to Rosa and say it out loud');
+    expect(t).toContain("Don't answer for Rosa.");
+  });
+  it('folded: one highlighted line that opens it again, still at the top', () => {
+    const html = howBlock('', false);
+    expect(html).toMatch(/^<button type="button" class="how-line" id="how" data-act="how" aria-expanded="false">/);
+    expect(text(html)).toBe('How it works: 4 steps Show');
+    expect(html).not.toContain('<li>');
+    const screen = homeScreen(home({ howOpen: false }));
+    expect(screen.indexOf('class="how-line"')).toBeLessThan(screen.indexOf('id="topics"'));
+  });
+});
+
+describe('simple view: the topics', () => {
+  const list = topics(SAMPLE_PROFILE);
+  it('seven tiles, closed: no question is shown until a topic is tapped', () => {
+    const html = topicGrid({ name: '', topics: list, topicOpen: null, aiTag: S.aiTag.net });
+    expect(count(html, 'class="topic"')).toBe(7);
+    expect(html).not.toContain('class="tq"');
+    for (const t of list) expect(html).toContain(`data-topic="${t.id}"`);
+  });
+  it('an open topic lists its questions as one-tap rows, the family\'s own tagged, under the lead line', () => {
+    const html = topicGrid({ name: 'Frank', topics: list, topicOpen: 'food', aiTag: S.aiTag.net });
+    expect(html).toContain('class="topic open" data-act="topic" data-topic="food" aria-expanded="true"');
+    expect(count(html, 'class="tq"')).toBe(list[0].questions.length);
+    expect(html).toContain('data-q="Would you like tea or coffee?"');
+    expect(html).toContain('data-q="Would you like pot roast or chili?"><span>Would you like pot roast or chili?</span><span class="tag">Frank&#39;s own</span>');
+    expect(html.indexOf('tea or coffee')).toBeLessThan(html.indexOf('pot roast or chili'));
+    expect(text(html)).toContain('Tap one. Then say it out loud as you turn the computer to Frank.');
+  });
+  it('the panel opens under the ROW of its tile, so no tile moves (left and right tile alike)', () => {
+    for (const [open, after] of [['food', 'body'], ['body', 'body'], ['rest', 'people'], ['fun', 'fun']] as const) {
+      const html = topicGrid({ name: '', topics: list, topicOpen: open, aiTag: '' });
+      const tiles = [...html.matchAll(/data-topic="(\w+)"/g)].map((m) => m[1]);
+      expect(tiles).toEqual(list.map((t) => t.id));
+      expect(html.indexOf('class="tqs"')).toBeGreaterThan(html.indexOf(`data-topic="${after}"`));
+      const next = list[list.findIndex((t) => t.id === after) + 1];
+      if (next) expect(html.indexOf('class="tqs"')).toBeLessThan(html.indexOf(`data-topic="${next.id}"`));
+    }
+  });
+  it('the one open question carries the tag that says where its AI is', () => {
+    const html = topicGrid({ name: '', topics: list, topicOpen: 'plans', aiTag: S.aiTag.net });
+    expect(count(html, 'class="tag net"')).toBe(1);
+    expect(html).toContain('<span class="tag net" id="ai-tag">needs internet</span>');
+  });
+});
+
+describe("simple view: the person's screens", () => {
+  it('the choices: "Point to your answer" and the question on top, no category word, one tile per choice, the way out last', async () => {
+    const c = await make('Do you want coffee or tea?');
+    expect(c.topic).toBe('drink');
+    const html = personSimple(person({ card: c }));
+    expect(html.indexOf('Point to your answer')).toBeLessThan(html.indexOf('Do you want coffee or tea?'));
+    expect(html.indexOf('Do you want coffee or tea?')).toBeLessThan(html.indexOf('class="pt'));
+    // the category word ("drink") is nowhere on the person's screen
+    expect(text(html).split(' ')).not.toContain('drink');
+    expect(html).not.toContain('class="headline"');
+    expect([...html.matchAll(/class="pt[^"]*" data-i="(\d)"/g)].map((m) => m[1])).toEqual(['0', '1', '2']);
+    expect(html).toMatch(/class="pt esc[^"]*" data-i="2">[\s\S]*something else/);
+    // the word stands under its picture, inside the same tile
+    expect(html).toMatch(/data-i="0"><svg data-pic="coffee"><\/svg><span>coffee<\/span>/);
+  });
+  it('nothing but the choices looks tappable: the only other control is the carer\'s labelled press-and-hold', async () => {
+    const html = personSimple(person({ card: await make('Do you want coffee or tea?') }));
+    expect(count(html, '<button')).toBe(4);
+    expect(html).toContain('id="exit" class="hold"');
+    expect(text(html)).toContain('Carer: hold here to go back');
+    expect(html).not.toMatch(/data-act=|href=/);
+    // the preview on the carer's screen has no such control
+    expect(personSimple(person({ card: await make('Do you want coffee or tea?'), full: false }))).not.toContain('id="exit"');
+  });
+  it('at most three choices and the way out on a card; the needs board is the one grid', async () => {
+    for (const q of ['Would you like water, juice or milk?', 'How bad is the pain?', 'Are you too hot or too cold?', 'How are you feeling today?', 'Are you hungry?']) {
+      const html = personSimple(person({ card: await make(q) }));
+      expect(count(html, 'class="pt'), q).toBeLessThanOrEqual(4);
+      expect(html, q).toContain('<div class="p-tiles">');
+    }
+    const board = personSimple(person({ card: needsCard() }));
+    expect(board).toContain('<div class="p-tiles board">');
+    expect(count(board, 'class="pt')).toBe(9);
+    expect(text(board)).toContain('Point to your answer What do you need?');
+  });
+  it('the check: "So: tea. Right?", the picture with its word, then "Yes" and "No, something else"', async () => {
+    const c = await make('Do you want coffee or tea?');
+    const html = personSimple(person({ card: c, picked: c.choices[1] }));
+    expect(html).toContain('id="p-so">So: tea. Right?</p>');
+    expect(html).toMatch(/class="p-pick"><svg data-pic="tea"><\/svg><p class="p-big">tea<\/p>/);
+    expect(html).toMatch(/data-confirm="yes">[\s\S]*<span>Yes<\/span>/);
+    expect(html).toContain('data-confirm="change"><span>No, something else</span>');
+    expect(html.indexOf('data-confirm="yes"')).toBeLessThan(html.indexOf('data-confirm="change"'));
+    expect(text(html)).not.toMatch(/\bchange\b/);
+  });
+  it('the finish: "Thank you. Tea." and one button, "Give the computer back"; no press-and-hold as the only way out', async () => {
+    const c = await make('Do you want coffee or tea?');
+    const html = personSimple(person({ card: c, picked: c.choices[1], confirmed: true }));
+    expect(text(html)).toBe('Thank you. Tea. Give the computer back');
+    expect(html).toContain('class="p-give" data-act="give-back">Give the computer back</button>');
+    expect(count(html, '<button')).toBe(1);
+    expect(html).not.toContain('id="exit"');
+    // the preview shows the same finish without the button
+    expect(personSimple(person({ card: c, picked: c.choices[1], confirmed: true, full: false }))).not.toContain('p-give');
+  });
+  it('"Hide the choices": only the question; nothing to point to yet: the waiting picture', async () => {
+    const c = await make('Do you want coffee or tea?');
+    expect(text(personSimple(person({ card: c, less: true })))).toBe('Carer: hold here to go back Do you want coffee or tea?');
+    expect(personSimple(person({}))).toContain('data-pic="listen"');
+  });
+  it('a number scale named in the question stays one line of numbers with its ends named', async () => {
+    const html = personSimple(person({ card: await make('How bad is the pain, from 0 to 10?') }));
+    expect(html).toContain('class="p-tiles scale"');
+    expect(html).toContain(COPY.scale.high);
+  });
+  it('going over the answers: the list, then Yes / No; an answer whose card had no title shows alone', () => {
+    const html = personSimple(person({ recap: true, answers: [{ topic: 'drink', label: 'tea' }, { topic: '', label: 'rest' }] }));
+    expect(html).toContain('<li><span>drink</span><b>tea</b></li><li><b>rest</b></li>');
+    expect(html).toContain('data-confirm="recap-yes"');
+    expect(html).toContain('data-confirm="recap-change"><span>No</span>');
+  });
+  it('the "we\'re stuck" ways are five rows in one column', () => {
+    const html = personSimple(person({ card: repairCard(PROFILE) }));
+    expect(html).toContain('<div class="p-tiles ways">');
+    expect(count(html, 'class="pt')).toBe(5);
+  });
+});
+
+describe("simple view: the carer's screen before handing over", () => {
+  it('1 "Say it out loud" with the line, 2 "Turn the computer to <name>", the main button, then what they will see', async () => {
     const c = await make('Do you want coffee or tea?');
     const html = cardScreen(cardModel(c));
     expect(html).toContain(`<span class="num">1</span>${S.step1}`);
-    expect(html).toContain('<span class="num">2</span>Show Alan the card');
+    expect(html).toContain('<span class="num">2</span>Turn the computer to Alan');
     expect(html).toContain(c.say);
-    expect(html).toContain('id="person"');
-    expect(html).toContain('class="btn primary" data-act="show">Show Alan the card</button>');
-    expect(html.indexOf(S.step1)).toBeLessThan(html.indexOf('id="person"'));
-    expect(html.indexOf('id="person"')).toBeLessThan(html.indexOf('data-act="show"'));
+    expect(html).toContain('class="btn primary" data-act="show">Show Alan the choices</button>');
+    expect(html).toContain('What Alan will see:');
+    expect(html).toContain('id="person" class="person mini pv"');
+    expect(html.indexOf(S.step1)).toBeLessThan(html.indexOf('data-act="show"'));
+    expect(html.indexOf('data-act="show"')).toBeLessThan(html.indexOf('id="person"'));
   });
-  it('"We\'re stuck" is on this screen, before any answer', async () => {
+  it('the visible line "Wait. Count to ten. Don\'t answer for <name>." stands on the screen, right under the main button', async () => {
+    const html = cardScreen(cardModel(await make('Do you want coffee or tea?')));
+    expect(html).toContain('id="wait-line"');
+    expect(text(html)).toContain("Wait. Count to ten. Don't answer for Alan.");
+    expect(html.indexOf('data-act="show"')).toBeLessThan(html.indexOf('id="wait-line"'));
+    expect(html.indexOf('id="wait-line"')).toBeLessThan(html.indexOf('id="person"'));
+    expect(text(cardScreen(cardModel(await make('Do you want coffee or tea?'), { name: '' })))).toContain("Don't answer for them.");
+  });
+  it('how to come back is said here, before the phone is handed over', async () => {
+    const t = text(cardScreen(cardModel(await make('Do you want coffee or tea?'))));
+    expect(t).toContain('"Give the computer back"');
+    expect(t).toContain('"Carer: hold here to go back"');
+  });
+  it('"We\'re stuck" and "Hide the choices" are on this screen, before any answer', async () => {
     const html = cardScreen(cardModel(await make('Do you want coffee or tea?')));
     expect(html).toContain(`data-act="stuck">${COPY.card.stuck.replace(/'/g, '&#39;')}</button>`);
     expect(html).toContain('data-act="less"');
   });
-  it('where the card was made is on the screen itself, under the card, not only behind the link', async () => {
+  it('where the choices were made is on the screen itself, not only behind the link', async () => {
     const c = await make('Do you want coffee or tea?');
     const html = cardScreen(cardModel(c));
     expect(html).toContain('id="made-where" data-maker="code" data-left="nothing"');
@@ -83,9 +270,16 @@ describe('simple view: the card is ready', () => {
     expect(html).toContain('data-maker="cloud" data-left="sent"');
     expect(html).toContain('fixed instructions');
   });
-  it('the repair card keeps the way back to the choices', () => {
-    const c = repairCard(PROFILE);
+  it('a narrowing card says in plain words that an AI made this follow-up, and where', async () => {
+    const c: Card = { ...(await make('Do you want coffee or tea?')), source: 'in-cloud', narrow: { level: 1, rejected: ['coffee', 'tea'] } };
     const html = cardScreen(cardModel(c));
+    expect(html).toContain('id="ai-made"');
+    expect(text(html)).toContain('AI suggested these next choices with online help, because none of the first ones fitted (step 1 of 2).');
+    expect(text(cardScreen(cardModel({ ...c, source: 'on-device', narrow: { level: 2, rejected: [] } })))).toContain('AI suggested these next choices on this computer, because none of the first ones fitted (step 2 of 2).');
+    expect(cardScreen(cardModel(await make('Do you want coffee or tea?')))).not.toContain('id="ai-made"');
+  });
+  it('the repair card keeps the way back to the choices', () => {
+    const html = cardScreen(cardModel(repairCard(PROFILE)));
     expect(html).toContain('data-act="unstuck"');
     expect(html).toContain(COPY.repair.tip);
   });
@@ -100,7 +294,15 @@ describe('simple view: the card is ready', () => {
     expect(html).toContain('data-maker="none"');
     expect(cardScreen(cardModel(c, { canAskOnline: false }))).not.toContain('data-act="sheet"');
   });
-  it('a memory question: the line to say instead, no card to show', async () => {
+  it('the same question with no connection: a clear "needs the internet" state, and no offer that could not work', async () => {
+    const c = await makeCard('What do you want to do this weekend?', { profile: PROFILE, support: 'more', engine: Object.assign(new NullEngine(), { cloudConfigured: true }), allowCloud: false, deviceReady: false });
+    const html = cardScreen(cardModel(c, { canAskOnline: true, offline: true }));
+    expect(html).toContain('id="offline"');
+    expect(text(html)).toContain('This question needs the internet, and you are offline. The topic questions and "Needs it now?" work without it.');
+    expect(html).not.toContain('data-act="sheet"');
+    expect(html).toContain(COPY.card.justAsk);
+  });
+  it('a memory question: the line to say instead, nothing to show', async () => {
     const c = await make('What year did we get married?');
     const html = cardScreen(cardModel(c));
     expect(c.kind).toBe('no-quiz');
@@ -109,25 +311,101 @@ describe('simple view: the card is ready', () => {
   });
 });
 
-describe('simple view: they answered', () => {
+describe('simple view: after an answer', () => {
   const made = { maker: 'code' as const, left: 'nothing' as const, spoken: false, lines: [S.made.code, S.left.nothing] };
-  const html = answeredScreen({ name: 'Alan', label: 'tea', afterHtml: '', next: null, hasAnswers: true, today: [{ q: 'Do you want coffee or tea?', label: 'tea' }], made, privacy: [S.privacy.none] });
-  it('what they chose, the next thing to do, the ways on', () => {
-    expect(html).toContain('Alan chose and said yes to');
-    expect(html).toContain('<b>tea</b>');
+  const model = (over: Partial<AnsweredModel> = {}): AnsweredModel => ({
+    name: 'Alan', label: 'tea', out: false, afterHtml: '', next: null, follow: [], tryNext: null, who: false, invite: false, narrow: null, narrowLast: false, short: null,
+    hasAnswers: true, today: [{ q: 'Do you want coffee or tea?', label: 'tea' }], made, privacy: [S.privacy.none], ...over,
+  });
+  const html = answeredScreen(model());
+  it('what they chose, and "Ask another question" as the main button right under it', () => {
+    expect(text(html)).toContain('Alan chose, and said yes to: tea');
     expect(html).toContain(`class="btn primary" data-act="new">${S.another}</button>`);
+    expect(count(html, 'class="btn primary"')).toBe(1);
+    expect(html.indexOf('class="chose"')).toBeLessThan(html.indexOf('data-act="new"'));
     for (const act of ['needs', 'recap', 'stuck']) expect(html).toContain(`data-act="${act}"`);
     expect(html).toContain(S.today);
+    expect(text(answeredScreen(model({ name: '' })))).toContain('They chose, and said yes to: tea');
   });
-  it('says where the answers are kept and where the card was made', () => {
+  it('says where the answers are kept and where the choices were made', () => {
     expect(html).toContain(S.privacy.answers);
     expect(html).toContain('id="made-where"');
     expect(html).toContain('data-act="inside-card"');
   });
-  it('a question that was two in one: the second question is the main button', () => {
-    const two = answeredScreen({ name: '', label: 'good', afterHtml: '', next: { act: 'next', label: COPY.card.nextSecond }, hasAnswers: false, today: [], made, privacy: [] });
+  it('a question that was two in one: the second question is the main button, "Ask another question" stays', () => {
+    const two = answeredScreen(model({ next: { act: 'next', label: COPY.card.nextSecond } }));
     expect(two).toContain(`class="btn primary" data-act="next">${COPY.card.nextSecond}</button>`);
-    expect(two).toContain('They chose and said yes to');
+    expect(two).toContain(`class="btn" data-act="new">${S.another}</button>`);
+  });
+  it('the next step after a "yes" that would lead nowhere: one-tap questions under the main button', () => {
+    const h = answeredScreen(model({ label: 'yes', follow: ['Where does it hurt?'] }));
+    expect(h).toContain('id="follow"');
+    expect(h).toContain('class="btn ask-next" data-q="Where does it hurt?">Where does it hurt?</button>');
+    expect(h.indexOf('data-act="new"')).toBeLessThan(h.indexOf('id="follow"'));
+    expect(html).not.toContain('id="follow"');
+  });
+  it('About them is offered here, after the first card, with "Ask another question" above it and never as the main button', () => {
+    const h = answeredScreen(model({ invite: true, name: '' }));
+    expect(h).toContain('id="invite"');
+    expect(text(h)).toContain("Want their family's names on the questions?");
+    expect(h).toContain(`<a class="btn" href="#/about">${S.invite.add}</a>`);
+    expect(h).toContain('data-act="invite-later"');
+    expect(h.indexOf('data-act="new"')).toBeLessThan(h.indexOf('id="invite"'));
+    expect(count(h, 'class="btn primary"')).toBe(1);
+    expect(text(answeredScreen(model({ invite: true, name: 'Rosa' })))).toContain("Want Rosa's family's names on the questions?");
+    expect(html).not.toContain('id="invite"');
+  });
+  it('after "something else": what to do now, never a dead end', () => {
+    const h = answeredScreen(model({ label: 'something else', out: true, tryNext: 'Would you like some more?' }));
+    expect(text(h)).toContain('Alan chose: something else');
+    expect(h).toContain('id="after-out"');
+    expect(text(h)).toContain(S.out.show);
+    expect(h).toContain('data-q="Would you like some more?">Try: Would you like some more?</button>');
+    for (const act of ['needs', 'own', 'stuck', 'new']) expect(h).toContain(`data-act="${act}"`);
+    expect(count(h, 'data-act="stuck"')).toBe(1);
+    expect(text(answeredScreen(model({ label: 'not sure', out: true })))).toContain(S.out.notSure);
+  });
+  it('after "something else" an AI can narrow it down: the button, and where that AI runs, in plain words', () => {
+    const cloud = answeredScreen(model({ label: 'something else', out: true, narrow: 'cloudOn' }));
+    expect(cloud).toContain('id="narrow" data-act="narrow"');
+    expect(text(cloud)).toContain('Narrow it down: AI suggests the next choices');
+    expect(text(cloud)).toContain(S.narrow.cloudOn);
+    expect(cloud.indexOf('id="narrow"')).toBeLessThan(cloud.indexOf(S.out.show));
+    expect(text(answeredScreen(model({ label: 'something else', out: true, narrow: 'device' })))).toContain('Nothing is sent.');
+    expect(text(answeredScreen(model({ label: 'something else', out: true, narrow: 'ask' })))).toContain('the app asks you first');
+    const off = answeredScreen(model({ label: 'something else', out: true, narrow: 'offline' }));
+    expect(off).toMatch(/id="narrow" data-act="narrow" disabled/);
+    // after the second step it is no longer offered, and the screen says so
+    const last = answeredScreen(model({ label: 'something else', out: true, narrow: null, narrowLast: true }));
+    expect(last).not.toContain('id="narrow"');
+    expect(text(last)).toContain(S.narrow.last);
+    expect(text(last)).toContain(S.out.show);
+  });
+  it('"call someone" with nobody in About them: a field for one name', () => {
+    const h = answeredScreen(model({ label: 'yes', who: true }));
+    expect(h).toContain('<form id="who"');
+    expect(h).toContain('id="who-name"');
+    expect(html).not.toContain('id="who"');
+  });
+  it('"Today in short": the sentences, who wrote them, a Copy button', () => {
+    const h = answeredScreen(model({ short: { sentences: ['Alan answered 2 questions today.', 'What they chose: tea.'], source: 'rules', busy: false, copied: false } }));
+    expect(h).toContain('id="today-short" data-source="rules"');
+    expect(text(h)).toContain('Today in short Alan answered 2 questions today. What they chose: tea.');
+    expect(text(h)).toContain(S.short.rules);
+    expect(h).toContain(`data-act="copy-short" aria-live="polite">${S.short.copy}</button>`);
+    const dev = shortBlock({ sentences: ['a.', 'b.'], source: 'on-device', busy: false, copied: true });
+    expect(dev).toContain('data-source="on-device"');
+    expect(text(dev)).toContain(S.short.device);
+    expect(dev).toContain(`>${S.short.copied}</button>`);
+    expect(text(shortBlock({ sentences: ['a.'], source: 'rules', busy: true, copied: false }))).toContain(S.short.busy);
+    expect(shortBlock(null)).toBe('');
+    expect(html).not.toContain('id="today-short"');
+  });
+  it('it is on the "Go over the answers" screen too', async () => {
+    const c = await make('Do you want coffee or tea?');
+    const short = { sentences: ['x.', 'y.'], source: 'rules' as const, busy: false, copied: false };
+    expect(cardScreen(cardModel(c, { recap: true, short }))).toContain('id="today-short"');
+    expect(cardScreen(cardModel(c, { short }))).not.toContain('id="today-short"');
   });
 });
 

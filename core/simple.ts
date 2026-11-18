@@ -55,26 +55,38 @@ export interface WhereInput {
   configured: boolean;
   device: DeviceStatus | 'checking';
   cloudOn: boolean;
-  about: string;
+  /** The browser reports a connection. Without one, online help cannot be reached. */
+  online: boolean;
 }
 
-/** Where the AI runs, in one line on the first screen: by what this browser has and whether online help is on. */
-export function whereLine(i: WhereInput): string {
-  const W = COPY.simple.where;
-  if (!i.configured) return W.noConfig;
-  if (i.device === 'checking') return W.checking;
-  if (i.device === 'available') return i.cloudOn ? W.deviceCloudOn(i.about) : W.device(i.about);
-  return i.cloudOn ? W.cloudOn(i.about) : W.cloudOff;
+/** Where a typed open question would get its choices here: the AI in this browser, online help, or nowhere. */
+export type AiPlace = 'device' | 'cloudOn' | 'ask' | 'offline' | 'none' | 'checking';
+export function aiPlace(i: WhereInput): AiPlace {
+  if (!i.configured) return 'none';
+  if (i.device === 'checking') return 'checking';
+  if (i.device === 'available') return 'device';
+  if (!i.online) return 'offline';
+  return i.cloudOn ? 'cloudOn' : 'ask';
 }
 
-/** The small line under a ready question: how its card will be made here. `open` is the one open question of the three. */
-export function tryNote(open: boolean, i: Omit<WhereInput, 'about'>): string {
-  const T = COPY.simple.tryNote;
-  if (!open) return T.code;
-  if (!i.configured) return T.openNone;
-  if (i.device === 'checking') return T.openChecking;
-  if (i.device === 'available') return T.openDevice;
-  return i.cloudOn ? T.openCloudOn : T.openAsk;
+/**
+ * The plain AI line of the first screen: what the AI is for, then where it runs on this device. On a phone there is no
+ * AI in the browser (Chrome's built-in model is desktop only), so the second sentence there says "online", and that
+ * the app asks first. Nothing is said about this device before its capability check has answered.
+ */
+export function aiLines(i: WhereInput): string[] {
+  const A = COPY.simple.ai;
+  const place = aiPlace(i);
+  if (place === 'none') return [A.none];
+  if (place === 'checking') return [A.line];
+  return [A.line, A[place]];
+}
+
+/** The tag on the one open question in the topics: "needs internet", or that the AI is on this device. */
+export function aiTag(i: WhereInput): string {
+  const T = COPY.simple.aiTag;
+  const place = aiPlace(i);
+  return place === 'device' ? T.device : place === 'offline' ? T.offline : place === 'none' ? T.none : place === 'checking' ? T.checking : T.net;
 }
 
 /**
@@ -85,4 +97,13 @@ export function tryNote(open: boolean, i: Omit<WhereInput, 'about'>): string {
  */
 export function sheetWanted(c: Card | null, i: { cloudOn: boolean; cloudConfigured: boolean }): boolean {
   return !!c && !!c.blocked && !i.cloudOn && i.cloudConfigured && !!c.unsentPayload;
+}
+
+/**
+ * A question that needs online help, asked with no connection: the screen says "needs the internet" instead of
+ * offering a sheet that could not send anything. True when online help could have made this card (it was wanted, or
+ * it was on and the request never left), and the browser reports no connection.
+ */
+export function needsInternet(c: Card | null, i: { online: boolean; cloudConfigured: boolean }): boolean {
+  return !!c && !!c.blocked && c.kind !== 'no-quiz' && !i.online && i.cloudConfigured && (!!c.unsentPayload || !!c.retry);
 }

@@ -87,7 +87,7 @@ function toChoices(answers: string[], escapes: string[], profile: Profile, asked
 }
 
 /** KB §7 rule 5: up to 3 choices at "mild", 2 at "more" and "most"; always exactly one escape. Numbers as figures (§2.9). */
-function finish(base: Omit<Card, 'choices' | 'say'>, answers: string[], escapes: string[], profile: Profile, support: SupportLevel, cap = choiceCap(support)): Card {
+export function finish(base: Omit<Card, 'choices' | 'say'>, answers: string[], escapes: string[], profile: Profile, support: SupportLevel, cap = choiceCap(support)): Card {
   const when = questionType(base.asked) === 'when';
   // never two tiles with the same label, and never the way out among the answers (rules.ts, isEscapeLabel)
   const real = answers.filter((a, i) => !isEscapeLabel(a) && answers.findIndex((b) => lc(b) === lc(a)) === i);

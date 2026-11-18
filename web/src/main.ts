@@ -17,14 +17,18 @@ import { RECORDED_STEP } from '../../core/recorded';
 import { badgeKind, countSwaps, sentLine, sessionReceipt, sessionTally } from '../../core/receipt';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS, SAMPLE_STEP } from '../../core/sample';
-import { madeWhere, privacyLines, sheetWanted, tryNote, whereLine } from '../../core/simple';
+import { aiLines, aiTag, madeWhere, needsInternet, privacyLines, sheetWanted } from '../../core/simple';
+import { canNarrow, narrowCard, narrowInput, type NarrowInput } from '../../core/narrow';
+import { aiPlace } from '../../core/simple';
+import { daySummary, rulesSummary, todays, type DaySummary } from '../../core/summary';
+import { asksWho, awayNames, callQuestion, followUps, nextInTopic, topics, type TopicId } from '../../core/topics';
 import { stripQuestion } from '../../core/strip';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
 import { pickEngine } from './ai/pick';
 import { fetchSettings } from './ai/remoteConfig';
 import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile } from './pictos';
-import { aboutSimple, answeredScreen, cardScreen, consentSheet, homeScreen, type AboutRow } from './simple';
+import { aboutSimple, answeredScreen, cardScreen, consentSheet, homeScreen, personSimple, shortBlock, type AboutRow } from './simple';
 import { kvClear, kvGet, kvSet } from './store';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
@@ -61,6 +65,10 @@ interface Settings {
    * kept in this browser. Judge mode (#/demo) is always the full view and does not change this.
    */
   view?: 'simple' | 'full';
+  /** Simple view: "How it works: 4 steps" is folded to one line. Set by the first confirmed answer, or by "Hide" / "Show". */
+  howFolded?: boolean;
+  /** Simple view: a first answer was confirmed in this browser (About them is offered only after that). */
+  firstCard?: boolean;
 }
 
 interface State {
@@ -107,6 +115,17 @@ interface State {
   sheet: boolean;
   /** Simple view, About them: the row that is open. */
   aboutRow: AboutRow | null;
+  /** Simple view, first screen: the topic whose questions are open (one at a time; kept while a question is asked). */
+  topicOpen: TopicId | null;
+  /** Simple view: the answered card About them is offered on (at most one a visit), and "Not now". */
+  inviteFor: Card | null;
+  inviteOff: boolean;
+  /** Simple view: the narrowing step being made or waiting for a yes on the consent sheet (core/narrow.ts). */
+  narrowPending: NarrowInput | null;
+  /** Simple view: "Today in short" (core/summary.ts), and whether the on-device model is still writing it. */
+  short: DaySummary | null;
+  shortBusy: boolean;
+  shortCopied: boolean;
 }
 
 const cfg = webConfig();
@@ -140,6 +159,13 @@ const state: State = {
   recorded: false,
   sheet: false,
   aboutRow: null,
+  topicOpen: null,
+  inviteFor: null,
+  inviteOff: false,
+  narrowPending: null,
+  short: null,
+  shortBusy: false,
+  shortCopied: false,
 };
 /** When this page was opened: the simple view's "Today" list holds the answers confirmed since then. */
 const pageStart = Date.now();
@@ -691,7 +717,7 @@ function afterAnswer(c: Card, p: Choice, button: string): string {
   return `<p class="say need-line">${esc(needLine(p.label))}</p>${where}`;
 }
 
-const recapText = () => state.answers.map((a) => `${a.topic}, ${a.label}`).join('; ') + '. Right?';
+const recapText = () => state.answers.map((a) => (a.topic ? `${a.topic}, ${a.label}` : a.label)).join('; ') + '. Right?';
 
 // ---------------------------------------------------------------- person view (pane and full screen)
 function picture(ch: Choice): string {
@@ -704,6 +730,8 @@ function picture(ch: Choice): string {
   return ''; // bundled pictures only in this build: a word-only tile, never an empty frame
 }
 
+/** The card's headline in the full view: left out when the card has none (never a generic word in its place). */
+const headline = (topic: string) => (topic ? `<h2 class="headline">${esc(topic)}</h2>` : '');
 function personView(full: boolean): string {
   const c = state.card;
   const exit = full ? `<button id="exit" class="exit" aria-label="${C.person.exit}" title="${C.person.exit}">${CROSS}</button>` : '';
@@ -714,9 +742,9 @@ function personView(full: boolean): string {
       <button class="tile" data-confirm="recap-change">${CROSS}<span>${C.person.change}</span></button></div>`;
   }
   if (!c || c.blocked || !c.choices.length) return `${exit}<div class="listening${state.busy ? ' thinking' : ''}">${builtinPicto('listen')}</div>`;
-  if (state.less) return `${exit}<h2 class="headline">${esc(c.topic)}</h2>`;
+  if (state.less) return `${exit}${headline(c.topic)}`;
   if (state.picked && state.confirmed) {
-    return `${exit}<h2 class="headline">${esc(c.topic)}</h2><div class="answered">${picture(state.picked)}<p>${esc(state.picked.label)}</p></div>`;
+    return `${exit}${headline(c.topic)}<div class="answered">${picture(state.picked)}<p>${esc(state.picked.label)}</p></div>`;
   }
   if (state.picked) {
     // a "no" or "not sure" sits in a neutral frame: never a giant cross above yes / change (§2.14)
@@ -728,13 +756,13 @@ function personView(full: boolean): string {
   if (c.kind === 'repair') {
     // three ways to get the message out in one row, then the two ways to leave it for now (quieter tiles)
     const tile = (ch: Choice, i: number, extra: string) => `<button class="tile ${extra} ${picture(ch) ? '' : 'wordonly'}" data-i="${i}">${picture(ch)}<span>${esc(ch.label)}</span></button>`;
-    return `${exit}<h2 class="headline">${esc(c.topic)}</h2>
+    return `${exit}${headline(c.topic)}
       <div class="tiles repair">${c.choices.slice(0, 3).map((ch, i) => tile(ch, i, '')).join('')}</div>
       <div class="tiles two">${c.choices.slice(3).map((ch, i) => tile(ch, i + 3, 'out')).join('')}</div>`;
   }
   if (c.kind === 'needs') {
     // one board: eight needs, each a picture and its word, then the way out on a row of its own
-    return `${exit}<h2 class="headline">${esc(c.topic)}</h2>
+    return `${exit}${headline(c.topic)}
       <div class="tiles needs">${c.choices.map((ch, i) => `<button class="tile ${ch.role === 'escape' ? 'escape' : ''}" data-i="${i}">${picture(ch)}<span>${esc(ch.label)}</span></button>`).join('')}</div>`;
   }
   const answers = c.choices.filter((x) => x.role === 'answer');
@@ -742,17 +770,25 @@ function personView(full: boolean): string {
     // a number scale named in the question: one line of numbers, the two ends named under it, then the way out
     const num = (ch: Choice, i: number) => `<button class="tile wordonly" data-i="${i}"><span>${esc(ch.label)}</span></button>`;
     const out = c.choices.map((ch, i) => (ch.role === 'escape' ? `<button class="tile escape ${picture(ch) ? '' : 'wordonly'}" data-i="${i}">${picture(ch)}<span>${esc(ch.label)}</span></button>` : '')).join('');
-    return `${exit}<h2 class="headline">${esc(c.topic)}</h2>
+    return `${exit}${headline(c.topic)}
     <div class="tiles scale" style="--n:${Math.min(6, answers.length)}">${c.choices.map((ch, i) => (ch.role === 'answer' ? num(ch, i) : '')).join('')}</div>
     <p class="scale-ends"><span>${c.scale.lo} · ${c.scale.lo === 0 ? C.scale.low : C.scale.lowFromOne}</span><span>${c.scale.hi} · ${C.scale.high}</span></p>
     <div class="tiles two">${out}</div>`;
   }
   const cls = state.settings.support === 'most' ? 'tiles stacked' : answers.length >= 3 ? 'tiles three' : 'tiles two';
-  return `${exit}<h2 class="headline">${esc(c.topic)}</h2>
+  return `${exit}${headline(c.topic)}
     <div class="${cls}">${c.choices.map((ch, i) => `<button class="tile ${ch.role === 'escape' ? 'escape' : ''} ${picture(ch) ? '' : 'wordonly'}" data-i="${i}">${picture(ch)}<span>${esc(ch.label)}</span></button>`).join('')}</div>`;
 }
 
+/** The person's side of the simple view (web/src/simple.ts, personSimple): the whole screen, or the carer's preview. */
+function personModel(full: boolean) {
+  // (read, never set: only a tap on the person's screen picks or confirms; tests/unit/truth.test.ts)
+  const { card, busy, less, picked, confirmed, recap, answers } = state;
+  return { card, busy, less, picked, confirmed, recap, answers, pic: picture, waitPic: builtinPicto('listen'), full };
+}
 function personScreen(): string {
+  // the simple view has its own screens for the person (design/USER_FIRST.md); judge mode and the full view keep theirs
+  if (simpleView()) return `<main class="person full pv" id="person" aria-label="For the person" data-kind="${state.card ? state.card.kind : ''}">${personSimple(personModel(true))}</main>`;
   return `<main class="person full" id="person" aria-label="Card for the person">${personView(true)}</main>`;
 }
 
@@ -925,23 +961,74 @@ function simplePrivacy(): string[] {
   });
 }
 const aboutName = () => C.about.heading(state.profile.personName);
-const whereInput = () => ({ configured: !!cfg, device: state.device, cloudOn: state.settings.cloudHelp, about: aboutName() });
-const simpleTries = () => C.simple.tries.map((q, i) => ({ q, note: tryNote(i === C.simple.tries.length - 1, whereInput()) }));
+const whereInput = () => ({ configured: !!cfg, device: state.device, cloudOn: state.settings.cloudHelp, online: isOnline() });
 const simpleMade = (c: Card) => madeWhere(c, { spoken: voiceCards.has(c), about: aboutName() });
 
+/** "Today in short" as the screens draw it: null until an answer was confirmed today. */
+const shortModel = () => (state.short ? { sentences: state.short.sentences, source: state.short.source, busy: state.shortBusy, copied: state.shortCopied } : null);
+const todayAnswers = () => todays(state.history).map((h) => ({ q: h.q, label: h.label, at: h.at }));
+let shortSeq = 0;
 /**
- * "/" in the simple view: the first screen, the card-ready screen or the answered screen, by the same state the full
- * view reads. The consent sheet is drawn over it when a question needs online help (state.sheet).
+ * Writes "Today in short" again after an answer: the rules' sentences at once, then, where this browser has the
+ * on-device model, the model's own (ONLY_ON_DEVICE; core/summary.ts checks them). No cloud step exists on this path.
+ */
+function refreshShort() {
+  const answers = todayAnswers();
+  const name = state.profile.personName.trim();
+  const seq = ++shortSeq;
+  state.shortCopied = false;
+  if (!answers.length) { state.short = null; state.shortBusy = false; return; }
+  state.short = { sentences: rulesSummary(answers, name), source: 'rules' };
+  state.shortBusy = state.device === 'available' && !!state.engine.summarizeDevice && answers.length >= 2;
+  if (!state.shortBusy) return;
+  void daySummary(answers, name, state.engine, true).then((s) => { if (seq !== shortSeq) return; state.short = s; state.shortBusy = false; patchShort(); });
+}
+function patchShort() {
+  const el = document.querySelector('#today-short');
+  if (el) el.outerHTML = shortBlock(shortModel());
+}
+/** Where a narrowing step would run here, or null when none is offered for this answer. */
+function narrowPlace(c: Card, label: string): 'device' | 'cloudOn' | 'ask' | 'offline' | null {
+  if (!canNarrow(c, label)) return null;
+  const place = aiPlace(whereInput());
+  return place === 'none' || place === 'checking' ? null : place;
+}
+/** One narrowing step (core/narrow.ts): on this device where the model is, else online help when it is on; the consent sheet otherwise. */
+async function runNarrow(i: NarrowInput) {
+  const seq = ++makeSeq;
+  useSettings();
+  state.narrowPending = i;
+  state.busy = true; state.error = null; resetCard(); render();
+  if (state.device === 'checking') await refreshDevice().catch(() => { state.device = 'unavailable'; });
+  const card = await narrowCard(i, { profile: state.profile, support: state.settings.support, engine: state.engine, allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available', routing: routing() });
+  state.made.push(card);
+  if (seq !== makeSeq) return;
+  setCard(card);
+  state.sheet = simpleView() && isOnline() && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
+  state.busy = false; state.waitStart = Date.now(); useSettings(); render();
+}
+
+/**
+ * "/" in the simple view: the first screen, the screen before handing over or the screen after an answer, by the same
+ * state the full view reads. The consent sheet is drawn over it when a question needs online help (state.sheet).
  */
 function simpleScreen(): string {
   const c = state.card;
-  const name = state.profile.personName;
+  const name = state.profile.personName.trim();
   let screen: string;
   if (c && state.confirmed && state.picked && !state.recap && !state.recapDone) {
+    const p = state.picked;
     const next = partnerActions(c, { less: false, hasAnswers: false }).find((a) => a.act === 'next' && !!c.pending) ?? null;
+    // the way out of a card (not of the needs board, which has its own line, and not a way to try from the repair card)
+    const out = p.role === 'escape' && c.kind !== 'needs';
     screen = answeredScreen({
-      name, label: state.picked.label, next, hasAnswers: state.answers.length > 0,
-      afterHtml: (state.picked.role === 'escape' && c.kind !== 'needs' ? `<p class="tip">${esc(C.card.choseEscape(state.picked.label))}</p>` : '') + afterAnswer(c, state.picked, 'btn'),
+      name, label: p.label, next, out, hasAnswers: state.answers.length > 0,
+      afterHtml: afterAnswer(c, p, 'btn'),
+      follow: out || p.role !== 'answer' ? [] : followUps(c, p.label, state.profile),
+      tryNext: out ? nextInTopic(state.lastQuestion, state.profile) : null,
+      narrow: out ? narrowPlace(c, p.label) : null, narrowLast: out && !!c.narrow && !canNarrow(c, p.label), short: shortModel(),
+      who: p.role === 'answer' && asksWho(c, p.label, state.profile),
+      invite: state.inviteFor === c && !state.inviteOff,
       today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
       made: simpleMade(c), privacy: simplePrivacy(),
     });
@@ -950,26 +1037,31 @@ function simpleScreen(): string {
     screen = cardScreen({
       name, card: c, less: state.less, recap: state.recap, recapDone: state.recapDone, recapText: recapText(),
       actions: partnerActions(c, { less: state.less, hasAnswers: state.answers.length > 0 }),
-      made: simpleMade(c), personHtml: personView(false),
+      made: simpleMade(c), personHtml: personSimple(personModel(false)),
       canAskOnline: sheetWanted(c, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured }),
-      lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '',
+      offline: needsInternet(c, { online: isOnline(), cloudConfigured: state.engine.cloudConfigured }),
+      lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(),
     });
   } else {
+    const p = state.profile;
     screen = homeScreen({
-      name, about: aboutName(), hasProfile: !!(name || state.profile.people.length || state.profile.foods.length || state.profile.places.length),
-      busy: state.busy, error: state.error, question: state.lastQuestion, tries: simpleTries(),
-      privacy: simplePrivacy(), where: whereLine(whereInput()), micHtml: voiceButton(), voiceHtml: voiceLine(),
+      name,
+      aboutLink: !!state.settings.firstCard || !!(name || p.people.length || p.foods.length || p.places.length || p.tv.length || p.music.length),
+      busy: state.busy, error: state.error, question: state.lastQuestion,
+      howOpen: !state.settings.howFolded, topics: topics(p), topicOpen: state.topicOpen, aiTag: aiTag(whereInput()), ai: aiLines(whereInput()),
+      privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(),
     });
   }
   if (!state.sheet || !c?.unsentPayload) return screen;
   return `${screen.replace('<main class="simple', '<main inert aria-hidden="true" class="simple')}${consentSheet({ about: aboutName(), line: sentLine(c.unsentPayload).text, deviceThere: state.device === 'available' })}`;
 }
-/** The simple view's lines that depend on the device check, updated in place when it answers (no redraw). */
+/** The simple view's lines that depend on the device check or the connection, updated in place (no redraw). */
 function patchSimple() {
-  const w = document.querySelector('#s-where'); if (w) w.textContent = whereLine(whereInput());
-  const notes = document.querySelectorAll('.try .ready small');
-  simpleTries().forEach((t, i) => { if (notes[i]) notes[i].textContent = t.note; });
+  const a = document.querySelector('#ai-line span'); if (a) a.textContent = aiLines(whereInput()).join(' ');
+  const t = document.querySelector('#ai-tag'); if (t) t.textContent = aiTag(whereInput());
 }
+// the connection came or went: the AI line and the "needs internet" tag follow; a no-card screen is drawn again
+for (const ev of ['online', 'offline']) window.addEventListener(ev, () => { if (!simpleView() || route() !== 'partner') return; if (state.card?.blocked && !state.sheet) render(); else patchSimple(); });
 
 // ---------------------------------------------------------------- render
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -1154,7 +1246,8 @@ async function make(q: string) {
     if (seq !== makeSeq) return; // a later question was asked meanwhile: its card is the one to show
     setCard(card);
     // simple view: a question that needs online help, with cloud help off, brings up the consent sheet (never a page)
-    state.sheet = simpleView() && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
+    // (with no connection the sheet could send nothing: the screen then says the question needs the internet)
+    state.sheet = simpleView() && isOnline() && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
   } catch (e) {
     if (seq !== makeSeq) return;
     state.card = null; state.error = (e as Error).message;
@@ -1169,6 +1262,12 @@ function onPersonTap(t: HTMLElement) {
   if (!c) return;
   if (t.dataset.confirm === 'yes') {
     state.confirmed = true;
+    if (simpleView()) {
+      // the first confirmed answer folds "How it works" to its one line (remembered), and About them is offered once,
+      // on this answer's screen, when it names nobody yet
+      if (!state.settings.firstCard) { state.settings.firstCard = true; state.settings.howFolded = true; saveSettings(); }
+      if (!state.inviteFor && !state.inviteOff && c.kind !== 'repair' && awayNames(state.profile).length === 0) state.inviteFor = c;
+    }
     if (state.picked && state.picked.role === 'answer') {
       state.answers.push({ topic: c.topic, label: state.picked.label });
       // kept on this computer for "last time"; with the sample family it stays in memory and goes when judge mode is left
@@ -1178,6 +1277,7 @@ function onPersonTap(t: HTMLElement) {
         if (!state.demo) void kvSet('history', state.history);
       }
     }
+    if (simpleView()) refreshShort();
     render(); return;
   }
   if (t.dataset.confirm === 'change') { state.picked = null; state.waitStart = Date.now(); render(); return; }
@@ -1211,7 +1311,8 @@ function act(el: HTMLElement) {
   switch (a) {
     case 'show': lift = true; go('person'); break;
     // ---- the simple view
-    case 'new': state.lastQuestion = ''; state.error = null; dictated = false; resetCard(); render(); document.querySelector<HTMLInputElement>('#q')?.focus({ preventScroll: true }); break;
+    // (the simple view does not put the cursor in the field: on a phone that opens the keyboard over the topics)
+    case 'new': state.lastQuestion = ''; state.error = null; dictated = false; resetCard(); render(); if (!simpleView()) document.querySelector<HTMLInputElement>('#q')?.focus({ preventScroll: true }); break;
     case 'inside': case 'inside-card': case 'inside-about':
       // into the full view, and it stays the view of this browser until "Simple view" is pressed
       state.settings.view = 'full'; state.settings.welcomed = true; state.sheet = false; saveSettings();
@@ -1223,11 +1324,27 @@ function act(el: HTMLElement) {
       state.settings.view = 'simple'; saveSettings();
       if (state.demo) void leaveDemo(); else go('');
       break;
+    case 'how': state.settings.howFolded = !state.settings.howFolded; saveSettings(); render(); document.querySelector<HTMLElement>('#how[data-act], #how [data-act=how]')?.focus({ preventScroll: true }); break;
+    case 'topic': { const id = el.dataset.topic as TopicId; state.topicOpen = state.topicOpen === id ? null : id; render(); document.querySelector<HTMLElement>(`.topic[data-topic="${id}"]`)?.focus({ preventScroll: true }); break; }
+    // the finish screen's button: the phone goes back to the carer, who sees the answer
+    case 'give-back': lift = true; go(''); break;
+    // after the way out: ask it a new way, in the carer's own words
+    case 'own': state.lastQuestion = ''; state.error = null; dictated = false; resetCard(); render(); document.querySelector<HTMLInputElement>('#q')?.focus(); break;
+    case 'invite-later': state.inviteOff = true; render(); break;
+    // after the way out: an AI suggests the next, broader choices (two steps at most)
+    case 'narrow': if (state.card && state.picked) void runNarrow(narrowInput(state.card, todayAnswers())); break;
+    case 'copy-short': {
+      const text = state.short?.sentences.join(' ') ?? '';
+      const done = () => { state.shortCopied = true; patchShort(); document.querySelector<HTMLElement>('[data-act=copy-short]')?.focus(); };
+      if (navigator.clipboard?.writeText) void navigator.clipboard.writeText(text).then(done, () => { /* no clipboard here: the text is on the screen to select */ });
+      break;
+    }
     case 'sheet': if (state.card?.unsentPayload) { state.sheet = true; render(); } break;
     case 'sheet-no': state.sheet = false; render(); break;
     case 'sheet-yes':
       // the same switch as the consent page's, turned on by one button; the question is then asked again at once
-      state.sheet = false; state.settings.cloudHelp = true; saveSettings(); askSettings(); void make(state.lastQuestion);
+      // (when the sheet came up for a narrowing step, that step is what is asked again)
+      state.sheet = false; state.settings.cloudHelp = true; saveSettings(); askSettings(); if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else void make(state.lastQuestion);
       break;
     case 'row': { const row = el.dataset.row as AboutRow; state.aboutRow = state.aboutRow === row ? null : row; render(); break; }
     case 'less': state.less = !state.less; render(); break;
@@ -1235,8 +1352,8 @@ function act(el: HTMLElement) {
       if (state.card?.pending) void make(state.card.pending);
       else if (state.card?.nextPage) { setCard(state.card.nextPage); state.picked = null; state.confirmed = false; render(); }
       break;
-    case 'retry': if (state.card?.retry) void make(state.card.retry); break;
-    case 'recap': state.recap = true; state.recapDone = false; render(); break;
+    case 'retry': if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else if (state.card?.retry) void make(state.card.retry); break;
+    case 'recap': state.recap = true; state.recapDone = false; if (simpleView() && !state.short) refreshShort(); render(); break;
     case 'stuck':
       // the repair card takes the person's screen; the question card waits behind it
       if (state.card && state.card.kind !== 'repair') { state.before = state.card; setCard(repairCard(state.profile)); state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.waitStart = Date.now(); render(); }
@@ -1323,6 +1440,8 @@ app.addEventListener('click', (ev) => {
 app.addEventListener('submit', (ev) => {
   if ((ev.target as HTMLElement).id === 'ask') { ev.preventDefault(); void make(($('#q') as HTMLInputElement).value); }
   else if ((ev.target as HTMLElement).id === 'fb') { ev.preventDefault(); void submitFeedback(); }
+  // "Who? Type one name": one yes / no question about that one person, made by the rules
+  else if ((ev.target as HTMLElement).id === 'who') { ev.preventDefault(); const n = ($('#who-name') as HTMLInputElement).value.trim(); if (n) { dictated = false; void make(callQuestion(n)); } }
   else ev.preventDefault();
 });
 app.addEventListener('change', (ev) => {
@@ -1365,9 +1484,15 @@ const cancelHold = () => { if (hold) { clearTimeout(hold); hold = null; } docume
 app.addEventListener('pointerup', cancelHold);
 app.addEventListener('pointercancel', cancelHold);
 app.addEventListener('pointerleave', cancelHold, true);
+// with a keyboard there is no press and hold: Enter on the carer's way back leaves the person's screen
+app.addEventListener('keydown', (ev) => { if ((ev as KeyboardEvent).key === 'Enter' && (ev.target as HTMLElement).id === 'exit') { ev.preventDefault(); lift = true; go(''); } });
 window.addEventListener('hashchange', () => draw());
 // the consent sheet: Escape is its "No"
 window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && state.sheet) { state.sheet = false; render(); } });
+
+// The app shell is kept by a service worker (web/public/sw.js, its file list written at build time), so the page, the
+// rules, the topics, quick needs and About them open with no connection. Production builds only: the dev server has none.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) window.addEventListener('load', () => { void navigator.serviceWorker.register('/sw.js').catch(() => { /* no offline copy: the page works as before */ }); });
 
 // Opened straight on judge mode: the first card is made before the first draw, so there is no empty frame before it.
 void Promise.all([load(), loadTrial()]).then(async () => {

@@ -11,14 +11,14 @@
   --bg: #eef2f6; --ink: #0f141a; --muted: #4a5361; --line: #c9d1db; --panel: #ffffff;
   --accent: #0b6e4f; --accent-soft: #d5f5ea; --on-accent: #ffffff; --field: #6b7686;
   --yes: #0b6e4f; --no: #b3261e; --warn: #8a5300; --cloud: #0b57a4; --cloud-soft: #e1eefb; --warn-soft: #fdf0d9;
-  --card-edge: #c9d1db; color-scheme: light;
+  --card-edge: #c9d1db; --how-bg: #fff6d6; --how-edge: #8a5f00; --how-ink: #1d1600; color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root[data-view="simple"] {
     --bg: #111823; --ink: #e8eef5; --muted: #a9b6c6; --line: #2c3a4b; --panel: #1a2431;
     --accent: #5fe0b5; --accent-soft: #163a30; --on-accent: #06231a; --field: #7a8a9e;
     --yes: #5fe0b5; --no: #ff8a80; --warn: #ffc266; --cloud: #8cc8ff; --cloud-soft: #13283d; --warn-soft: #3a2c12;
-    --card-edge: #2c3a4b; color-scheme: dark;
+    --card-edge: #2c3a4b; --how-bg: #33290c; --how-edge: #e0b040; --how-ink: #fff3cf; color-scheme: dark;
   }
 }
 #app.view-simple { min-height: 100dvh; }
@@ -67,27 +67,47 @@
 .simple .making { font-size: 17px; }
 .simple .warn { color: var(--warn); font-size: 16px; }
 
-/* the three ready questions, quick needs, About them */
-.simple .try { display: grid; gap: 8px; }
-.simple .try h2, .simple .steplabel.muted { font-size: 15px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
-.simple .ready { justify-content: space-between; text-align: left; padding: 8px 14px 8px 16px; min-height: 60px; }
-.simple .ready::after { content: ""; flex: none; width: 10px; height: 10px; border-right: 3px solid var(--muted); border-top: 3px solid var(--muted); transform: rotate(45deg); margin-right: 4px; }
-.simple .ready span, .simple .btn.needs span, .simple .offer span:first-child { display: grid; text-align: left; line-height: 1.25; min-width: 0; }
-.simple .ready b { font-weight: 600; }
-.simple .ready small, .simple .btn.needs small, .simple .offer small { font-weight: 400; font-size: 14.5px; color: var(--muted); margin-top: 2px; }
+/* the first screen: quick needs at the top, "How it works: 4 steps" (highlighted), topics, your own question */
+.simple h2.sec { font-size: 20px; line-height: 1.2; letter-spacing: -0.01em; }
+.simple .btn.needs span { display: grid; text-align: left; line-height: 1.25; min-width: 0; }
+.simple .btn.needs small { font-weight: 400; font-size: 15px; color: var(--ink); margin-top: 2px; }
 .simple .btn.needs { justify-content: flex-start; border-color: var(--accent); background: var(--accent-soft); min-height: 64px; }
 .simple .btn.needs b { color: var(--accent); }
-.simple .btn.needs small { color: var(--ink); }
 .simple .btn.needs .sg { color: var(--accent); }
-.simple .offer { border: 2px solid var(--field); background: var(--panel); border-radius: 16px; padding: 10px 16px; min-height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--ink); text-decoration: none; }
-.simple .offer b { font-size: 17px; }
-.simple .offer .go { color: var(--accent); font-weight: 600; font-size: 16px; text-decoration: underline; text-underline-offset: 3px; flex: none; }
+.simple .how { background: var(--how-bg); border: 2px solid var(--how-edge); border-radius: 16px; padding: 10px 12px 4px; color: var(--how-ink); }
+.simple .how-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.simple .how h2 { font-size: 19px; line-height: 1.2; }
+.simple .how .tog, .simple .how-line .tog { font-size: 16px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.simple .how .tog { min-height: 44px; min-width: 44px; padding: 0 0 0 8px; border: 0; background: none; color: var(--how-ink); cursor: pointer; }
+.simple .how ol { list-style: none; margin: 0; padding: 0; }
+.simple .how li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--how-edge); font-size: 17px; line-height: 1.25; }
+.simple .how li .num { background: var(--how-ink); color: var(--how-bg); margin-right: 0; width: 26px; height: 26px; font-size: 15px; }
+.simple .how li .sg { width: 40px; height: 40px; color: var(--how-ink); }
+.simple .how li .st { display: grid; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+.simple .how li .wait { font-weight: 700; }
+.simple .how-line { width: 100%; min-height: 48px; padding: 6px 14px; border-radius: 14px; border: 2px solid var(--how-edge); background: var(--how-bg); color: var(--how-ink); font-weight: 700; font-size: 17px; display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; cursor: pointer; }
+.simple .how :focus-visible, .simple .how-line:focus-visible { outline-color: var(--how-ink); }
+.simple .topics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.simple .topic { min-height: 64px; padding: 8px 10px; border-radius: 14px; border: 2px solid var(--field); background: var(--panel); color: var(--ink); font-weight: 700; font-size: 17px; line-height: 1.2; display: flex; align-items: center; gap: 8px; text-align: left; cursor: pointer; overflow-wrap: anywhere; min-width: 0; }
+.simple .topic .sg { width: 30px; height: 30px; color: var(--accent); }
+.simple .topic span { min-width: 0; }
+.simple .topic.open { border-color: var(--accent); background: var(--accent-soft); }
+.simple .tqs { grid-column: 1 / -1; background: var(--panel); border: 2px solid var(--accent); border-radius: 14px; padding: 2px 0; display: grid; }
+.simple .tqs .lead { font-size: 15px; color: var(--muted); padding: 8px 14px 4px; }
+.simple .tq { min-height: 56px; padding: 8px 14px; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; color: var(--ink); font-size: 18px; font-weight: 600; line-height: 1.25; display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; cursor: pointer; width: 100%; }
+.simple .tq > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.simple .tag { flex: none; font-size: 13.5px; font-weight: 600; border-radius: 8px; padding: 2px 8px; background: var(--accent-soft); color: var(--ink); max-width: 46%; text-align: center; }
+.simple .tag.net { background: none; border: 1px solid var(--field); color: var(--muted); }
+.simple .ai-line { display: flex; align-items: flex-start; gap: 8px; font-size: 15.5px; color: var(--ink); }
+.simple .ai-line .sg { color: var(--accent); margin-top: 1px; }
+.simple .foot .links { display: flex; flex-wrap: wrap; gap: 0 22px; }
+.simple .offline { display: flex; align-items: flex-start; gap: 10px; font-size: 17px; border: 2px solid var(--warn); background: var(--warn-soft); border-radius: 14px; padding: 10px 12px; }
+.simple .offline .sg { color: var(--warn); margin-top: 2px; }
 
 /* the foot of every simple screen: what has left, where the AI runs, the way inside */
 .simple .foot { border-top: 1px solid var(--line); padding: 10px 0 0; display: grid; gap: 4px; color: var(--ink); font-size: 15px; }
 .simple .lock, .simple .made-where { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: var(--ink); }
 .simple .lock .sg, .simple .made-where .sg { color: var(--accent); margin-top: 1px; }
-.simple .where { font-size: 15px; color: var(--muted); }
 .simple .inside { font-size: 17px; }
 
 /* the card is ready */
@@ -107,6 +127,9 @@
 .simple .made-where[data-left="maybe"] .sg { color: var(--warn); }
 .simple .why-not { font-size: 17px; }
 
+/* "Wait. Count to ten. Don't answer for them.": on the screen itself, in normal size, never small print */
+.simple .waitline { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 700; line-height: 1.25; background: var(--how-bg); color: var(--how-ink); border: 2px solid var(--how-edge); border-radius: 14px; padding: 10px 12px; }
+.simple .waitline .sg { width: 26px; height: 26px; color: var(--how-ink); }
 /* the preview of the person's card: the white sheet, a little smaller than full screen */
 .simple .person.mini { min-height: 0; padding: 16px 12px; gap: 12px; border-radius: 22px; box-shadow: 0 24px 48px -30px rgba(15, 20, 26, .45), 0 0 0 1px var(--card-edge); animation: none; }
 .simple .person.mini .headline { font-size: 28px; }
@@ -136,6 +159,97 @@
 .simple .before li { list-style: none; padding: 12px 0; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; font-size: 17px; }
 .simple .before li span { min-width: 0; overflow-wrap: anywhere; }
 .simple .before b { color: var(--accent); }
+
+.simple .chose.out { border-color: var(--field); background: var(--panel); }
+.simple .chose.out .sg { color: var(--muted); }
+.simple .next-steps { display: grid; gap: 10px; }
+.simple .btn.ask-next { justify-content: flex-start; text-align: left; }
+.simple .who-form { display: grid; gap: 6px; font-size: 16px; }
+.simple .who-form .row { display: flex; gap: 10px; }
+.simple .who-form .field { flex: 1; min-width: 0; min-height: 56px; padding: 10px 14px; border-radius: 16px; border: 2px solid var(--field); background: var(--panel); color: var(--ink); font-size: 18px; }
+.simple .who-form .btn { width: auto; flex: none; }
+.simple .invite { border: 2px solid var(--accent); background: var(--accent-soft); border-radius: 16px; padding: 12px 14px; display: grid; gap: 8px; color: var(--ink); }
+.simple .invite b { font-size: 19px; line-height: 1.25; }
+.simple .invite p { font-size: 16px; }
+
+.simple .btn.narrow { border-color: var(--accent); justify-content: flex-start; text-align: left; }
+.simple .btn.narrow .sg { color: var(--accent); }
+.simple .ai-made { display: flex; align-items: flex-start; gap: 8px; font-size: 16px; border: 2px solid var(--accent); background: var(--accent-soft); border-radius: 14px; padding: 8px 12px; }
+.simple .ai-made .sg { color: var(--accent); margin-top: 1px; }
+.simple .short { border: 2px solid var(--field); background: var(--panel); border-radius: 16px; padding: 12px 14px; display: grid; gap: 8px; }
+.simple .short h2 { font-size: 19px; }
+.simple .short #short-text { font-size: 17px; overflow-wrap: anywhere; }
+.simple .short .by { display: flex; align-items: flex-start; gap: 8px; font-size: 14.5px; color: var(--muted); }
+.simple .short .by .sg { width: 18px; height: 18px; margin-top: 2px; color: var(--accent); }
+.simple .short .btn { width: auto; justify-self: start; min-height: 48px; padding: 6px 22px; }
+
+/* ---------------------------------------------------------------- the person's side (personSimple)
+   Always the white sheet (styles.css, .person). One instruction and the question, then one centred column of choices,
+   each as wide as the screen and at least 96 px tall, the picture with its word under it, the way out last with a
+   solid edge (a real answer, not a disabled one). Nothing moves: the only motion is the pressed choice's highlight. */
+.person.pv { align-content: start; gap: 14px; text-align: center; }
+.person.full.pv { padding: 12px 16px 20px; gap: 14px; align-content: start; grid-template-columns: minmax(0, 1fr); max-width: 640px; margin: 0 auto; }
+.person.pv *, .person.pv { animation: none !important; }
+.pv .hold { justify-self: start; min-height: 44px; padding: 4px 10px 4px 0; border: 0; background: none; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: var(--muted); font-family: inherit; cursor: pointer; text-align: left; touch-action: none; -webkit-user-select: none; user-select: none; }
+.pv .hold i { width: 22px; height: 22px; flex: none; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); display: block; }
+.pv .hold.holding i { border-color: var(--accent); transition: border-color .55s linear; }
+.pv .hold.holding { color: var(--ink); }
+.pv .p-do { margin: 0; font-size: 28px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.pv .p-ask { margin: 0; font-size: 26px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.pv .p-ask.alone { font-size: 34px; padding: 40px 0; }
+.pv .p-tiles { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.pv .pt { width: 100%; min-height: 104px; padding: 10px 12px; border: 3px solid var(--ink); border-radius: 18px; background: #fff; color: var(--ink); font-family: inherit; font-size: 32px; font-weight: 700; line-height: 1.15; display: grid; justify-items: center; align-content: center; gap: 4px; cursor: pointer; overflow-wrap: anywhere; min-width: 0; }
+.pv .pt svg, .pv .pt .photo { width: 60px; height: 60px; }
+.pv .pt span { min-width: 0; max-width: 100%; }
+.pv .pt.wordonly { min-height: 96px; }
+.pv .pt.esc, .pv .pt.quiet { min-height: 84px; font-size: 26px; font-weight: 600; border-color: var(--muted); grid-auto-flow: column; justify-content: center; align-items: center; gap: 12px; }
+.pv .pt.esc svg, .pv .pt.quiet svg { width: 40px; height: 40px; }
+.pv .pt.pressed { background: var(--accent-soft); }
+.pv .pt.yes { border-color: var(--yes); color: var(--yes); grid-auto-flow: column; justify-content: center; align-items: center; gap: 14px; font-size: 36px; }
+.pv .pt.yes .p-sign { width: 52px; height: 52px; }
+.pv .pt.no { font-size: 27px; min-height: 88px; }
+.pv .pt:focus-visible, .pv .hold:focus-visible, .pv .p-give:focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
+.pv .p-tiles.board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pv .p-tiles.board .pt { min-height: 112px; font-size: 23px; padding: 8px 4px; }
+.pv .p-tiles.board .pt svg { width: 56px; height: 56px; }
+.pv .p-tiles.board .pt.esc { grid-column: 1 / -1; min-height: 76px; }
+.pv .p-tiles.ways .pt { min-height: 84px; font-size: 27px; grid-auto-flow: column; justify-content: center; align-items: center; gap: 14px; }
+.pv .p-tiles.ways .pt svg { width: 48px; height: 48px; }
+.pv .p-tiles.scale { grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); gap: 6px; }
+.pv .p-tiles.scale .pt { min-height: 72px; padding: 4px 2px; border-radius: 12px; font-size: 28px; }
+.pv .scale-ends { display: flex; justify-content: space-between; gap: 12px; margin: 0; font-size: 18px; color: var(--muted); }
+.pv .p-pick { display: grid; justify-items: center; gap: 4px; }
+.pv .p-pick svg, .pv .p-pick .photo { width: 104px; height: 104px; }
+.pv .p-big { margin: 0; font-size: 42px; font-weight: 800; line-height: 1.1; overflow-wrap: anywhere; }
+.pv .p-done { display: grid; justify-items: center; gap: 10px; padding: 24px 0 8px; }
+.pv .p-tick { width: 84px; height: 84px; color: var(--yes); }
+.pv .p-give { width: 100%; min-height: 80px; padding: 10px 14px; border: 0; border-radius: 18px; background: var(--accent); color: #fff; font-family: inherit; font-size: 26px; font-weight: 800; cursor: pointer; }
+.pv .so { text-align: left; }
+.pv .so li b { margin-left: auto; }
+.pv .listening { min-height: 200px; }
+/* the preview on the carer's screen: the same screen, smaller */
+.simple .person.mini.pv { padding: 14px 12px; gap: 10px; }
+.simple .person.mini.pv .p-do { font-size: 21px; }
+.simple .person.mini.pv .p-ask { font-size: 20px; }
+.simple .person.mini.pv .pt { min-height: 72px; font-size: 22px; border-width: 2px; border-radius: 14px; grid-auto-flow: column; justify-content: center; align-items: center; gap: 12px; }
+.simple .person.mini.pv .pt svg, .simple .person.mini.pv .pt .photo { width: 40px; height: 40px; }
+.simple .person.mini.pv .pt.esc, .simple .person.mini.pv .pt.quiet, .simple .person.mini.pv .pt.no { min-height: 56px; font-size: 19px; }
+.simple .person.mini.pv .pt.esc svg { width: 30px; height: 30px; }
+.simple .person.mini.pv .p-tiles { gap: 8px; }
+.simple .person.mini.pv .p-tiles.board .pt { min-height: 64px; font-size: 17px; gap: 8px; }
+.simple .person.mini.pv .p-tiles.board .pt svg { width: 32px; height: 32px; }
+.simple .person.mini.pv .p-tiles.scale .pt { min-height: 52px; font-size: 20px; }
+.simple .person.mini.pv .p-pick svg, .simple .person.mini.pv .p-pick .photo, .simple .person.mini.pv .p-tick { width: 64px; height: 64px; }
+.simple .person.mini.pv .p-big { font-size: 28px; }
+.simple .person.mini.pv .p-done { padding: 8px 0; }
+.simple .person.mini.pv .listening { min-height: 120px; }
+.simple .person.mini.pv .so li { font-size: 19px; }
+@media (max-width: 340px) {
+  .pv .p-do { font-size: 25px; } .pv .p-ask { font-size: 23px; }
+  .pv .pt { font-size: 28px; } .pv .pt.esc, .pv .pt.quiet, .pv .pt.no { font-size: 23px; } .pv .p-give { font-size: 23px; }
+  .pv .p-tiles.board .pt { font-size: 20px; }
+  .simple .topic { font-size: 16px; padding: 8px; } .simple .tq { font-size: 17px; }
+}
 
 /* the consent sheet: over the screen, at the moment a question needs it */
 .dim { position: fixed; inset: 0; background: rgba(5, 9, 14, .72); z-index: 5; }

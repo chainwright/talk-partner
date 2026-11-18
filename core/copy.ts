@@ -320,43 +320,120 @@ const COPY = {
   // "nothing else" or "only": the request also holds the app's fixed instructions (tests/unit/simple.test.ts).
   // `about` is the About-me heading ("About Frank" / "About me"); `name` is the person's name, or ''.
   simple: {
-    heading: 'Ask a question. Get a card they can point to.',
-    sub: 'For family and carers of an adult with aphasia: they understand you, but the words to answer may not come.',
+    /** The header of the first screen: the hope, not the mechanism. The person's name when About them has it, else "them". */
+    hope: (name: string) => `When the words won't come, let ${name || 'them'} point.`,
     with: (name: string) => `with ${name}`,
-    field: 'Type your question',
-    make: 'Make a card',
-    making: 'Making the card…',
-    tryHeading: 'Or ask one of these',
-    /** Three ready questions: two that code decides alone, one open question (the one that shows where the AI runs). */
-    tries: ['Do you want coffee or tea?', 'Are you in pain?', 'What do you want to do this weekend?'] as const,
-    tryNote: {
-      code: 'No AI: the app makes this card by its rules',
-      openDevice: 'Made by the AI built into Chrome on this computer',
-      openCloudOn: 'Uses online help',
-      openAsk: 'Needs online help: the app asks you first',
-      openChecking: 'An open question: it needs AI',
-      openNone: 'An open question: it needs AI, and this copy has none',
+    /** The board for needs that cannot wait: at the top of the first screen, above everything else. */
+    needs: 'Needs it now?',
+    needsSub: 'Toilet, drink, pain, too hot: one tap, then they point.',
+    needsShort: 'Quick needs',
+    /** The highlighted block at the top: open on the first visit, one line after the first card (remembered). */
+    how: {
+      title: 'How it works: 4 steps',
+      hide: 'Hide',
+      show: 'Show',
+      steps: (name: string) => [
+        'Ask a simple question, or pick one below',
+        `Turn the computer to ${name || 'them'} and say it out loud`,
+        `${name ? `${name} points` : 'They point'} at the answer. No words needed`,
+        `Check: "So: tea. Right?" ${name ? `${name} taps` : 'They tap'} Yes or No`,
+      ],
     },
-    needs: 'Quick needs',
-    needsSub: 'Toilet, drink, pain… one tap, no typing',
-    offer: 'Put their people on the cards',
-    offerGo: (has: boolean) => (has ? 'Change details' : 'Add details'),
-    offerSub: 'Their name, family and places. They stay on this computer.',
-    inside: 'See how it works inside',
-    madeLink: 'How was this card made?',
+    /** The one skill that makes a choice card work (SCA: give time). Visible on the steps and on the hand-over screen. */
+    wait: (name: string) => `Wait. Count to ten. Don't answer for ${name || 'them'}.`,
+    topicsHeading: 'What do you want to ask?',
+    topicLead: (name: string) => `Tap one. Then say it out loud as you turn the computer to ${name || 'them'}.`,
+    ownTag: (name: string) => (name ? `${name}'s own` : 'their own'),
+    /** The tag on the one open question in the topics: where its choices would come from here. */
+    aiTag: { device: 'AI on this computer', net: 'needs internet', offline: 'needs internet: you are offline', none: 'needs AI: none set up here', checking: 'needs AI' },
+    ownHeading: 'Or ask your own question',
+    field: 'Type it here',
+    make: (name: string) => `Show ${name || 'them'} the choices`,
+    making: 'Finding the choices…',
+    /** What the AI is for, in one plain line, then where it runs on this device (core/simple.ts, aiLines). */
+    ai: {
+      line: 'For a question you type, AI suggests the answers they can point to. The topic questions above do not need it.',
+      device: 'On this computer that AI is built into Chrome: nothing is sent.',
+      ask: "On this computer that AI is online (Google's): the app asks you first, and shows the line that would go.",
+      cloudOn: "On this computer that AI is online (Google's), and online help is on.",
+      none: 'This copy has no AI set up: a question you type works when it is yes / no or either-or.',
+      offline: 'You are offline, and that AI needs the internet. The topic questions and "Needs it now?" work without it.',
+    },
+    aboutLink: (name: string) => (name ? `About ${name}` : 'About them'),
+    inside: 'How it works inside',
+    madeLink: 'How was this made?',
     back: 'New question',
-    step1: 'Say this out loud',
-    step2: (name: string) => `Show ${name || 'them'} the card`,
-    tip: 'Point to each choice as you say it. Then wait. There is no rush.',
-    tipExit: (name: string) => `To come back from ${name ? `${name}'s` : 'their'} screen, press and hold the cross in the corner.`,
+    /** The carer's screen before handing over. */
+    step1: 'Say it out loud',
+    step2: (name: string) => `Turn the computer to ${name || 'them'}`,
+    preview: (name: string) => `What ${name || 'they'} will see:`,
+    tip: 'Point to each choice as you say it. If their hand is weak, they can point and you tap.',
+    tipExit: (name: string) => `After the answer, ${name ? `${name}'s` : 'their'} screen says "Give the computer back". To come back sooner, press and hold "Carer: hold here to go back" at its top.`,
     lessHint: (name: string) => `"Hide the choices" lets ${name || 'them'} try to say it first.`,
-    chose: (name: string) => `${name || 'They'} chose and said yes to`,
+    /** The person's own screens: adult words, one thing to do. `label` is the choice they pointed to. */
+    person: {
+      point: 'Point to your answer',
+      hold: 'Carer: hold here to go back',
+      holdTitle: 'Back to the carer screen (press and hold; with a keyboard, press Enter)',
+      so: (label: string) => `So: ${label}. Right?`,
+      yes: 'Yes',
+      no: 'No, something else',
+      thanks: 'Thank you.',
+      done: (label: string) => `${label.charAt(0).toUpperCase()}${label.slice(1)}.`,
+      give: 'Give the computer back',
+      recap: 'So far:',
+      recapNo: 'No',
+    },
+    chose: (name: string) => `${name || 'They'} chose, and said yes to:`,
+    choseOut: (name: string) => `${name || 'They'} chose:`,
     another: 'Ask another question',
+    nextHeading: 'Or ask next:',
+    /** The carer's screen after the person chose the way out: what to do now, never a dead end. */
+    out: {
+      heading: 'None of those fitted. What now:',
+      show: 'Ask them to show you, or to write or draw it. Then ask it as a new question.',
+      notSure: 'Not sure is an answer too. Ask it another way, or come back to it later.',
+      tryNext: (q: string) => `Try: ${q}`,
+      needs: 'Open "Needs it now?"',
+      own: 'Ask it a new way',
+      stuck: "We're stuck: other ways to get it across",
+    },
+    /** After the way out: an AI suggests the next, broader choices (core/narrow.ts). Two levels at most. */
+    narrow: {
+      go: 'Narrow it down: AI suggests the next choices',
+      device: 'The AI built into Chrome does this on this computer. Nothing is sent.',
+      cloudOn: "Google's online AI does this. It gets the question and the choices that did not fit, with any names you listed swapped out, and the app's fixed instructions. Never the answers they chose.",
+      ask: 'This uses online help: the app asks you first, and shows the line that would go.',
+      offline: 'You are offline: narrowing needs the internet on this computer.',
+      busy: 'Finding the next choices…',
+      label: (level: number, max: number, where: 'device' | 'cloud') => `AI suggested these next choices${where === 'device' ? ' on this computer' : ' with online help'}, because none of the first ones fitted (step ${level} of ${max}).`,
+      last: 'That was the last narrowing step.',
+    },
+    /** "Today in short": two to four plain sentences for the family or the therapist (core/summary.ts). */
+    short: {
+      heading: 'Today in short',
+      copy: 'Copy',
+      copied: 'Copied',
+      device: 'Written by the AI built into Chrome on this computer, from the answers kept here. Nothing was sent.',
+      rules: "Written by the app's rules on this computer, no AI. The answers are personal, so they are never sent to online help.",
+      busy: 'The AI on this computer is writing it…',
+    },
+    /** "Do you want to call someone?" answered yes, and About them names nobody: one name, typed by the carer. */
+    who: { label: 'Who? Type one name', go: 'Ask' },
+    /** About them, offered after the first card and never before. */
+    invite: {
+      title: (name: string) => `Want ${name ? `${name}'s` : 'their'} family's names on the questions?`,
+      body: 'Add family and friends, favourite food, places and shows. Then "Would you like to call Jen?" is one tap. About two minutes. It stays on this computer. Fill it in together if you can.',
+      add: 'Add people and favourites',
+      later: 'Not now',
+    },
     recap: 'Go over the answers',
     today: 'Today',
     noCard: 'No card for this one',
     askChoice: 'Or ask it as a choice, with both options in the question: "This, or that?"',
     useOnline: 'Use online help for this question',
+    /** A question that needs online help, asked with no connection: said plainly, and what still works. */
+    offline: 'This question needs the internet, and you are offline. The topic questions and "Needs it now?" work without it.',
     /** Where this card was made: one sentence for who made it, one for what left. Read from the card, never assumed. */
     made: {
       code: "Made by the app's rules on this computer. No AI used.",
@@ -382,15 +459,6 @@ const COPY = {
       maybe: (n: number) => `${n} more may have left this computer: online help was asked and did not answer.`,
       voice: (n: number) => `${n} spoken question${n === 1 ? '' : 's'} went to Google as a recording, to be typed out.`,
       answers: 'Answers are kept on this computer only.',
-    },
-    /** Where the AI runs, in one line on the first screen: by what this browser has and whether online help is on. */
-    where: {
-      checking: "Simple questions (yes / no, either-or, pain): the app's rules make the card on this computer, no AI.",
-      device: (about: string) => `Simple questions: the app's rules make the card, no AI. Open questions: the AI built into Chrome makes it on this computer, from ${about}. Nothing is sent for either.`,
-      deviceCloudOn: (about: string) => `Simple questions: the app's rules make the card, no AI. Open questions: the AI built into Chrome makes it on this computer, from ${about}. Online help is on: a weak card gets a second try from Google's online AI, which never sees ${about}.`,
-      cloudOff: "Simple questions (yes / no, either-or, pain): the app's rules make the card on this computer, no AI. Open questions need online help, and the app asks you first. On a computer with Chrome's built-in AI they are made there, and nothing is sent.",
-      cloudOn: (about: string) => `Simple questions: the app's rules make the card on this computer, no AI. Open questions go to Google's online AI, with any names you listed swapped out; it never sees ${about}. Online help is on.`,
-      noConfig: "This copy has no AI set up. Simple questions (yes / no, either-or, pain) still make cards, by the app's rules.",
     },
     about: {
       sub: (name: string) => `${name ? `${name}'s` : 'Their'} people and places go onto the cards. On a computer with Chrome's built-in AI, their foods and favourites shape the choices too.`,
@@ -454,7 +522,7 @@ const COPY = {
       sentLabel: 'Sent to Google:',
       sent: 'that line, and the app\'s fixed instructions. Names you listed are swapped first ("Person A"). Other names are guessed and can be missed; the rest goes as you typed it, so leave out health details.',
       neverLabel: 'Never sent:',
-      never: (about: string) => `your ${about} lists, photos, who lives at home, the answers on the cards.`,
+      never: (about: string) => `your ${about} lists, photos, who lives at home, the answers they chose.`,
       dataLabel: 'Data use:',
       data: "Google's free tier: Google may use what is sent to improve its products.",
       yes: 'Yes, send open questions to Google',
@@ -535,6 +603,8 @@ const COPY = {
         blockedCloud: 'no card: cloud help was asked and failed, and nothing made on this computer could stand in for it',
         blocked: 'no card: fewer than two choices survived',
         oneOption: 'one real option was left, so it is asked as a yes / no question',
+        narrow: 'the person chose the way out: a model suggested broader choices, and the same rules checked them',
+        narrowBlocked: 'no narrowing card: fewer than two real choices came back',
         repair: 'a fixed card for a stuck moment, never a model',
         needs: 'a fixed board of everyday needs, never a model',
         recognition: 'a recognition card from About me only, nothing made up',
@@ -757,6 +827,11 @@ const COPY = {
     cloudWouldCheckOff: (kept: boolean) => `Cloud help could try this one, but it is off.${kept ? ' The card made on this computer is kept.' : ''}`,
     cloudWouldCheckUnconfigured: (kept: boolean) => `Cloud help could try this one, but it is not configured on this copy.${kept ? ' The card made on this computer is kept.' : ''}`,
     leak: 'Not sent: the question still held an About me word after stripping.',
+    narrow: (level: number, max: number) => `A narrowing card (${level} of ${max}): they chose the way out, so an AI suggested broader choices from the question and what did not fit. The same rules checked them.`,
+    narrowNone: 'No good next choices came out, so there is no narrowing card. Ask them to show you, or to write or draw it.',
+    narrowNeedsAi: 'Narrowing needs an AI: the one built into Chrome on a computer, or online help.',
+    narrowFailed: 'Online help did not answer, so there is no narrowing card. Try again, or ask them to show you.',
+    narrowSay: 'Something else, then:',
     cloudOptionsUnfit: "The cloud's options didn't fit; the card made on this computer is kept.",
     holdUpTwo: 'The real options are not known: hold up two and point to each as you ask.',
     ranOffline: 'Ran on this computer (offline). Nothing was sent.',
@@ -809,6 +884,8 @@ const COPY = {
       cloudGot: 'got the question only, About me words swapped out',
       cloudOffline: 'the cloud was unreachable, so the stripped question ran on this computer',
       codeRan: 'applied the card rules',
+      narrowDevice: 'got the question, what did not fit, the answers so far and the About me lists',
+      narrowCloud: 'got the question and what did not fit, About me words swapped out; never the answers so far',
     },
   },
 } as const;
@@ -841,12 +918,13 @@ const NOT_THIS_DEVICE: [string, string][] = [
   ['Gemini Nano on this computer reads About me', 'Gemini Nano reads About me on the device itself, where the browser has it (desktop Chrome)'],
 ];
 
-/** "this computer" → "this phone" / "this tablet" in one string. */
+/** "this computer" → "this phone" / "this tablet" (and "the computer" → "the phone") in one string. */
 export function deviceWords(text: string, kind: DeviceKind): string {
   if (kind === 'computer') return text;
   let out = text;
   for (const [from, to] of NOT_THIS_DEVICE) out = out.split(from).join(to);
-  return out.replace(/\b([Tt])his computer\b/g, `$1his ${kind}`);
+  // ("the computer" is the device in hand as well: "Turn the computer to them", "Give the computer back")
+  return out.replace(/\b([Tt])his computer\b/g, `$1his ${kind}`).replace(/\b([Tt])he computer\b/g, `$1he ${kind}`);
 }
 
 type Node = Record<string, unknown>;

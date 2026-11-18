@@ -994,7 +994,7 @@ export function validTopic(t: string | undefined, options: string[] = []): strin
   const l = lc(c);
   if (/\b(?:Person|Food|Place|Show|Music|Thing|Name) [A-Z]\b/.test(c)) return '';
   // a word that only says "this is a question / a choice" is no headline (a cloud topic "question", 17 Nov 2026)
-  if (GENERIC_TITLE.test(l)) return '';
+  if (GENERIC_TITLE.test(l) || isEscapeLabel(l)) return '';
   const ws = l.split(' ');
   if (ws.length === 1 && (STOP.has(l) || ADVERB_ONLY.has(l) || ADDRESS.has(l))) return '';
   for (const o of options.map(lc)) if (l === o || l.includes(o) || o.includes(l)) return '';

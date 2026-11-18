@@ -1,13 +1,19 @@
-// The simple view (direction A, "One screen"): what a carer on a phone sees at "/". Three states of one screen (the
-// first screen, the card is ready, they answered), a consent sheet that comes up only when a question needs online
-// help, and About them as four plain rows. These functions only draw: every value is handed in by main.ts, which reads
-// it from the same state, the same `Card` and the same pipeline as the full view. No DOM here, so the markup can be
-// tested in Node (tests/unit/simple-view.test.ts). Every word a person reads comes from core/copy.ts.
+// The simple view (direction A, "One screen"): what a carer on a phone sees at "/", and what the person sees when the
+// phone is turned to them. The carer's side: the first screen (the hope line, quick needs, "How it works: 4 steps",
+// topics, your own question), the screen before handing over, and the screen after an answer; a consent sheet that
+// comes up only when a question needs online help; About them as four plain rows. The person's side: the choices
+// ("Point to your answer" and the question, no category word), the check ("So: tea. Right?"), the finish ("Thank you.
+// Tea." and "Give the phone back"). Design: design/USER_FIRST.md, design/topics_2026-11-17/.
+// These functions only draw: every value is handed in by main.ts, which reads it from the same state, the same `Card`
+// and the same pipeline as the full view. No DOM here, so the markup can be tested in Node
+// (tests/unit/simple-view.test.ts). Every word a person reads comes from core/copy.ts.
 
 import type { PartnerAction } from '../../core/actions';
 import { COPY } from '../../core/copy';
+import { NARROW_LEVELS } from '../../core/narrow';
 import type { MadeWhere } from '../../core/simple';
-import type { Card, Profile } from '../../core/types';
+import type { Topic, TopicId } from '../../core/topics';
+import type { Card, Choice, Profile } from '../../core/types';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
@@ -22,24 +28,44 @@ export const SIGN = {
   grid: sign('<rect x="14" y="14" width="28" height="28" rx="6"/><rect x="54" y="14" width="28" height="28" rx="6"/><rect x="14" y="54" width="28" height="28" rx="6"/><rect x="54" y="54" width="28" height="28" rx="6"/>'),
   person: sign('<circle cx="48" cy="30" r="14"/><path d="M20 84c2-18 14-28 28-28s26 10 28 28"/>'),
   tick: sign('<path d="M20 50l18 18 38-40"/>'),
+  out: sign('<circle cx="48" cy="48" r="36"/><path d="M36 38c0-8 5-13 12-13s12 5 12 12c0 9-12 9-12 19"/><circle cx="48" cy="69" r="2" fill="currentColor"/>'),
+  net: sign('<path d="M14 40a50 50 0 0168 0M26 54a32 32 0 0144 0M38 68a14 14 0 0120 0"/><circle cx="48" cy="80" r="2" fill="currentColor"/>'),
+  spark: sign('<path d="M48 10l9 27 27 9-27 9-9 27-9-27-27-9 27-9z"/>'),
+  // the four steps: ask, turn the phone, they point, check
+  ask: sign('<circle cx="26" cy="22" r="10"/><path d="M10 80c0-20 8-32 16-32s16 12 16 32"/><path d="M56 12c14 0 28 6 28 16s-14 16-28 16l-6 6v-6"/>'),
+  turn: sign('<rect x="30" y="12" width="36" height="60" rx="6"/><path d="M14 40a36 36 0 0020 32M82 40a36 36 0 01-20 32"/><path d="M26 66l8 6-2 10M70 66l-8 6 2 10"/>'),
+  point: sign('<rect x="12" y="8" width="44" height="60" rx="6"/><rect x="20" y="18" width="28" height="16" rx="4"/><rect x="20" y="40" width="28" height="16" rx="4"/><path d="M48 92V60a6 6 0 0112 0v12l14 2a8 8 0 016 8v10"/>'),
+  check: sign('<path d="M16 16h52a8 8 0 018 8v24a8 8 0 01-8 8H40L24 70V56h-8a8 8 0 01-8-8V24a8 8 0 018-8z"/><path d="M26 36l10 10 20-20"/>'),
+};
+/** One sign per topic tile (decorative: the word is always next to it). */
+const TOPIC_SIGN: Record<TopicId, string> = {
+  food: sign('<path d="M18 36h48v15a24 24 0 01-48 0z"/><path d="M66 39h9a9 9 0 010 18h-9"/><path d="M33 12v12M48 12v12"/>'),
+  body: sign('<circle cx="48" cy="18" r="9"/><path d="M24 39h48M48 30v30l-15 27M48 60l15 27"/>'),
+  rest: sign('<path d="M12 66h72M12 78V36M84 78V60a12 12 0 00-12-12H36v18"/><circle cx="24" cy="51" r="6"/>'),
+  people: sign('<circle cx="33" cy="30" r="12"/><circle cx="66" cy="36" r="9"/><path d="M9 81c3-18 12-27 24-27s21 9 24 27M54 60c12-3 27 3 33 21"/>'),
+  feel: sign('<circle cx="48" cy="48" r="36"/><path d="M33 57c9 9 21 9 30 0"/><circle cx="36" cy="39" r="2" fill="currentColor"/><circle cx="60" cy="39" r="2" fill="currentColor"/>'),
+  plans: sign('<rect x="12" y="21" width="72" height="63" rx="9"/><path d="M12 39h72M30 12v18M66 12v18"/>'),
+  fun: sign('<rect x="12" y="24" width="72" height="48" rx="6"/><path d="M36 84h24M36 12l12 12 12-12"/>'),
 };
 
-export interface SimpleModel {
-  /** The person's name, or '' when About me has none yet. */
+export interface HomeModel {
+  /** The person's name, or '' when About them has none yet (then the words say "them", never "him" or "her"). */
   name: string;
-  /** The About-me heading: "About Frank" / "About me". */
-  about: string;
-  /** About me holds something (a name, a person, a list entry). */
-  hasProfile: boolean;
+  /** About them holds something, or a first card was answered here: the small link to it is on the first screen. */
+  aboutLink: boolean;
   busy: boolean;
   error: string | null;
   question: string;
-  /** The three ready questions, each with the line that says how its card is made here. */
-  tries: { q: string; note: string }[];
-  /** The state-driven privacy sentences (core/simple.ts, privacyLines). */
+  /** "How it works: 4 steps" is open (the first visit) or folded to one line (after the first card; remembered). */
+  howOpen: boolean;
+  topics: Topic[];
+  topicOpen: TopicId | null;
+  /** The tag on the open question: "needs internet", or that the AI is on this device (core/simple.ts, aiTag). */
+  aiTag: string;
+  /** The plain AI line: what the AI is for, then where it runs here (core/simple.ts, aiLines). */
+  ai: string[];
+  /** The state-driven privacy sentences (core/simple.ts, privacyLines): one small line. */
   privacy: string[];
-  /** Where the AI runs, in one line (core/simple.ts, whereLine). */
-  where: string;
   /** The microphone button and the line under the field, as the full view draws them (main.ts): '' where there is none. */
   micHtml: string;
   voiceHtml: string;
@@ -49,40 +75,157 @@ const top = (m: { name: string }) => `<header class="s-top"><a class="brand" hre
 const insideLink = (act: 'inside' | 'inside-card', label: string) => `<button type="button" class="tlink inside" data-act="${act}">${label} →</button>`;
 const privacyBlock = (lines: string[], extra = '') => `<p class="lock" id="s-privacy">${SIGN.lock}<span>${lines.map(esc).join(' ')}${extra ? ` ${esc(extra)}` : ''}</span></p>`;
 
-/** The first screen: one thing to do, three ready questions, quick needs, About them offered, and what has left. */
-export function homeScreen(m: SimpleModel): string {
+/** "How it works: 4 steps": the highlighted block, or its one folded line. The "wait" line is always under step 3. */
+export function howBlock(name: string, open: boolean): string {
+  const H = COPY.simple.how;
+  if (!open) return `<button type="button" class="how-line" id="how" data-act="how" aria-expanded="false"><span>${H.title}</span><span class="tog">${H.show}</span></button>`;
+  const signs = [SIGN.ask, SIGN.turn, SIGN.point, SIGN.check];
+  const steps = H.steps(name).map((line, i) => `<li><span class="num">${i + 1}</span>${signs[i]}<span class="st">${esc(line)}${i === 2 ? `<b class="wait">${esc(COPY.simple.wait(name))}</b>` : ''}</span></li>`).join('');
+  return `<section class="how" id="how" aria-labelledby="how-h"><div class="how-head"><h2 id="how-h">${H.title}</h2><button type="button" class="tog" data-act="how" aria-expanded="true">${H.hide}</button></div><ol>${steps}</ol></section>`;
+}
+
+/**
+ * The topic tiles, two to a row; the questions of the open topic come in a panel under the ROW the tile is in, so no
+ * tile ever moves when a topic opens (a tired hand finds each topic where it was).
+ */
+export function topicGrid(m: Pick<HomeModel, 'name' | 'topics' | 'topicOpen' | 'aiTag'>): string {
+  const S = COPY.simple;
+  const tile = (t: Topic) => `<button type="button" class="topic${m.topicOpen === t.id ? ' open' : ''}" data-act="topic" data-topic="${t.id}" aria-expanded="${m.topicOpen === t.id}" aria-controls="tq-${t.id}">${TOPIC_SIGN[t.id]}<span>${esc(t.label)}</span></button>`;
+  const panel = (t: Topic) => `<div class="tqs" id="tq-${t.id}" role="group" aria-label="${esc(t.label)}"><p class="lead">${esc(S.topicLead(m.name))}</p>${t.questions.map((x) =>
+    `<button type="button" class="tq" data-q="${esc(x.q)}"><span>${esc(x.q)}</span>${x.own ? `<span class="tag">${esc(S.ownTag(m.name))}</span>` : x.ai ? `<span class="tag net" id="ai-tag">${esc(m.aiTag)}</span>` : ''}</button>`).join('')}</div>`;
+  let html = '';
+  for (let i = 0; i < m.topics.length; i += 2) {
+    const row = m.topics.slice(i, i + 2);
+    html += row.map(tile).join('');
+    const open = row.find((t) => t.id === m.topicOpen);
+    if (open) html += panel(open);
+  }
+  return `<div class="topics" id="topics">${html}</div>`;
+}
+
+/**
+ * The first screen, top to bottom: the hope line, quick needs, how it works, topics, your own question, the plain AI
+ * line, one small privacy line. No empty video slot, no walkthrough, no About-them form before the first card.
+ */
+export function homeScreen(m: HomeModel): string {
   const S = COPY.simple;
   const status = m.busy ? `<p class="making" role="status"><span class="dot wait"></span>${S.making}</p>` : m.error ? `<p class="warn" role="alert">${esc(m.error)}</p>` : '';
   return `<main class="simple wrap home" data-screen="home">
   ${top(m)}
   <div class="col">
-    <div><h1>${S.heading}</h1><p class="sub">${S.sub}</p></div>
-    <form id="ask" class="s-ask">
-      <div class="row"><input id="q" class="field" autocomplete="off" placeholder="${S.field}" aria-label="${COPY.ask.label}" value="${esc(m.question)}">${m.micHtml}</div>
-      ${m.voiceHtml}
-      <button id="make" class="btn primary" type="submit" ${m.busy ? 'disabled' : ''}>${S.make}</button>
-    </form>
-    <div id="result" aria-live="polite">${status}</div>
-    <div class="try"><h2>${S.tryHeading}</h2>
-      ${m.tries.map((t) => `<button type="button" class="btn ready" data-q="${esc(t.q)}"><span><b>${esc(t.q)}</b><small>${esc(t.note)}</small></span></button>`).join('')}
-    </div>
+    <h1 id="hope">${esc(S.hope(m.name))}</h1>
+    <button type="button" class="btn needs" data-act="needs">${SIGN.grid}<span><b>${S.needs}</b><small>${S.needsSub}</small></span></button>
+    ${howBlock(m.name, m.howOpen)}
   </div>
   <div class="col">
-    <button type="button" class="btn needs" data-act="needs">${SIGN.grid}<span><b>${S.needs}</b><small>${S.needsSub}</small></span></button>
-    <a class="offer" href="#/about"><span><b>${m.hasProfile ? esc(m.about) : S.offer}</b><small>${S.offerSub}</small></span><span class="go">${S.offerGo(m.hasProfile)} →</span></a>
+    <div class="stack"><h2 class="sec">${S.topicsHeading}</h2>${topicGrid(m)}</div>
+    <form id="ask" class="s-ask"><h2 class="sec">${S.ownHeading}</h2>
+      <div class="row"><input id="q" class="field" autocomplete="off" placeholder="${S.field}" aria-label="${S.ownHeading}" value="${esc(m.question)}">${m.micHtml}</div>
+      ${m.voiceHtml}
+      <button id="make" class="btn primary" type="submit" ${m.busy ? 'disabled' : ''}>${esc(S.make(m.name))}</button>
+      <div id="result" aria-live="polite">${status}</div>
+      <p class="ai-line" id="ai-line">${SIGN.spark}<span>${m.ai.map(esc).join(' ')}</span></p>
+    </form>
   </div>
   <footer class="foot">
     ${privacyBlock(m.privacy)}
-    <p class="where" id="s-where">${esc(m.where)}</p>
-    ${insideLink('inside', S.inside)}
+    <p class="links">${insideLink('inside', S.inside)}${m.aboutLink ? `<a class="tlink" href="#/about">${esc(S.aboutLink(m.name))} →</a>` : ''}</p>
   </footer>
 </main>`;
 }
 
+// ---------------------------------------------------------------- the person's side
+export interface PersonModel {
+  card: Card | null;
+  busy: boolean;
+  /** "Hide the choices" is on: the person sees only the question. */
+  less: boolean;
+  picked: Choice | null;
+  confirmed: boolean;
+  /** Going over the answers: the list so far, with Yes / No. */
+  recap: boolean;
+  answers: { topic: string; label: string }[];
+  /** The picture of a choice, drawn by main.ts (a bundled pictogram, the person's photo or initial): '' for none. */
+  pic: (ch: Choice) => string;
+  /** The picture shown while there is nothing to point to. */
+  waitPic: string;
+  /** The whole screen (with the carer's way back and the finish button), or the preview on the carer's screen. */
+  full: boolean;
+}
+
+const TICK = '<svg class="p-sign" viewBox="0 0 96 96" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 50l18 18 38-40"/></svg>';
+const DONE = '<svg class="p-tick" viewBox="0 0 96 96" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><circle cx="48" cy="48" r="40"/><path d="M28 50l14 14 26-28"/></svg>';
+
+/**
+ * The person's screen. One instruction and the question itself on top, then the choices in one centred column, each
+ * as wide as the screen (a choice never sits only on the right half), the picture with its word under it, the way out
+ * last. No category word above the choices. Nothing moves except the pressed choice. The only other control is the
+ * carer's way back, labelled as the carer's, which needs a press and hold; the finish screen has a plain button.
+ */
+export function personSimple(m: PersonModel): string {
+  const P = COPY.simple.person;
+  const c = m.card;
+  const hold = m.full ? `<button type="button" id="exit" class="hold" title="${P.holdTitle}"><i aria-hidden="true"></i>${P.hold}</button>` : '';
+  const tile = (ch: Choice, i: number, cls = '') => {
+    const pic = m.pic(ch);
+    return `<button type="button" class="pt${ch.role === 'escape' ? ' esc' : ''}${pic ? '' : ' wordonly'}${cls}" data-i="${i}">${pic}<span>${esc(ch.label)}</span></button>`;
+  };
+  const yesNo = (yes: string, no: string) => `<div class="p-tiles"><button type="button" class="pt yes" data-confirm="${yes}">${TICK}<span>${P.yes}</span></button>
+      <button type="button" class="pt no" data-confirm="${no}"><span>${no === 'change' ? P.no : P.recapNo}</span></button></div>`;
+  if (m.recap) {
+    const list = m.answers.length ? `<ul class="so">${m.answers.map((a) => `<li>${a.topic ? `<span>${esc(a.topic)}</span>` : ''}<b>${esc(a.label)}</b></li>`).join('')}</ul>` : `<p class="so-empty">${COPY.person.recapEmpty}</p>`;
+    return `${hold}<p class="p-do">${P.recap}</p>${list}${yesNo('recap-yes', 'recap-change')}`;
+  }
+  if (!c || c.blocked || !c.choices.length) return `${hold}<div class="listening${m.busy ? ' thinking' : ''}">${m.waitPic}</div>`;
+  if (m.less) return `${hold}<p class="p-ask alone">${esc(c.asked)}</p>`;
+  if (m.picked && m.confirmed) {
+    // the finish: "Thank you. Tea." and the way to hand the phone back; never a dead end, never only a press and hold
+    return `<div class="p-done" role="status">${DONE}<p class="p-do">${P.thanks}</p><div class="p-pick">${m.pic(m.picked)}<p class="p-big">${esc(P.done(m.picked.label))}</p></div></div>
+      ${m.full ? `<button type="button" class="p-give" data-act="give-back">${P.give}</button>` : ''}`;
+  }
+  if (m.picked) {
+    return `${hold}<p class="p-do" id="p-so">${esc(P.so(m.picked.label))}</p>
+      <div class="p-pick">${m.pic(m.picked)}<p class="p-big">${esc(m.picked.label)}</p></div>${yesNo('yes', 'change')}`;
+  }
+  const headLines = `<p class="p-do">${P.point}</p><p class="p-ask">${esc(c.asked)}</p>`;
+  if (c.scale) {
+    // a number scale named in the question: one line of numbers, the two ends named under it, then the way out
+    const nums = c.choices.map((ch, i) => (ch.role === 'answer' ? `<button type="button" class="pt wordonly num" data-i="${i}"><span>${esc(ch.label)}</span></button>` : '')).join('');
+    const out = c.choices.map((ch, i) => (ch.role === 'escape' ? tile(ch, i) : '')).join('');
+    const n = Math.min(6, c.choices.filter((x) => x.role === 'answer').length);
+    return `${hold}${headLines}<div class="p-tiles scale" style="--n:${n}">${nums}</div>
+      <p class="scale-ends"><span>${c.scale.lo} · ${c.scale.lo === 0 ? COPY.scale.low : COPY.scale.lowFromOne}</span><span>${c.scale.hi} · ${COPY.scale.high}</span></p>
+      <div class="p-tiles">${out}</div>`;
+  }
+  // the quick-needs board is the one screen with more than three choices: two to a row, the way out on its own row
+  const cls = c.kind === 'needs' ? ' board' : c.kind === 'repair' ? ' ways' : '';
+  return `${hold}${headLines}<div class="p-tiles${cls}">${c.choices.map((ch, i) => tile(ch, i, ch.role === 'repair' && i >= 3 ? ' quiet' : '')).join('')}</div>`;
+}
+
+// ---------------------------------------------------------------- "Today in short"
+export interface ShortModel {
+  sentences: string[];
+  /** Who wrote it: the AI on this device, or the app's rules (core/summary.ts). Never online help. */
+  source: 'on-device' | 'rules';
+  /** The on-device model is still writing: the rules' sentences stand meanwhile. */
+  busy: boolean;
+  copied: boolean;
+}
+/** Two to four sentences of today's answers, who wrote them, and a button to copy them for the family or the therapist. */
+export function shortBlock(m: ShortModel | null): string {
+  if (!m) return '';
+  const K = COPY.simple.short;
+  return `<section class="short" id="today-short" data-source="${m.source}" aria-labelledby="short-h"><h2 id="short-h">${K.heading}</h2>
+    <p id="short-text">${m.sentences.map(esc).join(' ')}</p>
+    <p class="by">${m.source === 'on-device' ? SIGN.spark : SIGN.lock}<span>${esc(m.busy ? K.busy : m.source === 'on-device' ? K.device : K.rules)}</span></p>
+    <button type="button" class="btn quiet" data-act="copy-short" aria-live="polite">${m.copied ? K.copied : K.copy}</button></section>`;
+}
+
+// ---------------------------------------------------------------- the carer's screen before handing over
 export interface CardModel {
   name: string;
   card: Card;
-  /** "Hide the choices" is on: the person sees only the headline. */
+  /** "Hide the choices" is on: the person sees only the question. */
   less: boolean;
   /** The recap is on the person's screen. */
   recap: boolean;
@@ -92,12 +235,16 @@ export interface CardModel {
   /** The buttons the card rules give this card (core/actions.ts), the same list as the full view. */
   actions: PartnerAction[];
   made: MadeWhere;
-  /** What the person's card looks like now (main.ts, personView): the preview the partner holds up. */
+  /** What the person's screen looks like now (personSimple, not full): the preview the carer sees before turning the phone. */
   personHtml: string;
   /** Cloud help is off and could try this question: the blocked screen offers the sheet again. */
   canAskOnline: boolean;
-  /** What they chose the last time this question was asked ('' when it was not): for the partner only. */
+  /** This question needs online help and the browser has no connection: said instead of the offer. */
+  offline: boolean;
+  /** What they chose the last time this question was asked ('' when it was not): for the carer only. */
   lastTime: string;
+  /** "Today in short", shown while the answers are gone over. */
+  short?: ShortModel | null;
 }
 
 /** Where this card was made: on the screen itself, under the card, never only behind a link. */
@@ -108,14 +255,21 @@ export function madeBlock(w: MadeWhere): string {
 
 function actionButtons(m: { name: string }, actions: PartnerAction[]): { primary: string; rest: string } {
   const S = COPY.simple;
-  const label = (a: PartnerAction) => (a.act === 'show' ? S.step2(m.name) : a.act === 'recap' ? S.recap : a.label);
+  const label = (a: PartnerAction) => (a.act === 'show' ? S.make(m.name) : a.act === 'recap' ? S.recap : a.label);
   const primary = actions.filter((a) => a.primary).map((a) => `<button type="button" class="btn primary" data-act="${a.act}">${esc(label(a))}</button>`).join('');
   const others = actions.filter((a) => !a.primary);
   const rest = others.length ? `<div class="two-btn${others.length === 1 ? ' one' : ''}">${others.map((a) => `<button type="button" class="btn quiet" data-act="${a.act}">${esc(label(a))}</button>`).join('')}</div>` : '';
   return { primary, rest };
 }
 
-/** The card is ready: 1 say this out loud, 2 show them the card. Also the screen for a question that got no card. */
+/** The visible "wait" line: on the steps of the first screen and on the screen the carer reads before handing over. */
+export const waitLine = (name: string) => `<p class="waitline" id="wait-line">${SIGN.info}<span>${esc(COPY.simple.wait(name))}</span></p>`;
+
+/**
+ * The carer's screen before handing over: 1 say it out loud (the line), 2 turn the phone (what they will see, and the
+ * main button), with "Wait. Count to ten. Don't answer for them." on the screen itself. Also the screen for a
+ * question that got no card.
+ */
 export function cardScreen(m: CardModel): string {
   const S = COPY.simple;
   const K = COPY.card;
@@ -131,8 +285,8 @@ export function cardScreen(m: CardModel): string {
   if (c.kind === 'no-quiz' || c.blocked) {
     const body = c.kind === 'no-quiz'
       ? `<p class="steplabel">${COPY.memory.line}</p><p class="say">${esc(c.say.replace(COPY.notes.tellPrefix, ''))}</p>`
-      : `<h1>${S.noCard}</h1><p class="why-not">${esc(c.blocked ?? '')}</p><p class="say">${K.justAsk}</p>
-         ${m.canAskOnline ? `<button type="button" class="btn" data-act="sheet">${S.useOnline}</button>` : ''}
+      : `<h1>${S.noCard}</h1>${m.offline ? `<p class="offline" id="offline" role="status">${SIGN.net}<span>${S.offline}</span></p>` : `<p class="why-not">${esc(c.blocked ?? '')}</p>`}<p class="say">${K.justAsk}</p>
+         ${m.canAskOnline && !m.offline ? `<button type="button" class="btn" data-act="sheet">${S.useOnline}</button>` : ''}
          <p class="tip">${S.askChoice}</p>`;
     return `<main class="simple wrap one nocard" data-screen="nocard">${back}
   <div class="col">${coach}${body}${primary}${rest}${madeBlock(m.made)}</div>${foot}</main>`;
@@ -142,28 +296,52 @@ export function cardScreen(m: CardModel): string {
   const sayLabel = m.recap || m.recapDone ? S.recap : m.less ? K.lessOn : S.step1;
   const tip = c.kind === 'repair' ? COPY.repair.tip : c.kind === 'needs' ? COPY.needs.tip : S.tip;
   const canHide = m.actions.some((a) => a.act === 'less');
+  // a narrowing card says in plain words that an AI made this follow-up, and where
+  const ai = c.narrow ? `<p class="ai-made" id="ai-made">${SIGN.spark}<span>${esc(S.narrow.label(c.narrow.level, NARROW_LEVELS, c.source === 'in-cloud' ? 'cloud' : 'device'))}</span></p>` : '';
   return `<main class="simple wrap card" data-screen="card">${back}
-  <div class="c-say">${coach}<div class="stack">${step(1, sayLabel)}<p class="say">${esc(say)}</p></div>${m.lastTime ? `<p class="last">${esc(m.lastTime)}</p>` : ''}</div>
-  <div class="c-card">${step(2, S.step2(m.name))}
-    <section id="person" class="person mini" aria-label="Card for the person" data-kind="${c.kind}">${m.personHtml}</section>
-    ${madeBlock(m.made)}
-  </div>
-  <div class="c-go">${primary}
+  <div class="c-say">${ai}${coach}<div class="stack">${step(1, sayLabel)}<p class="say">${esc(say)}</p></div>${m.lastTime ? `<p class="last">${esc(m.lastTime)}</p>` : ''}</div>
+  <div class="c-go">${step(2, S.step2(m.name))}
+    ${primary}
+    ${primary ? waitLine(m.name) : ''}
     ${primary ? `<p class="tip">${esc(tip)} ${esc(S.tipExit(m.name))}</p>` : ''}
+  </div>
+  <div class="c-card"><p class="steplabel muted">${esc(S.preview(m.name))}</p>
+    <section id="person" class="person mini pv" aria-label="${esc(S.preview(m.name))}" data-kind="${c.kind}">${m.personHtml}</section>
     ${rest}
     ${canHide ? `<p class="hint">${esc(S.lessHint(m.name))}</p>` : ''}
     ${safety}
+    ${m.recap || m.recapDone ? shortBlock(m.short ?? null) : ''}
+    ${madeBlock(m.made)}
   </div>${foot}</main>`;
 }
 
+// ---------------------------------------------------------------- the carer's screen after an answer
 export interface AnsweredModel {
   name: string;
-  /** The label they chose and confirmed with the tick. */
+  /** The label they chose and confirmed. */
   label: string;
-  /** The partner's next move for this answer, already drawn (a way out, a need, a repair way): '' for a plain answer. */
+  /** They chose the way out ("something else", "not sure"): the screen then says what to do now. */
+  out: boolean;
+  /** The carer's next move for this answer, already drawn (a need's line, a repair way): '' for a plain answer. */
   afterHtml: string;
   /** "Next: second question", when the question was two in one. */
   next: PartnerAction | null;
+  /** Questions that follow from this answer (core/topics.ts, followUps): one tap each, made by the rules. */
+  follow: string[];
+  /** After the way out: the next question of the same topic to try, or null. */
+  tryNext: string | null;
+  /**
+   * After the way out: an AI can suggest the next, broader choices (core/narrow.ts), and where it would run here.
+   * Null when no further narrowing step is offered (two were made, "not sure", or no AI on this copy).
+   */
+  narrow: 'device' | 'cloudOn' | 'ask' | 'offline' | null;
+  /** The card they left was itself the last narrowing step. */
+  narrowLast: boolean;
+  short: ShortModel | null;
+  /** "Call someone" was answered yes and About them names nobody: a field for one name. */
+  who: boolean;
+  /** About them is offered (after the first card; at most once a visit). */
+  invite: boolean;
   hasAnswers: boolean;
   /** Answers confirmed since this page was opened, newest first. */
   today: { q: string; label: string }[];
@@ -171,20 +349,38 @@ export interface AnsweredModel {
   privacy: string[];
 }
 
-/** They answered: what they chose, and the next thing to do. */
+/** They answered: what they chose, "Ask another question" as the main button, and the next step where there is one. */
 export function answeredScreen(m: AnsweredModel): string {
   const S = COPY.simple;
   const today = m.today.length ? `<div class="before"><p class="steplabel muted">${S.today}</p><ul>${m.today.map((t) => `<li><span>${esc(t.q)}</span><b>${esc(t.label)}</b></li>`).join('')}</ul></div>` : '';
+  const qBtn = (q: string, label = q) => `<button type="button" class="btn ask-next" data-q="${esc(q)}">${esc(label)}</button>`;
+  const another = `<button type="button" class="btn${m.next ? '' : ' primary'}" data-act="new">${S.another}</button>`;
+  // the way out was chosen: what to do now, in order of how often it helps (never a dead end)
+  const narrow = m.narrow ? `<button type="button" class="btn narrow" id="narrow" data-act="narrow" ${m.narrow === 'offline' ? 'disabled' : ''}>${SIGN.spark}<span>${S.narrow.go}</span></button>
+      <p class="tip" id="narrow-where">${esc(S.narrow[m.narrow])}</p>` : '';
+  const outBlock = m.out ? `<div class="next-steps" id="after-out"><p class="steplabel">${S.out.heading}</p>
+      ${narrow}${m.narrowLast ? `<p class="tip">${S.narrow.last}</p>` : ''}
+      <p class="tip">${esc(m.label === 'not sure' ? S.out.notSure : S.out.show)}</p>
+      ${m.tryNext ? qBtn(m.tryNext, S.out.tryNext(m.tryNext)) : ''}
+      <button type="button" class="btn" data-act="needs">${S.out.needs}</button>
+      <button type="button" class="btn" data-act="own">${S.out.own}</button>
+      <button type="button" class="btn" data-act="stuck">${esc(S.out.stuck)}</button></div>` : '';
+  const follow = m.follow.length ? `<div class="next-steps" id="follow"><p class="steplabel muted">${S.nextHeading}</p>${m.follow.map((q) => qBtn(q)).join('')}</div>` : '';
+  const who = m.who ? `<form id="who" class="who-form"><label for="who-name">${S.who.label}</label><div class="row"><input id="who-name" class="field" autocomplete="off"><button type="submit" class="btn">${S.who.go}</button></div></form>` : '';
+  const invite = m.invite ? `<div class="invite" id="invite"><b>${esc(S.invite.title(m.name))}</b><p>${S.invite.body}</p>
+      <a class="btn" href="#/about">${S.invite.add}</a><button type="button" class="btn quiet" data-act="invite-later">${S.invite.later}</button></div>` : '';
   return `<main class="simple wrap s-answered" data-screen="answered">
   ${top(m)}
   <div class="col">
-    <div class="chose" role="status">${SIGN.tick}<div><span class="muted small">${esc(S.chose(m.name))}</span><b>${esc(m.label)}</b></div></div>
+    <div class="chose${m.out ? ' out' : ''}" role="status">${m.out ? SIGN.out : SIGN.tick}<div><span class="muted small">${esc(m.out ? S.choseOut(m.name) : S.chose(m.name))}</span><b>${esc(m.label)}</b></div></div>
     ${m.afterHtml}
-    ${m.next ? `<button type="button" class="btn primary" data-act="${m.next.act}">${esc(m.next.label)}</button><button type="button" class="btn" data-act="new">${S.another}</button>`
-      : `<button type="button" class="btn primary" data-act="new">${S.another}</button>`}
-    <div class="two-btn"><button type="button" class="btn quiet" data-act="needs">${S.needs}</button>${m.hasAnswers ? `<button type="button" class="btn quiet" data-act="recap">${S.recap}</button>` : ''}<button type="button" class="btn quiet" data-act="stuck">${COPY.card.stuck}</button></div>
+    ${m.next ? `<button type="button" class="btn primary" data-act="${m.next.act}">${esc(m.next.label)}</button>` : ''}
+    ${another}
+    ${outBlock}${follow}${who}
+    ${invite}
+    <div class="two-btn">${m.out ? '' : `<button type="button" class="btn quiet" data-act="needs">${S.needsShort}</button>`}${m.hasAnswers ? `<button type="button" class="btn quiet" data-act="recap">${S.recap}</button>` : ''}${m.out ? '' : `<button type="button" class="btn quiet" data-act="stuck">${esc(COPY.card.stuck)}</button>`}</div>
   </div>
-  <div class="col">${today}${madeBlock(m.made)}</div>
+  <div class="col">${today}${shortBlock(m.short)}${madeBlock(m.made)}</div>
   <footer class="foot">
     ${privacyBlock(m.privacy, S.privacy.answers)}
     ${insideLink('inside-card', S.madeLink)}

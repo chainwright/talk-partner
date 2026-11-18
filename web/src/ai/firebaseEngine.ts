@@ -16,6 +16,11 @@
 //                                                                             sound never runs on the device in any mode; the
 //                                                                             mode says what happens, and the app says it first.
 //
+//   summary    ONLY_ON_DEVICE    today's confirmed answers (core/summary.ts)   "Today in short". The answers are personal, so
+//                                                                             there is no cloud fall-back: where the browser
+//                                                                             has no model, the app's rules write it instead.
+//
+// A narrowing card after "something else" (core/narrow.ts) uses the private and the stripped step, as an open question does.
 // Two steps make cards, and a third turns a spoken question into text. Pictures are bundled: the picture-generation
 // model this file once defined and never called was removed on 17 Nov 2026. The browser's own speech recognition
 // (Web Speech API), used for a few hours on 17 Nov, is gone: it was AI inference outside Firebase AI Logic.
@@ -33,6 +38,7 @@ import {
 } from 'firebase/ai';
 import type { AudioClip, DeviceStatus, Engine, ModelResult } from '../../../core/engine';
 import { CLOUD_TEXT_MODEL } from '../../../core/models';
+import { SUMMARY_SCHEMA, SUMMARY_SYSTEM_PROMPT } from '../../../core/summary';
 import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, SYSTEM_PROMPT, TRANSCRIBE_PROMPT, TRANSCRIBE_SCHEMA, TRANSCRIBE_SYSTEM_PROMPT, cloudPrompt } from '../../../core/prompt';
 import { cloudTextRequest } from '../../../core/requests';
 import { appCheckConfigured, appWithAppCheck, namedAppCheckFailure, type WebConfig } from './app';
@@ -50,7 +56,7 @@ const sys = (text: string) => [{ role: 'system' as const, content: [{ type: 'tex
  * One console line per answered model call: which leg, its mode, and the SDK's own `inferenceSource` value as it came
  * back. No prompt and no answer text is logged. The run logs in devlog/ quote these lines.
  */
-function report(leg: 'private' | 'stripped' | 'voice', mode: string, inferenceSource: unknown, ms: number) {
+function report(leg: 'private' | 'stripped' | 'voice' | 'summary', mode: string, inferenceSource: unknown, ms: number) {
   console.info(`[ai-logic] leg=${leg} mode=${mode} inferenceSource=${String(inferenceSource)} ms=${ms}`);
 }
 
@@ -61,6 +67,8 @@ export class FirebaseEngine implements Engine {
   private privateModel: GenerativeModel | null = null;
   private cloudModel: GenerativeModel | null = null;
   private voiceModel: GenerativeModel | null = null;
+  private summaryModel: GenerativeModel | null = null;
+  private localAi: ReturnType<typeof getAI> | null = null;
   /** The cloud text model in use: the in-code default until Remote Config gives a checked name (core/models.ts). */
   private textModel = CLOUD_TEXT_MODEL;
   private cloudAi: ReturnType<typeof getAI> | null = null;
@@ -69,11 +77,15 @@ export class FirebaseEngine implements Engine {
     this.cloudConfigured = appCheckConfigured(cfg);
   }
 
+  /** The Firebase app of the on-device steps: no App Check, so starting it and running on it contact no host. */
+  private get local(): ReturnType<typeof getAI> {
+    return (this.localAi ??= getAI(initializeApp(this.cfg.firebase, 'private-on-device'), { backend: new GoogleAIBackend() }));
+  }
+
   /** The private leg: its own Firebase app, no App Check, so starting it and running it contact no host. */
   private get device(): GenerativeModel {
     if (this.privateModel) return this.privateModel;
-    const local = getAI(initializeApp(this.cfg.firebase, 'private-on-device'), { backend: new GoogleAIBackend() });
-    return (this.privateModel = getGenerativeModel(local, {
+    return (this.privateModel = getGenerativeModel(this.local, {
       mode: InferenceMode.ONLY_ON_DEVICE,
       onDeviceParams: { createOptions: { ...IO, initialPrompts: sys(SYSTEM_PROMPT) }, promptOptions: { responseConstraint: CARD_SCHEMA } },
     }));
@@ -141,6 +153,24 @@ export class FirebaseEngine implements Engine {
     }
     const ms = Math.round(performance.now() - t0);
     report('private', 'ONLY_ON_DEVICE', r.response.inferenceSource, ms);
+    return { text: r.response.text(), source: 'on-device', ms };
+  }
+
+  /**
+   * "Today in short" (core/summary.ts): the day's answers, ONLY_ON_DEVICE on the same no-App-Check app as the private
+   * leg, with its own instructions and answer format (a model instance holds one of each). Anything but an on-device
+   * answer is an error: there is no cloud fall-back for the person's answers.
+   */
+  async summarizeDevice(prompt: string): Promise<ModelResult> {
+    this.summaryModel ??= getGenerativeModel(this.local, {
+      mode: InferenceMode.ONLY_ON_DEVICE,
+      onDeviceParams: { createOptions: { ...IO, initialPrompts: sys(SUMMARY_SYSTEM_PROMPT) }, promptOptions: { responseConstraint: SUMMARY_SCHEMA } },
+    });
+    const t0 = performance.now();
+    const r = await this.summaryModel.generateContent(prompt);
+    if (r.response.inferenceSource !== InferenceSource.ON_DEVICE) throw new Error("the summary step didn't run on this computer");
+    const ms = Math.round(performance.now() - t0);
+    report('summary', 'ONLY_ON_DEVICE', r.response.inferenceSource, ms);
     return { text: r.response.text(), source: 'on-device', ms };
   }
 
@@ -232,6 +262,7 @@ export class LazyFirebaseEngine implements Engine {
   prepareDevice(onProgress?: (p: number) => void) { return this.e.prepareDevice(onProgress); }
   warmDevice() { return this.e.warmDevice(); }
   runDevice(prompt: string) { return this.e.runDevice(prompt); }
+  summarizeDevice(prompt: string) { return this.e.summarizeDevice(prompt); }
   cloudRequest(strippedQuestion: string) { return cloudTextRequest(strippedQuestion, this.textModel); }
   runCloud(strippedQuestion: string) { return this.e.runCloud(strippedQuestion); }
   transcribe(clip: AudioClip) { return this.e.transcribe(clip); }

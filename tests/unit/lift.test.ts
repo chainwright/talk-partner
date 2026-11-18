@@ -28,7 +28,9 @@ describe('lift the card', () => {
     expect(reduced).toMatch(/::view-transition-group\(\*\), ::view-transition-old\(\*\), ::view-transition-new\(\*\) \{ animation: none !important; \}/);
   });
   it('only "Show to person", the quick-needs board and the way back start it', () => {
-    expect(main.match(/lift = true;/g)).toHaveLength(3);
+    // (five since 17 Nov: the way back is also the finish screen's "Give the phone back" and Enter on the carer's control)
+    expect(main.match(/lift = true;/g)).toHaveLength(5);
+    expect(main).toContain("case 'give-back': lift = true; go(''); break;");
     expect(main).toContain("case 'show': lift = true; go('person'); break;");
     // (since 17 Nov: "Quick needs" puts its board on the person's screen in the same gesture)
     expect(main).toContain("case 'needs': openNeeds(); lift = true; go('needs'); break;");

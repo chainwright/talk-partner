@@ -4,13 +4,14 @@
 //     holds the app's fixed instructions), and they follow what has happened this session;
 //   - the line under a card says who made it and what left, from the card itself (the badge's own vocabulary);
 //   - the consent sheet comes up only for a question the cloud step could try, with cloud help off;
-//   - the three ready questions are what their small lines say: two made by rules alone, one open.
+//   - the plain AI line and the tag on the one open topic question say where the AI runs here: on a phone, online.
 import { afterEach, describe, expect, it } from 'vitest';
 import { COPY, copyDevice, deviceKindFrom, deviceWords, setCopyDevice } from '../../core/copy';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { makeCard, needsNoModel } from '../../core/pipeline';
 import { cloudTextRequest } from '../../core/requests';
-import { madeWhere, privacyLines, sheetWanted, tryNote, whereLine } from '../../core/simple';
+import { aiLines, aiPlace, aiTag, madeWhere, needsInternet, privacyLines, sheetWanted } from '../../core/simple';
+import { AI_QUESTION } from '../../core/topics';
 import { EMPTY_PROFILE, type Card } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -34,7 +35,7 @@ class Fake implements Engine {
   cloudRequest(q: string) { return cloudTextRequest(q); }
   async runCloud(): Promise<ModelResult> { this.calls.push('cloud'); if (this.o.cloud instanceof Error) throw this.o.cloud; if (!this.o.cloud) throw new Error('no cloud'); return { text: this.o.cloud, source: 'in-cloud', ms: 3 }; }
 }
-const OPEN = COPY.simple.tries[2];
+const OPEN = AI_QUESTION;
 const CLOUD_ANSWER = '{"topic":"weekend","kind":"choice","choices":["a walk","a film","a meal out"]}';
 const DEVICE_ANSWER = '{"topic":"weekend","kind":"choice","choices":["allotment","library","pub"]}';
 const ABOUT = 'About Alan';
@@ -143,7 +144,7 @@ describe('the simple view\'s privacy lines say what is sent, never more', () => 
 describe('the line under a card: made on this device, or with online help', () => {
   it('a card the rules make alone: no AI, nothing sent', async () => {
     const e = new Fake({ device: DEVICE_ANSWER, cloud: CLOUD_ANSWER });
-    const w = madeWhere(await make(COPY.simple.tries[0], e, true, true), { about: ABOUT });
+    const w = madeWhere(await make('Do you want coffee or tea?', e, true, true), { about: ABOUT });
     expect(e.calls).toEqual([]);
     expect(w).toMatchObject({ maker: 'code', left: 'nothing', spoken: false });
     expect(w.lines).toEqual([COPY.simple.made.code, COPY.simple.left.nothing]);
@@ -177,7 +178,7 @@ describe('the line under a card: made on this device, or with online help', () =
     expect(w.lines).toEqual([COPY.simple.made.none, COPY.simple.left.maybe]);
   });
   it('a spoken question adds that its recording went to Google', async () => {
-    const w = madeWhere(await make(COPY.simple.tries[0], new Fake(), false, false), { about: ABOUT, spoken: true });
+    const w = madeWhere(await make('Do you want coffee or tea?', new Fake(), false, false), { about: ABOUT, spoken: true });
     expect(w.spoken).toBe(true);
     expect(w.lines[2]).toBe(COPY.simple.left.voice);
   });
@@ -197,41 +198,102 @@ describe('the consent sheet comes up only when a question needs online help', ()
     expect(sheetWanted(c, { cloudOn: false, cloudConfigured: false })).toBe(false);
   });
   it('not for a card the rules made, not for a card the on-device model made, not for a memory question, not with no card at all', async () => {
-    expect(sheetWanted(await make(COPY.simple.tries[0], new Fake(), false, false), on)).toBe(false);
+    expect(sheetWanted(await make('Do you want coffee or tea?', new Fake(), false, false), on)).toBe(false);
     expect(sheetWanted(await make(OPEN, new Fake({ device: DEVICE_ANSWER }), false, true), on)).toBe(false);
     expect(sheetWanted(await make('What year did we get married?', new Fake(), false, false), on)).toBe(false);
     expect(sheetWanted(null, on)).toBe(false);
   });
 });
 
-describe('the first screen: the three ready questions and where the AI runs', () => {
-  it('the first two are made by rules alone, on any copy; the third is open', () => {
-    expect(needsNoModel(COPY.simple.tries[0], EMPTY_PROFILE)).toBe(true);
-    expect(needsNoModel(COPY.simple.tries[1], EMPTY_PROFILE)).toBe(true);
-    expect(needsNoModel(COPY.simple.tries[2], EMPTY_PROFILE)).toBe(false);
+describe('the first screen: the plain AI line and where the AI runs here', () => {
+  const base = { configured: true, device: 'unavailable' as const, cloudOn: false, online: true };
+  it('the open topic question is open, and a plain topic question is not', () => {
+    expect(needsNoModel(AI_QUESTION, EMPTY_PROFILE)).toBe(false);
+    expect(needsNoModel('Would you like tea or coffee?', EMPTY_PROFILE)).toBe(true);
   });
-  it('the small line under each says how its card is made here', () => {
-    const T = COPY.simple.tryNote;
-    const base = { configured: true, device: 'unavailable' as const, cloudOn: false };
-    expect(tryNote(false, base)).toBe(T.code);
-    expect(tryNote(true, base)).toBe(T.openAsk);
-    expect(tryNote(true, { ...base, cloudOn: true })).toBe(T.openCloudOn);
-    expect(tryNote(true, { ...base, device: 'available' })).toBe(T.openDevice);
-    expect(tryNote(true, { ...base, device: 'checking' })).toBe(T.openChecking);
-    expect(tryNote(true, { ...base, configured: false })).toBe(T.openNone);
+  it('where a typed open question would get its choices, by what this browser has', () => {
+    expect(aiPlace(base)).toBe('ask');
+    expect(aiPlace({ ...base, cloudOn: true })).toBe('cloudOn');
+    expect(aiPlace({ ...base, device: 'available' })).toBe('device');
+    expect(aiPlace({ ...base, device: 'available', online: false })).toBe('device'); // the model in the browser needs no connection
+    expect(aiPlace({ ...base, online: false })).toBe('offline');
+    expect(aiPlace({ ...base, cloudOn: true, online: false })).toBe('offline');
+    expect(aiPlace({ ...base, device: 'checking' })).toBe('checking');
+    expect(aiPlace({ ...base, configured: false })).toBe('none');
   });
-  it('the routing line names both halves of the hybrid, by what this browser has', () => {
-    const W = COPY.simple.where;
-    const base = { configured: true, device: 'unavailable' as const, cloudOn: false, about: ABOUT };
-    expect(whereLine(base)).toBe(W.cloudOff);
-    expect(whereLine({ ...base, cloudOn: true })).toBe(W.cloudOn(ABOUT));
-    expect(whereLine({ ...base, device: 'available' })).toBe(W.device(ABOUT));
-    expect(whereLine({ ...base, device: 'available', cloudOn: true })).toBe(W.deviceCloudOn(ABOUT));
-    expect(whereLine({ ...base, device: 'checking' })).toBe(W.checking);
-    expect(whereLine({ ...base, configured: false })).toBe(W.noConfig);
-    // with the on-device model and cloud help off, "nothing is sent" is said; with cloud help on, it is not
-    expect(W.device(ABOUT)).toMatch(/Nothing is sent/);
-    expect(W.deviceCloudOn(ABOUT)).not.toMatch(/Nothing is sent/);
-    expect(W.cloudOff).toMatch(/asks you first/);
+  it('one plain sentence of what the AI is for, then where it runs on this device', () => {
+    const A = COPY.simple.ai;
+    expect(aiLines(base)).toEqual([A.line, A.ask]);
+    expect(aiLines({ ...base, cloudOn: true })).toEqual([A.line, A.cloudOn]);
+    expect(aiLines({ ...base, device: 'available' })).toEqual([A.line, A.device]);
+    expect(aiLines({ ...base, online: false })).toEqual([A.line, A.offline]);
+    // nothing is said about this device before its check has answered
+    expect(aiLines({ ...base, device: 'checking' })).toEqual([A.line]);
+    expect(aiLines({ ...base, configured: false })).toEqual([A.none]);
+    expect(A.line).toMatch(/AI suggests the answers/);
+    expect(A.line).toMatch(/topic questions above do not need it/);
+    expect(A.device).toMatch(/nothing is sent/);
+    expect(A.ask).toMatch(/asks you first/);
+    expect(A.cloudOn).not.toMatch(/nothing is sent/i);
+  });
+  it('on a phone the line says the AI is online: a phone has no AI in the browser', () => {
+    setCopyDevice('phone');
+    expect(aiLines(base)[1]).toBe("On this phone that AI is online (Google's): the app asks you first, and shows the line that would go.");
+    expect(aiLines({ ...base, online: false })[1]).toMatch(/^You are offline, and that AI needs the internet/);
+  });
+  it('the tag on the open topic question', () => {
+    const T = COPY.simple.aiTag;
+    expect(aiTag(base)).toBe(T.net);
+    expect(aiTag({ ...base, cloudOn: true })).toBe(T.net);
+    expect(aiTag({ ...base, device: 'available' })).toBe(T.device);
+    expect(aiTag({ ...base, online: false })).toBe(T.offline);
+    expect(aiTag({ ...base, configured: false })).toBe(T.none);
+  });
+  it('a question that needs online help, asked offline, is said to need the internet; a rules card never is', async () => {
+    const blocked = await make(OPEN, new Fake(), false, false);
+    const i = { online: false, cloudConfigured: true };
+    expect(needsInternet(blocked, i)).toBe(true);
+    expect(needsInternet(blocked, { ...i, online: true })).toBe(false);
+    expect(needsInternet(blocked, { ...i, cloudConfigured: false })).toBe(false);
+    expect(needsInternet(await make('Do you want coffee or tea?', new Fake(), false, false), i)).toBe(false);
+    expect(needsInternet(await make('What year did we get married?', new Fake(), false, false), i)).toBe(false);
+    expect(needsInternet(null, i)).toBe(false);
+  });
+});
+
+describe('the words of the new first screen and the person\'s screens', () => {
+  const S = COPY.simple;
+  it('no default "him" or "her": the name from About them, else "them"', () => {
+    expect(S.hope('')).toBe("When the words won't come, let them point.");
+    expect(S.hope('Frank')).toBe("When the words won't come, let Frank point.");
+    expect(S.wait('')).toBe("Wait. Count to ten. Don't answer for them.");
+    expect(S.wait('Rosa')).toBe("Wait. Count to ten. Don't answer for Rosa.");
+    const all = strings(S).join(' \n ');
+    expect(all).not.toMatch(/\b(?:him|his|he|she|her|hers)\b/i);
+  });
+  it('four steps, and the title says so', () => {
+    expect(S.how.title).toBe('How it works: 4 steps');
+    expect(S.how.steps('')).toHaveLength(4);
+    expect(S.how.steps('Frank')[2]).toBe('Frank points at the answer. No words needed');
+    expect(S.how.steps('')[2]).toBe('They point at the answer. No words needed');
+  });
+  it('the person\'s screens: the instruction, the check and the finish', () => {
+    const P = S.person;
+    expect(P.point).toBe('Point to your answer');
+    expect(P.so('tea')).toBe('So: tea. Right?');
+    expect([P.yes, P.no]).toEqual(['Yes', 'No, something else']);
+    expect(P.thanks).toBe('Thank you.');
+    expect(P.done('tea')).toBe('Tea.');
+    expect(P.hold).toMatch(/^Carer:/);
+  });
+  it('"the computer" is the device in hand too: on a phone the finish button says "Give the phone back"', () => {
+    expect(S.person.give).toBe('Give the computer back');
+    setCopyDevice('phone');
+    expect(COPY.simple.person.give).toBe('Give the phone back');
+    expect(COPY.simple.how.steps('')[1]).toBe('Turn the phone to them and say it out loud');
+    expect(COPY.simple.step2('Frank')).toBe('Turn the phone to Frank');
+    setCopyDevice('tablet');
+    expect(COPY.simple.person.give).toBe('Give the tablet back');
+    expect(deviceWords('On a computer with Chrome', 'phone')).toBe('On a computer with Chrome');
   });
 });
