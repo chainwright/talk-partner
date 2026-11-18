@@ -1,0 +1,562 @@
+{
+ "about": "The fictional Miller family (design/PERSONA_SCENARIO.md). One week of diary entries: day 0 is Monday, day 6 (Sunday) is \"today\", and \"now\" is Sunday at 12:00. Used by tests/unit/frank-week.test.ts and by scripts/e2e-simple.py (the diary run), which put the same entries on the last seven days.",
+ "now": "12:00",
+ "profile": {
+  "personName": "Frank",
+  "partnerName": "Carol",
+  "people": [
+   {
+    "id": "p1",
+    "name": "Carol",
+    "relation": "wife",
+    "household": true
+   },
+   {
+    "id": "p2",
+    "name": "Beth",
+    "relation": "daughter",
+    "household": false
+   },
+   {
+    "id": "p3",
+    "name": "Tom",
+    "relation": "brother",
+    "household": false
+   }
+  ],
+  "foods": [
+   "ginger biscuits",
+   "porridge"
+  ],
+  "places": [
+   "the lake",
+   "church"
+  ],
+  "tv": [
+   "football"
+  ],
+  "music": [],
+  "other": [
+   "Bo is his dog"
+  ]
+ },
+ "health": {
+  "text": "Type 2 diabetes, diet only. Dr Patel on Monday.",
+  "diabetes": true,
+  "swallowing": false,
+  "fluidLimit": false,
+  "reminders": false
+ },
+ "entries": [
+  {
+   "d": 0,
+   "t": "07:40",
+   "kind": "answer",
+   "q": "Would you like tea or coffee?",
+   "label": "tea",
+   "topic": "food",
+   "pos": 0,
+   "of": 2
+  },
+  {
+   "d": 0,
+   "t": "07:45",
+   "kind": "answer",
+   "q": "Would you like milk in it?",
+   "label": "yes",
+   "topic": "food",
+   "pos": 0,
+   "of": 2,
+   "yn": true
+  },
+  {
+   "d": 0,
+   "t": "08:10",
+   "kind": "answer",
+   "q": "Would you like ginger biscuits or porridge?",
+   "label": "porridge",
+   "topic": "food",
+   "pos": 1,
+   "of": 2
+  },
+  {
+   "d": 0,
+   "t": "10:30",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 0,
+   "t": "12:40",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 0,
+   "t": "13:00",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 0,
+   "t": "14:00",
+   "kind": "answer",
+   "q": "Are you tired?",
+   "label": "yes",
+   "topic": "rest",
+   "pos": 0,
+   "of": 2,
+   "yn": true
+  },
+  {
+   "d": 0,
+   "t": "14:02",
+   "kind": "answer",
+   "q": "Would you like to lie down?",
+   "label": "yes",
+   "topic": "rest",
+   "pos": 0,
+   "of": 2,
+   "yn": true
+  },
+  {
+   "d": 0,
+   "t": "16:00",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 0,
+   "t": "18:30",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 0,
+   "t": "19:20",
+   "kind": "answer",
+   "q": "Would you like to go for a walk?",
+   "label": "yes",
+   "topic": "plans",
+   "pos": 0,
+   "of": 2,
+   "yn": true
+  },
+  {
+   "d": 0,
+   "t": "20:30",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 1,
+   "t": "07:30",
+   "kind": "answer",
+   "q": "Would you like tea or coffee?",
+   "label": "tea",
+   "topic": "food",
+   "pos": 0,
+   "of": 2
+  },
+  {
+   "d": 1,
+   "t": "07:50",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 1,
+   "t": "08:30",
+   "kind": "answer",
+   "q": "Are you in pain?",
+   "label": "yes",
+   "topic": "body",
+   "pos": 0,
+   "of": 2,
+   "yn": true
+  },
+  {
+   "d": 1,
+   "t": "08:31",
+   "kind": "answer",
+   "q": "Where does it hurt?",
+   "label": "right shoulder",
+   "topic": "body",
+   "pos": 1,
+   "of": 3
+  },
+  {
+   "d": 1,
+   "t": "10:00",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 1,
+   "t": "12:30",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 1,
+   "t": "13:00",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 1,
+   "t": "16:00",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 1,
+   "t": "18:30",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 1,
+   "t": "21:00",
+   "kind": "log",
+   "log": "slept",
+   "label": "slept"
+  },
+  {
+   "d": 2,
+   "t": "07:35",
+   "kind": "answer",
+   "q": "Would you like tea or coffee?",
+   "label": "tea",
+   "topic": "food",
+   "pos": 0,
+   "of": 2
+  },
+  {
+   "d": 2,
+   "t": "08:00",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 2,
+   "t": "12:45",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 2,
+   "t": "15:20",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 2,
+   "t": "18:40",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 2,
+   "t": "20:00",
+   "kind": "answer",
+   "q": "Are you in pain?",
+   "label": "no",
+   "topic": "body",
+   "pos": 1,
+   "of": 2,
+   "yn": true
+  },
+  {
+   "d": 3,
+   "t": "07:30",
+   "kind": "answer",
+   "q": "Would you like tea or coffee?",
+   "label": "tea",
+   "topic": "food",
+   "pos": 0,
+   "of": 2
+  },
+  {
+   "d": 3,
+   "t": "08:00",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 3,
+   "t": "10:15",
+   "kind": "answer",
+   "q": "Would you like ginger biscuits or porridge?",
+   "label": "ginger biscuits",
+   "topic": "food",
+   "pos": 0,
+   "of": 2
+  },
+  {
+   "d": 3,
+   "t": "12:30",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 3,
+   "t": "13:00",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 3,
+   "t": "15:30",
+   "kind": "answer",
+   "q": "Would you like something sweet or something savoury?",
+   "label": "something sweet",
+   "topic": "food",
+   "pos": 0,
+   "of": 2
+  },
+  {
+   "d": 3,
+   "t": "16:00",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 3,
+   "t": "19:45",
+   "kind": "answer",
+   "q": "Would you like ginger biscuits or porridge?",
+   "label": "ginger biscuits",
+   "topic": "food",
+   "pos": 0,
+   "of": 2
+  },
+  {
+   "d": 3,
+   "t": "20:00",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 4,
+   "t": "07:40",
+   "kind": "answer",
+   "q": "Would you like tea or coffee?",
+   "label": "tea",
+   "topic": "food",
+   "pos": 0,
+   "of": 2
+  },
+  {
+   "d": 4,
+   "t": "08:00",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 4,
+   "t": "12:30",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 4,
+   "t": "13:00",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 4,
+   "t": "16:00",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 4,
+   "t": "19:00",
+   "kind": "answer",
+   "q": "Are you tired?",
+   "label": "yes",
+   "topic": "rest",
+   "pos": 0,
+   "of": 2,
+   "yn": true,
+   "lessSure": true
+  },
+  {
+   "d": 4,
+   "t": "19:01",
+   "kind": "answer",
+   "q": "Are you in pain?",
+   "label": "yes",
+   "topic": "body",
+   "pos": 0,
+   "of": 2,
+   "yn": true,
+   "lessSure": true
+  },
+  {
+   "d": 4,
+   "t": "19:02",
+   "kind": "answer",
+   "q": "Are you hungry?",
+   "label": "yes",
+   "topic": "food",
+   "pos": 0,
+   "of": 2,
+   "yn": true,
+   "lessSure": true
+  },
+  {
+   "d": 4,
+   "t": "19:03",
+   "kind": "answer",
+   "q": "Do you need the toilet?",
+   "label": "yes",
+   "topic": "body",
+   "pos": 0,
+   "of": 2,
+   "yn": true,
+   "lessSure": true
+  },
+  {
+   "d": 4,
+   "t": "19:04",
+   "kind": "answer",
+   "q": "Would you like a visitor today?",
+   "label": "yes",
+   "topic": "people",
+   "pos": 0,
+   "of": 2,
+   "yn": true,
+   "lessSure": true
+  },
+  {
+   "d": 5,
+   "t": "07:45",
+   "kind": "answer",
+   "q": "Would you like tea or coffee?",
+   "label": "tea",
+   "topic": "food",
+   "pos": 0,
+   "of": 2
+  },
+  {
+   "d": 5,
+   "t": "08:10",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 5,
+   "t": "12:30",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 5,
+   "t": "13:10",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 5,
+   "t": "15:00",
+   "kind": "answer",
+   "q": "Would you like TV or music?",
+   "label": "tv",
+   "topic": "fun",
+   "pos": 0,
+   "of": 2
+  },
+  {
+   "d": 5,
+   "t": "15:05",
+   "kind": "answer",
+   "q": "Would you like to call Tom?",
+   "label": "yes",
+   "topic": "people",
+   "pos": 0,
+   "of": 2,
+   "yn": true
+  },
+  {
+   "d": 5,
+   "t": "17:00",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  },
+  {
+   "d": 5,
+   "t": "18:30",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 6,
+   "t": "08:00",
+   "kind": "answer",
+   "q": "Would you like tea or coffee?",
+   "label": "tea",
+   "topic": "food",
+   "pos": 0,
+   "of": 2
+  },
+  {
+   "d": 6,
+   "t": "08:20",
+   "kind": "log",
+   "log": "ate",
+   "label": "ate"
+  },
+  {
+   "d": 6,
+   "t": "11:00",
+   "kind": "log",
+   "log": "drank",
+   "label": "drank"
+  }
+ ],
+ "expect": {
+  "week": [
+   "sweets",
+   "few-drinks",
+   "less-sure"
+  ],
+  "fewDrinksDay": 2,
+  "fewDrinks": 2,
+  "sweets": 3,
+  "lessSure": 5,
+  "lessSureDay": 4
+ }
+}

@@ -15,6 +15,17 @@ export interface Answered {
   label: string;
   /** When it was confirmed (ms since the epoch, from this computer's clock). */
   at: number;
+  /** Where the choice stood among the answers on the screen (0 = first), and how many answers there were. For the answer-reliability guard (core/reliability.ts). */
+  pos?: number;
+  of?: number;
+  /** The card was a yes / no card. */
+  yn?: boolean;
+  /**
+   * The answer-reliability guard marked it (core/reliability.ts): it was given in a run of "yes" to nearly every yes /
+   * no question, or of the same place on the screen every time. The carer's side says "less sure"; the person's screen
+   * never shows it.
+   */
+  lessSure?: boolean;
 }
 
 export const HISTORY_CAP = 300;

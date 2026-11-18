@@ -17,6 +17,12 @@ board, About them, and the same with long names) is measured at every width, 320
 pages) is measured from 360 px up: at 320 px three of its screens are known to be 10 to 27 px too wide (the recording
 of the on-device step, the repair card, the table on "How this works"; design/simple_shell_2026-11-17/PROPOSAL.md §2).
 
+Phase 3 (18 Nov 2026) is measured at every width as well, with the Miller family's week in the diary, a long name
+and a long health note: the diary (today, week, month, after a tap on the log), what stands out, the sheet before
+the lines go to online help, health notes, "Keep a copy" and its preview, the guard's line on the carer's screens,
+and the person's screen with the bigger pictures (at 844 px tall: 110 to 130 px, nothing scrolls). In the full view
+the empty card area is words, not an ear, and the placeholder fits in the field.
+
 Makes code cards only. Every request that is not to the page's own host is refused, so nothing reaches Firebase.
 
 Usage: npm run dev (in another shell), then
@@ -24,6 +30,8 @@ Usage: npm run dev (in another shell), then
 Exit code 0 when every check passes, 1 otherwise.
 """
 import argparse
+import datetime
+import json
 import os
 import sys
 from urllib.parse import urlparse
@@ -325,6 +333,119 @@ def simple(url, width, browser):
     ctx.close()
 
 
+KV_PUT = """(all) => new Promise((res) => { const r = indexedDB.open('talk-partner', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => { const tx = r.result.transaction('kv', 'readwrite'); for (const [k, v] of Object.entries(all)) tx.objectStore('kv').put(v, k); tx.oncomplete = () => res(true); tx.onerror = () => res(false); }; r.onerror = () => res(false); })"""
+FIXTURE_WEEK = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tests', 'fixtures', 'frank-week.json')
+
+
+def named(ok, width, name, detail=''):
+    results.append(bool(ok))
+    print(f"{'PASS' if ok else 'FAIL'}  {width}px  {name}{'' if ok else '  ' + detail}")
+
+
+def phase3(url, width, browser):
+    """The carer's screens of phase 3 with a full week in the diary, long names and a long health note; the person's
+    screen with the bigger pictures."""
+    ctx = context(url, width, browser)
+    page = ctx.new_page()
+    page.on('dialog', lambda d: d.accept())
+    week = json.load(open(FIXTURE_WEEK))
+    today = datetime.date.today()
+    now = int(datetime.datetime.now().timestamp() * 1000)
+    entries = []
+    for i, r in enumerate(week['entries']):
+        h, m = (int(x) for x in r['t'].split(':'))
+        at = int(datetime.datetime.combine(today - datetime.timedelta(days=6 - r['d']), datetime.time(h, m)).timestamp() * 1000)
+        e = {'id': f'w{i}', 'at': at, 'kind': r['kind'], 'label': r['label'], 'topic': r.get('topic') or {'drank': 'food', 'ate': 'food', 'toilet': 'body', 'slept': 'rest', 'pain': 'body'}[r['log']]}
+        e.update({k: r[k] for k in ('log', 'q') if k in r})
+        if r.get('lessSure'):
+            e['lessSure'] = True
+        entries.append(e)
+    entries.append({'id': 'long', 'at': now - 60000, 'kind': 'answer', 'q': LONG_Q, 'label': 'stay at home and watch television', 'topic': 'plans', 'lessSure': True})
+    profile = dict(week['profile'], personName='Christopher-Alexander')
+    health = {'text': 'Thickened fluids only, level 2, as the speech and language therapist wrote in the discharge letter; no straws. ' * 2, 'diabetes': True, 'swallowing': True, 'fluidLimit': True, 'reminders': True}
+    # four "yes" in the last few minutes: the guard is on, so the carer's screens carry its line
+    history = [{'q': f'Question {n}?', 'topic': '', 'label': 'yes', 'at': now - (5 - n) * 30000, 'pos': 0, 'of': 2, 'yn': True, 'lessSure': True} for n in range(4)]
+    asks = [{'at': now - n * 60000, 'open': False, 'two': n == 1, 'quiz': False, 'again': False} for n in range(1, 5)]
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
+    page.evaluate(KV_PUT, {'diary': entries, 'health': health, 'profile': profile, 'history': history, 'asks': asks, 'settings': {'cloudHelp': False, 'support': 'more', 'welcomed': True, 'firstCard': True, 'howFolded': True}})
+    page.reload()
+    page.wait_for_selector('main.simple.home')
+    check(page, width, 'phase 3: the first screen with "Diary" under the questions')
+    page.locator('#diary-link').click()
+    page.wait_for_selector('main.simple.diary')
+    check(page, width, 'phase 3: the diary, today (a long question, "less sure", the tip of the day)')
+    page.locator('[data-log=toilet]').click()
+    page.wait_for_selector('#logged')
+    check(page, width, 'phase 3: the diary after a tap on the log ("Logged: Toilet, …" and Undo)')
+    page.locator('#tab-week').click()
+    page.wait_for_selector('#insights')
+    check(page, width, 'phase 3: the diary, the week, with what stands out (every health note on)')
+    page.locator('#tab-month').click()
+    page.wait_for_timeout(150)
+    check(page, width, 'phase 3: the diary, the month')
+    if page.locator('#ins-plainer').count():
+        page.locator('#ins-plainer').click()
+        page.wait_for_selector('#ins-sheet')
+        page.locator('#ins-sheet-whole summary').click()
+        check(page, width, 'phase 3: the sheet before the lines go to online help, the whole request open')
+        page.locator('[data-act=ins-no]').click()
+    page.evaluate(KV_PUT, {'health': {'text': '', 'diabetes': True, 'swallowing': False, 'fluidLimit': False, 'reminders': False}})
+    page.reload()
+    page.wait_for_selector('main.simple.diary')
+    page.locator('#tab-week').click()
+    page.wait_for_selector('#ins-plainer')
+    page.locator('#ins-plainer').click()
+    page.wait_for_selector('#ins-sheet')
+    check(page, width, 'phase 3: the sheet before the lines go to online help (three lines)')
+    page.locator('[data-act=ins-no]').click()
+    page.evaluate(KV_PUT, {'health': health})
+    page.goto(url + '#/about')
+    page.wait_for_selector('main.about-simple')
+    page.reload()
+    page.wait_for_selector('main.about-simple')
+    check(page, width, 'phase 3: About them, the health row closed with a long note, and "Keep a copy"')
+    page.locator('.rowhead[data-row=health]').click()
+    page.wait_for_selector('#health-text')
+    check(page, width, 'phase 3: About them, health notes open')
+    with page.expect_download() as dl:
+        page.locator('#backup-save').click()
+    page.locator('#backup-file').set_input_files(dl.value.path())
+    page.wait_for_selector('#import-sheet')
+    check(page, width, 'phase 3: the preview of a file before it replaces About them')
+    page.locator('[data-act=import-no]').click()
+    page.locator('#backup-file').set_input_files({'name': 'x.json', 'mimeType': 'application/json', 'buffer': b'{}'})
+    page.wait_for_selector('#backup-error')
+    check(page, width, 'phase 3: "Keep a copy" with a file that is not ours')
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    page.locator('.topic[data-topic=food]').click()
+    page.locator('.tq', has_text='water, juice or milk').click()
+    page.wait_for_selector('main.simple.card #guard')
+    check(page, width, 'phase 3: before handing over, with the guard\'s line')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    check(page, width, "phase 3: the person's choices, three bigger pictures and the way out")
+    fits = page.evaluate("(() => { const de = document.documentElement; const p = [...document.querySelectorAll('main.pv .pt:not(.esc) svg')].map((x) => Math.round(x.getBoundingClientRect().height)); return { p, sh: de.scrollHeight, ch: de.clientHeight }; })()")
+    if width >= 390:
+        page.set_viewport_size({'width': width, 'height': 844})
+        page.wait_for_timeout(150)
+        fits = page.evaluate("(() => { const de = document.documentElement; const p = [...document.querySelectorAll('main.pv .pt:not(.esc) svg')].map((x) => Math.round(x.getBoundingClientRect().height)); return { p, sh: de.scrollHeight, ch: de.clientHeight }; })()")
+        named(all(110 <= x <= 130 for x in fits['p']) and fits['sh'] <= fits['ch'], width, 'phase 3: at 844 px tall the three pictures are 110 to 130 px and nothing scrolls', str(fits))
+        page.set_viewport_size({'width': width, 'height': 800})
+    else:
+        named(all(x >= 96 for x in fits['p']), width, 'phase 3: on a narrower phone the three pictures are 96 px or more', str(fits))
+    page.locator('main.pv .pt', has_text='water').first.click()
+    page.wait_for_selector('[data-confirm=yes]')
+    check(page, width, "phase 3: the person's check, with the bigger picture")
+    page.locator('[data-confirm=yes]').click()
+    page.wait_for_selector('.p-give')
+    page.locator('.p-give').click()
+    page.wait_for_selector('main.simple.s-answered #guard')
+    check(page, width, 'phase 3: after the answer, with the guard\'s line')
+    ctx.close()
+
+
 def run(url, width, browser):
     ctx = context(url, width, browser)
     page = ctx.new_page()
@@ -394,6 +515,7 @@ def main():
         browser = p.chromium.launch()
         for w in (int(x) for x in a.widths.split(',')):
             simple(a.url, w, browser)
+            phase3(a.url, w, browser)
             if w >= 360:
                 run(a.url, w, browser)
         browser.close()

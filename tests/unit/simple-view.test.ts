@@ -491,9 +491,10 @@ describe('simple view: the consent sheet', () => {
 });
 
 describe('simple view: About them', () => {
-  it('four rows, closed, with what is in them; nothing is required', () => {
+  it('five rows (the fifth is health notes), closed, with what is in them; nothing is required', () => {
     const html = aboutSimple({ profile: PROFILE, open: null, saved: false });
-    expect(html.split('class="rowhead"').length - 1).toBe(4);
+    expect(html.split('class="rowhead"').length - 1).toBe(5);
+    expect(html).toContain(S.health.none);
     expect(html).toContain('About Alan');
     expect(html).toContain('Alan · Maria');
     expect(html).toContain('Maria (wife)');
@@ -509,7 +510,7 @@ describe('simple view: About them', () => {
   it('empty: every row says so and offers "Add"', () => {
     const html = aboutSimple({ profile: { ...EMPTY_PROFILE, people: [] }, open: null, saved: false });
     expect(html.split(S.about.none).length - 1).toBe(4);
-    expect(html.split(`>${S.about.add}<`).length - 1).toBe(4);
+    expect(html.split(`>${S.about.add}<`).length - 1).toBe(5);
     expect(html).toContain('<h1>About them</h1>');
   });
 });

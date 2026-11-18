@@ -24,6 +24,15 @@ What is checked (design/USER_FIRST.md, design/topics_2026-11-17):
     IndexedDB, shown on the card and on the person's screens before the drawing wherever a choice is that word;
     "Delete", "Delete all photos", "Delete everything on this phone"; nothing asked of another host, nothing posted;
   - Back and Home on every carer screen, and the browser's own back button (one step back inside the app);
+  - phase 3 (18 Nov 2026), the carer's side: the diary (a one-tap log with the time and Undo, today / week / month, the
+    topic filter, kept in IndexedDB, "Delete the diary"); the answer-reliability guard ("yes" to four yes / no
+    questions in a row: one gentle line for the carer, the answers marked "less sure", the next either-or in a
+    different order, nothing of it on the person's screen); health notes in About them; the Miller family's week
+    (tests/fixtures/frank-week.json) through the diary and the insight lines (sweets with diabetes noted -> "Worth
+    mentioning to the doctor or nurse"; Wednesday's drinks with their base; Friday's "less sure"); the sheet with the
+    exact text before those lines go to online help for their wording; the tip of the day; About them saved to a
+    file, cleared and brought back identical; and the bigger pictures on the person's screen (110 to 130 px, three
+    choices and "something else" on 390 x 844 without scrolling);
   - with a production build or the hosted copy (a service worker is there): the same flow with the connection off;
   - every control at least 24 px, every button at least 44 px, the main button at least 60 px, the person's choices
     at least 80 px; no page error and no sideways overflow on any screen.
@@ -37,6 +46,8 @@ Usage: npm run build && npx vite preview (in another shell; or npm run dev with 
 Exit code 0 when every check passes, 1 otherwise.
 """
 import argparse
+import datetime
+import json
 import os
 import sys
 from urllib.parse import urlparse
@@ -464,7 +475,12 @@ def phone(browser, url, live):
     page.locator('#another').scroll_into_view_if_needed()
     page.locator('[data-next]').first.click()
     page.wait_for_selector('main.simple.card #made-where')
-    check('that question is one idea with three answers and a way out, made by the rules', page.locator('#person .pt').all_inner_texts() == ['body', 'people', 'plans', 'something else'] and page.locator('#made-where').get_attribute('data-maker') == 'code')
+    # (this is the fourth "yes" to a yes / no question within ten minutes of this run: the answer-reliability guard is
+    # on, so the carer's screen says so and this either-or shows its answers turned by one place; none is lost)
+    order = page.locator('#person .pt').all_inner_texts()
+    check('that question is one idea with three answers and a way out, made by the rules', sorted(order[:3]) == ['body', 'people', 'plans'] and order[3] == 'something else' and page.locator('#made-where').get_attribute('data-maker') == 'code', str(order))
+    check('the guard: after "yes" to four yes / no questions in a row, the carer reads "They may be tired. Try again later, or check with a different question."', 'They may be tired. Try again later, or check with a different question.' in text(page, '#guard'), text(page)[:200])
+    check('the guard: the next either-or shows its answers in a different order (people, plans, body), and the line to say follows it', order == ['people', 'plans', 'body', 'something else'] and 'people, plans, body, or something else' in text(page, '.say').lower(), f"{order} / {text(page, '.say')}")
     page.locator('[data-act=show]').click()
     page.wait_for_selector('main.pv .pt')
     hold_exit(page)
@@ -558,7 +574,7 @@ def phone(browser, url, live):
     check('About them has the top bar: "Back" and "Talk Partner / Home"', text(page, '#s-top') == 'Back Talk Partner Home')
     page.wait_for_selector('main.about-simple')
     about = text(page)
-    check('About them: four rows, "Everything here stays on this phone.", nothing required', page.locator('.rowhead').count() == 4 and 'Everything here stays on this phone.' in about and page.locator('input:not([type=file])').count() == 0, about[:200])
+    check('About them: five rows (the fifth is health notes), "Everything here stays on this phone.", nothing required', page.locator('.rowhead').count() == 5 and 'Everything here stays on this phone.' in about and page.locator('#about input:not([type=file])').count() == 0, about[:200])
     page.locator('.rowhead[data-row=names]').click()
     page.fill('input[data-field=personName]', 'Frank')
     page.fill('input[data-field=partnerName]', 'Carol')
@@ -669,7 +685,7 @@ def offline(browser, url):
     new_q(page)
     page.locator('.foot a[href="#/about"]').click()
     page.wait_for_selector('main.about-simple')
-    check('offline: About them opens', page.locator('.rowhead').count() == 4)
+    check('offline: About them opens', page.locator('.rowhead').count() == 5)
     add_photo(page, 'tea')
     check('offline: a photo can be added with no connection (it never needed one)', page.locator('#photo-list li').count() == 1)
     page.locator('[data-act=home]').click()
@@ -685,6 +701,19 @@ def offline(browser, url):
     page.wait_for_selector('main.simple.nocard')
     check('offline: a question that needs online help gets a clear "needs the internet" state, and no sheet', page.locator('#offline').is_visible() and 'This question needs the internet, and you are offline.' in text(page) and page.locator('#sheet, [data-act=sheet]').count() == 0, text(page)[:200])
     screen_checks(page, 'offline, needs the internet', primary=False)
+    # phase 3 with the connection off: the diary, the one-tap log, the week's lines (rules, on this phone), health notes
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    page.locator('#diary-link').click()
+    page.wait_for_selector('main.simple.diary')
+    page.locator('[data-log=drank]').click()
+    page.wait_for_selector('#logged')
+    check('offline: the diary opens, holds the answer given offline, and a tap logs "Drank"', 'Would you like tea or coffee? tea' in text(page, '#timeline') and 'Drank' in text(page, '#timeline') and len(page.evaluate(KV_GET, 'diary')) >= 2, text(page, '#timeline'))
+    page.locator('#tab-week').click()
+    page.wait_for_selector('#insights')
+    wk = text(page, '#insights')
+    check('offline: the week\'s lines are counted and worded by the rules on this phone, and online wording is not offered', "Counted and worded by the app's rules on this phone. No AI, nothing sent." in wk and 'They are not medical advice and not a diagnosis.' in wk and page.locator('#ins-plainer').count() == 0, wk)
+    screen_checks(page, 'offline, the diary', primary=False)
     ctx.set_offline(False)
     check('offline: no page error', not errors, '; '.join(errors))
     ctx.close()
@@ -919,6 +948,299 @@ def photos(browser, url):
     ctx.close()
 
 
+KV_GET = """(key) => new Promise((res) => { const r = indexedDB.open('talk-partner', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => { const q = r.result.transaction('kv', 'readonly').objectStore('kv').get(key); q.onsuccess = () => res(q.result === undefined ? null : q.result); q.onerror = () => res(null); }; r.onerror = () => res(null); })"""
+KV_PUT = """(all) => new Promise((res) => { const r = indexedDB.open('talk-partner', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => { const tx = r.result.transaction('kv', 'readwrite'); for (const [k, v] of Object.entries(all)) tx.objectStore('kv').put(v, k); tx.oncomplete = () => res(true); tx.onerror = () => res(false); }; r.onerror = () => res(false); })"""
+FIXTURE_WEEK = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tests', 'fixtures', 'frank-week.json')
+LOG_TOPIC = {'drank': 'food', 'ate': 'food', 'toilet': 'body', 'slept': 'rest', 'pain': 'body'}
+
+
+def frank_week():
+    """tests/fixtures/frank-week.json on the last seven days: day 6 (the fixture's Sunday) is today. The same entries
+    that tests/unit/frank-week.test.ts runs through the guard and the rules, with the "less sure" marks the guard sets."""
+    week = json.load(open(FIXTURE_WEEK))
+    today = datetime.date.today()
+    day = lambda d: today - datetime.timedelta(days=6 - d)
+    entries = []
+    for i, r in enumerate(week['entries']):
+        h, m = (int(x) for x in r['t'].split(':'))
+        at = int(datetime.datetime.combine(day(r['d']), datetime.time(h, m)).timestamp() * 1000)
+        e = {'id': f'w{i}', 'at': at, 'kind': r['kind'], 'label': r['label'], 'topic': r.get('topic') or LOG_TOPIC[r['log']]}
+        for k in ('log', 'q'):
+            if k in r:
+                e[k] = r[k]
+        if r.get('lessSure'):
+            e['lessSure'] = True
+        entries.append(e)
+    name = lambda d: f"{day(d):%a} {day(d).day} {day(d):%b}"
+    return week, entries, name
+
+
+def diary(browser, url, live):
+    """Phase 3, as Carol on her phone: the one-tap log, the diary by day, week and month and by topic, the guard,
+    health notes, the Miller family's week and its insight lines, the sheet before the lines go to online help, the
+    tip of the day, the copy of About them in a file, bigger pictures on the person's screen."""
+    host = urlparse(url).hostname
+    ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block', accept_downloads=True)
+    outside = []
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    page = ctx.new_page()
+    errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('dialog', lambda d: d.accept())
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
+
+    # ---- the way in, and the empty diary
+    below = page.evaluate("document.querySelector('#diary-link').getBoundingClientRect().top > document.querySelector('#ask').getBoundingClientRect().bottom - 1")
+    check('diary: the first screen has "Diary" under the questions, not above them', below and 'Diary' in text(page, '#diary-link'))
+    page.locator('#diary-link').click()
+    page.wait_for_selector('main.simple.diary')
+    first = text(page)
+    check('diary: opens on Today, empty, and says it is kept on this phone only and never shown on their screen', 'Nothing entered today yet.' in first and 'The diary is kept on this phone only. It is never sent anywhere, and it is never shown on their screen.' in first and page.locator('#tab-today[aria-selected=true]').count() == 1, first[:300])
+    check('diary: five one-tap log buttons (Drank, Ate, Toilet, Slept, Pain), each at least 80 px tall', page.locator('#log-row .logbtn').all_inner_texts() == ['Drank', 'Ate', 'Toilet', 'Slept', 'Pain'] and min(b[3] for b in ys(page, '#log-row .logbtn')) >= 80, str(ys(page, '#log-row .logbtn')))
+    check('diary: an empty diary has no "what stands out", nothing to copy and nothing to delete', page.locator('#insights, #diary-copy, #diary-del').count() == 0)
+    screen_checks(page, 'diary: empty', primary=False)
+
+    # ---- one tap logs it, with the time; Undo; it is kept across a reload
+    page.locator('[data-log=drank]').click()
+    page.wait_for_selector('#logged')
+    now = page.evaluate("(() => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); })()")
+    logged = text(page, '#logged')
+    check('diary: one tap on "Drank" logs it with the time, and says so', logged.startswith('Logged: Drank, ') and 'Undo' in logged and page.locator('#timeline .de').count() == 1 and 'Drank' in text(page, '#timeline'), logged)
+    check('diary: the entry is on today\'s timeline with its time', text(page, '#timeline .de time')[:4] == now[:4] or text(page, '#timeline .de time') != '', text(page, '#timeline'))
+    page.locator('[data-act=log-undo]').click()
+    page.wait_for_function("!document.querySelector('#logged')")
+    check('diary: "Undo" takes it out again', page.locator('#timeline .de').count() == 0 and page.evaluate(KV_GET, 'diary') == [])
+    for k in ('drank', 'ate', 'toilet', 'slept', 'pain'):
+        page.locator(f'[data-log={k}]').click()
+        page.wait_for_selector('#logged')
+    check('diary: five taps, five entries, in order of time', page.locator('#timeline .de b').all_inner_texts() == ['Drank', 'Ate', 'Toilet', 'Slept', 'Pain'], str(page.locator('#timeline .de b').all_inner_texts()))
+    page.locator('#diary-topic').select_option('body')
+    page.wait_for_timeout(100)
+    check('diary: the topic filter (Body & care: Toilet and Pain)', page.locator('#timeline .de b').all_inner_texts() == ['Toilet', 'Pain'])
+    page.locator('#diary-topic').select_option('people')
+    page.wait_for_timeout(100)
+    check('diary: a topic with nothing in it says so', 'Nothing on this topic here.' in text(page, '#timeline'))
+    page.locator('#diary-topic').select_option('all')
+    screen_checks(page, 'diary: today, five entries', primary=False)
+    page.reload()
+    page.wait_for_selector('main.simple.diary')
+    check('diary: kept across a reload (IndexedDB on this phone)', page.locator('#timeline .de').count() == 5 and len(page.evaluate(KV_GET, 'diary')) == 5)
+    check('diary: Back goes to the first screen', True)
+    page.locator('[data-act=back]').click()
+    page.wait_for_selector('main.simple.home')
+
+    # ---- the guard: "yes" to four yes / no questions in a row
+    for i, (topic, q) in enumerate((('food', 'Are you hungry?'), ('rest', 'Are you tired?'), ('body', 'Do you need the toilet?'), ('body', 'Are you in pain?'))):
+        ask_topic(page, topic, q)
+        if i == 3:
+            page.locator('[data-act=show]').click()
+            page.wait_for_selector('main.pv .pt')
+            page.locator('main.pv .pt', has_text='yes').first.click()
+            page.wait_for_selector('[data-confirm=yes]')
+            page.locator('[data-confirm=yes]').click()
+            page.wait_for_selector('.p-give')
+            person = text(page)
+            check('guard: the person\'s own screen says nothing of it ("Thank you. Yes." and "Give the phone back", no line, no mark)', 'tired. Try' not in person and 'less sure' not in person and page.locator('#guard').count() == 0 and 'Thank you.' in person, person)
+            page.locator('.p-give').click()
+            page.wait_for_selector('main.simple.s-answered')
+        else:
+            answer(page, 'yes')
+            check(f'guard: nothing is said after {i + 1} "yes"', page.locator('#guard').count() == 0)
+        if i < 3:
+            new_q(page)
+    guard = text(page, '#guard') if page.locator('#guard').count() else ''
+    check('guard: after the fourth "yes" the carer reads "They may be tired. Try again later, or check with a different question."', 'They may be tired. Try again later, or check with a different question.' in guard and 'nearly all "yes"' in guard and 'less sure' in guard, guard)
+    screen_checks(page, 'guard: the answered screen with the line', primary=False)
+    hist = page.evaluate(KV_GET, 'history')
+    check('guard: the four answers are marked "less sure" in the answers kept here', [bool(h.get('lessSure')) for h in hist] == [True] * 4 and all(h.get('yn') and h.get('pos') == 0 for h in hist), str(hist)[:300])
+    new_q(page)
+    ask_topic(page, 'food', 'tea or coffee')
+    check('guard: the next either-or has its answers in a different order (coffee, tea), none removed, and the line to say follows', page.locator('#person .pt').all_inner_texts() == ['coffee', 'tea', 'something else'] and 'coffee, tea, or something else' in text(page, '.say').lower() and page.locator('#guard').count() == 1, f"{page.locator('#person .pt').all_inner_texts()} / {text(page, '.say')}")
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    page.locator('#diary-link').click()
+    page.wait_for_selector('main.simple.diary')
+    check('guard: in the diary the four answers carry "less sure", and what the carer logged does not', page.locator('#timeline .de[data-less-sure]').count() == 4 and page.locator('#timeline .de.log[data-less-sure]').count() == 0 and page.locator('#timeline .tag.unsure').count() == 4, text(page, '#timeline'))
+    check('diary: the answers are there with their questions ("Are you hungry? yes")', 'Are you hungry? yes' in text(page, '#timeline'))
+    tip = text(page, '#day-tip') if page.locator('#day-tip').count() else ''
+    check('tip of the day: one sentence about the carer\'s own questions, with what it is from, worded by the rules', "Each of today's 5 questions asked one clear thing." in tip and 'From your 5 questions today. About the questions, never about them.' in tip and 'No AI, nothing sent.' in tip, tip)
+    page.locator('#tip-hide').click()
+    page.wait_for_selector('#tip-show')
+    page.wait_for_timeout(300)
+    page.reload()
+    page.wait_for_selector('main.simple.diary')
+    check('tip of the day: "Hide tips" hides it, and it stays hidden after a reload', page.locator('#day-tip').count() == 0 and page.locator('#tip-show').count() == 1)
+    screen_checks(page, 'diary: today, with answers and "less sure"', primary=False)
+
+    # ---- health notes, in About them
+    page.goto(url + '#/about')
+    page.wait_for_selector('main.about-simple')
+    page.locator('.rowhead[data-row=health]').click()
+    page.wait_for_selector('#health-text')
+    health = text(page, '.rowcard[data-row=health]')
+    check('health notes: four toggles and free text; "never sent to online help"; "not a medical record"', page.locator('input[data-health]').count() == 4 and 'Health notes stay on this phone. They are never sent to online help.' in health and 'This is not a medical record.' in health, health)
+    page.locator('input[data-health=diabetes]').check()
+    page.locator('#health-text').fill('Type 2, diet only.')
+    screen_checks(page, 'About them: health notes open', primary=False)
+    page.reload()
+    page.wait_for_selector('main.about-simple')
+    check('health notes: kept on this phone across a reload, and shown on the closed row', page.evaluate(KV_GET, 'health') == {'text': 'Type 2, diet only.', 'diabetes': True, 'swallowing': False, 'fluidLimit': False, 'reminders': False} and 'Diabetes, Type 2, diet only.' in text(page, '.rowcard[data-row=health]'), str(page.evaluate(KV_GET, 'health')))
+    check('health notes: not part of the profile the card prompts read', 'health' not in (page.evaluate(KV_GET, 'profile') or {}) and 'diabetes' not in json.dumps(page.evaluate(KV_GET, 'profile') or {}).lower())
+
+    # ---- the Miller family's week (tests/fixtures/frank-week.json) drives the diary and the insights
+    week, entries, name = frank_week()
+    page.evaluate(KV_PUT, {'diary': entries, 'health': week['health'], 'profile': week['profile'], 'history': [], 'asks': []})
+    page.goto(url + '#/diary')
+    page.wait_for_selector('main.simple.diary')
+    page.reload()
+    page.wait_for_selector('main.simple.diary')
+    check('week fixture: the diary is Frank\'s ("Frank\'s diary")', "Frank's diary" in text(page, 'h1'))
+    page.locator('#tab-week').click()
+    page.wait_for_selector('#insights')
+    days = page.evaluate("[...document.querySelectorAll('#timeline .day')].map((d) => d.dataset.day)")
+    check('week fixture: the Week tab shows the days newest first, each a timeline', days[-6:] == [name(d) for d in (5, 4, 3, 2, 1, 0)] and len(days) in (6, 7), str(days))
+    mon = text(page, f'#timeline .day[data-day="{name(0)}"]')
+    check('week fixture: Monday reads as a day ("07:40 Would you like tea or coffee? tea … 10:30 Drank … 14:00 Are you tired? yes")', '07:40 Would you like tea or coffee? tea' in mon and '10:30 Drank' in mon and '14:00 Are you tired? yes' in mon, mon[:300])
+    ins = page.evaluate("[...document.querySelectorAll('#insights .ins')].map((l) => ({ id: l.dataset.id, level: l.dataset.level, lvl: (l.querySelector('.lvl') || {}).innerText || '', text: l.querySelector('.ins-text').innerText.replace(/\\s+/g, ' ').trim(), base: l.querySelector('.ins-base').innerText.trim() }))")
+    check('week fixture: three lines, in order: sweets, Wednesday\'s drinks, Friday\'s "less sure"', [x['id'] for x in ins] == week['expect']['week'], str(ins))
+    by = {x['id']: x for x in ins}
+    sw = by.get('sweets', {})
+    check('week fixture, Thursday: sweets with diabetes noted -> "Worth mentioning to the doctor or nurse", and no diet advice', sw.get('lvl', '').strip() == 'Worth mentioning to the doctor or nurse' and sw.get('text') == 'Something sweet was chosen 3 times in the last 7 days. Diabetes is noted here.' and sw.get('base') == 'Chosen 3 times in 7 days. Only what was entered here.', str(sw))
+    fd = by.get('few-drinks', {})
+    check('week fixture, Wednesday: the drinks line names the day and its base ("Chosen or logged 2 times that day. Only what was entered here.")', fd.get('text') == f'Few drinks were entered on {name(2)}: 2.' and fd.get('base') == 'Chosen or logged 2 times that day. Only what was entered here.', str(fd))
+    ls = by.get('less-sure', {})
+    check('week fixture, Friday: the answers marked "less sure" are a line of their own', ls.get('text', '').startswith(f'5 answers on {name(4)} are marked "less sure"') and ls.get('base') == '5 of 25 answers in 7 days.', str(ls))
+    check('week fixture: Friday evening\'s five answers carry "less sure" in the timeline', page.locator(f'#timeline .day[data-day="{name(4)}"] .de[data-less-sure]').count() == 5)
+    whole = text(page, '#insights')
+    check('insights: the fixed footer ("not medical advice and not a diagnosis"), and who counted and worded them (the rules, no AI, nothing sent)', 'They are not medical advice and not a diagnosis.' in whole and "Counted and worded by the app's rules on this phone. No AI, nothing sent." in whole, whole[-400:])
+    check('insights: no medical advice in any line (no dose, medicine, diet, "should", "drink more")', not any(w in whole.lower() for w in ('dose', 'medicine', 'medication', 'insulin', ' diet', 'should', 'drink more', 'more to drink', 'dehydrat')), whole)
+    check('insights: no line names Frank, his family or what he chose', not any(w in whole for w in ('Frank', 'Carol', 'Beth', 'Tom', 'ginger', 'porridge', 'Patel')), whole)
+    screen_checks(page, 'diary: the week, with what stands out', primary=False)
+    page.locator('#diary-topic').select_option('feel')
+    page.wait_for_timeout(100)
+    check('week fixture: the topic filter narrows the timeline, and the counted lines stay the whole week\'s', page.locator('#timeline .de').count() == 0 and page.locator('#insights .ins').count() == 3)
+    page.locator('#diary-topic').select_option('body')
+    page.wait_for_timeout(100)
+    check('week fixture: Body & care holds the pain and toilet answers', 'Are you in pain? yes' in text(page, '#timeline') and 'Drank' not in text(page, '#timeline'))
+    page.locator('#diary-topic').select_option('all')
+    page.locator('#tab-month').click()
+    page.wait_for_timeout(150)
+    month = text(page, '#insights')
+    check('week fixture: the Month tab counts 30 days with a month\'s thresholds (3 sweet choices in 30 days are not a line; "5 of 25 answers in 30 days")', 'What stands out: the last 30 days' in month and f'Few drinks were entered on {name(2)}: 2.' in month and '5 of 25 answers in 30 days.' in month and 'Something sweet' not in month, month[:400])
+    page.locator('#tab-today').click()
+    page.wait_for_timeout(150)
+    check('week fixture: Today has no "what stands out" (one day is too little to count)', page.locator('#insights').count() == 0)
+
+    # ---- plainer words by online help: a sheet with the exact text first, every time
+    page.locator('#tab-week').click()
+    page.wait_for_selector('#ins-plainer')
+    before = len(outside)
+    page.locator('#ins-plainer').click()
+    page.wait_for_selector('#ins-sheet')
+    sheet = page.locator('#ins-sheet-text').inner_text()
+    want = f'1. Something sweet was chosen 3 times in the last 7 days.\n2. Few drinks were entered on {name(2)}: 2.\n3. 5 answers on {name(4)} are marked "less sure": yes to nearly everything, or the same place on the screen each time. Read that day with care.'
+    check('wording sheet: it shows the exact text that would go, the three counted lines and nothing else', sheet.strip() == want, sheet)
+    stxt = text(page, '#ins-sheet')
+    check('wording sheet: no name, no health note, nothing of the diary is in that text', not any(w in sheet for w in ('Frank', 'Carol', 'Beth', 'Tom', 'Diabetes', 'diabetes', 'Type 2', 'Patel', 'ginger', 'porridge', 'tea')))
+    check('wording sheet: says what is never sent (names, photos, the diary itself, the health notes) and that it is for these lines, once', 'names, photos, the diary itself, the health notes, the answers they chose.' in stxt and 'This is for these lines, this once. It does not turn online help on for anything else.' in stxt, stxt)
+    page.locator('#ins-sheet-whole summary').click()
+    whole_req = page.locator('#ins-sheet-whole pre').inner_text()
+    check('wording sheet: the whole request can be read (mode PREFER_IN_CLOUD, the fixed instructions, the same text)', '"mode": "PREFER_IN_CLOUD"' in whole_req and 'Do not add advice, causes, a diagnosis, medicines, doses, a diet' in whole_req and 'Something sweet was chosen 3 times' in whole_req and 'Frank' not in whole_req and 'iabetes' not in whole_req, whole_req[:300])
+    check('wording sheet: nothing was asked of any other host while it is up', len(outside) == before, str(outside[before:]))
+    screen_checks(page, 'wording sheet', primary=True)
+    page.locator('[data-act=ins-no]').click()
+    page.wait_for_function("!document.querySelector('#ins-sheet')")
+    check('wording sheet: "No" keeps the app\'s own words, and nothing was sent', "Counted and worded by the app's rules on this phone. No AI, nothing sent." in text(page, '#ins-by') and len(outside) == before and page.evaluate(KV_GET, 'settings') is not None and not (page.evaluate(KV_GET, 'settings') or {}).get('cloudHelp'))
+    if live:
+        print('SKIP  wording sheet: "Yes" is not pressed on a hosted copy (--live), so nothing is sent')
+    else:
+        page.locator('#ins-plainer').click()
+        page.wait_for_selector('#ins-sheet')
+        page.locator('[data-act=ins-yes]').click()
+        page.wait_for_function("document.querySelector('#ins-by') && /own wording stands/.test(document.querySelector('#ins-by').innerText)", timeout=40000)
+        after = text(page, '#insights')
+        check('wording: with online help refused by this test, the screen says the lines may have left and the app\'s own wording stands (never "nothing was sent")', "Online help did not answer, so the app's own wording stands. The lines you saw on the sheet may have left this phone." in after and 'Something sweet was chosen 3 times in the last 7 days.' in after, after[-400:])
+        check('wording: the yes did not turn online help on for anything else', not (page.evaluate(KV_GET, 'settings') or {}).get('cloudHelp'))
+        page.locator('[data-act=home]').click()
+        page.wait_for_selector('main.simple.home')
+        check('wording: the first screen\'s privacy line says the lines were handed to Google\'s online AI for their wording', "Lines from the diary's \"What stands out\" were handed to Google's online AI once this session, for their wording" in text(page, '#s-privacy'), text(page, '#s-privacy'))
+        page.locator('#diary-link').click()
+        page.wait_for_selector('main.simple.diary')
+
+    # ---- a copy of About them in a file: save, clear, bring back = identical
+    page.goto(url + '#/about')
+    page.wait_for_selector('main.about-simple')
+    add_photo(page, 'Bo', label='backup')
+    saved = {k: page.evaluate(KV_GET, k) for k in ('profile', 'photos', 'health')}
+    check('backup: "Keep a copy" says the file is made on this phone, sent nowhere, and holds names, photos and health notes', 'The app sends it nowhere. It holds names, photos and health notes: keep it somewhere private.' in text(page, '#backup'), text(page, '#backup'))
+    before = len(outside)
+    with page.expect_download() as dl:
+        page.locator('#backup-save').click()
+    path = dl.value.path()
+    data = json.load(open(path))
+    check('backup: the file is JSON with the profile, the photos as data URLs and the health notes', dl.value.suggested_filename == 'talk-partner-about-them.json' and data['app'] == 'talk-partner' and data['kind'] == 'about-them' and data['profile'] == saved['profile'] and data['photos'] == saved['photos'] and data['photos'][0]['data'].startswith('data:image/jpeg;base64,') and data['health'] == saved['health'], str({k: str(v)[:60] for k, v in data.items()}))
+    check('backup: saving the file asked nothing of any other host', len(outside) == before)
+    kept_diary = len(page.evaluate(KV_GET, 'diary'))
+    page.locator('#delete-everything').click()
+    page.wait_for_selector('main.simple.home')
+    check('backup: "Delete everything on this phone" clears About them, the photos, the health notes and the diary', all(not page.evaluate(KV_GET, k) for k in ('profile', 'photos', 'health', 'diary')))
+    page.goto(url + '#/about')
+    page.wait_for_selector('main.about-simple')
+    page.locator('#backup-file').set_input_files({'name': 'notes.json', 'mimeType': 'application/json', 'buffer': b'{"some": "other file"}'})
+    page.wait_for_selector('#backup-error')
+    check('backup: a file that is not ours is refused in plain words, and nothing changes', 'This is not an About them file from Talk Partner.' in text(page, '#backup-error') and not page.evaluate(KV_GET, 'profile'))
+    page.locator('#backup-file').set_input_files(path)
+    page.wait_for_selector('#import-sheet')
+    prev = text(page, '#import-sheet')
+    check('backup: before anything is replaced, the file\'s contents are shown (the name, 3 people, 1 photo, health notes: diabetes …)', 'The name: Frank' in prev and '3 people' in prev and '1 photo' in prev and 'Health notes: diabetes' in prev and 'Bringing it back replaces About them' in prev and not page.evaluate(KV_GET, 'profile'), prev)
+    screen_checks(page, 'backup: the preview sheet', primary=True)
+    page.locator('[data-act=import-yes]').click()
+    page.wait_for_selector('#backup-done')
+    back = {k: page.evaluate(KV_GET, k) for k in ('profile', 'photos', 'health')}
+    check('backup: save -> clear -> bring back = identical (profile, photos, health notes)', back == saved, str({k: back[k] == saved[k] for k in back}))
+    check('backup: the diary is not in the file (it was deleted with everything, and stays empty)', kept_diary > 0 and not page.evaluate(KV_GET, 'diary'))
+    page.reload()
+    page.wait_for_selector('main.about-simple')
+    check('backup: after a reload About them is Frank\'s again, with the photo and the health notes', 'About Frank' in text(page, 'h1') and page.locator('#photo-list li').count() == 1 and 'Diabetes' in text(page, '.rowcard[data-row=health]'))
+    screen_checks(page, 'About them: with "Keep a copy"', primary=True)
+
+    # ---- delete the diary
+    page.evaluate(KV_PUT, {'diary': entries})
+    page.goto(url + '#/diary')
+    page.wait_for_selector('main.simple.diary')
+    page.reload()
+    page.wait_for_selector('#diary-del')
+    page.locator('#diary-del').click()
+    page.wait_for_selector('#diary-deleted')
+    check('diary: "Delete the diary" (after a yes) empties it on this phone and says so', page.evaluate(KV_GET, 'diary') == [] and 'The diary was deleted.' in text(page) and page.locator('#timeline .de').count() == 0)
+
+    # ---- bigger pictures on the person's screen, and the photo the same size
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    ask_topic(page, 'food', 'water, juice or milk')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    m = page.evaluate("(() => { const de = document.documentElement; const t = [...document.querySelectorAll('main.pv .pt:not(.esc)')]; return { pics: t.map((x) => Math.round(x.querySelector('svg, img').getBoundingClientRect().height)), tiles: t.map((x) => Math.round(x.getBoundingClientRect().height)), words: t.map((x) => parseFloat(getComputedStyle(x).fontSize)), esc: Math.round(document.querySelector('main.pv .pt.esc').getBoundingClientRect().bottom), sh: de.scrollHeight, ch: de.clientHeight }; })()")
+    check('pictures: with three choices each picture is 110 to 130 px tall and fills most of its tile', all(110 <= p <= 130 for p in m['pics']) and all(p / t >= 0.6 for p, t in zip(m['pics'], m['tiles'])), str(m))
+    check('pictures: the word stays large (30 px or more)', min(m['words']) >= 30, str(m))
+    check('pictures: three choices and "something else" stand on 390 x 844 without scrolling', m['sh'] <= m['ch'] and m['esc'] <= 844, str(m))
+    screen_checks(page, 'pictures: three choices on the person\'s screen', primary=False)
+    hold_exit(page)
+    page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    ask_topic(page, 'food', 'tea or coffee')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    two = page.evaluate("[...document.querySelectorAll('main.pv .pt:not(.esc)')].map((x) => Math.round(x.querySelector('svg, img').getBoundingClientRect().height))")
+    check('pictures: with two choices each picture is 110 to 130 px tall', len(two) == 2 and all(110 <= p <= 130 for p in two), str(two))
+    check('diary run: no page error', not errors, '; '.join(errors))
+    if live:
+        check('diary run: nothing was asked of any other host', not outside, str(outside[:3]))
+    ctx.close()
+
+
 def words(browser, url, ua, word, label, width, height):
     host = urlparse(url).hostname
     ctx = browser.new_context(viewport={'width': width, 'height': height}, service_workers='block', **({'user_agent': ua} if ua else {}))
@@ -971,6 +1293,7 @@ def main():
         phone(browser, url, a.live)
         learning(browser, url)
         photos(browser, url)
+        diary(browser, url, a.live)
         if a.dev:
             print('SKIP  offline: --dev (the dev server has no service worker; run against a production build)')
         else:

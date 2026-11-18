@@ -40,6 +40,19 @@ export interface Engine {
    * without it (no project settings, or a browser with no on-device model) gets the rules' own summary.
    */
   summarizeDevice?(prompt: string): Promise<ModelResult>;
+  /**
+   * Optional: put a few rule-made lines into plainer words (core/reword.ts: the insights, the tip of the day). ONLY on
+   * device, like the summary step; throws rather than fall back. The prompt may hold the carer's health notes.
+   */
+  rewordDevice?(prompt: string): Promise<ModelResult>;
+  /**
+   * Optional: the same wording step by online help (PREFER_IN_CLOUD), for the insight lines on a device with no model
+   * of its own. Called only after a yes on the sheet that shows this exact text. The text is the rules' own lines:
+   * no name, no health note, nothing of the diary (core/insights.ts, insightCloudText).
+   */
+  rewordCloud?(text: string): Promise<ModelResult>;
+  /** The exact request body `rewordCloud` would send for this text. */
+  rewordRequest?(text: string): unknown;
   /** Optional: use this cloud text model from the next cloud call on (a name Remote Config gave, already checked). */
   setCloudModel?(model: string): void;
   /** The exact request body the cloud step would send for this stripped question. */

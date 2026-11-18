@@ -28,6 +28,15 @@ import { spokenLine } from '../../core/rules';
 import { START_FRAME, addPhoto as addOwnPhoto, clampFrame, cleanWord, photoFor, removePhoto, type Frame, type Photo } from '../../core/photos';
 import { framed, loadPhoto, type Loaded } from './photo';
 import { stripQuestion } from '../../core/strip';
+import { backupText, makeBackup, readBackup, type Backup, type BackupPreview } from '../../core/backup';
+import { addEntry, answerEntry, diaryText, inSpan, logEntry, markDiary, needEntry, removeEntry, type DiaryEntry, type DiaryTopic, type LogKind, type Span } from '../../core/diary';
+import { within, type CloudError } from '../../core/engine';
+import { NO_HEALTH, cleanHealth, cloudLines, insightCloudText, insightDevicePrompt, insights, type HealthNotes, type Insight, type InsightSpan } from '../../core/insights';
+import { RELIABLE, markLessSure, reliability, reorder, tapsFrom } from '../../core/reliability';
+import { checkReworded, rewordOnDevice, type RewordSource } from '../../core/reword';
+import { addAsk, askOf, tipOfDay, type Ask } from '../../core/tip';
+import { topicOf } from '../../core/topics';
+import { backupBlock, diaryLink, diaryScreen, guardBlock, importSheet, insightSheet, type InsightsModel } from './diary';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
 import { pickEngine } from './ai/pick';
@@ -52,7 +61,7 @@ const C = COPY;
 const dw = (text: string) => deviceWords(text, copyDevice());
 
 /** 'trial' is the hidden stopwatch for devlog/TRIAL_PROTOCOL.md: reachable only by typing #/trial, never linked. */
-type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'feedback' | 'trial';
+type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'feedback' | 'trial' | 'diary';
 
 interface Settings {
   cloudHelp: boolean;
@@ -74,6 +83,8 @@ interface Settings {
   howFolded?: boolean;
   /** Simple view: a first answer was confirmed in this browser (About them is offered only after that). */
   firstCard?: boolean;
+  /** The diary's tip of the day is hidden ("Hide tips"); it stays hidden until "Show the tip of the day". */
+  tipOff?: boolean;
 }
 
 interface State {
@@ -151,6 +162,30 @@ interface State {
   short: DaySummary | null;
   shortBusy: boolean;
   shortCopied: boolean;
+  /** The diary (core/diary.ts): confirmed answers, needs pointed to and the carer's one-tap log. On this device only (IndexedDB key 'diary'); never sent, never on the person's screen. */
+  diary: DiaryEntry[];
+  /** Health notes (core/insights.ts), from About them. On this device only (IndexedDB key 'health'); never in a cloud request. */
+  health: HealthNotes;
+  /** The flags of the questions asked (core/tip.ts): four marks and a time each, no words (IndexedDB key 'asks'). */
+  asks: Ask[];
+  diaryTab: Span;
+  diaryTopic: DiaryTopic | 'all';
+  /** The diary: what was just logged (for "Undo"), "Copied", and "the diary was deleted". */
+  logged: { id: string; log: LogKind; at: number } | null;
+  diaryCopied: boolean;
+  diaryDeleted: boolean;
+  /** The wording of the insight lines on screen: the rules' own, the on-device model's, or online help's (after a yes on the sheet). `key` names the lines it belongs to. */
+  ins: { key: string; words: (string | null)[] | null; source: RewordSource; busy: boolean; note: '' | 'failed' | 'notSent' | 'refused' };
+  /** The sheet that shows the exact text before the insight lines go to online help: null when it is not up. */
+  insSheet: { key: string; text: string; request: string; sources: Insight[] } | null;
+  /** How many times insight lines were handed to online help this session (the privacy line says so). */
+  insSent: number;
+  /** The tip of the day in the on-device model's words, for the tip text it belongs to. */
+  tipWords: { of: string; words: string } | null;
+  /** About them, "Keep a copy": the file chosen to bring back (shown before anything is replaced), an error, "done". */
+  importDraft: { backup: Backup; preview: BackupPreview } | null;
+  backupError: string;
+  backupDone: boolean;
 }
 
 const cfg = webConfig();
@@ -202,6 +237,21 @@ const state: State = {
   short: null,
   shortBusy: false,
   shortCopied: false,
+  diary: [],
+  health: NO_HEALTH,
+  asks: [],
+  diaryTab: 'today',
+  diaryTopic: 'all',
+  logged: null,
+  diaryCopied: false,
+  diaryDeleted: false,
+  ins: { key: '', words: null, source: 'rules', busy: false, note: '' },
+  insSheet: null,
+  insSent: 0,
+  tipWords: null,
+  importDraft: null,
+  backupError: '',
+  backupDone: false,
 };
 /** When this page was opened: the simple view's "Today" list holds the answers confirmed since then. */
 const pageStart = Date.now();
@@ -218,6 +268,7 @@ function route(): Route {
   // the quick-needs board, full screen: also reachable by its own address, with no question asked and no model
   if (h === 'needs') { if (state.card?.kind !== 'needs') openNeeds(); return 'person'; }
   if (h === 'how') return 'how';
+  if (h === 'diary') return 'diary';
   if (h === 'feedback') return 'feedback';
   if (h === 'trial') return 'trial';
   // the simple view has no first-run screen: its first screen is the product
@@ -249,6 +300,8 @@ function go(r: Route | 'demo' | 'needs' | '') {
 function backStep(from: string): string | null {
   if (state.sheet) { state.sheet = false; return from; }
   if (state.photoDraft) { state.photoDraft = null; return from; }
+  if (state.insSheet) { state.insSheet = null; return from; }
+  if (state.importDraft) { state.importDraft = null; return from; }
   if (from === 'person' || from === 'needs') {
     const c = state.card;
     // the check ("So: tea. Right?") goes back to the choices; the choices go back to the carer's screen
@@ -370,6 +423,99 @@ async function load() {
   if (Array.isArray(ph)) state.photos = ph;
   const f = await kvGet<Forgotten>('learned');
   if (f) state.forgotten = { ...NOTHING_FORGOTTEN, ...f };
+  const d = await kvGet<DiaryEntry[]>('diary');
+  if (Array.isArray(d)) state.diary = d;
+  state.health = cleanHealth(await kvGet<HealthNotes>('health'));
+  const a = await kvGet<Ask[]>('asks');
+  if (Array.isArray(a)) state.asks = a;
+}
+
+// ---------------------------------------------------------------- phase 3: the guard, the diary, the insights, the tip (carer's side only)
+/** What the answer-reliability guard notices now (core/reliability.ts): rules, from the answers kept on this device. Never for the sample family. */
+const guardNow = () => (learns() ? reliability(tapsFrom(state.history), Date.now()) : RELIABLE);
+const guardHtml = () => guardBlock({ name: state.profile.personName.trim(), flags: guardNow().flags });
+/**
+ * While the guard is on, the next either-or shows its answers in a different order (none removed; the line to say
+ * follows). A yes / no card, a scale and a paged list keep their order.
+ */
+function guardOrder(c: Card): Card {
+  if (c.kind !== 'choice' || c.nextPage || c.scale || c.blocked || !guardNow().flags.length) return c;
+  c.choices = [...reorder(c.choices.filter((x) => x.role === 'answer')), ...c.choices.filter((x) => x.role !== 'answer')];
+  c.say = spokenLine(c.asked, c.choices.map((x) => x.spoken));
+  return c;
+}
+const saveDiary = () => { if (!state.demo) void kvSet('diary', state.diary); };
+/** The flags of a card that was just made, kept for the tip of the day (no word of the question is kept). */
+function noteAsk(c: Card) {
+  if (state.demo) return;
+  state.asks = addAsk(state.asks, askOf(c, Date.now()));
+  void kvSet('asks', state.asks);
+}
+const insKey = (span: InsightSpan, lines: Insight[]) => `${span}|${lines.map((l) => l.text).join('|')}`;
+/**
+ * The insight lines of the diary's tab, and their wording. The lines are rules (core/insights.ts). Where this browser
+ * has the on-device model they are put into plainer words there (ONLY_ON_DEVICE; the check in core/reword.ts decides);
+ * online help words them only after a yes on the sheet (the 'ins-yes' action). No cloud step starts from here.
+ */
+function insightsModel(span: InsightSpan): InsightsModel {
+  const lines = insights(state.diary, state.health, span, Date.now());
+  const key = insKey(span, lines);
+  if (state.ins.key !== key) {
+    const worded = lines.filter((l) => l.id !== 'nothing');
+    const onDevice = !state.demo && worded.length > 0 && worded.length === lines.length && state.device === 'available' && !!state.engine.rewordDevice;
+    state.ins = { key, words: null, source: 'rules', busy: onDevice, note: '' };
+    if (onDevice) {
+      void rewordOnDevice(lines.map((l) => l.text), insightDevicePrompt(lines, state.health), state.engine, true).then((r) => {
+        if (state.ins.key !== key) return;
+        state.ins = { key, words: r.source === 'on-device' ? r.lines : null, source: r.source, busy: false, note: '' };
+        if (route() === 'diary') render();
+      });
+    }
+  }
+  const sendable = cloudLines(lines).length > 0 && !state.demo && state.engine.cloudConfigured && !!state.engine.rewordCloud && (state.device === 'unavailable' || state.device === 'downloadable');
+  return { span, lines, words: state.ins.words, source: state.ins.source, busy: state.ins.busy, note: state.ins.note, cloud: sendable ? (isOnline() ? 'ask' : 'offline') : null };
+}
+/** The tip of the day (core/tip.ts: rules), and where the browser has the on-device model, its sentence in plainer words (ONLY_ON_DEVICE). */
+function tipModel() {
+  const tip = state.demo ? null : tipOfDay(state.asks, Date.now());
+  if (tip && !state.settings.tipOff && state.tipWords?.of !== tip.text && state.device === 'available' && state.engine.rewordDevice) {
+    state.tipWords = { of: tip.text, words: '' };
+    void rewordOnDevice([tip.text], `1. ${tip.text}`, state.engine, true).then((r) => {
+      if (state.tipWords?.of !== tip.text || r.source !== 'on-device') return;
+      state.tipWords = { of: tip.text, words: r.lines[0] };
+      if (route() === 'diary') render();
+    });
+  }
+  return { tip, words: tip && state.tipWords?.of === tip.text && state.tipWords.words ? state.tipWords.words : null, off: !!state.settings.tipOff };
+}
+function diaryView(): string {
+  const now = Date.now();
+  return diaryScreen({
+    name: state.profile.personName.trim(), tab: state.diaryTab, topic: state.diaryTopic, now,
+    entries: inSpan(state.diary, state.diaryTab, now, state.diaryTopic), any: state.diary.length > 0, logged: state.logged,
+    insights: state.diaryTab === 'today' ? null : insightsModel(state.diaryTab), tip: tipModel(), copied: state.diaryCopied, deleted: state.diaryDeleted,
+  });
+}
+/** The yes on the sheet: these lines, this once, to online help for their wording. The text is the one the sheet showed. */
+async function sendInsights() {
+  const sheet = state.insSheet;
+  if (!sheet || !state.engine.rewordCloud) return;
+  state.insSheet = null;
+  state.ins = { key: sheet.key, words: null, source: 'rules', busy: true, note: '' };
+  state.insSent++;
+  render();
+  const done = (next: Partial<typeof state.ins>) => { if (state.ins.key !== sheet.key) return; state.ins = { ...state.ins, busy: false, ...next }; if (route() === 'diary') render(); };
+  try {
+    const r = await within(state.engine.rewordCloud(sheet.text));
+    const words = checkReworded(r.text, sheet.sources.map((l) => l.text));
+    if (!words) { done({ note: 'refused' }); return; }
+    // back onto the lines on screen: a line that did not go keeps the rules' own words
+    const lines = insights(state.diary, state.health, sheet.key.split('|')[0] as InsightSpan, Date.now());
+    done({ words: lines.map((l) => { const i = sheet.sources.findIndex((x) => x.text === l.text); return i < 0 ? null : words[i]; }), source: r.source });
+  } catch (e) {
+    if ((e as CloudError).notSent) state.insSent--;
+    done({ note: (e as CloudError).notSent ? 'notSent' : 'failed' });
+  }
 }
 
 // ---------------------------------------------------------------- what was learned (core/prefs.ts): on this device only
@@ -1125,7 +1271,7 @@ function simplePrivacy(): string[] {
   return privacyLines({
     cloudOn: state.settings.cloudHelp, settingsAsked,
     sent: r.cardsLeft, maybe: r.perCard.filter((x) => x.attempted && !x.left).length, clips: voiceSent.clips,
-  });
+  }).concat(state.insSent ? [C.simple.insights.sentLine(state.insSent)] : []).filter((x, i, all) => !(state.insSent && i === 0 && all.length > 1 && (x === C.simple.privacy.none || x === C.simple.privacy.cloudOn)));
 }
 const aboutName = () => C.about.heading(state.profile.personName);
 const whereInput = () => ({ configured: !!cfg, device: state.device, cloudOn: state.settings.cloudHelp, online: isOnline() });
@@ -1169,6 +1315,7 @@ async function runNarrow(i: NarrowInput) {
   if (state.device === 'checking') await refreshDevice().catch(() => { state.device = 'unavailable'; });
   const card = await narrowCard(i, { profile: state.profile, support: state.settings.support, engine: state.engine, allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available', routing: routing() });
   state.made.push(card);
+  if (!card.blocked) noteAsk(card);
   if (seq !== makeSeq) return;
   setCard(card);
   state.sheet = simpleView() && isOnline() && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
@@ -1220,7 +1367,7 @@ function simpleScreen(): string {
       who: p.role === 'answer' && asksWho(c, p.label, state.profile),
       invite: state.inviteFor === c && !state.inviteOff,
       today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
-      made: simpleMade(c), privacy: simplePrivacy(),
+      made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' ? '' : guardHtml(),
     });
   } else if (c && !state.busy) {
     const prev = c.blocked || c.kind === 'repair' || c.kind === 'needs' ? null : lastAnswer(state.history, c.asked, state.cardAt);
@@ -1232,6 +1379,7 @@ function simpleScreen(): string {
       offline: needsInternet(c, { online: isOnline(), cloudConfigured: state.engine.cloudConfigured }),
       lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(), tips: state.tips,
       usual: (() => { const u = usualFor(c); return u ? usualHint(u) : ''; })(),
+      guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' ? '' : guardHtml(),
     });
   } else {
     const p = state.profile;
@@ -1240,7 +1388,7 @@ function simpleScreen(): string {
       aboutLink: !!state.settings.firstCard || !!(name || p.people.length || p.foods.length || p.places.length || p.tv.length || p.music.length),
       busy: state.busy, error: state.error, question: state.lastQuestion,
       howOpen: !state.settings.howFolded, topics: topics(p), topicOpen: state.topicOpen, aiTag: aiTag(whereInput()), ai: aiLines(whereInput()),
-      privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(),
+      privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: diaryLink(),
     });
   }
   if (!state.sheet || !c?.unsentPayload) return screen;
@@ -1263,7 +1411,8 @@ function render(lifted = false) {
   const app = $('#app');
   // the route goes on #app with a prefix: a bare "person" or "welcome" class made #app pick up the card pane's frame
   // and the welcome padding (the thin frame around the full-screen card, DESIGN_DIRECTIONS "must fix")
-  const simple = simpleView() && (r === 'partner' || r === 'about');
+  // the diary is a carer's screen of the simple view, whichever view the rest is in
+  const simple = (simpleView() && (r === 'partner' || r === 'about')) || r === 'diary';
   app.className = `route-${r}${simple ? ' view-simple' : ''}`;
   // the simple view has its own light look (dark by the system setting); the full view and the person's card do not change
   document.documentElement.dataset.view = simple ? 'simple' : r === 'person' ? 'person' : 'full';
@@ -1273,7 +1422,7 @@ function render(lifted = false) {
   // the card judge mode opens with is simply there: no entrance, so the very first frame is a finished card
   if (key !== lastKey && r === 'about' && simple) refreshLearnedShort();
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError }) : aboutScreen()) : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: backupBlock({ error: state.backupError, done: state.backupDone }) }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   keepGuard();
   if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);
@@ -1285,6 +1434,17 @@ function render(lifted = false) {
     app.querySelector('main')?.setAttribute('inert', '');
     app.insertAdjacentHTML('beforeend', photoSheet({ src: d.loaded.src, w: d.loaded.w, h: d.loaded.h, frame: d.frame, step: d.step, framed: d.framed, word: d.word, error: d.error }));
     document.querySelector<HTMLElement>(d.step === 'label' ? '#photo-word' : '#photo-h')?.focus();
+  }
+  // the two sheets of phase 3: the exact text before insight lines go to online help, and what a file holds before it replaces About them
+  if (r === 'diary' && state.insSheet) {
+    app.querySelector('main')?.setAttribute('inert', '');
+    app.insertAdjacentHTML('beforeend', insightSheet({ text: state.insSheet.text, request: state.insSheet.request }));
+    document.querySelector<HTMLElement>('#ins-sheet-h')?.focus();
+  }
+  if (simple && r === 'about' && state.importDraft) {
+    app.querySelector('main')?.setAttribute('inert', '');
+    app.insertAdjacentHTML('beforeend', importSheet(state.importDraft.preview));
+    document.querySelector<HTMLElement>('#import-h')?.focus();
   }
   if (r === 'trial') {
     timer = setInterval(() => { const el = document.querySelector('#elapsed'); const c = trialClock(); if (el && c) el.textContent = c; }, 100);
@@ -1450,7 +1610,9 @@ async function make(q: string) {
     state.made.push(card);
     if (spoken) voiceCards.add(card);
     if (seq !== makeSeq) return; // a later question was asked meanwhile: its card is the one to show
-    setCard(simpleView() ? usualOrder(card) : card);
+    // (a question that waits for a yes on the consent sheet is noted when it is asked again, not twice)
+    if (!(card.blocked && card.unsentPayload)) noteAsk(card);
+    setCard(simpleView() ? guardOrder(usualOrder(card)) : card);
     // simple view: a question that needs online help, with cloud help off, brings up the consent sheet (never a page)
     // (with no connection the sheet could send nothing: the screen then says the question needs the internet)
     state.sheet = simpleView() && isOnline() && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
@@ -1478,13 +1640,28 @@ function onPersonTap(t: HTMLElement) {
       state.answers.push({ topic: c.topic, label: state.picked.label });
       // kept on this computer for "last time"; with the sample family it stays in memory and goes when judge mode is left
       // (a need from the quick-needs board is of the moment: it is in the recap, and not in "Answers so far" or "Asked before")
+      const at = Date.now();
       if (c.kind !== 'needs') {
-        state.history = addAnswer(state.history, { q: c.asked, topic: c.topic, label: state.picked.label, at: Date.now() });
+        // where the choice stood among the answers, for the answer-reliability guard (an either-or, a yes / no or a feelings card only)
+        const shown = c.choices.filter((x) => x.role === 'answer');
+        const placed = ['choice', 'yesno', 'feeling'].includes(c.kind) && !c.scale ? { pos: shown.indexOf(state.picked), of: shown.length, yn: c.kind === 'yesno' } : {};
+        state.history = addAnswer(state.history, { q: c.asked, topic: c.topic, label: state.picked.label, at, ...placed });
+        if (learns()) {
+          // the guard (core/reliability.ts, rules): a run of "yes" or of one place on the screen is marked "less sure",
+          // in the answers and in the diary. It shows on the carer's side only.
+          const r = reliability(tapsFrom(state.history), at);
+          state.history = markLessSure(state.history, r, at);
+          const topic = topicOf(state.chain[0] ?? c.asked, state.profile)?.id ?? topicOf(c.asked, state.profile)?.id ?? null;
+          state.diary = markDiary(addEntry(state.diary, answerEntry({ q: c.asked, label: state.picked.label, at }, topic)), r.since, at);
+          saveDiary();
+        }
         if (!state.demo) void kvSet('history', state.history);
       } else if (learns()) {
         // what was asked for on the board, and when: counted on this device for "What we've learned" (core/prefs.ts)
-        state.needsLog = [...state.needsLog, { label: state.picked.label, at: Date.now() }].slice(-300);
+        state.needsLog = [...state.needsLog, { label: state.picked.label, at }].slice(-300);
         void kvSet('needs', state.needsLog);
+        state.diary = addEntry(state.diary, needEntry(state.picked.label, at));
+        saveDiary();
       }
     }
     if (simpleView()) refreshShort();
@@ -1611,6 +1788,53 @@ function act(el: HTMLElement) {
     case 'photo-cancel': state.photoDraft = null; render(); break;
     case 'photo-del': state.photos = removePhoto(state.photos, el.dataset.id ?? ''); void kvSet('photos', state.photos); render(); break;
     case 'photo-del-all': if (confirm(C.simple.photos.delAllConfirm)) { state.photos = []; void kvSet('photos', []); render(); } break;
+    // ---- the diary (core/diary.ts): the carer's one-tap log, the tabs, copy, delete; on this device only
+    case 'log': {
+      const kind = el.dataset.log as LogKind;
+      const e = logEntry(kind, Date.now());
+      state.diary = addEntry(state.diary, e); saveDiary();
+      state.logged = { id: e.id, log: kind, at: e.at }; state.diaryCopied = false; state.diaryDeleted = false;
+      render(); document.querySelector<HTMLElement>(`[data-log="${kind}"]`)?.focus({ preventScroll: true });
+      break;
+    }
+    case 'log-undo': state.diary = removeEntry(state.diary, el.dataset.id ?? ''); saveDiary(); state.logged = null; render(); document.querySelector<HTMLElement>('#log-row button')?.focus({ preventScroll: true }); break;
+    case 'diary-tab': state.diaryTab = el.dataset.tab as Span; state.logged = null; state.diaryCopied = false; render(); document.querySelector<HTMLElement>(`#tab-${state.diaryTab}`)?.focus({ preventScroll: true }); break;
+    case 'diary-copy': {
+      const D = C.simple.diary;
+      const text = diaryText(inSpan(state.diary, state.diaryTab, Date.now(), state.diaryTopic), { log: D.log as Record<LogKind, string>, lessSure: C.simple.guard.lessSure, need: D.need });
+      const done = () => { state.diaryCopied = true; render(); document.querySelector<HTMLElement>('#diary-copy')?.focus({ preventScroll: true }); };
+      if (navigator.clipboard?.writeText) void navigator.clipboard.writeText(text).then(done, () => { /* no clipboard here: the diary is on the screen to select */ });
+      break;
+    }
+    case 'diary-del':
+      if (confirm(C.simple.diary.delConfirm)) { state.diary = []; void kvSet('diary', []); state.logged = null; state.diaryDeleted = true; state.ins = { key: '', words: null, source: 'rules', busy: false, note: '' }; render(); }
+      break;
+    case 'tip-toggle': state.settings.tipOff = !state.settings.tipOff; saveSettings(); render(); document.querySelector<HTMLElement>('#tip-hide, #tip-show')?.focus({ preventScroll: true }); break;
+    // ---- the insight lines in plainer words by online help: a sheet with the exact text first, every time
+    case 'ins-plainer': {
+      if (state.diaryTab === 'today' || !state.engine.rewordRequest) break;
+      const lines = insights(state.diary, state.health, state.diaryTab, Date.now());
+      const sources = cloudLines(lines);
+      if (!sources.length) break;
+      const text = insightCloudText(lines);
+      state.insSheet = { key: insKey(state.diaryTab, lines), text, request: JSON.stringify(state.engine.rewordRequest(text), null, 2), sources };
+      render();
+      break;
+    }
+    case 'ins-no': state.insSheet = null; render(); document.querySelector<HTMLElement>('#ins-plainer')?.focus({ preventScroll: true }); break;
+    case 'ins-yes': void sendInsights(); break;
+    // ---- a copy of About them in a file (core/backup.ts): made here, saved where the carer chooses, sent nowhere
+    case 'backup-save': state.backupError = ''; state.backupDone = false; downloadFile(C.simple.backup.fileName, backupText(makeBackup(state.profile, state.photos, state.health, Date.now())), 'application/json'); break;
+    case 'backup-load': state.backupError = ''; state.backupDone = false; document.querySelector<HTMLInputElement>('#backup-file')?.click(); break;
+    case 'import-no': state.importDraft = null; render(); break;
+    case 'import-yes':
+      if (state.importDraft) {
+        const b = state.importDraft.backup;
+        state.profile = b.profile; state.photos = b.photos; state.health = b.health; state.importDraft = null; state.backupDone = true;
+        void kvSet('profile', state.profile); void kvSet('photos', state.photos); void kvSet('health', state.health);
+        render(); document.querySelector<HTMLElement>('#backup')?.scrollIntoView({ block: 'nearest' });
+      }
+      break;
     case 'row': { const row = el.dataset.row as AboutRow; state.aboutRow = state.aboutRow === row ? null : row; render(); break; }
     case 'less': state.less = !state.less; render(); break;
     case 'next':
@@ -1668,7 +1892,7 @@ function act(el: HTMLElement) {
       break;
     case 'delete-all':
       if (confirm(C.about.deleteConfirm)) {
-        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.needsLog = []; state.forgotten = NOTHING_FORGOTTEN; state.learnedShort = null; state.photos = []; state.photoDraft = null; state.made = []; resetCard(); go(simpleView() ? '' : 'welcome'); });
+        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.needsLog = []; state.forgotten = NOTHING_FORGOTTEN; state.learnedShort = null; state.photos = []; state.photoDraft = null; state.made = []; state.diary = []; state.health = NO_HEALTH; state.asks = []; state.logged = null; state.importDraft = null; state.backupError = ''; state.backupDone = false; state.ins = { key: '', words: null, source: 'rules', busy: false, note: '' }; resetCard(); go(simpleView() ? '' : 'welcome'); });
       }
       break;
     default:
@@ -1723,6 +1947,18 @@ app.addEventListener('change', (ev) => {
   if (t.id === 'consent') { state.consentChecked = (t as HTMLInputElement).checked; render(); return; }
   if (t instanceof HTMLInputElement && t.dataset.photo !== undefined && t.files?.[0]) { void addPhoto(Number(t.dataset.photo), t.files[0]); return; }
   if (t instanceof HTMLInputElement && t.id === 'photo-file' && t.files?.[0]) { void openPhoto(t.files[0]); return; }
+  if (t.id === 'diary-topic') { state.diaryTopic = (t as HTMLSelectElement).value as DiaryTopic | 'all'; state.logged = null; render(); document.querySelector<HTMLElement>('#diary-topic')?.focus({ preventScroll: true }); return; }
+  // health notes (About them): kept on this device at once; never part of the profile the prompts read
+  if (t instanceof HTMLInputElement && t.type === 'checkbox' && t.dataset.health) { state.health = cleanHealth({ ...state.health, [t.dataset.health]: t.checked }); if (!state.demo) void kvSet('health', state.health); return; }
+  if (t instanceof HTMLInputElement && t.id === 'backup-file' && t.files?.[0]) {
+    const file = t.files[0];
+    void file.text().then((text) => {
+      const r = readBackup(text);
+      if (r.ok) { state.importDraft = { backup: r.backup, preview: r.preview }; state.backupError = ''; } else { state.importDraft = null; state.backupError = C.simple.backup.bad[r.error]; }
+      render(); if (!r.ok) document.querySelector<HTMLElement>('#backup')?.scrollIntoView({ block: 'nearest' });
+    }, () => { state.backupError = C.simple.backup.bad.json; render(); });
+    return;
+  }
   if (t instanceof HTMLInputElement && t.dataset.field === 'household') { state.profile.people[Number(t.dataset.person)].household = t.checked; saveProfile(); }
 });
 // framing by hand: drag the picture in its square (pointer), or move it with the arrow keys
@@ -1759,6 +1995,7 @@ app.addEventListener('input', (ev) => {
   const t = ev.target as HTMLInputElement | HTMLTextAreaElement;
   if (t.id === 'crop-zoom' && state.photoDraft) { setFrame({ ...state.photoDraft.frame, zoom: Number(t.value) }); return; }
   if (t.id === 'photo-word' && state.photoDraft) { state.photoDraft.word = t.value; return; }
+  if (t instanceof HTMLTextAreaElement && t.dataset.health === 'text') { state.health = cleanHealth({ ...state.health, text: t.value }); if (!state.demo) void kvSet('health', state.health); return; }
   // typing takes over from the microphone; an emptied field holds no spoken question any more
   if (t.id === 'q') { if (voice.view().phase !== 'idle') voice.cancel(); if (!t.value.trim()) dictated = false; }
   if (t.id === 'q') { state.lastQuestion = t.value; if (step === 'waiting') step = 'cancelled'; return; }
@@ -1793,7 +2030,7 @@ app.addEventListener('keydown', (ev) => { if ((ev as KeyboardEvent).key === 'Ent
 // (a back press in the simple view is drawn by `popstate` above; the address change it brings is not drawn twice)
 window.addEventListener('hashchange', () => { if (simpleView() && hashNow() === drawnAt) return; draw(); });
 // the consent sheet: Escape is its "No"
-window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && state.sheet) { state.sheet = false; render(); } else if (ev.key === 'Escape' && state.photoDraft) { state.photoDraft = null; render(); } });
+window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && state.sheet) { state.sheet = false; render(); } else if (ev.key === 'Escape' && state.photoDraft) { state.photoDraft = null; render(); } else if (ev.key === 'Escape' && state.insSheet) { state.insSheet = null; render(); } else if (ev.key === 'Escape' && state.importDraft) { state.importDraft = null; render(); } });
 
 // The app shell is kept by a service worker (web/public/sw.js, its file list written at build time), so the page, the
 // rules, the topics, quick needs and About them open with no connection. Production builds only: the dev server has none.

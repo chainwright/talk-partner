@@ -378,3 +378,85 @@
   .simple .person.mini .tile { font-size: 19px; }
   .sheet .btn { font-size: 17px; }
 }
+
+/* ---------------------------------------------------------------- phase 3 (18 Nov 2026): the carer's side only
+   The guard's line, the diary (one-tap log, tabs, timeline), what stands out, the tip, the copy of About them.
+   Only the colour tokens above are used (ink, muted, panel, field, accent, accent-soft, warn, line). */
+.simple .guard { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; border: 2px solid var(--warn); background: var(--panel); border-radius: 14px; padding: 10px 12px; }
+.simple .guard .sg { width: 26px; height: 26px; color: var(--warn); margin-top: 1px; }
+.simple .guard b { display: block; font-size: 17px; line-height: 1.3; color: var(--ink); overflow-wrap: anywhere; }
+.simple .guard small { display: block; font-size: 15px; line-height: 1.35; color: var(--ink); margin-top: 4px; }
+.simple .btn.diary-link { justify-content: flex-start; text-decoration: none; min-height: 64px; }
+.simple .btn.diary-link span { display: grid; text-align: left; line-height: 1.25; min-width: 0; }
+.simple .btn.diary-link small { font-weight: 400; font-size: 15px; color: var(--ink); margin-top: 2px; }
+.simple .btn.diary-link .sg { color: var(--accent); flex: none; }
+.simple.diary { gap: 16px; }
+.simple .logrow { display: grid; gap: 8px; }
+.simple .logbtns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.simple .logbtns .logbtn { min-height: 84px; padding: 6px 4px; display: grid; justify-items: center; align-content: center; gap: 2px; font-size: 17px; font-weight: 700; }
+.simple .logbtns .logbtn svg { width: 44px; height: 44px; }
+.simple .logged { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 16px; color: var(--ink); min-height: 44px; margin: 0; }
+.simple .logged .sg { width: 22px; height: 22px; color: var(--accent); flex: none; }
+.simple .logged span { flex: 1 1 auto; min-width: 0; }
+.simple .logged .btn { width: auto; min-height: 44px; padding: 4px 16px; }
+.simple .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 2px solid var(--field); border-radius: 14px; overflow: hidden; }
+.simple .tabs .tab { min-height: 52px; border: 0; background: var(--panel); color: var(--ink); font-family: inherit; font-size: 17px; font-weight: 600; cursor: pointer; }
+.simple .tabs .tab + .tab { border-left: 2px solid var(--field); }
+.simple .tabs .tab.on { background: var(--accent-soft); font-weight: 800; box-shadow: inset 0 -4px 0 var(--accent); }
+.simple .tabs .tab:focus-visible { outline: 3px solid var(--accent); outline-offset: -4px; }
+.simple .topic-pick { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
+.simple .topic-pick select { min-height: 48px; padding: 8px 12px; border: 2px solid var(--field); border-radius: 12px; background: var(--panel); color: var(--ink); font-family: inherit; font-size: 17px; width: 100%; min-width: 0; }
+.simple .timeline { display: grid; gap: 14px; }
+.simple .timeline .day h3 { margin: 0 0 6px; font-size: 17px; font-weight: 800; }
+.simple .timeline ul { padding: 0; margin: 0; display: grid; gap: 0; border: 2px solid var(--field); border-radius: 14px; background: var(--panel); overflow: hidden; }
+.simple .timeline .de { list-style: none; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; padding: 8px 12px; font-size: 16.5px; line-height: 1.3; }
+.simple .timeline .de + .de { border-top: 1px solid var(--line); }
+.simple .timeline time { color: var(--muted); font-variant-numeric: tabular-nums; }
+.simple .timeline .what { min-width: 0; overflow-wrap: anywhere; }
+.simple .timeline .q { color: var(--muted); }
+.simple .tag.unsure { display: inline-block; max-width: none; background: none; border: 1px solid var(--warn); color: var(--ink); font-weight: 600; white-space: nowrap; }
+.simple .insights, .simple .day-tip { border: 2px solid var(--field); background: var(--panel); border-radius: 16px; padding: 12px 14px; display: grid; gap: 10px; }
+.simple .insights h2, .simple .day-tip h2, .simple .backup h2 { font-size: 19px; line-height: 1.2; margin: 0; }
+.simple .ins-list { padding: 0; margin: 0; display: grid; gap: 10px; }
+.simple .ins { list-style: none; display: grid; gap: 3px; padding: 0 0 0 12px; border-left: 4px solid var(--field); }
+.simple .ins.tell { border-left-color: var(--warn); }
+.simple .ins.mention { border-left-color: var(--accent); }
+.simple .ins .lvl { display: flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 800; color: var(--ink); }
+.simple .ins .lvl .sg { width: 18px; height: 18px; flex: none; color: var(--accent); }
+.simple .ins.tell .lvl .sg { color: var(--warn); }
+.simple .ins-text { margin: 0; font-size: 17px; line-height: 1.35; overflow-wrap: anywhere; }
+.simple .ins-base { margin: 0; font-size: 14.5px; color: var(--muted); overflow-wrap: anywhere; }
+.simple .insights .by, .simple .day-tip .by, .simple .ins-foot { display: flex; align-items: flex-start; gap: 8px; font-size: 14.5px; color: var(--muted); margin: 0; }
+.simple .insights .by .sg, .simple .day-tip .by .sg, .simple .ins-foot .sg { width: 18px; height: 18px; margin-top: 2px; color: var(--accent); flex: none; }
+.simple .ins-foot { color: var(--ink); border-top: 1px solid var(--line); padding-top: 10px; }
+.simple .insights .btn { min-height: 52px; }
+.simple .insights .tip { display: flex; align-items: flex-start; gap: 8px; margin: 0; }
+.simple .insights .tip .sg { width: 18px; height: 18px; flex: none; margin-top: 2px; }
+.simple .day-tip #tip-text { margin: 0; font-size: 17px; line-height: 1.35; }
+.simple .day-tip .tlink, .simple #tip-show { justify-self: start; min-height: 44px; }
+.simple .backup { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 10px; }
+.sheet.ins-sheet pre, .sheet .whole pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; }
+.sheet.ins-sheet .goes pre.q { font-size: 16px; line-height: 1.4; }
+.sheet .whole summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: 15px; color: var(--muted); }
+.sheet .whole pre { font-size: 12.5px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
+.sheet .has { padding: 0 0 0 20px; margin: 0; display: grid; gap: 4px; font-size: 16.5px; }
+.simple .rowbody textarea[data-health] { min-height: 84px; }
+
+/* Bigger pictures on the person's screen (the walk at 390 px, 18 Nov): the picture fills most of the tile, about 110
+   to 130 px, the word under it stays large, and three choices and "something else" still stand on a 390 x 844 screen
+   without scrolling. Three answers: 112 px; one or two: 128 px. The family's photos get the same size. The preview on
+   the carer's screen, the needs board, the scale and the repair card keep their own sizes (set above). */
+.person.full.pv { gap: 10px; padding: 8px 16px 14px; }
+.person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) { gap: 10px; }
+.person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no):not(.wordonly) { min-height: 0; padding: 6px 12px 8px; gap: 2px; font-size: 30px; }
+.person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) svg,
+.person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo { width: 112px; height: 112px; }
+.person.full.pv .p-tiles:not(.board):not(.ways):not(.scale):not(:has(.pt:not(.esc):nth-child(3))) .pt:not(.esc):not(.quiet):not(.yes):not(.no) svg,
+.person.full.pv .p-tiles:not(.board):not(.ways):not(.scale):not(:has(.pt:not(.esc):nth-child(3))) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo { width: 128px; height: 128px; }
+.person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt.esc { min-height: 80px; }
+.person.full.pv .p-pick svg, .person.full.pv .p-pick .photo { width: 128px; height: 128px; }
+.person.full.pv .hold { min-height: 44px; }
+@media (max-height: 700px) {
+  .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) svg,
+  .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo { width: 96px; height: 96px; }
+}

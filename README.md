@@ -31,6 +31,7 @@ code is in **`web/src/ai/firebaseEngine.ts`**. See [Added on 17 Nov](#added-on-1
 | Private card | question + the family's About-me lists | `ONLY_ON_DEVICE` | Family data must never fall back to the cloud. `PREFER_ON_DEVICE` would send this prompt to the cloud while Gemini Nano is missing or downloading. |
 | Narrowing card, after "something else" (`core/narrow.ts`) | on the device: the question, the choices that did not fit, today's answers so far, About me. In the cloud: the question and the choices that did not fit, About-me words swapped out; never the answers | the same two steps: `ONLY_ON_DEVICE` first, else `PREFER_IN_CLOUD` when the carer has turned online help on | The person chose the way out, so an AI suggests the next, broader choices (two levels at most). The same card rules check them, and the screen says an AI made this follow-up. Since 18 Nov a proposed choice that is more of the kind already refused is dropped, and when fewer than two are left the rules make the broader choices and the card says so (`core/kinds.ts`). On the device the prompt may also hold what was learned by counting (`core/prefs.ts`); the cloud text never does. |
 | "Today in short" (`core/summary.ts`) | today's confirmed answers | `ONLY_ON_DEVICE` (`summarizeDevice`), no cloud step | Two to four sentences for the family or the therapist. The answers are personal: where the browser has no Gemini Nano, the app's rules write the summary and no model gets them. |
+| Plainer words for the week's and the month's lines and for the tip of the day (`core/reword.ts`; [phase 3](#added-on-18-nov-phase-3-the-diary-health-notes-what-stands-out-the-answer-check-a-tip-a-copy-in-a-file)) | on the device: the lines the app's rules wrote, and the carer's health notes as context. In the cloud: the insight lines only, as shown on a sheet first; no name, no health note, nothing of the diary | `ONLY_ON_DEVICE` (`rewordDevice`); on a device with no model, `PREFER_IN_CLOUD` (`rewordCloud`) after a yes on that sheet, each time | What is counted, the thresholds and the red flags are rules. A model only rewords, and code checks its words (no new number, no name, no medical or advising word, never "more to drink"); otherwise the rules' words stay. Neither step has run against a real model yet. |
 | Stripped card | the question with every About-me word swapped for "Person A", "Place A"… and a word that looks like a name the family didn't list (a capitalised word, the word after a title such as "Dr.", a lowercase word that is not an everyday English word) swapped for "Name A" | `PREFER_IN_CLOUD` | Holds no profile data, so an offline fall-back to the device is safe. |
 
 **On a phone there is no on-device step today.** Chrome's built-in Gemini Nano exists in desktop Chrome only, not on
@@ -165,6 +166,77 @@ Count to ten. Don't answer for them." and "Point to each choice as you say it.")
 answer screen shows the question with its answer ("Are you tired?" — "Yes"), the next step, one line on what left, and
 "More".
 
+## Added on 18 Nov, phase 3: the diary, health notes, what stands out, the answer check, a tip, a copy in a file
+For the carer's side only: nothing in this section is ever drawn on the person's screen, which shows no count, no
+mark and no score. Status and limits: `CLAIMS.md`, rows 63 to 72. Nobody it is for has tried any of it yet, and no
+nurse, doctor or speech and language therapist has read the wording.
+
+**What is rules, what is AI, and where it runs.**
+
+| Part | Made by | Where | What a model gets |
+|---|---|---|---|
+| The answer check (`core/reliability.ts`) | rules | the device | nothing: no model |
+| The diary and its one-tap log (`core/diary.ts`) | rules | the device (IndexedDB) | nothing: no model |
+| What stands out: what is counted, the thresholds, the red flags, how serious a line is, the base of each line, the footer (`core/insights.ts`) | rules | the device | nothing: no model |
+| The wording of those lines, in plainer words (`core/reword.ts`) | Gemini Nano, `ONLY_ON_DEVICE`, where the browser has it (desktop Chrome) | the device | the lines the rules wrote, and the carer's health notes as context |
+| The same wording on a phone | Google's cloud model, `PREFER_IN_CLOUD`, only after a yes on a sheet that shows the exact text, each time | Google | the lines the rules wrote: no name, no photo, no health note, nothing of the diary. A line whose own words state a health note is not sent |
+| The tip of the day (`core/tip.ts`): which tip, and its sentence | rules | the device | nothing |
+| The tip's sentence in plainer words | Gemini Nano, `ONLY_ON_DEVICE`, where the browser has it; no cloud step | the device | that one sentence |
+| Health notes, the copy of About them in a file (`core/backup.ts`) | rules | the device | nothing: no model |
+
+A model only ever rewords. Code checks what comes back (`checkReworded`): the same number of lines, every number
+kept and none added, no name, no word of diagnosis, medicine, dose or diet that the rules' line does not hold, no
+"should", never "more to drink" in any words. Otherwise the rules' own words stay. **Neither wording step has run
+against a real model yet**: the on-device one needs desktop Chrome with Gemini Nano, the cloud one a browser that App
+Check accepts; both are tested with a scripted engine, and the browser test refuses the cloud request and checks that
+the screen then says the lines may have left.
+
+**The answer check (`core/reliability.ts`).** Yes / no and pointing are not always reliable for a person with aphasia,
+most of all when they are tired, and a diary that counts answers would turn an unreliable run into a "fact". So the
+rules notice two things in the answers kept on the device: "yes" to at least 4 of the last 5 yes / no cards, and the
+same place on the screen at least 4 times in a row, each within 10 minutes (the time limit on the second is ours:
+without it, tea first on the card every morning would be flagged, and that is a preference). Then the carer reads one
+line, on the carer's screens only: *"Frank may be tired. Try again later, or check with a different question."* The
+answers of that run are marked "less sure" in the diary, and the next either-or shows its choices in a different
+order (none removed; a yes / no card keeps its order). The thresholds are ours, not a clinical standard.
+
+**The diary (`core/diary.ts`, `web/src/diary.ts`).** One tap logs "Drank", "Ate", "Toilet", "Slept" or "Pain" with the
+time, with "Undo". The diary also keeps every answer the person confirmed and every need they pointed to on the
+board. Today / Week / Month, a timeline by day, a filter by topic, "Copy as text, for a visit", and "Delete the
+diary". It is kept in IndexedDB on the device and nowhere else. **A diary is not a record of what happened**: it
+holds only what was entered in the app, and every count says so.
+
+**Health notes** (About them): free text, and four toggles (diabetes, swallowing difficulty, a fluid limit from the
+doctor, needs reminders to drink and eat). They are kept apart from the profile the card prompts read, stay on the
+device, and are never in a cloud request.
+
+**What stands out (`core/insights.ts`)**, for the last 7 or 30 days, five lines at most. Red flags ("Tell the doctor
+or nurse"): pain chosen or logged on 3 days or more; a whole past day with entries and no drink among them, said with
+its doubt ("That can simply mean nobody entered one."). Worth mentioning or to keep in mind: a day with few drinks
+entered, something sweet chosen often, bad nights on 3 days, many answers marked "less sure". Each line shows what it
+was counted from (*"Chosen or logged 2 times that day. Only what was entered here."*). The health notes change the
+thresholds: with diabetes noted, 3 sweet choices in a week are "Worth mentioning to the doctor or nurse" (6 without
+the note, and then only "To keep in mind"); with reminders noted, a day with 3 drinks is already few; with swallowing
+difficulty noted, a day with no food entered is mentioned; **with a fluid limit noted the app never suggests more to
+drink in any words** (a test scans every line of every fixture for it), drops the "few drinks" line, and mentions a
+day with 8 drinks or more instead. Never medical advice: no diagnosis, no medicine, no dose, no diet plan, and a
+fixed footer says so. The numbers are ours; no clinician has reviewed them.
+
+**The tip of the day (`core/tip.ts`).** One sentence for the carer about the carer's own questions, never about the
+person, from flags the rules already set on each card: two things in one question, a memory question, choices that
+did not fit twice, mostly open questions; or what went well. Not before three questions that day. The app keeps four
+yes / no marks and a time per question, never its words. It can be hidden, and stays hidden.
+
+**A copy of About them in a file (`core/backup.ts`).** About them lives in one browser, so a cleared browser or a new
+phone loses it. "Save About them to a file" writes a JSON file on the device (names, people and their photos, lists,
+kept facts, the family's photos as data URLs, health notes); the app sends it nowhere. "Bring About them back from a
+file" shows what the file holds before anything is replaced, checks every field, and refuses a file that is not ours.
+The diary and the answers are not in the file.
+
+**Bigger pictures on the person's screen.** A picture is now 112 px (three choices) or 128 px (one or two) on a
+390 px phone, with the word under it at 30 px, and three choices and "something else" stand on 390 x 844 without
+scrolling (measured by `scripts/e2e-simple.py` and `scripts/overflow-check.py`); the family's photos get the same size.
+
 ## Changed on 17 Nov after the second rehearsal run
 A second run of our rehearsal set E (simulated partners and answers, not people; its numbers are not quoted anywhere)
 left seven things. Each was fixed as a class and tested on new phrasings (`tests/unit/sim-e2-classes.test.ts`, 63
@@ -254,32 +326,40 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 
 | Where | Line holds | What it is |
 |---|---|---|
-| `web/src/ai/firebaseEngine.ts:38` | `from 'firebase/ai'` | the only import of the SDK in the repo (guarded by `tests/unit/no-direct-model-calls.test.ts`) |
-| `web/src/ai/firebaseEngine.ts:82` | `getAI(` | the AI Logic instance of the private step: its own Firebase app with no App Check, so a card made on this computer contacts no host |
-| `web/src/ai/firebaseEngine.ts:88` | `getGenerativeModel(` | private step model |
-| `web/src/ai/firebaseEngine.ts:89` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
-| `web/src/ai/firebaseEngine.ts:101` | `getAI(` | the AI Logic instance of the cloud step (Gemini Developer API backend), on the app that has App Check; it uses the App Check session token (limited-use tokens per request were tried on 17 Nov and taken out the same day, see "Where the AI runs, in detail") |
-| `web/src/ai/firebaseEngine.ts:107` | `getGenerativeModel(` | stripped step model |
-| `web/src/ai/firebaseEngine.ts:108` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
-| `web/src/ai/firebaseEngine.ts:135` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
-| `web/src/ai/firebaseEngine.ts:149` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
-| `web/src/ai/firebaseEngine.ts:150` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
-| `web/src/ai/firebaseEngine.ts:165` | `getGenerativeModel(` | summary step model ("Today in short", `core/summary.ts`): the day's answers, on the same no-App-Check app as the private step |
-| `web/src/ai/firebaseEngine.ts:166` | `InferenceMode.ONLY_ON_DEVICE` | its mode: the person's answers never fall back to the cloud; where the browser has no model the app's rules write the summary |
-| `web/src/ai/firebaseEngine.ts:170` | `generateContent(` | summary step call |
-| `web/src/ai/firebaseEngine.ts:171` | `inferenceSource !== InferenceSource.ON_DEVICE` | the summary step rejects any answer not from the device |
-| `web/src/ai/firebaseEngine.ts:192` | `generateContent(` | stripped step call |
-| `web/src/ai/firebaseEngine.ts:197` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
-| `web/src/ai/firebaseEngine.ts:209` | `getGenerativeModel(` | voice step model: the same cloud model, asked only for the words of a recording (`{"transcript": string}`) |
-| `web/src/ai/firebaseEngine.ts:210` | `InferenceMode.ONLY_IN_CLOUD` | its mode: the SDK's on-device step takes text and JPEG / PNG only, so sound cannot run on the device; the app says "cloud" before the first use |
-| `web/src/ai/firebaseEngine.ts:226` | `generateContent(` | voice step call: one per recording, the sound as `inlineData` (WAV), after a yes to the notice |
-| `web/src/ai/firebaseEngine.ts:229` | `inferenceSource === InferenceSource.ON_DEVICE` | where the recording was turned into text, from the SDK's report |
-| `web/src/ai/firebaseEngine.ts:251` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
+| `web/src/ai/firebaseEngine.ts:47` | `from 'firebase/ai'` | the only import of the SDK in the repo (guarded by `tests/unit/no-direct-model-calls.test.ts`) |
+| `web/src/ai/firebaseEngine.ts:94` | `getAI(` | the AI Logic instance of the private step: its own Firebase app with no App Check, so a card made on this computer contacts no host |
+| `web/src/ai/firebaseEngine.ts:100` | `getGenerativeModel(` | private step model |
+| `web/src/ai/firebaseEngine.ts:101` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
+| `web/src/ai/firebaseEngine.ts:113` | `getAI(` | the AI Logic instance of the cloud step (Gemini Developer API backend), on the app that has App Check; it uses the App Check session token (limited-use tokens per request were tried on 17 Nov and taken out the same day, see "Where the AI runs, in detail") |
+| `web/src/ai/firebaseEngine.ts:119` | `getGenerativeModel(` | stripped step model |
+| `web/src/ai/firebaseEngine.ts:120` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
+| `web/src/ai/firebaseEngine.ts:147` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
+| `web/src/ai/firebaseEngine.ts:161` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
+| `web/src/ai/firebaseEngine.ts:162` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
+| `web/src/ai/firebaseEngine.ts:177` | `getGenerativeModel(` | summary step model ("Today in short", `core/summary.ts`): the day's answers, on the same no-App-Check app as the private step |
+| `web/src/ai/firebaseEngine.ts:178` | `InferenceMode.ONLY_ON_DEVICE` | its mode: the person's answers never fall back to the cloud; where the browser has no model the app's rules write the summary |
+| `web/src/ai/firebaseEngine.ts:182` | `generateContent(` | summary step call |
+| `web/src/ai/firebaseEngine.ts:183` | `inferenceSource !== InferenceSource.ON_DEVICE` | the summary step rejects any answer not from the device |
+| `web/src/ai/firebaseEngine.ts:205` | `generateContent(` | stripped step call |
+| `web/src/ai/firebaseEngine.ts:210` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
+| `web/src/ai/firebaseEngine.ts:222` | `getGenerativeModel(` | voice step model: the same cloud model, asked only for the words of a recording (`{"transcript": string}`) |
+| `web/src/ai/firebaseEngine.ts:223` | `InferenceMode.ONLY_IN_CLOUD` | its mode: the SDK's on-device step takes text and JPEG / PNG only, so sound cannot run on the device; the app says "cloud" before the first use |
+| `web/src/ai/firebaseEngine.ts:239` | `generateContent(` | voice step call: one per recording, the sound as `inlineData` (WAV), after a yes to the notice |
+| `web/src/ai/firebaseEngine.ts:242` | `inferenceSource === InferenceSource.ON_DEVICE` | where the recording was turned into text, from the SDK's report |
+| `web/src/ai/firebaseEngine.ts:253` | `getGenerativeModel(` | wording step model on the device ("plainer words" for the insight lines and the tip of the day, `core/reword.ts`), on the same no-App-Check app as the private step |
+| `web/src/ai/firebaseEngine.ts:254` | `InferenceMode.ONLY_ON_DEVICE` | its mode: the prompt may hold the carer's health notes, so there is no cloud fall-back; without a model the rules' own words stand |
+| `web/src/ai/firebaseEngine.ts:258` | `generateContent(` | wording step call on the device |
+| `web/src/ai/firebaseEngine.ts:259` | `inferenceSource !== InferenceSource.ON_DEVICE` | the on-device wording step rejects any answer not from the device |
+| `web/src/ai/firebaseEngine.ts:275` | `getGenerativeModel(` | wording step model for online help: the insight lines the rules wrote, called only after a yes on the sheet that shows the exact text (`web/src/main.ts`, `sendInsights`) |
+| `web/src/ai/firebaseEngine.ts:276` | `InferenceMode.PREFER_IN_CLOUD` | its mode: the text holds no name, no health note and nothing of the diary (`core/insights.ts`, `insightCloudText`) |
+| `web/src/ai/firebaseEngine.ts:281` | `generateContent(` | wording step call through online help |
+| `web/src/ai/firebaseEngine.ts:284` | `inferenceSource === InferenceSource.ON_DEVICE` | where the lines were worded, from the SDK's report |
+| `web/src/ai/firebaseEngine.ts:306` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
 | `web/src/ai/app.ts:32` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started by the first cloud call (a card, a recording) or the first feedback note, never at page load |
 | `core/pipeline.ts:733` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:848` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:878` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:500` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
+| `web/src/main.ts:646` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all, and since 17 Nov neither does any either-or whose two options the code reads whole. Every cut is visible per card in "Why this card".
@@ -467,6 +547,9 @@ under `@firebase/firestore`, which this app does not import.
   `voice.ts` is the microphone's state machine (record, stop, send the clip once through the engine; no DOM, so it
   is tested with a scripted microphone, recorder and engine); `mic.ts` is the browser's side; `feedback.ts` the form. `core/needs.ts` is the quick-needs board.
   `web/src/simple.ts` draws the simple view (the carer's screens and the person's); `web/sw.template.js` is the service worker, `web/public/manifest.webmanifest` the manifest.
+- Phase 3: `core/reliability.ts` (the answer check), `core/diary.ts` (the diary), `core/insights.ts` (health notes, what
+  stands out), `core/reword.ts` (plainer words: the one job a model has there), `core/tip.ts` (the tip of the day),
+  `core/backup.ts` (About them in a file); `web/src/diary.ts` draws their screens.
 - `core/tree.ts`: the conversation trees (what comes after every answer). `core/prefs.ts`: what is learned by
   counting. `core/photos.ts` and `web/src/photo.ts`: the family's own photos. `core/kinds.ts`: the kinds of answer the
   narrowing card may offer.

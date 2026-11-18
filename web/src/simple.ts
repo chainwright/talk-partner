@@ -10,6 +10,7 @@
 
 import type { PartnerAction } from '../../core/actions';
 import { COPY } from '../../core/copy';
+import { HEALTH_TEXT_MAX, HEALTH_TOGGLES, NO_HEALTH, hasHealth, type HealthNotes } from '../../core/insights';
 import { NARROW_LEVELS } from '../../core/narrow';
 import { cropRect, PHOTO_CAP, WORD_MAX, type Frame, type Photo } from '../../core/photos';
 import type { Learned } from '../../core/prefs';
@@ -67,6 +68,8 @@ export interface HomeModel {
   /** The microphone button and the line under the field, as the full view draws them (main.ts): '' where there is none. */
   micHtml: string;
   voiceHtml: string;
+  /** The way into the diary (web/src/diary.ts), drawn by main.ts: under the questions. '' where there is none. */
+  diaryHtml?: string;
 }
 
 /**
@@ -132,6 +135,7 @@ export function homeScreen(m: HomeModel): string {
       <div id="result" aria-live="polite">${status}</div>
       <p class="ai-line" id="ai-line">${SIGN.spark}<span>${m.ai.map(esc).join(' ')}</span></p>
     </form>
+    ${m.diaryHtml ?? ''}
   </div>
   <footer class="foot">
     ${privacyBlock(m.privacy)}
@@ -255,6 +259,8 @@ export interface CardModel {
   tips?: boolean;
   /** The person's usual answer to this question, learned on this device ("Usually: tea (5 of 7)"): '' before three answers. For the carer only. */
   usual?: string;
+  /** The answer-reliability guard's line for the carer (web/src/diary.ts, guardBlock): '' when nothing was noticed. Never on the person's screen. */
+  guardHtml?: string;
 }
 
 /** Where this card was made: on the screen itself, under the card, never only behind a link. */
@@ -309,7 +315,7 @@ export function cardScreen(m: CardModel): string {
   // a narrowing card says in plain words that an AI made this follow-up, and where
   const ai = c.narrow ? `<p class="ai-made" id="ai-made" data-by="${c.narrow.by ?? 'ai'}">${c.narrow.by === 'rules' ? SIGN.lock : SIGN.spark}<span>${esc(c.narrow.by === 'rules' ? S.narrow.labelRules(c.narrow.level, NARROW_LEVELS) : S.narrow.label(c.narrow.level, NARROW_LEVELS, c.source === 'in-cloud' ? 'cloud' : 'device'))}</span></p>` : '';
   return `<main class="simple wrap card" data-screen="card">${back}
-  <div class="c-say">${ai}${coach}<div class="stack">${step(1, sayLabel)}<p class="say">${esc(say)}</p></div>${m.usual ? `<p class="usual" id="usual">${SIGN.person}<span>${esc(m.usual)}</span></p>` : m.lastTime ? `<p class="last">${esc(m.lastTime)}</p>` : ''}</div>
+  <div class="c-say">${m.guardHtml ?? ''}${ai}${coach}<div class="stack">${step(1, sayLabel)}<p class="say">${esc(say)}</p></div>${m.usual ? `<p class="usual" id="usual">${SIGN.person}<span>${esc(m.usual)}</span></p>` : m.lastTime ? `<p class="last">${esc(m.lastTime)}</p>` : ''}</div>
   <div class="c-go">${step(2, S.step2(m.name))}
     ${primary}
     ${primary ? waitLine(m.name) : ''}
@@ -366,6 +372,8 @@ export interface AnsweredModel {
   today: { q: string; label: string }[];
   made: MadeWhere;
   privacy: string[];
+  /** The answer-reliability guard's line for the carer (web/src/diary.ts, guardBlock): '' when nothing was noticed. */
+  guardHtml?: string;
 }
 
 /** They answered: what they chose, "Ask another question" as the main button, and the next step where there is one. */
@@ -401,6 +409,7 @@ export function answeredScreen(m: AnsweredModel): string {
   ${navBar({ back: true })}
   <div class="col">
     <div class="chose${m.out ? ' out' : ''}" id="chose" role="status">${m.out ? SIGN.out : SIGN.tick}<div>${m.question ? `<span class="asked" id="chose-q">${esc(m.question)}</span>` : `<span class="muted small">${esc(S.choseNeed(m.name))}</span>`}<b id="chose-a">${esc(big)}</b></div></div>
+    ${m.guardHtml ?? ''}
     ${m.afterHtml}
     ${end}
     ${m.next ? `<button type="button" class="btn primary" data-act="${m.next.act}">${esc(m.next.label)}</button>` : ''}
@@ -448,7 +457,7 @@ export function consentSheet(m: SheetModel): string {
 </div>`;
 }
 
-export type AboutRow = 'names' | 'people' | 'foods' | 'places';
+export type AboutRow = 'names' | 'people' | 'foods' | 'places' | 'health';
 
 /** About them, as four plain rows over the same fields as the full page: offered, never required. */
 /**
@@ -506,8 +515,11 @@ export function photoSheet(m: PhotoDraftModel): string {
   return `<div class="dim"></div><div class="sheet photo-sheet" id="photo-sheet" role="dialog" aria-modal="true" aria-labelledby="photo-h">${body}</div>`;
 }
 
-export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved: boolean; learned?: Learned[]; learnedShort?: string[] | null; photos?: Photo[]; photoError?: string }): string {
+export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved: boolean; learned?: Learned[]; learnedShort?: string[] | null; photos?: Photo[]; photoError?: string; health?: HealthNotes; backupHtml?: string }): string {
   const S = COPY.simple.about;
+  const HN = COPY.simple.health;
+  const h = m.health ?? NO_HEALTH;
+  const noted = [...HEALTH_TOGGLES.filter((k) => h[k]).map((k) => HN.toggles[k]), ...(h.text.trim() ? [h.text.trim().slice(0, 40)] : [])];
   const A = COPY.about;
   const p = m.profile;
   const count = (n: number) => (n ? String(n) : '+');
@@ -539,11 +551,16 @@ export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved:
     ${row('foods', count(p.foods.length), S.rows.foods, listed(p.foods), p.foods.length > 0, text('foods', A.foods))}
     ${row('places', count(p.places.length + p.tv.length + p.music.length), S.rows.places, listed([...p.places, ...p.tv, ...p.music]), p.places.length + p.tv.length + p.music.length > 0,
       `${text('places', A.places)}${text('tv', A.tv)}${text('music', A.music)}`)}
+    ${row('health', hasHealth(h) ? '✓' : '+', HN.row, noted.length ? noted.join(', ') : HN.none, hasHealth(h),
+      `<p class="tip">${HN.lead}</p><p class="lock" id="health-lock">${SIGN.lock}<span>${HN.lock}</span></p>
+      ${HEALTH_TOGGLES.map((k) => `<label class="check"><input type="checkbox" data-health="${k}" ${h[k] ? 'checked' : ''}>${HN.toggles[k]}</label>`).join('')}
+      <label>${HN.text} <small>${HN.textHint}</small><textarea data-health="text" id="health-text" rows="3" maxlength="${HEALTH_TEXT_MAX}">${esc(h.text)}</textarea></label>`)}
   </form>
   <p id="saved" class="saved" role="status">${m.saved ? A.saved : ''}</p>
   <a class="btn primary" href="#/">${A.done}</a>
   ${photosBlock({ name: p.personName, photos: m.photos ?? [], error: m.photoError })}
   ${learnedBlock({ name: p.personName, lines: m.learned ?? [], facts: p.other ?? [], short: m.learnedShort ?? null })}
+  ${m.backupHtml ?? ''}
   <button type="button" class="btn quiet danger" id="delete-everything" data-act="delete-all">${COPY.simple.photos.everything}</button>
   <p class="small muted more">${S.more} <button type="button" class="tlink" data-act="inside-about">${S.moreLink} →</button></p>
 </main>`;

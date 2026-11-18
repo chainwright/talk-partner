@@ -132,7 +132,9 @@ describe('the quick-needs board: the tick / cross check, and whose side says wha
   });
   it('a confirmed need is of the moment: it is not kept in "Answers so far"', () => {
     const main = read('web/src/main.ts');
-    expect(main).toMatch(/if \(c\.kind !== 'needs'\) \{\s+state\.history = addAnswer\(/);
+    expect(main).toMatch(/if \(c\.kind !== 'needs'\) \{[\s\S]{0,700}?state\.history = addAnswer\(/);
+    // (the diary keeps it, as a need pointed to, on this device: core/diary.ts)
+    expect(main).toMatch(/state\.diary = addEntry\(state\.diary, needEntry\(/);
   });
 });
 

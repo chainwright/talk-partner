@@ -20,6 +20,15 @@
 //                                                                             there is no cloud fall-back: where the browser
 //                                                                             has no model, the app's rules write it instead.
 //
+//   reword     ONLY_ON_DEVICE    a few lines the rules wrote (the week's        the insights and the tip of the day in plainer
+//   (device)                     insights, the tip), and the carer's health    words (core/reword.ts). Personal context, so no
+//                                notes as context                              cloud fall-back: without a model the rules' own
+//                                                                             words stand.
+//   reword     PREFER_IN_CLOUD   the insight lines the rules wrote, as shown   the same wording step on a device with no model
+//   (cloud)                      on a sheet first; no name, no health note,    of its own. Called only after a yes on that sheet
+//                                nothing of the diary                          (web/src/main.ts); the app's check decides
+//                                                                             whether the words may stand.
+//
 // A narrowing card after "something else" (core/narrow.ts) uses the private and the stripped step, as an open question does.
 // Two steps make cards, and a third turns a spoken question into text. Pictures are bundled: the picture-generation
 // model this file once defined and never called was removed on 17 Nov 2026. The browser's own speech recognition
@@ -41,6 +50,7 @@ import { CLOUD_TEXT_MODEL } from '../../../core/models';
 import { SUMMARY_SCHEMA, SUMMARY_SYSTEM_PROMPT } from '../../../core/summary';
 import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, SYSTEM_PROMPT, TRANSCRIBE_PROMPT, TRANSCRIBE_SCHEMA, TRANSCRIBE_SYSTEM_PROMPT, cloudPrompt } from '../../../core/prompt';
 import { cloudTextRequest } from '../../../core/requests';
+import { REWORD_SCHEMA, REWORD_SYSTEM_PROMPT, rewordRequest } from '../../../core/reword';
 import { appCheckConfigured, appWithAppCheck, namedAppCheckFailure, type WebConfig } from './app';
 
 export type { WebConfig };
@@ -56,7 +66,7 @@ const sys = (text: string) => [{ role: 'system' as const, content: [{ type: 'tex
  * One console line per answered model call: which leg, its mode, and the SDK's own `inferenceSource` value as it came
  * back. No prompt and no answer text is logged. The run logs in devlog/ quote these lines.
  */
-function report(leg: 'private' | 'stripped' | 'voice' | 'summary', mode: string, inferenceSource: unknown, ms: number) {
+function report(leg: 'private' | 'stripped' | 'voice' | 'summary' | 'reword', mode: string, inferenceSource: unknown, ms: number) {
   console.info(`[ai-logic] leg=${leg} mode=${mode} inferenceSource=${String(inferenceSource)} ms=${ms}`);
 }
 
@@ -68,6 +78,8 @@ export class FirebaseEngine implements Engine {
   private cloudModel: GenerativeModel | null = null;
   private voiceModel: GenerativeModel | null = null;
   private summaryModel: GenerativeModel | null = null;
+  private rewordLocal: GenerativeModel | null = null;
+  private rewordOnline: GenerativeModel | null = null;
   private localAi: ReturnType<typeof getAI> | null = null;
   /** The cloud text model in use: the in-code default until Remote Config gives a checked name (core/models.ts). */
   private textModel = CLOUD_TEXT_MODEL;
@@ -180,6 +192,7 @@ export class FirebaseEngine implements Engine {
     this.textModel = model;
     this.cloudModel = null;
     this.voiceModel = null;
+    this.rewordOnline = null;
   }
 
   cloudRequest(strippedQuestion: string) {
@@ -231,6 +244,48 @@ export class FirebaseEngine implements Engine {
     report('voice', 'ONLY_IN_CLOUD', r.response.inferenceSource, ms);
     return { text: r.response.text(), source, ms };
   }
+
+  /**
+   * Plainer words for a few lines the rules wrote (core/reword.ts), ONLY_ON_DEVICE on the no-App-Check app: the prompt
+   * may hold the carer's health notes, so anything but an on-device answer is an error.
+   */
+  async rewordDevice(prompt: string): Promise<ModelResult> {
+    this.rewordLocal ??= getGenerativeModel(this.local, {
+      mode: InferenceMode.ONLY_ON_DEVICE,
+      onDeviceParams: { createOptions: { ...IO, initialPrompts: sys(REWORD_SYSTEM_PROMPT) }, promptOptions: { responseConstraint: REWORD_SCHEMA } },
+    });
+    const t0 = performance.now();
+    const r = await this.rewordLocal.generateContent(prompt);
+    if (r.response.inferenceSource !== InferenceSource.ON_DEVICE) throw new Error("the wording step didn't run on this computer");
+    const ms = Math.round(performance.now() - t0);
+    report('reword', 'ONLY_ON_DEVICE', r.response.inferenceSource, ms);
+    return { text: r.response.text(), source: 'on-device', ms };
+  }
+
+  rewordRequest(text: string) {
+    return rewordRequest(text, this.textModel);
+  }
+
+  /**
+   * The same wording step by the cloud model (PREFER_IN_CLOUD, the default app with App Check). The caller has shown
+   * this exact text on a sheet and got a yes (web/src/main.ts). The source is what the SDK reports, never assumed.
+   */
+  async rewordCloud(text: string): Promise<ModelResult> {
+    if (!this.cloudConfigured) throw Object.assign(new Error('online help is not set up (App Check)'), { notSent: true });
+    this.rewordOnline ??= getGenerativeModel(this.ai, {
+      mode: InferenceMode.PREFER_IN_CLOUD,
+      inCloudParams: { model: this.textModel, systemInstruction: REWORD_SYSTEM_PROMPT, generationConfig: { responseMimeType: 'application/json', responseJsonSchema: REWORD_SCHEMA as any } },
+      onDeviceParams: { createOptions: { ...IO, initialPrompts: sys(REWORD_SYSTEM_PROMPT) }, promptOptions: { responseConstraint: REWORD_SCHEMA } },
+    });
+    const t0 = performance.now();
+    const r = await this.rewordOnline.generateContent(text).catch(async (e: Error) => {
+      throw Object.assign(await namedAppCheckFailure(e), { notSent: typeof navigator !== 'undefined' && navigator.onLine === false });
+    });
+    const source = r.response.inferenceSource === InferenceSource.ON_DEVICE ? 'on-device' : 'in-cloud';
+    const ms = Math.round(performance.now() - t0);
+    report('reword', 'PREFER_IN_CLOUD', r.response.inferenceSource, ms);
+    return { text: r.response.text(), source, ms };
+  }
 }
 
 /**
@@ -263,6 +318,9 @@ export class LazyFirebaseEngine implements Engine {
   warmDevice() { return this.e.warmDevice(); }
   runDevice(prompt: string) { return this.e.runDevice(prompt); }
   summarizeDevice(prompt: string) { return this.e.summarizeDevice(prompt); }
+  rewordDevice(prompt: string) { return this.e.rewordDevice(prompt); }
+  rewordRequest(text: string) { return rewordRequest(text, this.textModel); }
+  rewordCloud(text: string) { return this.e.rewordCloud(text); }
   cloudRequest(strippedQuestion: string) { return cloudTextRequest(strippedQuestion, this.textModel); }
   runCloud(strippedQuestion: string) { return this.e.runCloud(strippedQuestion); }
   transcribe(clip: AudioClip) { return this.e.transcribe(clip); }

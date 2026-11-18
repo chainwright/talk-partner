@@ -53,6 +53,22 @@ Logic, so it was not built). *Back and Home* stand at the top of every carer scr
 the AI is where it was, in a typed open question, the narrowing step (which now refuses "more of the same kind") and
 "Today in short".
 
+**Added on 18 Nov, phase 3, the carer's side only** (`CLAIMS.md` rows 63 to 72; README "Added on 18 Nov, phase 3").
+A *diary* (one tap logs a drink, a meal, the toilet, sleep or pain; the answers and the needs go in by themselves;
+today, week, month, by topic; on the device only) and, for a week or a month, *what stands out*: at most five lines,
+each with what it was counted from ("Chosen or logged 2 times that day. Only what was entered here."), red flags
+marked "Tell the doctor or nurse", never medical advice. **Counting, thresholds and red flags are rules; the AI only
+rewords.** In desktop Chrome with Gemini Nano the lines are put into plainer words on the device (`ONLY_ON_DEVICE`); on
+a phone the same wording is offered through the cloud (`PREFER_IN_CLOUD`), only after a yes on a sheet that shows the
+exact text, each time, and that text holds no name, no health note and nothing of the diary. Code checks the words
+that come back and keeps its own otherwise. Neither wording step has run against a real model yet. An *answer check*
+(rules) notices "yes" to nearly every yes / no question or the same place on the screen every time, tells the carer
+gently, marks those answers "less sure" and changes the order of the next either-or; the person's screen never shows
+any of it. *Health notes* change the thresholds (with a fluid limit noted the app never suggests more to drink).
+Also: a tip of the day about the carer's own questions, About them saved to a file and brought back, bigger
+pictures on the person's screen. To see it in a minute: open the hosted copy, tap "Diary" under the questions, log
+something, then Week.
+
 **What happens next depends on your browser, and the status line at the top says which.** In desktop Chrome with
 Gemini Nano the first step runs by itself, with no click: when the model has loaded (a few seconds; 16 to 22 s
 right after the browser starts, in the four starts we timed) the app asks "What do you want to do this weekend?" and the model on this computer

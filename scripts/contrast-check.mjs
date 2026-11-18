@@ -47,6 +47,12 @@ const TEXT = [
   ['on-accent', 'accent', '18 Nov: "Next: ..." (the tree\'s next question), the bar "A newer version is ready. Tap to update."'],
   ['ink', 'accent-soft', '18 Nov: "Usually: tea (5 of 7)"'],
   ['no', 'panel', '18 Nov: "Delete everything on this phone"'],
+  ['ink', 'panel', 'phase 3: the guard\'s line, a diary entry, an insight line, the tip of the day, a log button'],
+  ['muted', 'panel', 'phase 3: the time of a diary entry, its question, the base of an insight line, who worded it'],
+  ['ink', 'accent-soft', 'phase 3: the selected tab of the diary (Today / Week / Month)'],
+  ['ink', 'bg', 'phase 3: the day headings of the diary, the topic filter\'s label'],
+  ['muted', 'bg', 'phase 3: "Nothing entered today yet.", the line on what the diary holds'],
+  ['no', 'bg', 'phase 3: "Delete the diary"'],
   ];
 const UI = [
   ['field', 'bg', 'the edge of every button, field and row'],
@@ -73,6 +79,10 @@ const UI = [
   ['field', 'bg', '18 Nov: the edge of "Back" and "Home", of a photo in the list, of a learned line'],
   ['accent', 'bg', '18 Nov: the edge of the line that says what to do now'],
   ['no', 'bg', '18 Nov: the edge of "Delete everything on this phone"'],
+  ['warn', 'panel', 'phase 3: the edge and the sign of the guard\'s line, the edge of a "Tell the doctor or nurse" line, of the "less sure" tag'],
+  ['accent', 'panel', 'phase 3: the edge of a "Worth mentioning" line, the tick of "Logged", the signs in "what stands out"'],
+  ['field', 'panel', 'phase 3: the edge of the tabs, of the timeline, of a "To keep in mind" line'],
+  ['accent', 'accent-soft', 'phase 3: the bar under the selected tab'],
 ];
 // the person's card: a white sheet in every theme (web/src/styles.css, .person)
 const CARD = [
