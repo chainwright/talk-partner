@@ -173,5 +173,12 @@ the table.
 | 150 | `f452ff7` | `471022d` | 2026-11-17 20:20 | Colour pictures and the family's own photos. Every picture is redrawn as a simple, reali… |
 | 151 | `b9c7602` | `dfc4178` | 2026-11-17 20:20 | The documents follow 18 Nov: README has 'Added on 18 Nov' (conversation trees, what the … |
 | 152 | `c20306f` | `640c721` | 2026-11-17 20:23 | The hosted copy is the build of b9c7602 (18 Nov, about 02:20 UTC): 20 of 20 served files… |
+| 153 | `02a08e8` | `c29f435` | 2026-11-17 21:19 | Phase 3, the carer's side: an answer check, a diary, health notes, what stands out, a ti… |
+| 154 | `80a4c30` | `d195636` | 2026-11-17 21:27 | The full view's empty card area says in words what will be there, and its placeholder fi… |
+| 155 | `9117fdd` | `daabc2c` | 2026-11-17 21:43 | Five findings of a role-play on the hosted copy (Carol and Frank, 390 px). The data-use … |
+| 156 | `d04e530` | `ce4bc4e` | 2026-11-17 21:51 | Evidence for phase 3 and the role-play fixes at 9117fdd, production build on localhost (… |
+| 157 | `a99cbf3` | `c97de09` | 2026-11-17 21:54 | The hosted copy is the build of d04e530 (18 Nov, 03:52 UTC): 20 of 20 served files have … |
+| 158 | `3a9cf34` | `884702b` | 2026-11-17 22:12 | The answer check never discounts pain, and drinks are counted as the timeline shows them… |
+| 159 | `95eb1bd` | `f41931a` | 2026-11-17 22:15 | The hosted copy is the build of 3a9cf34 (18 Nov, 04:13 UTC): 20 of 20 served files have … |
 
-Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145 and 146–152 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
+Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152 and 153–159 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
