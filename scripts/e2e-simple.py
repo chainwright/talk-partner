@@ -594,7 +594,7 @@ def phone(browser, url, live):
     check('About them has the top bar: "Back" and "Talk Partner / Home"', text(page, '#s-top') == 'Back Talk Partner Home')
     page.wait_for_selector('main.about-simple')
     about = text(page)
-    check('About them: five rows (the fifth is health notes), "Everything here stays on this phone.", nothing required', page.locator('.rowhead').count() == 5 and 'Everything here stays on this phone.' in about and page.locator('#about input:not([type=file])').count() == 0, about[:200])
+    check('About them: five rows (the fifth is health notes), "Everything here stays on this phone, unless you share it yourself.", nothing required', page.locator('.rowhead').count() == 5 and 'Everything here stays on this phone, unless you share it yourself.' in about and page.locator('#about input:not([type=file])').count() == 0, about[:200])
     page.locator('.rowhead[data-row=names]').click()
     page.fill('input[data-field=personName]', 'Frank')
     page.fill('input[data-field=partnerName]', 'Carol')
@@ -802,7 +802,7 @@ def learning(browser, url):
     lines = page.locator('#learned-list li > span:first-child').all_inner_texts()
     check('learning: About them lists what was learned, in plain words with the counts (the usual choice, and the need asked for three times)',
           len(lines) == 2 and lines[0] == '"Would you like tea or coffee": usually coffee (3 of 3).' and lines[1].startswith('Asked for "drink" on the needs board 3 times'), str(lines))
-    check('learning: it says how it was learned (counted on this phone, no AI, never sent, only a hint)', 'Counted on this phone from the answers they confirmed: no AI, and it is never sent anywhere.' in text(page, '#learned') and 'they always choose for themselves' in text(page, '#learned'))
+    check('learning: it says how it was learned (counted on this phone, no AI, never sent by the app, only a hint)', 'Counted on this phone from the answers they confirmed: no AI, and the app never sends it anywhere (the usual choices leave only in a note for the next carer, if you share one yourself).' in text(page, '#learned') and 'they always choose for themselves' in text(page, '#learned'))
     check('learning: each line has "Keep as a fact" and "Remove", and there is "Forget everything learned"', page.locator('[data-act=learned-keep]').count() == 2 and page.locator('[data-act=learned-remove]').count() == 2 and page.locator('[data-act=learned-forget]').is_visible())
     screen_checks(page, 'learning: About them, what was learned', primary=False)
     page.locator('#learned-list li', has_text='drink').locator('[data-act=learned-keep]').click()
@@ -1359,7 +1359,7 @@ def diary(browser, url, live):
     page.locator('#diary-link').click()
     page.wait_for_selector('main.simple.diary')
     first = text(page)
-    check('diary: opens on Today, empty, and says it is kept on this phone only and never shown on their screen', 'Nothing entered today yet.' in first and 'The diary is kept on this phone only. It is never sent anywhere, and it is never shown on their screen.' in first and page.locator('#tab-today[aria-selected=true]').count() == 1, first[:300])
+    check('diary: opens on Today, empty, and says it is kept on this phone only, leaves only when the carer shares it, and is never shown on their screen', 'Nothing entered today yet.' in first and 'The diary is kept on this phone only. The app never sends it anywhere: it leaves only when you share it yourself, as a text you see first. It is never shown on their screen.' in first and page.locator('#tab-today[aria-selected=true]').count() == 1, first[:300])
     check('diary: seven one-tap log buttons (Drank, Ate, Toilet, Slept, Pain, and since phase 5 Fall and Tablets taken), each at least 80 px tall', page.locator('#log-row .logbtn').all_inner_texts() == ['Drank', 'Ate', 'Toilet', 'Slept', 'Pain', 'Fall', 'Tablets taken'] and min(b[3] for b in ys(page, '#log-row .logbtn')) >= 80, str(ys(page, '#log-row .logbtn')))
     check('diary: an empty diary has no "what stands out", nothing to copy and nothing to delete', page.locator('#insights, #diary-copy, #diary-del').count() == 0)
     screen_checks(page, 'diary: empty', primary=False)
@@ -1453,7 +1453,7 @@ def diary(browser, url, live):
     page.locator('.rowhead[data-row=health]').click()
     page.wait_for_selector('#health-text')
     health = text(page, '.rowcard[data-row=health]')
-    check('health notes: four toggles, free text and (phase 5) the emergency number; "never sent to online help"; "not a medical record"', page.locator('input[type=checkbox][data-health]').count() == 4 and page.locator('#emergency-number').count() == 1 and '911 in the US and Canada, 999 in the UK, 112 in the EU' in health and 'Health notes stay on this phone. They are never sent to online help.' in health and 'This is not a medical record.' in health, health)
+    check('health notes: four toggles, free text and (phase 5) the emergency number; "never sent to online help"; "not a medical record"', page.locator('input[type=checkbox][data-health]').count() == 4 and page.locator('#emergency-number').count() == 1 and '911 in the US and Canada, 999 in the UK, 112 in the EU' in health and 'Health notes stay on this phone. They are never sent to online help. They leave only if you tick them into a text you share yourself.' in health and 'This is not a medical record.' in health, health)
     page.locator('input[data-health=diabetes]').check()
     page.locator('#health-text').fill('Type 2, diet only.')
     screen_checks(page, 'About them: health notes open', primary=False)
@@ -1899,13 +1899,253 @@ def phase5(browser, url, live):
     ctx.close()
 
 
+SHARE_STUB = """() => { window.__shared = []; Object.defineProperty(Navigator.prototype, 'share', { configurable: true, writable: true, value: function (d) { window.__shared.push(d); return Promise.resolve(); } }); }"""
+NO_SHARE = """() => { try { delete Navigator.prototype.share; } catch (e) {} Object.defineProperty(navigator, 'share', { configurable: true, value: undefined }); }"""
+
+
+def phase6(browser, url, live):
+    """Phase 6 (18 Nov 2026), as Carol on a 390 x 844 phone, with the Miller family's week and, yesterday, a pain in
+    the chest and a fall with a blow to the head: a line of "What stands out" opened to its entries and hidden again;
+    "Share with family" through its sheet (the exact text, the health notes off and on, Copy, Share with
+    `navigator.share` replaced by a stub that records what it is handed); "For the next carer"; a browser without Web
+    Share; the doctor-visit page with a line opened, and as it prints. No model is part of any of it: every request to
+    another host is refused and counted, and none is expected."""
+    host = urlparse(url).hostname
+    origin = f'{urlparse(url).scheme}://{urlparse(url).netloc}'
+    ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
+    ctx.grant_permissions(['clipboard-read', 'clipboard-write'], origin=origin)
+    ctx.add_init_script(f'({SHARE_STUB})()')
+    outside = []
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    page = ctx.new_page()
+    errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('dialog', lambda d: d.accept())
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
+    check('phase 6, first screen with an empty diary: no "For the next carer" yet (there is nothing to hand over)', page.locator('#handover-link').count() == 0)
+
+    # ---- the Miller family's week, and yesterday a pain in the chest and a fall with a blow to the head; today the tablets and a drink
+    week, entries, name = frank_week()
+    now = datetime.datetime.now()
+    at = lambda d, h, m: int(datetime.datetime.combine(datetime.date.today() - datetime.timedelta(days=d), datetime.time(h, m)).timestamp() * 1000)
+    early = lambda h, m: at(0, h, m) if (h, m) < (now.hour, now.minute) else None
+    extra = [
+        {'id': 'x1', 'at': at(1, 21, 0), 'kind': 'answer', 'q': 'Are you in pain?', 'label': 'yes', 'topic': 'body'},
+        {'id': 'x2', 'at': at(1, 21, 1), 'kind': 'answer', 'q': 'Where does it hurt?', 'label': 'chest', 'topic': 'body'},
+        {'id': 'x3', 'at': at(1, 21, 2), 'kind': 'answer', 'q': 'How bad is the pain?', 'label': 'quite bad', 'topic': 'body'},
+        {'id': 'x4', 'at': at(1, 22, 30), 'kind': 'log', 'log': 'fall', 'label': 'fall: hit head', 'topic': 'body'},
+        {'id': 'x5', 'at': at(1, 23, 0), 'kind': 'log', 'log': 'tablets', 'label': 'tablets', 'topic': 'body'},
+        {'id': 'x6', 'at': at(1, 23, 5), 'kind': 'log', 'log': 'drank', 'label': 'drank', 'topic': 'food'},
+    ]
+    entries = [e for e in entries if e['at'] <= time.time() * 1000] + extra
+    history = [{'q': e['q'], 'topic': '', 'label': e['label'], 'at': e['at']} for e in entries if e['kind'] == 'answer' and e['id'].startswith('w')]
+    visit = {'startedAt': int(time.time() * 1000) - 60000, 'done': True, 'answers': [{'id': 'pain', 'q': 'Are you in pain?', 'label': 'no', 'at': int(time.time() * 1000) - 50000}, {'id': 'sleep', 'q': 'How have you been sleeping?', 'label': 'so-so', 'at': int(time.time() * 1000) - 40000}], 'since': at(6, 0, 0)}
+    page.evaluate(KV_PUT, {'diary': entries, 'health': week['health'], 'profile': week['profile'], 'history': history, 'asks': [], 'visit': visit})
+    page.reload()
+    page.wait_for_selector('main.simple.home')
+    check('phase 6, first screen: "For the next carer" stands under "Diary" once the diary holds something', 'For the next carer' in text(page, '#handover-link') and ys(page, '#handover-link')[0][1] > ys(page, '#diary-link')[0][1], str(ys(page, '#handover-link')))
+    screen_checks(page, 'phase 6, first screen')
+
+    # ---------------------------------------------------------------- D: a line shows the entries it was counted from
+    page.goto(url + '#/diary')
+    page.wait_for_selector('main.simple.diary')
+    check('diary: the privacy line is true with sharing in the app: kept here only, never sent by the app, leaves only when the carer shares it as a text seen first', "The diary is kept on this phone only. The app never sends it anywhere: it leaves only when you share it yourself, as a text you see first. It is never shown on Frank's screen." in text(page, '#diary-lock'), text(page, '#diary-lock'))
+    page.locator('#tab-week').click()
+    page.wait_for_selector('#insights')
+    lines = page.evaluate("[...document.querySelectorAll('#insights .ins')].map((l) => ({ id: l.dataset.id, see: (l.querySelector('.src-toggle') || {}).innerText || '', open: l.querySelectorAll('.src').length }))")
+    check('D: every line of "What stands out" has "See the entries (N)", closed at first', len(lines) >= 4 and all(x['see'].startswith('See the entries (') and x['open'] == 0 for x in lines), str(lines))
+    ids = [x['id'] for x in lines]
+    check('D: the week has the chest pain of one day, the fall, the sweets, Wednesday\'s drinks', all(k in ids for k in ('pain-day', 'fall', 'sweets', 'few-drinks')), str(ids))
+    page.locator('.src-toggle[data-src=few-drinks]').click()
+    page.wait_for_selector('#src-few-drinks')
+    few = page.evaluate("[...document.querySelectorAll('#src-few-drinks li')].map((e) => e.innerText.replace(/\\s+/g, ' ').trim())")
+    check('D: "Few drinks … : 2" opens to Wednesday\'s two drinks, each with its time: the tea on a card and one "Drank"', len(few) == 2 and few[0].startswith('07:35 Would you like tea or coffee? tea') and few[1] == '15:20 Drank' and name(2) in text(page, '#src-few-drinks'), str(few))
+    check('D: the button now reads "Hide the entries", and the entries stand inside the same line, on the same screen', text(page, '.src-toggle[data-src=few-drinks]') == 'Hide the entries' and page.locator('.ins[data-id=few-drinks] #src-few-drinks').count() == 1 and page.locator('main.simple.diary').count() == 1)
+    page.locator('.src-toggle[data-src=pain-day]').click()
+    page.wait_for_selector('#src-pain-day')
+    pd = text(page, '.ins[data-id=pain-day]')
+    order = page.evaluate("(() => { const li = document.querySelector('.ins[data-id=pain-day]'); const y = (s) => li.querySelector(s).getBoundingClientRect().top; return [y('.ins-text'), y('.ins-act'), y('.urgent'), y('.src')]; })()")
+    check('D, worst case (a pain in the chest): the opened line keeps "Tell the doctor or nurse. If it is new or sudden, call 911 now." and the call box, above its entries', 'If it is new or sudden, call 911 now.' in pd and page.locator('.ins[data-id=pain-day] .urgent a[href="tel:911"]').count() == 1 and order == sorted(order) and 'Where does it hurt? chest' in text(page, '#src-pain-day') and 'How bad is the pain? quite bad' in text(page, '#src-pain-day'), pd[:400])
+    page.locator('.src-toggle[data-src=fall]').click()
+    page.wait_for_selector('#src-fall')
+    check('D, worst case (a fall with a blow to the head): its entry reads "Fall  Noted: a blow to the head.", under the call box', 'Fall Noted: a blow to the head.' in text(page, '#src-fall') and page.locator('.ins[data-id=fall] .urgent a[href="tel:911"]').count() == 1, text(page, '#src-fall'))
+    screen_checks(page, 'D: the week with three lines opened', primary=False)
+    page.locator('.ins[data-id=pain-day]').scroll_into_view_if_needed()
+    shot(page, '01_what_stands_out_a_line_opened_to_its_entries')
+    shot(page, '01b_what_stands_out_three_lines_opened_full_page', full=True)
+    page.locator('.src-toggle[data-src=few-drinks]').click()
+    page.wait_for_function("!document.querySelector('#src-few-drinks')")
+    check('D: "Hide the entries" closes the line again; the others stay open', text(page, '.src-toggle[data-src=few-drinks]') == 'See the entries (2)' and page.locator('#src-pain-day').count() == 1)
+    page.locator('#tab-month').click()
+    page.wait_for_selector('#insights')
+    check('D: the 30-day view has the same button on every line', page.locator('#insights .ins').count() == page.locator('#insights .ins .src-toggle').count() and page.locator('#insights .ins').count() >= 4)
+    page.locator('#tab-week').click()
+    page.wait_for_selector('#insights')
+
+    # ---------------------------------------------------------------- A: "Share with family", through the sheet
+    check('A: "Share with family" and "For the next carer" stand on the diary', text(page, '#share-family') == 'Share with family' and text(page, '#share-handover') == 'For the next carer')
+    page.locator('#share-family').click()
+    page.wait_for_selector('#share-sheet')
+    sheet = text(page, '#share-sheet')
+    shown = page.evaluate("document.querySelector('#share-text').textContent")
+    first = shown.split('\n')
+    check('A, the sheet: "This text leaves the phone through the app you pick (message, email). Talk Partner keeps no copy and has no server."', 'This text leaves the phone through the app you pick (message, email). Talk Partner keeps no copy and has no server.' in sheet, sheet[:300])
+    check('A, the sheet: the text starts "Shared from Talk Partner on [date]. Counted by the app\'s rules from what was entered here; not a medical record."', first[0].startswith(f'Shared from Talk Partner on {name(6)}, ') and first[0].endswith(". Counted by the app's rules from what was entered here; not a medical record."), first[0])
+    check('A, worst case: a line carries a call box, so the call sentence is the second line of the text', first[1] == 'Call 911 now if this is new or sudden: see "What stands out" below.', first[1])
+    check('A: the span is the tab\'s (the last 7 days), with "What stands out", each line\'s base, and the entries by day', f"Frank's diary, the last 7 days ({name(0)} to {name(6)})." in shown and 'WHAT STANDS OUT (the last 7 days)' in shown and 'How it was counted: Counted that day: 2.' in shown and f'ENTRIES BY DAY\n{name(0)}\n  07:40  Would you like tea or coffee? tea' in shown, shown[:500])
+    check('A, worst cases in the text: the chest pain and the fall with a blow to the head each have whom to tell and "Call 911 now if this is new or sudden."', shown.count('   Call 911 now if this is new or sudden.') == 2 and 'Tell the doctor or nurse. If it is new or sudden, call 911 now.' in shown and 'If there is new pain, drowsiness or confusion since, call 911 now.' in shown)
+    check('A: "Include the health notes" is off, and the text holds no health note (no "Diabetes", none of the carer\'s own words)', not page.locator('#share-health').is_checked() and 'iabetes' not in shown and 'Patel' not in shown and 'HEALTH NOTES' not in shown and 'The health notes are not in this text' in sheet)
+    check('A: while the box is off, the sheet names the note the reader will not know (diabetes)', 'Noted in About them: diabetes. The person who reads this text will not know it unless you tick the box.' in text(page, '#share-health-warn'))
+    check('A: no photo and no data URL in the text; "Photos never go in."', 'data:' not in shown and 'base64' not in shown and 'Photos never go in.' in sheet)
+    check('A: Share, Copy and Cancel, in that order, under the text', page.locator('#share-sheet .choice button').all_inner_texts() == ['Share', 'Copy', 'Cancel'] and ys(page, '#share-go')[0][1] > ys(page, '#share-text')[0][1])
+    fit = page.evaluate("(() => { const s = document.querySelector('#share-sheet'); const c = document.querySelector('#share-cancel').getBoundingClientRect(); return { top: Math.round(s.getBoundingClientRect().top), bottom: Math.round(c.bottom), scroll: s.scrollHeight - s.clientHeight }; })()")
+    check('A: the sheet fits a 390 x 844 screen with its three buttons in reach (the long text scrolls inside its own box)', fit['top'] >= 0 and fit['bottom'] <= 844 and fit['scroll'] <= 1, str(fit))
+    check('A: nothing has left before a button is pressed', page.evaluate('window.__shared.length') == 0)
+    t = page.evaluate(TARGETS.replace("'#app button, #app a[href], #app input, #app textarea, #app select'", "'#share-sheet button, #share-sheet input'").replace("!el.closest('[inert]') && ", ''))
+    check('A, the sheet: every button at least 44 px tall, the box at least 24 px', not t['small'] and not t['shortButtons'], str(t))
+    o = page.evaluate(OVERFLOW)
+    check('A, the sheet: nothing runs off the side of the screen', o['sw'] <= o['vw'] and o['n'] == 0, str(o))
+    shot(page, '02_share_sheet_health_notes_off')
+
+    page.locator('#share-health').check()
+    page.wait_for_function("document.querySelector('#share-sheet').dataset.health === '1'")
+    on = page.evaluate("document.querySelector('#share-text').textContent")
+    check('A: with the box ticked the text has the health notes as the family noted them, and the line that rests on one says so', 'HEALTH NOTES (as noted in the app by the family; not a medical record)\n- Diabetes\n- Type 2 diabetes, diet only. Dr Patel on Monday.' in on and 'Diabetes is noted here.' in on and page.locator('#share-health-warn').count() == 0 and 'The health notes are in this text, as you see them below.' in text(page, '#share-sheet'), on[:300])
+    page.locator('#share-text').evaluate("(e) => { e.scrollTop = e.querySelector ? e.scrollHeight * 0.0 : 0; const i = e.textContent.indexOf('HEALTH NOTES'); const r = document.createRange(); r.setStart(e.firstChild, i); r.setEnd(e.firstChild, i + 12); const b = r.getBoundingClientRect(); e.scrollTop += b.top - e.getBoundingClientRect().top - 40; }")
+    shot(page, '03_share_sheet_health_notes_on')
+
+    page.locator('#share-copy').click()
+    page.wait_for_function("document.querySelector('#share-copy').innerText.trim() === 'Copied'")
+    clip = page.evaluate('navigator.clipboard.readText()')
+    check('A, Copy: the clipboard holds the sheet\'s text, character for character; the button says "Copied" and the last one "Close"', clip == on and page.locator('#share-sheet .choice button').all_inner_texts() == ['Share', 'Copied', 'Close'], f'{len(clip)} / {len(on)}')
+    shot(page, '04_share_sheet_copied')
+    page.locator('#share-go').click()
+    page.wait_for_function("document.querySelector('#share-status').innerText.trim() !== ''")
+    shared = page.evaluate('window.__shared')
+    check('A, Share: navigator.share is called once, with { text } and nothing else, and the text is the sheet\'s, character for character', len(shared) == 1 and list(shared[0].keys()) == ['text'] and shared[0]['text'] == on, str([list(x.keys()) for x in shared]))
+    check('A, Share: the sheet says "Handed to the app you picked. Talk Partner kept no copy."', 'Handed to the app you picked. Talk Partner kept no copy.' in text(page, '#share-status'))
+    shot(page, '05_share_sheet_after_share')
+    page.locator('#share-cancel').click()
+    page.wait_for_function("!document.querySelector('#share-sheet')")
+    page.locator('#share-family').click()
+    page.wait_for_selector('#share-sheet')
+    check('A: the box is off again every time the sheet opens', not page.locator('#share-health').is_checked() and 'HEALTH NOTES' not in page.evaluate("document.querySelector('#share-text').textContent"))
+    page.keyboard.press('Escape')
+    page.wait_for_function("!document.querySelector('#share-sheet')")
+    check('A: Escape is "Cancel": the sheet is gone and nothing more was handed over', page.evaluate('window.__shared.length') == 1)
+    page.locator('#tab-today').click()
+    page.wait_for_timeout(150)
+    page.locator('#share-family').click()
+    page.wait_for_selector('#share-sheet')
+    today = page.evaluate("document.querySelector('#share-text').textContent")
+    check('A, worst case, the Today tab (the chest pain and the fall were yesterday): the text is about today, and still carries this week\'s lines and the call sentence', today.split('\n')[1].startswith('Call 911 now if this is new or sudden') and f"Frank's diary, today ({name(6)})." in today and 'WHAT STANDS OUT (the last 7 days)' in today and 'Pain in the head or the chest was chosen' in today and '21:01' not in today, today[:400])
+    page.locator('#share-cancel').click()
+    page.wait_for_function("!document.querySelector('#share-sheet')")
+
+    # ---------------------------------------------------------------- A: "For the next carer"
+    page.locator('#share-handover').click()
+    page.wait_for_selector('#share-sheet')
+    ho = page.evaluate("document.querySelector('#share-text').textContent")
+    hl = ho.split('\n')
+    check('A, handover: the same sheet ("Share this with the next carer?"), the same first sentence, the last 24 hours', 'Share this with the next carer?' in text(page, '#share-h') and hl[0].startswith('Shared from Talk Partner on ') and any(x.startswith('For the next carer: Frank. The last 24 hours (') for x in hl), ho[:300])
+    check('A, handover, worst cases: the call sentence at the top; the pain as it was answered, with whom to tell and when to call; the fall with the blow to the head', hl[1] == 'Call 911 now if this is new or sudden: see the lines on pain and falls below.' and 'Where does it hurt? chest' in ho and 'How bad is the pain? quite bad. Tell the doctor or nurse. If it is new or sudden, call 911 now.' in ho and 'Falls: 1 logged (' in ho and 'With a blow to the head:' in ho and 'If there is new pain, drowsiness or confusion since, call 911 now.' in ho, ho[:900])
+    check('A, handover: drinks, food, toilet and tablets of the last 24 hours; the tablets line says to check before giving any', all(k in ho for k in ('Drinks: ', 'Food: ', 'Toilet: ', 'Tablets taken: logged at ')) and 'The app does not know which tablets or how many: check before giving any.' in ho, ho[:900])
+    check('A, handover: the usual choices learned ("usually tea"), and never one about pain, the body, a feeling or a need', '"Would you like tea or coffee": usually tea' in ho and 'Nothing about pain, the body, feelings or a need is in this list: ask those every time.' in ho and 'Are you in pain" (' not in ho and 'Are you tired' not in ho.split('USUAL CHOICES')[1], ho.split('USUAL CHOICES')[1] if 'USUAL CHOICES' in ho else ho)
+    check('A, handover: no health note with the box off', 'iabetes' not in ho and 'HEALTH NOTES' not in ho and not page.locator('#share-health').is_checked())
+    shot(page, '06_handover_note_for_the_next_carer')
+    page.locator('#share-text').evaluate("(e) => { e.scrollTop = e.scrollHeight; }")
+    shot(page, '06b_handover_note_usual_choices')
+    page.locator('#share-go').click()
+    page.wait_for_function("document.querySelector('#share-status').innerText.trim() !== ''")
+    shared = page.evaluate('window.__shared')
+    check('A, handover, Share: the stub was handed { text } with the note, character for character', len(shared) == 2 and list(shared[1].keys()) == ['text'] and shared[1]['text'] == ho)
+    page.locator('#share-cancel').click()
+    page.wait_for_function("!document.querySelector('#share-sheet')")
+    page.locator('[data-act=home]').first.click()
+    page.wait_for_selector('main.simple.home')
+    page.locator('#handover-link').click()
+    page.wait_for_selector('#share-sheet')
+    check('A, handover from the first screen: the same sheet over the first screen', 'Share this with the next carer?' in text(page, '#share-h') and page.locator('main.simple.home[inert]').count() == 1)
+    page.locator('#share-cancel').click()
+    page.wait_for_function("!document.querySelector('#share-sheet')")
+
+    # ---------------------------------------------------------------- A: with a fluid limit noted (worst case)
+    page.evaluate(KV_PUT, {'health': {**week['health'], 'fluidLimit': True}})
+    page.goto(url + '#/diary')
+    page.reload()
+    page.wait_for_selector('main.simple.diary')
+    page.locator('#tab-week').click()
+    page.wait_for_selector('#insights')
+    page.locator('#share-family').click()
+    page.wait_for_selector('#share-sheet')
+    off = page.evaluate("document.querySelector('#share-text').textContent")
+    low = off.lower()
+    check('A, worst case, a fluid limit noted and the box off: the sheet names it to the carer; the text states no limit and never suggests more to drink', 'a fluid limit from the doctor' in text(page, '#share-health-warn') and 'fluid limit' not in low and not any(w in low for w in ('drink more', 'more to drink', 'more fluid', 'more water', 'encourage', 'should drink')), text(page, '#share-health-warn'))
+    page.locator('#share-health').check()
+    page.wait_for_function("document.querySelector('#share-sheet').dataset.health === '1'")
+    onf = page.evaluate("document.querySelector('#share-text').textContent")
+    check('A, worst case, a fluid limit noted and the box ticked: the drinks line points to the doctor\'s plan; still never "more"', "A fluid limit from the doctor is noted here: check the day against the doctor's plan." in onf and '- A fluid limit from the doctor' in onf and not any(w in onf.lower() for w in ('drink more', 'more to drink', 'more fluid', 'more water', 'encourage', 'should drink')))
+    page.locator('#share-cancel').click()
+    page.wait_for_function("!document.querySelector('#share-sheet')")
+    page.evaluate(KV_PUT, {'health': week['health']})
+
+    # ---------------------------------------------------------------- D on the doctor-visit page, and as it prints
+    page.goto(url + '#/visit')
+    page.reload()
+    page.wait_for_selector('#since')
+    since = page.evaluate("[...document.querySelectorAll('#since-lines > li')].map((l) => ({ t: l.firstChild.textContent.trim(), see: (l.querySelector('.src-toggle') || {}).innerText || '' }))")
+    check('D, the visit page: a line of "Since the last visit" that counted something has "See the entries (N)"; one that counted nothing has no button', any(x['t'].startswith('Falls: 1 logged') and x['see'] == 'See the entries (1)' for x in since) and any(x['t'].startswith('Sleep: no bad night') and x['see'] == '' for x in since), str(since))
+    fall_i = [i for i, x in enumerate(since) if x['t'].startswith('Falls:')][0]
+    page.locator(f'.src-toggle[data-src=since-{fall_i}]').click()
+    page.wait_for_selector(f'#src-since-{fall_i}')
+    check('D, the visit page: the falls line opens to the fall, with its time and the blow to the head', 'Fall Noted: a blow to the head.' in text(page, f'#src-since-{fall_i}') and '22:30' in text(page, f'#src-since-{fall_i}'))
+    check('D, the visit page: the call box is still the first thing on the page', text(page, '#visit-page').startswith('Call 911 now if this is new or sudden.'))
+    screen_checks(page, 'D: the visit page with a line opened')
+    page.locator('#since').scroll_into_view_if_needed()
+    shot(page, '07_visit_page_since_the_last_visit_a_line_opened')
+    shot(page, '07b_visit_page_full', full=True)
+    page.emulate_media(media='print')
+    page.wait_for_timeout(200)
+    printed = page.evaluate("(() => { const vis = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; }; return { src: [...document.querySelectorAll('.src-wrap, .src, .src-toggle')].filter(vis).length, lines: [...document.querySelectorAll('#since-lines > li')].filter(vis).length, box: vis(document.querySelector('#visit-urgent')), controls: [...document.querySelectorAll('.no-print')].filter(vis).length, text: document.querySelector('#visit-page').innerText }; })()")
+    check('D, print: the page prints clean: no "See the entries", no entry list, no control; the lines and the call box are printed', printed['src'] == 0 and printed['controls'] == 0 and printed['lines'] == len(since) and printed['box'] and 'Hide the entries' not in printed['text'] and '22:30' not in printed['text'], str({k: v for k, v in printed.items() if k != 'text'}))
+    shot(page, '08_visit_page_print_preview', full=True)
+    page.emulate_media(media='screen')
+    check('phase 6: nothing was asked of any other host in the whole run (no AI, no server: the text left through the stub and the clipboard only)', not outside, str(outside))
+    check('phase 6: no page error', not errors, '; '.join(errors))
+    ctx.close()
+
+    # ---------------------------------------------------------------- a browser without Web Share: only Copy
+    ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
+    ctx.grant_permissions(['clipboard-read', 'clipboard-write'], origin=origin)
+    ctx.add_init_script(f'({NO_SHARE})()')
+    page = ctx.new_page()
+    errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
+    page.evaluate(KV_PUT, {'diary': entries, 'health': week['health'], 'profile': week['profile'], 'history': history, 'asks': []})
+    page.goto(url + '#/diary')
+    page.reload()
+    page.wait_for_selector('main.simple.diary')
+    page.locator('#share-family').click()
+    page.wait_for_selector('#share-sheet')
+    check('A, no Web Share in the browser: only "Copy" and "Cancel", and the sheet says the text leaves only if the carer pastes it', page.evaluate("typeof navigator.share") == 'undefined' and page.locator('#share-sheet .choice button').all_inner_texts() == ['Copy', 'Cancel'] and 'This text leaves the phone only if you paste it somewhere yourself. Talk Partner keeps no copy and has no server.' in text(page, '#share-leaves'), text(page, '#share-sheet')[:200])
+    page.locator('#share-copy').click()
+    page.wait_for_function("document.querySelector('#share-copy').innerText.trim() === 'Copied'")
+    check('A, no Web Share: Copy works, with the sheet\'s text', page.evaluate('navigator.clipboard.readText()') == page.evaluate("document.querySelector('#share-text').textContent"))
+    shot(page, '09_no_web_share_only_copy')
+    check('phase 6, no Web Share: no page error', not errors, '; '.join(errors))
+    ctx.close()
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--url', default='http://localhost:5179/')
     ap.add_argument('--live', action='store_true', help='a hosted copy: never press "Yes" on the sheet, so nothing is sent')
     ap.add_argument('--dev', action='store_true', help='the dev server: it has no service worker, so the offline run is left out (and said so)')
-    ap.add_argument('--shots', default=None, help='a folder for pictures of the phase 5 screens (devlog/evidence_phase5)')
-    ap.add_argument('--only', default=None, help='run one part only: phase5')
+    ap.add_argument('--shots', default=None, help='a folder for pictures of the phase 5 or phase 6 screens (devlog/evidence_phase5, devlog/evidence_phase6)')
+    ap.add_argument('--only', default=None, help='run one part only: phase5 or phase6')
     a = ap.parse_args()
     global SHOTS
     SHOTS = a.shots
@@ -1914,8 +2154,8 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch()
         print(f'browser: Chromium {browser.version} (headless)')
-        if a.only == 'phase5':
-            phase5(browser, url, a.live)
+        if a.only in ('phase5', 'phase6'):
+            (phase5 if a.only == 'phase5' else phase6)(browser, url, a.live)
             browser.close()
             bad = results.count(False)
             print(f'\n{len(results) - bad} of {len(results)} checks passed')
@@ -1925,7 +2165,14 @@ def main():
         photos(browser, url)
         diary(browser, url, a.live)
         phase4(browser, url, a.live)
-        phase5(browser, url, a.live)
+        if SHOTS and 'phase6' in SHOTS:
+            # (the pictures of each phase go to its own folder: this run writes phase 6's only)
+            keep, SHOTS = SHOTS, None
+            phase5(browser, url, a.live)
+            SHOTS = keep
+        else:
+            phase5(browser, url, a.live)
+        phase6(browser, url, a.live)
         if a.dev:
             print('SKIP  offline: --dev (the dev server has no service worker; run against a production build)')
         else:

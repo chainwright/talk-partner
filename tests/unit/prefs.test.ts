@@ -156,7 +156,7 @@ describe('About them: "What we\'ve learned"', () => {
     expect(html).toContain(`data-act="learned-keep" data-key="${lines[0].key}"`);
     expect(html).toContain(`data-act="learned-remove" data-key="${lines[0].key}"`);
     expect(html).toContain('data-act="learned-forget"');
-    expect(html).toContain('no AI, and it is never sent anywhere');
+    expect(html).toContain('no AI, and the app never sends it anywhere (the usual choices leave only in a note for the next carer, if you share one yourself)');
     expect(html).toContain('Frank always chooses, not the app');
     expect(learnedBlock({ name: '', lines, facts: [], short: null })).toContain('they always choose for themselves');
   });

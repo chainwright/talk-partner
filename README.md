@@ -26,6 +26,10 @@ device (`ONLY_ON_DEVICE`, Gemini Nano in desktop Chrome), or by no model; the pa
 About-them word swapped out may go to the cloud (`PREFER_IN_CLOUD`) after a yes on a sheet that shows the exact
 line; the words on one card may go to the cloud to be spoken (Read aloud, `ONLY_IN_CLOUD`) after a yes on a sheet
 that says so. What the app says about health (what stands out, when to call) is rules and fixed text, never a model.
+The app itself sends the diary, the health notes and the answers nowhere, and there is no server of ours to send
+them to. Since phase 6 the carer can share a text of the diary with the family or the next carer: the text is built
+by rules on the device, shown in full on a sheet first, and leaves only through the app the carer picks (the phone's
+share sheet, or the clipboard). No model reads it or is handed it.
 
 Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a therapy, not a diagnosis.
 
@@ -146,8 +150,9 @@ no choice is removed and nothing is chosen for the person, whose screen says not
 counted: a pattern by time of day (three answers in each part of the day), a usual yes or no, and what was asked for
 on the needs board, how often and when. In a tree, the usual side of the next either-or is offered as a short
 question under the main button ("Would you like something sweet?"). About them lists every learned line in plain
-words with its counts, each with "Keep as a fact" and "Remove", and "Forget everything learned". It never leaves the
-device: `prefs.ts` imports nothing and no file that builds a prompt or a request imports it
+words with its counts, each with "Keep as a fact" and "Remove", and "Forget everything learned". The app never sends
+it anywhere (since phase 6 the usual choices are in the note "For the next carer", which leaves only when the carer
+shares it): `prefs.ts` imports nothing and no file that builds a prompt or a request imports it
 (`tests/unit/prefs.test.ts`). Two AI uses exist in code, both `ONLY_ON_DEVICE` (desktop Chrome with Gemini Nano
 only, so on no phone today): the learned lines as hints in the narrowing step's on-device prompt, and a two-sentence
 summary of them in About them. **Neither has been run against a real Gemini Nano.**
@@ -243,14 +248,16 @@ why, and the rest, are under "More".
 **The diary (`core/diary.ts`, `web/src/diary.ts`).** One tap logs "Drank", "Ate", "Toilet", "Slept" or "Pain" with the
 time, with "Undo". The diary also keeps every answer the person confirmed and every need they pointed to on the
 board. Today / Week / Month, a timeline by day, a filter by topic, "Copy as text, for a visit", and "Delete the
-diary". It is kept in IndexedDB on the device and nowhere else. **A diary is not a record of what happened**: it
+diary". It is kept in IndexedDB on the device and nowhere else; it leaves only when the carer shares it as a text
+(phase 6, below). **A diary is not a record of what happened**: it
 holds only what was entered in the app, and every count says so.
 
 **Health notes** (About them): free text, and four toggles (diabetes, swallowing difficulty, a fluid limit from the
 doctor, needs reminders to drink and eat). They are kept apart from the profile the card prompts read, stay on the
-device, and are never in a cloud request.
+device, and are never in a cloud request. (Since phase 6 they go into a text the carer shares only when the carer
+ticks "Include the health notes" on the sheet; the box is off every time.)
 
-**What stands out (`core/insights.ts`)**, for the last 7 or 30 days, five lines at most. Red flags ("Tell the doctor
+**What stands out (`core/insights.ts`)**, for the last 7 or 30 days, six lines at most. Red flags ("Tell the doctor
 or nurse"): pain chosen or logged on 3 days or more; a whole past day with entries and no drink among them, said with
 its doubt ("That can simply mean nobody entered one."). Worth mentioning or to keep in mind: a day with few drinks
 entered, something sweet chosen often, bad nights on 3 days, many answers marked "less sure". Each line shows what it
@@ -455,10 +462,66 @@ step is Read aloud.
   in every script and screenshot (a monogram, a drawn dog, a drawn lake: `tests/fixtures/photo-*.jpg`, our own
   drawings, no real face); the needs board's tiles are 100 px tall so that nine and the way out fit 390 x 844.
 
-Not built from round 6: sharing with a second carer, a practice report for the therapist, insight lines that open
-their entries, a "words that worked" list. Not done by us: a nurse's or therapist's read of any wording here.
+Not built from round 6 in phase 5: sharing with a second carer and insight lines that open their entries (both
+built in phase 6, below), a practice report for the therapist, a "words that worked" list (not built). Not done by us: a nurse's or therapist's read of any wording here.
 
 2609 unit tests (50 new: `phase5-grammar`, `phase5-safety`). On the production build on localhost: `e2e-simple.py` 620/620 at `d198eb0` (its phase 5 run, 66 checks, again at `de631b1` after the board's height changed in the full view); `pwa-check.py` 30/30, `e2e-needs.mjs` 12/12 and `e2e-noconfig.mjs` 25/25 at `de631b1`; `overflow-check.py` 510/510 at `d198eb0` (it has no phase 5 screens of its own; the phase 5 run checks its screens at 390 px only).
+
+## Added on 18 Nov, phase 6: share with the care circle, and where a line came from
+Two things the judges of round 6 asked for (their items C and G; `CLAIMS.md` rows 98 to 103;
+`devlog/evidence_phase6/`; `devlog/DAY17.md`). **This phase has no AI in it at all**: everything here is rules and
+fixed text on the device, and no model reads, writes or is handed any of it. **No carer, no person with aphasia and
+no clinician has used or read any of it.**
+
+**Every line of "What stands out" can show where it came from (`core/insights.ts`, `web/src/phase6.ts`).** Under each
+line: "See the entries (N)". A tap shows, in place, the diary entries the rule counted: by day, the time, the
+question and the answer, or the log; "Hide the entries" closes it. It holds for every line the rules can write
+(pain on three days, one day of strong or head or chest pain, no drink, few drinks, many drinks under a fluid limit,
+sweets, no food, sleep, mood, a fall, "less sure"). For "no drink on Wed" the entries are that day's, under "No drink
+among these." A card and a tap within 20 minutes count once, and both are shown, one of them marked "counted once
+with the entry beside it". The entries stand under the line's "whom to tell" sentence and its call box, never in
+their place. The same on the doctor-visit page under each line of "Since the last visit"; none of it is printed.
+How it is kept true: the rules return the entry ids with each line (`Insight.source`), and the count itself is now
+read from the same list (`eventGroups` in `core/diary.ts`), so a line cannot count one thing and show another.
+`tests/unit/phase6-source.test.ts` checks every line's ids against the entries its rule counted, and the new count
+against the old one, kept word for word in the test, on 300 made-up days.
+
+**Share with the care circle (`core/share.ts`, `web/src/phase6.ts`).** No server and no account.
+- **"Share with family"**, on the diary, for the tab that is open (Today, Week, Month). The text starts "Shared from
+  Talk Partner on [date and time]. Counted by the app's rules from what was entered here; not a medical record.",
+  then the span, the "What stands out" lines as the rules wrote them (the level, the line, its "whom to tell"
+  sentence, how it was counted), then the entries by day, and it ends "This text does not say what to give or what
+  to do. Before changing food, drink or tablets, go by the doctor's plan." When a line carries the call box, the
+  text has "Call [number] now if this is new or sudden" as its second line and again on that line.
+- **"For the next carer"**, on the diary and on the first screen: the last 24 hours (drinks, food, the toilet, pain
+  as it was answered, falls, tablets taken) and the usual choices the app has counted. "None entered" is said as a
+  gap that may be one ("If that is right, and not a gap in the diary, tell the doctor or nurse today"); every fall
+  carries when to call; the tablets line says "check before giving any" whether a tap was logged or not.
+- **The sheet first.** Nothing leaves before a sheet has shown the exact text, with "This text leaves the phone
+  through the app you pick (message, email). Talk Partner keeps no copy and has no server." Then **Share** (the Web
+  Share API, `navigator.share({ text })`: the phone's own share sheet), **Copy**, **Cancel**. In a browser without
+  Web Share there is only Copy.
+- **Health notes only when ticked.** "Include the health notes" is off every time the sheet opens. With it off the
+  builder is not handed the notes at all, so the lines are counted as if none were noted and no sentence can state
+  one. Because that can hide something the reader needs (a fluid limit, swallowing difficulty, diabetes), the sheet
+  then says so to the carer: "Noted in About them: a fluid limit from the doctor. The person who reads this text
+  will not know it unless you tick the box."
+- **Never in the text:** a photo (a diary entry holds none, and the builder reads none), an entry id, a model's
+  rewording of a line.
+
+Where this differs from what we were asked to build, and why (`devlog/DAY17.md` has each): the Today tab's text
+carries the lines of the last 7 days (the Today tab shows none of its own, and a chest pain of yesterday must not be
+missing from a text about today); the first line has the time as well as the date; the usual choices in the handover
+note leave out every usual "no" and the needs board as well as the care questions (a note that says "usually says no
+to a drink" could stop the next carer from offering one); in the handover note every fall carries the call sentence,
+a blow to the head noted or not.
+
+**Limits.** What the receiving app does with the text is outside the app: a message can be stored, forwarded or
+read by its service. The text holds what was entered, so a name typed into a question is in it, and the sheet says
+so. A shared text is a copy of one moment: it does not update, and it says when it was made. The diary's privacy
+line now reads "The app never sends it anywhere: it leaves only when you share it yourself, as a text you see
+first." The Share button was pressed in a test browser against a stub of `navigator.share`; it was pressed on no
+real phone by us.
 
 ## Changed on 18 Nov after a role-play on the phone
 One of us played Carol and Frank (`design/PERSONA_SCENARIO.md`, fictional) on the hosted copy at 390 px. What it
@@ -613,7 +676,7 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `core/pipeline.ts:733` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:848` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:878` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:776` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
+| `web/src/main.ts:802` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all, and since 17 Nov neither does any either-or whose two options the code reads whole. Every cut is visible per card in "Why this card".

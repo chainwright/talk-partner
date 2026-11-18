@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
 import { P4 } from '../../core/copy4';
 import { P5 } from '../../core/copy5';
+import { P6 } from '../../core/copy6';
 import { treeEnds } from '../../core/tree';
 
 /** Every string of a copy group; every function is called with empty strings (and again with zeros) for its arguments. */
@@ -27,8 +28,8 @@ describe('with no name set, no string says "them can / them is / them has"', () 
     expect(P4.turn.sub('')).toBe('Hand over the phone: they can start.');
     expect(P4.turn.sub('Frank')).toBe('Hand over the phone: Frank can start.');
   });
-  it('every copy string (core/copy.ts, copy4.ts, copy5.ts)', () => {
-    const all = [...strings(COPY), ...strings(P4), ...strings(P5)];
+  it('every copy string (core/copy.ts, copy4.ts, copy5.ts, copy6.ts)', () => {
+    const all = [...strings(COPY), ...strings(P4), ...strings(P5), ...strings(P6)];
     expect(all.length).toBeGreaterThan(900);
     expect(all.filter((s) => BAD.test(s))).toEqual([]);
     // the test can fail: the sentence judge round 6 found is caught

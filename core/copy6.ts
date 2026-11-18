@@ -15,4 +15,82 @@ export const P6 = {
     /** An entry of the line that is no longer in the diary (it was undone since). */
     gone: 'An entry behind this line is no longer in the diary.',
   },
+  /**
+   * The text the carer can share (core/share.ts) and the sheet that shows it first (web/src/phase6.ts). The text is
+   * built by rules on the device; it leaves only through the app the carer picks, after the sheet. `device` is
+   * "phone", "tablet" or "computer".
+   */
+  share: {
+    family: 'Share with family',
+    handover: 'For the next carer',
+    handoverSub: 'The last 24 hours as a note you can send.',
+    /** The first line of every shared text (the brief's sentence, with the time added). */
+    stamp: (when: string) => `Shared from Talk Partner on ${when}. Counted by the app's rules from what was entered here; not a medical record.`,
+    /** At the top when a line below carries the call box. */
+    call: (number: string, where: string) => `Call ${number} now if this is new or sudden: see ${where} below.`,
+    callLine: (number: string) => `Call ${number} now if this is new or sudden.`,
+    whereFamily: '"What stands out"',
+    whereHandover: 'the lines on pain and falls',
+    title: { today: (name: string, day: string) => `${name ? `${name}'s diary` : 'The diary'}, today (${day}).`, week: (name: string, from: string, to: string) => `${name ? `${name}'s diary` : 'The diary'}, the last 7 days (${from} to ${to}).`, month: (name: string, from: string, to: string) => `${name ? `${name}'s diary` : 'The diary'}, the last 30 days (${from} to ${to}).` },
+    stands: { week: 'WHAT STANDS OUT (the last 7 days)', month: 'WHAT STANDS OUT (the last 30 days)' } as Record<string, string>,
+    standsNone: 'Nothing was entered in this time, so there is nothing to count.',
+    from: 'How it was counted:',
+    health: 'HEALTH NOTES (as noted in the app by the family; not a medical record)',
+    entries: 'ENTRIES BY DAY',
+    entriesNone: { today: 'Nothing entered today yet.', week: 'Nothing entered in the last 7 days.', month: 'Nothing entered in the last 30 days.' } as Record<string, string>,
+    /** The last lines of every shared text. */
+    gap: 'Only what was entered in the app is here. A gap can mean nobody entered it.',
+    noAdvice: "This text does not say what to give or what to do. Before changing food, drink or tablets, go by the doctor's plan.",
+    // ---- the handover note
+    hTitle: (name: string, from: string, to: string) => `For the next carer${name ? `: ${name}` : ''}. The last 24 hours (${from} to ${to}).`,
+    hCount: (what: string, n: number, times: string) => `${what}: ${n} entered (${times}).`,
+    hDrinks: 'Drinks',
+    hFood: 'Food',
+    hToilet: 'Toilet',
+    hNoDrink: 'Drinks: none entered. If that is right, and not a gap in the diary, tell the doctor or nurse today.',
+    hFewDrinks: 'That is few for a day: worth mentioning to the doctor or nurse.',
+    hFluid: "A fluid limit from the doctor is noted: go by the doctor's plan.",
+    hNoFood: 'Food: none entered. If that is right, and not a gap in the diary, mention it to the doctor or nurse.',
+    hNoToilet: 'Toilet: none entered.',
+    hPain: (items: string) => `Pain: ${items}.`,
+    hPainAsk: 'Ask again on your shift, and take the answer as said.',
+    hNoPain: 'Pain: none entered. That does not show there was none: ask, and take the answer as said.',
+    hFalls: (n: number, times: string) => `Falls: ${n} logged (${times}).`,
+    hFallHead: (times: string) => `With a blow to the head: ${times}.`,
+    hNoFalls: 'Falls: none logged.',
+    hTablets: (times: string) => `Tablets taken: logged at ${times}. The app does not know which tablets or how many: check before giving any.`,
+    hNoTablets: 'Tablets taken: none logged. That can mean nobody tapped it: check before giving any.',
+    hNothing: 'Nothing was entered in the last 24 hours. That is a gap in the diary, not a report: ask the family how the day went.',
+    usual: (name: string) => `USUAL CHOICES (counted from the answers ${name || 'they'} confirmed; a hint for you, and ${name || 'they'} still choose${name ? 's' : ''} every time)`,
+    usualNone: 'Nothing learned yet.',
+    usualNever: 'Nothing about pain, the body, feelings or a need is in this list: ask those every time.',
+    /** In the privacy line of the session, once a text was handed over or copied. */
+    sessionLine: (n: number) => `A text from the diary was handed to an app you picked, or copied, ${n === 1 ? 'once' : `${n} times`} this session, after you saw it. Talk Partner itself sent nothing and kept no copy.`,
+    // ---- the sheet
+    sheet: {
+      heading: { family: 'Share this with family?', handover: 'Share this with the next carer?' } as Record<string, string>,
+      /** The brief's sentence; "the phone" follows the device. */
+      leaves: (device: string) => `This text leaves the ${device} through the app you pick (message, email). Talk Partner keeps no copy and has no server.`,
+      leavesCopy: (device: string) => `This text leaves the ${device} only if you paste it somewhere yourself. Talk Partner keeps no copy and has no server.`,
+      exact: 'This is the exact text. Nothing else goes with it.',
+      healthBox: 'Include the health notes',
+      healthNone: 'No health notes are noted in About them.',
+      healthOff: 'The health notes are not in this text, and the lines are counted as if none were noted.',
+      healthOn: 'The health notes are in this text, as you see them below.',
+      /** Under the box, while it is off and a note that changes what is safe is noted. */
+      healthWarn: (what: string) => `Noted in About them: ${what}. The person who reads this text will not know it unless you tick the box.`,
+      photos: 'Photos never go in.',
+      share: 'Share',
+      copy: 'Copy',
+      copied: 'Copied',
+      cancel: 'Cancel',
+      close: 'Close',
+      /** After Share or Copy. */
+      shared: 'Handed to the app you picked. Talk Partner kept no copy.',
+      shareFailed: 'Sharing did not start here. Use Copy, then paste the text where you want it.',
+      copyFailed: 'Copying is not possible here. Select the text above and copy it yourself.',
+      names: 'The text holds what was entered: a name in a question stays as it was asked.',
+
+    },
+  },
 } as const;

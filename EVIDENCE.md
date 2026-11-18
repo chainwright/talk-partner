@@ -193,3 +193,17 @@ held-out run record uncommitted changes in the tree, so we do not call them clea
 | 97 | `tests/fixtures/photo-beth.jpg`, `photo-bo.jpg`, `photo-lake.jpg` | `python3 scripts/phase4-shots.py --out devlog/evidence_phase5/reshoot_phase4` | `reshoot_phase4/04_person_words_with_B_beth_bo_biscuits.png`, `15_phototalk_pick_a_photo.png`, `16_…`, `17_person_photo_over_the_question.png` |
 
 Not run for phase 5: any of it with a carer, a person with aphasia or a clinician; the `tel:` link on a real phone; the wording steps against a real model.
+
+## Phase 6 (18 Nov 2026): rows 98 to 103
+No model is part of phase 6, so there is no AI run to save: the proof is the unit tests and one browser run in which
+every request to another host is refused and counted (none was made).
+
+| Row | File | Command | Saved output |
+|---|---|---|---|
+| 98, 99 | `core/insights.ts` (`Insight.source`), `core/diary.ts` (`eventGroups`), `core/since.ts`, `web/src/phase6.ts` (`sourceBlock`), `tests/unit/phase6-source.test.ts` | `npx vitest run tests/unit/phase6-source.test.ts`; `python3 scripts/e2e-simple.py --only phase6 --shots devlog/evidence_phase6` (a production build on localhost) | `devlog/evidence_phase6/01_what_stands_out_a_line_opened_to_its_entries.png`, `01b_what_stands_out_three_lines_opened_full_page.png`, `07_visit_page_since_the_last_visit_a_line_opened.png`, `07b_visit_page_full.png`, `08_visit_page_print_preview.png` (the page under print media) |
+| 100, 101 | `core/share.ts` (`familyText`, `handoverText`, `handoverUsual`), `tests/unit/phase6-share.test.ts` | `npx vitest run tests/unit/phase6-share.test.ts`; the phase 6 browser run | `02_share_sheet_health_notes_off.png`, `06_handover_note_for_the_next_carer.png`, `06b_handover_note_usual_choices.png` |
+| 102 | `web/src/phase6.ts` (`shareSheet`), `web/src/main.ts` (`share-open`, `share-go`, `share-copy`) | the phase 6 browser run (`navigator.share` replaced by a stub that records what it is handed; the clipboard read back) | `03_share_sheet_health_notes_on.png`, `04_share_sheet_copied.png`, `05_share_sheet_after_share.png`, `09_no_web_share_only_copy.png`; `e2e-phase6_local.txt` |
+| 103 | `core/copy.ts`, `core/copy6.ts` | `npx vitest run tests/unit/phase6-share.test.ts tests/unit/diary-view.test.ts`; `scripts/e2e-simple.py` (the diary run reads the line on the screen) | `e2e-simple_local.txt` |
+
+Not run for phase 6: any of it with a carer, a family member, a paid carer or a clinician; Share on a real phone (the
+phone's own share sheet was never opened by us); the print on paper.

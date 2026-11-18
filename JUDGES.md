@@ -46,7 +46,7 @@ topic question the next question is the main button ("Are you hungry?" → yes �
 meal?" → snack → "something sweet or something savoury?"), and a path ends on one line that says what to do ("Bring
 them a sweet snack."); `core/tree.ts`, walked answer by answer in `tests/unit/tree.test.ts`. *What it learns:* after
 three confirmed answers to the same question the carer sees "Usually: coffee (3 of 3)" and that choice first; it is
-counting, not AI, it stays on the device, and About them lists every learned line with "Remove" (`core/prefs.ts`).
+counting, not AI, the app never sends it anywhere, and About them lists every learned line with "Remove" (`core/prefs.ts`).
 *Pictures:* our own colour drawings, and the family's own photos first wherever a choice is the photo's word; no AI
 looks at a photo to put it on a card (the one place a model may be shown a photo is phase 4's "Talk about a photo",
 on the device only, after the carer's tap), and no background is removed (a segmentation model would be AI inference outside Firebase AI
@@ -56,7 +56,7 @@ the AI is where it was, in a typed open question, the narrowing step (which now 
 
 **Added on 18 Nov, phase 3, the carer's side only** (`CLAIMS.md` rows 63 to 72; README "Added on 18 Nov, phase 3").
 A *diary* (one tap logs a drink, a meal, the toilet, sleep or pain; the answers and the needs go in by themselves;
-today, week, month, by topic; on the device only) and, for a week or a month, *what stands out*: at most five lines,
+today, week, month, by topic; kept on the device only) and, for a week or a month, *what stands out*: at most six lines,
 each with what it was counted from ("Chosen or logged 2 times that day. Only what was entered here."), red flags
 marked "Tell the doctor or nurse", never medical advice. **Counting, thresholds and red flags are rules; the AI only
 rewords.** In desktop Chrome with Gemini Nano the lines are put into plainer words on the device (`ONLY_ON_DEVICE`); on
@@ -83,6 +83,19 @@ at the photo (`ONLY_ON_DEVICE`, the picture as inline JPEG; the engine has no cl
 one more question from the things it names. The spike that decided it and the SDK's own
 `inferenceSource=on_device` lines are in `devlog/evidence_phase4/AI_RUN_LOG.md`. On a phone the questions are the
 rules' and the screen says so.
+
+**Added on 18 Nov, phase 6: share with the care circle, and where a line came from** (`CLAIMS.md` rows 98 to 103;
+README "Added on 18 Nov, phase 6"; `devlog/evidence_phase6/`). **No AI is in this phase**: rules and fixed text on the
+device. Open the diary, tab Week: under every line of "What stands out" is **"See the entries (N)"**, which shows in
+place the diary entries the rule counted (the rules return the ids with the line; the count is read from the same
+list). Then **"Share with family"**: a sheet shows the exact text (the span, the lines with how each was counted,
+the entries by day), says "This text leaves the phone through the app you pick (message, email). Talk Partner keeps
+no copy and has no server.", and has Share (`navigator.share({ text })`), Copy and Cancel. The health notes go in
+only when the box on the sheet is ticked (off every time); photos never. **"For the next carer"** is a note of the
+last 24 hours with the usual choices. A line that carries the call box puts "Call 911 now if this is new or sudden"
+at the top of the text. The diary's privacy line was changed to stay true: the app never sends the diary; it leaves
+only when the carer shares it, as a text seen first. Nobody it is for has used it; Share was pressed against a stub
+in a test browser, on no real phone.
 
 **Added on 18 Nov, phase 5, after judge round 6** (`CLAIMS.md` rows 86 to 97; README "Added on 18 Nov, phase 5").
 On the bare address, as a phone: the first screen has **"Something new or sudden?"** (FAST, four more reasons to

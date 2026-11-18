@@ -31,7 +31,7 @@ import { stripQuestion } from '../../core/strip';
 import { backupText, makeBackup, readBackup, type Backup, type BackupPreview } from '../../core/backup';
 import { addEntry, answerEntry, diaryText, inSpan, logEntry, markDiary, needEntry, removeEntry, type DiaryEntry, type DiaryTopic, type LogKind, type Span } from '../../core/diary';
 import { within, type CloudError } from '../../core/engine';
-import { NO_HEALTH, cleanHealth, cloudLines, insightCloudText, insightDevicePrompt, insights, type HealthNotes, type Insight, type InsightSpan } from '../../core/insights';
+import { hasHealth, NO_HEALTH, cleanHealth, cloudLines, insightCloudText, insightDevicePrompt, insights, type HealthNotes, type Insight, type InsightSpan } from '../../core/insights';
 import { RELIABLE, careAnswer, markLessSure, reliability, reorder, tapsFrom } from '../../core/reliability';
 import { checkReworded, rewordOnDevice, type RewordSource } from '../../core/reword';
 import { addAsk, askOf, tipOfDay, type Ask } from '../../core/tip';
@@ -56,6 +56,9 @@ import { CARE_TOPICS } from '../../core/reliability';
 import { WRONG_TILE, emergencyNumber, urgentAnswer, urgentAny } from '../../core/redflag';
 import { fromIsoDay, pickedQuestions, sinceLines, sinceText, toggleQuestion } from '../../core/since';
 import { SpeakCache, isPcm, pcmRate, pcmToWav, speakText, speakable } from '../../core/speak';
+import { P6 } from '../../core/copy6';
+import { familyText, handoverText, riskyNotes } from '../../core/share';
+import { handoverLink, shareSheet } from './phase6';
 import { fallBlock, hearButton, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenLink, suddenScreen, urgentBox } from './phase5';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
@@ -539,7 +542,30 @@ async function hear() {
 }
 // ---------------------------------------------------------------- phase 6: where a line came from, and sharing
 /** "See the entries": the lines that are open, by key (an insight id, or "since-N" on the doctor-visit page). In memory only. */
-const p6 = { open: [] as string[] };
+const p6 = {
+  open: [] as string[],
+  /**
+   * The sheet before a text is shared (core/share.ts): which text, whether the health notes are ticked in (off every
+   * time the sheet opens), the exact text as the sheet shows it, and what happened. "Share" and "Copy" hand over this
+   * text and no other. In memory only: nothing of it is stored.
+   */
+  share: null as { kind: 'family' | 'handover'; health: boolean; text: string; status: '' | 'shared' | 'copied' | 'shareFailed' | 'copyFailed'; from: string } | null,
+  /** How many times a text was handed to the share sheet or copied this session (the privacy line says so). */
+  shared: 0,
+};
+const canShare = () => typeof (navigator as Navigator & { share?: unknown }).share === 'function';
+/** The text of the open sheet, built again by the rules: with the health notes only when the box is ticked (the builder is not handed them otherwise). */
+function shareTextNow(kind: 'family' | 'handover', health: boolean): string {
+  const base = { diary: state.diary, health: health ? state.health : null, name: state.profile.personName.trim(), now: Date.now(), number: callNumber() };
+  return kind === 'family' ? familyText({ ...base, span: state.diaryTab }) : handoverText({ ...base, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [] });
+}
+
+function closeShare() {
+  const from = p6.share?.from;
+  p6.share = null;
+  render();
+  if (from) document.querySelector<HTMLElement>(`#${from}`)?.focus({ preventScroll: true });
+}
 
 /** "Since the last visit", for the doctor-visit page: the diary's counts from the day the carer named, and the picked questions. */
 function sinceModel() {
@@ -1417,7 +1443,7 @@ function simplePrivacy(): string[] {
   return privacyLines({
     cloudOn: state.settings.cloudHelp, settingsAsked,
     sent: r.cardsLeft, maybe: r.perCard.filter((x) => x.attempted && !x.left).length, clips: voiceSent.clips,
-  }).concat(state.insSent ? [C.simple.insights.sentLine(state.insSent)] : []).concat(p5.speakSent ? [P5.speak.sent(p5.speakSent)] : []).filter((x, i, all) => !((state.insSent || p5.speakSent) && i === 0 && all.length > 1 && (x === C.simple.privacy.none || x === C.simple.privacy.cloudOn)));
+  }).concat(state.insSent ? [C.simple.insights.sentLine(state.insSent)] : []).concat(p5.speakSent ? [P5.speak.sent(p5.speakSent)] : []).concat(p6.shared ? [P6.share.sessionLine(p6.shared)] : []).filter((x, i, all) => !((state.insSent || p5.speakSent) && i === 0 && all.length > 1 && (x === C.simple.privacy.none || x === C.simple.privacy.cloudOn)));
 }
 const aboutName = () => C.about.heading(state.profile.personName);
 const whereInput = () => ({ configured: !!cfg, device: state.device, cloudOn: state.settings.cloudHelp, online: isOnline() });
@@ -1552,7 +1578,7 @@ function simpleScreen(): string {
       aboutLink: !!state.settings.firstCard || !!(name || p.people.length || p.foods.length || p.places.length || p.tv.length || p.music.length),
       busy: state.busy, error: state.error, question: state.lastQuestion,
       howOpen: !state.settings.howFolded, topics: topics(p), topicOpen: state.topicOpen, aiTag: aiTag(whereInput()), ai: aiLines(whereInput()),
-      privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: `${diaryLink()}${p4Links(name)}`,
+      privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: `${diaryLink()}${!state.demo && state.diary.length ? handoverLink() : ''}${p4Links(name)}`,
       bodyHtml: suddenLink('sudden-body'),
       turnHtml: `${turnButton(name)}${suddenLink()}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
     });
@@ -1750,6 +1776,13 @@ function render(lifted = false) {
     app.querySelector('main')?.setAttribute('inert', '');
     app.insertAdjacentHTML('beforeend', insightSheet({ text: state.insSheet.text, request: state.insSheet.request }));
     document.querySelector<HTMLElement>('#ins-sheet-h')?.focus();
+  }
+  // phase 6: the exact text before it is shared with the family or the next carer
+  if (p6.share && r !== 'diary' && r !== 'partner') p6.share = null;
+  if (p6.share && (r === 'diary' || r === 'partner')) {
+    const sh = p6.share;
+    app.querySelector('main')?.setAttribute('inert', '');
+    app.insertAdjacentHTML('beforeend', shareSheet({ kind: sh.kind, text: sh.text, health: sh.health, hasHealth: hasHealth(state.health), risky: riskyNotes(state.health), canShare: canShare(), device: copyDevice(), status: sh.status }));
   }
   if (simple && r === 'about' && state.importDraft) {
     app.querySelector('main')?.setAttribute('inert', '');
@@ -2148,6 +2181,32 @@ function act(el: HTMLElement) {
     case 'photo-cancel': state.photoDraft = null; render(); break;
     case 'photo-del': state.photos = removePhoto(state.photos, el.dataset.id ?? ''); void kvSet('photos', state.photos); render(); break;
     case 'photo-del-all': if (confirm(C.simple.photos.delAllConfirm)) { state.photos = []; void kvSet('photos', []); render(); } break;
+    // ---- phase 6: share with the care circle. The sheet shows the exact text; only "Share" and "Copy" hand it over,
+    // to the app the carer picks or to the clipboard. The app itself sends nothing and stores nothing of it.
+    case 'share-open': {
+      if (state.demo) break;
+      const kind = el.dataset.kind === 'handover' ? 'handover' : 'family';
+      p6.share = { kind, health: false, text: shareTextNow(kind, false), status: '', from: el.id };
+      render();
+      document.querySelector<HTMLElement>('#share-h')?.focus();
+      break;
+    }
+    case 'share-cancel': closeShare(); break;
+    case 'share-go': {
+      const sh = p6.share;
+      if (!sh || !canShare()) break;
+      const said = (status: 'shared' | 'shareFailed') => { if (p6.share !== sh) return; sh.status = status; if (status === 'shared') p6.shared++; render(); document.querySelector<HTMLElement>('#share-status')?.scrollIntoView({ block: 'nearest' }); };
+      // (a share the carer cancels in the phone's own sheet is an AbortError: nothing left, nothing is said)
+      void navigator.share({ text: sh.text }).then(() => said('shared'), (e: unknown) => { if ((e as { name?: string } | null)?.name !== 'AbortError') said('shareFailed'); });
+      break;
+    }
+    case 'share-copy': {
+      const sh = p6.share;
+      if (!sh) break;
+      const said = (status: 'copied' | 'copyFailed') => { if (p6.share !== sh) return; sh.status = status; if (status === 'copied') p6.shared++; render(); document.querySelector<HTMLElement>('#share-copy')?.focus({ preventScroll: true }); };
+      if (navigator.clipboard?.writeText) void navigator.clipboard.writeText(sh.text).then(() => said('copied'), () => said('copyFailed')); else said('copyFailed');
+      break;
+    }
     // ---- phase 6: a line of "What stands out" or of "Since the last visit" shows the entries it was counted from, and hides them
     case 'src-toggle': {
       const k = el.dataset.src ?? '';
@@ -2324,6 +2383,8 @@ app.addEventListener('change', (ev) => {
   if (t.id === 'consent') { state.consentChecked = (t as HTMLInputElement).checked; render(); return; }
   if (t instanceof HTMLInputElement && t.dataset.photo !== undefined && t.files?.[0]) { void addPhoto(Number(t.dataset.photo), t.files[0]); return; }
   if (t instanceof HTMLInputElement && t.id === 'photo-file' && t.files?.[0]) { void openPhoto(t.files[0]); return; }
+  // the share sheet's box: the text is built again, with the health notes or without them, and shown before anything leaves
+  if (t.id === 'share-health' && p6.share) { const on = (t as HTMLInputElement).checked; p6.share = { ...p6.share, health: on, text: shareTextNow(p6.share.kind, on), status: '' }; render(); document.querySelector<HTMLElement>('#share-health')?.focus({ preventScroll: true }); return; }
   if (t.id === 'diary-topic') { state.diaryTopic = (t as HTMLSelectElement).value as DiaryTopic | 'all'; state.logged = null; render(); document.querySelector<HTMLElement>('#diary-topic')?.focus({ preventScroll: true }); return; }
   // "Since the last visit" (the doctor-visit page): the day to count from, and up to three fixed questions
   if (t.id === 'since-from' && state.p4.visit) { const d = fromIsoDay(t.value); if (d !== null) { state.p4.visit.since = d; void kvSet('visit', state.p4.visit); render(); } return; }
@@ -2411,7 +2472,7 @@ app.addEventListener('keydown', (ev) => { if ((ev as KeyboardEvent).key === 'Ent
 // (a back press in the simple view is drawn by `popstate` above; the address change it brings is not drawn twice)
 window.addEventListener('hashchange', () => { if (simpleView() && hashNow() === drawnAt) return; draw(); });
 // the consent sheet: Escape is its "No"
-window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && state.sheet) { state.sheet = false; render(); } else if (ev.key === 'Escape' && state.photoDraft) { state.photoDraft = null; render(); } else if (ev.key === 'Escape' && state.insSheet) { state.insSheet = null; render(); } else if (ev.key === 'Escape' && state.importDraft) { state.importDraft = null; render(); } });
+window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && state.sheet) { state.sheet = false; render(); } else if (ev.key === 'Escape' && state.photoDraft) { state.photoDraft = null; render(); } else if (ev.key === 'Escape' && state.insSheet) { state.insSheet = null; render(); } else if (ev.key === 'Escape' && state.importDraft) { state.importDraft = null; render(); } else if (ev.key === 'Escape' && p6.share) closeShare(); });
 
 // The app shell is kept by a service worker (web/public/sw.js, its file list written at build time), so the page, the
 // rules, the topics, quick needs and About them open with no connection. Production builds only: the dev server has none.

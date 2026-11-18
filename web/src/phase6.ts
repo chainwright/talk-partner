@@ -46,3 +46,53 @@ export function sourceBlock(m: SourceModel): string {
   const days = byDay(found).map((d) => { const w = dayWord(d.day, m.now); return `<section class="day" data-day="${dayText(d.day)}"><h4>${w ? `${w} · ` : ''}${dayText(d.day)}</h4><ul>${d.entries.map((e) => sourceLine(e, m.once.includes(e.id))).join('')}</ul></section>`; }).join('');
   return `<div class="src-wrap no-print">${button}<div class="src" id="${id}" role="region" aria-label="${S.hide}">${m.note ? `<p class="src-note">${m.note}</p>` : ''}${days}${found.length < m.ids.length ? `<p class="tip src-gone">${S.gone}</p>` : ''}</div></div>`;
 }
+
+// ---------------------------------------------------------------- share with the care circle
+const sign = (body: string) => `<svg class="sg" viewBox="0 0 96 96" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+const SHARE = sign('<path d="M48 60V12M30 28l18-18 18 18"/><path d="M20 46v32a6 6 0 006 6h44a6 6 0 006-6V46"/>');
+const NOTE = sign('<path d="M22 12h40l14 14v52a6 6 0 01-6 6H22a6 6 0 01-6-6V18a6 6 0 016-6z"/><path d="M32 40h32M32 54h32M32 68h18"/>');
+
+/** On the diary screen: "Share with family" (the tab's span) and "For the next carer". */
+export const shareButtons = () => `<div class="two-btn share-row" id="share-row"><button type="button" class="btn" id="share-family" data-act="share-open" data-kind="family">${SHARE}<span>${P6.share.family}</span></button><button type="button" class="btn" id="share-handover" data-act="share-open" data-kind="handover">${NOTE}<span>${P6.share.handover}</span></button></div>`;
+/** On the carer's first screen, under the way into the diary: the note for the next carer. */
+export const handoverLink = () => `<button type="button" class="btn diary-link handover-link" id="handover-link" data-act="share-open" data-kind="handover">${NOTE}<span><b>${P6.share.handover}</b><small>${P6.share.handoverSub}</small></span></button>`;
+
+export interface ShareSheetModel {
+  kind: 'family' | 'handover';
+  /** The exact text: what "Share" hands over and what "Copy" copies, character for character. */
+  text: string;
+  /** "Include the health notes" is ticked. */
+  health: boolean;
+  /** Health notes are noted in About them at all (the box can be ticked). */
+  hasHealth: boolean;
+  /** While the box is off: the notes that change what is safe to give, by name (core/share.ts, riskyNotes). */
+  risky: string[];
+  /** This browser has the Web Share API. Without it there is only "Copy". */
+  canShare: boolean;
+  /** "phone", "tablet" or "computer". */
+  device: string;
+  status: '' | 'shared' | 'copied' | 'shareFailed' | 'copyFailed';
+}
+
+/**
+ * The sheet before anything leaves: where the text goes, the box for the health notes (off by default), the exact
+ * text, and Share / Copy / Cancel. Nothing is handed over until a button on it is pressed.
+ */
+export function shareSheet(m: ShareSheetModel): string {
+  const K = P6.share.sheet;
+  const state = !m.hasHealth ? K.healthNone : m.health ? K.healthOn : K.healthOff;
+  const said = m.status === 'shared' ? K.shared : m.status === 'shareFailed' ? K.shareFailed : m.status === 'copyFailed' ? K.copyFailed : '';
+  return `<div class="dim"></div>
+<div class="sheet share-sheet" id="share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-h" data-kind="${m.kind}" data-health="${m.health ? 1 : 0}">
+  <h2 id="share-h" tabindex="-1">${K.heading[m.kind]}</h2>
+  <p id="share-leaves">${esc(m.canShare ? K.leaves(m.device) : K.leavesCopy(m.device))}</p>
+  <label class="check" id="share-health-row"><input type="checkbox" id="share-health" ${m.health ? 'checked' : ''} ${m.hasHealth ? '' : 'disabled'}><span>${K.healthBox}</span></label>
+  <p class="small muted" id="share-health-state">${state} ${K.photos}</p>
+  ${!m.health && m.risky.length ? `<p class="warn" id="share-health-warn" role="status">${esc(K.healthWarn(m.risky.join(', ')))}</p>` : ''}
+  <div class="goes"><p class="small muted" id="share-exact">${K.exact} ${K.names}</p><pre class="q" id="share-text" tabindex="0">${esc(m.text)}</pre></div>
+  <div class="choice">${m.canShare ? `<button type="button" class="btn primary" id="share-go" data-act="share-go">${K.share}</button>` : ''}
+  <button type="button" class="btn${m.canShare ? '' : ' primary'}" id="share-copy" data-act="share-copy">${m.status === 'copied' ? K.copied : K.copy}</button>
+  <button type="button" class="btn" id="share-cancel" data-act="share-cancel">${m.status === 'shared' || m.status === 'copied' ? K.close : K.cancel}</button></div>
+  <p class="small" id="share-status" role="status">${said}</p>
+</div>`;
+}

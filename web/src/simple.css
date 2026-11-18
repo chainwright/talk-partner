@@ -598,3 +598,17 @@
 .simple .src .once { display: block; font-size: 15px; color: var(--muted); }
 .simple .src .q { color: var(--muted); }
 @media print { .simple .src-wrap { display: none !important; } }
+/* Share with the care circle: the two ways in, and the sheet with the exact text. A month of entries is long, so the
+   text scrolls inside its own box and the buttons stay in reach. */
+.simple .share-row .btn { gap: 8px; }
+.simple .share-row .btn .sg { width: 24px; height: 24px; flex: none; }
+.simple .btn.handover-link { width: 100%; }
+.sheet.share-sheet pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 15.5px; line-height: 1.4; max-height: 32dvh; overflow-y: auto; overscroll-behavior: contain; border: 2px solid var(--field); border-radius: 12px; padding: 10px 12px; background: var(--bg); }
+.sheet.share-sheet pre:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.sheet.share-sheet .check { display: flex; gap: 10px; align-items: center; min-height: 48px; font-size: 17px; font-weight: 600; }
+.sheet.share-sheet .check input { width: 24px; height: 24px; flex: none; }
+.sheet.share-sheet .warn { margin: 0; border-left: 4px solid var(--warn); background: var(--warn-soft); color: var(--ink); padding: 8px 10px; border-radius: 0 10px 10px 0; font-weight: 600; }
+.sheet.share-sheet #share-status:empty { display: none; }
+.sheet.share-sheet .choice { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; grid-auto-rows: auto; }
+.sheet.share-sheet .choice .btn { min-height: 56px; padding-left: 6px; padding-right: 6px; }
+.simple .since-lines .src li { border: 0; padding: 0; margin: 0; }
