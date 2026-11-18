@@ -3,8 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Talk Partner turns a partner's question into a supported-conversation card for an adult with aphasia." />
+    <meta name="description" content="Talk Partner: when the words won't come, let them point. A carer asks, an adult with aphasia points to a written choice, and the phone checks the answer." />
     <title>Talk Partner</title>
+    <!-- installable (a home-screen icon, opens full screen) and usable with no connection: the manifest, and the
+         service worker that main.ts registers in a production build (web/sw.template.js) -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0b6e4f" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Talk Partner" />
     <!-- the look of the first frame: the bare address opens the simple view (light), any other the full view (dark);
          main.ts sets it again on every draw, from the view actually shown -->
     <script>document.documentElement.dataset.view = location.hash.replace(/^#\/?/, '') ? 'full' : 'simple';</script>

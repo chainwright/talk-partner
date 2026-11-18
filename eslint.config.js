@@ -11,4 +11,6 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-explicit-any': 'off' },
   },
   { files: ['scripts/**/*.mjs'], languageOptions: { globals: { fetch: 'readonly', Buffer: 'readonly' } } },
+  // the service worker (plain JavaScript, copied into the build by vite.config.ts): its own globals
+  { files: ['web/sw.template.js'], languageOptions: { globals: { caches: 'readonly', fetch: 'readonly', Request: 'readonly', Response: 'readonly', __FILES__: 'readonly' } } },
 );
