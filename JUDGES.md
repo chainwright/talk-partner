@@ -84,6 +84,14 @@ one more question from the things it names. The spike that decided it and the SD
 `inferenceSource=on_device` lines are in `devlog/evidence_phase4/AI_RUN_LOG.md`. On a phone the questions are the
 rules' and the screen says so.
 
+**Changed on 18 Nov after the owner's walk on his phone** (`CLAIMS.md` rows 104 to 107; README "Changed on 18 Nov
+after the owner's walk"). *Back* goes exactly one step: ask a topic question, answer it, press "Next", then Back:
+the answer before is there, not the first screen. *After "something else"* the carer's screen says "None of these.
+Find out what it is: one step at a time." and its first step is made by the rules, with no AI: "More choices like
+these" (water, juice, milk, then tea, coffee and the family's own), or "What is it about?" where no kind is known,
+or, for the body and feelings, "Show me where" and the needs board. The AI's narrowing step is the last on the list.
+"Show me" goes on to "Did you understand?": the carer types the word and the person confirms it.
+
 **Added on 18 Nov, phase 6: share with the care circle, and where a line came from** (`CLAIMS.md` rows 98 to 103;
 README "Added on 18 Nov, phase 6"; `devlog/evidence_phase6/`). **No AI is in this phase**: rules and fixed text on the
 device. Open the diary, tab Week: under every line of "What stands out" is **"See the entries (N)"**, which shows in

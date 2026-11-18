@@ -612,3 +612,22 @@
 .sheet.share-sheet .choice { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; grid-auto-rows: auto; }
 .sheet.share-sheet .choice .btn { min-height: 56px; padding-left: 6px; padding-right: 6px; }
 .simple .since-lines .src li { border: 0; padding: 0; margin: 0; }
+
+/* ---------------------------------------------------------------- after "something else" (18 Nov 2026, the owner's walk) */
+/* One line that says what to do, then the ways in order, numbered: the first is the main button. */
+.simple .out-lead { font-size: 19px; font-weight: 800; color: var(--ink); }
+.simple .ways { list-style: none; counter-reset: way; margin: 0; padding: 0; display: grid; gap: 10px; }
+.simple .ways > li { counter-increment: way; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 8px; align-items: start; }
+.simple .ways > li::before { content: counter(way); font-weight: 800; font-size: 18px; color: var(--muted); padding-top: 14px; text-align: center; }
+.simple .ways > li > * { grid-column: 2; min-width: 0; }
+.simple .ways .btn { width: 100%; justify-content: flex-start; text-align: left; }
+.simple .ways .btn.way span { display: grid; line-height: 1.25; min-width: 0; }
+.simple .ways .btn.way small { font-weight: 400; font-size: 15px; margin-top: 2px; overflow-wrap: anywhere; }
+.simple .ways .btn.way:not(.primary) small { color: var(--muted); }
+.simple .ways .btn.way.primary small { color: var(--on-accent); }
+.simple .ways .way-last { margin: 0 0 6px; }
+.simple .understood { display: grid; gap: 10px; border: 2px solid var(--field); border-radius: 14px; padding: 12px; background: var(--panel); }
+.simple .understood .steplabel { margin: 0; font-size: 19px; font-weight: 800; color: var(--ink); }
+.simple .understood label small { display: block; font-weight: 400; color: var(--muted); }
+.simple .understood .row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.simple .understood .row .field { width: 100%; min-height: 56px; font-size: 20px; }

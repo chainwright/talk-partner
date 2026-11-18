@@ -427,16 +427,16 @@ def phone(browser, url, live):
     page.locator('.p-give').click()
     page.wait_for_selector('main.simple.s-answered #after-out')
     out = text(page)
-    check('after "something else": the screen says so, and the tree leads on with a broader question ("a hot drink or a cold drink?")', text(page, '#chose') == 'Would you like water, juice or milk? Something else' and nexts(page) == ['Would you like a hot drink or a cold drink?'], out[:200])
+    # (18 Nov, the owner's walk on his phone: no question of another topic after the way out; the ways in the rules' order)
+    check('after "something else": the screen says so, and no question is offered in its place (the tree\'s next question is not on this screen)', text(page, '#chose') == 'Would you like water, juice or milk? Something else' and nexts(page) == [] and page.locator('main.s-answered [data-q]').count() == 0, out[:200])
     shown = page.evaluate("[...document.querySelectorAll('#after-out button')].map((b) => b.id)")
-    # (phase 4: the first-letter helper is the third; "Ask them to show or write it" is then the first thing under "More")
-    check('after "something else": three things to press stay on the screen (the next question, "Narrow it down", "Try the first letter"), never a dead end',
-          'None of those fitted. What now:' in out and shown == ['next-q', 'narrow', 'letter-go'] and page.locator('[data-act=needs], [data-act=own], #another, #show-write').count() == 0, f'{shown} {out[:300]}')
+    check('after "something else": one line that says what to do, then the ways in order: more choices of the same kind (the rules), the first letter, "show or write it", and the AI last; never a dead end',
+          'None of these. Find out what it is: one step at a time.' in out and shown == ['way-more', 'letter-go', 'show-write', 'narrow'] and page.locator('main.s-answered > .col [data-act=own], main.s-answered > .col #another').count() == 0, f'{shown} {out[:300]}')
+    check('after "something else": "More choices like these" says what comes next, and none of it was refused (tea, coffee; not water, juice or milk)', text(page, '#way-more') == 'More choices like these Next: tea, coffee. Then more, three at a time.', text(page, '#way-more'))
     more(page)
-    check('after "something else": "Ask them to show or write it" is the first thing under "More"', page.evaluate("document.querySelector('#out-more button')?.id") == 'show-write' and text(page, '#show-write') == 'Ask them to show or write it')
     rest = text(page, '#more-body')
-    check('after "something else": the rest is under "More" (ask another question, the needs board, a new way, the advice to show or write it), and no "Try" offers a refused choice',
-          all(page.locator(f'#more-body [data-act={a}]').is_visible() for a in ('needs', 'own', 'new')) and 'Ask them to show you, or to write or draw it.' in rest and not any(w in t.lower() for t in page.locator('#more-body [data-q]').all_inner_texts() for w in ('water', 'juice', 'milk')), rest[:300])
+    check('after "something else": under "More": ask another question, the needs board, a new way; no question of another topic and no "Try"',
+          all(page.locator(f'#more-body [data-act={a}]').is_visible() for a in ('needs', 'own', 'new')) and page.locator('#more-body [data-q]').count() == 0 and 'Try:' not in rest, rest[:300])
     check('after "something else": an AI can narrow it down, and the screen says that on this phone it uses online help and asks first', page.locator('#narrow').is_visible() and text(page, '#narrow') == 'Narrow it down: AI suggests the next choices' and text(page, '#narrow-where') == 'This uses online help: the app asks you first, and shows the line that would go.', text(page, '#after-out')[:300])
     screen_checks(page, 'after "something else"')
     n0 = len(outside)
@@ -1070,7 +1070,8 @@ def phase4(browser, url, live):
     ask_topic(page, 'food', 'Would you like tea or coffee?')
     answer(page, 'something else')
     out = page.locator('#after-out button').count()
-    check('letter: after "something else" the carer is offered "Try the first letter", and still three things at most', page.locator('#after-out #letter-go').count() == 1 and out <= 3, f'{out} buttons: {text(page, "#after-out")}')
+    # (18 Nov, the owner's walk on his phone: the ways stand in order, numbered; the first letter is the second of them)
+    check('letter: after "something else" the carer is offered "Try the first letter", second on the list after the step the rules make, four ways at most', page.locator('#after-out #letter-go').count() == 1 and out <= 4 and page.evaluate("[...document.querySelectorAll('#ways > li > button')].map((b) => b.id).indexOf('letter-go')") == 1, f'{out} buttons: {text(page, "#after-out")}')
     screen_checks(page, 'letter: after "something else"', primary=True)
     page.locator('#letter-go').click()
     page.wait_for_selector('main.pv.letters #abc')
@@ -2080,6 +2081,180 @@ def backstack(browser, url):
         ctx.close()
 
 
+def ways(browser, url):
+    """After "something else" the carer always has a clear next step (18 Nov 2026, the owner's walk on his phone: the
+    screen offered "Next: Are you hungry?" after a drink was refused, and "show me" ended on "Ask another question").
+    At 390 x 844: the drinks example (something else -> more drinks -> "juice" -> confirmed), a question about no kind
+    the rules know ("What is it about?"), the body ("Show me where" and the needs board first), and "show me" ->
+    understood -> typed -> confirmed by the person; "Not yet" goes back to the ways, never to the first screen. No
+    model is part of it: every request to another host is refused and counted."""
+    host = urlparse(url).hostname
+    ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
+    outside = []
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    page = ctx.new_page()
+    errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
+    DRINK, HOT_COLD = 'Would you like something to drink?', 'Would you like a hot drink or a cold drink?'
+    way_ids = lambda: page.evaluate("[...document.querySelectorAll('#ways > li > button, #ways > li > a')].map((e) => e.id)")
+
+    # ---- the case found on the phone: a drink, yes, hot or cold, "something else"
+    ask_topic(page, 'food', DRINK)
+    answer(page, 'yes')
+    page.locator(f'#next-q[data-q="{HOT_COLD}"]').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    answer(page, 'something else')
+    out = text(page)
+    ids = way_ids()
+    check('ways: the screen opens with one line in plain words: "None of these. Find out what it is: one step at a time."', text(page, '#out-lead') == 'None of these. Find out what it is: one step at a time.', text(page, '#after-out')[:200])
+    check('ways, the drinks example: the first and main button is "More choices like these", and it says what comes next (water, juice, milk)', ids[:1] == ['way-more'] and 'primary' in page.locator('#way-more').get_attribute('class') and text(page, '#way-more') == 'More choices like these Next: water, juice, milk. Then more, three at a time.', str(ids) + text(page, '#way-more'))
+    check('ways: then the first letter, then "Ask them to show or write it", and the AI\'s step last (where there is one)', ids[1:3] == ['letter-go', 'show-write'] and ids[3:] in ([], ['narrow']), str(ids))
+    check('ways: one main button on the screen, and it is the first way', page.locator('main.s-answered .btn.primary').count() == 1 and page.locator('main.s-answered .btn.primary').first.get_attribute('id') == 'way-more')
+    check('ways: no question of another topic on the screen ("Are you hungry?" is gone), shown or under "More"', 'Are you hungry' not in out and page.locator('main.s-answered [data-q]').count() == 0, out[:300])
+    more(page)
+    under = text(page, '#more-body')
+    check('ways: under "More": "Ask something else" / "Ask another question" and "Ask it a new way"; still no question of another topic', 'Are you hungry' not in under and page.locator('#more-body [data-q]').count() == 0 and page.locator('#more-body #another').count() == 1, under[:300])
+    page.locator('#more').click()
+    screen_checks(page, 'ways: after "something else" to a drink')
+    shot(page, 'r2_01_after_something_else_one_step_at_a_time')
+
+    # ---- more drinks, three at a time, made by the rules; "juice", confirmed
+    page.locator('#way-more').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    say = text(page, 'main.card .say')
+    check('ways, more choices: the carer\'s screen says what to say out loud ("Which drink? Water, juice, milk, or something else"), and that the rules made it and nothing was sent', say.startswith('Which drink?') and 'ater' in say and 'juice' in say and 'milk' in say and 'Nothing was sent' in text(page, '#made-where'), say + ' / ' + text(page, '#made-where'))
+    screen_checks(page, 'ways: the carer\'s screen of more drinks')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    tiles = [t.strip() for t in page.locator('main.pv .pt').all_inner_texts()]
+    check('ways, more choices, the person\'s screen: water, juice, milk and "something else", each with a picture', tiles == ['water', 'juice', 'milk', 'something else'] and page.locator('main.pv .pt svg, main.pv .pt img').count() >= 4, str(tiles))
+    fits(page, 'ways: more drinks on the person\'s screen')
+    shot(page, 'r2_02_more_choices_like_these_water_juice_milk')
+    page.locator('main.pv .pt', has_text='something else').first.click()
+    page.wait_for_function("[...document.querySelectorAll('main.pv .pt')].some((e) => e.innerText.trim() === 'tea')")
+    tiles2 = [t.strip() for t in page.locator('main.pv .pt').all_inner_texts()]
+    check('ways, more choices: "something else" on the first page brings the next three (tea, coffee), not the same ones', tiles2[:2] == ['tea', 'coffee'] and 'water' not in tiles2 and tiles2[-1] == 'something else', str(tiles2))
+    hold_exit(page)
+    page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=back]').first.click()
+    page.wait_for_selector('#way-more')
+    check('ways: Back from the card of more choices lands on the list of ways again', way_ids()[:1] == ['way-more'])
+    page.locator('#way-more').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    answer(page, 'juice')
+    got = page.evaluate(SIG)
+    check('ways, the drinks example to the end: something else -> more drinks -> "juice" -> confirmed by the person: the carer reads "Which drink? Juice"', got.startswith('answered | Which drink? | Juice'), got)
+    check('ways: after a real answer the screen is the usual one: "Ask another question" is the main button, and no list of ways', page.locator('#ways').count() == 0 and page.locator('#another.primary').count() == 1)
+    shot(page, 'r2_03_juice_confirmed')
+    last = page.evaluate(KV_GET, 'diary')[-1]
+    check('ways: the answer is in the diary under its question ("Which drink?" juice), kept on this phone', last.get('q') == 'Which drink?' and last.get('label') == 'juice' and last.get('kind') == 'answer', str(last))
+
+    # ---- the list used up: every page refused
+    page.locator('[data-act=back]').first.click()
+    page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    page.locator('main.pv .pt', has_text='something else').first.click()
+    page.wait_for_function("[...document.querySelectorAll('main.pv .pt')].some((e) => e.innerText.trim() === 'tea')")
+    tap_yes(page, 'something else')
+    give_back(page)
+    ids = way_ids()
+    check('ways: after every drink the rules have was refused, the same list is not offered again: the first letter is the next step', ids[:2] == ['letter-go', 'show-write'] and 'way-more' not in ids and 'way-about' not in ids, str(ids))
+
+    # ---- "show me" goes on: understood -> typed -> confirmed by the person
+    page.locator('#show-write').click()
+    page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=show]').click()
+    tap_yes(page, 'show me')
+    give_back(page)
+    und = text(page, '#understood')
+    check('ways, "show me": the carer\'s screen goes on: "Did you understand?", "Yes: type it" with a field, and "Not yet: try another way"', 'Say: "Show me."' in text(page) and 'Did you understand?' in und and 'Yes: type it' in und and 'Not yet: try another way' in und and page.locator('#understood-word').count() == 1, und)
+    screen_checks(page, 'ways: after "show me"', primary=False)
+    shot(page, 'r2_04_show_me_did_you_understand')
+    page.locator('#not-yet').click()
+    page.wait_for_selector('#ways')
+    check('ways, "Not yet: try another way": back on the list of ways of the same question, not on the first screen', page.locator('main.simple.home').count() == 0 and way_ids()[:2] == ['letter-go', 'show-write'] and text(page, '#out-lead').startswith('None of these.'), page.evaluate(SIG))
+    page.locator('#show-write').click()
+    page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=show]').click()
+    tap_yes(page, 'write it')
+    give_back(page)
+    page.locator('#understood-go').click()
+    page.wait_for_timeout(200)
+    check('ways, "Yes: type it" with nothing typed: nothing happens, the field waits', page.locator('#understood-word').count() == 1 and page.locator('main.pv').count() == 0)
+    page.fill('#understood-word', 'lemonade')
+    page.locator('#understood-go').click()
+    page.wait_for_selector('main.pv .pt')
+    tiles = [t.strip() for t in page.locator('main.pv .pt').all_inner_texts()]
+    check('ways, typed: the word goes onto the person\'s screen as a choice, with "something else"; nothing is picked for them', tiles == ['lemonade', 'something else'] and page.locator('[data-confirm]').count() == 0, str(tiles))
+    fits(page, 'ways: the typed word on the person\'s screen')
+    page.locator('main.pv .pt', has_text='lemonade').first.click()
+    page.wait_for_selector('[data-confirm=yes]')
+    check('ways, typed: the person points to it and is asked "So: lemonade. Right?"', text(page, '#p-so') == 'So: lemonade. Right?', text(page, '#p-so'))
+    shot(page, 'r2_05_typed_word_so_lemonade_right')
+    page.locator('[data-confirm=yes]').click()
+    give_back(page)
+    got = page.evaluate(SIG)
+    check('ways, typed: confirmed by the person: the carer reads "Lemonade"', got.startswith('answered |') and '| Lemonade |' in got, got)
+    last = page.evaluate(KV_GET, 'diary')[-1]
+    check('ways, typed: it is in the diary as an answer, and counts as a drink like any other', last.get('label') == 'lemonade' and last.get('kind') == 'answer', str(last))
+    shot(page, 'r2_06_typed_word_confirmed')
+
+    # ---- a question about no kind the rules know: "What is it about?"
+    page.locator('[data-act=home]').first.click()
+    page.wait_for_selector('main.simple.home')
+    page.fill('#q', 'Do you want the red one or the blue one?')
+    page.locator('#ask button[type=submit]').click()
+    page.wait_for_selector('main.simple.card #made-where, #sheet, main.simple.nocard')
+    if page.locator('main.simple.card [data-act=show]').count():
+        answer(page, 'something else')
+        ids = way_ids()
+        check('ways, no kind known: the first and main button is "What is it about?"', ids[:1] == ['way-about'] and 'A drink, food, a person, a place, the body, a feeling.' in text(page, '#way-about'), str(ids))
+        page.locator('#way-about').click()
+        page.wait_for_selector('main.simple.card #made-where')
+        page.locator('[data-act=show]').click()
+        page.wait_for_selector('main.pv .pt')
+        tiles = [t.strip() for t in page.locator('main.pv .pt').all_inner_texts()]
+        check('ways, "What is it about?": a picture card: a drink, food, a person, and "something else" for the next three', tiles == ['a drink', 'food', 'a person', 'something else'] and page.locator('main.pv .pt svg').count() >= 4, str(tiles))
+        fits(page, 'ways: "What is it about?" on the person\'s screen')
+        shot(page, 'r2_07_what_is_it_about')
+        tap_yes(page, 'a person')
+        give_back(page)
+        check('ways, "What is it about?" -> a person: the main button is "Next: Who?"', text(page, 'main.s-answered .btn.primary') == 'Next: Who?', text(page, 'main.s-answered .btn.primary'))
+        page.locator('main.s-answered .btn.primary').click()
+        page.wait_for_selector('main.simple.card #made-where')
+        check('ways, "Who?": the choices are people (a friend, a neighbour, the carer) with nothing in About them', 'Who?' in text(page, 'main.card .say') and 'friend' in text(page, 'main.card .say'), text(page, 'main.card .say'))
+    else:
+        check('ways, no kind known: the typed either-or made a card by the rules', False, text(page)[:200])
+
+    # ---- worst case: the body. "Show me where" and the needs board first, never a list of guesses, never another topic
+    page.locator('[data-act=home]').first.click()
+    page.wait_for_selector('main.simple.home')
+    ask_topic(page, 'body', 'Are you comfortable?')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    esc_label = [t.strip() for t in page.locator('main.pv .pt').all_inner_texts()][-1]
+    tap_yes(page, esc_label)
+    give_back(page)
+    ids = way_ids()
+    check(f'ways, worst case, "Body & care" ("Are you comfortable?" -> {esc_label}): "Show me where" is the main button, the needs board second; no list of guesses, no other topic', ids[:2] == ['way-where', 'way-needs'] and 'way-more' not in ids and 'way-about' not in ids and page.locator('main.s-answered [data-q]').count() == 1, str(ids))
+    shot(page, 'r2_08_body_show_me_where_and_the_needs_board')
+    page.locator('#way-where').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check('ways, "Show me where": the body card ("Where does it hurt?")', 'Where does it hurt?' in text(page, 'main.card .say') and page.locator('#person[data-kind=body]').count() == 1, text(page, 'main.card .say'))
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv[data-kind=body] .pt')
+    page.locator('main.pv .pt', has_text='chest').first.click()
+    tap_yes(page, 'middle')
+    give_back(page)
+    check('ways, worst case: a place in the chest chosen on that card brings the boxed "Call 911 now if this is new or sudden." as before', 'Call 911 now if this is new or sudden.' in text(page, '#urgent') and page.locator('#urgent a[href="tel:911"]').count() == 1)
+    check('ways: nothing was asked of any other host in the whole run (rules only)', not outside, str(outside))
+    check('ways: no page error', not errors, '; '.join(errors))
+    ctx.close()
+
+
 SHARE_STUB = """() => { window.__shared = []; Object.defineProperty(Navigator.prototype, 'share', { configurable: true, writable: true, value: function (d) { window.__shared.push(d); return Promise.resolve(); } }); }"""
 NO_SHARE = """() => { try { delete Navigator.prototype.share; } catch (e) {} Object.defineProperty(navigator, 'share', { configurable: true, value: undefined }); }"""
 
@@ -2337,9 +2512,11 @@ def main():
         print(f'browser: Chromium {browser.version} (headless)')
         if a.only == 'back':
             backstack(browser, url)
+        if a.only == 'ways':
+            ways(browser, url)
         if a.only in ('phase5', 'phase6'):
             (phase5 if a.only == 'phase5' else phase6)(browser, url, a.live)
-        if a.only in ('phase5', 'phase6', 'back'):
+        if a.only in ('phase5', 'phase6', 'back', 'ways'):
             browser.close()
             bad = results.count(False)
             print(f'\n{len(results) - bad} of {len(results)} checks passed')
@@ -2358,6 +2535,7 @@ def main():
             phase5(browser, url, a.live)
         phase6(browser, url, a.live)
         backstack(browser, url)
+        ways(browser, url)
         if a.dev:
             print('SKIP  offline: --dev (the dev server has no service worker; run against a production build)')
         else:

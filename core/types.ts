@@ -176,6 +176,12 @@ export interface Card {
    * partner screen offers "Try again" for it.
    */
   retry?: string | null;
+  /** A card of more choices of one kind, made by the rules after "something else" (core/more.ts): the kind, and what was shown before this page. */
+  more?: { subject: 'drink' | 'food' | 'people' | 'place' | 'activity'; shown: string[] };
+  /** The fixed card "What is it about?" (core/more.ts). */
+  aboutWhat?: boolean;
+  /** The one answer is a word the carer typed after "show me" or "write it" (core/more.ts): the person confirms it. */
+  typed?: boolean;
   /** Paged fixed list (body map at "more"): the escape on this card leads to the next page. */
   nextPage?: Card | null;
   /** Notes for the partner screen (e.g. "cloud not configured: card kept from device"). */

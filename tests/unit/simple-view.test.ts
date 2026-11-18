@@ -406,44 +406,68 @@ describe('simple view: after an answer', () => {
     expect(text(answeredScreen(model({ invite: true, name: 'Rosa' })))).toContain("Want Rosa's family's names on the questions?");
     expect(html).not.toContain('id="invite"');
   });
-  it('after "something else": what to do now, never a dead end', () => {
-    const h = answeredScreen(model({ label: 'something else', out: true, tryNext: 'Would you like some more?' }));
+  it('after "something else": one line that says what to do, then the ways in the rules\' order; never a question of another topic', () => {
+    const W = ['more', 'letter', 'show', 'narrow'] as const;
+    const h = answeredScreen(model({ label: 'something else', out: true, tryNext: 'Would you like some more?', ways: [...W], moreFirst: ['water', 'juice', 'milk'] }));
     expect(text(h)).toContain('Do you want coffee or tea? Something else');
     expect(h).toContain('id="after-out"');
-    // (18 Nov, the role-play) three things stay on the screen: the next question as the main button, the AI's broader
-    // choices where there is an AI, and "Ask them to show or write it"; everything else is under "More"
-    expect(h).toContain('class="btn primary ask-next" id="next-q" data-q="Would you like some more?"');
+    expect(text(h)).toContain('None of these. Find out what it is: one step at a time.');
+    // (18 Nov, the owner's walk on his phone) the first way is one the rules make, and it is the main button
+    expect(h).toContain('<button type="button" class="btn way primary" id="way-more" data-act="more-like">');
+    expect(text(h)).toContain('More choices like these Next: water, juice, milk. Then more, three at a time.');
     expect(h).toContain(`id="show-write" data-act="stuck">${S.out.showWrite}</button>`);
-    const three = answeredScreen(model({ label: 'something else', out: true, narrow: 'ask', follow: ['Would you like a hot drink or a cold drink?'], tryNext: 'Would you like water, juice or milk?' }));
+    // the next question of the topic or of the tree is not on this screen any more, shown or under "More"
+    const three = answeredScreen(model({ label: 'something else', out: true, narrow: 'ask', follow: ['Are you hungry?'], tryNext: 'Would you like water, juice or milk?', ways: [...W], moreFirst: ['water'] }));
     const shown = three.slice(three.indexOf('id="after-out"'), three.indexOf('id="left-line"'));
-    expect([...shown.matchAll(/<button[^>]*>/g)].map((m) => (m[0].match(/id="([^"]+)"/) ?? [])[1])).toEqual(['next-q', 'narrow', 'show-write']);
-    expect(three).toContain('data-q="Would you like a hot drink or a cold drink?" data-next="1"');
-    for (const act of ['needs', 'own', 'new']) expect(three).not.toContain(`data-act="${act}"`);
-    expect(three).not.toContain('Try: ');
-    const open = answeredScreen(model({ label: 'something else', out: true, more: true, narrow: 'ask', follow: ['Would you like a hot drink or a cold drink?'], tryNext: 'Would you like water, juice or milk?' }));
+    expect([...shown.matchAll(/<button[^>]*>/g)].map((m) => (m[0].match(/id="([^"]+)"/) ?? [])[1])).toEqual(['way-more', 'show-write', 'narrow']);
+    expect(three).not.toContain('Are you hungry?');
+    expect(three).not.toContain('id="next-q"');
+    expect(three).not.toContain('data-q=');
+    for (const act of ['own', 'new']) expect(three).not.toContain(`data-act="${act}"`);
+    const open = answeredScreen(model({ label: 'something else', out: true, more: true, narrow: 'ask', follow: ['Are you hungry?'], tryNext: 'Would you like water, juice or milk?', ways: [...W], moreFirst: ['water'] }));
     const rest = open.slice(open.indexOf('id="more-body"'));
-    for (const act of ['needs', 'own', 'new']) expect(rest).toContain(`data-act="${act}"`);
-    expect(rest).toContain('data-q="Would you like water, juice or milk?">Try: Would you like water, juice or milk?</button>');
-    expect(text(rest)).toContain(S.out.show);
+    for (const act of ['own', 'new']) expect(rest).toContain(`data-act="${act}"`);
+    expect(open).not.toContain('Are you hungry?');
+    expect(open).not.toContain('Try: ');
     expect(count(open, 'data-act="stuck"')).toBe(1);
-    expect(count(open, 'id="next-q"')).toBe(1);
-    expect(text(answeredScreen(model({ label: 'not sure', out: true, more: true })))).toContain(S.out.notSure);
+    expect(text(answeredScreen(model({ label: 'not sure', out: true, more: true, ways: ['about', 'letter', 'show'] })))).toContain(S.out.notSure);
+    // a card the person started keeps the next question of the same conversation as its first step
+    const turn = answeredScreen(model({ label: 'someone else', out: true, follow: ['Is it good news, or a worry?'], ways: ['letter', 'show'], keepLead: true }));
+    expect(turn).toContain('id="next-q" data-q="Is it good news, or a worry?"');
   });
-  it('after "something else" an AI can narrow it down: the button, and where that AI runs, in plain words', () => {
-    const cloud = answeredScreen(model({ label: 'something else', out: true, narrow: 'cloudOn' }));
+  it('the ways, each in its place: "What is it about?", "Show me where" and the needs board for the body, the AI last', () => {
+    const about = answeredScreen(model({ label: 'something else', out: true, narrow: 'ask', ways: ['about', 'letter', 'show', 'narrow'] }));
+    expect(about).toContain('class="btn way primary" id="way-about" data-act="about-what"');
+    expect(text(about)).toContain('What is it about? A drink, food, a person, a place, the body, a feeling.');
+    const body = answeredScreen(model({ label: 'something else', out: true, narrow: 'ask', ways: ['where', 'needs', 'letter', 'show', 'narrow'] }));
+    const ids = [...body.slice(body.indexOf('id="ways"'), body.indexOf('id="left-line"')).matchAll(/<button[^>]*id="([^"]+)"/g)].map((m) => m[1]);
+    expect(ids).toEqual(['way-where', 'way-needs', 'show-write', 'narrow']);
+    expect(body).toContain('class="btn ask-next way primary" id="way-where" data-q="Where does it hurt?" data-next="1"');
+    expect(body).toContain('id="way-needs" data-act="needs"');
+    expect(count(body, 'class="btn way primary"') + count(body, 'class="btn ask-next way primary"')).toBe(1);
+  });
+  it('after "something else" an AI can narrow it down, as the last way: the button, and where that AI runs, in plain words', () => {
+    const W = { ways: ['more', 'letter', 'show', 'narrow'] as ('more' | 'letter' | 'show' | 'narrow')[], moreFirst: ['water'] };
+    const cloud = answeredScreen(model({ label: 'something else', out: true, narrow: 'cloudOn', ...W }));
     expect(cloud).toContain('id="narrow" data-act="narrow"');
     expect(text(cloud)).toContain('Narrow it down: AI suggests the next choices');
     expect(text(cloud)).toContain(S.narrow.cloudOn);
-    expect(cloud.indexOf('id="narrow"')).toBeLessThan(cloud.indexOf('id="show-write"'));
-    expect(text(answeredScreen(model({ label: 'something else', out: true, narrow: 'device' })))).toContain('Nothing is sent.');
-    expect(text(answeredScreen(model({ label: 'something else', out: true, narrow: 'ask' })))).toContain('the app asks you first');
-    const off = answeredScreen(model({ label: 'something else', out: true, narrow: 'offline' }));
+    expect(text(cloud)).toContain('The last way, when the others did not find it:');
+    // (18 Nov: it was the second thing on the screen; it is the last now, after every way the rules make)
+    expect(cloud.indexOf('id="show-write"')).toBeLessThan(cloud.indexOf('id="narrow"'));
+    expect(cloud.indexOf('id="way-more"')).toBeLessThan(cloud.indexOf('id="show-write"'));
+    expect(text(answeredScreen(model({ label: 'something else', out: true, narrow: 'device', ...W })))).toContain('Nothing is sent.');
+    expect(text(answeredScreen(model({ label: 'something else', out: true, narrow: 'ask', ...W })))).toContain('the app asks you first');
+    const off = answeredScreen(model({ label: 'something else', out: true, narrow: 'offline', ...W }));
     expect(off).toMatch(/id="narrow" data-act="narrow" disabled/);
+    // with no AI here the list simply ends at "show or write it"
+    const none = answeredScreen(model({ label: 'something else', out: true, narrow: null, ...W }));
+    expect(none).not.toContain('id="narrow"');
+    expect(none).not.toContain('narrow-last');
     // after the second step it is no longer offered, and the screen says so
-    const last = answeredScreen(model({ label: 'something else', out: true, narrow: null, narrowLast: true }));
+    const last = answeredScreen(model({ label: 'something else', out: true, narrow: null, narrowLast: true, ...W }));
     expect(last).not.toContain('id="narrow"');
     expect(text(last)).toContain(S.narrow.last);
-    expect(text(last)).toContain(S.out.show);
   });
   it('"call someone" with nobody in About them: a field for one name', () => {
     const h = answeredScreen(model({ label: 'yes', who: true }));

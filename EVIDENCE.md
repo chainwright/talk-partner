@@ -205,5 +205,8 @@ every request to another host is refused and counted (none was made).
 | 102 | `web/src/phase6.ts` (`shareSheet`), `web/src/main.ts` (`share-open`, `share-go`, `share-copy`) | the phase 6 browser run (`navigator.share` replaced by a stub that records what it is handed; the clipboard read back) | `03_share_sheet_health_notes_on.png`, `04_share_sheet_copied.png`, `05_share_sheet_after_share.png`, `09_no_web_share_only_copy.png`; `e2e-phase6_local.txt` |
 | 103 | `core/copy.ts`, `core/copy6.ts` | `npx vitest run tests/unit/phase6-share.test.ts tests/unit/diary-view.test.ts`; `scripts/e2e-simple.py` (the diary run reads the line on the screen) | `e2e-simple_local.txt` |
 
+| 104 | `web/src/main.ts` (`trackScreen`, `backStep`) | `python3 scripts/e2e-simple.py --only back --shots devlog/evidence_phase6` | `r1_01_the_second_question_on_the_carers_screen.png`, `r1_02_one_tap_on_back_the_answer_before_not_the_first_screen.png`; `e2e-back_local.txt` |
+| 105 to 107 | `core/more.ts`, `web/src/phase7.ts`, `tests/unit/out-ways.test.ts` | `npx vitest run tests/unit/out-ways.test.ts`; `python3 scripts/e2e-simple.py --only ways --shots devlog/evidence_phase6` | `r2_01_after_something_else_one_step_at_a_time.png` to `r2_08_body_show_me_where_and_the_needs_board.png`; `e2e-ways_local.txt` |
+
 Not run for phase 6: any of it with a carer, a family member, a paid carer or a clinician; Share on a real phone (the
 phone's own share sheet was never opened by us); the print on paper.

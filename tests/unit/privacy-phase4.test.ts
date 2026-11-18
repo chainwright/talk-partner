@@ -100,17 +100,16 @@ describe('the carer\'s screens', () => {
   const made = { maker: 'code' as const, left: 'nothing' as const, spoken: false, lines: ['Made by the app\'s rules.', 'Nothing was sent.'] };
   const base: AnsweredModel = { name: 'Frank', label: 'something else', question: 'Would you like tea or coffee?', more: false, out: true, afterHtml: '', next: null, follow: [], end: '', tryNext: 'Would you like a hot drink or a cold drink?', narrow: 'ask', narrowLast: false, short: null, who: false, invite: false, hasAnswers: false, today: [], made, privacy: ['x'] };
   const outButtons = (html: string) => [...html.slice(html.indexOf('id="after-out"'), html.indexOf('id="left-line"')).matchAll(/<button/g)].length;
-  it('after "something else" the first letter is offered, and still three things at most stand on the screen; the rest is the first thing under "More"', () => {
-    const html = answeredScreen({ ...base, outExtra: letterButton('Frank') });
-    expect(outButtons(html)).toBe(3);
-    expect(html.slice(html.indexOf('id="after-out"'), html.indexOf('id="left-line"'))).toContain('id="letter-go"');
-    expect(html).not.toContain('id="show-write"');
-    const open = answeredScreen({ ...base, more: true, outExtra: letterButton('Frank') });
-    expect(open.slice(open.indexOf('id="out-more"'))).toContain('id="show-write"');
+  it('after "something else" the first letter is one of the ways, after the step the rules make and before "show or write it" and the AI', () => {
+    // (18 Nov, the owner's walk on his phone: the ways stand in the rules' order, all on the screen, numbered)
+    const html = answeredScreen({ ...base, outExtra: letterButton('Frank'), ways: ['more', 'letter', 'show', 'narrow'], moreFirst: ['water', 'juice', 'milk'] });
+    const shown = html.slice(html.indexOf('id="after-out"'), html.indexOf('id="left-line"'));
+    expect([...shown.matchAll(/<button[^>]*id="([^"]+)"/g)].map((m) => m[1])).toEqual(['way-more', 'letter-go', 'show-write', 'narrow']);
+    expect(outButtons(html)).toBe(4);
   });
-  it('with nothing else to offer, the first letter and "Ask them to show or write it" both stand', () => {
-    const html = answeredScreen({ ...base, tryNext: null, narrow: null, outExtra: letterButton('Frank') });
-    expect(outButtons(html)).toBe(2);
+  it('with no AI and no list of the kind, "What is it about?", the first letter and "Ask them to show or write it" stand', () => {
+    const html = answeredScreen({ ...base, tryNext: null, narrow: null, outExtra: letterButton('Frank'), ways: ['about', 'letter', 'show', 'narrow'] });
+    expect(outButtons(html)).toBe(3);
     expect(html).toContain('id="show-write"');
   });
   it('the first screen: the person\'s button stands between the quick needs and "How it works", the two ways in under the diary', () => {

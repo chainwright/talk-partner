@@ -8,6 +8,8 @@
 // and the same pipeline as the full view. No DOM here, so the markup can be tested in Node
 // (tests/unit/simple-view.test.ts). Every word a person reads comes from core/copy.ts.
 
+import type { Way } from '../../core/more';
+import { waysBlock } from './phase7';
 import type { PartnerAction } from '../../core/actions';
 import { COPY } from '../../core/copy';
 import { HEALTH_TEXT_MAX, HEALTH_TOGGLES, NO_HEALTH, hasHealth, type HealthNotes } from '../../core/insights';
@@ -356,7 +358,7 @@ export interface AnsweredModel {
   /** The carer's next move for this answer, already drawn (a need's line, a repair way): '' for a plain answer. */
   afterHtml: string;
   /** "Next: second question", when the question was two in one. */
-  next: PartnerAction | null;
+  next: PartnerAction | { act: string; label: string } | null;
   /** The questions that follow from this answer (core/tree.ts): the first is the main button ("Next: …"), made by the rules. */
   follow: string[];
   /** A shorter way, as a suggestion (core/prefs.ts): the person's usual side of the next either-or, asked first. Null when nothing is learned yet. */
@@ -372,6 +374,11 @@ export interface AnsweredModel {
   narrow: 'device' | 'cloudOn' | 'ask' | 'offline' | null;
   /** The card they left was itself the last narrowing step. */
   narrowLast: boolean;
+  /** After the way out: the ways to find out what it is, in the rules' order (core/more.ts), and what the card of more choices offers first. */
+  ways?: Way[];
+  moreFirst?: string[];
+  /** After the way out of a card the person started: the next question of the same conversation stays the first step. */
+  keepLead?: boolean;
   short: ShortModel | null;
   /** "Call someone" was answered yes and About them names nobody: a field for one name. */
   who: boolean;
@@ -410,12 +417,16 @@ export function answeredScreen(m: AnsweredModel): string {
   // question, the AI's broader choices, and "Ask them to show or write it"; the rest is under "More".)
   // (18 Nov, phase 4: the first-letter helper joins them. Still three at most on the screen, in this order; what does not fit is the first thing under "More".)
   const showWrite = `<button type="button" class="btn" id="show-write" data-act="stuck">${S.out.showWrite}</button>`;
-  const ways = [nextBtn, narrow, m.outExtra ?? '', showWrite].filter(Boolean);
-  const outBlock = m.out ? `<div class="next-steps" id="after-out"><p class="steplabel">${S.out.heading}</p>
-      ${ways.slice(0, 3).join('\n')}${m.narrowLast ? `<p class="tip">${S.narrow.last} ${esc(S.out.show)}</p>` : ''}</div>` : '';
-  const outMore = m.out ? `<div class="next-steps" id="out-more">${ways.slice(3).join('')}${m.narrowLast ? '' : `<p class="tip">${esc(m.label === 'not sure' ? S.out.notSure : S.out.show)}</p>`}
-      ${m.tryNext && !tryMain ? qBtn(m.tryNext, S.out.tryNext(m.tryNext)) : ''}
-      <button type="button" class="btn" data-act="needs">${S.out.needs}</button>
+  // (18 Nov, the owner's walk on his phone: "Next: Are you hungry?" after "something else" to a drink jumped to another
+  // topic, and he did not know how to find out what else. The screen now has one line that says what to do and the
+  // ways in the rules' order (core/more.ts): a step the rules make first, the AI's last, and no question of another
+  // topic. A question of the same conversation stays the first step where the person started it, `keepLead`.)
+  void tryMain; void showWrite;
+  const waysHtml = m.out && m.ways ? waysBlock({ ways: m.ways, moreFirst: m.moreFirst ?? [], letterHtml: m.outExtra ?? '', narrowHtml: narrow }) : '';
+  const outBlock = m.out ? `<div class="next-steps" id="after-out"><p class="steplabel out-lead" id="out-lead">${S.out.heading}</p>
+      ${m.keepLead ? nextBtn : ''}${waysHtml}${m.narrowLast ? `<p class="tip">${S.narrow.last}</p>` : ''}</div>` : '';
+  const outMore = m.out ? `<div class="next-steps" id="out-more">${m.label === 'not sure' ? `<p class="tip">${esc(S.out.notSure)}</p>` : ''}
+      ${m.ways?.includes('needs') ? '' : `<button type="button" class="btn" data-act="needs">${S.out.needs}</button>`}
       <button type="button" class="btn" data-act="own">${S.out.own}</button></div>` : '';
   const rest = m.follow.slice(lead ? 1 : 0);
   const follow = rest.length ? `<div class="next-steps" id="follow"><p class="steplabel muted">${S.nextHeading}</p>${rest.map((q) => qBtn(q).replace('data-q=', 'data-next="1" data-q=')).join('')}</div>` : '';
@@ -442,7 +453,7 @@ export function answeredScreen(m: AnsweredModel): string {
     ${oneLine}
     <button type="button" class="btn quiet more-btn" id="more" data-act="more" aria-expanded="${m.more}" aria-controls="more-body">${m.more ? S.less : S.more}</button>
   </div>
-  ${m.more ? `<div class="col more-body" id="more-body">${m.out ? `${another}${follow}${outMore}` : ''}${others}${today}${shortBlock(m.short)}${madeBlock(m.made)}
+  ${m.more ? `<div class="col more-body" id="more-body">${m.out ? `${another}${m.keepLead ? follow : ''}${outMore}` : ''}${others}${today}${shortBlock(m.short)}${madeBlock(m.made)}
     ${privacyBlock(m.privacy, S.privacy.answers)}
     ${insideLink('inside-card', S.madeLink)}</div>` : ''}
 </main>`;

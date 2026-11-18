@@ -444,7 +444,8 @@ const COPY = {
     nextHeading: 'Or ask next:',
     /** The carer's screen after the person chose the way out: what to do now, never a dead end. */
     out: {
-      heading: 'None of those fitted. What now:',
+      /** (18 Nov, the owner's wording after his walk on the phone: core/copy7.ts has the rest of this screen) */
+      heading: 'None of these. Find out what it is: one step at a time.',
       show: 'Ask them to show you, or to write or draw it. Then ask it as a new question.',
       notSure: 'Not sure is an answer too. Ask it another way, or come back to it later.',
       tryNext: (q: string) => `Try: ${q}`,

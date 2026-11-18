@@ -523,6 +523,48 @@ line now reads "The app never sends it anywhere: it leaves only when you share i
 first." The Share button was pressed in a test browser against a stub of `navigator.share`; it was pressed on no
 real phone by us.
 
+## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
+Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104
+to 107; `devlog/evidence_phase6/r1_*.png`, `r2_*.png`; `devlog/DAY17.md`). Both fixes are rules: no AI was added.
+
+**Back goes exactly one step.** From the carer's screen of the second question of a conversation, one tap on Back
+landed on the first screen. Back used to be decided from the one card on the screen, so everything before it was
+lost. Now every carer's screen that is drawn is a step on a stack (`web/src/main.ts`, `trackScreen`): the first
+screen, a question before it is handed over, the answer, the next question, the diary, the visit page, "Something
+new or sudden?", About them. "Back" and the phone's own back button or gesture pop exactly one step and show that
+screen as it was (the topic still open on the first screen); "Home" empties the stack. The person's screens are not
+steps: there the press and hold goes back, as before. `scripts/e2e-simple.py --only back` walks a topic's tree six
+screens deep and back, asserting each screen in reverse, with the Back button and again with the browser's own back,
+and the same through the needs board, the first letter, "wants to say something", the diary and the visit page.
+
+**After "something else" the carer always has a next step, made by the rules (`core/more.ts`,
+`web/src/phase7.ts`).** After "a hot drink or a cold drink?" → "something else" the screen offered "Next: Are you
+hungry?", a jump to another topic, and the owner did not know how to find out WHAT else. The screen now opens with
+one line, "None of these. Find out what it is: one step at a time.", and a numbered list:
+1. **"More choices like these"**: the next choices of the same kind, three at a time, from a fixed list and then
+   About them (drinks: water, juice, milk, tea, coffee, then the family's own; food: the kinds, then the family's
+   foods; people: the family, then a friend, a neighbour, the carer, the nurse, the doctor; places and things to do:
+   the family's own first). Nothing that was already shown is offered again. Where the rules know no kind for the
+   question, the first step is **"What is it about?"**, a picture card (a drink, food, a person, a place, my body, a
+   feeling), and each answer leads to its list or its card.
+2. the first letter; 3. "Ask them to show or write it"; 4. the AI's narrowing step, last, where there is one.
+
+No question of another topic is on that screen any more, shown or under "More". **In "Body & care" and "Feelings"
+the first two steps are "Show me where" (the body card) and the needs board**, never a list of guesses; the call box
+rules of phase 5 are unchanged. **"Show me", "write it" and "draw" go on** instead of ending on "Ask another
+question": "Did you understand?" → "Yes: type it" puts the carer's word on the person's screen as a choice under the
+question that was open; the person points to it, is asked "So: [word]. Right?", and only their yes puts it in the
+diary. "Not yet: try another way" goes back to the list of ways, not to the first screen. The app still picks and
+confirms nothing for the person (`tests/unit/truth.test.ts`). `tests/unit/out-ways.test.ts` walks every either-or of
+every topic and every tree to its way out and checks that the first step is one the rules make and never a topic
+jump.
+
+**Limits.** The lists are short and ours; a drink that is in neither the fixed list nor About them is found only by
+the first letter or by showing it. What a question is about is read from its words by a small word list
+(`core/kinds.ts`): a typed question it does not know gets "What is it about?". The typed word is the carer's; the
+person's yes is to that word. Nobody the app is for has tried the new screen; the owner's own walk is what found
+the two faults.
+
 ## Changed on 18 Nov after a role-play on the phone
 One of us played Carol and Frank (`design/PERSONA_SCENARIO.md`, fictional) on the hosted copy at 390 px. What it
 found, and what changed (`CLAIMS.md` rows 73 to 76):
@@ -676,7 +718,7 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `core/pipeline.ts:733` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:848` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:878` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:857` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
+| `web/src/main.ts:883` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all, and since 17 Nov neither does any either-or whose two options the code reads whole. Every cut is visible per card in "Why this card".

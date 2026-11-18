@@ -35,7 +35,7 @@ import { hasHealth, NO_HEALTH, cleanHealth, cloudLines, insightCloudText, insigh
 import { RELIABLE, careAnswer, markLessSure, reliability, reorder, tapsFrom } from '../../core/reliability';
 import { checkReworded, rewordOnDevice, type RewordSource } from '../../core/reword';
 import { addAsk, askOf, tipOfDay, type Ask } from '../../core/tip';
-import { topicOf } from '../../core/topics';
+import { WHERE_HURTS, topicOf } from '../../core/topics';
 import { backupBlock, diaryLink, diaryScreen, guardBlock, importSheet, insightSheet, type InsightsModel } from './diary';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
@@ -47,7 +47,7 @@ import { kvClear, kvGet, kvSet } from './store';
 import { P4 } from '../../core/copy4';
 import { letterCard, letterEnd, type LetterInput } from '../../core/letter';
 import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
-import { FEEL_QUESTION, aboutCard, menuTopic, starterOf, topicMenu, turnCard, turnLead, type Starter } from '../../core/turn';
+import { BODY_FIRST, FEEL_QUESTION, aboutCard, menuTopic, starterOf, topicMenu, turnCard, turnLead, type Starter } from '../../core/turn';
 import { nextVisit, visitCard, visitText, type VisitRecord } from '../../core/visit';
 import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
 import { P5 } from '../../core/copy5';
@@ -57,6 +57,9 @@ import { WRONG_TILE, emergencyNumber, urgentAnswer, urgentAny } from '../../core
 import { fromIsoDay, pickedQuestions, sinceLines, sinceText, toggleQuestion } from '../../core/since';
 import { SpeakCache, isPcm, pcmRate, pcmToWav, speakText, speakable } from '../../core/speak';
 import { P6 } from '../../core/copy6';
+import { P7 } from '../../core/copy7';
+import { ABOUT_LEADS, aboutWhatCard, moreCard, moreChoices, moreSubject, outWays, shownOn, typedCard, type MoreSubject } from '../../core/more';
+import { understoodBlock } from './phase7';
 import { familyText, handoverText, riskyNotes } from '../../core/share';
 import { handoverLink, shareSheet } from './phase6';
 import { fallBlock, hearButton, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenLink, suddenScreen, urgentBox } from './phase5';
@@ -346,7 +349,14 @@ interface Snap { key: string; route: string; view: Pick<State, typeof VIEW[numbe
 const trail = { stack: [] as Snap[], current: null as Snap | null };
 const cardIds = new WeakMap<Card, number>();
 let cardIdSeq = 0;
-const cardId = (c: Card) => cardIds.get(c) ?? (cardIds.set(c, ++cardIdSeq), cardIdSeq);
+/** One number for a card and for every further page of it: turning a page on the person's screen is not a step of the carer's. */
+function cardId(c: Card): number {
+  const known = cardIds.get(c);
+  if (known) return known;
+  const id = ++cardIdSeq;
+  for (let p: Card | null | undefined = c; p; p = p.nextPage) if (!cardIds.has(p)) cardIds.set(p, id);
+  return id;
+}
 /** Which carer's screen is on: null for a person's screen and while a card is being made (neither is a step). */
 function screenKey(r: Route): string | null {
   if (r === 'person' || state.busy) return null;
@@ -615,6 +625,22 @@ function shareTextNow(kind: 'family' | 'handover', health: boolean): string {
   return kind === 'family' ? familyText({ ...base, span: state.diaryTab }) : handoverText({ ...base, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [] });
 }
 
+/** A card the rules made after "something else" goes onto the carer's screen like any other card: said out loud, then shown. */
+function showRuleCard(card: Card) {
+  makeSeq++; state.busy = false; state.error = null;
+  state.before = null; setCard(card); state.made.push(card);
+  state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.recapDone = false; state.more = false; state.waitStart = Date.now();
+  render(); window.scrollTo(0, 0);
+}
+/** "Yes: type it": the carer's word on a card on the person's screen; they point to it and the check follows ("So: juice. Right?"). */
+function checkTyped(raw: string) {
+  const asked = state.before && state.before.kind !== 'needs' && state.before.kind !== 'repair' ? state.before.asked : '';
+  const card = typedCard(raw, asked, state.profile, state.settings.support);
+  if (!card) { document.querySelector<HTMLInputElement>('#understood-word')?.focus(); return; }
+  // (the word goes onto the person's screen as a choice: only their own tap picks it, and only their yes confirms it)
+  showRuleCard(card);
+  lift = true; go('person');
+}
 function closeShare() {
   const from = p6.share?.from;
   p6.share = null;
@@ -1232,7 +1258,8 @@ function choseLine(c: Card, p: Choice): string {
  * answer. `button` is the class of the one-tap question (a chip in the full view, a button in the simple one).
  */
 function afterAnswer(c: Card, p: Choice, button: string): string {
-  if (p.role === 'repair') return `<p class="say">${esc(C.repair.lines[p.label] ?? '')}</p>`;
+  // (after "show me", "write it" or "draw" the screen goes on: the carer types what they understood, or goes back to the ways)
+  if (p.role === 'repair') return `<p class="say">${esc(C.repair.lines[p.label] ?? '')}</p>${([C.repair.tiles.showMe, C.repair.tiles.writeIt, C.repair.tiles.draw] as string[]).includes(p.label) ? understoodBlock(state.profile.personName.trim()) : ''}`;
   if (c.kind !== 'needs') return '';
   const where = p.label === 'pain' ? `<p><button class="${button}" data-q="${esc(C.needs.painQuestion)}">${esc(C.needs.painQuestion)}</button></p><p class="safety">${C.safety}</p>` : '';
   return `<p class="say need-line">${esc(needLine(p.label))}</p>${where}`;
@@ -1565,6 +1592,10 @@ async function runNarrow(i: NarrowInput) {
  */
 function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: string } {
   if (c.kind === 'needs' || c.kind === 'repair') return { follow: [], end: '' };
+  // "What is it about?": the body leads to the body card and the first questions of "Body & care", a feeling to the feelings card
+  if (c.aboutWhat) return { follow: out ? [] : ABOUT_LEADS[p.label] === 'body' ? [WHERE_HURTS, ...BODY_FIRST.filter((q) => q !== WHERE_HURTS)].slice(0, 3) : ABOUT_LEADS[p.label] === 'feeling' ? [FEEL_QUESTION] : [], end: '' };
+  // a word the carer typed after "show me": a word about pain, the toilet or help leads on as it does for a first-letter word
+  if (c.typed) return out ? { follow: [], end: '' } : letterEnd(p.spoken);
   // a first-letter card: the word is the answer; the menu the person started from: up to three questions of that topic
   if (c.letter) return out ? { follow: [], end: '' } : letterEnd(p.spoken);
   if (c.photoTalk && photoEnd(c.asked, p.label, state.profile.personName.trim())) return { follow: [], end: photoEnd(c.asked, p.label, state.profile.personName.trim()) };
@@ -1588,7 +1619,8 @@ function simpleScreen(): string {
   let screen: string;
   if (c && state.confirmed && state.picked && !state.recap && !state.recapDone) {
     const p = state.picked;
-    const next = partnerActions(c, { less: false, hasAnswers: false }).find((a) => a.act === 'next' && !!c.pending) ?? null;
+    const lead = c.aboutWhat && p.role === 'answer' ? ABOUT_LEADS[p.label] : undefined;
+    const next = lead && lead !== 'body' && lead !== 'feeling' ? { act: 'more-like', label: P7.more.next(P7.more.ask[lead]) } : partnerActions(c, { less: false, hasAnswers: false }).find((a) => a.act === 'next' && !!c.pending) ?? null;
     // the way out of a card (not of the needs board, which has its own line, and not a way to try from the repair card)
     const out = p.role === 'escape' && c.kind !== 'needs';
     screen = answeredScreen({
@@ -1609,6 +1641,8 @@ function simpleScreen(): string {
       made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),
       leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber()) : ''}${turnHtml()}`,
       outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
+      // after the way out: the ways to find out what it is, in the rules' order; a step the rules make comes first
+      ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),
     });
   } else if (c && !state.busy) {
     const prev = c.blocked || c.kind === 'repair' || c.kind === 'needs' ? null : lastAnswer(state.history, c.asked, state.cardAt);
@@ -2333,6 +2367,29 @@ function act(el: HTMLElement) {
       break;
     case 'retry': if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else if (state.card?.retry) void make(state.card.retry); break;
     case 'recap': state.recap = true; state.recapDone = false; if (simpleView() && !state.short) refreshShort(); render(); break;
+    // ---- after "something else" (core/more.ts): more choices of the same kind, or "What is it about?". Rules only.
+    case 'more-like': {
+      const c = state.card;
+      if (!c) break;
+      const lead = c.aboutWhat && state.picked?.role === 'answer' ? ABOUT_LEADS[state.picked.label] : undefined;
+      const subject: MoreSubject | null = lead && lead !== 'body' && lead !== 'feeling' ? lead : c.more?.subject ?? moreSubject(c.asked, shownOn(c));
+      const card = subject ? moreCard(subject, c.aboutWhat ? [] : shownOn(c), state.profile) : null;
+      if (card) showRuleCard(card);
+      break;
+    }
+    case 'about-what': if (state.card) showRuleCard(aboutWhatCard(state.profile)); break;
+    // "Not yet: try another way": back to the list of ways of the question that was open, never to the first screen
+    case 'ways': {
+      if (state.card?.kind !== 'repair') break;
+      // the screen with the ways is a step that was on the way here (the person's own "something else"): it is shown
+      // again as it was. Nothing is picked or confirmed by the app.
+      const at = trail.stack.map((x) => /^card:\d+:answered:/.test(x.key) && x.view.picked?.role === 'escape').lastIndexOf(true);
+      if (at >= 0) { const to = trail.stack[at]; trail.stack.length = at; putSnap(to); }
+      // no such step (the carer pressed "We're stuck" on a card): the other ways of that card stand again
+      else { state.picked = null; state.confirmed = false; state.more = false; }
+      render(); window.scrollTo(0, 0);
+      break;
+    }
     case 'stuck':
       // the repair card takes the person's screen; the question card waits behind it
       if (state.card && state.card.kind !== 'repair') { state.before = state.card; setCard(repairCard(state.profile)); state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.waitStart = Date.now(); render(); }
@@ -2429,6 +2486,7 @@ app.addEventListener('submit', (ev) => {
   else if ((ev.target as HTMLElement).id === 'photo-form') { ev.preventDefault(); savePhoto(); }
   // "Who? Type one name": one yes / no question about that one person, made by the rules
   else if ((ev.target as HTMLElement).id === 'who') { ev.preventDefault(); const n = ($('#who-name') as HTMLInputElement).value.trim(); if (n) { dictated = false; void make(callQuestion(n)); } }
+  else if ((ev.target as HTMLElement).id === 'understood-form') { ev.preventDefault(); checkTyped(($('#understood-word') as HTMLInputElement).value); }
   else ev.preventDefault();
 });
 app.addEventListener('change', (ev) => {
