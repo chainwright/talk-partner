@@ -13,6 +13,7 @@ Brief: `design/PHASE3_BRIEF.md`. What was built, in the brief's order, and what 
 | 6 | About them to a file and back, with a preview | rules | `core/backup.ts` |
 | 6a | Bigger pictures on the person's screen | CSS | `web/src/simple.css` |
 | 6b | No model outside Firebase AI Logic | a test | `tests/unit/privacy-phase3.test.ts` |
+| + | The owner's phone test: the empty card area of the full view says in words what will be there (it was an ear), and the placeholder is "Your question" | — | `web/src/main.ts`, `core/copy.ts` |
 
 ## Decisions that differ from the brief, and why
 - **The cloud wording text holds no health note.** The brief's step 4 allows "aggregated counts and the notes as

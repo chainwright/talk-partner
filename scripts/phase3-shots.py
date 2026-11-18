@@ -2,7 +2,7 @@
 """Screens of phase 3 (18 Nov 2026), as a phone at 390 x 844: the diary and its one-tap log, the answer-reliability
 guard's line on the carer's screens, health notes, the Miller family's week (tests/fixtures/frank-week.json) with what
 stands out, the sheet before the lines go to online help, the tip of the day, "Keep a copy" and its preview, the
-and the bigger pictures on the person's screen.
+bigger pictures on the person's screen, and the full view's empty card area in words.
 Output: devlog/evidence_phase3/NN_*.png. Nothing is asked of any other host (every such request is refused).
 
 Usage: npm run build && npx vite preview (in another shell), then python3 scripts/phase3-shots.py [--url http://localhost:5179/]
@@ -158,6 +158,12 @@ def main():
         shot('19_person_two_choices_one_a_family_photo', full=False)
         e2e.hold_exit(pg)
         pg.wait_for_selector('main.simple.card')
+        # the full view: the empty card area in words (the owner's phone test), the placeholder that fits
+        pg.locator('[data-act=home]').click()
+        pg.wait_for_selector('main.simple.home')
+        pg.locator('[data-act=inside]').click()
+        pg.wait_for_selector('#card-empty')
+        shot('20_full_view_empty_card_area_in_words')
         c.close()
         # the dark theme
         c, pg = page_of(color_scheme='dark')

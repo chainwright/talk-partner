@@ -1054,7 +1054,9 @@ function personView(full: boolean): string {
       <div class="tiles two"><button class="tile yes" data-confirm="recap-yes">${TICK}<span>${C.person.yes}</span></button>
       <button class="tile" data-confirm="recap-change">${CROSS}<span>${C.person.change}</span></button></div>`;
   }
-  if (!c || c.blocked || !c.choices.length) return `${exit}<div class="listening${state.busy ? ' thinking' : ''}">${builtinPicto('listen')}</div>`;
+  // the empty card area of the partner screen says in words what will be here (the owner's phone test, 18 Nov 2026: an
+  // ear alone told nobody anything); the person's own full screen keeps its quiet picture
+  if (!c || c.blocked || !c.choices.length) return full ? `${exit}<div class="listening${state.busy ? ' thinking' : ''}">${builtinPicto('listen')}</div>` : `<div class="listening words${state.busy ? ' thinking' : ''}"><p id="card-empty" role="status">${state.busy ? C.card.emptyBusy : C.card.emptyPane}</p></div>`;
   if (state.less) return `${exit}${headline(c.topic)}`;
   if (state.picked && state.confirmed) {
     return `${exit}${headline(c.topic)}<div class="answered">${picture(state.picked)}<p>${esc(state.picked.label)}</p></div>`;

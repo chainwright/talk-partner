@@ -208,6 +208,10 @@ details td, details th, .screen td, .screen th { border-top: 1px solid var(--lin
 .answered p { text-align: center; font-size: 36px; margin: 0; }
 .listening { display: grid; place-items: center; min-height: 360px; color: var(--muted); }
 .listening svg { width: 160px; height: 160px; }
+/* the empty card area in words (the partner screen): normal size, no picture */
+.listening.words { min-height: 160px; padding: 16px; }
+.listening.words p { margin: 0; max-width: 30ch; font-size: 18px; line-height: 1.4; text-align: center; color: var(--muted); }
+.listening.words.thinking p { color: var(--ink); font-weight: 600; }
 .so { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
 .so li { display: flex; justify-content: space-between; gap: 12px; font-size: 28px; border-bottom: 1px solid var(--line); padding: 6px 4px; }
 .so li span { color: var(--muted); } .so-empty { text-align: center; color: var(--muted); font-size: 22px; }

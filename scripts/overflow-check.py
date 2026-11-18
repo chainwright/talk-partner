@@ -335,6 +335,7 @@ def simple(url, width, browser):
 
 KV_PUT = """(all) => new Promise((res) => { const r = indexedDB.open('talk-partner', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => { const tx = r.result.transaction('kv', 'readwrite'); for (const [k, v] of Object.entries(all)) tx.objectStore('kv').put(v, k); tx.oncomplete = () => res(true); tx.onerror = () => res(false); }; r.onerror = () => res(false); })"""
 FIXTURE_WEEK = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tests', 'fixtures', 'frank-week.json')
+PLACEHOLDER = """() => { const q = document.querySelector('#q'); const cs = getComputedStyle(q); const c = document.createElement('canvas').getContext('2d'); c.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; return { text: q.placeholder, need: Math.ceil(c.measureText(q.placeholder).width), room: Math.floor(q.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)) }; }"""
 
 
 def named(ok, width, name, detail=''):
@@ -344,7 +345,7 @@ def named(ok, width, name, detail=''):
 
 def phase3(url, width, browser):
     """The carer's screens of phase 3 with a full week in the diary, long names and a long health note; the person's
-    screen with the bigger pictures."""
+    screen with the bigger pictures; and the full view's empty card area in words with a placeholder that fits."""
     ctx = context(url, width, browser)
     page = ctx.new_page()
     page.on('dialog', lambda d: d.accept())
@@ -443,6 +444,17 @@ def phase3(url, width, browser):
     page.locator('.p-give').click()
     page.wait_for_selector('main.simple.s-answered #guard')
     check(page, width, 'phase 3: after the answer, with the guard\'s line')
+    if width >= 360:
+        # the full view ("How it works inside"): the empty card area says in words what will be there, and the placeholder is not cut
+        page.locator('[data-act=home]').click()
+        page.wait_for_selector('main.simple.home')
+        page.locator('[data-act=inside]').click()
+        page.wait_for_selector('#card-empty')
+        check(page, width, 'full view: the partner screen with no card yet')
+        empty = ' '.join(page.locator('#person').inner_text().split())
+        named(empty == 'Your card will appear here. Type or say a question above, or tap one you asked before.' and page.locator('#person svg').count() == 0, width, 'full view: the empty card area is plain words, with no ear', empty)
+        ph = page.evaluate(PLACEHOLDER)
+        named(ph['text'] == 'Your question' and ph['need'] <= ph['room'], width, 'full view: the placeholder "Your question" fits in the field', str(ph))
     ctx.close()
 
 

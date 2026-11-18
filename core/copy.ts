@@ -32,7 +32,7 @@ const COPY = {
   },
 
   ask: {
-    placeholder: "Ask what you'd normally ask…",
+    placeholder: 'Your question',
     make: 'Make card',
     making: 'Making…',
     /** Shown in place of the card while it is being made (a model answer takes a few seconds). */
@@ -51,6 +51,9 @@ const COPY = {
   },
 
   card: {
+    /** The empty card area of the full view's partner screen: plain words, no picture to puzzle over. */
+    emptyPane: 'Your card will appear here. Type or say a question above, or tap one you asked before.',
+    emptyBusy: 'Making the card…',
     sayThis: 'Say this:',
     tip: 'Point to each choice as you read it. Then wait.',
     waiting: (clock: string) => `Waiting ${clock}. Give time; there's no rush.`,
