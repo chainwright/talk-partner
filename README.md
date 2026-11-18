@@ -634,7 +634,16 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-Last done on 18 Nov 2026, 03:52 UTC: <https://talk-partner.web.app> serves the build of commit `d04e530` (phase 3:
+Last done on 18 Nov 2026, 04:13 UTC: <https://talk-partner.web.app> serves the build of commit `3a9cf34` (the answer
+check never discounts pain, the toilet or a need and is quiet in a fast flow; every "Drank" tap counts; tied days are
+all named). Each of the 20 served files has the SHA-256 of the local build, and `/` equals `dist/index.html`. Against
+it: `e2e-simple.py --live` 459/459 (the same runs as below; it asks "Are you in pain?" while the answer check is on
+and finds no line and no mark; no "Yes" is pressed on a sheet); `pwa-check.py` 30/30; `e2e-needs.mjs` 12/12
+(`devlog/evidence_live/`, the files with `3a9cf34` in the name). Not run against this build: `overflow-check.py` on
+the hosted copy (402/402 on localhost at the same code), `e2e-cloud.mjs` and `e2e-ondevice.mjs`, and no wording step
+against a real model.
+
+The deploy before it, 18 Nov 2026, 03:52 UTC: <https://talk-partner.web.app> serves the build of commit `d04e530` (phase 3:
 the diary, health notes, what stands out, the answer check, the tip, About them in a file, bigger pictures; the
 full view's empty card area in words; the five role-play fixes, the paid tier's data-use line among them). Each of
 the 20 served files has the SHA-256 of the local build, and `/` equals `dist/index.html`. Against it:
