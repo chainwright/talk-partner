@@ -537,10 +537,14 @@ async function hear() {
     if (state.card === c) patchHear();
   }
 }
+// ---------------------------------------------------------------- phase 6: where a line came from, and sharing
+/** "See the entries": the lines that are open, by key (an insight id, or "since-N" on the doctor-visit page). In memory only. */
+const p6 = { open: [] as string[] };
+
 /** "Since the last visit", for the doctor-visit page: the diary's counts from the day the carer named, and the picked questions. */
 function sinceModel() {
   const r = state.p4.visit;
-  return { name: state.profile.personName.trim(), since: sinceLines(state.demo ? [] : state.diary, r?.since ?? null, Date.now()), picked: pickedQuestions(r?.carerAsk), number: callNumber() };
+  return { name: state.profile.personName.trim(), since: sinceLines(state.demo ? [] : state.diary, r?.since ?? null, Date.now()), picked: pickedQuestions(r?.carerAsk), number: callNumber(), open: p6.open.filter((k) => k.startsWith('since-')).map((k) => Number(k.slice(6))), diary: state.demo ? [] : state.diary };
 }
 
 /** After a yes on the sheet: the step the sheet came up for is asked again (a letter, a narrowing step, or the question itself). */
@@ -594,7 +598,7 @@ function insightsModel(span: InsightSpan): InsightsModel {
     }
   }
   const sendable = cloudLines(lines).length > 0 && !state.demo && state.engine.cloudConfigured && !!state.engine.rewordCloud && (state.device === 'unavailable' || state.device === 'downloadable');
-  return { span, lines, words: state.ins.words, source: state.ins.source, busy: state.ins.busy, note: state.ins.note, cloud: sendable ? (isOnline() ? 'ask' : 'offline') : null, number: callNumber() };
+  return { span, lines, words: state.ins.words, source: state.ins.source, busy: state.ins.busy, note: state.ins.note, cloud: sendable ? (isOnline() ? 'ask' : 'offline') : null, number: callNumber(), open: p6.open, diary: state.diary, now: Date.now() };
 }
 /** The tip of the day (core/tip.ts: rules), and where the browser has the on-device model, its sentence in plainer words (ONLY_ON_DEVICE). */
 function tipModel() {
@@ -2144,6 +2148,14 @@ function act(el: HTMLElement) {
     case 'photo-cancel': state.photoDraft = null; render(); break;
     case 'photo-del': state.photos = removePhoto(state.photos, el.dataset.id ?? ''); void kvSet('photos', state.photos); render(); break;
     case 'photo-del-all': if (confirm(C.simple.photos.delAllConfirm)) { state.photos = []; void kvSet('photos', []); render(); } break;
+    // ---- phase 6: a line of "What stands out" or of "Since the last visit" shows the entries it was counted from, and hides them
+    case 'src-toggle': {
+      const k = el.dataset.src ?? '';
+      p6.open = p6.open.includes(k) ? p6.open.filter((x) => x !== k) : [...p6.open, k];
+      render();
+      document.querySelector<HTMLElement>(`[data-act="src-toggle"][data-src="${k}"]`)?.focus({ preventScroll: true });
+      break;
+    }
     // ---- the diary (core/diary.ts): the carer's one-tap log, the tabs, copy, delete; on this device only
     case 'log': {
       const kind = el.dataset.log as LogKind;

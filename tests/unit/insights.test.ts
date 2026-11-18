@@ -10,6 +10,8 @@ import { NOW, WEEK, weekDiary, when } from './week';
 const I = COPY.simple.insights;
 const H = (o: Partial<HealthNotes>): HealthNotes => ({ ...NO_HEALTH, ...o });
 const ids = (xs: Insight[]) => xs.map((x) => x.id);
+/** A line without its entry ids ("See the entries": tests/unit/phase6-source.test.ts). */
+const bare = (x: Insight) => Object.fromEntries(Object.entries(x).filter(([k]) => k !== 'source'));
 const all = (xs: Insight[]) => xs.map((x) => `${x.text} ${x.noted} ${x.base}`).join(' ');
 /** A plain day: three drinks and three meals logged. */
 const plain = (d: number): DiaryEntry[] => [['08:00', 'drank'], ['08:10', 'ate'], ['12:00', 'drank'], ['12:30', 'ate'], ['17:00', 'drank'], ['18:00', 'ate']].map(([t, k]) => logEntry(k as 'drank', when(d, t)));
@@ -47,7 +49,7 @@ describe('the rules', () => {
     const wed = [logEntry('drank', when(2, '08:00')), logEntry('ate', when(2, '12:00')), logEntry('drank', when(2, '15:00'))];
     const xs = insights([...days(0, 1), ...wed], NO_HEALTH, 'week', NOW);
     // (18 Nov, phase 5: two drinks in a day is worth mentioning, with or without reminders noted)
-    expect(xs).toEqual([{ id: 'few-drinks', level: 'mention', text: 'Few drinks were entered on Wed 18 Nov: 2.', noted: '', base: 'Counted that day: 2. Every "Drank" tap counts, and every drink chosen on a card (tea, coffee, water, juice, milk, or yes to "something to drink"); a card and a tap within 20 minutes count once. Only what was entered here.' }]);
+    expect(xs.map(bare)).toEqual([{ id: 'few-drinks', level: 'mention', text: 'Few drinks were entered on Wed 18 Nov: 2.', noted: '', base: 'Counted that day: 2. Every "Drank" tap counts, and every drink chosen on a card (tea, coffee, water, juice, milk, or yes to "something to drink"); a card and a tap within 20 minutes count once. Only what was entered here.' }]);
     // (18 Nov, the second role-play) two days with the fewest are both named, and three taps in one minute are three drinks
     const fri = [logEntry('drank', when(4, '08:00')), logEntry('ate', when(4, '12:00'))];
     const mon = [logEntry('ate', when(0, '09:00')), logEntry('drank', when(0, '10:00'))];
@@ -63,7 +65,7 @@ describe('the rules', () => {
     const five = [...days(0, 1, 2), sweet(0, '10:00'), sweet(0, '15:00'), sweet(1, '10:00'), sweet(1, '15:00'), sweet(2, '10:00')];
     expect(ids(insights(five, NO_HEALTH, 'week', NOW))).toEqual(['nothing']);
     const xs = insights([...five, sweet(2, '15:00')], NO_HEALTH, 'week', NOW);
-    expect(xs).toEqual([{ id: 'sweets', level: 'note', text: 'Something sweet was chosen 6 times in the last 7 days.', noted: '', base: 'Chosen 6 times in 7 days. Only what was entered here.' }]);
+    expect(xs.map(bare)).toEqual([{ id: 'sweets', level: 'note', text: 'Something sweet was chosen 6 times in the last 7 days.', noted: '', base: 'Chosen 6 times in 7 days. Only what was entered here.' }]);
   });
   it('many answers marked "less sure": said, with how many of how many', () => {
     const unsure = [0, 1, 2].map((n) => answerEntry({ q: `Question ${n}?`, label: 'yes', at: when(4, `19:0${n}`), lessSure: true }, 'other'));
@@ -100,7 +102,7 @@ describe('health notes change the thresholds', () => {
     const d = [...days(0, 1, 2), sweet(0, '10:00'), sweet(1, '10:00'), sweet(2, '10:00')];
     expect(ids(insights(d, NO_HEALTH, 'week', NOW))).toEqual(['nothing']);
     const xs = insights(d, H({ diabetes: true }), 'week', NOW);
-    expect(xs).toEqual([{ id: 'sweets', level: 'mention', text: 'Something sweet was chosen 3 times in the last 7 days.', noted: 'Diabetes is noted here.', base: 'Chosen 3 times in 7 days. Only what was entered here.' }]);
+    expect(xs.map(bare)).toEqual([{ id: 'sweets', level: 'mention', text: 'Something sweet was chosen 3 times in the last 7 days.', noted: 'Diabetes is noted here.', base: 'Chosen 3 times in 7 days. Only what was entered here.' }]);
     expect(I.level.mention).toBe('Worth mentioning to the doctor or nurse');
   });
   it('reminders: a day with 3 drinks is already few, and worth mentioning', () => {

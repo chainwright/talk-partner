@@ -34,9 +34,9 @@ describe('Frank\'s week', () => {
   it('the week\'s lines, in order: sweets (with diabetes noted), Wednesday\'s drinks, Friday\'s "less sure"', () => {
     const xs = insights(weekDiary(), WEEK.health, 'week', NOW);
     expect(xs.map((x) => x.id)).toEqual(WEEK.expect.week);
-    expect(xs[0]).toEqual({ id: 'sweets', level: 'mention', text: 'Something sweet was chosen 3 times in the last 7 days.', noted: 'Diabetes is noted here.', base: 'Chosen 3 times in 7 days. Only what was entered here.' });
+    expect(xs[0]).toMatchObject({ id: 'sweets', level: 'mention', text: 'Something sweet was chosen 3 times in the last 7 days.', noted: 'Diabetes is noted here.', base: 'Chosen 3 times in 7 days. Only what was entered here.' });
     expect(COPY.simple.insights.level[xs[0].level]).toBe('Worth mentioning to the doctor or nurse');
-    expect(xs[1]).toEqual({ id: 'few-drinks', level: 'mention', text: 'Few drinks were entered on Wed 18 Nov: 2.', noted: '', base: 'Counted that day: 2. Every "Drank" tap counts, and every drink chosen on a card (tea, coffee, water, juice, milk, or yes to "something to drink"); a card and a tap within 20 minutes count once. Only what was entered here.' });
+    expect(xs[1]).toMatchObject({ id: 'few-drinks', level: 'mention', text: 'Few drinks were entered on Wed 18 Nov: 2.', noted: '', base: 'Counted that day: 2. Every "Drank" tap counts, and every drink chosen on a card (tea, coffee, water, juice, milk, or yes to "something to drink"); a card and a tap within 20 minutes count once. Only what was entered here.' });
     expect(xs[2].text.startsWith('5 answers on Fri 20 Nov are marked "less sure"')).toBe(true);
     expect(xs[2].base).toBe('5 of 25 answers in 7 days.');
   });

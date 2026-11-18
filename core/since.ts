@@ -9,6 +9,7 @@
 // This file imports the diary and the copy; no file that builds a prompt or a request imports it.
 
 import { P5 } from './copy5';
+import { P6 } from './copy6';
 import { byDay, dayStart, dayText, daysBefore, events, tags, type DiaryEntry } from './diary';
 
 export const SINCE_DAYS = 30;
@@ -35,31 +36,36 @@ export function fromIsoDay(s: string): number | null {
 const uniqueDays = (ts: number[]) => [...new Set(ts.map(dayStart))].sort((a, b) => a - b);
 const named = (ds: number[], max = 5) => `${ds.slice(-max).map(dayText).join(', ')}${ds.length > max ? `, and ${ds.length - max} more` : ''}`;
 
-export interface Since { from: number; to: number; lines: string[]; any: boolean; /** A strong pain, a pain in the head or the chest, or a fall with a blow to the head is among the entries. */ urgent: boolean }
+/** Where a line came from (phase 6): the diary entries it was counted from, oldest first, and what is absent among them. */
+export interface SinceSource { ids: string[]; note: string }
+export interface Since { from: number; to: number; lines: string[]; /** One for each line, in the same order. */ sources: SinceSource[]; any: boolean; /** A strong pain, a pain in the head or the chest, or a fall with a blow to the head is among the entries. */ urgent: boolean }
 
 /** The lines of "Since the last visit". Pure: the same diary, day and moment give the same lines. */
 export function sinceLines(diary: DiaryEntry[], since: number | null | undefined, now: number): Since {
   const S = P5.since;
   const from = sinceFrom(since, now);
   const entries = diary.filter((e) => e.at >= from && e.at <= now).sort((a, b) => a.at - b.at);
-  if (!entries.length) return { from, to: now, lines: [S.none], any: false, urgent: false };
+  if (!entries.length) return { from, to: now, lines: [S.none], sources: [{ ids: [], note: '' }], any: false, urgent: false };
   const tagged = (t: Parameters<typeof events>[1]) => entries.filter((e) => tags(e).includes(t));
+  const ids = (es: DiaryEntry[]) => [...es].sort((a, b) => a.at - b.at).map((e) => e.id);
   const pain = uniqueDays(events(entries, 'pain'));
-  const hard = uniqueDays([...tagged('strong-pain'), ...tagged('place-pain')].map((e) => e.at));
+  const hardEntries = entries.filter((e) => tags(e).some((t) => t === 'strong-pain' || t === 'place-pain'));
+  const hard = uniqueDays(hardEntries.map((e) => e.at));
   const falls = tagged('fall');
   const days = byDay(entries);
-  const dry = days.filter((d) => d.day !== dayStart(now) && events(d.entries, 'drink').length === 0).length;
+  const dryDays = days.filter((d) => d.day !== dayStart(now) && events(d.entries, 'drink').length === 0);
+  const dry = dryDays.length;
   const low = uniqueDays(tagged('low-mood').map((e) => e.at));
   const nights = uniqueDays(events(entries, 'bad-sleep'));
-  const lines = [
-    S.pain(pain.length, named(pain)),
-    ...(hard.length ? [S.strong(named(hard))] : []),
-    S.falls(falls.length, named(uniqueDays(falls.map((e) => e.at)))),
-    S.drinks(dry, days.filter((d) => d.day !== dayStart(now)).length),
-    S.mood(low.length, named(low)),
-    S.sleep(nights.length, named(nights)),
+  const rows: [string, SinceSource][] = [
+    [S.pain(pain.length, named(pain)), { ids: ids(tagged('pain')), note: '' }],
+    ...(hard.length ? [[S.strong(named(hard)), { ids: ids(hardEntries), note: '' }] as [string, SinceSource]] : []),
+    [S.falls(falls.length, named(uniqueDays(falls.map((e) => e.at)))), { ids: ids(falls), note: '' }],
+    [S.drinks(dry, days.filter((d) => d.day !== dayStart(now)).length), { ids: ids(dryDays.flatMap((d) => d.entries)), note: dry ? P6.source.noDrink : '' }],
+    [S.mood(low.length, named(low)), { ids: ids(tagged('low-mood')), note: '' }],
+    [S.sleep(nights.length, named(nights)), { ids: ids(tagged('bad-sleep')), note: '' }],
   ];
-  return { from, to: now, lines, any: true, urgent: hard.length > 0 || tagged('fall-head').length > 0 };
+  return { from, to: now, lines: rows.map((r) => r[0]), sources: rows.map((r) => r[1]), any: true, urgent: hard.length > 0 || tagged('fall-head').length > 0 };
 }
 
 /** The carer's picks, as they may stand on the page: only questions of the fixed list, three at most, in the list's order. */

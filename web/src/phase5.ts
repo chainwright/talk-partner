@@ -9,6 +9,8 @@ import { P5 } from '../../core/copy5';
 import { dayText } from '../../core/diary';
 import { telHref } from '../../core/redflag';
 import { SINCE_QUESTIONS, isoDay, type Since } from '../../core/since';
+import type { DiaryEntry } from '../../core/diary';
+import { sourceBlock } from './phase6';
 import { SIGN, navBar } from './simple';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -92,7 +94,7 @@ export function hearButton(state: 'ready' | 'loading' | 'failed'): string {
 export const readAloudLine = () => `<p class="made-where spoken" id="spoken-line" data-left="sent">${SIGN.cloud}<span>${P5.speak.made}</span></p>`;
 
 // ---------------------------------------------------------------- "Since the last visit"
-export interface SinceModel { name: string; since: Since; picked: string[]; number: string }
+export interface SinceModel { name: string; since: Since; picked: string[]; number: string; /** "See the entries": the lines whose entries are shown (by index), and the diary they are looked up in. */ open?: number[]; diary?: DiaryEntry[] }
 /** On the doctor-visit page, apart from the person's own answers: the diary's counts, and the family's questions. */
 export function sinceBlock(m: SinceModel): string {
   const S = P5.since;
@@ -100,7 +102,7 @@ export function sinceBlock(m: SinceModel): string {
   return `<section class="since" id="since" aria-labelledby="since-h"><h2 id="since-h">${S.heading}</h2>
     <p class="sub" id="since-sub">${esc(S.sub(m.name))}</p>
     <p class="tip" id="since-span">${esc(S.span(dayText(m.since.from), dayText(m.since.to)))}</p>
-    <ul class="since-lines" id="since-lines">${m.since.lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
+    <ul class="since-lines" id="since-lines">${m.since.lines.map((l, i) => `<li>${esc(l)}${sourceBlock({ key: `since-${i}`, open: !!m.open?.includes(i), ids: m.since.sources[i]?.ids ?? [], once: [], note: m.since.sources[i]?.note ?? '', diary: m.diary ?? [], now: m.since.to })}</li>`).join('')}</ul>
     ${picked}
     <p class="visit-foot" id="since-note">${S.note}</p></section>`;
 }

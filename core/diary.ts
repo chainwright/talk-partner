@@ -177,19 +177,31 @@ export const SAME_EVENT_MS = 20 * 60 * 1000;
  * drunk), and the answers of one conversation ("something to drink? yes", then "tea").
  */
 export function events(entries: DiaryEntry[], tag: Tag): number[] {
+  return eventGroups(entries, tag).map((g) => g.at);
+}
+
+/** One counted event, and the entries behind it: the first id is the entry that is counted, the rest were merged into it. */
+export interface EventGroup { at: number; ids: string[] }
+
+/**
+ * The same count as `events`, with the entries each event was counted from (phase 6: an insight line can show where
+ * it came from). `events` is this list's moments, so the two cannot differ.
+ */
+export function eventGroups(entries: DiaryEntry[], tag: Tag): EventGroup[] {
   const hits = [...entries].filter((e) => tags(e).includes(tag)).sort((a, b) => a.at - b.at);
-  const logs = hits.filter((e) => e.kind === 'log').map((e) => ({ at: e.at, paired: false }));
-  const out = logs.map((l) => l.at);
+  const logs = hits.filter((e) => e.kind === 'log').map((e) => ({ at: e.at, ids: [e.id], paired: false }));
+  const out: EventGroup[] = logs.map((l) => l);
   let lastCard = -Infinity;
+  let lastGroup: EventGroup | null = null;
   for (const e of hits) {
     if (e.kind === 'log') continue;
     // one more answer of the same conversation: the same event as the one before it
-    if (e.at - lastCard < SAME_EVENT_MS) { lastCard = e.at; continue; }
+    if (e.at - lastCard < SAME_EVENT_MS && lastGroup) { lastCard = e.at; lastGroup.ids.push(e.id); continue; }
     lastCard = e.at;
     const near = logs.filter((l) => !l.paired && Math.abs(l.at - e.at) < SAME_EVENT_MS).sort((a, b) => Math.abs(a.at - e.at) - Math.abs(b.at - e.at))[0];
-    if (near) near.paired = true; else out.push(e.at);
+    if (near) { near.paired = true; near.ids.push(e.id); lastGroup = near; } else { lastGroup = { at: e.at, ids: [e.id] }; out.push(lastGroup); }
   }
-  return out.sort((a, b) => a - b);
+  return out.map((g) => ({ at: g.at, ids: g.ids })).sort((a, b) => a.at - b.at);
 }
 
 /** The diary with every entry of the guard's run marked "less sure" (core/reliability.ts): answers only, never a log. */

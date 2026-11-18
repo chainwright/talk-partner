@@ -583,3 +583,18 @@
 .person.full.pv .p-tiles.board .pt { min-height: 100px; }
 .person.full.pv .p-tiles.board .pt svg { width: 52px; height: 52px; }
 .person.full.pv .p-tiles.board .pt.esc { min-height: 72px; }
+
+/* ---------------------------------------------------------------- phase 6 (18 Nov 2026) */
+/* "See the entries" under a line of "What stands out" and of "Since the last visit": the entries the line was counted
+   from, in place. Never printed (the doctor-visit page prints clean). */
+.simple .src-wrap { margin-top: 8px; }
+.simple .src-toggle { min-height: 44px; padding: 8px 0; text-align: left; }
+.simple .src { margin-top: 4px; border-left: 4px solid var(--field); padding: 4px 0 4px 12px; display: grid; gap: 8px; }
+.simple .src h4 { margin: 0 0 2px; font-size: 16px; }
+.simple .src ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.simple .src li { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; font-size: 16px; overflow-wrap: anywhere; }
+.simple .src li time { font-variant-numeric: tabular-nums; color: var(--muted); }
+.simple .src .src-note { margin: 0; font-weight: 700; }
+.simple .src .once { display: block; font-size: 15px; color: var(--muted); }
+.simple .src .q { color: var(--muted); }
+@media print { .simple .src-wrap { display: none !important; } }
