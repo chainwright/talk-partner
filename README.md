@@ -336,7 +336,8 @@ no cloud model and throws on any answer that did not come from the device. On a 
 questions are the rules', and the screen says "No AI looked at the photo."
 
 2559 unit tests (143 new: `letter`, `turn`, `visit`, `phototalk`, `privacy-phase4`); `e2e-simple.py` 550/550 before
-the third role-play's fixes (554 with them, run against the hosted copy: see Deploy), of
+the third role-play's fixes (with them the whole run was made against the hosted copy only, 551/551 there: see
+Deploy; on localhost the phase 4 run and its overflow screens were run again), of
 which the phase 4 run (83 checks then, 87 now, with the Miller family and three photos) walks all four as Carol and Frank at
 390 x 844, asks nothing of any other host and presses no "Yes" on a sheet, and the offline run has four phase 4
 steps; `overflow-check.py` 503/503 at 320 to 412 px (101 of them phase 4: every person's screen of it also "needs no
@@ -732,7 +733,19 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-Last done on 18 Nov 2026, 05:02 UTC: <https://talk-partner.web.app> serves the build of commit `43e9293` (phase 4:
+Last done on 18 Nov 2026, 05:14 UTC: <https://talk-partner.web.app> serves the build of commit `421dae0` (the three
+fixes of the third role-play: every first-letter tile starts with the letter and the conversation's kind comes
+first; "Who is it about?" and the questions about the telling after "I want to tell you something"; the doctor-visit
+screen names the person). Each of the 20 served files has the SHA-256 of the local build, and `/` equals
+`dist/index.html`. Against it: `e2e-simple.py --live` 551/551 (the phase 4 run is 87 of them; no "Yes" is pressed on
+a sheet, and that run asked nothing of any other host); `pwa-check.py` 30/30; `e2e-needs.mjs` 12/12
+(`devlog/evidence_live/`, the files with `421dae0` in the name). Not run against this build: the full
+`overflow-check.py` (its phase 4 screens 108/108 on localhost at the same code; the other 402 were last run at
+`2396775`), `update-check.py`, `e2e-noconfig.mjs`, `e2e-cloud.mjs`, `e2e-ondevice.mjs`, and `e2e-phase4-ai.py`
+(last at `9ff3e9d`; the letter step's request and the photo step did not change, the order and the labels of the
+rules' words did).
+
+The deploy before it, 18 Nov 2026, 05:02 UTC: <https://talk-partner.web.app> serves the build of commit `43e9293` (phase 4:
 the first-letter helper, "[Name] wants to say something", "Before a doctor visit", "Talk about a photo"). Each of
 the 20 served files has the SHA-256 of the local build, and `/` equals `dist/index.html`
 (`devlog/evidence_live/served-files_live_2026-11-18_43e9293.txt`). Against it: `e2e-simple.py --live` 547/547 (as a
