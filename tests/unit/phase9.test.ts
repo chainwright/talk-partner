@@ -386,11 +386,11 @@ import { repairCard } from '../../core/pipeline';
 describe('9. P1 the person\'s own "Not now"', () => {
   const person = (card: Awaited<ReturnType<typeof makeCard>>, full = true) => personSimple({ card, busy: false, less: false, picked: null, confirmed: false, recap: false, answers: [], pic: () => '', waitPic: '', full });
   const rules = (q: string) => makeCard(q, { profile: EMPTY_PROFILE, support: 'more', engine: new Slow(), allowCloud: false, deviceReady: false });
-  it('the same small tile at the foot of every question screen the person holds; never on the carer\'s preview', async () => {
+  it('the same small tile on the top row of every question screen the person holds, opposite the carer\'s press and hold; never on the carer\'s preview', async () => {
     for (const q of ['Are you in pain?', 'Would you like tea or coffee?', 'How bad is the pain?', 'Where does it hurt?', 'How are you feeling today?']) {
       const html = person(await rules(q));
       expect((html.match(/data-not-now="1"/g) ?? []).length, q).toBe(1);
-      expect(html.trim().endsWith('</button>'), q).toBe(true);
+      expect(html, q).toMatch(/^<div class="p-top"><button type="button" id="exit" class="hold"[^]*?<button type="button" class="p-notnow"/);
     }
     expect(person(repairCard(EMPTY_PROFILE))).toContain('data-not-now="1"');
     expect(person(await rules('Would you like tea or coffee?'), false)).not.toContain('data-not-now');

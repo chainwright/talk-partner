@@ -46,7 +46,7 @@ import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile } from '.
 import { aboutSimple, answeredScreen, cardScreen, chipBlock, consentSheet, frameStyle, homeScreen, laterBlock, personSimple, photoSheet, shortBlock, tryAiBlock, type AboutRow } from './simple';
 import { kvClear, kvGet, kvSet } from './store';
 import { P4 } from '../../core/copy4';
-import { letterCard, letterEnd, type LetterInput } from '../../core/letter';
+import { LETTER_CLOUD_TASK, letterCard, letterEnd, type LetterInput } from '../../core/letter';
 import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
 import { BODY_FIRST, FEEL_QUESTION, aboutCard, menuTopic, starterOf, topicMenu, turnCard, turnLead, type Starter } from '../../core/turn';
 import { nextVisit, visitCard, visitLabel, visitText, type VisitRecord } from '../../core/visit';
@@ -1860,7 +1860,7 @@ function simpleScreen(): string {
   }
   if (!state.sheet || !c?.unsentPayload) return screen;
   // the first-letter step: the sheet shows the one line that comes from the conversation (the question and the letter), then the whole request
-  if (c.letter) return `${screen.replace('<main class="simple', '<main inert aria-hidden="true" class="simple')}${letterSheet({ line: sentLine(c.unsentPayload).text.split(' Give two or three')[0].replace(/^Partner asks:\s*/, ''), request: c.unsentPayload })}`;
+  if (c.letter) return `${screen.replace('<main class="simple', '<main inert aria-hidden="true" class="simple')}${letterSheet({ line: sentLine(c.unsentPayload).text.split(` ${LETTER_CLOUD_TASK}`)[0].split(' Give two or three')[0].replace(/^Partner asks:\s*/, ''), request: c.unsentPayload })}`;
   return `${screen.replace('<main class="simple', '<main inert aria-hidden="true" class="simple')}${consentSheet({ about: aboutName(), line: c.narrow ? sentLine(c.unsentPayload).text.split(` ${NARROW_TASK}`)[0].replace(/^Partner asks:\s*/, '') : sentLine(c.unsentPayload).text, deviceThere: state.device === 'available', ...(c.narrow ? { narrow: { request: c.unsentPayload } } : {}) })}`;
 }
 /** The simple view's lines that depend on the device check or the connection, updated in place (no redraw). */

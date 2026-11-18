@@ -236,21 +236,23 @@ export function personSimple(m: PersonModel): string {
       <div class="p-pick">${m.pic(m.picked)}<p class="p-big">${esc(m.picked.label)}</p></div>${yesNo('yes', 'change')}`;
   }
   const headLines = `<p class="p-do">${P.point}</p><p class="p-ask">${esc(c.asked)}</p>`;
-  // (phase 9) the person's own "Not now": the same small tile at the foot of every question screen; it ends the card
+  // (phase 9) the person's own "Not now": the same small tile on the top row of every question screen; it ends the card
   // and the question is kept for later (core/later.ts). Not a choice: it never enters the answers.
   const notNow = m.full ? `<button type="button" class="p-notnow" id="p-notnow" data-not-now="1">${P.notNow}</button>` : '';
+  // (it shares the top row with the carer's press and hold, so it adds no height: three choices and the way out still fit)
+  const top = hold || notNow ? `<div class="p-top">${hold}${notNow}</div>` : '';
   if (c.scale) {
     // a number scale named in the question: one line of numbers, the two ends named under it, then the way out
     const nums = c.choices.map((ch, i) => (ch.role === 'answer' ? `<button type="button" class="pt wordonly num" data-i="${i}"><span>${esc(ch.label)}</span></button>` : '')).join('');
     const out = c.choices.map((ch, i) => (ch.role === 'escape' ? tile(ch, i) : '')).join('');
     const n = Math.min(6, c.choices.filter((x) => x.role === 'answer').length);
-    return `${hold}${headLines}<div class="p-tiles scale" style="--n:${n}">${nums}</div>
+    return `${top}${headLines}<div class="p-tiles scale" style="--n:${n}">${nums}</div>
       <p class="scale-ends"><span>${c.scale.lo} · ${c.scale.lo === 0 ? COPY.scale.low : COPY.scale.lowFromOne}</span><span>${c.scale.hi} · ${COPY.scale.high}</span></p>
-      <div class="p-tiles">${out}</div>${notNow}`;
+      <div class="p-tiles">${out}</div>`;
   }
   // the quick-needs board is the one screen with more than three choices: two to a row, the way out on its own row
   const cls = c.kind === 'needs' ? ' board' : c.kind === 'repair' ? ' ways' : '';
-  return `${hold}${headLines}<div class="p-tiles${cls}">${c.choices.map((ch, i) => tile(ch, i, ch.role === 'repair' && i >= 3 ? ' quiet' : '')).join('')}</div>${notNow}`;
+  return `${top}${headLines}<div class="p-tiles${cls}">${c.choices.map((ch, i) => tile(ch, i, ch.role === 'repair' && i >= 3 ? ' quiet' : '')).join('')}</div>`;
 }
 
 // ---------------------------------------------------------------- "Today in short"
