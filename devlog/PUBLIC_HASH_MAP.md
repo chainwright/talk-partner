@@ -217,5 +217,7 @@ the table.
 | 194 | `feb272d` | `a035b96` | 2026-11-18 13:18 | Phase 8, found by the full runs: "Home" from deep put the first screen back 490 px down … |
 | 195 | `1a5e79f` | `4739b26` | 2026-11-18 13:32 | Phase 8, documents: README "Added on 18 to 19 Nov, phase 8", JUDGES, CLAIMS rows 114 to … |
 | 196 | `3a9c0ce` | `b47c4de` | 2026-11-18 13:52 | Deploy of 1a5e79f (phase 8): README Deploy and JUDGES name the live build; hosted copy =… |
+| 197 | `32dd0dd` | `3becc3e` | 2026-11-18 14:20 | Judge mode, an open question that got no card (no model ready, cloud help off): the card… |
+| 198 | `fd0cc37` | `003a7db` | 2026-11-18 14:27 | Deploy of 32dd0dd: README Deploy and JUDGES name it; live e2e-simple 991/991, pwa 30/30,… |
 
-Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183 and 184–196 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
+Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196 and 197–198 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
