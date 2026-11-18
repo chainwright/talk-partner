@@ -45,7 +45,7 @@ describe('what builds a prompt or a request does not know the diary or the healt
 });
 
 describe('the one text that may go to online help', () => {
-  const nasty: HealthNotes = { text: 'Frank Miller, born 1958, takes metformin 500 mg. Call Dr Patel 555-0100.', diabetes: true, swallowing: true, fluidLimit: true, reminders: true };
+  const nasty: HealthNotes = { text: 'Frank Miller, born 1958, takes metformin 500 mg. Call Dr Patel 555-0100.', diabetes: true, swallowing: true, fluidLimit: true, reminders: true, emergency: '999' };
   const diary = [...weekDiary(), answerEntry({ q: 'Would you like to call Tom?', label: 'yes', at: when(1, '11:00') }, 'people'), answerEntry({ q: 'Would you like Aunt Zelda\'s fudge cake or porridge?', label: "Aunt Zelda's fudge cake", at: when(1, '15:00') }, 'food'), logEntry('pain', when(0, '09:00')), logEntry('pain', when(2, '09:00'))];
   it('holds no name, no health note and no diary entry, whatever the family typed', () => {
     for (const h of [WEEK.health, nasty]) for (const span of ['week', 'month'] as const) {
@@ -72,7 +72,7 @@ describe('the one text that may go to online help', () => {
     expect(html).toContain(COPY.simple.insights.sheet.never);
     expect(COPY.simple.insights.sheet.never).toMatch(/names, photos, the diary itself, the health notes/);
     expect(html).toContain('PREFER_IN_CLOUD');
-    expect(cloudLines(lines).length).toBe(3);
+    expect(cloudLines(lines).length).toBe(2); // (phase 5: the "less sure" line has a fixed sentence and does not go)
   });
 });
 

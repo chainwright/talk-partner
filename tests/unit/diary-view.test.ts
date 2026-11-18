@@ -26,7 +26,7 @@ const model = (o: Partial<DiaryModel> = {}): DiaryModel => ({
 describe('the diary screen', () => {
   const html = diaryScreen(model());
   it('five one-tap log buttons, three tabs, a topic filter, Back and Home, and the line that it stays on this device', () => {
-    expect(count(html, 'data-act="log"')).toBe(5);
+    expect(count(html, 'data-act="log"')).toBe(7); // (phase 5: a fall, and tablets taken)
     for (const k of ['drank', 'ate', 'toilet', 'slept', 'pain']) expect(html).toContain(`data-log="${k}"`);
     expect(count(html, 'role="tab"')).toBe(3);
     expect(html).toContain('id="tab-week" data-act="diary-tab" data-tab="week" aria-selected="true"');

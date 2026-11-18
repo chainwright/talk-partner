@@ -10,7 +10,8 @@ import { CLOUD_TEXT_MODEL } from './models';
 import type { Engine } from './engine';
 
 export const REWORD_SYSTEM_PROMPT = `You get a short numbered list of plain statements written by an app for a family carer.
-Say each statement again in plainer, warmer words: one or two short sentences per statement, same order, the same number of statements.
+Say each statement again in plainer words: one or two short sentences per statement, same order, the same number of statements.
+Do not make anything sound less serious or more serious than it is written.
 Use only what is in the statement. Keep every number and every day exactly as given.
 Do not add advice, causes, a diagnosis, medicines, doses, a diet, names, or anything that is not in the statement. Adult, calm tone. No exclamation marks.
 Reply as JSON: {"lines": ["...", "..."]}.`;
@@ -35,12 +36,21 @@ export function rewordRequest(text: string, model: string = CLOUD_TEXT_MODEL) {
 /** Words a reworded line may not bring in: the app gives no medical advice, whoever wrote the sentence. */
 const MEDICAL = /\b(?:diagnos\w*|dose|doses|dosage|mg|ml|medicine|medicines|medication|medications|tablet|tablets|pill|pills|insulin|prescri\w*|treat|treatment|cure|diet|dehydrat\w*|infection|disease|symptom\w*|should|must|need to|needs to|have to|has to|ought)\b/i;
 const MORE_DRINK = /\b(?:drink|drinks|fluid|fluids|water)\b[^.]{0,40}\bmore\b|\bmore\b[^.]{0,40}\b(?:drink|drinks|fluid|fluids|water|to drink)\b|\b(?:offer|give|encourage|push)\b[^.]{0,40}\b(?:drink|drinks|fluid|fluids|water)\b/i;
+/**
+ * Whom to call or tell (phase 5): a reworded line may neither bring such a word in nor leave one out. A model that
+ * drops "tell the nurse" has changed what the carer is told to do; one that adds "call the doctor" is advising.
+ */
+const CARE_WORD = /\b(?:call|calls|calling|phone|ring|doctor|doctors|nurse|nurses|gp|emergency|ambulance|hospital|999|911|112)\b/gi;
+/** Words that make a line sound smaller than the rules wrote it: refused unless the source line holds them. */
+const MINIMISE = /\b(?:just|only|merely|simply|probably|fine|okay|ok|normal|harmless|minor|nothing to worry|no need to worry|not to worry|don't worry|do not worry|no worry|no worries|no cause for concern|nothing serious|not serious|no big deal|a bit|a little|slightly)\b/gi;
+const found = (re: RegExp, text: string) => [...new Set((text.match(new RegExp(re.source, 'gi')) ?? []).map((w) => w.toLowerCase()))];
 export const REWORD_MAX = 260;
 
 /**
  * A model's lines, checked against the rules' own: null when they cannot be used. As many lines as went in; each
  * short; no number, no capitalised word and no medical or advising word that its own source line does not hold; never
- * "more to drink" in any words.
+ * "more to drink" in any words; the same "call / doctor / nurse" words as the source, no more and no fewer; and no
+ * word that plays the line down ("just", "only", "fine", "nothing to worry") unless the source holds it.
  */
 export function checkReworded(raw: string, sources: string[]): string[] | null {
   let parsed: unknown;
@@ -63,6 +73,11 @@ export function checkReworded(raw: string, sources: string[]): string[] | null {
     const med: string[] = x.match(new RegExp(MEDICAL.source, 'gi')) ?? [];
     if (med.some((w) => !low.includes(w.toLowerCase()))) return null;
     if (MORE_DRINK.test(x) && !MORE_DRINK.test(src)) return null;
+    // (phase 5) whom to call or tell: the same words in and out; and no word that plays the line down
+    const careIn = found(CARE_WORD, src);
+    const careOut = found(CARE_WORD, x);
+    if (careOut.some((w) => !careIn.includes(w)) || careIn.some((w) => !careOut.includes(w))) return null;
+    if (found(MINIMISE, x).some((w) => !low.includes(w))) return null;
     out.push(x);
   }
   return out;

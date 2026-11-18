@@ -22,7 +22,9 @@ describe('save, clear, bring back', () => {
     const back = ok(text).backup;
     expect(back.profile).toEqual(profile);
     expect(back.photos).toEqual(photos);
-    expect(back.health).toEqual(WEEK.health);
+    // (phase 5: the emergency number is kept with the health notes; the week's fixture has none, which reads as '')
+    expect(back.health).toEqual({ ...WEEK.health, emergency: '' });
+    expect(ok(backupText(makeBackup(profile, photos, { ...WEEK.health, emergency: '999' }, NOW))).backup.health.emergency).toBe('999');
     expect(back.profile.people[2].photo).toBe(JPEG);
     expect(backupText(makeBackup(back.profile, back.photos, back.health, NOW))).toBe(text);
   });

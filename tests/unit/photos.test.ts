@@ -175,7 +175,9 @@ describe('About them: the family\'s own photos', () => {
     const html = photosBlock({ name: 'Frank', photos: [photo('tea', 1), photo('Jen', 2)] });
     expect(html).toContain("Frank&#39;s own photos");
     expect(html).toContain(COPY.simple.photos.lock);
-    expect(COPY.simple.photos.lock).toBe('Photos stay on this computer only. They are never sent anywhere, and no AI looks at them.');
+    // (18 Nov, phase 5, judge round 6: "no AI looks at them" was false on a desktop Chrome with the built-in model)
+    expect(COPY.simple.photos.lock).toBe("Photos stay on this computer only. They are never sent anywhere. On this computer no AI looks at them. On a desktop computer with Chrome's built-in AI, it can look at one on that computer itself, never online.");
+    expect(photosBlock({ name: 'Frank', photos: [], desktopAi: true })).toContain('with one exception: in &quot;Talk about a photo&quot;'.replace(/&quot;/g, '"'));
     expect(html.match(/data-act="photo-del" data-id="p\d"/g)).toHaveLength(2);
     expect(html).toContain('<b>tea</b>');
     expect(html).toContain('data-act="photo-new"');

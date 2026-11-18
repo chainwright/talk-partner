@@ -1,7 +1,7 @@
 // The diary (core/diary.ts): entries from the carer's one-tap log, the confirmed answers and the needs board; today,
 // week and month; the timeline by day; the topic filter; what an entry counts as; and the "less sure" marks.
 import { describe, expect, it } from 'vitest';
-import { DIARY_CAP, LOG_KINDS, SAME_EVENT_MS, addEntry, answerEntry, byDay, dayText, dayWord, diaryText, events, guessTopic, inSpan, logEntry, markDiary, needEntry, removeEntry, spanRange, tags, timeText, type DiaryEntry } from '../../core/diary';
+import { DIARY_CAP, LOG_KINDS, SAME_EVENT_MS, addEntry, answerEntry, byDay, dayText, dayWord, diaryText, events, guessTopic, inSpan, logEntry, markDiary, needEntry, removeEntry, spanRange, tags, timeText, type DiaryEntry, type LogKind } from '../../core/diary';
 import { COPY } from '../../core/copy';
 import { TOPIC_BASE } from '../../core/topics';
 import { NOW, WEEK, weekDiary, when } from './week';
@@ -10,10 +10,10 @@ const ans = (q: string, label: string, at: number, topic?: DiaryEntry['topic']) 
 
 describe('entries', () => {
   it('the one-tap log: five kinds, each with its time and its topic', () => {
-    expect(LOG_KINDS).toEqual(['drank', 'ate', 'toilet', 'slept', 'pain']);
+    expect(LOG_KINDS).toEqual(['drank', 'ate', 'toilet', 'slept', 'pain', 'fall', 'tablets']);
     const e = logEntry('drank', when(0, '09:02'));
     expect(e).toMatchObject({ kind: 'log', log: 'drank', topic: 'food', at: when(0, '09:02') });
-    expect(LOG_KINDS.map((k) => logEntry(k, 1).topic)).toEqual(['food', 'food', 'body', 'rest', 'body']);
+    expect(LOG_KINDS.map((k) => logEntry(k, 1).topic)).toEqual(['food', 'food', 'body', 'rest', 'body', 'body', 'body']);
     expect(Object.keys(COPY.simple.diary.log)).toEqual(LOG_KINDS);
   });
   it('an answer keeps its question, and its topic is the conversation\'s or is read from the words', () => {
@@ -97,7 +97,13 @@ describe('what an entry counts as', () => {
     expect(tags(ans('Are you in pain?', 'no', 1))).toEqual([]);
     expect(tags(ans('Where does it hurt?', 'right shoulder', 1))).toEqual(['pain']);
     expect(tags(ans('How are you feeling today?', 'in pain', 1))).toEqual(['pain']);
-    expect(tags(ans('How bad is the pain?', 'quite bad', 1))).toEqual(['pain']);
+    expect(tags(ans('How bad is the pain?', 'quite bad', 1))).toEqual(['pain', 'strong-pain']);
+    expect(tags(ans('How bad is the pain?', 'a little', 1))).toEqual(['pain']);
+    // (phase 5) the second step of the body card is a pain entry too, and the head and the chest are told apart
+    expect(tags(ans('Where in the chest?', 'middle', 1))).toEqual(['pain', 'place-pain']);
+    expect(tags(ans('Where in the legs?', 'your left knee', 1))).toEqual(['pain']);
+    expect(tags(ans('Where in the head?', 'somewhere else', 1))).toEqual([]);
+    expect(tags(ans('How are you feeling today?', 'sad', 1))).toEqual(['low-mood']);
     expect(tags(ans('Do you need the toilet?', 'yes', 1))).toEqual(['toilet']);
     expect(tags(ans('Are you tired?', 'yes', 1))).toEqual(['tired']);
     expect(tags(ans('How did you sleep?', 'bad', 1))).toEqual(['bad-sleep']);
@@ -135,7 +141,7 @@ describe('"less sure"', () => {
     expect(markDiary(d, null, t)).toBe(d);
   });
   it('the text for a visit says it, with the time and the question, and holds no count and no advice', () => {
-    const W = { log: COPY.simple.diary.log as Record<'drank' | 'ate' | 'toilet' | 'slept' | 'pain', string>, lessSure: COPY.simple.guard.lessSure, need: COPY.simple.diary.need };
+    const W = { log: COPY.simple.diary.log as Record<LogKind, string>, lessSure: COPY.simple.guard.lessSure, need: COPY.simple.diary.need };
     const text = diaryText(inSpan(weekDiary(), 'week', NOW), W);
     expect(text.startsWith('Mon 16 Nov\n  07:40  Would you like tea or coffee? tea')).toBe(true);
     expect(text).toContain('  19:00  Are you tired? yes (less sure)');

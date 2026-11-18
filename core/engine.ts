@@ -59,6 +59,14 @@ export interface Engine {
    * fall back, and an engine without it (a phone, a copy with no project settings) gets the rules' questions alone.
    */
   lookDevice?(image: ImageClip): Promise<ModelResult>;
+  /**
+   * Optional: Read aloud (core/speak.ts). The words on one card go to a Gemini text-to-speech model, ONLY_IN_CLOUD
+   * (the SDK has no on-device speech), and come back as sound. Called only after the carer turned Read aloud on, on
+   * the sheet that says what goes. An engine without it (no project settings) has no Read aloud.
+   */
+  speak?(text: string): Promise<SpokenResult>;
+  /** The exact request `speak` would send for this text. */
+  speakRequest?(text: string): unknown;
   /** Optional: use this cloud text model from the next cloud call on (a name Remote Config gave, already checked). */
   setCloudModel?(model: string): void;
   /** The exact request body the cloud step would send for this stripped question. */
@@ -72,6 +80,9 @@ export interface Engine {
    */
   transcribe?(clip: AudioClip): Promise<ModelResult>;
 }
+
+/** The sound of one card: base64 of what the model returned, its type, and where it ran (the SDK's report). */
+export interface SpokenResult { base64: string; mimeType: string; source: 'on-device' | 'in-cloud'; ms: number }
 
 /** How long the cloud step is waited for before the card says that online help did not answer. */
 export const CLOUD_WAIT_MS = 25000;

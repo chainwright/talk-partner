@@ -19,9 +19,9 @@ const card = needsCard();
 const labels = card.choices.map((c) => c.label);
 
 describe('the quick-needs board: what is on it', () => {
-  it('eight needs and the way out, in a fixed order', () => {
-    expect(labels).toEqual(['toilet', 'drink', 'food', 'pain', 'tired', 'too hot', 'too cold', 'call someone', 'something else']);
-    expect(card.choices.filter((c) => c.role === 'answer')).toHaveLength(8);
+  it('nine needs (eight, and since phase 5 "something\'s wrong") and the way out, in a fixed order', () => {
+    expect(labels).toEqual(['toilet', 'drink', 'food', 'pain', 'tired', 'too hot', 'too cold', 'call someone', "something's wrong", 'something else']);
+    expect(card.choices.filter((c) => c.role === 'answer')).toHaveLength(9);
     expect(card.choices.filter((c) => c.role === 'escape').map((c) => c.label)).toEqual(['something else']);
     expect(card.choices[card.choices.length - 1].role).toBe('escape');
   });

@@ -48,7 +48,12 @@ export const VISIT: VisitQuestion[] = [
 export const VISIT_MAX = VISIT.length;
 
 export interface VisitAnswer { id: VisitId; q: string; label: string; at: number; /** The way out was chosen ("something else", "not sure"). */ out?: boolean }
-export interface VisitRecord { startedAt: number; answers: VisitAnswer[]; done: boolean }
+export interface VisitRecord {
+  startedAt: number; answers: VisitAnswer[]; done: boolean;
+  /** Phase 5, the carer's part of the page (core/since.ts): the day of the last visit, and up to three questions picked from the fixed list. */
+  since?: number;
+  carerAsk?: string[];
+}
 
 /** The question to ask next, or null at the end. The two questions about the pain follow only a yes to the first. */
 export function nextVisit(answers: VisitAnswer[]): VisitQuestion | null {

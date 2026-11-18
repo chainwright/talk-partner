@@ -29,6 +29,11 @@
 //                                nothing of the diary                          (web/src/main.ts); the app's check decides
 //                                                                             whether the words may stand.
 //
+//   speak      ONLY_IN_CLOUD     the words on one card (the question and its   Read aloud (core/speak.ts): a Gemini text-to-speech
+//                                choices; names on it included), after a yes   model says them on the person's screen. The SDK has
+//                                on a sheet that says so                       no on-device speech, so the mode says what happens.
+//                                                                             Never a doctor-visit card.
+//
 // A narrowing card after "something else" (core/narrow.ts) uses the private and the stripped step, as an open question does.
 // Two steps make cards, and a third turns a spoken question into text. Pictures are bundled: the picture-generation
 // model this file once defined and never called was removed on 17 Nov 2026. The browser's own speech recognition
@@ -43,9 +48,10 @@
 
 import { initializeApp } from 'firebase/app';
 import {
-  getAI, getGenerativeModel, GoogleAIBackend, InferenceMode, InferenceSource, type GenerativeModel,
+  getAI, getGenerativeModel, GoogleAIBackend, InferenceMode, InferenceSource, ResponseModality, type GenerativeModel,
 } from 'firebase/ai';
-import type { AudioClip, DeviceStatus, Engine, ImageClip, ModelResult } from '../../../core/engine';
+import type { AudioClip, DeviceStatus, Engine, ImageClip, ModelResult, SpokenResult } from '../../../core/engine';
+import { TTS_MODEL, TTS_STYLE, TTS_VOICE, speakRequest } from '../../../core/speak';
 import { LOOK_PROMPT, LOOK_SCHEMA, LOOK_SYSTEM_PROMPT } from '../../../core/phototalk';
 import { CLOUD_TEXT_MODEL } from '../../../core/models';
 import { SUMMARY_SCHEMA, SUMMARY_SYSTEM_PROMPT } from '../../../core/summary';
@@ -67,7 +73,7 @@ const sys = (text: string) => [{ role: 'system' as const, content: [{ type: 'tex
  * One console line per answered model call: which leg, its mode, and the SDK's own `inferenceSource` value as it came
  * back. No prompt and no answer text is logged. The run logs in devlog/ quote these lines.
  */
-function report(leg: 'private' | 'stripped' | 'voice' | 'summary' | 'reword' | 'look', mode: string, inferenceSource: unknown, ms: number) {
+function report(leg: 'private' | 'stripped' | 'voice' | 'summary' | 'reword' | 'look' | 'speak', mode: string, inferenceSource: unknown, ms: number) {
   console.info(`[ai-logic] leg=${leg} mode=${mode} inferenceSource=${String(inferenceSource)} ms=${ms}`);
 }
 
@@ -82,6 +88,7 @@ export class FirebaseEngine implements Engine {
   private rewordLocal: GenerativeModel | null = null;
   private rewordOnline: GenerativeModel | null = null;
   private lookLocal: GenerativeModel | null = null;
+  private ttsModel: GenerativeModel | null = null;
   private localAi: ReturnType<typeof getAI> | null = null;
   /** The cloud text model in use: the in-code default until Remote Config gives a checked name (core/models.ts). */
   private textModel = CLOUD_TEXT_MODEL;
@@ -310,6 +317,33 @@ export class FirebaseEngine implements Engine {
     report('reword', 'PREFER_IN_CLOUD', r.response.inferenceSource, ms);
     return { text: r.response.text(), source, ms };
   }
+
+  speakRequest(text: string) {
+    return speakRequest(text);
+  }
+
+  /**
+   * Read aloud: the words on one card to a Gemini text-to-speech model, ONLY_IN_CLOUD on the default app (App Check).
+   * The request holds the text, the voice and the style, and nothing else (core/speak.ts, speakRequest). The sound
+   * comes back as inline data; the source is what the SDK reports.
+   */
+  async speak(text: string): Promise<SpokenResult> {
+    if (!this.cloudConfigured) throw Object.assign(new Error('Read aloud is not set up (App Check)'), { notSent: true });
+    this.ttsModel ??= getGenerativeModel(this.ai, {
+      mode: InferenceMode.ONLY_IN_CLOUD,
+      inCloudParams: { model: TTS_MODEL, generationConfig: { responseModalities: [ResponseModality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_VOICE } } } } },
+    });
+    const t0 = performance.now();
+    const r = await this.ttsModel.generateContent([{ type: 'text', text, speechMetadata: { style: TTS_STYLE } }]).catch(async (e: Error) => {
+      throw Object.assign(await namedAppCheckFailure(e), { notSent: typeof navigator !== 'undefined' && navigator.onLine === false });
+    });
+    const part = r.response.inlineDataParts()?.[0];
+    if (!part?.inlineData?.data) throw new Error('the speech step returned no sound');
+    const source = r.response.inferenceSource === InferenceSource.ON_DEVICE ? 'on-device' : 'in-cloud';
+    const ms = Math.round(performance.now() - t0);
+    report('speak', 'ONLY_IN_CLOUD', r.response.inferenceSource, ms);
+    return { base64: part.inlineData.data, mimeType: part.inlineData.mimeType, source, ms };
+  }
 }
 
 /**
@@ -349,4 +383,6 @@ export class LazyFirebaseEngine implements Engine {
   cloudRequest(strippedQuestion: string) { return cloudTextRequest(strippedQuestion, this.textModel); }
   runCloud(strippedQuestion: string) { return this.e.runCloud(strippedQuestion); }
   transcribe(clip: AudioClip) { return this.e.transcribe(clip); }
+  speakRequest(text: string) { return speakRequest(text); }
+  speak(text: string) { return this.e.speak(text); }
 }

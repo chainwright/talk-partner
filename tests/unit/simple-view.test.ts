@@ -178,7 +178,7 @@ describe("simple view: the person's screens", () => {
     }
     const board = personSimple(person({ card: needsCard() }));
     expect(board).toContain('<div class="p-tiles board">');
-    expect(count(board, 'class="pt')).toBe(9);
+    expect(count(board, 'class="pt')).toBe(10); // nine tiles since phase 5 ("something's wrong"), and the way out
     expect(text(board)).toContain('Point to your answer What do you need?');
   });
   it('the check: "So: tea. Right?", the picture with its word, then "Yes" and "No, something else"', async () => {

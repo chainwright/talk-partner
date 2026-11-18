@@ -10,7 +10,8 @@ const json = (lines: unknown) => JSON.stringify({ lines });
 
 describe('the check', () => {
   it('plainer words for each line, the same count, pass', () => {
-    expect(checkReworded(json(['Sweet things were picked 3 times over the last 7 days.', 'On Wed 18 Nov only 2 drinks were written down.']), SRC)).toEqual(['Sweet things were picked 3 times over the last 7 days.', 'On Wed 18 Nov only 2 drinks were written down.']);
+    // (18 Nov, phase 5: "only 2 drinks" used to pass here; "only" plays the line down, and is refused below)
+    expect(checkReworded(json(['Sweet things were picked 3 times over the last 7 days.', 'On Wed 18 Nov, 2 drinks were written down.']), SRC)).toEqual(['Sweet things were picked 3 times over the last 7 days.', 'On Wed 18 Nov, 2 drinks were written down.']);
     expect(checkReworded(`Here you go: ${json(['1. Sweet things: 3 times in 7 days.', '2. On Wed 18 Nov, 2 drinks.'])}`, SRC)).toEqual(['Sweet things: 3 times in 7 days.', 'On Wed 18 Nov, 2 drinks.']);
   });
   it.each([

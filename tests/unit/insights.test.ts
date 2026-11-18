@@ -36,7 +36,9 @@ describe('the rules', () => {
     const noDrink = [logEntry('ate', when(2, '08:00')), logEntry('ate', when(2, '18:00'))];
     const xs = insights([...days(0, 1, 4), ...noDrink, logEntry('ate', when(6, '08:00'))], NO_HEALTH, 'week', NOW);
     expect(xs[0]).toMatchObject({ id: 'no-drink', level: 'tell' });
-    expect(xs[0].text).toBe('No drink was chosen or logged on Wed 18 Nov. That can simply mean nobody entered one.');
+    // (18 Nov, phase 5: the sentence that excused the line is gone)
+    expect(xs[0].text).toBe('No drink was chosen or logged on Wed 18 Nov. If that is right, and not a gap in the diary, tell the doctor or nurse today.');
+    expect(xs[0].text).not.toMatch(/simply|nobody entered/);
     expect(xs[0].base).toBe('Other things were entered on that day, and no drink. Only what was entered here.');
     expect(all(xs)).not.toContain('Thu 19 Nov');
     expect(all(xs)).not.toContain('Sun 22 Nov');
@@ -44,7 +46,8 @@ describe('the rules', () => {
   it('a day with few drinks entered: the count, the day, and "only what was entered here"', () => {
     const wed = [logEntry('drank', when(2, '08:00')), logEntry('ate', when(2, '12:00')), logEntry('drank', when(2, '15:00'))];
     const xs = insights([...days(0, 1), ...wed], NO_HEALTH, 'week', NOW);
-    expect(xs).toEqual([{ id: 'few-drinks', level: 'note', text: 'Few drinks were entered on Wed 18 Nov: 2.', noted: '', base: 'Counted that day: 2. Every "Drank" tap counts, and every drink chosen on a card (tea, coffee, water, juice, milk, or yes to "something to drink"); a card and a tap within 20 minutes count once. Only what was entered here.' }]);
+    // (18 Nov, phase 5: two drinks in a day is worth mentioning, with or without reminders noted)
+    expect(xs).toEqual([{ id: 'few-drinks', level: 'mention', text: 'Few drinks were entered on Wed 18 Nov: 2.', noted: '', base: 'Counted that day: 2. Every "Drank" tap counts, and every drink chosen on a card (tea, coffee, water, juice, milk, or yes to "something to drink"); a card and a tap within 20 minutes count once. Only what was entered here.' }]);
     // (18 Nov, the second role-play) two days with the fewest are both named, and three taps in one minute are three drinks
     const fri = [logEntry('drank', when(4, '08:00')), logEntry('ate', when(4, '12:00'))];
     const mon = [logEntry('ate', when(0, '09:00')), logEntry('drank', when(0, '10:00'))];
@@ -112,7 +115,10 @@ describe('health notes change the thresholds', () => {
   });
   it('a fluid limit from the doctor: no "few drinks" line, a day with many drinks is mentioned, and the no-drink line points to the doctor\'s plan', () => {
     const wed = [logEntry('drank', when(2, '08:00')), logEntry('ate', when(2, '12:00'))];
-    expect(ids(insights([...days(0, 1), ...wed], H({ fluidLimit: true }), 'week', NOW))).toEqual(['nothing']);
+    // (18 Nov, phase 5: the line is no longer hidden under a fluid limit; it points to the doctor's plan and never says "more")
+    const low = insights([...days(0, 1), ...wed], H({ fluidLimit: true }), 'week', NOW);
+    expect(ids(low)).toEqual(['few-drinks']);
+    expect(low[0]).toMatchObject({ level: 'mention', local: true, text: "Few drinks were entered on Wed 18 Nov: 1. A fluid limit from the doctor is noted here: check the day against the doctor's plan." });
     const many = Array.from({ length: 8 }, (_, i) => logEntry('drank', when(1, `${String(8 + i).padStart(2, '0')}:00`)));
     const xs = insights([...days(0), ...many, logEntry('ate', when(2, '12:00'))], H({ fluidLimit: true }), 'week', NOW);
     expect(ids(xs)).toEqual(['no-drink', 'many-drinks']);
@@ -135,7 +141,7 @@ describe('never medical advice', () => {
     for (const d of diaries) for (const span of ['week', 'month'] as const) {
       const text = all(insights(d, H({ fluidLimit: true }), span, NOW));
       expect(text).not.toMatch(MORE_DRINK);
-      expect(text).not.toMatch(/few drinks/i);
+      expect(text).not.toMatch(/drink more|more to drink|more fluid|offer|encourage/i);
     }
   });
   it('no line of any diary under any notes names a diagnosis, a medicine, a dose or a diet, or tells the carer what they must do', () => {
@@ -163,13 +169,14 @@ describe('what a model may be handed: the rules\' lines, for their wording only'
   const lines = insights(weekDiary(), health, 'week', NOW);
   it('the cloud text is the numbered lines and nothing else: no name, no health note, no diary entry', () => {
     const text = insightCloudText(lines);
-    expect(text).toBe('1. Something sweet was chosen 3 times in the last 7 days.\n2. Few drinks were entered on Wed 18 Nov: 2.\n3. 5 answers on Fri 20 Nov are marked "less sure": yes to nearly everything, or the same place on the screen each time. Read that day with care.');
+    // (18 Nov, phase 5: the "less sure" line carries a fixed sentence, so no model rewords it and it does not go)
+    expect(text).toBe('1. Something sweet was chosen 3 times in the last 7 days.\n2. Few drinks were entered on Wed 18 Nov: 2.');
     for (const word of ['Frank', 'Carol', 'Beth', 'Tom', 'Bo', 'Patel', 'diabetes', 'Diabetes', 'ginger', 'porridge', 'Type 2', 'tea']) expect(text).not.toContain(word);
   });
   it('a line whose own words state a health note never goes: the fluid limit, swallowing difficulty', () => {
     const many = Array.from({ length: 8 }, (_, i) => logEntry('drank', when(1, `${String(8 + i).padStart(2, '0')}:00`)));
     const xs = insights([...days(0), ...many, logEntry('ate', when(2, '12:00')), logEntry('drank', when(3, '09:00')), logEntry('pain', when(3, '10:00')), logEntry('pain', when(0, '10:00')), logEntry('pain', when(1, '10:00'))], H({ fluidLimit: true, swallowing: true, diabetes: true }), 'week', NOW);
-    expect(ids(xs)).toEqual(['pain', 'no-drink', 'many-drinks', 'no-food']);
+    expect(ids(xs)).toEqual(['pain', 'no-drink', 'few-drinks', 'many-drinks', 'no-food']);
     expect(ids(cloudLines(xs))).toEqual(['pain']);
     expect(insightCloudText(xs)).not.toMatch(/fluid limit|swallowing|noted|diabetes/i);
     expect(cloudLines(insights(days(0, 1), NO_HEALTH, 'week', NOW))).toEqual([]);
@@ -181,7 +188,7 @@ describe('what a model may be handed: the rules\' lines, for their wording only'
   it('the on-device prompt adds what the carer noted, as context: it is for ONLY_ON_DEVICE', () => {
     const p = insightDevicePrompt(lines, health);
     expect(p).toContain('The carer noted: Diabetes; Type 2 diabetes, diet only. Dr Patel on Monday.');
-    expect(insightDevicePrompt(lines, NO_HEALTH)).toBe(insightCloudText(lines));
+    expect(insightDevicePrompt(lines.filter((l) => !l.act), NO_HEALTH)).toBe(insightCloudText(lines));
   });
   it('the counts of the span, for the base of a screen', () => {
     expect(spanCounts(weekDiary(), 'week', NOW)).toMatchObject({ days: 7, daysWithEntries: 7, sweet: 3, lessSure: 5 });

@@ -14,12 +14,16 @@ import type { RewordSource } from '../../core/reword';
 import type { Tip } from '../../core/tip';
 import { TOPIC_BASE } from '../../core/topics';
 import { builtinPicto } from './pictos';
+import { FALL_HEAD } from '../../core/diary';
+import { P5 } from '../../core/copy5';
+import { DEFAULT_NUMBER } from '../../core/redflag';
+import { urgentBox } from './phase5';
 import { SIGN, navBar } from './simple';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const deco = (id: string) => builtinPicto(id).replace(/role="img" aria-label="[^"]*"/, 'class="tp" aria-hidden="true" focusable="false"');
 const BOOK = '<svg class="sg" viewBox="0 0 96 96" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 14h52a8 8 0 018 8v60H26a8 8 0 01-8-8z"/><path d="M34 34h28M34 50h28M34 66h16"/></svg>';
-const LOG_PIC: Record<LogKind, string> = { drank: 'drink', ate: 'food', toilet: 'toilet', slept: 'bed', pain: 'pain' };
+const LOG_PIC: Record<LogKind, string> = { drank: 'drink', ate: 'food', toilet: 'toilet', slept: 'bed', pain: 'pain', fall: 'fall', tablets: 'tablets' };
 
 /** The guard's line for the carer: gentle, about the moment. Empty when nothing was noticed. */
 export function guardBlock(m: { name: string; flags: Flag[] }): string {
@@ -48,13 +52,15 @@ export interface InsightsModel {
   note: '' | 'failed' | 'notSent' | 'refused';
   /** Online help can be asked for the wording here ('ask'), could if there were a connection ('offline'), or not at all (null: there is a model on the device, no project settings, or no line that may go). */
   cloud: 'ask' | 'offline' | null;
+  /** The emergency number the call box of an urgent line names (About them; 911 by default). */
+  number?: string;
 }
 
 /** The week's or the month's lines: the level, the line, what it was counted from; who worded them; the fixed footer. */
 export function insightsBlock(m: InsightsModel | null): string {
   if (!m) return '';
   const I = COPY.simple.insights;
-  const line = (x: Insight, i: number) => `<li class="ins ${x.level}" data-id="${x.id}" data-level="${x.level}">${x.id === 'nothing' ? '' : `<span class="lvl">${x.level === 'note' ? SIGN.info : SIGN.person}${I.level[x.level]}</span>`}<p class="ins-text">${esc(m.words?.[i] ?? x.text)}${x.noted ? ` <span class="noted">${esc(x.noted)}</span>` : ''}</p><p class="ins-base">${esc(x.base)}</p></li>`;
+  const line = (x: Insight, i: number) => `<li class="ins ${x.level}" data-id="${x.id}" data-level="${x.level}">${x.id === 'nothing' ? '' : `<span class="lvl">${x.level === 'note' ? SIGN.info : SIGN.person}${I.level[x.level]}</span>`}<p class="ins-text">${esc(m.words?.[i] ?? x.text)}${x.noted ? ` <span class="noted">${esc(x.noted)}</span>` : ''}</p>${x.act ? `<p class="ins-act">${esc(x.act)}</p>` : ''}<p class="ins-base">${esc(x.base)}</p>${x.urgent ? urgentBox(m.number ?? DEFAULT_NUMBER, `urgent-${x.id}`) : ''}</li>`;
   const by = m.busy ? I.by.busy : m.note ? I.by[m.note] : m.source === 'on-device' ? I.by.device : m.source === 'in-cloud' ? I.by.cloud : I.by.rules;
   const body = m.lines.length ? `<ul class="ins-list" id="ins-list">${m.lines.map(line).join('')}</ul>
     <p class="by" id="ins-by" data-source="${m.source}">${m.source === 'rules' ? SIGN.lock : m.source === 'in-cloud' ? SIGN.cloud : SIGN.spark}<span>${esc(by)}</span></p>
@@ -90,11 +96,13 @@ export interface DiaryModel {
   copied: boolean;
   /** The diary was just deleted. */
   deleted: boolean;
+  /** After "Fall" was logged (web/src/phase5.ts): when to call, the call button, one tap for a blow to the head. */
+  fallHtml?: string;
 }
 
 function entryLine(e: DiaryEntry): string {
   const D = COPY.simple.diary;
-  const what = e.kind === 'log' ? `<b>${D.log[e.log!]}</b>` : e.kind === 'need' ? `<span class="q">${D.need}</span> <b>${esc(e.label)}</b>` : `<span class="q">${esc(e.q ?? '')}</span> <b>${esc(e.label)}</b>`;
+  const what = e.kind === 'log' ? `<b>${D.log[e.log!]}</b>${e.label === FALL_HEAD ? ` <span class="q">${P5.fall.headNoted}</span>` : ''}` : e.kind === 'need' ? `<span class="q">${D.need}</span> <b>${esc(e.label)}</b>` : `<span class="q">${esc(e.q ?? '')}</span> <b>${esc(e.label)}</b>`;
   return `<li class="de ${e.kind}" data-kind="${e.kind}"${e.lessSure ? ' data-less-sure="1"' : ''}><time>${timeText(e.at)}</time><span class="what">${what}${e.lessSure ? ` <span class="tag unsure">${COPY.simple.guard.lessSure}</span>` : ''}</span></li>`;
 }
 
@@ -114,7 +122,7 @@ export function diaryScreen(m: DiaryModel): string {
   ${navBar({ back: true })}
   <div><h1>${esc(D.heading(m.name))}</h1></div>
   <p class="lock banner" id="diary-lock">${SIGN.lock}<span>${esc(D.lock(m.name))}</span></p>
-  <section class="logrow" aria-labelledby="log-h"><h2 class="sec" id="log-h">${D.logHeading}</h2><div class="logbtns" id="log-row">${log}</div>${logged}</section>
+  <section class="logrow" aria-labelledby="log-h"><h2 class="sec" id="log-h">${D.logHeading}</h2><div class="logbtns" id="log-row">${log}</div>${logged}${m.fallHtml ?? ''}</section>
   <div class="tabs" role="tablist" aria-label="${D.tabsLabel}" id="tabs">${tabs}</div>
   <label class="topic-pick" for="diary-topic"><span>${D.topic}</span><select id="diary-topic" class="field">${topics}</select></label>
   <div class="timeline" id="timeline" role="tabpanel" aria-labelledby="tab-${m.tab}">${timeline}</div>

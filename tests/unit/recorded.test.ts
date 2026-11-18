@@ -83,9 +83,16 @@ describe('the recording on screen: labelled, shown only where the step cannot ru
     expect(on).toHaveLength(2);
     expect(on.some((l) => l.includes("case 'cloud-on': if (state.consentChecked) {"))).toBe(true);
     // the sheet (17 Nov 2026): its "Yes" is the only other switch, and the sheet is drawn only for a card that holds what would be sent
-    const yes = main.split("case 'sheet-yes':")[1]?.split('break;')[0] ?? '';
+    // (18 Nov, phase 5, judge round 6: the sheet's first button is "Just this once": that one request may use online
+    // help and the switch stays off; "Yes, every time" is the only other switch)
+    const once = main.split("case 'sheet-yes':")[1]?.split('break;')[0] ?? '';
+    expect(once).toBe(' state.sheet = false; p5.once = true; askAgain(); ');
+    const yes = main.split("case 'sheet-always':")[1]?.split('break;')[0] ?? '';
+    expect(yes).toContain('state.settings.cloudHelp = true; saveSettings(); askSettings(); askAgain();');
     // (18 Nov, phase 4: the first-letter step is the third thing the sheet can be up for; its yes asks that step again)
-    expect(yes).toContain('state.settings.cloudHelp = true; saveSettings(); askSettings(); if (state.card?.letter && state.p4.letterPending) void runLetter(state.p4.letterPending); else if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else void make(state.lastQuestion);');
+    expect(main).toContain('if (state.card?.letter && state.p4.letterPending) void runLetter(state.p4.letterPending); else if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else void make(state.lastQuestion);');
+    // "once" is read and cleared by the one request that follows, in each of the three steps
+    expect(main.match(/const once = p5\.once; p5\.once = false;/g)).toHaveLength(3);
     expect(main).toContain("if (!state.sheet || !c?.unsentPayload) return screen;");
     // with cloud help off the recording only links to the consent screen
     expect(block).toContain('`${R.cloudOff} <a href="#/cloud">${R.cloudLink}</a>`');

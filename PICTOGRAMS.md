@@ -63,6 +63,9 @@ roast). The figures use one neutral head colour and differ by one attribute each
 | tired | pale blue face, closed eyes, small Zs | 18 Nov 2026 (colour; first drawn 11 Nov 2026 as a line drawing) | Apache-2.0 |
 | worried | pale orange face, raised brows, wavy mouth | 18 Nov 2026 (colour; first drawn 11 Nov 2026 as a line drawing) | Apache-2.0 |
 | pain | red lightning bolt | 18 Nov 2026 (colour; first drawn 11 Nov 2026 as a line drawing) | Apache-2.0 |
+| something's wrong | amber warning triangle with a dark mark (the ninth tile of the needs board) | 18 Nov 2026 (phase 5) | Apache-2.0 |
+| fall | a figure on the ground, three red lines above (the diary's "Fall" log) | 18 Nov 2026 (phase 5) | Apache-2.0 |
+| tablets | a white capsule and a round blue tablet (the diary's "Tablets taken" log) | 18 Nov 2026 (phase 5) | Apache-2.0 |
 | spouse | two figures and a gold ring (wife, husband, partner) | 18 Nov 2026 (colour; first drawn 11 Nov 2026 as a line drawing) | Apache-2.0 |
 | child | adult and a shorter adult (son, daughter) | 18 Nov 2026 (colour; first drawn 11 Nov 2026 as a line drawing) | Apache-2.0 |
 | sibling | two figures side by side (sister, brother) | 18 Nov 2026 (colour; first drawn 11 Nov 2026 as a line drawing) | Apache-2.0 |

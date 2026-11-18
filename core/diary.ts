@@ -14,8 +14,12 @@ import { careAnswer } from './reliability';
 import type { TopicId } from './topics';
 
 /** The carer's one-tap log. */
-export type LogKind = 'drank' | 'ate' | 'toilet' | 'slept' | 'pain';
-export const LOG_KINDS: LogKind[] = ['drank', 'ate', 'toilet', 'slept', 'pain'];
+export type LogKind = 'drank' | 'ate' | 'toilet' | 'slept' | 'pain' | 'fall' | 'tablets';
+// (18 Nov, judge round 6: a fall and "tablets taken". The tablets are a log line and nothing more: the app counts
+// no dose, reminds of none and draws no line from them.)
+export const LOG_KINDS: LogKind[] = ['drank', 'ate', 'toilet', 'slept', 'pain', 'fall', 'tablets'];
+/** What a "Fall" entry is called once the carer noted a blow to the head. */
+export const FALL_HEAD = 'fall: hit head';
 
 export type DiaryTopic = TopicId | 'other';
 
@@ -39,8 +43,8 @@ export interface DiaryEntry {
 /** About a year of heavy use; the oldest entries fall off past it. */
 export const DIARY_CAP = 6000;
 
-const LOG_TOPIC: Record<LogKind, DiaryTopic> = { drank: 'food', ate: 'food', toilet: 'body', slept: 'rest', pain: 'body' };
-const NEED_TOPIC: Record<string, DiaryTopic> = { toilet: 'body', drink: 'food', food: 'food', pain: 'body', tired: 'rest', 'too hot': 'body', 'too cold': 'body', 'call someone': 'people' };
+const LOG_TOPIC: Record<LogKind, DiaryTopic> = { drank: 'food', ate: 'food', toilet: 'body', slept: 'rest', pain: 'body', fall: 'body', tablets: 'body' };
+const NEED_TOPIC: Record<string, DiaryTopic> = { toilet: 'body', drink: 'food', food: 'food', pain: 'body', tired: 'rest', 'too hot': 'body', 'too cold': 'body', 'call someone': 'people', "something's wrong": 'body' };
 const lc = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
 let seq = 0;
 const newId = (at: number) => `d${at.toString(36)}${(seq++ % 1296).toString(36)}`;
@@ -129,7 +133,7 @@ export function dayWord(day: number, now: number): '' | 'Today' | 'Yesterday' {
 }
 
 // ---------------------------------------------------------------- what an entry counts as (for the insights)
-export type Tag = 'drink' | 'food' | 'sweet' | 'toilet' | 'sleep' | 'bad-sleep' | 'pain' | 'tired';
+export type Tag = 'drink' | 'food' | 'sweet' | 'toilet' | 'sleep' | 'bad-sleep' | 'pain' | 'tired' | 'fall' | 'fall-head' | 'tablets' | 'low-mood' | 'strong-pain' | 'place-pain';
 
 const DRINK = /^(?:tea|coffee|water|juice|milk|a drink|drink|squash|cocoa|hot chocolate|lemonade|a cup of tea|a glass of water)$/;
 const SWEET = /\b(?:sweet|sweets|biscuit|biscuits|cake|chocolate|ice cream|pudding|dessert|candy|cookie|cookies|jam|honey|toffee|doughnut|pastry|pie)\b/;
@@ -144,7 +148,7 @@ const FOOD_Q = /\b(?:snack|meal|eat|sweet|savoury|breakfast|lunch|dinner|supper|
 export function tags(e: DiaryEntry): Tag[] {
   const l = lc(e.label);
   const q = lc(e.q ?? '');
-  if (e.kind === 'log') return e.log === 'drank' ? ['drink'] : e.log === 'ate' ? ['food'] : e.log === 'toilet' ? ['toilet'] : e.log === 'slept' ? ['sleep'] : ['pain'];
+  if (e.kind === 'log') return e.log === 'drank' ? ['drink'] : e.log === 'ate' ? ['food'] : e.log === 'toilet' ? ['toilet'] : e.log === 'slept' ? ['sleep'] : e.log === 'fall' ? (l === FALL_HEAD ? ['fall', 'fall-head'] : ['fall']) : e.log === 'tablets' ? ['tablets'] : ['pain'];
   if (e.kind === 'need') return l === 'drink' ? ['drink'] : l === 'food' ? ['food'] : l === 'toilet' ? ['toilet'] : l === 'pain' ? ['pain'] : l === 'tired' ? ['tired'] : [];
   const out: Tag[] = [];
   if (DRINK.test(l) || (/\bsomething to drink\b/.test(q) && l === 'yes')) out.push('drink');
@@ -154,6 +158,12 @@ export function tags(e: DiaryEntry): Tag[] {
   if ((/\b(?:in pain|hurt|hurts|hurting|sore)\b/.test(q) && l === 'yes') || l === 'in pain' || /^where does it hurt\b/.test(q) || (/^how bad is the pain\b/.test(q) && l !== 'not sure')) out.push('pain');
   if ((/\btired\b/.test(q) && l === 'yes') || l === 'tired') out.push('tired');
   if (/^how did you sleep\b/.test(q) && l === 'bad') out.push('bad-sleep');
+  // (phase 5) what the insights look at day by day: a strong pain, a pain in the head or the chest, a low day
+  if (/^how bad is the pain\b/.test(q) && /^(?:quite bad|very bad)$/.test(l)) out.push('strong-pain');
+  // (the second step of the body card asks "Where in the chest?": a place chosen there is a pain entry too)
+  if (/^where in the \w+\b/.test(q) && !/^some(?:where|thing) else$/.test(l) && !out.includes('pain')) out.push('pain');
+  if ((/^where in the (?:head|chest)\b/.test(q) && !/^some(?:where|thing) else$/.test(l)) || (/^where does it hurt\b/.test(q) && /\b(?:head|chest)\b/.test(l))) out.push('place-pain');
+  if (/^how are you feeling today\b/.test(q) && /^(?:sad|bad)$/.test(l)) out.push('low-mood');
   return out;
 }
 
@@ -185,7 +195,7 @@ export function events(entries: DiaryEntry[], tag: Tag): number[] {
 /** The diary with every entry of the guard's run marked "less sure" (core/reliability.ts): answers only, never a log. */
 export function markDiary(diary: DiaryEntry[], since: number | null, now: number): DiaryEntry[] {
   if (since === null) return diary;
-  return diary.map((e) => (e.kind === 'answer' && e.at >= since && e.at <= now && !e.lessSure && !careAnswer(e.q ?? '', e.label) ? { ...e, lessSure: true } : e));
+  return diary.map((e) => (e.kind === 'answer' && e.at >= since && e.at <= now && !e.lessSure && !careAnswer(e.q ?? '', e.label, e.topic) ? { ...e, lessSure: true } : e));
 }
 
 /** The span as plain text, for "Copy for a visit": day by day, a time and what was entered. No count, no advice. */

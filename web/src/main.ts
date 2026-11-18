@@ -50,6 +50,13 @@ import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion,
 import { FEEL_QUESTION, aboutCard, menuTopic, starterOf, topicMenu, turnCard, turnLead, type Starter } from '../../core/turn';
 import { nextVisit, visitCard, visitText, type VisitRecord } from '../../core/visit';
 import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
+import { P5 } from '../../core/copy5';
+import { FALL_HEAD } from '../../core/diary';
+import { CARE_TOPICS } from '../../core/reliability';
+import { WRONG_TILE, emergencyNumber, urgentAnswer, urgentAny } from '../../core/redflag';
+import { fromIsoDay, pickedQuestions, sinceLines, sinceText, toggleQuestion } from '../../core/since';
+import { SpeakCache, isPcm, pcmRate, pcmToWav, speakText, speakable } from '../../core/speak';
+import { fallBlock, hearButton, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenLink, suddenScreen, urgentBox } from './phase5';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
@@ -67,7 +74,7 @@ const C = COPY;
 const dw = (text: string) => deviceWords(text, copyDevice());
 
 /** 'trial' is the hidden stopwatch for devlog/TRIAL_PROTOCOL.md: reachable only by typing #/trial, never linked. */
-type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'feedback' | 'trial' | 'diary' | 'visit' | 'phototalk';
+type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'feedback' | 'trial' | 'diary' | 'visit' | 'phototalk' | 'sudden';
 
 interface Settings {
   cloudHelp: boolean;
@@ -91,6 +98,10 @@ interface Settings {
   firstCard?: boolean;
   /** The diary's tip of the day is hidden ("Hide tips"); it stays hidden until "Show the tip of the day". */
   tipOff?: boolean;
+  /** Read aloud is on (core/speak.ts): the words of each shown card go to Google to be spoken. Off until the carer says yes on its sheet. */
+  speak?: boolean;
+  /** The carer has said yes on the Read aloud sheet once: turning it on again needs no second sheet. */
+  speakOk?: boolean;
 }
 
 interface State {
@@ -298,6 +309,7 @@ function route(): Route {
   if (h === 'diary') return 'diary';
   if (h === 'visit') return 'visit';
   if (h === 'phototalk') return 'phototalk';
+  if (h === 'sudden') return 'sudden';
   if (h === 'feedback') return 'feedback';
   if (h === 'trial') return 'trial';
   // the simple view has no first-run screen: its first screen is the product
@@ -328,9 +340,11 @@ function go(r: Route | 'demo' | 'needs' | '') {
  */
 function backStep(from: string): string | null {
   if (state.sheet) { state.sheet = false; return from; }
+  if (p5.speakSheet) { p5.speakSheet = false; return from; }
   if (state.photoDraft) { state.photoDraft = null; return from; }
   if (state.insSheet) { state.insSheet = null; return from; }
   if (state.importDraft) { state.importDraft = null; return from; }
+  if (from === 'sudden') return '';
   if (from === 'visit' || from === 'phototalk') { if (from === 'phototalk' && state.p4.talk) { state.p4.talk = null; return from; } return ''; }
   // the alphabet goes back to the carer's screen it was opened from; the visit questions go back to their page
   if (from === 'person' && state.p4.letter) { state.p4.letter = null; return ''; }
@@ -356,7 +370,7 @@ function backStep(from: string): string | null {
 }
 /** "Home": the first screen, from anywhere. */
 function goHome() {
-  clearP4();
+  clearP4(); p5.urgent = false; p5.speakSheet = false; stopSound();
   makeSeq++; state.busy = false; state.lastQuestion = ''; state.error = null; dictated = false; resetCard();
   history.replaceState(history.state, '', location.pathname + location.search);
   render(); window.scrollTo(0, 0);
@@ -469,11 +483,77 @@ async function load() {
   if (v && Array.isArray(v.answers)) state.p4.visit = v;
 }
 
+// ---------------------------------------------------------------- phase 5: the call box, Read aloud, since the last visit
+/**
+ * What phase 5 keeps for the session. `urgent`: an answer of this conversation can be urgent (core/redflag.ts), so the
+ * boxed "Call [number] now if this is new or sudden" stays up until a new conversation starts. `once`: the carer said
+ * "Just this once" on the sheet, so the next request may use online help, and only that one. `spoken`: the cards whose
+ * words went to Google to be read aloud; `speakSent`: how many requests were handed over.
+ */
+const p5 = {
+  urgent: false, once: false, speakSheet: false, speakSent: 0,
+  hear: 'ready' as 'ready' | 'loading' | 'failed',
+  spoken: new WeakSet<Card>(),
+  sounds: new SpeakCache<string>(),
+  audio: null as HTMLAudioElement | null,
+};
+/** The emergency number the call buttons use: About them's, or 911. */
+const callNumber = () => emergencyNumber(state.health.emergency);
+/** Read aloud can run here at all: a copy with project settings, and never the sample family. */
+const canSpeak = () => !!state.engine.speak && state.engine.cloudConfigured && !state.demo;
+const speakOn = () => canSpeak() && !!state.settings.speak;
+const stopSound = () => { p5.audio?.pause(); p5.audio = null; };
+function patchHear() {
+  const el = document.querySelector('#hear, #hear-failed');
+  if (el) el.outerHTML = hearButton(p5.hear);
+}
+/**
+ * The card on the person's screen, read aloud (core/speak.ts): its question and its choices, through the engine's
+ * `speak` (Firebase AI Logic, a Gemini text-to-speech model, ONLY_IN_CLOUD). Only when the carer turned Read aloud
+ * on. A card is sent once: "Hear it again" plays the kept sound. Never a doctor-visit card.
+ */
+async function hear() {
+  const c = state.card;
+  if (!speakOn() || !speakable(c) || !state.engine.speak) return;
+  const text = speakText(c);
+  stopSound();
+  const play = (url: string) => { const a = new Audio(url); p5.audio = a; void a.play().catch(() => { /* the browser wants a tap first: the button is there */ }); };
+  const kept = p5.sounds.get(text);
+  if (kept) { p5.hear = 'ready'; patchHear(); play(kept); return; }
+  if (!isOnline()) return;
+  p5.hear = 'loading'; patchHear();
+  p5.speakSent++; p5.spoken.add(c);
+  try {
+    const r = await within(state.engine.speak(text));
+    const raw = Uint8Array.from(atob(r.base64), (ch) => ch.charCodeAt(0));
+    const bytes = isPcm(r.mimeType) ? pcmToWav(raw, pcmRate(r.mimeType)) : raw;
+    const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: isPcm(r.mimeType) ? 'audio/wav' : r.mimeType }));
+    p5.sounds.set(text, url);
+    p5.hear = 'ready';
+    if (state.card === c && route() === 'person' && !state.picked) { patchHear(); play(url); }
+  } catch (e) {
+    if ((e as CloudError).notSent) { p5.speakSent--; p5.spoken.delete(c); }
+    p5.hear = 'failed';
+    if (state.card === c) patchHear();
+  }
+}
+/** "Since the last visit", for the doctor-visit page: the diary's counts from the day the carer named, and the picked questions. */
+function sinceModel() {
+  const r = state.p4.visit;
+  return { name: state.profile.personName.trim(), since: sinceLines(state.demo ? [] : state.diary, r?.since ?? null, Date.now()), picked: pickedQuestions(r?.carerAsk), number: callNumber() };
+}
+
+/** After a yes on the sheet: the step the sheet came up for is asked again (a letter, a narrowing step, or the question itself). */
+function askAgain() {
+  if (state.card?.letter && state.p4.letterPending) void runLetter(state.p4.letterPending); else if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else void make(state.lastQuestion);
+}
+
 // ---------------------------------------------------------------- phase 3: the guard, the diary, the insights, the tip (carer's side only)
 /** What the answer-reliability guard notices now (core/reliability.ts): rules, from the answers kept on this device. Never for the sample family. */
 const guardNow = () => (learns() ? reliability(tapsFrom(state.history), Date.now()) : RELIABLE);
 /** The guard's line, never on a card about pain, the toilet, help or a need: such an answer is taken as said (core/reliability.ts, careAnswer). */
-const guardHtml = (c?: Card, label = '') => (c && (c.kind === 'needs' || c.kind === 'body' || c.kind === 'pain' || careAnswer(c.asked, label)) ? '' : guardBlock({ name: state.profile.personName.trim(), flags: guardNow().flags }));
+const careTopic = (c: Card) => topicOf(state.chain[0] ?? c.asked, state.profile)?.id ?? topicOf(c.asked, state.profile)?.id ?? null;
+const guardHtml = (c?: Card, label = '') => (c && (c.kind === 'needs' || c.kind === 'body' || c.kind === 'pain' || c.kind === 'feeling' || careAnswer(c.asked, label, careTopic(c))) ? '' : guardBlock({ name: state.profile.personName.trim(), flags: guardNow().flags }));
 /**
  * While the guard is on, the next either-or shows its answers in a different order (none removed; the line to say
  * follows). A yes / no card, a scale and a paged list keep their order.
@@ -498,7 +578,7 @@ const insKey = (span: InsightSpan, lines: Insight[]) => `${span}|${lines.map((l)
  * online help words them only after a yes on the sheet (the 'ins-yes' action). No cloud step starts from here.
  */
 function insightsModel(span: InsightSpan): InsightsModel {
-  const lines = insights(state.diary, state.health, span, Date.now());
+  const lines = insights(state.diary, state.health, span, Date.now(), callNumber());
   const key = insKey(span, lines);
   if (state.ins.key !== key) {
     const worded = lines.filter((l) => l.id !== 'nothing');
@@ -507,13 +587,14 @@ function insightsModel(span: InsightSpan): InsightsModel {
     if (onDevice) {
       void rewordOnDevice(lines.map((l) => l.text), insightDevicePrompt(lines, state.health), state.engine, true).then((r) => {
         if (state.ins.key !== key) return;
-        state.ins = { key, words: r.source === 'on-device' ? r.lines : null, source: r.source, busy: false, note: '' };
+        // (a line with a fixed "whom to tell" sentence keeps the rules' own words: no model rewords it)
+        state.ins = { key, words: r.source === 'on-device' ? r.lines.map((w, i) => (lines[i].act ? null : w)) : null, source: r.source, busy: false, note: '' };
         if (route() === 'diary') render();
       });
     }
   }
   const sendable = cloudLines(lines).length > 0 && !state.demo && state.engine.cloudConfigured && !!state.engine.rewordCloud && (state.device === 'unavailable' || state.device === 'downloadable');
-  return { span, lines, words: state.ins.words, source: state.ins.source, busy: state.ins.busy, note: state.ins.note, cloud: sendable ? (isOnline() ? 'ask' : 'offline') : null };
+  return { span, lines, words: state.ins.words, source: state.ins.source, busy: state.ins.busy, note: state.ins.note, cloud: sendable ? (isOnline() ? 'ask' : 'offline') : null, number: callNumber() };
 }
 /** The tip of the day (core/tip.ts: rules), and where the browser has the on-device model, its sentence in plainer words (ONLY_ON_DEVICE). */
 function tipModel() {
@@ -534,6 +615,8 @@ function diaryView(): string {
     name: state.profile.personName.trim(), tab: state.diaryTab, topic: state.diaryTopic, now,
     entries: inSpan(state.diary, state.diaryTab, now, state.diaryTopic), any: state.diary.length > 0, logged: state.logged,
     insights: state.diaryTab === 'today' ? null : insightsModel(state.diaryTab), tip: tipModel(), copied: state.diaryCopied, deleted: state.diaryDeleted,
+    // after a logged fall: when to call, the call button, and one tap to note a blow to the head
+    fallHtml: state.logged?.log === 'fall' ? fallBlock({ number: callNumber(), id: state.logged.id, head: state.diary.find((e) => e.id === state.logged!.id)?.label === FALL_HEAD }) : '',
   });
 }
 /** The yes on the sheet: these lines, this once, to online help for their wording. The text is the one the sheet showed. */
@@ -550,7 +633,7 @@ async function sendInsights() {
     const words = checkReworded(r.text, sheet.sources.map((l) => l.text));
     if (!words) { done({ note: 'refused' }); return; }
     // back onto the lines on screen: a line that did not go keeps the rules' own words
-    const lines = insights(state.diary, state.health, sheet.key.split('|')[0] as InsightSpan, Date.now());
+    const lines = insights(state.diary, state.health, sheet.key.split('|')[0] as InsightSpan, Date.now(), callNumber());
     done({ words: lines.map((l) => { const i = sheet.sources.findIndex((x) => x.text === l.text); return i < 0 ? null : words[i]; }), source: r.source });
   } catch (e) {
     if ((e as CloudError).notSent) state.insSent--;
@@ -852,7 +935,7 @@ function openNeeds() {
   if (step === 'waiting') step = 'cancelled'; // judge mode's automatic step stands down, as for a typed question
   makeSeq++;
   voiceAsk = false; voiceHeard = false; dictated = false; voice.cancel();
-  state.busy = false; state.error = null; state.lastQuestion = ''; resetCard();
+  state.busy = false; state.error = null; state.lastQuestion = ''; resetCard(); p5.urgent = false;
   const card = needsCard();
   setCard(card); state.made.push(card); state.waitStart = Date.now();
 }
@@ -1154,7 +1237,9 @@ function personScreen(): string {
   const talkPhoto = state.card?.photoTalk && !state.picked ? state.photos.find((x) => x.id === state.p4.talk?.id) : null;
   if (simpleView() && talkPhoto) return `<main class="person full pv with-photo rowtiles" id="person" aria-label="For the person" data-kind="${state.card!.kind}">${personSimple(personModel(true)).replace('<p class="p-do">', `<img class="p-photo photo own" id="p-photo" src="${talkPhoto.data}" alt=""><p class="p-do">`)}</main>`;
   // (the starters and the topic menu have longer words: the picture stands beside the word, so three and the way out fit)
-  if (simpleView()) return `<main class="person full pv${state.card?.turn && !state.picked ? ' rowtiles' : ''}" id="person" aria-label="For the person" data-kind="${state.card ? state.card.kind : ''}">${personSimple(personModel(true))}</main>`;
+  // Read aloud is on: one button over the choices repeats the card (a control, not a choice); never on a doctor-visit card
+  const hearHtml = speakOn() && speakable(state.card) && !state.picked && !state.recap && (isOnline() || p5.sounds.has(speakText(state.card))) ? hearButton(p5.hear) : '';
+  if (simpleView()) return `<main class="person full pv${state.card?.turn && !state.picked ? ' rowtiles' : ''}${hearHtml ? ' with-hear' : ''}" id="person" aria-label="For the person" data-kind="${state.card ? state.card.kind : ''}">${personSimple(personModel(true)).replace('<p class="p-do">', `${hearHtml}<p class="p-do">`)}</main>`;
   return `<main class="person full" id="person" aria-label="Card for the person">${personView(true)}</main>`;
 }
 
@@ -1325,11 +1410,16 @@ function simplePrivacy(): string[] {
   return privacyLines({
     cloudOn: state.settings.cloudHelp, settingsAsked,
     sent: r.cardsLeft, maybe: r.perCard.filter((x) => x.attempted && !x.left).length, clips: voiceSent.clips,
-  }).concat(state.insSent ? [C.simple.insights.sentLine(state.insSent)] : []).filter((x, i, all) => !(state.insSent && i === 0 && all.length > 1 && (x === C.simple.privacy.none || x === C.simple.privacy.cloudOn)));
+  }).concat(state.insSent ? [C.simple.insights.sentLine(state.insSent)] : []).concat(p5.speakSent ? [P5.speak.sent(p5.speakSent)] : []).filter((x, i, all) => !((state.insSent || p5.speakSent) && i === 0 && all.length > 1 && (x === C.simple.privacy.none || x === C.simple.privacy.cloudOn)));
 }
 const aboutName = () => C.about.heading(state.profile.personName);
 const whereInput = () => ({ configured: !!cfg, device: state.device, cloudOn: state.settings.cloudHelp, online: isOnline() });
-const simpleMade = (c: Card) => madeWhere(c, { spoken: voiceCards.has(c), about: aboutName() });
+/** Where the card was made and what left for it. A card whose words went to Google to be read aloud never says "Nothing was sent". */
+const simpleMade = (c: Card) => {
+  const w = madeWhere(c, { spoken: voiceCards.has(c), about: aboutName() });
+  if (!p5.spoken.has(c)) return w;
+  return w.left === 'nothing' ? { ...w, left: 'sent' as const, lines: [w.lines[0], P5.speak.made, ...w.lines.slice(2)] } : { ...w, lines: [...w.lines, P5.speak.made] };
+};
 
 /** "Today in short" as the screens draw it: null until an answer was confirmed today. */
 const shortModel = () => (state.short ? { sentences: state.short.sentences, source: state.short.source, busy: state.shortBusy, copied: state.shortCopied } : null);
@@ -1365,9 +1455,10 @@ async function runNarrow(i: NarrowInput) {
   const seq = ++makeSeq;
   useSettings();
   state.narrowPending = i;
+  const once = p5.once; p5.once = false;
   state.busy = true; state.error = null; resetCard(); render();
   if (state.device === 'checking') await refreshDevice().catch(() => { state.device = 'unavailable'; });
-  const card = await narrowCard(i, { profile: state.profile, support: state.settings.support, engine: state.engine, allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available', routing: routing() });
+  const card = await narrowCard(i, { profile: state.profile, support: state.settings.support, engine: state.engine, allowCloud: state.settings.cloudHelp || once, deviceReady: state.device === 'available', routing: routing() });
   state.made.push(card);
   if (!card.blocked) noteAsk(card);
   if (seq !== makeSeq) return;
@@ -1428,7 +1519,7 @@ function simpleScreen(): string {
       invite: state.inviteFor === c && !state.inviteOff,
       today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
       made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),
-      leadHtml: turnHtml(),
+      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber()) : ''}${turnHtml()}`,
       outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
     });
   } else if (c && !state.busy) {
@@ -1441,9 +1532,11 @@ function simpleScreen(): string {
       offline: needsInternet(c, { online: isOnline(), cloudConfigured: state.engine.cloudConfigured }),
       lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(), tips: state.tips,
       usual: (() => { const u = usualFor(c); return u ? usualHint(u) : ''; })(),
+      // (the call box stays over the next questions of a conversation in which an answer can be urgent)
+      topHtml: p5.urgent && !c.blocked ? urgentBox(callNumber()) : '',
       guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c),
       // the first-letter helper: its way in from "We're stuck", who found a letter card's words, and another letter when there was no word
-      extraHtml: c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterButton(name, true) : letterBy(c.letter.by)) : '',
+      extraHtml: `${c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterButton(name, true) : letterBy(c.letter.by)) : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && (speakable(c) || speakOn()) ? speakSwitch({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}${p5.spoken.has(c) ? readAloudLine() : ''}`,
     });
   } else {
     const p = state.profile;
@@ -1453,7 +1546,8 @@ function simpleScreen(): string {
       busy: state.busy, error: state.error, question: state.lastQuestion,
       howOpen: !state.settings.howFolded, topics: topics(p), topicOpen: state.topicOpen, aiTag: aiTag(whereInput()), ai: aiLines(whereInput()),
       privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: `${diaryLink()}${p4Links(name)}`,
-      turnHtml: `${turnButton(name)}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
+      bodyHtml: suddenLink('sudden-body'),
+      turnHtml: `${turnButton(name)}${suddenLink()}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
     });
   }
   if (!state.sheet || !c?.unsentPayload) return screen;
@@ -1491,9 +1585,10 @@ async function runLetter(i: LetterInput) {
   const seq = ++makeSeq;
   useSettings();
   state.p4.letterPending = i; state.p4.letter = null; state.p4.letterNo = false;
+  const once = p5.once; p5.once = false;
   state.busy = true; state.error = null; resetCard(); render();
   if (state.device === 'checking') await refreshDevice().catch(() => { state.device = 'unavailable'; });
-  const card = await letterCard(i, { profile: state.profile, support: state.settings.support, engine: state.engine, allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available', routing: routing() });
+  const card = await letterCard(i, { profile: state.profile, support: state.settings.support, engine: state.engine, allowCloud: state.settings.cloudHelp || once, deviceReady: state.device === 'available', routing: routing() });
   state.made.push(card);
   if (seq !== makeSeq) return;
   setCard(card);
@@ -1546,6 +1641,14 @@ async function visitNext() {
   const card = await visitCard(v, state.profile, state.settings.support);
   setCard(card); state.p4.visitRun = true; state.p4.visitEnd = false; state.waitStart = Date.now();
   if (route() === 'person') render(); else { lift = true; go('person'); }
+}
+/** The doctor-visit page: the person's own answers, the call box when an answer can be urgent, and "Since the last visit" apart from them. */
+function visitView(): string {
+  const r = state.p4.visit;
+  const m = sinceModel();
+  const has = !!r && r.answers.length > 0;
+  const urgent = has && (urgentAny(r.answers) || m.since.urgent);
+  return visitScreen({ name: m.name, record: r, copied: state.p4.visitCopied, urgentHtml: urgent ? urgentBox(m.number, 'visit-urgent') : '', sinceHtml: has ? sinceBlock(m) : '', controlsHtml: has ? sinceControls(m) : '' });
 }
 /** The questions about the picked photo: the rules' three, and one more when the on-device model named things in it. */
 function talkQuestions(): PhotoQuestion[] {
@@ -1601,7 +1704,7 @@ function render(lifted = false) {
   // the route goes on #app with a prefix: a bare "person" or "welcome" class made #app pick up the card pane's frame
   // and the welcome padding (the thin frame around the full-screen card, DESIGN_DIRECTIONS "must fix")
   // the diary is a carer's screen of the simple view, whichever view the rest is in
-  const simple = (simpleView() && (r === 'partner' || r === 'about')) || r === 'diary' || r === 'visit' || r === 'phototalk';
+  const simple = (simpleView() && (r === 'partner' || r === 'about')) || r === 'diary' || r === 'visit' || r === 'phototalk' || r === 'sudden';
   app.className = `route-${r}${simple ? ' view-simple' : ''}`;
   // the simple view has its own light look (dark by the system setting); the full view and the person's card do not change
   document.documentElement.dataset.view = simple ? 'simple' : r === 'person' ? 'person' : 'full';
@@ -1610,13 +1713,24 @@ function render(lifted = false) {
   const key = `${r}|${cardSeq}`;
   // the card judge mode opens with is simply there: no entrance, so the very first frame is a finished card
   if (key !== lastKey && r === 'about' && simple) refreshLearnedShort();
+  const fresh = key !== lastKey;
+  if (r !== 'person') stopSound();
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: backupBlock({ error: state.backupError, done: state.backupDone }) }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'visit' ? visitScreen({ name: state.profile.personName.trim(), record: state.p4.visit, copied: state.p4.visitCopied }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: backupBlock({ error: state.backupError, done: state.backupDone }), numberHtml: numberField(state.health.emergency), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   keepGuard();
   if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);
   // the sheet is a dialog: the keyboard starts on its heading, and the screen under it is inert
   if (simple && state.sheet) document.querySelector<HTMLElement>('#sheet-h')?.focus();
+  // Read aloud: the sheet before it is turned on shows the words of the card in front of the carer
+  if (simple && r === 'partner' && p5.speakSheet && speakable(state.card)) {
+    const text = speakText(state.card);
+    app.querySelector('main')?.setAttribute('inert', '');
+    app.insertAdjacentHTML('beforeend', speakSheet({ text, request: JSON.stringify(state.engine.speakRequest?.(text) ?? {}, null, 2) }));
+    document.querySelector<HTMLElement>('#speak-sheet-h')?.focus();
+  }
+  // a new card on the person's screen is read aloud once, when Read aloud is on (the button there repeats it)
+  if (r === 'person' && fresh && simpleView() && speakOn() && speakable(state.card) && !state.picked && !state.p4.letter) { p5.hear = 'ready'; void hear(); }
   // adding a photo (About them): a dialog over the screen, which is inert under it
   if (simple && r === 'about' && state.photoDraft) {
     const d = state.photoDraft;
@@ -1785,8 +1899,10 @@ async function make(q: string) {
   // was this question spoken, and its recording sent to the cloud? (the card then says so, onVoice)
   const spoken = dictated; dictated = false; voiceHeard = false; voiceAsk = false; voice.cancel();
   // a question that was not tapped as a next step of the tree starts a new conversation
-  if (!chained) state.chain = [q];
+  if (!chained) { state.chain = [q]; p5.urgent = false; }
   chained = false;
+  // "Just this once" on the sheet: this one request may use online help, and the switch stays off
+  const once = p5.once; p5.once = false;
   if (!turnKeep) state.p4.turn = null;
   turnKeep = false; state.p4.letterNo = false;
   state.busy = true; state.error = null; state.lastQuestion = q; resetCard(); render();
@@ -1796,7 +1912,7 @@ async function make(q: string) {
   try {
     const card = await makeCard(q, {
       profile: state.profile, support: state.settings.support, engine: state.engine,
-      allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available', routing: routing(),
+      allowCloud: state.settings.cloudHelp || once, deviceReady: state.device === 'available', routing: routing(),
     });
     state.made.push(card);
     if (spoken) voiceCards.add(card);
@@ -1815,6 +1931,7 @@ async function make(q: string) {
 }
 
 function onPersonTap(t: HTMLElement) {
+  if (t.dataset.hear) { void hear(); return; }
   // the alphabet: a letter leads to its words; "No, I don't know" goes back to the carer, and nothing is counted
   if (t.dataset.letter && state.p4.letter) { const l = state.p4.letter; t.classList.add('pressed'); setTimeout(() => { void runLetter({ asked: l.asked, letter: t.dataset.letter!, rejected: l.rejected, topic: l.topic, learned: learnedWords() }); }, 180); return; }
   if (t.dataset.letterNo && state.p4.letter) { state.p4.letter = null; state.p4.letterNo = true; makeSeq++; state.busy = false; resetCard(); lift = true; go(''); return; }
@@ -1826,6 +1943,8 @@ function onPersonTap(t: HTMLElement) {
   if (t.dataset.confirm === 'yes' && state.picked && (c.visit || c.turn) && p4Confirm(c, state.picked)) return;
   if (t.dataset.confirm === 'yes') {
     state.confirmed = true;
+    // an answer that can be urgent (core/redflag.ts) keeps the call box up for the rest of this conversation
+    if (state.picked && urgentAnswer(c.asked, state.picked.label)) p5.urgent = true;
     if (simpleView()) {
       // the first confirmed answer folds "How it works" to its one line (remembered), and About them is offered once,
       // on this answer's screen, when it names nobody yet
@@ -1841,7 +1960,9 @@ function onPersonTap(t: HTMLElement) {
         // where the choice stood among the answers, for the answer-reliability guard (an either-or, a yes / no or a feelings card only)
         const shown = c.choices.filter((x) => x.role === 'answer');
         const placed = ['choice', 'yesno', 'feeling'].includes(c.kind) && !c.scale && !c.letter && !c.turn && !state.p4.turn ? { pos: shown.indexOf(state.picked), of: shown.length, yn: c.kind === 'yesno' } : {};
-        state.history = addAnswer(state.history, { q: c.asked, topic: c.topic, label: state.picked.label, at, ...placed });
+        // (an answer about the body or a feeling, by its topic, is never counted or marked by the answer check)
+        const careId = careTopic(c);
+        state.history = addAnswer(state.history, { q: c.asked, topic: c.topic, label: state.picked.label, at, ...placed, ...(careId && CARE_TOPICS.includes(careId) ? { care: true } : {}) });
         if (learns()) {
           // the guard (core/reliability.ts, rules): a run of "yes" or of one place on the screen is marked "less sure",
           // in the answers and in the diary. It shows on the carer's side only.
@@ -1950,7 +2071,7 @@ function act(el: HTMLElement) {
     case 'how': state.settings.howFolded = !state.settings.howFolded; saveSettings(); render(); document.querySelector<HTMLElement>('#how[data-act], #how [data-act=how]')?.focus({ preventScroll: true }); break;
     case 'topic': { const id = el.dataset.topic as TopicId; state.topicOpen = state.topicOpen === id ? null : id; render(); document.querySelector<HTMLElement>(`.topic[data-topic="${id}"]`)?.focus({ preventScroll: true }); break; }
     // the finish screen's button: the phone goes back to the carer, who sees the answer
-    case 'give-back': lift = true; if (state.p4.visitEnd) { state.p4.visitEnd = false; state.p4.visitRun = false; resetCard(); go('visit'); } else go(''); break;
+    case 'give-back': lift = true; if (state.p4.visitEnd) { state.p4.visitEnd = false; state.p4.visitRun = false; resetCard(); go('visit'); } else if (state.card?.kind === 'needs' && state.confirmed && state.picked?.label === WRONG_TILE) go('sudden'); else go(''); break; // (the board's "something's wrong" leads the carer straight to "Something new or sudden?")
     // ---- phase 4: the first letter, the person starts, before a doctor visit, talk about a photo
     case 'letter': {
       const c = state.card;
@@ -1973,12 +2094,12 @@ function act(el: HTMLElement) {
       const card = turnCard(); setCard(card); state.made.push(card); state.waitStart = Date.now(); lift = true; go('person');
       break;
     }
-    case 'visit-start': state.p4.visit = { startedAt: Date.now(), answers: [], done: false }; state.p4.visitCopied = false; void kvSet('visit', state.p4.visit); void visitNext(); break;
+    case 'visit-start': state.p4.visit = { startedAt: Date.now(), answers: [], done: false, ...(state.p4.visit?.since ? { since: state.p4.visit.since } : {}), ...(state.p4.visit?.carerAsk ? { carerAsk: state.p4.visit.carerAsk } : {}) }; state.p4.visitCopied = false; void kvSet('visit', state.p4.visit); void visitNext(); break;
     case 'visit-resume': void visitNext(); break;
     case 'visit-print': window.print(); break;
     case 'visit-copy': {
       const done = () => { state.p4.visitCopied = true; render(); document.querySelector<HTMLElement>('#visit-copy')?.focus(); };
-      if (state.p4.visit && navigator.clipboard?.writeText) void navigator.clipboard.writeText(visitText(state.p4.visit, state.profile.personName.trim())).then(done, () => { /* no clipboard here: the page is on the screen */ });
+      if (state.p4.visit && navigator.clipboard?.writeText) void navigator.clipboard.writeText(`${visitText(state.p4.visit, state.profile.personName.trim())}\n\n${(() => { const m = sinceModel(); return sinceText(m.since, m.picked, m.name); })()}`).then(done, () => { /* no clipboard here: the page is on the screen */ });
       break;
     }
     case 'visit-del': if (confirm(P4.visit.delConfirm)) { state.p4.visit = null; state.p4.visitCopied = false; void kvSet('visit', null); render(); } break;
@@ -1999,11 +2120,10 @@ function act(el: HTMLElement) {
     }
     case 'sheet': if (state.card?.unsentPayload) { state.sheet = true; render(); } break;
     case 'sheet-no': state.sheet = false; render(); break;
-    case 'sheet-yes':
-      // the same switch as the consent page's, turned on by one button; the question is then asked again at once
-      // (when the sheet came up for a narrowing step, that step is what is asked again)
-      state.sheet = false; state.settings.cloudHelp = true; saveSettings(); askSettings(); if (state.card?.letter && state.p4.letterPending) void runLetter(state.p4.letterPending); else if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else void make(state.lastQuestion);
-      break;
+    // "Just this once" (the sheet's first button): this one request goes to online help, and online help stays off
+    case 'sheet-yes': state.sheet = false; p5.once = true; askAgain(); break;
+    // "Yes, every time": the same switch as the consent page's, turned on by one button; the question is then asked again at once
+    case 'sheet-always': state.sheet = false; state.settings.cloudHelp = true; saveSettings(); askSettings(); askAgain(); break;
     // ---- what was learned (About them): keep a line as a fact, remove it, or forget everything learned
     case 'learned-keep': {
       const line = learned(state.history, state.needsLog, state.forgotten).find((l) => l.key === el.dataset.key);
@@ -2030,6 +2150,13 @@ function act(el: HTMLElement) {
       render(); document.querySelector<HTMLElement>(`[data-log="${kind}"]`)?.focus({ preventScroll: true });
       break;
     }
+    case 'fall-head': state.diary = state.diary.map((e) => (e.id === el.dataset.id && e.log === 'fall' ? { ...e, label: FALL_HEAD } : e)); saveDiary(); render(); break;
+    // ---- Read aloud: the sheet first, then the switch; off again with one tap
+    case 'speak-ask': if (state.settings.speakOk) { state.settings.speak = true; saveSettings(); } else p5.speakSheet = true; render(); break;
+    case 'speak-yes': p5.speakSheet = false; state.settings.speak = true; state.settings.speakOk = true; saveSettings(); render(); break;
+    case 'speak-no': p5.speakSheet = false; render(); break;
+    case 'speak-off': state.settings.speak = false; saveSettings(); stopSound(); render(); break;
+    case 'sudden-number': state.aboutRow = 'health'; break;
     case 'log-undo': state.diary = removeEntry(state.diary, el.dataset.id ?? ''); saveDiary(); state.logged = null; render(); document.querySelector<HTMLElement>('#log-row button')?.focus({ preventScroll: true }); break;
     case 'diary-tab': state.diaryTab = el.dataset.tab as Span; state.logged = null; state.diaryCopied = false; render(); document.querySelector<HTMLElement>(`#tab-${state.diaryTab}`)?.focus({ preventScroll: true }); break;
     case 'diary-copy': {
@@ -2181,6 +2308,9 @@ app.addEventListener('change', (ev) => {
   if (t instanceof HTMLInputElement && t.dataset.photo !== undefined && t.files?.[0]) { void addPhoto(Number(t.dataset.photo), t.files[0]); return; }
   if (t instanceof HTMLInputElement && t.id === 'photo-file' && t.files?.[0]) { void openPhoto(t.files[0]); return; }
   if (t.id === 'diary-topic') { state.diaryTopic = (t as HTMLSelectElement).value as DiaryTopic | 'all'; state.logged = null; render(); document.querySelector<HTMLElement>('#diary-topic')?.focus({ preventScroll: true }); return; }
+  // "Since the last visit" (the doctor-visit page): the day to count from, and up to three fixed questions
+  if (t.id === 'since-from' && state.p4.visit) { const d = fromIsoDay(t.value); if (d !== null) { state.p4.visit.since = d; void kvSet('visit', state.p4.visit); render(); } return; }
+  if (t instanceof HTMLInputElement && t.dataset.sinceQ !== undefined && state.p4.visit) { state.p4.visit.carerAsk = toggleQuestion(pickedQuestions(state.p4.visit.carerAsk), P5.since.questions[Number(t.dataset.sinceQ)]); void kvSet('visit', state.p4.visit); render(); return; }
   // health notes (About them): kept on this device at once; never part of the profile the prompts read
   if (t instanceof HTMLInputElement && t.type === 'checkbox' && t.dataset.health) { state.health = cleanHealth({ ...state.health, [t.dataset.health]: t.checked }); if (!state.demo) void kvSet('health', state.health); return; }
   if (t instanceof HTMLInputElement && t.id === 'backup-file' && t.files?.[0]) {
@@ -2228,6 +2358,7 @@ app.addEventListener('input', (ev) => {
   const t = ev.target as HTMLInputElement | HTMLTextAreaElement;
   if (t.id === 'crop-zoom' && state.photoDraft) { setFrame({ ...state.photoDraft.frame, zoom: Number(t.value) }); return; }
   if (t.id === 'photo-word' && state.photoDraft) { state.photoDraft.word = t.value; return; }
+  if (t instanceof HTMLInputElement && t.dataset.health === 'emergency') { state.health = cleanHealth({ ...state.health, emergency: t.value }); if (!state.demo) void kvSet('health', state.health); return; }
   if (t instanceof HTMLTextAreaElement && t.dataset.health === 'text') { state.health = cleanHealth({ ...state.health, text: t.value }); if (!state.demo) void kvSet('health', state.health); return; }
   // typing takes over from the microphone; an emptied field holds no spoken question any more
   if (t.id === 'q') { if (voice.view().phase !== 'idle') voice.cancel(); if (!t.value.trim()) dictated = false; }

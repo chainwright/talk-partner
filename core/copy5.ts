@@ -1,0 +1,142 @@
+// The words of phase 5 (18 Nov 2026, after judge round 6): "Something new or sudden?", the call box, Read aloud,
+// "Since the last visit". Same rules as core/copy.ts: plain, adult, no praise, no exclamation marks, never "him" or
+// "her" (the name, or "they"). Nothing here is a diagnosis: the lists say what to look for and whom to call, and the
+// app never says what is wrong. No clinician has checked this wording (CLAIMS.md says so).
+
+const them = (name: string) => name || 'them';
+const They = (name: string) => name || 'They';
+const their = (name: string) => (name ? `${name}'s` : 'their');
+const days = (n: number) => `${n} day${n === 1 ? '' : 's'}`;
+
+export const P5 = {
+  sudden: {
+    link: 'Something new or sudden?',
+    linkSub: 'What to look for, and one button to call.',
+    heading: 'Something new or sudden?',
+    lead: (number: string) => `If you see any one of these, and it is new or sudden, call ${number} now. Do not wait to see if it passes.`,
+    fastHeading: 'FAST',
+    fast: [
+      ['Face', 'One side of the face has dropped, or the smile is uneven.'],
+      ['Arm', 'One arm or one leg is suddenly weak or numb.'],
+      ['Speech', 'Speech is suddenly worse, slurred or gone: more than on other days.'],
+      ['Time', 'Call now. Note the time it started: the ambulance crew will ask.'],
+    ] as [string, string][],
+    alsoHeading: 'Call for these as well',
+    also: ['A sudden, very bad headache.', 'Chest pain, or trouble breathing.', 'A fall with a blow to the head, or a fall and cannot get up.', 'Suddenly very drowsy or confused, or cannot be woken.'],
+    call: (number: string) => `Call emergency services: ${number}`,
+    unsure: 'Not on this list, and you are still worried? Call. You know them best.',
+    notSudden: 'Worried, and it is not sudden: call the doctor or nurse today.',
+    number: (number: string) => `The button calls ${number}. The number is 911 in the US and Canada, 999 in the UK and 112 in the EU.`,
+    change: 'Change the number (About them, Health notes)',
+    source: 'A fixed list: FAST (face, arm, speech, time), the public check for the signs of a stroke, and four more reasons to call. No AI wrote it, and nothing is sent. The app cannot tell what is wrong. No doctor or nurse has checked this wording.',
+    /** The ninth tile of the needs board, and what the carer reads when it was pointed to. */
+    tile: "something's wrong",
+    tileLine: 'Something is wrong. Look now for what is new or sudden. If you are not sure, call.',
+    /** The boxed line over an answer that can be urgent (core/redflag.ts), and on the doctor-visit page. */
+    box: (number: string) => `Call ${number} now if this is new or sudden.`,
+    boxCall: (number: string) => `Call ${number}`,
+    boxMore: 'What to look for',
+    /** In About them, under Health notes. */
+    field: 'Emergency number',
+    fieldHint: '911 in the US and Canada, 999 in the UK, 112 in the EU. The "Call" buttons of this app use it. Empty means 911.',
+  },
+  speak: {
+    title: 'Read aloud',
+    off: (name: string) => `Off. Turn it on, and the question and the choices are read out on ${their(name)} screen.`,
+    on: 'On. The words on each card you show go to Google to be spoken.',
+    turnOn: 'Turn on Read aloud',
+    turnOff: 'Turn off',
+    offline: 'Read aloud needs the internet. You are offline.',
+    never: 'The questions of "Before a doctor visit" are never read aloud: nothing of them is sent.',
+    hear: 'Hear it',
+    again: 'Hear it again',
+    loading: 'Getting the voice…',
+    failed: 'The voice did not come. Say it out loud yourself.',
+    sheet: {
+      heading: 'Turn on Read aloud?',
+      /** The brief's sentence, word for word. */
+      body: 'The words on this card, including names on it, go to Google to be spoken. Nothing else.',
+      goes: 'For this card, these words would go:',
+      plus: 'The request also names the voice and a calm, slow way of speaking. Nothing from About them is in it beyond the words above.',
+      neverLabel: 'Never sent:',
+      never: 'photos, the diary, the health notes, the answers they choose, and any card you have not shown.',
+      dataLabel: 'Data use:',
+      yes: 'Yes, read cards aloud',
+      no: 'No, keep it off',
+      after: 'It stays on until you turn it off, on the screen before you hand over. Each card that is read aloud says so under it.',
+    },
+    /** Under a card whose words were sent to be spoken, and in the privacy line of the session. */
+    made: 'Read aloud is on: the words on this card went to Google to be spoken.',
+    sent: (n: number) => `The words of ${n === 1 ? 'one card' : `${n} cards`} went to Google to be spoken (Read aloud).`,
+  },
+  log: { fall: 'Fall', tablets: 'Tablets taken' } as Record<string, string>,
+  fall: {
+    box: (number: string) => `A fall: if they hit their head, cannot get up, or have new pain, call ${number} now.`,
+    head: 'They hit their head',
+    headNoted: 'Noted: a blow to the head.',
+  },
+  insights: {
+    strongPain: (answers: string, day: string) => `Strong pain was chosen on ${day}: ${answers}.`,
+    strongPainBase: 'The answer to "How bad is the pain?", as it was given.',
+    placePain: (places: string, day: string) => `Pain in the head or the chest was chosen on ${day}: ${places}.`,
+    placePainBase: 'The place chosen on the body card, as it was given.',
+    /** Fixed, after a pain line of one day: never a model's words, never sent. */
+    painAct: (number: string) => `Tell the doctor or nurse. If it is new or sudden, call ${number} now.`,
+    noDrink: (d: string) => `No drink was chosen or logged on ${d}. If that is right, and not a gap in the diary, tell the doctor or nurse today.`,
+    fewDrinksFluid: (d: string, n: number, several: boolean) => `Few drinks were entered on ${d}: ${n}${several ? ' each' : ''}. A fluid limit from the doctor is noted here: check the day against the doctor's plan.`,
+    mood: (n: number, span: string) => `"Sad" or "bad" was the answer to "How are you feeling today?" on ${days(n)} in the last ${span}.`,
+    moodBase: (d: string) => `Days: ${d}.`,
+    moodAct: (number: string) => `Talk to the GP or nurse about it. If you are worried about safety, call ${number}.`,
+    fall: (n: number, d: string) => `${n === 1 ? 'A fall was' : `${n} falls were`} logged: ${d}.`,
+    fallHead: (d: string) => `A fall with a blow to the head was logged on ${d}.`,
+    fallBase: 'Every "Fall" tap counts.',
+    fallAct: 'Tell the doctor or nurse about every fall.',
+    fallHeadAct: (number: string) => `If there is new pain, drowsiness or confusion since, call ${number} now.`,
+    /** A line of the last 7 days that the 30-day view keeps. */
+    recent: 'From the last 7 days.',
+    lessSureNever: 'Answers about pain, the body, feelings or a need are never marked: take them as said.',
+  },
+  since: {
+    heading: 'Since the last visit',
+    sub: (name: string) => `What the family entered in the diary. These lines are not ${their(name)} own answers.`,
+    fromLabel: 'The last visit was on',
+    span: (from: string, to: string) => `From the diary, ${from} to ${to}. Only what was entered in this app; a gap can mean nobody entered it.`,
+    pain: (n: number, d: string) => (n ? `Pain: chosen or logged on ${days(n)} (${d}).` : 'Pain: none entered.'),
+    strong: (d: string) => `Strong pain, or pain in the head or the chest: ${d}.`,
+    falls: (n: number, d: string) => (n ? `Falls: ${n} logged (${d}).` : 'Falls: none logged.'),
+    drinks: (dry: number, withEntries: number) => (withEntries ? `Drinks: on ${dry} of ${days(withEntries)} with entries, no drink was entered.` : 'Drinks: nothing entered.'),
+    mood: (n: number, d: string) => (n ? `Mood: "sad" or "bad" on ${days(n)} (${d}).` : 'Mood: no "sad" or "bad" day entered.'),
+    sleep: (n: number, d: string) => (n ? `Sleep: a bad night on ${days(n)} (${d}).` : 'Sleep: no bad night entered.'),
+    none: 'The diary holds nothing for this time.',
+    qHeading: 'Questions for the doctor',
+    qLead: 'Pick up to three. They are printed under the answers.',
+    qPrinted: 'The family wants to ask',
+    questions: [
+      'What should we watch for at home?',
+      'Who do we call out of hours?',
+      'Is the pain something to look at?',
+      'Is the sleep something to look at?',
+      'Is the mood something to look at?',
+      'How much should be drunk in a day?',
+      'Can the tablets be looked at again?',
+      'What would help against falls at home?',
+      'Is there more speech therapy, or a group nearby?',
+      'What help is there for the family?',
+    ],
+    note: 'Counted by fixed rules on this device, from the diary. No AI, nothing sent. Not a medical record.',
+  },
+  consent: {
+    /** One plain name for it on every sheet (judge round 6): "online help", which is Google's AI. */
+    name: 'online help',
+    once: 'Just this once',
+    always: 'Yes, every time (until I turn it off)',
+    onceAfter: '"Just this once" sends this one question. "Every time" keeps online help on until you turn it off (inside, under Cloud help).',
+  },
+  photosLock: {
+    /** Read through the device's word: on a phone it says "this phone". No model can look at a photo there. */
+    here: "Photos stay on this computer only. They are never sent anywhere. On this computer no AI looks at them. On a desktop computer with Chrome's built-in AI, it can look at one on that computer itself, never online.",
+    /** A browser that has the on-device model. */
+    desktop: 'Photos stay on this computer only. They are never sent anywhere. No AI looks at them, with one exception: in "Talk about a photo", when you tap "Ask the AI on this device to look at it", Chrome\'s built-in AI looks at that one photo on this computer itself, never online.',
+  },
+  helpers: { them, They },
+} as const;

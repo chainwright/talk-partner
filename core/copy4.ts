@@ -43,10 +43,10 @@ export const P4 = {
     },
     sheet: {
       heading: 'Ask online help for words?',
-      body: 'No word with this letter is in About them. Online help can suggest everyday words. It sees only this:',
+      body: "No word with this letter is in About them. Online help is Google's AI: it can suggest everyday words. It sees only this:",
       plus: 'and the app\'s fixed instructions (the same for every family).',
       never: 'Names, photos, the answers so far, and everything in About them.',
-      yes: 'Yes, ask online help',
+      yes: 'Just this once',
       no: 'No, keep it here',
       whole: 'The whole request',
     },
@@ -55,7 +55,8 @@ export const P4 = {
   },
   turn: {
     button: (name: string) => (name ? `${name} wants to say something` : 'They want to say something'),
-    sub: (name: string) => `Hand over the phone: ${them(name)} can start.`,
+    // (18 Nov, judge round 6: with no name this read "them can start"; the subject form is "they")
+    sub: (name: string) => `Hand over the phone: ${name || 'they'} can start.`,
     ask: 'What would you like to do?',
     say: 'What would you like to do: ask for something, tell me something, or say how you feel?',
     starters: { need: 'I need something', tell: 'I want to tell you something', feel: 'I feel…' },

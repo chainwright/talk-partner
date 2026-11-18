@@ -42,9 +42,17 @@ export const SAME_POS = 4;
 export const MIN_SPAN_MS = 2 * 60 * 1000;
 export const MIN_CARDS = 5;
 
-/** An answer about pain, the toilet, help or a need: the guard never counts it, marks it or speaks on it. */
-export function careAnswer(q: string, label = ''): boolean {
-  return /\b(?:pain|hurt|hurts|hurting|sore|ache|aches|toilet|bathroom|loo|help|need|needs|emergency|unwell|sick|dizzy|breathe|breathing)\b/i.test(q) || /^(?:in pain|pain|toilet|help)$/i.test(label.trim());
+/**
+ * An answer about pain, the body, a feeling, the toilet, help or a need: the guard never counts it, marks it or speaks
+ * on it. (18 Nov, judge round 6: every answer of "Body & care" and of "Feelings" is exempt, by its topic where the
+ * caller knows it and by its words otherwise; the word list gained headache, chest, breath, fall, dizzy, sick, numb,
+ * swallow and their forms. tests/unit/phase5-safety.test.ts walks every question of the two topics and of their trees.)
+ */
+const CARE_WORDS = /\b(?:pain|pains|painful|hurt|hurts|hurting|sore|ache|aches|aching|headache|headaches|head|chest|breath|breathe|breathing|fall|fell|fallen|dizzy|faint|sick|vomit|vomiting|numb|numbness|weak|weakness|swallow|swallowing|choke|choking|toilet|bathroom|loo|help|need|needs|emergency|unwell|ill|wrong|comfortable|uncomfortable|hot|cold|wash|glasses|hearing aid|side|feel|feeling|feelings|bothering|worried|worry|sad|upset|afraid|scared|quiet time|stop for now)\b/i;
+const CARE_LABELS = /^(?:in pain|pain|toilet|help|sad|bad|tired|something's wrong|body)$/i;
+export const CARE_TOPICS = ['body', 'feel'];
+export function careAnswer(q: string, label = '', topic: string | null = null): boolean {
+  return (topic !== null && CARE_TOPICS.includes(topic)) || CARE_WORDS.test(q) || CARE_LABELS.test(label.trim());
 }
 
 export type Flag = 'yes-run' | 'same-position';
@@ -58,9 +66,9 @@ export interface Reliability {
 export const RELIABLE: Reliability = { flags: [], since: null, pos: null };
 
 /** The answers of the history that the guard can read (the ones that recorded where the choice stood). */
-export function tapsFrom(history: { q?: string; label: string; at: number; pos?: number; of?: number; yn?: boolean }[]): Tap[] {
+export function tapsFrom(history: { q?: string; label: string; at: number; pos?: number; of?: number; yn?: boolean; care?: boolean }[]): Tap[] {
   return history
-    .filter((h) => typeof h.pos === 'number' && typeof h.of === 'number' && !careAnswer(h.q ?? '', h.label))
+    .filter((h) => typeof h.pos === 'number' && typeof h.of === 'number' && !h.care && !careAnswer(h.q ?? '', h.label))
     .map((h) => ({ at: h.at, yn: !!h.yn, yes: !!h.yn && h.label.trim().toLowerCase() === 'yes', pos: h.pos!, of: h.of! }))
     .sort((a, b) => a.at - b.at);
 }
@@ -90,10 +98,10 @@ export function reliability(taps: Tap[], now: number): Reliability {
 }
 
 /** A new list with every answer of the run marked "less sure". Nothing else is changed, and nothing is removed. */
-export function markLessSure<T extends { at: number; lessSure?: boolean; q?: string; label?: string }>(xs: T[], r: Reliability, now: number): T[] {
+export function markLessSure<T extends { at: number; lessSure?: boolean; q?: string; label?: string; care?: boolean }>(xs: T[], r: Reliability, now: number): T[] {
   if (r.since === null) return xs;
   const since = r.since;
-  return xs.map((x) => (x.at >= since && x.at <= now && !x.lessSure && !careAnswer(x.q ?? '', x.label ?? '') ? { ...x, lessSure: true } : x));
+  return xs.map((x) => (x.at >= since && x.at <= now && !x.lessSure && !x.care && !careAnswer(x.q ?? '', x.label ?? '') ? { ...x, lessSure: true } : x));
 }
 
 /**

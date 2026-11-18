@@ -117,6 +117,10 @@ const P: Record<string, string> = {
   'change topic': `<path d="M12 14h40a7 7 0 017 7v20a7 7 0 01-7 7H34l-11 9v-9H12a7 7 0 01-7-7V21a7 7 0 017-7z" fill="${C.greyLight}"/><path d="M44 44h36a7 7 0 017 7v20a7 7 0 01-7 7h-7v9l-11-9H44a7 7 0 01-7-7V51a7 7 0 017-7z" fill="${C.blue}"/><path d="M48 58h28M48 66h18" stroke="${C.white}"/>`,
   tired: face(C.sky, '<ellipse cx="48" cy="64" rx="6" ry="5" fill="#2b3440" stroke="none"/>', '<path d="M28 42c4 4 10 4 14 0M54 42c4 4 10 4 14 0" stroke-width="4"/>') + `<path d="M70 12h10l-10 10h10" stroke="${C.navy}" stroke-width="3"/>`,
   worried: face('#f6d08a', '<path d="M34 66c5-5 9 4 14 0s9 4 14 0" stroke-width="4"/>', `<circle cx="36" cy="44" r="3.5" fill="${OUTLINE}" stroke="none"/><circle cx="60" cy="44" r="3.5" fill="${OUTLINE}" stroke="none"/><path d="M27 34l12-5M69 34l-12-5" stroke-width="4"/>`),
+  // (18 Nov, phase 5) the ninth tile of the needs board, and the two new diary logs
+  "something's wrong": `<path d="M48 10L88 80H8z" fill="${C.amber}"/><path d="M48 22L74 70" stroke="${C.white}" stroke-width="3" opacity=".45"/><path d="M48 36v22" stroke="${OUTLINE}" stroke-width="7"/><circle cx="48" cy="69" r="4.5" fill="${OUTLINE}" stroke="none"/>`,
+  fall: `<path d="M8 84h80" stroke="${C.grey}" stroke-width="4"/><circle cx="24" cy="56" r="10" fill="${C.skin}"/><path d="M34 62l26 8-2 12H34z" fill="${C.blue}"/><path d="M58 72l22 2M58 80l20 4" stroke-width="5"/><path d="M40 62l14-14" stroke-width="5"/><path d="M66 20l-8 12M78 26l-10 10M54 14l-4 12" stroke="${C.red}" stroke-width="4"/>`,
+  tablets: `<rect x="12" y="26" width="46" height="22" rx="11" fill="${C.white}" transform="rotate(-24 35 37)"/><path d="M30 24l10 24" transform="rotate(-24 35 37)"/><circle cx="64" cy="64" r="16" fill="${C.sky}"/><path d="M52 64h24"/><path d="M56 56a10 10 0 018-5" stroke="${C.white}" stroke-width="3" opacity=".7"/>`,
   pain: `<path d="M56 6L24 52h20l-8 38 36-50H52z" fill="${C.red}"/><path d="M50 18L34 44" stroke="${C.white}" stroke-width="3" opacity=".5"/>`,
 
   // people: head and shoulders, one attribute each

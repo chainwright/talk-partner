@@ -23,6 +23,8 @@
 // taken out, and no name (the lines never hold one). The carer's free text is in the on-device prompt only.
 
 import { COPY } from './copy';
+import { P5 } from './copy5';
+import { DEFAULT_NUMBER } from './redflag';
 import { byDay, dayStart, dayText, events, inSpan, tags, SPAN_DAYS, type DiaryEntry } from './diary';
 
 export interface HealthNotes {
@@ -34,22 +36,24 @@ export interface HealthNotes {
   fluidLimit: boolean;
   /** Needs reminders to drink and eat. */
   reminders: boolean;
+  /** The emergency number the call buttons use, as the carer typed it ('' = 911). Not a health note: it is in no prompt and no request. */
+  emergency: string;
 }
-export const NO_HEALTH: HealthNotes = { text: '', diabetes: false, swallowing: false, fluidLimit: false, reminders: false };
+export const NO_HEALTH: HealthNotes = { text: '', diabetes: false, swallowing: false, fluidLimit: false, reminders: false, emergency: '' };
 export const HEALTH_TEXT_MAX = 600;
 export const HEALTH_TOGGLES = ['diabetes', 'swallowing', 'fluidLimit', 'reminders'] as const;
 
 /** Whatever was stored, as health notes: unknown fields are dropped, a missing one is off. */
 export function cleanHealth(h: unknown): HealthNotes {
   const x = (h ?? {}) as Partial<HealthNotes>;
-  return { text: typeof x.text === 'string' ? x.text.slice(0, HEALTH_TEXT_MAX) : '', diabetes: x.diabetes === true, swallowing: x.swallowing === true, fluidLimit: x.fluidLimit === true, reminders: x.reminders === true };
+  return { text: typeof x.text === 'string' ? x.text.slice(0, HEALTH_TEXT_MAX) : '', diabetes: x.diabetes === true, swallowing: x.swallowing === true, fluidLimit: x.fluidLimit === true, reminders: x.reminders === true, emergency: typeof x.emergency === 'string' ? x.emergency.replace(/[^\d+ ]/g, '').slice(0, 16) : '' };
 }
 export const hasHealth = (h: HealthNotes) => !!h.text.trim() || h.diabetes || h.swallowing || h.fluidLimit || h.reminders;
 
 export type InsightSpan = 'week' | 'month';
 export type Level = 'tell' | 'mention' | 'note';
 export interface Insight {
-  id: 'pain' | 'no-drink' | 'few-drinks' | 'many-drinks' | 'sweets' | 'no-food' | 'sleep' | 'less-sure' | 'nothing';
+  id: 'pain' | 'pain-day' | 'no-drink' | 'few-drinks' | 'many-drinks' | 'sweets' | 'no-food' | 'sleep' | 'mood' | 'fall' | 'less-sure' | 'nothing';
   /** 'tell': a red flag. 'mention': worth mentioning to the doctor or nurse. 'note': for the carer to keep in mind. */
   level: Level;
   /** What was counted, in plain words. The only part a model may put into plainer words. */
@@ -60,9 +64,18 @@ export interface Insight {
   base: string;
   /** The text itself states a health note (a fluid limit, swallowing difficulty): the line is never sent to online help. */
   local?: boolean;
+  /**
+   * A fixed sentence after the line: whom to tell, and when to call. Rules' words only: a line that has one is never
+   * handed to a model for rewording, on the device or online (phase 5).
+   */
+  act?: string;
+  /** The boxed "Call [number] now if this is new or sudden", with the call button, stands under the line. */
+  urgent?: boolean;
+  /** In the 30-day view: a line of the last 7 days, kept so that the longer view does not hide what is recent. */
+  recent?: boolean;
 }
 
-export const MAX_INSIGHTS = 5;
+export const MAX_INSIGHTS = 6;
 
 export interface Thresholds {
   /** Pain on this many days of the span is a red flag. */
@@ -80,6 +93,8 @@ export interface Thresholds {
   noFoodDay: boolean;
   badSleepDays: number;
   lessSure: number;
+  /** "Sad" or "bad" on this many days of the span is worth mentioning. */
+  lowMoodDays: number;
 }
 
 /** The thresholds for a span, as the health notes set them. Rules; the numbers are ours, not a clinical standard. */
@@ -95,10 +110,12 @@ export function thresholds(h: HealthNotes, span: InsightSpan): Thresholds {
     noFoodDay: h.swallowing,
     badSleepDays: 3,
     lessSure: 3,
+    lowMoodDays: 3,
   };
 }
 
 const I = COPY.simple.insights;
+const I5 = P5.insights;
 const ORDER: Record<Level, number> = { tell: 0, mention: 1, note: 2 };
 const daysOf = (ts: number[]) => [...new Set(ts.map(dayStart))].sort((a, b) => a - b);
 const listed = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
@@ -109,7 +126,7 @@ const names = (days: number[], max = 3) => listed(days.slice(-max).map(dayText))
  * same diary, notes and moment give the same lines. Today is counted for what happened (pain, sweets), and left out
  * of "nothing was entered that day" (the day is not over).
  */
-export function insights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpan, now: number): Insight[] {
+function spanInsights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpan, now: number, number: string): Insight[] {
   const entries = inSpan(diary, span, now);
   if (!entries.length) return [];
   const T = thresholds(health, span);
@@ -122,25 +139,52 @@ export function insights(diary: DiaryEntry[], health: HealthNotes, span: Insight
   const painDays = daysOf(events(entries, 'pain'));
   if (painDays.length >= T.painDays) out.push({ id: 'pain', level: 'tell', text: I.pain(painDays.length, S), noted: '', base: `${I.painBase(names(painDays, 7))} ${I.only}` });
 
-  // a whole day with entries and no drink among them: a red flag, said with its doubt
-  const dry = past.filter((d) => events(d.entries, 'drink').length === 0).map((d) => d.day);
-  if (dry.length) out.push({ id: 'no-drink', level: 'tell', text: health.fluidLimit ? I.noDrinkFluid(names(dry)) : I.noDrink(names(dry)), noted: '', base: `${I.noDrinkBase(Math.min(dry.length, 3))} ${I.only}`, ...(health.fluidLimit ? { local: true } : {}) });
-
-  // a day with few drinks entered (the day with the fewest); never with a fluid limit
-  if (!health.fluidLimit) {
-    const low = past.map((d) => ({ day: d.day, n: events(d.entries, 'drink').length })).filter((x) => x.n > 0 && x.n < T.fewDrinks);
-    const least = Math.min(...low.map((x) => x.n));
-    // every day that has the fewest is named (two days with one drink each are both worth a look), the last three at most
-    const few = low.filter((x) => x.n === least).map((x) => x.day).sort((a, b) => a - b).slice(-3);
-    if (few.length) out.push({ id: 'few-drinks', level: T.fewDrinksMention ? 'mention' : 'note', text: I.fewDrinks(names(few), least, few.length > 1), noted: T.fewDrinksMention ? I.fewDrinksReminders : '', base: `${I.fewDrinksBase(least, few.length > 1)} ${I.only}` });
-  } else if (T.manyDrinks) {
-    const many = days.map((d) => ({ day: d.day, n: events(d.entries, 'drink').length })).filter((x) => x.n >= T.manyDrinks).sort((a, b) => b.n - a.n)[0];
-    if (many) out.push({ id: 'many-drinks', level: 'mention', text: I.manyDrinks(dayText(many.day), many.n), noted: '', base: `${I.manyDrinksBase(many.n)} ${I.only}`, local: true });
+  // one day is enough for a strong pain ("quite bad", "very bad") or a pain in the head or the chest: the latest such
+  // day is a line of its own, with whom to tell and when to call (judge round 6: a single day never showed)
+  const hard = entries.filter((e) => tags(e).some((t) => t === 'strong-pain' || t === 'place-pain'));
+  if (hard.length) {
+    const hardDays = daysOf(hard.map((e) => e.at));
+    const last = hardDays[hardDays.length - 1];
+    const that = hard.filter((e) => dayStart(e.at) === last);
+    const strong = [...new Set(that.filter((e) => tags(e).includes('strong-pain')).map((e) => e.label.toLowerCase()))];
+    const places = [...new Set(that.filter((e) => tags(e).includes('place-pain')).map((e) => { const m = (e.q ?? '').match(/^Where in the (\w+)/i); const l = e.label.replace(/^your\s+/i, ''); return m ? `${m[1].toLowerCase()} (${l})` : l; }))];
+    const text = [strong.length ? I5.strongPain(listed(strong), dayText(last)) : '', places.length ? I5.placePain(listed(places), dayText(last)) : ''].filter(Boolean).join(' ');
+    const others = hardDays.slice(0, -1);
+    out.push({ id: 'pain-day', level: 'mention', text, noted: '', base: `${[strong.length ? I5.strongPainBase : '', places.length ? I5.placePainBase : ''].filter(Boolean).join(' ')}${others.length ? ` Also on: ${names(others, 5)}.` : ''} ${I.only}`, act: I5.painAct(number), urgent: true });
   }
+
+  // a whole day with entries and no drink among them: a red flag (18 Nov: said without the sentence that excused it)
+  const dry = past.filter((d) => events(d.entries, 'drink').length === 0).map((d) => d.day);
+  if (dry.length) out.push({ id: 'no-drink', level: 'tell', text: health.fluidLimit ? I.noDrinkFluid(names(dry)) : I5.noDrink(names(dry)), noted: '', base: `${I.noDrinkBase(Math.min(dry.length, 3))} ${I.only}`, ...(health.fluidLimit ? { local: true } : {}) });
 
   // something sweet, chosen often: worth mentioning when diabetes is noted, a note otherwise
   const sweets = events(entries, 'sweet').length;
   if (sweets >= T.sweets) out.push({ id: 'sweets', level: T.sweetsMention ? 'mention' : 'note', text: I.sweets(sweets, S), noted: T.sweetsMention ? I.sweetsDiabetes : '', base: `${I.sweetsBase(sweets, S)} ${I.only}` });
+
+  // a day with few drinks entered (the day with the fewest): worth mentioning (two drinks in a day is low for anyone).
+  // With a fluid limit the line still shows, and says to check the day against the doctor's plan: never "more".
+  {
+    const low = past.map((d) => ({ day: d.day, n: events(d.entries, 'drink').length })).filter((x) => x.n > 0 && x.n < T.fewDrinks);
+    const least = Math.min(...low.map((x) => x.n));
+    // every day that has the fewest is named (two days with one drink each are both worth a look), the last three at most
+    const few = low.filter((x) => x.n === least).map((x) => x.day).sort((a, b) => a - b).slice(-3);
+    if (few.length) out.push({ id: 'few-drinks', level: 'mention', text: health.fluidLimit ? I5.fewDrinksFluid(names(few), least, few.length > 1) : I.fewDrinks(names(few), least, few.length > 1), noted: T.fewDrinksMention ? I.fewDrinksReminders : '', base: `${I.fewDrinksBase(least, few.length > 1)} ${I.only}`, ...(health.fluidLimit ? { local: true } : {}) });
+  }
+  if (T.manyDrinks) {
+    const many = days.map((d) => ({ day: d.day, n: events(d.entries, 'drink').length })).filter((x) => x.n >= T.manyDrinks).sort((a, b) => b.n - a.n)[0];
+    if (many) out.push({ id: 'many-drinks', level: 'mention', text: I.manyDrinks(dayText(many.day), many.n), noted: '', base: `${I.manyDrinksBase(many.n)} ${I.only}`, local: true });
+  }
+
+  // a fall: every one is worth mentioning; with a blow to the head noted, the line names it and the call box stands under it
+  const falls = entries.filter((e) => tags(e).includes('fall'));
+  if (falls.length) {
+    const head = falls.filter((e) => tags(e).includes('fall-head'));
+    out.push({ id: 'fall', level: 'mention', text: `${I5.fall(falls.length, names(daysOf(falls.map((e) => e.at)), 7))}${head.length ? ` ${I5.fallHead(names(daysOf(head.map((e) => e.at))))}` : ''}`, noted: '', base: `${I5.fallBase} ${I.only}`, act: head.length ? `${I5.fallAct} ${I5.fallHeadAct(number)}` : I5.fallAct, ...(head.length ? { urgent: true } : {}) });
+  }
+
+  // "sad" or "bad" on three days or more: worth mentioning, with whom to talk to
+  const lowDays = daysOf(entries.filter((e) => tags(e).includes('low-mood')).map((e) => e.at));
+  if (lowDays.length >= T.lowMoodDays) out.push({ id: 'mood', level: 'mention', text: I5.mood(lowDays.length, S), noted: '', base: `${I5.moodBase(names(lowDays, 7))} ${I.only}`, act: I5.moodAct(number) });
 
   // with swallowing difficulty noted: a day with entries and no food among them
   if (T.noFoodDay) {
@@ -155,10 +199,27 @@ export function insights(diary: DiaryEntry[], health: HealthNotes, span: Insight
   // many answers the guard marked: the lines above are to be read with care
   const answers = entries.filter((e) => e.kind === 'answer');
   const unsure = answers.filter((e) => e.lessSure);
-  if (unsure.length >= T.lessSure) out.push({ id: 'less-sure', level: 'note', text: I.lessSure(unsure.length, names(daysOf(unsure.map((e) => e.at))), daysOf(unsure.map((e) => e.at)).length > 1), noted: '', base: I.lessSureBase(unsure.length, answers.length, S) });
+  if (unsure.length >= T.lessSure) out.push({ id: 'less-sure', level: 'note', text: I.lessSure(unsure.length, names(daysOf(unsure.map((e) => e.at))), daysOf(unsure.map((e) => e.at)).length > 1), noted: '', base: I.lessSureBase(unsure.length, answers.length, S), act: I5.lessSureNever });
 
   if (!out.length) return [{ id: 'nothing', level: 'note', text: I.nothing(S), noted: '', base: `${I.nothingBase(entries.length, days.length)} ${I.only}` }];
-  return out.map((x, i) => ({ x, i })).sort((a, b) => ORDER[a.x.level] - ORDER[b.x.level] || a.i - b.i).map((p) => p.x).slice(0, MAX_INSIGHTS);
+  return out;
+}
+
+
+/**
+ * The lines of the span, the most serious first, six at most. The 30-day view keeps the lines of the last 7 days that
+ * it would not show by itself (its own thresholds are four times higher), marked as recent: a month must not hide
+ * this week (judge round 6). `number` is the emergency number the fixed sentences name (About them; 911 by default).
+ */
+export function insights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpan, now: number, number: string = DEFAULT_NUMBER): Insight[] {
+  let out = spanInsights(diary, health, span, now, number);
+  if (span === 'month') {
+    const have = new Set(out.map((x) => x.id));
+    const week = spanInsights(diary, health, 'week', now, number).filter((x) => x.id !== 'nothing' && !have.has(x.id)).map((x) => ({ ...x, recent: true, base: `${I5.recent} ${x.base}` }));
+    if (week.length) out = [...out.filter((x) => x.id !== 'nothing'), ...week];
+  }
+  const rank = (x: Insight) => ORDER[x.level] * 2 - (x.urgent ? 1 : 0);
+  return out.map((x, i) => ({ x, i })).sort((a, b) => rank(a.x) - rank(b.x) || a.i - b.i).map((p) => p.x).slice(0, MAX_INSIGHTS);
 }
 
 /** How many entries of each kind the span holds: for the on-device prompt, and for nothing else. */
@@ -181,9 +242,9 @@ const numbered = (lines: Insight[]) => lines.map((l, i) => `${i + 1}. ${l.text}`
 export function insightCloudText(lines: Insight[]): string {
   return numbered(cloudLines(lines));
 }
-/** The lines that may go to online help: every line that does not itself state a health note. */
+/** The lines that may go to online help: every line that does not itself state a health note, and none that carries a fixed "whom to tell" sentence. */
 export function cloudLines(lines: Insight[]): Insight[] {
-  return lines.filter((l) => l.id !== 'nothing' && !l.local);
+  return lines.filter((l) => l.id !== 'nothing' && !l.local && !l.act);
 }
 
 /**

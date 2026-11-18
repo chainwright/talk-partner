@@ -15,7 +15,7 @@ export const WEEK = JSON.parse(readFileSync(join(__dirname, '..', 'fixtures', 'f
 export const MONDAY = 16;
 export const when = (d: number, t: string) => { const [h, m] = t.split(':').map(Number); return new Date(2026, 10, MONDAY + d, h, m).getTime(); };
 export const NOW = when(6, '12:00');
-const LOG_TOPIC = { drank: 'food', ate: 'food', toilet: 'body', slept: 'rest', pain: 'body' } as const;
+const LOG_TOPIC = { drank: 'food', ate: 'food', toilet: 'body', slept: 'rest', pain: 'body', fall: 'body', tablets: 'body' } as const;
 
 /** The week as diary entries. `withMarks: false` leaves the "less sure" marks out, for the test that the guard sets them itself. */
 export function weekDiary(withMarks = true): DiaryEntry[] {

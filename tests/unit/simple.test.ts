@@ -119,7 +119,10 @@ describe('the simple view\'s privacy lines say what is sent, never more', () => 
   });
   it('the sheet names the receiver, the paid tier\'s data use and the settings request', () => {
     const K = COPY.consent.sheet;
-    expect(K.bodyNoDevice(ABOUT)).toMatch(/Google's Gemini, through Firebase AI Logic/);
+    // (18 Nov, phase 5: one plain name on the sheet, "online help", which is Google's AI; the technical words are one tap inside)
+    expect(K.bodyNoDevice(ABOUT)).toMatch(/Online help is Google's AI/);
+    expect(K.techBody).toMatch(/Google's Gemini API, through Firebase AI Logic/);
+    expect(K.yes).toBe('Just this once');
     expect(K.data).toMatch(/paid service.*does not use what is sent to improve its products.*limited time/);
     expect(K.data).not.toMatch(/free tier|may use/);
     expect(COPY.simple.insights.sheet.data).toBe(K.data);

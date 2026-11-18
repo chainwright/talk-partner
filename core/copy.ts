@@ -122,7 +122,8 @@ const COPY = {
     openTitle: 'A board of everyday needs they can point to. No AI, nothing sent; it works with no connection.',
     ask: 'What do you need?',
     headline: 'I need',
-    tiles: ['toilet', 'drink', 'food', 'pain', 'tired', 'too hot', 'too cold', 'call someone'] as const,
+    // (18 Nov, judge round 6: the ninth tile lets the person raise the alarm; the carer then gets "Something new or sudden?")
+    tiles: ['toilet', 'drink', 'food', 'pain', 'tired', 'too hot', 'too cold', 'call someone', "something's wrong"] as const,
     escape: 'something else',
     say: 'What do you need? Show me.',
     tip: 'Hold the screen where they can reach it. Name a tile as you point, if it helps. Then wait.',
@@ -136,6 +137,7 @@ const COPY = {
       'too hot': 'Change one thing: a layer off, a window, a fan. Then ask "Better?" and wait for a yes or a no.',
       'too cold': 'Change one thing: a blanket, a layer, the heating. Then ask "Better?" and wait for a yes or a no.',
       'call someone': 'Say one name at a time, or show photos, and wait for a yes. Then make the call together.',
+      "something's wrong": 'Something is wrong. Look now for what is new or sudden. If you are not sure, call.',
       'something else': 'Ask in the question box, one thing at a time. Or press "We\'re stuck" for other ways to get it across.',
     } as Record<string, string>,
     /** After "pain" is confirmed: one tap asks the body-map question (made in code, like the board). */
@@ -382,7 +384,11 @@ const COPY = {
     photos: {
       heading: (name: string) => `${name ? `${name}'s` : 'Their'} own photos`,
       why: (name: string) => `A photo of a person, a food or drink, or a place ${name ? `${name} knows` : 'they know'}. A card shows it in place of the drawing wherever its word is one of the choices.`,
-      lock: 'Photos stay on this computer only. They are never sent anywhere, and no AI looks at them.',
+      // (18 Nov, judge round 6: "no AI looks at them" was false on a desktop Chrome with the built-in model, where
+      // "Talk about a photo" can show it one. `lock` is read through the device's word, so a phone says "this phone";
+      // `lockDesktop` is shown where the browser has the on-device model.)
+      lock: "Photos stay on this computer only. They are never sent anywhere. On this computer no AI looks at them. On a desktop computer with Chrome's built-in AI, it can look at one on that computer itself, never online.",
+      lockDesktop: 'Photos stay on this computer only. They are never sent anywhere. No AI looks at them, with one exception: in "Talk about a photo", when you tap "Ask the AI on this device to look at it", the AI built into Chrome looks at that one photo on this computer itself, never online.',
       add: 'Add a photo',
       full: 'That is the most photos the app keeps (60). Delete one to add another.',
       del: 'Delete',
@@ -537,7 +543,7 @@ const COPY = {
       marked: 'These answers are marked "less sure" in the diary.',
       more: 'More',
       order: 'The next either-or shows its choices in a different order.',
-      never: 'Answers about pain, the toilet or a need are never marked: take them as said.',
+      never: 'Answers about pain, the body, feelings, the toilet or a need are never marked: take them as said.',
       lessSure: 'less sure',
     },
     /** The diary (core/diary.ts): the carer's side only. */
@@ -547,7 +553,7 @@ const COPY = {
       heading: (name: string) => (name ? `${name}'s diary` : 'Diary'),
       lock: (name: string) => `The diary is kept on this computer only. It is never sent anywhere, and it is never shown on ${name ? `${name}'s` : 'their'} screen.`,
       logHeading: 'Log it now, one tap:',
-      log: { drank: 'Drank', ate: 'Ate', toilet: 'Toilet', slept: 'Slept', pain: 'Pain' } as Record<string, string>,
+      log: { drank: 'Drank', ate: 'Ate', toilet: 'Toilet', slept: 'Slept', pain: 'Pain', fall: 'Fall', tablets: 'Tablets taken' } as Record<string, string>,
       logged: (what: string, time: string) => `Logged: ${what}, ${time}.`,
       undo: 'Undo',
       tabs: { today: 'Today', week: 'Week', month: 'Month' } as Record<string, string>,
@@ -621,14 +627,14 @@ const COPY = {
       plainerOffline: 'Plainer words need the internet on this computer. You are offline.',
       sheet: {
         heading: 'Use online help for the wording?',
-        body: "The counting is done. Google's online AI can put these lines into plainer words. This is the exact text that would go:",
+        body: "The counting is done. Online help is Google's AI: it can put these lines into plainer words. This is the exact text that would go:",
         sentLabel: 'Sent to Google:',
         sent: "the lines above, as you see them, and the app's fixed instructions.",
         neverLabel: 'Never sent:',
         never: 'names, photos, the diary itself, the health notes, the answers they chose.',
         dataLabel: 'Data use:',
         data: "Google's paid service: Google does not use what is sent to improve its products. It keeps it for a limited time to check for misuse.",
-        yes: 'Yes, send these lines once',
+        yes: 'Just this once',
         no: 'No, keep the app\'s own words',
         once: 'This is for these lines, this once. It does not turn online help on for anything else.',
         whole: 'The whole request',
@@ -723,8 +729,8 @@ const COPY = {
      */
     sheet: {
       heading: 'This question needs online help',
-      bodyNoDevice: (about: string) => `This computer has no AI of its own for open questions. Google's Gemini, through Firebase AI Logic, can suggest general choices. It never sees ${about}.`,
-      bodyDevice: (about: string) => `The AI on this computer made no card for this one. Google's Gemini, through Firebase AI Logic, can suggest general choices. It never sees ${about}.`,
+      bodyNoDevice: (about: string) => `This computer has no AI of its own for open questions. Online help is Google's AI: it can suggest general choices. It never sees ${about}.`,
+      bodyDevice: (about: string) => `The AI on this computer made no card for this one. Online help is Google's AI: it can suggest general choices. It never sees ${about}.`,
       goes: 'This is the line that would go:',
       sentLabel: 'Sent to Google:',
       sent: 'that line, and the app\'s fixed instructions. Names you listed are swapped first ("Person A"). Other names are guessed and can be missed; the rest goes as you typed it, so leave out health details.',
@@ -732,18 +738,22 @@ const COPY = {
       never: (about: string) => `your ${about} lists, photos, who lives at home, the answers they chose.`,
       dataLabel: 'Data use:',
       data: "Google's paid service: Google does not use what is sent to improve its products. It keeps it for a limited time to check for misuse.",
-      yes: 'Yes, send open questions to Google',
+      // (18 Nov, judge round 6: the first yes is for this one question; keeping online help on is the second button)
+      yes: 'Just this once',
+      always: 'Yes, every time',
       no: 'No, not for this question',
-      after: 'It stays on until you turn it off (inside, under Cloud help). With it on, the app also asks Firebase once for its settings: no question is in that.',
+      after: '"Just this once" sends this one question to online help. "Every time" keeps online help on until you turn it off (inside, under Cloud help); the app then also asks Firebase once for its settings: no question is in that.',
+      tech: 'Who receives it, in technical words',
+      techBody: "Google's Gemini API, through Firebase AI Logic, on the paid tier.",
       exact: 'See the exact request',
       terms: "Google's data terms",
       /** The same sheet for a narrowing step (after "something else"): plain words first, the whole request one tap away. */
       narrow: {
-        heading: "Ask Google's AI for other ideas?",
-        body: "None of those fitted. Google's AI can suggest other kinds of answer. It sees only this:",
+        heading: 'Ask online help for other ideas?',
+        body: "None of those fitted. Online help is Google's AI: it can suggest other kinds of answer. It sees only this:",
         plus: 'and the app\'s fixed instructions. Names you listed are swapped first ("Person A").',
         never: (about: string) => `your ${about} lists, photos, the answers they chose.`,
-        yes: "Yes, ask Google's AI",
+        yes: 'Just this once',
         no: 'No, not now',
         whole: 'The whole request',
       },

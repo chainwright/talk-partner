@@ -58,7 +58,17 @@ const TEXT = [
   ['accent', 'panel', 'phase 4: the signs of those buttons and of the line "[Name] started this"'],
   ['warn', 'bg', 'phase 4: "If the pain is new or strong, do not wait for the visit" under the doctor-visit page'],
   ['no', 'bg', 'phase 4: "Delete these answers"'],
+  // phase 5 (judge round 6: the small "Next:" label on the main button took the muted grey and stood at about 1.2:1)
+  ['on-accent', 'accent', 'phase 5: the small "Next:" label on the main button (.btn.primary.ask-next small)'],
+  ['panel', 'no', 'phase 5: the call button ("Call emergency services: 911", "Call 911")'],
+  ['ink', 'panel', 'phase 5: the boxed line "Call 911 now if this is new or sudden", the FAST list, "Since the last visit", the Read aloud switch'],
+  ['ink', 'cloud-soft', 'phase 5: the Read aloud switch when it is on'],
+  ['muted', 'panel', 'phase 5: the small line of "Something new or sudden?"'],
   ];
+// The "Next:" label is a <small> inside the main button. The plain rule for it is the muted grey (right on a white
+// button); on the green main button it must be overridden, or it is unreadable. The rule is checked to be there.
+const NEXT_RULE = /\.simple \.btn\.primary\.ask-next small \{[^}]*color: var\(--on-accent\)/;
+const nextRuleOk = NEXT_RULE.test(css);
 const UI = [
   ['field', 'bg', 'the edge of every button, field and row'],
   ['field', 'panel', 'the edge of a field inside a row or the sheet'],
@@ -88,6 +98,9 @@ const UI = [
   ['accent', 'panel', 'phase 3: the edge of a "Worth mentioning" line, the tick of "Logged", the signs in "what stands out"'],
   ['field', 'panel', 'phase 3: the edge of the tabs, of the timeline, of a "To keep in mind" line'],
   ['accent', 'accent-soft', 'phase 3: the bar under the selected tab'],
+  ['no', 'panel', 'phase 5: the edge and the sign of the boxed call line, the edge of the way to "Something new or sudden?"'],
+  ['no', 'bg', 'phase 5: the call button against the page'],
+  ['cloud', 'panel', 'phase 5: the sign of the Read aloud switch'],
 ];
 // the person's card: a white sheet in every theme (web/src/styles.css, .person)
 const CARD = [
@@ -95,10 +108,12 @@ const CARD = [
   ['#4a5361', '#ffffff', 'the person\'s screen: "Carer: hold here to go back", the edge of the way out'],
   ['#0b6e4f', '#ffffff', 'the person\'s screen: "Yes" and its tick, the finish tick, the edge of "Yes"'],
   ['#ffffff', '#0b6e4f', 'the person\'s screen: "Give the phone back"'],
+  ['#1f262e', '#ffffff', 'phase 5: the "Hear it again" button on the person\'s screen (Read aloud)'],
   ['#2b3440', '#ffffff', '18 Nov: the outline of every colour picture on the card and on a topic tile\'s white plate, the edge of a family photo'],
 ];
 
 let bad = 0;
+if (!nextRuleOk) { console.error('the "Next:" label on the main button has no rule that gives it the button\'s own text colour'); bad++; }
 const lines = ['# Contrast of the simple view', '', `Read from \`web/src/simple.css\` by \`scripts/contrast-check.mjs\`. Text needs 4.5:1, a control edge or sign 3:1 (WCAG 2.2, 1.4.3 and 1.4.11).`, ''];
 for (const [theme, t] of Object.entries(THEMES)) {
   lines.push(`## ${theme}`, '', '| kind | foreground | background | ratio | needs | result | used for |', '|---|---|---|---|---|---|---|');

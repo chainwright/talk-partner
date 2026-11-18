@@ -72,6 +72,8 @@ export interface HomeModel {
   diaryHtml?: string;
   /** The button "[Name] wants to say something" (web/src/phase4.ts), drawn by main.ts: under the quick needs. */
   turnHtml?: string;
+  /** The way to "Something new or sudden?" at the top of "Body & care" (web/src/phase5.ts), drawn by main.ts. */
+  bodyHtml?: string;
 }
 
 /**
@@ -99,10 +101,10 @@ export function howBlock(name: string, open: boolean): string {
  * The topic tiles, two to a row; the questions of the open topic come in a panel under the ROW the tile is in, so no
  * tile ever moves when a topic opens (a tired hand finds each topic where it was).
  */
-export function topicGrid(m: Pick<HomeModel, 'name' | 'topics' | 'topicOpen' | 'aiTag'>): string {
+export function topicGrid(m: Pick<HomeModel, 'name' | 'topics' | 'topicOpen' | 'aiTag' | 'bodyHtml'>): string {
   const S = COPY.simple;
   const tile = (t: Topic) => `<button type="button" class="topic${m.topicOpen === t.id ? ' open' : ''}" data-act="topic" data-topic="${t.id}" aria-expanded="${m.topicOpen === t.id}" aria-controls="tq-${t.id}">${TOPIC_SIGN[t.id]}<span>${esc(t.label)}</span></button>`;
-  const panel = (t: Topic) => `<div class="tqs" id="tq-${t.id}" role="group" aria-label="${esc(t.label)}"><p class="lead">${esc(S.topicLead(m.name))}</p>${t.questions.map((x) =>
+  const panel = (t: Topic) => `<div class="tqs" id="tq-${t.id}" role="group" aria-label="${esc(t.label)}"><p class="lead">${esc(S.topicLead(m.name))}</p>${t.id === 'body' ? m.bodyHtml ?? '' : ''}${t.questions.map((x) =>
     `<button type="button" class="tq" data-q="${esc(x.q)}"><span>${esc(x.q)}</span>${x.own ? `<span class="tag">${esc(S.ownTag(m.name))}</span>` : x.ai ? `<span class="tag net" id="ai-tag">${esc(m.aiTag)}</span>` : ''}</button>`).join('')}</div>`;
   let html = '';
   for (let i = 0; i < m.topics.length; i += 2) {
@@ -266,6 +268,8 @@ export interface CardModel {
   guardHtml?: string;
   /** More for the carer on this screen, drawn by main.ts (web/src/phase4.ts): the way to the first-letter helper, who found a first-letter card's words. */
   extraHtml?: string;
+  /** Over everything else on this screen (web/src/phase5.ts): the boxed call line, while an answer of this conversation can be urgent. */
+  topHtml?: string;
 }
 
 /** Where this card was made: on the screen itself, under the card, never only behind a link. */
@@ -320,7 +324,7 @@ export function cardScreen(m: CardModel): string {
   // a narrowing card says in plain words that an AI made this follow-up, and where
   const ai = c.narrow ? `<p class="ai-made" id="ai-made" data-by="${c.narrow.by ?? 'ai'}">${c.narrow.by === 'rules' ? SIGN.lock : SIGN.spark}<span>${esc(c.narrow.by === 'rules' ? S.narrow.labelRules(c.narrow.level, NARROW_LEVELS) : S.narrow.label(c.narrow.level, NARROW_LEVELS, c.source === 'in-cloud' ? 'cloud' : 'device'))}</span></p>` : '';
   return `<main class="simple wrap card" data-screen="card">${back}
-  <div class="c-say">${m.guardHtml ?? ''}${ai}${coach}<div class="stack">${step(1, sayLabel)}<p class="say">${esc(say)}</p></div>${m.usual ? `<p class="usual" id="usual">${SIGN.person}<span>${esc(m.usual)}</span></p>` : m.lastTime ? `<p class="last">${esc(m.lastTime)}</p>` : ''}</div>
+  <div class="c-say">${m.topHtml ?? ''}${m.guardHtml ?? ''}${ai}${coach}<div class="stack">${step(1, sayLabel)}<p class="say">${esc(say)}</p></div>${m.usual ? `<p class="usual" id="usual">${SIGN.person}<span>${esc(m.usual)}</span></p>` : m.lastTime ? `<p class="last">${esc(m.lastTime)}</p>` : ''}</div>
   <div class="c-go">${step(2, S.step2(m.name))}
     ${primary}
     ${primary ? waitLine(m.name) : ''}
@@ -494,8 +498,10 @@ export function consentSheet(m: SheetModel): string {
     <li class="w">${SIGN.info}<span><b>${K.dataLabel}</b> ${esc(K.data)}</span></li>
   </ul>
   <div class="choice"><button type="button" class="btn primary" data-act="sheet-yes">${K.yes}</button>
+  <button type="button" class="btn" data-act="sheet-always">${K.always}</button>
   <button type="button" class="btn" data-act="sheet-no">${K.no}</button></div>
   <p class="small muted after">${esc(K.after)}</p>
+  <details class="whole" id="sheet-tech"><summary>${K.tech}</summary><p>${K.techBody}</p></details>
   <p class="links"><a class="tlink" href="#/cloud">${K.exact} →</a><a class="tlink" href="${COPY.consent.termsLink}" target="_blank" rel="noopener">${K.terms}</a></p>
 </div>`;
 }
@@ -520,13 +526,13 @@ export function learnedBlock(m: { name: string; lines: Learned[]; facts: string[
 }
 
 /** The family's own photos: each with its word and "Delete", "Add a photo", and "Delete all photos". On this device only. */
-export function photosBlock(m: { name: string; photos: Photo[]; error?: string }): string {
+export function photosBlock(m: { name: string; photos: Photo[]; error?: string; desktopAi?: boolean }): string {
   const P = COPY.simple.photos;
   const tiles = m.photos.map((p) => `<li data-id="${esc(p.id)}"><img class="photo own" src="${p.data}" alt=""><b>${esc(p.word)}</b><button type="button" class="btn quiet small-btn" data-act="photo-del" data-id="${esc(p.id)}" aria-label="${P.del}: ${esc(p.word)}">${P.del}</button></li>`).join('');
   const full = m.photos.length >= PHOTO_CAP;
   return `<section class="photos" id="photos" aria-labelledby="photos-h"><h2 id="photos-h">${esc(P.heading(m.name))}</h2>
     <p class="tip">${esc(P.why(m.name))}</p>
-    <p class="lock" id="photos-lock">${SIGN.lock}<span>${P.lock}</span></p>
+    <p class="lock" id="photos-lock">${SIGN.lock}<span>${m.desktopAi ? P.lockDesktop : P.lock}</span></p>
     ${tiles ? `<ul class="photo-list" id="photo-list">${tiles}</ul>` : `<p class="tip" id="photos-none">${P.none}</p>`}
     ${m.error ? `<p class="warn" role="alert" id="photo-error">${esc(m.error)}</p>` : ''}
     ${full ? `<p class="tip">${P.full}</p>` : `<button type="button" class="btn" data-act="photo-new">${SIGN.photo}<span>${P.add}</span></button><input type="file" id="photo-file" accept="image/*" hidden>`}
@@ -558,7 +564,7 @@ export function photoSheet(m: PhotoDraftModel): string {
   return `<div class="dim"></div><div class="sheet photo-sheet" id="photo-sheet" role="dialog" aria-modal="true" aria-labelledby="photo-h">${body}</div>`;
 }
 
-export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved: boolean; learned?: Learned[]; learnedShort?: string[] | null; photos?: Photo[]; photoError?: string; health?: HealthNotes; backupHtml?: string }): string {
+export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved: boolean; learned?: Learned[]; learnedShort?: string[] | null; photos?: Photo[]; photoError?: string; health?: HealthNotes; backupHtml?: string; numberHtml?: string; desktopAi?: boolean }): string {
   const S = COPY.simple.about;
   const HN = COPY.simple.health;
   const h = m.health ?? NO_HEALTH;
@@ -597,11 +603,11 @@ export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved:
     ${row('health', hasHealth(h) ? '✓' : '+', HN.row, noted.length ? noted.join(', ') : HN.none, hasHealth(h),
       `<p class="tip">${HN.lead}</p><p class="lock" id="health-lock">${SIGN.lock}<span>${HN.lock}</span></p>
       ${HEALTH_TOGGLES.map((k) => `<label class="check"><input type="checkbox" data-health="${k}" ${h[k] ? 'checked' : ''}>${HN.toggles[k]}</label>`).join('')}
-      <label>${HN.text} <small>${HN.textHint}</small><textarea data-health="text" id="health-text" rows="3" maxlength="${HEALTH_TEXT_MAX}">${esc(h.text)}</textarea></label>`)}
+      <label>${HN.text} <small>${HN.textHint}</small><textarea data-health="text" id="health-text" rows="3" maxlength="${HEALTH_TEXT_MAX}">${esc(h.text)}</textarea></label>${m.numberHtml ?? ''}`)}
   </form>
   <p id="saved" class="saved" role="status">${m.saved ? A.saved : ''}</p>
   <a class="btn primary" href="#/">${A.done}</a>
-  ${photosBlock({ name: p.personName, photos: m.photos ?? [], error: m.photoError })}
+  ${photosBlock({ name: p.personName, photos: m.photos ?? [], error: m.photoError, desktopAi: m.desktopAi })}
   ${learnedBlock({ name: p.personName, lines: m.learned ?? [], facts: p.other ?? [], short: m.learnedShort ?? null })}
   ${m.backupHtml ?? ''}
   <button type="button" class="btn quiet danger" id="delete-everything" data-act="delete-all">${COPY.simple.photos.everything}</button>

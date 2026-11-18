@@ -15,7 +15,7 @@
 // three questions.
 
 import { HOW_BAD, WHAT_BOTHERS, WHERE_HURTS, WHICH_SIDE, awayNames, ownQuestions } from './topics';
-import type { Card, Profile } from './types';
+import { EMPTY_PROFILE, type Card, type Profile } from './types';
 
 /** A conversation is at most this many questions deep: the topic question and two that narrow it down. */
 export const TREE_DEPTH = 3;
@@ -431,6 +431,8 @@ export function after(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: st
   return { next, end };
 }
 
+/** Every end line of the table, with the person's name put in (for the grammar test: no "them can", "them is"). */
+export const treeEnds = (name: string) => Object.entries(TREE).flatMap(([q, node]) => Object.keys(node).map((label) => after({ asked: q, kind: 'choice' }, label, { ...EMPTY_PROFILE, personName: name }).end));
 /** Every question the table knows, as written (for the coverage test). */
 export const TREE_QUESTIONS = Object.keys(TREE);
 /** The size of the table: questions, and answers with a step. */

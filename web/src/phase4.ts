@@ -72,7 +72,11 @@ export function p4Links(name: string): string {
 }
 
 // ---------------------------------------------------------------- "Before a doctor visit"
-export interface VisitModel { name: string; record: VisitRecord | null; copied: boolean }
+export interface VisitModel {
+  name: string; record: VisitRecord | null; copied: boolean;
+  /** Phase 5 (web/src/phase5.ts), drawn by main.ts: the call box when an answer can be urgent; "Since the last visit"; the carer's controls for it. */
+  urgentHtml?: string; sinceHtml?: string; controlsHtml?: string;
+}
 /**
  * The carer's screen: before the first answer, what this is and the button that starts it; after, the one page of the
  * person's own answers (the part that is printed), then the buttons. No line here interprets an answer.
@@ -95,6 +99,7 @@ export function visitScreen(m: VisitModel): string {
   const pain = r.answers.some((a) => a.id === 'pain' && a.label.toLowerCase() === 'yes');
   return `${head}
   <section class="visit-page" id="visit-page" aria-labelledby="visit-h">
+    ${m.urgentHtml ?? ''}
     <p class="vp-kicker">${V.heading}</p>
     <h1 id="visit-h">${esc(V.pageTitle(m.name))}</h1>
     <p class="sub" id="visit-when">${esc(V.pageSub(visitDate(r.startedAt)))}</p>
@@ -102,9 +107,11 @@ export function visitScreen(m: VisitModel): string {
     <ul class="visit-rows" id="visit-rows">${rows}</ul>
     ${visitElse(r) ? `<p class="visit-else" id="visit-else">${V.elseNote}</p>` : ''}
     <p class="visit-foot" id="visit-foot">${esc(V.footer(m.name))}</p>
+    ${m.sinceHtml ?? ''}
   </section>
   <div class="no-print stack">
     ${pain ? `<p class="safety" id="visit-safety">${V.safety}</p>` : ''}
+    ${m.controlsHtml ?? ''}
     ${r.done ? '' : `<button type="button" class="btn primary" id="visit-resume" data-act="visit-resume">${V.resume}</button>`}
     <button type="button" class="btn${r.done ? ' primary' : ''}" id="visit-print" data-act="visit-print">${V.print}</button>
     <button type="button" class="btn" id="visit-copy" data-act="visit-copy" aria-live="polite">${m.copied ? V.copied : V.copy}</button>

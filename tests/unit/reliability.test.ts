@@ -91,7 +91,7 @@ describe('never about pain, the toilet, help or a need; never in an ordinary fas
   it('the line is the headline and one sentence; the rest is under "More"', () => {
     const html = guardBlock({ name: 'Frank', flags: ['yes-run'] });
     expect(html).toMatch(/<b>Frank may be tired\. Try again later, or check with a different question\.<\/b><small>These answers are marked &quot;less sure&quot; in the diary\.<\/small><details class="guard-more"><summary>More<\/summary>/);
-    expect(html.slice(html.indexOf('<details'))).toContain('Answers about pain, the toilet or a need are never marked: take them as said.');
+    expect(html.slice(html.indexOf('<details'))).toContain('Answers about pain, the body, feelings, the toilet or a need are never marked: take them as said.');
   });
 });
 

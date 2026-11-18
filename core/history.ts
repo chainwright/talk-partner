@@ -20,6 +20,8 @@ export interface Answered {
   of?: number;
   /** The card was a yes / no card. */
   yn?: boolean;
+  /** The conversation was about the body or a feeling (its topic): the answer check never counts or marks it. */
+  care?: boolean;
   /**
    * The answer-reliability guard marked it (core/reliability.ts): it was given in a run of "yes" to nearly every yes /
    * no question, or of the same place on the screen every time. The carer's side says "less sure"; the person's screen
