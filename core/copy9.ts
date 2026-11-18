@@ -22,6 +22,12 @@ export const P9 = {
     guess: 'Is this your emergency number?',
     change: 'Change it',
   },
+  /** Phase 9 (judge round 8, ADV-01-5): the cloud step is slow. */
+  wait: {
+    slow: (s: number) => `Online help is still working (${s} s). It stops by itself at 12 s.`,
+    stop: 'Stop waiting',
+    stopped: 'You stopped waiting, so there is no card. The question may already have gone to online help: the privacy count shows it when the answer comes. Ask it as a choice, "This, or that?", or pick a question from a topic.',
+  },
   since: {
     toilet: (n: number, d: string) => (n ? `Toilet: ${n} entered (${d}).` : 'Toilet: none entered. That can be a gap: ask the family.'),
     tablets: (n: number, d: string) => (n ? `Tablets taken: logged ${n} time${n === 1 ? '' : 's'} (${d}). The app does not know which tablets or how many.` : 'Tablets taken: none logged. That can mean nobody tapped it.'),

@@ -30,7 +30,8 @@ import { framed, loadPhoto, type Loaded } from './photo';
 import { stripQuestion } from '../../core/strip';
 import { backupText, makeBackup, readBackup, type Backup, type BackupPreview } from '../../core/backup';
 import { addEntry, answerEntry, dayStart, dayText, diaryText, inSpan, laterEntry, logEntry, markDiary, needEntry, removeEntry, type DiaryEntry, type DiaryTopic, type LogKind, type Span } from '../../core/diary';
-import { within, type CloudError } from '../../core/engine';
+import { CLOUD_SLOW_MS, within, type CloudError } from '../../core/engine';
+import { P9 } from '../../core/copy9';
 import { hasHealth, NO_HEALTH, cleanHealth, cloudLines, insightCloudText, insightDevicePrompt, insights, type HealthNotes, type Insight, type InsightSpan } from '../../core/insights';
 import { RELIABLE, careAnswer, guardExempt, markLessSure, reliability, reorder, tapsFrom } from '../../core/reliability';
 import { checkReworded, rewordOnDevice, type RewordSource } from '../../core/reword';
@@ -2193,6 +2194,31 @@ function useSettings() {
 }
 const routing = () => ({ moodWords: state.remote.values.routeMoodWords, minChoices: state.remote.values.routeMinChoices });
 
+/**
+ * Phase 9 (judge round 8, ADV-01-5): the cloud step of the card being made. From CLOUD_SLOW_MS (3 s) on, the
+ * "making" line says that online help is still working, with the seconds and "Stop waiting"; the pipeline itself
+ * gives up at CLOUD_WAIT_MS (12 s). "Stop waiting" calls the making off (its card, when it comes, is not shown; the
+ * privacy receipt still counts the request).
+ */
+const p9wait = { at: null as number | null, timer: null as ReturnType<typeof setInterval> | null };
+function cloudStarted(seq: number) {
+  if (seq !== makeSeq) return;
+  p9wait.at = Date.now();
+  if (p9wait.timer) clearInterval(p9wait.timer);
+  p9wait.timer = setInterval(() => {
+    if (seq !== makeSeq || !state.busy || p9wait.at === null) { cloudDone(); return; }
+    const ms = Date.now() - p9wait.at;
+    if (ms < CLOUD_SLOW_MS) return;
+    const s = Math.floor(ms / 1000);
+    const making = document.querySelector('.making');
+    if (!making) return;
+    const el = making.querySelector('#slow-wait .slow-s');
+    if (el) el.textContent = P9.wait.slow(s);
+    else making.insertAdjacentHTML('beforeend', `<span class="slow-wait" id="slow-wait"><span class="slow-s">${esc(P9.wait.slow(s))}</span> <button type="button" class="btn quiet small-btn" data-act="stop-wait">${P9.wait.stop}</button></span>`);
+  }, 250);
+}
+function cloudDone() { p9wait.at = null; if (p9wait.timer) clearInterval(p9wait.timer); p9wait.timer = null; }
+
 /** The question being made was tapped on the answered screen (a next step or a new start): its chain is already set. */
 let chained = false;
 /** The question being made is the second half of one the app split in two ("Next"). */
@@ -2224,6 +2250,7 @@ async function make(q: string) {
     const card = await makeCard(q, {
       profile: state.profile, support: state.settings.support, engine: state.engine,
       allowCloud: state.settings.cloudHelp || once, deviceReady: state.device === 'available', routing: routing(),
+      onCloud: () => cloudStarted(seq),
     });
     state.made.push(card);
     if (spoken) voiceCards.add(card);
@@ -2242,7 +2269,7 @@ async function make(q: string) {
     if (seq !== makeSeq) return;
     state.card = null; state.error = (e as Error).message;
   }
-  state.busy = false; state.waitStart = Date.now(); useSettings(); render();
+  cloudDone(); state.busy = false; state.waitStart = Date.now(); useSettings(); render();
 }
 
 function onPersonTap(t: HTMLElement) {
@@ -2433,6 +2460,8 @@ function act(el: HTMLElement) {
     case 'pt-look': void lookAtPhoto(); break;
     case 'pt-ask': { const q = talkQuestions()[Number(el.dataset.k)]; if (q) void askAboutPhoto(q); break; }
     // after the way out: ask it a new way, in the carer's own words
+    // (phase 9) "Stop waiting" while online help is slow: the making is called off; the screen says what to do instead
+    case 'stop-wait': if (state.busy) { makeSeq++; cloudDone(); state.busy = false; state.error = P9.wait.stopped; render(); document.querySelector<HTMLInputElement>('#q')?.focus(); } break;
     case 'own': state.lastQuestion = ''; state.error = null; dictated = false; resetCard(); render(); document.querySelector<HTMLInputElement>('#q')?.focus(); break;
     case 'invite-later': state.inviteOff = true; render(); break;
     // (phase 8) "Left for later": ask it again (a new conversation of that question), or done; either way it goes off Home

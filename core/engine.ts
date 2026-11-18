@@ -84,15 +84,24 @@ export interface Engine {
 /** The sound of one card: base64 of what the model returned, its type, and where it ran (the SDK's report). */
 export interface SpokenResult { base64: string; mimeType: string; source: 'on-device' | 'in-cloud'; ms: number }
 
-/** How long the cloud step is waited for before the card says that online help did not answer. */
-export const CLOUD_WAIT_MS = 25000;
+/**
+ * How long the cloud step is waited for before the card says that online help did not answer. Phase 9 (judge round
+ * 8, ADV-01-5): 12 s, not 25 s. The organiser's first live cloud card ended "No card" at 25 s; a tired carer does not
+ * wait that long, so after `CLOUD_SLOW_MS` the screen says it is still working and offers "Stop waiting".
+ */
+export const CLOUD_WAIT_MS = 12000;
+/** After this long without an answer, the carer's screen shows that online help is still working, with "Stop waiting". */
+export const CLOUD_SLOW_MS = 3000;
+/** The error `within` gives when the time is up (so the card can say "took too long", not "did not answer"). */
+export class CloudTimeout extends Error { readonly timedOut = true; }
+export const cloudTimedOut = (e: unknown) => (e as CloudTimeout)?.timedOut === true;
 /**
  * A cloud call that neither answers nor fails (a blocked script, a connection that hangs) must not leave the carer
  * in front of "Finding the choices…" for ever: after `ms` it counts as a failed call that may have left the device.
  */
 export function within<T>(call: Promise<T>, ms: number = CLOUD_WAIT_MS): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error(`online help gave no answer within ${Math.round(ms / 1000)} seconds`)), ms);
+    const t = setTimeout(() => reject(new CloudTimeout(`online help gave no answer within ${Math.round(ms / 1000)} seconds`)), ms);
     call.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e as Error); });
   });
 }

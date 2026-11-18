@@ -229,3 +229,64 @@ describe('5. P1 the handover note and the visit page', () => {
     expect(own.urgent).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------- item 6
+import { CLOUD_SLOW_MS, CLOUD_WAIT_MS, within, type DeviceStatus, type Engine, type ModelResult } from '../../core/engine';
+import { makeCard } from '../../core/pipeline';
+import { cloudTextRequest } from '../../core/requests';
+import { SAMPLE_PROFILE } from '../../core/sample';
+import { P9 } from '../../core/copy9';
+
+class Slow implements Engine {
+  label = 'slow';
+  modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' };
+  cloudConfigured = true;
+  constructor(private o: { hang?: boolean; answer?: string } = {}) {}
+  async deviceStatus(): Promise<DeviceStatus> { return 'unavailable'; }
+  async prepareDevice() {}
+  async runDevice(): Promise<ModelResult> { throw new Error('no model'); }
+  cloudRequest(q: string) { return cloudTextRequest(q); }
+  runCloud(): Promise<ModelResult> {
+    if (this.o.hang) return new Promise<never>(() => { /* never settles */ });
+    return new Promise((res) => setTimeout(() => res({ text: this.o.answer ?? '{"topic":"weekend","kind":"choice","choices":["the garden","a drive"]}', source: 'in-cloud', ms: 30 }), 30));
+  }
+}
+const cloudEnv = (engine: Engine, extra = {}) => ({ profile: SAMPLE_PROFILE, support: 'more' as const, engine, allowCloud: true, deviceReady: false, ...extra });
+
+describe('6. P0 the cloud wait: 3 s to "Stop waiting", 12 s to the plain line; settings never block; the latency in the trace', () => {
+  it('the limits are 3 s and 12 s (not 25 s)', () => {
+    expect(CLOUD_SLOW_MS).toBe(3000);
+    expect(CLOUD_WAIT_MS).toBe(12000);
+  });
+  it('worst case: online help never answers: the card says "took longer than 12 seconds", what to do instead, may have left, and the wait in ms', async () => {
+    let told = 0;
+    const c = await makeCard('What do you want to do this weekend?', cloudEnv(new Slow({ hang: true }), { cloudWaitMs: 25, onCloud: () => { told++; } }));
+    expect(told).toBe(1);
+    expect(c.blocked).toBe(COPY.notes.cloudSlowBlocked);
+    expect(c.blocked).toMatch(/Ask it as a choice/);
+    expect(c.notes.join(' ')).toContain('Cloud help took longer than 12 seconds');
+    expect(c.cloudAttempted).toBeTruthy();
+    const t = c.trace!.find((x) => x.step === 'stripped')!;
+    expect(t).toMatchObject({ ran: 'failed' });
+    expect(t.ms).toBeGreaterThanOrEqual(20);
+    // the trace holds a number and the service's message, never the question
+    expect(JSON.stringify(c.trace)).not.toContain('weekend');
+  });
+  it('an answer in time: the card, with its latency in the trace', async () => {
+    const c = await makeCard('What do you want to do this weekend?', cloudEnv(new Slow()));
+    expect(c.blocked).toBeFalsy();
+    expect(c.trace!.find((x) => x.step === 'stripped')).toMatchObject({ ran: 'in-cloud', ms: 30 });
+  });
+  it('the timeout error is known as a timeout, so no second try doubles the wait', async () => {
+    await expect(within(new Promise(() => {}), 5)).rejects.toMatchObject({ timedOut: true });
+  });
+  it('the web client: "Stop waiting" after 3 s, the making called off, and the settings fetched beside the app, never awaited', () => {
+    const main = readFileSync(join(__dirname, '..', '..', 'web', 'src', 'main.ts'), 'utf8');
+    expect(main).toContain('onCloud: () => cloudStarted(seq),');
+    expect(main).toContain("case 'stop-wait': if (state.busy) { makeSeq++; cloudDone(); state.busy = false; state.error = P9.wait.stopped;");
+    expect(main).toContain('if (ms < CLOUD_SLOW_MS) return;');
+    expect(main).toMatch(/void fetchSettings\(cfg\.firebase\)\.then/);
+    expect(main).not.toMatch(/await fetchSettings|await askSettings/);
+    expect(P9.wait.stopped).toMatch(/may already have gone to online help/);
+  });
+});

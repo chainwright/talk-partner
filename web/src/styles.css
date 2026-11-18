@@ -356,6 +356,9 @@ main.welcome::after { transform-origin: left center; animation: ts-turn 1s .3s c
 .making { margin: 0; display: flex; align-items: center; gap: 10px; color: var(--ink); font-size: 17px; }
 .making .dot { flex: none; }
 .making small { color: var(--muted); font-size: 13px; }
+/* phase 9: online help is slow: the seconds and "Stop waiting", on their own line under the making line */
+.making { flex-wrap: wrap; }
+.making .slow-wait { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 16px; }
 .listening.thinking svg { animation: tp-breathe 1.6s ease-in-out infinite; }
 @keyframes tp-breathe { 0%, 100% { opacity: .45; transform: scale(.97); } 50% { opacity: 1; transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .listening.thinking svg { animation: none; } }

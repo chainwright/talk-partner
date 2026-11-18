@@ -4,7 +4,7 @@
 // "Why this card" (Card.why) is written here, on the values the rules worked on, as they are worked on.
 
 import { COPY } from './copy';
-import { within, type CloudError, type Engine } from './engine';
+import { cloudTimedOut, within, type CloudError, type Engine } from './engine';
 import { pictureFor } from './pictures';
 import { cloudPrompt, devicePrompt } from './prompt';
 import {
@@ -559,6 +559,11 @@ export interface PipelineEnv {
   sleep?: (ms: number) => Promise<void>;
   /** How long the cloud step is waited for (core/engine.ts, CLOUD_WAIT_MS). Only tests pass it. */
   cloudWaitMs?: number;
+  /**
+   * Phase 9: called the moment the stripped question is handed to the SDK for the cloud step (the app then shows
+   * "still working… Stop waiting" after CLOUD_SLOW_MS). It is told nothing: no question, no answer.
+   */
+  onCloud?: () => void;
 }
 
 /**
@@ -829,8 +834,11 @@ async function cloudCard(
   let left: 'no' | 'maybe' | 'yes' = 'no';
   // one failed try that was followed by a second: its request may have left too, so the receipt counts it
   let firstTryFailed = false;
+  // (phase 9) the latency of the cloud step goes into the trace, answered or not: a number, never any text
+  const started = Date.now();
   try {
     left = 'maybe';
+    env.onCloud?.();
     let r: Awaited<ReturnType<Engine['runCloud']>>;
     try {
       r = await within(env.engine.runCloud(stripped.text), env.cloudWaitMs);
@@ -884,20 +892,22 @@ async function cloudCard(
       ranOffline: !sent, cloudSwaps: swaps(stripped.map), notes: [...notes, ...card.notes, ...cloudNotes],
     };
   } catch (e) {
-    if (!trace.some((t) => t.step === 'stripped')) trace.push({ step: 'stripped', ran: 'failed', why: (e as Error).message, used: false });
-    else trace[trace.findIndex((t) => t.step === 'stripped')] = { step: 'stripped', ran: 'failed', why: (e as Error).message, used: false };
+    const failed: StepTrace = { step: 'stripped', ran: 'failed', why: (e as Error).message, used: false, ms: Date.now() - started };
+    if (!trace.some((t) => t.step === 'stripped')) trace.push(failed);
+    else trace[trace.findIndex((t) => t.step === 'stripped')] = failed;
     if ((e as CloudError).notSent) left = 'no';
     // Only a card the step on this computer made is kept. With none, there is no card: a card put together from About
     // me by code alone does not know the question (set D, 16 Nov: after a 429, "Where do you want to sit?" offered the
     // lake and church under the badge "No AI needed"). The partner is told that cloud help failed, and can try again.
     const kept = !!fallback && !fallback.blocked && fallback.choices.filter((c) => c.role === 'answer').length >= 2;
     // the note is one plain sentence; the step trace ("where each step ran") keeps the service's full message
-    const reason = cloudWasAppCheck(e) ? 'check' : cloudWasBusy(e) ? 'busy' : 'down';
+    // (phase 9: a wait that ran out is said as such: "took too long", with what to do instead)
+    const reason = cloudTimedOut(e) ? 'slow' : cloudWasAppCheck(e) ? 'check' : cloudWasBusy(e) ? 'busy' : 'down';
     const note = N.cloudFailed(reason, kept);
     const base: Card = kept ? fallback! : {
       ...(fallback ?? assemble(asked, pending, null, env.profile, env.support, 'code')),
       source: 'code', kind: 'choice', choices: [], nextPage: null, say: N.justAsk(asked),
-      blocked: reason === 'check' ? N.cloudCheckBlocked : reason === 'busy' ? N.cloudBusyBlocked : N.cloudDownBlocked,
+      blocked: reason === 'slow' ? N.cloudSlowBlocked : reason === 'check' ? N.cloudCheckBlocked : reason === 'busy' ? N.cloudBusyBlocked : N.cloudDownBlocked,
       // the question to ask again, both halves when it was two in one
       retry: pending ? `${asked} ${pending}` : asked,
       why: { proposed: null, decided: W.decidedBy.blockedCloud, kept: [], added: [], dropped: [], headline: W.headlineFrom.question },
