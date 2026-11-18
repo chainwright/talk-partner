@@ -53,6 +53,11 @@ const TEXT = [
   ['ink', 'bg', 'phase 3: the day headings of the diary, the topic filter\'s label'],
   ['muted', 'bg', 'phase 3: "Nothing entered today yet.", the line on what the diary holds'],
   ['no', 'bg', 'phase 3: "Delete the diary"'],
+  ['ink', 'panel', 'phase 4: "[Name] wants to say something", "Try the first letter", the line "[Name] started this", an answer on the doctor-visit page, a photo\'s word'],
+  ['muted', 'panel', 'phase 4: the row name, the question and the time on the doctor-visit page, the choices under a photo question'],
+  ['accent', 'panel', 'phase 4: the signs of those buttons and of the line "[Name] started this"'],
+  ['warn', 'bg', 'phase 4: "If the pain is new or strong, do not wait for the visit" under the doctor-visit page'],
+  ['no', 'bg', 'phase 4: "Delete these answers"'],
   ];
 const UI = [
   ['field', 'bg', 'the edge of every button, field and row'],

@@ -462,3 +462,62 @@
   .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) svg,
   .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo { width: 96px; height: 96px; }
 }
+
+/* ---------------------------------------------------------------- phase 4 (18 Nov 2026) */
+/* The alphabet of the first-letter helper, on the person's screen: six letters to a row, five rows that share the
+   height of the screen, so all 26 letters and the way out stand on a 390 x 844 phone (and a 320 x 568 one) without
+   scrolling. Every letter is at least 43 px wide and 56 px tall. */
+.person.full.pv.letters { height: 100dvh; min-height: 0; box-sizing: border-box; grid-template-rows: auto auto auto minmax(0, 1fr); overflow: hidden; }
+.pv .abc { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: repeat(5, minmax(56px, 1fr)); gap: 8px; min-height: 0; }
+.pv .ab { min-width: 0; padding: 0; border: 3px solid var(--ink); border-radius: 14px; background: #fff; color: var(--ink); font-family: inherit; font-size: 34px; font-weight: 800; line-height: 1; cursor: pointer; touch-action: manipulation; }
+.pv .ab.pressed { background: var(--accent-soft); }
+.pv .ab.ab-no { grid-column: span 4; font-size: 22px; font-weight: 600; border-color: var(--muted); padding: 0 8px; }
+.pv .ab:focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 359px) { .pv .abc { gap: 6px; } .pv .ab { font-size: 28px; border-width: 2px; } .pv .ab.ab-no { font-size: 18px; } }
+@media (max-height: 620px) { .person.full.pv.letters .p-do { font-size: 22px; } .person.full.pv.letters .p-ask { font-size: 20px; } .pv .abc { grid-template-rows: repeat(5, minmax(48px, 1fr)); } }
+
+/* Cards whose words are longer (the person's starters, the topic menu) and the questions about a photo: the picture
+   stands beside the word, so three choices and the way out fit under the question (and under the photo). */
+.person.full.pv.rowtiles .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no):not(.wordonly) { grid-auto-flow: column; grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: center; text-align: left; gap: 14px; min-height: 108px; padding: 8px 14px; font-size: 28px; }
+.person.full.pv.rowtiles .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) svg,
+.person.full.pv.rowtiles .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo { width: 84px; height: 84px; }
+.person.full.pv.with-photo .p-photo { width: 128px; height: 128px; justify-self: center; }
+.person.full.pv.with-photo .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no):not(.wordonly) { min-height: 84px; padding: 6px 14px; }
+.person.full.pv.with-photo .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no).wordonly { min-height: 80px; }
+.person.full.pv.with-photo .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) svg,
+.person.full.pv.with-photo .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo { width: 64px; height: 64px; }
+
+/* The carer's side */
+.simple .btn.turn-go, .simple .btn.letter-go { justify-content: flex-start; min-height: 64px; text-align: left; }
+.simple .btn.turn-go { border-color: var(--accent); }
+.simple .btn.turn-go span, .simple .btn.letter-go span { display: grid; text-align: left; line-height: 1.25; min-width: 0; }
+.simple .btn.turn-go small, .simple .btn.letter-go small { font-weight: 400; font-size: 15px; color: var(--ink); margin-top: 2px; }
+.simple .btn.turn-go .sg, .simple .btn.letter-go .sg { color: var(--accent); flex: none; }
+.simple .turn-lead { display: flex; align-items: flex-start; gap: 10px; margin: 0; font-size: 18px; line-height: 1.35; border: 2px solid var(--accent); background: var(--panel); border-radius: 16px; padding: 10px 14px; }
+.simple .turn-lead .sg { color: var(--accent); flex: none; width: 26px; height: 26px; margin-top: 2px; }
+.simple .ask-next small { display: block; font-weight: 400; font-size: 15px; color: var(--muted); margin-top: 2px; }
+
+/* Before a doctor visit: the page of the person's own answers (the part that is printed) */
+.simple .visit-page { border: 2px solid var(--field); background: var(--panel); border-radius: 16px; padding: 16px; display: grid; gap: 10px; }
+.simple .visit-page h1 { margin: 0; }
+.simple .visit-page .vp-kicker { margin: 0; font-size: 15px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.simple .visit-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.simple .visit-rows li { display: grid; gap: 2px; padding: 10px 0; border-top: 1px solid var(--line); }
+.simple .visit-rows .vr { font-size: 15px; font-weight: 600; color: var(--muted); }
+.simple .visit-rows b { font-size: 24px; line-height: 1.2; overflow-wrap: anywhere; }
+.simple .visit-rows small { font-size: 15px; color: var(--muted); }
+.simple .visit-else { margin: 0; font-size: 18px; font-weight: 700; }
+.simple .visit-foot { margin: 0; padding-top: 10px; border-top: 2px solid var(--ink); font-size: 16px; font-weight: 600; }
+@media print {
+  .simple .s-top, .simple .no-print, .update-bar { display: none !important; }
+  .simple .visit-page { border: 0; padding: 0; }
+  html, body { background: #fff !important; }
+}
+
+/* Talk about a photo */
+.simple .pt-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.simple .pt-photo { width: 100%; display: grid; justify-items: center; gap: 4px; border: 2px solid var(--field); background: var(--panel); color: var(--ink); border-radius: 14px; padding: 8px 6px; font: inherit; font-size: 17px; cursor: pointer; overflow-wrap: anywhere; min-width: 0; min-height: 44px; }
+.simple .pt-photo .photo { width: 96px; height: 96px; }
+.simple .pt-photo:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.simple .pt-one { display: grid; justify-items: center; gap: 6px; font-size: 22px; }
+.simple .pt-one .photo { width: 160px; height: 160px; }

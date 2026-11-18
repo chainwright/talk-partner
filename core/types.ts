@@ -158,6 +158,17 @@ export interface Card {
    * was offered and not taken so far, so the next level does not offer it again.
    */
   narrow?: { level: number; rejected: string[]; /** 'rules' when the model's choices were more of the same kind and the rules made the card (core/kinds.ts). */ by?: 'rules' };
+  /**
+   * A first-letter card (core/letter.ts): the person pointed to the letter their word starts with, and the card offers
+   * words that start with it. `by` says who found the words: the rules alone, or a model that added some.
+   */
+  letter?: { letter: string; rejected: string[]; by: 'rules' | 'device' | 'cloud' };
+  /** A card the person started the conversation from (core/turn.ts): the starters, or the topics as a picture menu. */
+  turn?: 'start' | 'topics';
+  /** A question of the fixed list asked before a visit to the doctor (core/visit.ts): its id. Never a model. */
+  visit?: string;
+  /** A question about one of the family's own photos (core/phototalk.ts). 'device': the on-device model named things in it. */
+  photoTalk?: 'rules' | 'device';
   /** Set when no card could be made without a step the partner has to allow (e.g. cloud consent). */
   blocked?: string | null;
   /**

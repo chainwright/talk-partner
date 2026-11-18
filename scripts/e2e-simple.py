@@ -736,6 +736,7 @@ def offline(browser, url):
     wk = text(page, '#insights')
     check('offline: the week\'s lines are counted and worded by the rules on this phone, and online wording is not offered', "Counted and worded by the app's rules on this phone. No AI, nothing sent." in wk and 'They are not medical advice and not a diagnosis.' in wk and page.locator('#ins-plainer').count() == 0, wk)
     screen_checks(page, 'offline, the diary', primary=False)
+    phase4_offline(page)
     ctx.set_offline(False)
     check('offline: no page error', not errors, '; '.join(errors))
     ctx.close()
@@ -995,6 +996,315 @@ def frank_week():
         entries.append(e)
     name = lambda d: f"{day(d):%a} {day(d).day} {day(d):%b}"
     return week, entries, name
+
+
+def miller_p4():
+    """The Miller family for phase 4: the week fixture's About them, and three of the family's photos (the fixture
+    picture under three words: a person, the dog, a place), as web/src/store.ts keeps them."""
+    week = json.load(open(FIXTURE_WEEK))
+    import base64
+    data = 'data:image/jpeg;base64,' + base64.b64encode(open(FIXTURE_PHOTO, 'rb').read()).decode()
+    photos = [{'id': f'ph{i}', 'word': w, 'data': data, 'at': 1000 + i} for i, w in enumerate(['Beth', 'Bo', 'the lake'])]
+    return week['profile'], photos
+
+
+FITS = """() => { const de = document.documentElement; const low = Math.max(0, ...[...document.querySelectorAll('#person button, #person img, #person p')].map((e) => e.getBoundingClientRect().bottom)); return { h: innerHeight, sh: de.scrollHeight, low: Math.round(low) }; }"""
+
+
+def fits(page, label):
+    """The person's screen needs no scrolling: the page is not taller than the screen, and nothing on it ends below it."""
+    page.wait_for_timeout(250)
+    m = page.evaluate(FITS)
+    check(f'{label}: fits the screen without scrolling ({m["h"]} px tall)', m['sh'] <= m['h'] and m['low'] <= m['h'], str(m))
+
+
+def tap_yes(page, label):
+    """On the person's screen: point to a choice and say Yes (the screen that follows is the caller's to wait for)."""
+    page.wait_for_selector('main.pv .pt')
+    page.locator('main.pv .pt', has_text=label).first.click()
+    page.wait_for_selector('[data-confirm=yes]')
+    page.locator('[data-confirm=yes]').click()
+
+
+def give_back(page, sel='main.simple.s-answered'):
+    page.wait_for_selector('.p-give')
+    page.locator('.p-give').click()
+    page.wait_for_selector(sel)
+
+
+def phase4(browser, url, live):
+    """Phase 4, as Carol and Frank on a 390 x 844 phone with the Miller family in About them: the first-letter helper,
+    "Frank wants to say something", "Before a doctor visit", "Talk about a photo". No "Yes" is pressed on a sheet, and
+    every request to another host is refused and counted: there must be none."""
+    host = urlparse(url).hostname
+    ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
+    outside = []
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    page = ctx.new_page()
+    errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('dialog', lambda d: d.accept())
+    profile, photos = miller_p4()
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
+    page.evaluate(KV_PUT, {'profile': profile, 'photos': photos, 'settings': {'cloudHelp': False, 'support': 'more', 'welcomed': False, 'firstCard': True, 'howFolded': True}})
+    page.reload()
+    page.wait_for_selector('main.simple.home')
+    home = text(page)
+    check('phase 4, first screen: "Frank wants to say something" stands right under the quick needs, and the two new ways in under the diary', 'Frank wants to say something' in text(page, '#turn-go') and ys(page, '#turn-go')[0][1] > ys(page, '.btn.needs')[0][1] and ys(page, '#turn-go')[0][1] < ys(page, '#topics')[0][1] and 'Before a doctor visit' in home and 'Talk about a photo' in home, home[:200])
+    screen_checks(page, 'phase 4, first screen')
+
+    # ---------------------------------------------------------------- 1. the first-letter helper
+    ask_topic(page, 'food', 'Would you like tea or coffee?')
+    answer(page, 'something else')
+    out = page.locator('#after-out button').count()
+    check('letter: after "something else" the carer is offered "Try the first letter", and still three things at most', page.locator('#after-out #letter-go').count() == 1 and out <= 3, f'{out} buttons: {text(page, "#after-out")}')
+    screen_checks(page, 'letter: after "something else"', primary=True)
+    page.locator('#letter-go').click()
+    page.wait_for_selector('main.pv.letters #abc')
+    abc = text(page, '#person')
+    check('letter: the person\'s screen asks "Do you know how the word starts?" and says "Point to the first letter", with 26 letters and "No, I don\'t know"', 'Do you know how the word starts?' in abc and 'Point to the first letter' in abc and page.locator('#abc [data-letter]').all_inner_texts() == list('ABCDEFGHIJKLMNOPQRSTUVWXYZ') and text(page, '#abc-no') == "No, I don't know")
+    boxes = ys(page, '#abc .ab')
+    rows = sorted(set(b[1] for b in boxes))
+    check('letter: six letters to a row, five rows; every letter is at least 44 x 56 px', len(rows) == 5 and [sum(1 for b in boxes if b[1] == r) for r in rows] == [6, 6, 6, 6, 3] and min(b[2] for b in boxes) >= 44 and min(b[3] for b in boxes) >= 56, f'{rows} {min(b[2] for b in boxes)}x{min(b[3] for b in boxes)}')
+    fits(page, 'letter: the alphabet at 390 x 844')
+    check('letter: no score, no count and no mark on the person\'s screen', not page.evaluate("/\\d|score|wrong|less sure|tired/i.test(document.querySelector('#person').innerText)"))
+    page.locator('[data-letter=B]').click()
+    page.wait_for_selector('main.pv .pt')
+    words = page.locator('main.pv .pt').all_inner_texts()
+    check('letter: "B" offers Beth, Bo and ginger biscuits from About them, and "something else": three choices at most', [w.strip() for w in words] == ['Beth', 'Bo', 'ginger biscuits', 'something else'], str(words))
+    check('letter: the family\'s own photos stand on the words that have one (Beth, Bo)', page.locator('main.pv .pt img.photo.own').count() == 2)
+    fits(page, 'letter: the words with B')
+    tap_yes(page, 'Bo')
+    give_back(page)
+    check('letter: the carer reads the word and what to do next; nothing was sent', text(page, '#chose-a') == 'Bo' and 'The word is: Bo. Ask a yes or no question about it next.' in text(page, '#do-now') and page.locator('#left-line').get_attribute('data-left') == 'nothing' and page.locator('#guard').count() == 0, text(page))
+    screen_checks(page, 'letter: the word')
+    # the way out of the letter card: more words, or another letter; "No, I don't know" is fine
+    page.locator('[data-act=home]').click()
+    ask_topic(page, 'food', 'Would you like tea or coffee?')
+    answer(page, 'something else')
+    page.locator('#letter-go').click()
+    page.wait_for_selector('#abc')
+    page.locator('#abc-no').click()
+    page.wait_for_selector('main.simple.home #letter-no')
+    check('letter: "No, I don\'t know" goes back to the carer with one calm line; nothing is counted', 'No first letter this time. That is fine' in text(page, '#letter-no'))
+    # pain as a word leads on at once
+    ask_topic(page, 'food', 'Would you like tea or coffee?')
+    answer(page, 'something else')
+    page.locator('#letter-go').click()
+    page.wait_for_selector('#abc')
+    page.locator('[data-letter=P]').click()
+    page.wait_for_selector('main.pv .pt')
+    pw = [w.strip() for w in page.locator('main.pv .pt').all_inner_texts()]
+    tap_yes(page, 'pain')
+    give_back(page)
+    check('letter, safety: "pain" as the word leads straight to "Where does it hurt?", with the line about the nurse or doctor, and no "may be tired" line', pw[0] == 'porridge' and 'pain' in pw and page.locator('#next-q').get_attribute('data-q') == 'Where does it hurt?' and page.locator('#guard').count() == 0 and 'tired' not in text(page).lower(), f'{pw} {text(page)}')
+    # a letter no word of About them starts with, on a phone (no model in the browser): nothing is sent without a yes
+    page.locator('[data-act=home]').click()
+    ask_topic(page, 'food', 'Would you like tea or coffee?')
+    answer(page, 'something else')
+    page.locator('#letter-go').click()
+    page.wait_for_selector('#abc')
+    page.locator('[data-letter=X]').click()
+    page.wait_for_selector('main.simple.nocard')
+    if page.locator('#sheet').count():
+        sheet = text(page, '#sheet')
+        line = text(page, '#sheet-line')
+        check('letter: with no word for "X" the sheet comes up before anything is sent, in plain words first, and shows the one line that would go', sheet.startswith('Ask online help for words?') and line == 'Would you like tea or coffee? They cannot say the word. It starts with the letter "X".' and 'Never sent: Names, photos, the answers so far, and everything in About them.' in sheet, sheet[:300])
+        whole = page.locator('#sheet-whole pre').inner_text()
+        check('letter: the whole request holds the question and the letter, and nothing of About them', 'PREFER_IN_CLOUD' in whole and 'letter \\"X\\"' in whole and not page.evaluate("/\\b(?:Frank|Carol|Beth|Tom|Bo|ginger|porridge|lake|did not want)\\b/.test(document.querySelector('#sheet-whole pre').textContent)"), whole[:200])
+        screen_checks(page, 'letter: the sheet', primary=True)
+        page.locator('[data-act=sheet-no]').click()
+        page.wait_for_selector('#sheet', state='detached')
+    else:
+        print('NOTE  letter: this copy has no online help set up, so no sheet is offered for "X"')
+    check('letter: after "No" the carer\'s screen says there is no such word in About them, and offers another letter', 'No word that starts with X is in About them yet.' in text(page) and page.locator('#letter-go').count() == 1, text(page)[:300])
+    # from "We're stuck"
+    page.locator('[data-act=home]').click()
+    ask_topic(page, 'food', 'Would you like tea or coffee?')
+    page.locator('[data-act=stuck]').first.click()
+    page.wait_for_selector('#letter-go')
+    check('letter: "We\'re stuck" offers the first letter too', page.locator('main.simple.card #letter-go').count() == 1)
+
+    # ---------------------------------------------------------------- 2. "Frank wants to say something"
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    page.locator('#turn-go').click()
+    page.wait_for_selector('main.pv .pt')
+    st = [w.strip() for w in page.locator('main.pv .pt').all_inner_texts()]
+    check('his turn: the person\'s screen opens with three starters and "something else"', st == ['I need something', 'I want to tell you something', 'I feel…', 'something else'], str(st))
+    fits(page, 'his turn: the starters')
+    tap_yes(page, 'I need something')
+    page.wait_for_selector('main.pv[data-kind=needs] .pt')
+    check('his turn: "I need something" leads to the needs board, still on the person\'s screen', page.locator('main.pv[data-kind=needs] .pt').count() == 9)
+    tap_yes(page, 'pain')
+    give_back(page)
+    lead = text(page, '#turn-lead')
+    check('his turn: the carer reads "Frank started this: something is needed." over the need; pain keeps its own next step, and no "may be tired" line', lead == 'Frank started this: something is needed.' and 'Where does it hurt?' in text(page) and page.locator('#guard').count() == 0, text(page)[:300])
+    screen_checks(page, 'his turn: after a need', primary=False)
+    page.locator('[data-act=home]').click()
+    page.locator('#turn-go').click()
+    tap_yes(page, 'tell you something')
+    page.wait_for_selector('main.pv .pt >> text=People')
+    m1 = [w.strip() for w in page.locator('main.pv .pt').all_inner_texts()]
+    fits(page, 'his turn: the topics, first screen')
+    page.locator('main.pv .pt.esc').click()
+    page.wait_for_selector('main.pv .pt >> text=Body')
+    m2 = [w.strip() for w in page.locator('main.pv .pt').all_inner_texts()]
+    check('his turn: "I want to tell you something" leads to the topics as pictures, three to a screen, "something else" leading to the next three', m1 == ['People & family', 'Today & plans', 'TV, music & hobbies', 'something else'] and m2 == ['Food & drink', 'Body & care', 'Rest & sleep', 'something else'] and page.locator('main.pv .pt:not(.esc) svg').count() == 3, f'{m1} {m2}')
+    hold_exit(page)
+    page.wait_for_timeout(900)
+    page.locator('[data-act=home]').click()
+    page.locator('#turn-go').click()
+    tap_yes(page, 'tell you something')
+    tap_yes(page, 'People')
+    give_back(page)
+    lead = text(page, '#turn-lead')
+    asks = nexts(page)
+    check('his turn: the carer reads who started and what it is about, with three questions to ask (the family\'s own first)', lead == 'Frank started this: there is something to tell you. It is about: People & family.' and asks == ['Would you like to see Beth?', 'Would you like to call Beth?', 'Would you like to call Tom?'], f'{lead} {asks}')
+    screen_checks(page, 'his turn: after a topic')
+    page.locator('[data-act=home]').click()
+    page.locator('#turn-go').click()
+    tap_yes(page, 'I feel')
+    page.wait_for_selector('main.pv[data-kind=feeling] .pt')
+    fits(page, 'his turn: the feelings card')
+    feel = page.locator('main.pv .pt:not(.esc)').first.inner_text().strip()
+    tap_yes(page, feel)
+    give_back(page)
+    check('his turn: "I feel…" leads to the feelings card, and the carer reads that it is about a feeling', text(page, '#turn-lead') == 'Frank started this: it is about a feeling.' and text(page, '#chose-q') == 'How are you feeling today?', text(page)[:200])
+
+    # ---------------------------------------------------------------- 3. before a doctor visit
+    page.locator('[data-act=home]').click()
+    page.locator('#visit-link').click()
+    page.wait_for_selector('main.visit #visit-start')
+    intro = text(page)
+    check('visit: the carer\'s screen says what it is, that the list is fixed with no AI, and that the answers stay on this device', 'The questions are a fixed list. No AI writes or changes them, and no AI reads the answers.' in intro and 'The answers stay on this device. Nothing is sent.' in intro and 'Up to 8 questions.' in intro, intro)
+    screen_checks(page, 'visit: before the first question')
+    page.locator('#visit-start').click()
+    asked = []
+    for label in ['no', 'well', 'so-so']:
+        page.wait_for_selector('main.pv .pt')
+        asked.append(text(page, '#person .p-ask'))
+        fits(page, f'visit: "{asked[-1]}"')
+        tap_yes(page, label)
+        page.wait_for_timeout(300)
+    hold_exit(page)
+    page.wait_for_selector('main.visit #visit-page')
+    part = text(page)
+    check('visit: pain "no" skips the two pain questions; stopped half-way, the page says how far it got and offers to go on', asked == ['Are you in pain?', 'How have you been sleeping?', 'How is your appetite?'] and '3 of 6 questions were answered.' in part and page.locator('#visit-resume').count() == 1, f'{asked} {part[:200]}')
+    page.locator('#visit-resume').click()
+    for label in ['low', 'nothing much']:
+        tap_yes(page, label)
+        page.wait_for_timeout(300)
+    page.wait_for_selector('main.pv .pt >> text=my speech')
+    page.locator('main.pv .pt.esc').click()
+    page.wait_for_selector('main.pv .pt >> text=driving')
+    page.locator('main.pv .pt.esc').click()
+    page.wait_for_selector('[data-confirm=yes]')
+    page.locator('[data-confirm=yes]').click()
+    give_back(page, 'main.visit #visit-page')
+    pg1 = text(page, '#visit-page')
+    check('visit: the page has his six answers as given, the date, "something else" asking for time, and the fixed footer', page.locator('#visit-rows li').count() == 6 and "Frank's own answers" in pg1 and 'Answered at home, with a family member\'s help, on' in pg1 and 'There is something else, not on the list. Please give time for it.' in pg1 and pg1.endswith("Frank's answers, in Frank's own words where possible. Not a medical record.") and [x.strip() for x in page.locator('#visit-rows b').all_inner_texts()] == ['no', 'well', 'so-so', 'low', 'nothing much', 'something else'], pg1)
+    check('visit: with no pain there is no pain line; nothing is marked "less sure"', page.locator('#visit-safety').count() == 0 and 'less sure' not in text(page))
+    # again, with pain: where and how bad are asked; the worst case stands as given
+    page.locator('#visit-again').click()
+    tap_yes(page, 'yes')
+    page.wait_for_selector('main.pv[data-kind=body] .pt')
+    page.locator('main.pv .pt:not(.esc)').first.click()
+    page.wait_for_timeout(300)
+    where = page.locator('main.pv .pt:not(.esc)').first.inner_text().strip()
+    tap_yes(page, where)
+    page.wait_for_selector('main.pv .pt >> text=very bad')
+    fits(page, 'visit: "How bad is the pain?"')
+    for label in ['very bad', 'badly', 'poor', 'low', 'my body', 'my tablets']:
+        tap_yes(page, label)
+        page.wait_for_timeout(300)
+    give_back(page, 'main.visit #visit-page')
+    got = [x.strip() for x in page.locator('#visit-rows b').all_inner_texts()]
+    allp = text(page)
+    check('visit, safety (pain yes, very bad, mood low): all eight answers stand exactly as given; outside the page the carer is told not to wait for the visit; no line says tired, later or less sure', got == ['yes', where, 'very bad', 'badly', 'poor', 'low', 'my body', 'my tablets'] and 'If the pain is new or strong, do not wait for the visit: call the nurse or doctor.' in text(page, '#visit-safety') and not any(w in allp.lower() for w in ['less sure', 'may be tired', 'try again later']) and page.locator('#guard').count() == 0, f'{got} {allp[-300:]}')
+    screen_checks(page, 'visit: the page')
+    kept = page.evaluate(KV_GET, 'visit')
+    page.reload()
+    page.wait_for_selector('main.visit #visit-page')
+    hist = page.evaluate(KV_GET, 'history') or []
+    dia = page.evaluate(KV_GET, 'diary') or []
+    check('visit: the answers are kept on this device under their own key, survive a reload, and are in neither the history nor the diary', len(kept['answers']) == 8 and page.locator('#visit-rows li').count() == 8 and not any('appetite' in h['q'] or 'sleeping' in h['q'] or 'ask the doctor' in h['q'] for h in hist) and not any('appetite' in (d.get('q') or '') for d in dia), f'{len(hist)} {len(dia)}')
+    page.locator('#visit-del').click()
+    page.wait_for_selector('#visit-start')
+    check('visit: "Delete these answers" removes them', not page.evaluate(KV_GET, 'visit'))
+
+    # ---------------------------------------------------------------- 4. talk about a photo
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    page.locator('#phototalk-link').click()
+    page.wait_for_selector('#pt-grid')
+    check('photo: the carer picks one of the family\'s photos; the screen says no photo is ever sent, and that it is not a test', page.locator('.pt-photo').count() == 3 and 'The photos stay on this device. No photo is ever sent anywhere.' in text(page) and 'Not a test: nobody is asked who or what it is.' in text(page))
+    screen_checks(page, 'photo: pick a photo', primary=False)
+    page.locator('.pt-photo', has_text='Beth').click()
+    page.wait_for_selector('#pt-questions')
+    qs = [x.split('\n')[0].strip() for x in page.locator('[data-act=pt-ask]').all_inner_texts()]
+    check('photo: on a phone the three questions are the rules\', from the photo\'s word and About them; no AI is offered a look, and the screen says so', qs == ['Would you like to call Beth?', 'How does this photo make you feel?', 'Shall we show this photo to Tom?'] and page.locator('#pt-look').count() == 0 and text(page, '#pt-by') == "Made by the rules, from the photo's word and About them. No AI looked at the photo.", f'{qs} {text(page, "#pt-by")}')
+    check('photo: never a test question', not any(w in ' '.join(qs).lower() for w in ['who is', 'what is', 'remember']))
+    screen_checks(page, 'photo: the questions', primary=False)
+    page.locator('[data-act=pt-ask]').nth(1).click()
+    page.wait_for_selector('main.simple.card')
+    check('photo: the question is a card made by the rules; nothing was sent', page.locator('#made-where').get_attribute('data-maker') == 'code' and page.locator('#made-where').get_attribute('data-left') == 'nothing')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv.with-photo .pt')
+    ch = [w.strip() for w in page.locator('main.pv .pt').all_inner_texts()]
+    check('photo: the person sees the photo over the question, three choices and "something else"', page.locator('#p-photo').count() == 1 and ch == ['good', 'mixed', 'sad', 'something else'] and min(ys(page, '#p-photo')[0][2:]) >= 110, str(ch))
+    fits(page, 'photo: the photo, three choices and the way out')
+    tap_yes(page, 'good')
+    give_back(page)
+    check('photo: after the answer the carer can go back to the questions about this photo', page.locator('#pt-back').count() == 1 and text(page, '#chose-a') == 'Good')
+    page.locator('#pt-back').click()
+    page.wait_for_selector('#pt-questions')
+    page.locator('[data-act=pt-ask]').nth(0).click()
+    page.wait_for_selector('main.simple.card')
+    answer(page, 'yes')
+    check('photo: "Would you like to call Beth?" yes ends with what to do now', 'Call Beth now, together.' in text(page), text(page)[:200])
+
+    check('phase 4: nothing was asked of any other host in the whole run', not outside, '; '.join(outside[:4]))
+    check('phase 4: no page error', not errors, '; '.join(errors))
+    ctx.close()
+
+
+def phase4_offline(page):
+    """With the connection off (inside the offline run): the person starts, a doctor-visit question, the first letter."""
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    page.locator('#turn-go').click()
+    tap_yes(page, 'I need something')
+    page.wait_for_selector('main.pv[data-kind=needs] .pt')
+    tap_yes(page, 'drink')
+    give_back(page)
+    check('offline: the person starts ("I need something" -> the needs board -> drink), and the carer reads who started', 'started this: something is needed.' in text(page, '#turn-lead'))
+    page.locator('[data-act=home]').click()
+    ask_topic(page, 'food', 'tea or coffee')
+    answer(page, 'something else')
+    page.locator('#letter-go').click()
+    page.wait_for_selector('#abc')
+    page.locator('[data-letter=T]').click()
+    page.wait_for_selector('main.pv .pt')
+    tw = [w.strip() for w in page.locator('main.pv .pt').all_inner_texts()]
+    check('offline: the first letter works with no connection: "T" offers everyday words by the rules (never the refused tea)', tw[-1] == 'something else' and 'tea' not in tw and len(tw) >= 3, str(tw))
+    hold_exit(page)
+    page.wait_for_timeout(900)
+    page.locator('[data-act=home]').click()
+    page.locator('#visit-link').click()
+    page.wait_for_selector('#visit-start')
+    page.locator('#visit-start').click()
+    tap_yes(page, 'no')
+    tap_yes(page, 'well')
+    page.wait_for_timeout(300)
+    hold_exit(page)
+    page.wait_for_selector('main.visit #visit-page')
+    check('offline: the doctor-visit questions and their page work with no connection', page.locator('#visit-rows li').count() == 2)
+    page.locator('[data-act=home]').click()
+    page.locator('#phototalk-link').click()
+    page.wait_for_selector('main.phototalk')
+    check('offline: "Talk about a photo" opens with no connection', 'The photos stay on this device.' in text(page))
 
 
 def diary(browser, url, live):
@@ -1347,6 +1657,7 @@ def main():
         learning(browser, url)
         photos(browser, url)
         diary(browser, url, a.live)
+        phase4(browser, url, a.live)
         if a.dev:
             print('SKIP  offline: --dev (the dev server has no service worker; run against a production build)')
         else:

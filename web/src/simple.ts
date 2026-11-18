@@ -70,6 +70,8 @@ export interface HomeModel {
   voiceHtml: string;
   /** The way into the diary (web/src/diary.ts), drawn by main.ts: under the questions. '' where there is none. */
   diaryHtml?: string;
+  /** The button "[Name] wants to say something" (web/src/phase4.ts), drawn by main.ts: under the quick needs. */
+  turnHtml?: string;
 }
 
 /**
@@ -124,6 +126,7 @@ export function homeScreen(m: HomeModel): string {
   <div class="col">
     <h1 id="hope">${esc(S.hope(m.name))}</h1>
     <button type="button" class="btn needs" data-act="needs">${SIGN.grid}<span><b>${S.needs}</b><small>${S.needsSub}</small></span></button>
+    ${m.turnHtml ?? ''}
     ${howBlock(m.name, m.howOpen)}
   </div>
   <div class="col">
@@ -261,6 +264,8 @@ export interface CardModel {
   usual?: string;
   /** The answer-reliability guard's line for the carer (web/src/diary.ts, guardBlock): '' when nothing was noticed. Never on the person's screen. */
   guardHtml?: string;
+  /** More for the carer on this screen, drawn by main.ts (web/src/phase4.ts): the way to the first-letter helper, who found a first-letter card's words. */
+  extraHtml?: string;
 }
 
 /** Where this card was made: on the screen itself, under the card, never only behind a link. */
@@ -305,7 +310,7 @@ export function cardScreen(m: CardModel): string {
          ${m.canAskOnline && !m.offline ? `<button type="button" class="btn" data-act="sheet">${S.useOnline}</button>` : ''}
          <p class="tip">${S.askChoice}</p>`;
     return `<main class="simple wrap one nocard" data-screen="nocard">${back}
-  <div class="col">${coach}${body}${primary}${rest}${madeBlock(m.made)}</div>${foot}</main>`;
+  <div class="col">${coach}${body}${m.extraHtml ?? ''}${primary}${rest}${madeBlock(m.made)}</div>${foot}</main>`;
   }
 
   const say = m.recap || m.recapDone ? `${COPY.person.recapLine} ${m.recapText}` : m.less ? c.asked : c.say;
@@ -325,6 +330,7 @@ export function cardScreen(m: CardModel): string {
   </div>
   <div class="c-card"><p class="steplabel muted">${esc(S.preview(m.name))}</p>
     <section id="person" class="person mini pv" aria-label="${esc(S.preview(m.name))}" data-kind="${c.kind}">${m.personHtml}</section>
+    ${m.extraHtml ?? ''}
     ${rest}
     ${safety}
     ${m.recap || m.recapDone ? shortBlock(m.short ?? null) : ''}
@@ -374,6 +380,10 @@ export interface AnsweredModel {
   privacy: string[];
   /** The answer-reliability guard's line for the carer (web/src/diary.ts, guardBlock): '' when nothing was noticed. */
   guardHtml?: string;
+  /** The person started this conversation (web/src/phase4.ts, turnLine): the line over the answer. */
+  leadHtml?: string;
+  /** After the way out: the first-letter helper's button or buttons (web/src/phase4.ts), drawn by main.ts. */
+  outExtra?: string;
 }
 
 /** They answered: what they chose, "Ask another question" as the main button, and the next step where there is one. */
@@ -394,11 +404,12 @@ export function answeredScreen(m: AnsweredModel): string {
       <p class="tip" id="narrow-where">${esc(S.narrow[m.narrow])}</p>` : '';
   // (18 Nov, the role-play: six things to press were too many for a tired carer. Three stay on the screen: the next
   // question, the AI's broader choices, and "Ask them to show or write it"; the rest is under "More".)
+  // (18 Nov, phase 4: the first-letter helper joins them. Still three at most on the screen, in this order; what does not fit is the first thing under "More".)
+  const showWrite = `<button type="button" class="btn" id="show-write" data-act="stuck">${S.out.showWrite}</button>`;
+  const ways = [nextBtn, narrow, m.outExtra ?? '', showWrite].filter(Boolean);
   const outBlock = m.out ? `<div class="next-steps" id="after-out"><p class="steplabel">${S.out.heading}</p>
-      ${nextBtn}
-      ${narrow}${m.narrowLast ? `<p class="tip">${S.narrow.last} ${esc(S.out.show)}</p>` : ''}
-      <button type="button" class="btn" id="show-write" data-act="stuck">${S.out.showWrite}</button></div>` : '';
-  const outMore = m.out ? `<div class="next-steps" id="out-more">${m.narrowLast ? '' : `<p class="tip">${esc(m.label === 'not sure' ? S.out.notSure : S.out.show)}</p>`}
+      ${ways.slice(0, 3).join('\n')}${m.narrowLast ? `<p class="tip">${S.narrow.last} ${esc(S.out.show)}</p>` : ''}</div>` : '';
+  const outMore = m.out ? `<div class="next-steps" id="out-more">${ways.slice(3).join('')}${m.narrowLast ? '' : `<p class="tip">${esc(m.label === 'not sure' ? S.out.notSure : S.out.show)}</p>`}
       ${m.tryNext && !tryMain ? qBtn(m.tryNext, S.out.tryNext(m.tryNext)) : ''}
       <button type="button" class="btn" data-act="needs">${S.out.needs}</button>
       <button type="button" class="btn" data-act="own">${S.out.own}</button></div>` : '';
@@ -414,6 +425,7 @@ export function answeredScreen(m: AnsweredModel): string {
   return `<main class="simple wrap s-answered" data-screen="answered">
   ${navBar({ back: true })}
   <div class="col">
+    ${m.leadHtml ?? ''}
     <div class="chose${m.out ? ' out' : ''}" id="chose" role="status">${m.out ? SIGN.out : SIGN.tick}<div>${m.question ? `<span class="asked" id="chose-q">${esc(m.question)}</span>` : `<span class="muted small">${esc(S.choseNeed(m.name))}</span>`}<b id="chose-a">${esc(big)}</b></div></div>
     ${m.guardHtml ?? ''}
     ${m.afterHtml}

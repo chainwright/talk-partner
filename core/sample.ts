@@ -13,7 +13,8 @@ export const SAMPLE_PROFILE: Profile = {
   places: ['the lake', 'church', 'hardware store'],
   tv: ['Wheel of Fortune', 'Packers games'],
   music: ['Johnny Cash'],
-  other: [],
+  // (18 Nov, phase 4: the dog, for the first-letter helper: "B" then offers Bo)
+  other: ['Bo (dog)'],
 };
 
 /** Which of the judge-mode chip groups a question sits in (labels in core/copy.ts, `judge.groups`). */

@@ -45,7 +45,8 @@ import { initializeApp } from 'firebase/app';
 import {
   getAI, getGenerativeModel, GoogleAIBackend, InferenceMode, InferenceSource, type GenerativeModel,
 } from 'firebase/ai';
-import type { AudioClip, DeviceStatus, Engine, ModelResult } from '../../../core/engine';
+import type { AudioClip, DeviceStatus, Engine, ImageClip, ModelResult } from '../../../core/engine';
+import { LOOK_PROMPT, LOOK_SCHEMA, LOOK_SYSTEM_PROMPT } from '../../../core/phototalk';
 import { CLOUD_TEXT_MODEL } from '../../../core/models';
 import { SUMMARY_SCHEMA, SUMMARY_SYSTEM_PROMPT } from '../../../core/summary';
 import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, SYSTEM_PROMPT, TRANSCRIBE_PROMPT, TRANSCRIBE_SCHEMA, TRANSCRIBE_SYSTEM_PROMPT, cloudPrompt } from '../../../core/prompt';
@@ -66,7 +67,7 @@ const sys = (text: string) => [{ role: 'system' as const, content: [{ type: 'tex
  * One console line per answered model call: which leg, its mode, and the SDK's own `inferenceSource` value as it came
  * back. No prompt and no answer text is logged. The run logs in devlog/ quote these lines.
  */
-function report(leg: 'private' | 'stripped' | 'voice' | 'summary' | 'reword', mode: string, inferenceSource: unknown, ms: number) {
+function report(leg: 'private' | 'stripped' | 'voice' | 'summary' | 'reword' | 'look', mode: string, inferenceSource: unknown, ms: number) {
   console.info(`[ai-logic] leg=${leg} mode=${mode} inferenceSource=${String(inferenceSource)} ms=${ms}`);
 }
 
@@ -80,6 +81,7 @@ export class FirebaseEngine implements Engine {
   private summaryModel: GenerativeModel | null = null;
   private rewordLocal: GenerativeModel | null = null;
   private rewordOnline: GenerativeModel | null = null;
+  private lookLocal: GenerativeModel | null = null;
   private localAi: ReturnType<typeof getAI> | null = null;
   /** The cloud text model in use: the in-code default until Remote Config gives a checked name (core/models.ts). */
   private textModel = CLOUD_TEXT_MODEL;
@@ -267,6 +269,28 @@ export class FirebaseEngine implements Engine {
   }
 
   /**
+   * "Talk about a photo" (core/phototalk.ts): one of the family's photos and a fixed instruction, ONLY_ON_DEVICE on
+   * the no-App-Check app. The SDK's on-device step takes a JPEG or PNG as inline data and hands the browser's model a
+   * picture. No cloud model is named for this call, and anything but an on-device answer is an error: a family photo
+   * has no cloud path.
+   */
+  async lookDevice(image: ImageClip): Promise<ModelResult> {
+    this.lookLocal ??= getGenerativeModel(this.local, {
+      mode: InferenceMode.ONLY_ON_DEVICE,
+      onDeviceParams: {
+        createOptions: { expectedInputs: [{ type: 'text' as const, languages: ['en'] }, { type: 'image' as const }], expectedOutputs: IO.expectedOutputs, initialPrompts: sys(LOOK_SYSTEM_PROMPT) },
+        promptOptions: { responseConstraint: LOOK_SCHEMA },
+      },
+    });
+    const t0 = performance.now();
+    const r = await this.lookLocal.generateContent([{ type: 'inlineData', inlineData: { mimeType: image.mimeType, data: image.base64 } }, LOOK_PROMPT]);
+    if (r.response.inferenceSource !== InferenceSource.ON_DEVICE) throw new Error("the photo step didn't run on this computer");
+    const ms = Math.round(performance.now() - t0);
+    report('look', 'ONLY_ON_DEVICE', r.response.inferenceSource, ms);
+    return { text: r.response.text(), source: 'on-device', ms };
+  }
+
+  /**
    * The same wording step by the cloud model (PREFER_IN_CLOUD, the default app with App Check). The caller has shown
    * this exact text on a sheet and got a yes (web/src/main.ts). The source is what the SDK reports, never assumed.
    */
@@ -319,6 +343,7 @@ export class LazyFirebaseEngine implements Engine {
   runDevice(prompt: string) { return this.e.runDevice(prompt); }
   summarizeDevice(prompt: string) { return this.e.summarizeDevice(prompt); }
   rewordDevice(prompt: string) { return this.e.rewordDevice(prompt); }
+  lookDevice(image: ImageClip) { return this.e.lookDevice(image); }
   rewordRequest(text: string) { return rewordRequest(text, this.textModel); }
   rewordCloud(text: string) { return this.e.rewordCloud(text); }
   cloudRequest(strippedQuestion: string) { return cloudTextRequest(strippedQuestion, this.textModel); }

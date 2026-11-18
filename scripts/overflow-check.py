@@ -458,6 +458,141 @@ def phase3(url, width, browser):
     ctx.close()
 
 
+def phase4(url, width, browser):
+    """Phase 4 with a long name and long words in About them: the alphabet (all of it on the screen, at the phone's
+    own height), the words after a letter, the person's starters and the topic menu, the doctor-visit questions and
+    their page, "Talk about a photo" and the photo over a question. The person's screens must also need no scrolling."""
+    import base64
+    tall = {320: 568, 360: 740, 390: 844, 412: 915}.get(width, 844)
+    host = urlparse(url).hostname
+    ctx = browser.new_context(viewport={'width': width, 'height': tall}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA)
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else r.abort())
+    page = ctx.new_page()
+    page.on('dialog', lambda d: d.accept())
+    data = 'data:image/jpeg;base64,' + base64.b64encode(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tests', 'fixtures', 'photo-mug.jpg'), 'rb').read()).decode()
+    profile = {'personName': 'Maximilian-Alexander', 'partnerName': 'Carol', 'people': [{'id': 'p2', 'name': 'Bartholomew-Christopher', 'relation': 'son', 'household': False}, {'id': 'p3', 'name': 'Beth', 'relation': 'daughter', 'household': False}], 'foods': ['blackcurrant and apple crumble', 'porridge'], 'places': ['the botanical gardens'], 'tv': [], 'music': [], 'other': ['Bo (dog)']}
+    photos = [{'id': f'ph{i}', 'word': w, 'data': data, 'at': 1000 + i} for i, w in enumerate(['Bartholomew-Christopher', 'the botanical gardens', 'Bo'])]
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
+    page.evaluate(KV_PUT, {'profile': profile, 'photos': photos, 'settings': {'cloudHelp': False, 'support': 'more', 'welcomed': False, 'firstCard': True, 'howFolded': True}})
+    page.reload()
+    page.wait_for_selector('main.simple.home')
+
+    def fits(name):
+        m = page.evaluate("() => ({ h: innerHeight, sh: document.documentElement.scrollHeight, low: Math.round(Math.max(0, ...[...document.querySelectorAll('#person button, #person img, #person p')].map((e) => e.getBoundingClientRect().bottom))) })")
+        named(m['sh'] <= m['h'] and m['low'] <= m['h'], width, f'{name}: needs no scrolling at {width} x {tall}', str(m))
+
+    def yes(label):
+        page.wait_for_selector('main.pv .pt')
+        page.locator('main.pv .pt', has_text=label).first.click()
+        page.wait_for_selector('[data-confirm=yes]')
+        page.locator('[data-confirm=yes]').click()
+
+    check(page, width, 'phase 4: first screen, "[long name] wants to say something" and the two new ways in')
+    # the first letter
+    page.locator('.topic[data-topic=food]').click()
+    page.locator('.tq', has_text='tea or coffee').click()
+    page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=show]').click()
+    yes('something else')
+    page.locator('.p-give').click()
+    page.wait_for_selector('#letter-go')
+    check(page, width, 'phase 4: after "something else", with "Try the first letter"')
+    page.locator('#letter-go').click()
+    page.wait_for_selector('#abc')
+    check(page, width, "phase 4: the person's alphabet")
+    fits("phase 4: the person's alphabet (26 letters and the way out)")
+    small = page.evaluate("[...document.querySelectorAll('#abc .ab')].filter((e) => { const r = e.getBoundingClientRect(); return r.width < 40 || r.height < 44; }).length")
+    named(small == 0, width, 'phase 4: every letter is at least 40 x 44 px', str(small))
+    page.locator('[data-letter=B]').click()
+    page.wait_for_selector('main.pv .pt')
+    check(page, width, "phase 4: the person's words after a letter (long words, photos)")
+    if tall >= 844:
+        fits("phase 4: the words after a letter")
+    yes('Bo')
+    page.locator('.p-give').click()
+    page.wait_for_selector('main.simple.s-answered')
+    check(page, width, 'phase 4: the carer reads the word')
+    page.locator('[data-act=home]').click()
+    page.locator('.topic[data-topic=food]').click() if not page.locator('.tq', has_text='tea or coffee').count() else None
+    page.locator('.tq', has_text='tea or coffee').click()
+    page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=show]').click()
+    yes('something else')
+    page.locator('.p-give').click()
+    page.locator('#letter-go').click()
+    page.wait_for_selector('#abc')
+    page.locator('[data-letter=X]').click()
+    page.wait_for_selector('main.simple.nocard')
+    if page.locator('#sheet').count():
+        check(page, width, 'phase 4: the sheet before the letter and the question go to online help')
+        page.locator('#sheet-whole summary').click()
+        check(page, width, 'phase 4: that sheet, the whole request open')
+        page.locator('[data-act=sheet-no]').click()
+    check(page, width, 'phase 4: no word for the letter')
+    # the person starts
+    page.locator('[data-act=home]').click()
+    page.locator('#turn-go').click()
+    page.wait_for_selector('main.pv .pt')
+    check(page, width, "phase 4: the person's starters")
+    if tall >= 740:
+        fits("phase 4: the person's starters")
+    yes('tell you something')
+    page.wait_for_selector('main.pv .pt >> text=People')
+    check(page, width, "phase 4: the topics as a picture menu")
+    if tall >= 740:
+        fits('phase 4: the topics as a picture menu')
+    yes('People')
+    page.locator('.p-give').click()
+    page.wait_for_selector('#turn-lead')
+    check(page, width, 'phase 4: the carer reads who started (long name), with three questions')
+    # before a doctor visit
+    page.locator('[data-act=home]').click()
+    page.locator('#visit-link').click()
+    page.wait_for_selector('#visit-start')
+    check(page, width, 'phase 4: before a doctor visit, the first screen')
+    page.locator('#visit-start').click()
+    yes('yes')
+    page.wait_for_selector('main.pv[data-kind=body] .pt')
+    page.locator('main.pv .pt:not(.esc)').first.click()
+    page.wait_for_timeout(300)
+    yes(page.locator('main.pv .pt:not(.esc)').first.inner_text().strip())
+    page.wait_for_selector('main.pv .pt >> text=very bad')
+    check(page, width, "phase 4: a doctor-visit question on the person's screen (three choices and not sure)")
+    for label in ['very bad', 'badly', 'poor', 'low']:
+        yes(label)
+        page.wait_for_timeout(250)
+    page.wait_for_selector('main.pv .pt >> text=nothing much')
+    check(page, width, "phase 4: \"What worries you most?\"")
+    if tall >= 740:
+        fits('phase 4: "What worries you most?"')
+    yes('nothing much')
+    page.wait_for_selector('main.pv .pt >> text=getting stronger')
+    check(page, width, "phase 4: \"What do you want to ask the doctor?\"")
+    yes('getting stronger')
+    page.wait_for_selector('.p-give')
+    check(page, width, "phase 4: the end of the doctor-visit questions")
+    page.locator('.p-give').click()
+    page.wait_for_selector('#visit-page')
+    check(page, width, 'phase 4: the page of answers (long name), with the pain line and the buttons')
+    # talk about a photo
+    page.locator('[data-act=home]').click()
+    page.locator('#phototalk-link').click()
+    page.wait_for_selector('#pt-grid')
+    check(page, width, 'phase 4: talk about a photo, the photos (long words)')
+    page.locator('.pt-photo', has_text='Bo').first.click()
+    page.wait_for_selector('#pt-questions')
+    check(page, width, 'phase 4: talk about a photo, the questions')
+    page.locator('[data-act=pt-ask]').nth(1).click()
+    page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv.with-photo .pt')
+    check(page, width, "phase 4: the photo over the question on the person's screen")
+    if tall >= 844:
+        fits('phase 4: the photo, three choices and the way out')
+    ctx.close()
+
+
 def run(url, width, browser):
     ctx = context(url, width, browser)
     page = ctx.new_page()
@@ -522,10 +657,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--url', default='http://localhost:5179/')
     ap.add_argument('--widths', default='320,360,390,412')
+    ap.add_argument('--only', default='', help="'phase4': only the phase 4 screens")
     a = ap.parse_args()
     with sync_playwright() as p:
         browser = p.chromium.launch()
         for w in (int(x) for x in a.widths.split(',')):
+            if a.only in ('', 'phase4'):
+                phase4(a.url, w, browser)
+            if a.only:
+                continue
             simple(a.url, w, browser)
             phase3(a.url, w, browser)
             if w >= 360:

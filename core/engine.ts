@@ -53,6 +53,12 @@ export interface Engine {
   rewordCloud?(text: string): Promise<ModelResult>;
   /** The exact request body `rewordCloud` would send for this text. */
   rewordRequest?(text: string): unknown;
+  /**
+   * Optional: "Talk about a photo" (core/phototalk.ts). One of the family's own photos and a fixed instruction, ONLY
+   * on device: the model names things it sees. There is no cloud form of this call, in any mode; it throws rather than
+   * fall back, and an engine without it (a phone, a copy with no project settings) gets the rules' questions alone.
+   */
+  lookDevice?(image: ImageClip): Promise<ModelResult>;
   /** Optional: use this cloud text model from the next cloud call on (a name Remote Config gave, already checked). */
   setCloudModel?(model: string): void;
   /** The exact request body the cloud step would send for this stripped question. */
@@ -79,6 +85,9 @@ export function within<T>(call: Promise<T>, ms: number = CLOUD_WAIT_MS): Promise
     call.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e as Error); });
   });
 }
+
+/** A picture as it is handed to the SDK's on-device step: base64 of a JPEG or PNG. */
+export interface ImageClip { mimeType: 'image/jpeg' | 'image/png'; base64: string }
 
 /** A short recording as it is handed to the SDK: base64 of a WAV file. */
 export interface AudioClip { mimeType: string; base64: string }

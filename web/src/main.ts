@@ -44,6 +44,12 @@ import { fetchSettings } from './ai/remoteConfig';
 import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile } from './pictos';
 import { aboutSimple, answeredScreen, cardScreen, consentSheet, frameStyle, homeScreen, personSimple, photoSheet, shortBlock, type AboutRow } from './simple';
 import { kvClear, kvGet, kvSet } from './store';
+import { P4 } from '../../core/copy4';
+import { letterCard, letterEnd, type LetterInput } from '../../core/letter';
+import { checkedThings, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
+import { FEEL_QUESTION, menuTopic, starterOf, topicMenu, turnCard, turnLead, type Starter } from '../../core/turn';
+import { nextVisit, visitCard, visitText, type VisitRecord } from '../../core/visit';
+import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
@@ -61,7 +67,7 @@ const C = COPY;
 const dw = (text: string) => deviceWords(text, copyDevice());
 
 /** 'trial' is the hidden stopwatch for devlog/TRIAL_PROTOCOL.md: reachable only by typing #/trial, never linked. */
-type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'feedback' | 'trial' | 'diary';
+type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'feedback' | 'trial' | 'diary' | 'visit' | 'phototalk';
 
 interface Settings {
   cloudHelp: boolean;
@@ -186,6 +192,26 @@ interface State {
   importDraft: { backup: Backup; preview: BackupPreview } | null;
   backupError: string;
   backupDone: boolean;
+  /** Phase 4 (core/letter.ts, core/turn.ts, core/visit.ts, core/phototalk.ts): see P4State. */
+  p4: P4State;
+}
+interface P4State {
+  /** The alphabet is on the person's screen: the question it is for, what was refused so far, the question's topic. */
+  letter: { asked: string; rejected: string[]; topic: string | null } | null;
+  /** "No, I don't know" was pointed to: one line on the carer's screen says that is fine. Nothing is counted. */
+  letterNo: boolean;
+  /** The letter step being made, or waiting for a yes on the sheet. */
+  letterPending: LetterInput | null;
+  /** The person started this conversation: with which starter, and the topic they pointed to. */
+  turn: { starter: Starter | 'else'; topic: TopicId | null } | null;
+  /** The answers given before a doctor visit (IndexedDB key 'visit'): on this device only, apart from the history and the journal; never sent, read by no model. */
+  visit: VisitRecord | null;
+  /** The visit questions are on the person's screen; `visitEnd`: the last one was answered, the screen says thank you. */
+  visitRun: boolean;
+  visitEnd: boolean;
+  visitCopied: boolean;
+  /** Talk about a photo: the photo picked, what the on-device model named in it (null: not asked), and the state of that step. */
+  talk: { id: string; things: string[] | null; look: 'busy' | 'none' | null } | null;
 }
 
 const cfg = webConfig();
@@ -252,6 +278,7 @@ const state: State = {
   importDraft: null,
   backupError: '',
   backupDone: false,
+  p4: { letter: null, letterNo: false, letterPending: null, turn: null, visit: null, visitRun: false, visitEnd: false, visitCopied: false, talk: null },
 };
 /** When this page was opened: the simple view's "Today" list holds the answers confirmed since then. */
 const pageStart = Date.now();
@@ -269,6 +296,8 @@ function route(): Route {
   if (h === 'needs') { if (state.card?.kind !== 'needs') openNeeds(); return 'person'; }
   if (h === 'how') return 'how';
   if (h === 'diary') return 'diary';
+  if (h === 'visit') return 'visit';
+  if (h === 'phototalk') return 'phototalk';
   if (h === 'feedback') return 'feedback';
   if (h === 'trial') return 'trial';
   // the simple view has no first-run screen: its first screen is the product
@@ -302,6 +331,13 @@ function backStep(from: string): string | null {
   if (state.photoDraft) { state.photoDraft = null; return from; }
   if (state.insSheet) { state.insSheet = null; return from; }
   if (state.importDraft) { state.importDraft = null; return from; }
+  if (from === 'visit' || from === 'phototalk') { if (from === 'phototalk' && state.p4.talk) { state.p4.talk = null; return from; } return ''; }
+  // the alphabet goes back to the carer's screen it was opened from; the visit questions go back to their page
+  if (from === 'person' && state.p4.letter) { state.p4.letter = null; return ''; }
+  if (from === 'person' && (state.p4.visitRun || state.p4.visitEnd)) {
+    if (state.card && state.picked && !state.confirmed) { state.picked = null; return from; }
+    state.p4.visitRun = false; state.p4.visitEnd = false; resetCard(); return 'visit';
+  }
   if (from === 'person' || from === 'needs') {
     const c = state.card;
     // the check ("So: tea. Right?") goes back to the choices; the choices go back to the carer's screen
@@ -320,6 +356,7 @@ function backStep(from: string): string | null {
 }
 /** "Home": the first screen, from anywhere. */
 function goHome() {
+  clearP4();
   makeSeq++; state.busy = false; state.lastQuestion = ''; state.error = null; dictated = false; resetCard();
   history.replaceState(history.state, '', location.pathname + location.search);
   render(); window.scrollTo(0, 0);
@@ -428,6 +465,8 @@ async function load() {
   state.health = cleanHealth(await kvGet<HealthNotes>('health'));
   const a = await kvGet<Ask[]>('asks');
   if (Array.isArray(a)) state.asks = a;
+  const v = await kvGet<VisitRecord>('visit');
+  if (v && Array.isArray(v.answers)) state.p4.visit = v;
 }
 
 // ---------------------------------------------------------------- phase 3: the guard, the diary, the insights, the tip (carer's side only)
@@ -1104,7 +1143,16 @@ function personModel(full: boolean) {
 }
 function personScreen(): string {
   // the simple view has its own screens for the person (design/USER_FIRST.md); judge mode and the full view keep theirs
-  if (simpleView()) return `<main class="person full pv" id="person" aria-label="For the person" data-kind="${state.card ? state.card.kind : ''}">${personSimple(personModel(true))}</main>`;
+  const P = C.simple.person;
+  const hold = `<button type="button" id="exit" class="hold" title="${P.holdTitle}"><i aria-hidden="true"></i>${P.hold}</button>`;
+  // the alphabet of the first-letter helper, and the end of the doctor-visit questions (web/src/phase4.ts)
+  if (simpleView() && state.p4.letter) return `<main class="person full pv letters" id="person" aria-label="For the person" data-kind="letters">${letterGrid({ holdHtml: hold })}</main>`;
+  if (simpleView() && state.p4.visitEnd) return `<main class="person full pv" id="person" aria-label="For the person" data-kind="visit-end">${visitDone()}</main>`;
+  // a question about a family photo shows that photo over the question (on this device only; it is in no request)
+  const talkPhoto = state.card?.photoTalk && !state.picked ? state.photos.find((x) => x.id === state.p4.talk?.id) : null;
+  if (simpleView() && talkPhoto) return `<main class="person full pv with-photo rowtiles" id="person" aria-label="For the person" data-kind="${state.card!.kind}">${personSimple(personModel(true)).replace('<p class="p-do">', `<img class="p-photo photo own" id="p-photo" src="${talkPhoto.data}" alt=""><p class="p-do">`)}</main>`;
+  // (the starters and the topic menu have longer words: the picture stands beside the word, so three and the way out fit)
+  if (simpleView()) return `<main class="person full pv${state.card?.turn && !state.picked ? ' rowtiles' : ''}" id="person" aria-label="For the person" data-kind="${state.card ? state.card.kind : ''}">${personSimple(personModel(true))}</main>`;
   return `<main class="person full" id="person" aria-label="Card for the person">${personView(true)}</main>`;
 }
 
@@ -1336,6 +1384,9 @@ async function runNarrow(i: NarrowInput) {
  */
 function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: string } {
   if (c.kind === 'needs' || c.kind === 'repair') return { follow: [], end: '' };
+  // a first-letter card: the word is the answer; the menu the person started from: up to three questions of that topic
+  if (c.letter) return out ? { follow: [], end: '' } : letterEnd(p.label);
+  if (c.turn) return { follow: out ? [] : turnLead('tell', '', menuTopic(p.label), state.profile).ask, end: '' };
   // the short question about the usual choice: a yes ends as that choice would; anything else leads to the full question
   const sc = state.shortcut;
   if (sc && sc.q === c.asked) {
@@ -1359,7 +1410,7 @@ function simpleScreen(): string {
     const out = p.role === 'escape' && c.kind !== 'needs';
     screen = answeredScreen({
       name, label: p.label, question: c.kind === 'needs' ? '' : c.asked, more: state.more, next, out, hasAnswers: state.answers.length > 0,
-      afterHtml: afterAnswer(c, p, 'btn'),
+      afterHtml: `${afterAnswer(c, p, 'btn')}${c.photoTalk ? `<a class="btn" id="pt-back" href="#/phototalk">${P4.photo.questions}</a>` : ''}`,
       ...(() => {
         const step = treeStep(c, p, out);
         // a shorter way, as a suggestion: the usual side of the next either-or, asked first (the full question stays)
@@ -1368,11 +1419,13 @@ function simpleScreen(): string {
       })(),
       // (never a question that offers a refused choice again, and one about the same kind of thing: core/topics.ts)
       tryNext: out ? nextInTopic(state.lastQuestion, state.profile, [...(c.narrow?.rejected ?? []), ...c.choices.filter((x) => x.role === 'answer').map((x) => x.label)]) : null,
-      narrow: out ? narrowPlace(c, p.label) : null, narrowLast: out && !!c.narrow && !canNarrow(c, p.label), short: shortModel(),
+      narrow: out && !c.letter && !c.turn ? narrowPlace(c, p.label) : null, narrowLast: out && !!c.narrow && !canNarrow(c, p.label), short: shortModel(),
       who: p.role === 'answer' && asksWho(c, p.label, state.profile),
       invite: state.inviteFor === c && !state.inviteOff,
       today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
-      made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' ? '' : guardHtml(c, p.label),
+      made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),
+      leadHtml: turnHtml(),
+      outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
     });
   } else if (c && !state.busy) {
     const prev = c.blocked || c.kind === 'repair' || c.kind === 'needs' ? null : lastAnswer(state.history, c.asked, state.cardAt);
@@ -1384,7 +1437,9 @@ function simpleScreen(): string {
       offline: needsInternet(c, { online: isOnline(), cloudConfigured: state.engine.cloudConfigured }),
       lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(), tips: state.tips,
       usual: (() => { const u = usualFor(c); return u ? usualHint(u) : ''; })(),
-      guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' ? '' : guardHtml(c),
+      guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c),
+      // the first-letter helper: its way in from "We're stuck", who found a letter card's words, and another letter when there was no word
+      extraHtml: c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterButton(name, true) : letterBy(c.letter.by)) : '',
     });
   } else {
     const p = state.profile;
@@ -1393,10 +1448,13 @@ function simpleScreen(): string {
       aboutLink: !!state.settings.firstCard || !!(name || p.people.length || p.foods.length || p.places.length || p.tv.length || p.music.length),
       busy: state.busy, error: state.error, question: state.lastQuestion,
       howOpen: !state.settings.howFolded, topics: topics(p), topicOpen: state.topicOpen, aiTag: aiTag(whereInput()), ai: aiLines(whereInput()),
-      privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: diaryLink(),
+      privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: `${diaryLink()}${p4Links(name)}`,
+      turnHtml: `${turnButton(name)}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
     });
   }
   if (!state.sheet || !c?.unsentPayload) return screen;
+  // the first-letter step: the sheet shows the one line that comes from the conversation (the question and the letter), then the whole request
+  if (c.letter) return `${screen.replace('<main class="simple', '<main inert aria-hidden="true" class="simple')}${letterSheet({ line: sentLine(c.unsentPayload).text.split(' Give two or three')[0].replace(/^Partner asks:\s*/, ''), request: c.unsentPayload })}`;
   return `${screen.replace('<main class="simple', '<main inert aria-hidden="true" class="simple')}${consentSheet({ about: aboutName(), line: c.narrow ? sentLine(c.unsentPayload).text.split(` ${NARROW_TASK}`)[0].replace(/^Partner asks:\s*/, '') : sentLine(c.unsentPayload).text, deviceThere: state.device === 'available', ...(c.narrow ? { narrow: { request: c.unsentPayload } } : {}) })}`;
 }
 /** The simple view's lines that depend on the device check or the connection, updated in place (no redraw). */
@@ -1406,6 +1464,122 @@ function patchSimple() {
 }
 // the connection came or went: the AI line and the "needs internet" tag follow; a no-card screen is drawn again
 for (const ev of ['online', 'offline']) window.addEventListener(ev, () => { if (!simpleView() || route() !== 'partner') return; if (state.card?.blocked && !state.sheet) render(); else patchSimple(); });
+
+// ---------------------------------------------------------------- phase 4: the first letter, the person starts, the doctor visit, a photo
+/** A question asked from the person's own start keeps the line "[Name] started this" (set just before `make`). */
+let turnKeep = false;
+/** What does not outlive a conversation: the alphabet, the start by the person, the visit questions on the person's screen. The visit answers themselves stay. */
+function clearP4() { state.p4.letter = null; state.p4.letterNo = false; state.p4.letterPending = null; state.p4.turn = null; state.p4.visitRun = false; state.p4.visitEnd = false; }
+/** The carer takes the phone back from the person's screen (the press and hold): to the visit page while its questions run, else to the carer's screen. */
+function leavePerson() {
+  lift = true;
+  if (state.p4.visitRun || state.p4.visitEnd) { state.p4.visitRun = false; state.p4.visitEnd = false; resetCard(); go('visit'); return; }
+  state.p4.letter = null;
+  go('');
+}
+/** The usual answers learned on this device (core/prefs.ts), as plain words: for the rules of the first-letter helper and its ON-DEVICE prompt only. */
+const learnedWords = () => (learns() ? learned(state.history, state.needsLog, state.forgotten).flatMap((l) => (l.kind === 'usual' ? [usual(state.history, l.q, state.forgotten)?.label ?? ''] : [])).filter(Boolean) : []);
+/**
+ * One step of the first-letter helper (core/letter.ts): the rules' words when there are two or more; else the model on
+ * this device; else online help, only when it is on, and otherwise the sheet with the exact text first.
+ */
+async function runLetter(i: LetterInput) {
+  const seq = ++makeSeq;
+  useSettings();
+  state.p4.letterPending = i; state.p4.letter = null; state.p4.letterNo = false;
+  state.busy = true; state.error = null; resetCard(); render();
+  if (state.device === 'checking') await refreshDevice().catch(() => { state.device = 'unavailable'; });
+  const card = await letterCard(i, { profile: state.profile, support: state.settings.support, engine: state.engine, allowCloud: state.settings.cloudHelp, deviceReady: state.device === 'available', routing: routing() });
+  state.made.push(card);
+  if (seq !== makeSeq) return;
+  setCard(card);
+  state.sheet = simpleView() && isOnline() && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
+  state.busy = false; state.waitStart = Date.now(); useSettings();
+  // words were found: they are on the person's screen at once; none: the carer's screen says so (and may ask about online help)
+  if (card.blocked && route() === 'person') { lift = true; go(''); } else render();
+}
+/**
+ * The tick on a doctor-visit question or on a card the person started from. True when the answer led straight on to
+ * the next card on the person's screen (the choice is cleared for it; nothing is ever chosen here for the person).
+ */
+function p4Confirm(c: Card, picked: Choice): boolean {
+  // a doctor-visit question: the answer goes on the visit page, exactly as given, and the next question follows.
+  // It is not in the history or the journal, and the answer check never reads or marks it.
+  if (c.visit && state.p4.visitRun && state.p4.visit) {
+    state.p4.visit.answers = [...state.p4.visit.answers.filter((a) => a.id !== c.visit), { id: c.visit as VisitRecord['answers'][number]['id'], q: c.asked, label: picked.label, at: Date.now(), ...(picked.role === 'escape' ? { out: true } : {}) }];
+    void kvSet('visit', state.p4.visit);
+    state.picked = null; void visitNext(); return true;
+  }
+  // the person started: the starter leads on, still on this screen (the needs board, the topics, the feelings card)
+  if (c.turn === 'start') {
+    const s = starterOf(picked.label);
+    state.p4.turn = { starter: s ?? 'else', topic: null };
+    if (s === 'need' || s === 'tell') { const card = s === 'need' ? needsCard() : topicMenu(); setCard(card); state.made.push(card); state.picked = null; state.waitStart = Date.now(); render(); return true; }
+    if (s === 'feel') { turnKeep = true; void make(FEEL_QUESTION); return true; }
+  } else if (c.turn === 'topics' && state.p4.turn) state.p4.turn = { starter: 'tell', topic: picked.role === 'answer' ? menuTopic(picked.label) : null };
+  return false;
+}
+/** The line the carer reads when the person started this conversation: '' otherwise. */
+function turnHtml(): string {
+  const t = state.p4.turn;
+  if (!t) return '';
+  const lead = turnLead(t.starter, state.profile.personName.trim(), t.topic, state.profile);
+  return turnLine({ line: lead.line, about: lead.about });
+}
+/** The next question of the fixed doctor-visit list onto the person's screen, or the end of the list. No model: core/visit.ts. */
+async function visitNext() {
+  const r = state.p4.visit;
+  if (!r) return;
+  const v = nextVisit(r.answers);
+  makeSeq++; state.busy = false; state.error = null; resetCard();
+  if (!v) { r.done = true; void kvSet('visit', r); state.p4.visitEnd = true; state.p4.visitRun = false; if (route() === 'person') render(); else go('person'); return; }
+  const card = await visitCard(v, state.profile, state.settings.support);
+  setCard(card); state.p4.visitRun = true; state.p4.visitEnd = false; state.waitStart = Date.now();
+  if (route() === 'person') render(); else { lift = true; go('person'); }
+}
+/** The questions about the picked photo: the rules' three, and one more when the on-device model named things in it. */
+function talkQuestions(): PhotoQuestion[] {
+  const t = state.p4.talk;
+  const photo = state.photos.find((x) => x.id === t?.id);
+  if (!t || !photo) return [];
+  const more = t.things ? thingsQuestion(t.things) : null;
+  return [...photoQuestions(photo.word, state.profile), ...(more ? [more] : [])];
+}
+function photoTalkView(): string {
+  const t = state.p4.talk;
+  const picked = state.photos.find((x) => x.id === t?.id) ?? null;
+  const can = !state.demo && state.device === 'available' && !!state.engine.lookDevice;
+  const look = !picked || !t ? null : t.look === 'busy' ? 'busy' : t.things && thingsQuestion(t.things) ? 'done' : t.look === 'none' ? 'none' : can ? 'ask' : null;
+  return photoTalkScreen({ name: state.profile.personName.trim(), photos: state.photos, picked, questions: talkQuestions(), look });
+}
+/**
+ * The carer asked the model ON THIS DEVICE to look at the picked photo (ONLY_ON_DEVICE through Firebase AI Logic; the
+ * engine throws on any other source, and has no cloud form of this call). Code checks every word it names.
+ */
+async function lookAtPhoto() {
+  const t = state.p4.talk;
+  const photo = state.photos.find((x) => x.id === t?.id);
+  if (!t || !photo || !state.engine.lookDevice || state.device !== 'available') return;
+  t.look = 'busy'; render();
+  let things: string[] = [];
+  try {
+    const m = photo.data.match(/^data:(image\/(?:jpeg|png));base64,(.+)$/);
+    if (m) { const r = await state.engine.lookDevice({ mimeType: m[1] as 'image/jpeg' | 'image/png', base64: m[2] }); if (r.source === 'on-device') things = checkedThings(r.text, photo.word); }
+  } catch { /* nothing usable: the rules' questions stand */ }
+  if (state.p4.talk !== t) return;
+  t.things = things; t.look = thingsQuestion(things) ? null : 'none';
+  if (route() === 'phototalk') render();
+}
+/** One question about the photo becomes the card on the carer's screen. Fixed choices, or the app's rules with no model to call. */
+async function askAboutPhoto(pq: PhotoQuestion) {
+  const seq = ++makeSeq;
+  const q = pq.q;
+  const card = await photoTalkCard(pq, state.profile, state.settings.support);
+  if (seq !== makeSeq) return;
+  state.busy = false; state.error = null; state.lastQuestion = q; state.chain = [q]; resetCard(); clearP4();
+  state.made.push(card); setCard(card); state.waitStart = Date.now();
+  go(''); window.scrollTo(0, 0);
+}
 
 // ---------------------------------------------------------------- render
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -1417,7 +1591,7 @@ function render(lifted = false) {
   // the route goes on #app with a prefix: a bare "person" or "welcome" class made #app pick up the card pane's frame
   // and the welcome padding (the thin frame around the full-screen card, DESIGN_DIRECTIONS "must fix")
   // the diary is a carer's screen of the simple view, whichever view the rest is in
-  const simple = (simpleView() && (r === 'partner' || r === 'about')) || r === 'diary';
+  const simple = (simpleView() && (r === 'partner' || r === 'about')) || r === 'diary' || r === 'visit' || r === 'phototalk';
   app.className = `route-${r}${simple ? ' view-simple' : ''}`;
   // the simple view has its own light look (dark by the system setting); the full view and the person's card do not change
   document.documentElement.dataset.view = simple ? 'simple' : r === 'person' ? 'person' : 'full';
@@ -1427,7 +1601,7 @@ function render(lifted = false) {
   // the card judge mode opens with is simply there: no entrance, so the very first frame is a finished card
   if (key !== lastKey && r === 'about' && simple) refreshLearnedShort();
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: backupBlock({ error: state.backupError, done: state.backupDone }) }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: backupBlock({ error: state.backupError, done: state.backupDone }) }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'visit' ? visitScreen({ name: state.profile.personName.trim(), record: state.p4.visit, copied: state.p4.visitCopied }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   keepGuard();
   if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);
@@ -1603,6 +1777,8 @@ async function make(q: string) {
   // a question that was not tapped as a next step of the tree starts a new conversation
   if (!chained) state.chain = [q];
   chained = false;
+  if (!turnKeep) state.p4.turn = null;
+  turnKeep = false; state.p4.letterNo = false;
   state.busy = true; state.error = null; state.lastQuestion = q; resetCard(); render();
   // a question asked before the capability check has answered waits for it: the card must not be made as if this
   // computer could not run the private step
@@ -1629,10 +1805,15 @@ async function make(q: string) {
 }
 
 function onPersonTap(t: HTMLElement) {
+  // the alphabet: a letter leads to its words; "No, I don't know" goes back to the carer, and nothing is counted
+  if (t.dataset.letter && state.p4.letter) { const l = state.p4.letter; t.classList.add('pressed'); setTimeout(() => { void runLetter({ asked: l.asked, letter: t.dataset.letter!, rejected: l.rejected, topic: l.topic, learned: learnedWords() }); }, 180); return; }
+  if (t.dataset.letterNo && state.p4.letter) { state.p4.letter = null; state.p4.letterNo = true; makeSeq++; state.busy = false; resetCard(); lift = true; go(''); return; }
   const c = state.card;
   if (t.dataset.confirm === 'recap-yes') { state.recap = false; state.recapDone = true; render(); return; }
   if (t.dataset.confirm === 'recap-change') { state.recap = false; render(); return; }
   if (!c) return;
+  // a doctor-visit question, or a card the person started from: the confirmed answer leads on, on this screen (p4Confirm)
+  if (t.dataset.confirm === 'yes' && state.picked && (c.visit || c.turn) && p4Confirm(c, state.picked)) return;
   if (t.dataset.confirm === 'yes') {
     state.confirmed = true;
     if (simpleView()) {
@@ -1649,7 +1830,7 @@ function onPersonTap(t: HTMLElement) {
       if (c.kind !== 'needs') {
         // where the choice stood among the answers, for the answer-reliability guard (an either-or, a yes / no or a feelings card only)
         const shown = c.choices.filter((x) => x.role === 'answer');
-        const placed = ['choice', 'yesno', 'feeling'].includes(c.kind) && !c.scale ? { pos: shown.indexOf(state.picked), of: shown.length, yn: c.kind === 'yesno' } : {};
+        const placed = ['choice', 'yesno', 'feeling'].includes(c.kind) && !c.scale && !c.letter && !c.turn && !state.p4.turn ? { pos: shown.indexOf(state.picked), of: shown.length, yn: c.kind === 'yesno' } : {};
         state.history = addAnswer(state.history, { q: c.asked, topic: c.topic, label: state.picked.label, at, ...placed });
         if (learns()) {
           // the guard (core/reliability.ts, rules): a run of "yes" or of one place on the screen is marked "less sure",
@@ -1677,7 +1858,9 @@ function onPersonTap(t: HTMLElement) {
   if (!ch) return;
   if (ch.role === 'escape' && c.nextPage) { setCard(c.nextPage); render(); return; }
   if (c.kind === 'body' && c.bodyStep === 1 && (BODY_REGIONS as string[]).includes(ch.label)) {
-    setCard(bodyDetailCard(ch.label as BodyRegion, state.profile, state.settings.support)); render(); return;
+    const detail = bodyDetailCard(ch.label as BodyRegion, state.profile, state.settings.support);
+    if (c.visit) for (let d: Card | null | undefined = detail; d; d = d.nextPage) d.visit = c.visit;
+    setCard(detail); render(); return;
   }
   t.classList.add('pressed');
   setTimeout(() => { state.picked = ch; render(); }, 180);
@@ -1737,7 +1920,7 @@ function act(el: HTMLElement) {
     case 'show': lift = true; go('person'); break;
     // ---- the simple view
     // (the simple view does not put the cursor in the field: on a phone that opens the keyboard over the topics)
-    case 'new': state.lastQuestion = ''; state.error = null; dictated = false; resetCard(); render(); if (!simpleView()) document.querySelector<HTMLInputElement>('#q')?.focus({ preventScroll: true }); break;
+    case 'new': clearP4(); state.lastQuestion = ''; state.error = null; dictated = false; resetCard(); render(); if (!simpleView()) document.querySelector<HTMLInputElement>('#q')?.focus({ preventScroll: true }); break;
     case 'inside': case 'inside-card': case 'inside-about':
       // into the full view, and it stays the view of this browser until "Simple view" is pressed
       state.settings.view = 'full'; state.settings.welcomed = true; state.sheet = false; saveSettings();
@@ -1757,7 +1940,42 @@ function act(el: HTMLElement) {
     case 'how': state.settings.howFolded = !state.settings.howFolded; saveSettings(); render(); document.querySelector<HTMLElement>('#how[data-act], #how [data-act=how]')?.focus({ preventScroll: true }); break;
     case 'topic': { const id = el.dataset.topic as TopicId; state.topicOpen = state.topicOpen === id ? null : id; render(); document.querySelector<HTMLElement>(`.topic[data-topic="${id}"]`)?.focus({ preventScroll: true }); break; }
     // the finish screen's button: the phone goes back to the carer, who sees the answer
-    case 'give-back': lift = true; go(''); break;
+    case 'give-back': lift = true; if (state.p4.visitEnd) { state.p4.visitEnd = false; state.p4.visitRun = false; resetCard(); go('visit'); } else go(''); break;
+    // ---- phase 4: the first letter, the person starts, before a doctor visit, talk about a photo
+    case 'letter': {
+      const c = state.card;
+      const of = c?.kind === 'repair' ? state.before : c;
+      const shown = (x: Card | null | undefined) => (x && x.kind !== 'repair' && x.kind !== 'needs' ? x.choices.filter((y) => y.role === 'answer').map((y) => y.label) : []);
+      const asked = c?.letter ? state.p4.letterPending?.asked ?? '' : of && of.kind !== 'needs' && !of.turn ? of.asked : '';
+      const rejected = c?.letter ? [...c.letter.rejected, ...shown(c)] : [...(of?.narrow?.rejected ?? []), ...shown(of)];
+      state.p4.letter = { asked, rejected: rejected.filter((x, k, all) => all.indexOf(x) === k), topic: topicOf(state.chain[0] ?? asked, state.profile)?.id ?? null };
+      state.p4.letterNo = false; lift = true; go('person');
+      break;
+    }
+    case 'letter-more': {
+      const c = state.card; const i = state.p4.letterPending;
+      if (c?.letter && i) void runLetter({ ...i, rejected: [...i.rejected, ...c.choices.filter((y) => y.role === 'answer').map((y) => y.label)] });
+      break;
+    }
+    case 'turn': {
+      if (step === 'waiting') step = 'cancelled';
+      makeSeq++; clearP4(); state.busy = false; state.error = null; state.lastQuestion = ''; resetCard();
+      const card = turnCard(); setCard(card); state.made.push(card); state.waitStart = Date.now(); lift = true; go('person');
+      break;
+    }
+    case 'visit-start': state.p4.visit = { startedAt: Date.now(), answers: [], done: false }; state.p4.visitCopied = false; void kvSet('visit', state.p4.visit); void visitNext(); break;
+    case 'visit-resume': void visitNext(); break;
+    case 'visit-print': window.print(); break;
+    case 'visit-copy': {
+      const done = () => { state.p4.visitCopied = true; render(); document.querySelector<HTMLElement>('#visit-copy')?.focus(); };
+      if (state.p4.visit && navigator.clipboard?.writeText) void navigator.clipboard.writeText(visitText(state.p4.visit, state.profile.personName.trim())).then(done, () => { /* no clipboard here: the page is on the screen */ });
+      break;
+    }
+    case 'visit-del': if (confirm(P4.visit.delConfirm)) { state.p4.visit = null; state.p4.visitCopied = false; void kvSet('visit', null); render(); } break;
+    case 'pt-pick': state.p4.talk = { id: el.dataset.id ?? '', things: null, look: null }; render(); window.scrollTo(0, 0); break;
+    case 'pt-other': state.p4.talk = null; render(); break;
+    case 'pt-look': void lookAtPhoto(); break;
+    case 'pt-ask': { const q = talkQuestions()[Number(el.dataset.k)]; if (q) void askAboutPhoto(q); break; }
     // after the way out: ask it a new way, in the carer's own words
     case 'own': state.lastQuestion = ''; state.error = null; dictated = false; resetCard(); render(); document.querySelector<HTMLInputElement>('#q')?.focus(); break;
     case 'invite-later': state.inviteOff = true; render(); break;
@@ -1774,7 +1992,7 @@ function act(el: HTMLElement) {
     case 'sheet-yes':
       // the same switch as the consent page's, turned on by one button; the question is then asked again at once
       // (when the sheet came up for a narrowing step, that step is what is asked again)
-      state.sheet = false; state.settings.cloudHelp = true; saveSettings(); askSettings(); if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else void make(state.lastQuestion);
+      state.sheet = false; state.settings.cloudHelp = true; saveSettings(); askSettings(); if (state.card?.letter && state.p4.letterPending) void runLetter(state.p4.letterPending); else if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else void make(state.lastQuestion);
       break;
     // ---- what was learned (About them): keep a line as a fact, remove it, or forget everything learned
     case 'learned-keep': {
@@ -1897,7 +2115,7 @@ function act(el: HTMLElement) {
       break;
     case 'delete-all':
       if (confirm(C.about.deleteConfirm)) {
-        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.needsLog = []; state.forgotten = NOTHING_FORGOTTEN; state.learnedShort = null; state.photos = []; state.photoDraft = null; state.made = []; state.diary = []; state.health = NO_HEALTH; state.asks = []; state.logged = null; state.importDraft = null; state.backupError = ''; state.backupDone = false; state.ins = { key: '', words: null, source: 'rules', busy: false, note: '' }; resetCard(); go(simpleView() ? '' : 'welcome'); });
+        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.needsLog = []; state.forgotten = NOTHING_FORGOTTEN; state.learnedShort = null; state.photos = []; state.photoDraft = null; state.made = []; state.diary = []; state.health = NO_HEALTH; state.asks = []; state.logged = null; state.importDraft = null; state.backupError = ''; state.backupDone = false; state.ins = { key: '', words: null, source: 'rules', busy: false, note: '' }; state.p4.visit = null; clearP4(); resetCard(); go(simpleView() ? '' : 'welcome'); });
       }
       break;
     default:
@@ -2024,14 +2242,14 @@ app.addEventListener('pointerdown', (ev) => {
   const t = (ev.target as HTMLElement).closest('#exit');
   if (!t) return;
   t.classList.add('holding');
-  hold = setTimeout(() => { hold = null; lift = true; go(''); }, 600);
+  hold = setTimeout(() => { hold = null; leavePerson(); }, 600);
 });
 const cancelHold = () => { if (hold) { clearTimeout(hold); hold = null; } document.querySelector('#exit')?.classList.remove('holding'); };
 app.addEventListener('pointerup', cancelHold);
 app.addEventListener('pointercancel', cancelHold);
 app.addEventListener('pointerleave', cancelHold, true);
 // with a keyboard there is no press and hold: Enter on the carer's way back leaves the person's screen
-app.addEventListener('keydown', (ev) => { if ((ev as KeyboardEvent).key === 'Enter' && (ev.target as HTMLElement).id === 'exit') { ev.preventDefault(); lift = true; go(''); } });
+app.addEventListener('keydown', (ev) => { if ((ev as KeyboardEvent).key === 'Enter' && (ev.target as HTMLElement).id === 'exit') { ev.preventDefault(); leavePerson(); } });
 // (a back press in the simple view is drawn by `popstate` above; the address change it brings is not drawn twice)
 window.addEventListener('hashchange', () => { if (simpleView() && hashNow() === drawnAt) return; draw(); });
 // the consent sheet: Escape is its "No"
