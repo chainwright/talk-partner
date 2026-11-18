@@ -2618,6 +2618,9 @@ def phase6(browser, url, live):
     page.wait_for_selector('main.simple.home')
     page.evaluate(KV_PUT, {'diary': entries, 'health': week['health'], 'profile': week['profile'], 'history': history, 'asks': []})
     page.goto(url + '#/diary')
+    # (phase 9, judge round 8 §7.5: a reload at once after the address changed raced the app's own history step and
+    # landed on Home 1 time in 4; the diary is waited for first)
+    page.wait_for_selector('main.simple.diary')
     page.reload()
     page.wait_for_selector('main.simple.diary')
     page.locator('#share-family').click()

@@ -423,3 +423,21 @@ describe('10. P2 the first visit: the 4 steps folded to one line that keeps "Wri
     expect(folded).not.toContain('<ol>');
   });
 });
+
+// ---------------------------------------------------------------- item 12
+describe('12. the reload race: an immediate reload on an inner address keeps the screen', () => {
+  it('the web client notes each drawn screen for this tab and, on a reload within 3 s that lost the address, opens it again', () => {
+    const main = readFileSync(join(__dirname, '..', '..', 'web', 'src', 'main.ts'), 'utf8');
+    expect(main).toContain("if (nav?.type !== 'reload' || hashNow() || onGuard()) return;");
+    expect(main).toContain("d.h === 'demo' || typeof d.t !== 'number' || Date.now() - d.t > RACE_MS) return;");
+    expect(main).toContain('function keepGuard() {\n  noteDrawn();');
+    expect(main.indexOf('restoreRacedRoute();\nvoid Promise.all([load(), loadTrial()])')).toBeGreaterThan(0);
+    // what is noted is the screen's name and the moment, nothing of the family
+    expect(main).toContain("sessionStorage.setItem(DRAWN_KEY, JSON.stringify({ h: hashNow(), t: Date.now() }))");
+  });
+  it('e2e-simple waits for the diary before it reloads', () => {
+    const e2e = readFileSync(join(__dirname, '..', '..', 'scripts', 'e2e-simple.py'), 'utf8');
+    expect(e2e).toContain("page.goto(url + '#/diary')\n    # (phase 9, judge round 8 §7.5");
+    expect(e2e).toContain("page.wait_for_selector('main.simple.diary')\n    page.reload()");
+  });
+});

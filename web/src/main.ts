@@ -532,7 +532,28 @@ let skipPop = false;
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 /** The address the screen was drawn at last: after a back press the browser has already left it. */
 let drawnAt = hashNow();
+/**
+ * Phase 9 (judge round 8 §7.5): a reload at once after the address changed could race the guard. The guard rewrites
+ * the entry under it to the first screen's address and puts the inner one on a new entry; a reload that the browser
+ * took between the two loaded the first screen (1 time in 4 in the organiser's hands, 6 in 20 here). Each draw notes
+ * its screen for this tab (sessionStorage: the screen's name and the moment, nothing else); a reload within 3 s that
+ * lands on the bare first-screen address with no guard opens the noted screen instead.
+ */
+const DRAWN_KEY = 'tp-drawn';
+const RACE_MS = 3000;
+function noteDrawn() { try { sessionStorage.setItem(DRAWN_KEY, JSON.stringify({ h: hashNow(), t: Date.now() })); } catch { /* no storage in this tab: nothing to restore */ } }
+function restoreRacedRoute() {
+  try {
+    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    if (nav?.type !== 'reload' || hashNow() || onGuard()) return;
+    const d = JSON.parse(sessionStorage.getItem(DRAWN_KEY) ?? 'null') as { h?: unknown; t?: unknown } | null;
+    if (!d || typeof d.h !== 'string' || !/^[a-z]+$/.test(d.h) || d.h === 'demo' || typeof d.t !== 'number' || Date.now() - d.t > RACE_MS) return;
+    history.replaceState(history.state, '', `#/${d.h}`);
+    drawnAt = hashNow();
+  } catch { /* nothing noted: the first screen stands */ }
+}
 function keepGuard() {
+  noteDrawn();
   drawnAt = hashNow();
   if (!simpleView()) return;
   if (!atHome() && !onGuard()) pushGuard(location.href);
@@ -2907,6 +2928,7 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 }
 
 // Opened straight on judge mode: the first card is made before the first draw, so there is no empty frame before it.
+restoreRacedRoute();
 void Promise.all([load(), loadTrial()]).then(async () => {
   if (location.hash.replace(/^#\/?/, '') === 'demo') await enterDemo();
   render(); void refreshDevice().then(() => judgeStep());
