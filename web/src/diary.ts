@@ -26,7 +26,8 @@ export function guardBlock(m: { name: string; flags: Flag[] }): string {
   if (!m.flags.length) return '';
   const G = COPY.simple.guard;
   const why = [m.flags.includes('yes-run') ? G.yes : '', m.flags.includes('same-position') ? G.place : ''].filter(Boolean).join(' ');
-  return `<div class="guard" id="guard" role="status">${SIGN.info}<div><b>${esc(G.line(m.name))}</b><small>${esc(why)} ${esc(G.marked)}</small></div></div>`;
+  // the headline and one line; why, and what else follows, under "More"
+  return `<div class="guard" id="guard" role="status">${SIGN.info}<div><b>${esc(G.line(m.name))}</b><small>${esc(G.marked)}</small><details class="guard-more"><summary>${G.more}</summary><p>${esc(why)} ${esc(G.order)} ${esc(G.never)}</p></details></div></div>`;
 }
 
 /** The way into the diary from the first screen: under the questions, never above them. */

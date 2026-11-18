@@ -38,6 +38,14 @@ Brief: `design/PHASE3_BRIEF.md`. What was built, in the brief's order, and what 
 | 4 | "Call someone" asked one name at a time | Done: "Who would you like to call?" with up to three names and "someone else"; the same for a visitor |
 | 5 | "Chrome's built-in AI" in About them; "they" after the name was set | Done: the sentence is in the inside view only; the learned, photos and diary lines use the name |
 
+## After a second role-play, on the hosted copy of d04e530
+| # | Finding | Done |
+|---|---|---|
+| 1 | SAFETY: under "Are you in pain? Yes" the answer check said "may be tired"; a carer could dismiss real pain | Done: an answer about pain, the toilet, help or a need does not count toward a run, is never marked "less sure", and no line stands on its screen; "Next: Where does it hurt?" stays. The check speaks only after a run of 2 minutes or more, or with 5 answers or more in the 10 minutes. Its text is a headline and one line; the rest under "More" |
+| 2 | Three "Drank" taps at 08:10 counted as one drink | Done: every tap counts; only a card and one tap of the same thing within 20 minutes are one (and the answers of one conversation). A test: 3 taps in the same minute are 3 |
+| 3 | Two days tied on the fewest drinks, one was named | Done: all the days with the fewest are named (the last three at most), "1 each" |
+| 4 | Drink answers from cards | Done: tea, coffee, water, juice, milk and yes to "something to drink" count, merged with a tap as in 2, and the base line says how drinks are counted |
+
 ## Not done, or true only with a limit
 - Neither wording step has run against a real model: no desktop Chrome with Gemini Nano was driven for it, and the
   browser test refuses the cloud request (the screen then says the lines may have left).

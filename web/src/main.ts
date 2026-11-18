@@ -32,7 +32,7 @@ import { backupText, makeBackup, readBackup, type Backup, type BackupPreview } f
 import { addEntry, answerEntry, diaryText, inSpan, logEntry, markDiary, needEntry, removeEntry, type DiaryEntry, type DiaryTopic, type LogKind, type Span } from '../../core/diary';
 import { within, type CloudError } from '../../core/engine';
 import { NO_HEALTH, cleanHealth, cloudLines, insightCloudText, insightDevicePrompt, insights, type HealthNotes, type Insight, type InsightSpan } from '../../core/insights';
-import { RELIABLE, markLessSure, reliability, reorder, tapsFrom } from '../../core/reliability';
+import { RELIABLE, careAnswer, markLessSure, reliability, reorder, tapsFrom } from '../../core/reliability';
 import { checkReworded, rewordOnDevice, type RewordSource } from '../../core/reword';
 import { addAsk, askOf, tipOfDay, type Ask } from '../../core/tip';
 import { topicOf } from '../../core/topics';
@@ -433,7 +433,8 @@ async function load() {
 // ---------------------------------------------------------------- phase 3: the guard, the diary, the insights, the tip (carer's side only)
 /** What the answer-reliability guard notices now (core/reliability.ts): rules, from the answers kept on this device. Never for the sample family. */
 const guardNow = () => (learns() ? reliability(tapsFrom(state.history), Date.now()) : RELIABLE);
-const guardHtml = () => guardBlock({ name: state.profile.personName.trim(), flags: guardNow().flags });
+/** The guard's line, never on a card about pain, the toilet, help or a need: such an answer is taken as said (core/reliability.ts, careAnswer). */
+const guardHtml = (c?: Card, label = '') => (c && (c.kind === 'needs' || c.kind === 'body' || c.kind === 'pain' || careAnswer(c.asked, label)) ? '' : guardBlock({ name: state.profile.personName.trim(), flags: guardNow().flags }));
 /**
  * While the guard is on, the next either-or shows its answers in a different order (none removed; the line to say
  * follows). A yes / no card, a scale and a paged list keep their order.
@@ -1371,7 +1372,7 @@ function simpleScreen(): string {
       who: p.role === 'answer' && asksWho(c, p.label, state.profile),
       invite: state.inviteFor === c && !state.inviteOff,
       today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
-      made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' ? '' : guardHtml(),
+      made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' ? '' : guardHtml(c, p.label),
     });
   } else if (c && !state.busy) {
     const prev = c.blocked || c.kind === 'repair' || c.kind === 'needs' ? null : lastAnswer(state.history, c.asked, state.cardAt);
@@ -1383,7 +1384,7 @@ function simpleScreen(): string {
       offline: needsInternet(c, { online: isOnline(), cloudConfigured: state.engine.cloudConfigured }),
       lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(), tips: state.tips,
       usual: (() => { const u = usualFor(c); return u ? usualHint(u) : ''; })(),
-      guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' ? '' : guardHtml(),
+      guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' ? '' : guardHtml(c),
     });
   } else {
     const p = state.profile;

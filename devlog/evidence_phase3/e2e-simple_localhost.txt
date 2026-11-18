@@ -139,8 +139,7 @@ PASS  the third question of a conversation ends it with what to do: "Very bad. C
 PASS  hot or cold has a neutral answer: hot, cold, just right
 PASS  Feelings, after "yes": no dead end ("What is bothering you? Your body, people, or plans?")
 PASS  that question is one idea with three answers and a way out, made by the rules
-PASS  the guard: after "yes" to four yes / no questions in a row, the carer reads "They may be tired. Try again later, or check with a different question."
-PASS  the guard: the next either-or shows its answers in a different order (people, plans, body), and the line to say follows it
+PASS  the answer check says nothing in an ordinary flow (pain -> where -> how bad, then "is something bothering you")
 PASS  a press and hold on the carer's control goes back before any answer
 PASS  with a keyboard, Enter on it goes back too
 PASS  "Do you want to call someone?" yes, nobody in About them: a field for one name
@@ -312,17 +311,22 @@ PASS  diary: today, five entries: every button and stand-alone link is at least 
 PASS  diary: today, five entries: nothing runs off the side of the screen
 PASS  diary: kept across a reload (IndexedDB on this phone)
 PASS  diary: Back goes to the first screen
-PASS  guard: nothing is said after 1 "yes"
-PASS  guard: nothing is said after 2 "yes"
-PASS  guard: nothing is said after 3 "yes"
+PASS  guard: nothing is said after 1 "yes" (four quick ones are an ordinary flow)
+PASS  guard: nothing is said after 2 "yes" (four quick ones are an ordinary flow)
+PASS  guard: nothing is said after 3 "yes" (four quick ones are an ordinary flow)
+PASS  guard: nothing is said after 4 "yes" (four quick ones are an ordinary flow)
 PASS  guard: the person's own screen says nothing of it ("Thank you. Yes." and "Give the phone back", no line, no mark)
-PASS  guard: after the fourth "yes" the carer reads "They may be tired. Try again later, or check with a different question."
+PASS  guard: after the fifth "yes" the carer reads the headline and one line ("They may be tired. Try again later, or check with a different question." / marked "less sure"), the rest under "More"
+PASS  guard: "More" says why, and that answers about pain, the toilet or a need are never marked
 PASS  guard: the answered screen with the line: every control is at least 24 x 24 px
 PASS  guard: the answered screen with the line: every button and stand-alone link is at least 44 px tall
 PASS  guard: the answered screen with the line: nothing runs off the side of the screen
-PASS  guard: the four answers are marked "less sure" in the answers kept here
+PASS  guard: the five answers are marked "less sure" in the answers kept here
+PASS  guard and pain: no "may be tired" on the screen before a pain question is shown
+PASS  guard and pain: after "Are you in pain? Yes" there is no "may be tired" line, and the screen leads on with "Next: Where does it hurt?"
+PASS  guard and pain: the pain answer is not marked "less sure", in the answers and in the diary
 PASS  guard: the next either-or has its answers in a different order (coffee, tea), none removed, and the line to say follows
-PASS  guard: in the diary the four answers carry "less sure", and what the carer logged does not
+PASS  guard: in the diary the five answers carry "less sure"; the pain answer and what the carer logged do not
 PASS  diary: the answers are there with their questions ("Are you hungry? yes")
 PASS  tip of the day: one sentence about the carer's own questions, with what it is from, worded by the rules
 PASS  tip of the day: "Hide tips" hides it, and it stays hidden after a reload
@@ -340,7 +344,8 @@ PASS  week fixture: the Week tab shows the days newest first, each a timeline
 PASS  week fixture: Monday reads as a day ("07:40 Would you like tea or coffee? tea … 10:30 Drank … 14:00 Are you tired? yes")
 PASS  week fixture: three lines, in order: sweets, Wednesday's drinks, Friday's "less sure"
 PASS  week fixture, Thursday: sweets with diabetes noted -> "Worth mentioning to the doctor or nurse", and no diet advice
-PASS  week fixture, Wednesday: the drinks line names the day and its base ("Chosen or logged 2 times that day. Only what was entered here.")
+PASS  week fixture, Wednesday: the drinks line names the day, and its base says how drinks are counted (every "Drank" tap, every drink chosen on a card; a card and a tap within 20 minutes once)
+PASS  week fixture, Wednesday: the count in the line equals what the timeline shows (one tea on a card, one "Drank")
 PASS  week fixture, Friday: the answers marked "less sure" are a line of their own
 PASS  week fixture: Friday evening's five answers carry "less sure" in the timeline
 PASS  insights: the fixed footer ("not medical advice and not a diagnosis"), and who counted and worded them (the rules, no AI, nothing sent)
@@ -458,4 +463,4 @@ PASS  tablet, 800 x 1280: the sheet's two buttons are on the screen
 PASS  tablet, 800 x 1280: the full view uses the same word
 PASS  tablet, 800 x 1280: no page error
 
-457 of 457 checks passed
+462 of 462 checks passed

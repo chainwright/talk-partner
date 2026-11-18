@@ -484,12 +484,11 @@ def phone(browser, url, live):
     page.locator('#another').scroll_into_view_if_needed()
     page.locator('[data-next]').first.click()
     page.wait_for_selector('main.simple.card #made-where')
-    # (this is the fourth "yes" to a yes / no question within ten minutes of this run: the answer-reliability guard is
-    # on, so the carer's screen says so and this either-or shows its answers turned by one place; none is lost)
+    # (the "yes" answers before this one include "Are you in pain?", which the answer check never reads, and the run is
+    # too short and too fast for it: nothing is said, and the choices stand in their own order)
     order = page.locator('#person .pt').all_inner_texts()
-    check('that question is one idea with three answers and a way out, made by the rules', sorted(order[:3]) == ['body', 'people', 'plans'] and order[3] == 'something else' and page.locator('#made-where').get_attribute('data-maker') == 'code', str(order))
-    check('the guard: after "yes" to four yes / no questions in a row, the carer reads "They may be tired. Try again later, or check with a different question."', 'They may be tired. Try again later, or check with a different question.' in text(page, '#guard'), text(page)[:200])
-    check('the guard: the next either-or shows its answers in a different order (people, plans, body), and the line to say follows it', order == ['people', 'plans', 'body', 'something else'] and 'people, plans, body, or something else' in text(page, '.say').lower(), f"{order} / {text(page, '.say')}")
+    check('that question is one idea with three answers and a way out, made by the rules', order == ['body', 'people', 'plans', 'something else'] and page.locator('#made-where').get_attribute('data-maker') == 'code', str(order))
+    check('the answer check says nothing in an ordinary flow (pain -> where -> how bad, then "is something bothering you")', page.locator('#guard').count() == 0)
     page.locator('[data-act=show]').click()
     page.wait_for_selector('main.pv .pt')
     hold_exit(page)
@@ -1053,10 +1052,11 @@ def diary(browser, url, live):
     page.locator('[data-act=back]').click()
     page.wait_for_selector('main.simple.home')
 
-    # ---- the guard: "yes" to four yes / no questions in a row
-    for i, (topic, q) in enumerate((('food', 'Are you hungry?'), ('rest', 'Are you tired?'), ('body', 'Do you need the toilet?'), ('body', 'Are you in pain?'))):
+    # ---- the answer check: "yes" to five yes / no questions in a row (none about pain, the toilet or a need)
+    asked = (('food', 'Are you hungry?'), ('rest', 'Are you tired?'), ('fun', 'Would you like some music on?'), ('plans', 'Would you like to go for a walk?'), ('fun', 'Would you like the radio on?'))
+    for i, (topic, q) in enumerate(asked):
         ask_topic(page, topic, q)
-        if i == 3:
+        if i == len(asked) - 1:
             page.locator('[data-act=show]').click()
             page.wait_for_selector('main.pv .pt')
             page.locator('main.pv .pt', has_text='yes').first.click()
@@ -1069,14 +1069,24 @@ def diary(browser, url, live):
             page.wait_for_selector('main.simple.s-answered')
         else:
             answer(page, 'yes')
-            check(f'guard: nothing is said after {i + 1} "yes"', page.locator('#guard').count() == 0)
-        if i < 3:
+            check(f'guard: nothing is said after {i + 1} "yes" (four quick ones are an ordinary flow)', page.locator('#guard').count() == 0)
             new_q(page)
     guard = text(page, '#guard') if page.locator('#guard').count() else ''
-    check('guard: after the fourth "yes" the carer reads "They may be tired. Try again later, or check with a different question."', 'They may be tired. Try again later, or check with a different question.' in guard and 'nearly all "yes"' in guard and 'less sure' in guard, guard)
+    check('guard: after the fifth "yes" the carer reads the headline and one line ("They may be tired. Try again later, or check with a different question." / marked "less sure"), the rest under "More"', guard.startswith('They may be tired. Try again later, or check with a different question. These answers are marked "less sure" in the diary. More') and page.evaluate("document.querySelector('#guard details').open") is False, guard)
+    page.locator('#guard summary').click()
+    check('guard: "More" says why, and that answers about pain, the toilet or a need are never marked', 'nearly all "yes"' in text(page, '#guard') and 'Answers about pain, the toilet or a need are never marked: take them as said.' in text(page, '#guard'), text(page, '#guard'))
     screen_checks(page, 'guard: the answered screen with the line', primary=False)
     hist = page.evaluate(KV_GET, 'history')
-    check('guard: the four answers are marked "less sure" in the answers kept here', [bool(h.get('lessSure')) for h in hist] == [True] * 4 and all(h.get('yn') and h.get('pos') == 0 for h in hist), str(hist)[:300])
+    check('guard: the five answers are marked "less sure" in the answers kept here', [bool(h.get('lessSure')) for h in hist] == [True] * 5 and all(h.get('yn') and h.get('pos') == 0 for h in hist), str(hist)[:300])
+    # pain is never discounted: asked right now, while the check is on
+    new_q(page)
+    ask_topic(page, 'body', 'Are you in pain?')
+    check('guard and pain: no "may be tired" on the screen before a pain question is shown', page.locator('#guard').count() == 0)
+    answer(page, 'yes')
+    pain = text(page)
+    check('guard and pain: after "Are you in pain? Yes" there is no "may be tired" line, and the screen leads on with "Next: Where does it hurt?"', page.locator('#guard').count() == 0 and 'may be tired' not in pain and text(page, '#next-q') == 'Next: Where does it hurt?', pain[:300])
+    hist = page.evaluate(KV_GET, 'history')
+    check('guard and pain: the pain answer is not marked "less sure", in the answers and in the diary', not hist[-1].get('lessSure') and hist[-1]['q'] == 'Are you in pain?' and not [e for e in page.evaluate(KV_GET, 'diary') if e.get('q') == 'Are you in pain?' and e.get('lessSure')], str(hist[-1]))
     new_q(page)
     ask_topic(page, 'food', 'tea or coffee')
     check('guard: the next either-or has its answers in a different order (coffee, tea), none removed, and the line to say follows', page.locator('#person .pt').all_inner_texts() == ['coffee', 'tea', 'something else'] and 'coffee, tea, or something else' in text(page, '.say').lower() and page.locator('#guard').count() == 1, f"{page.locator('#person .pt').all_inner_texts()} / {text(page, '.say')}")
@@ -1084,10 +1094,10 @@ def diary(browser, url, live):
     page.wait_for_selector('main.simple.home')
     page.locator('#diary-link').click()
     page.wait_for_selector('main.simple.diary')
-    check('guard: in the diary the four answers carry "less sure", and what the carer logged does not', page.locator('#timeline .de[data-less-sure]').count() == 4 and page.locator('#timeline .de.log[data-less-sure]').count() == 0 and page.locator('#timeline .tag.unsure').count() == 4, text(page, '#timeline'))
+    check('guard: in the diary the five answers carry "less sure"; the pain answer and what the carer logged do not', page.locator('#timeline .de[data-less-sure]').count() == 5 and page.locator('#timeline .de.log[data-less-sure]').count() == 0 and page.locator('#timeline .tag.unsure').count() == 5 and 'Are you in pain? yes' in text(page, '#timeline'), text(page, '#timeline'))
     check('diary: the answers are there with their questions ("Are you hungry? yes")', 'Are you hungry? yes' in text(page, '#timeline'))
     tip = text(page, '#day-tip') if page.locator('#day-tip').count() else ''
-    check('tip of the day: one sentence about the carer\'s own questions, with what it is from, worded by the rules', "Each of today's 5 questions asked one clear thing." in tip and 'From your 5 questions today. About the questions, never about them.' in tip and 'No AI, nothing sent.' in tip, tip)
+    check('tip of the day: one sentence about the carer\'s own questions, with what it is from, worded by the rules', "Each of today's 7 questions asked one clear thing." in tip and 'From your 7 questions today. About the questions, never about them.' in tip and 'No AI, nothing sent.' in tip, tip)
     page.locator('#tip-hide').click()
     page.wait_for_selector('#tip-show')
     page.wait_for_timeout(300)
@@ -1131,7 +1141,9 @@ def diary(browser, url, live):
     sw = by.get('sweets', {})
     check('week fixture, Thursday: sweets with diabetes noted -> "Worth mentioning to the doctor or nurse", and no diet advice', sw.get('lvl', '').strip() == 'Worth mentioning to the doctor or nurse' and sw.get('text') == 'Something sweet was chosen 3 times in the last 7 days. Diabetes is noted here.' and sw.get('base') == 'Chosen 3 times in 7 days. Only what was entered here.', str(sw))
     fd = by.get('few-drinks', {})
-    check('week fixture, Wednesday: the drinks line names the day and its base ("Chosen or logged 2 times that day. Only what was entered here.")', fd.get('text') == f'Few drinks were entered on {name(2)}: 2.' and fd.get('base') == 'Chosen or logged 2 times that day. Only what was entered here.', str(fd))
+    check('week fixture, Wednesday: the drinks line names the day, and its base says how drinks are counted (every "Drank" tap, every drink chosen on a card; a card and a tap within 20 minutes once)', fd.get('text') == f'Few drinks were entered on {name(2)}: 2.' and fd.get('base') == 'Counted that day: 2. Every "Drank" tap counts, and every drink chosen on a card (tea, coffee, water, juice, milk, or yes to "something to drink"); a card and a tap within 20 minutes count once. Only what was entered here.', str(fd))
+    wed = page.evaluate("(d) => [...document.querySelectorAll(`#timeline .day[data-day='${d}'] .de`)].map((e) => e.innerText.replace(/\\s+/g, ' ').trim())", name(2))
+    check('week fixture, Wednesday: the count in the line equals what the timeline shows (one tea on a card, one "Drank")', len([x for x in wed if x.endswith('Drank') or x.endswith(' tea')]) == 2, str(wed))
     ls = by.get('less-sure', {})
     check('week fixture, Friday: the answers marked "less sure" are a line of their own', ls.get('text', '').startswith(f'5 answers on {name(4)} are marked "less sure"') and ls.get('base') == '5 of 25 answers in 7 days.', str(ls))
     check('week fixture: Friday evening\'s five answers carry "less sure" in the timeline', page.locator(f'#timeline .day[data-day="{name(4)}"] .de[data-less-sure]').count() == 5)

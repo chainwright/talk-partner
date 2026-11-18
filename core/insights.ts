@@ -128,8 +128,11 @@ export function insights(diary: DiaryEntry[], health: HealthNotes, span: Insight
 
   // a day with few drinks entered (the day with the fewest); never with a fluid limit
   if (!health.fluidLimit) {
-    const few = past.map((d) => ({ day: d.day, n: events(d.entries, 'drink').length })).filter((x) => x.n > 0 && x.n < T.fewDrinks).sort((a, b) => a.n - b.n || b.day - a.day)[0];
-    if (few) out.push({ id: 'few-drinks', level: T.fewDrinksMention ? 'mention' : 'note', text: I.fewDrinks(dayText(few.day), few.n), noted: T.fewDrinksMention ? I.fewDrinksReminders : '', base: `${I.fewDrinksBase(few.n)} ${I.only}` });
+    const low = past.map((d) => ({ day: d.day, n: events(d.entries, 'drink').length })).filter((x) => x.n > 0 && x.n < T.fewDrinks);
+    const least = Math.min(...low.map((x) => x.n));
+    // every day that has the fewest is named (two days with one drink each are both worth a look), the last three at most
+    const few = low.filter((x) => x.n === least).map((x) => x.day).sort((a, b) => a - b).slice(-3);
+    if (few.length) out.push({ id: 'few-drinks', level: T.fewDrinksMention ? 'mention' : 'note', text: I.fewDrinks(names(few), least, few.length > 1), noted: T.fewDrinksMention ? I.fewDrinksReminders : '', base: `${I.fewDrinksBase(least, few.length > 1)} ${I.only}` });
   } else if (T.manyDrinks) {
     const many = days.map((d) => ({ day: d.day, n: events(d.entries, 'drink').length })).filter((x) => x.n >= T.manyDrinks).sort((a, b) => b.n - a.n)[0];
     if (many) out.push({ id: 'many-drinks', level: 'mention', text: I.manyDrinks(dayText(many.day), many.n), noted: '', base: `${I.manyDrinksBase(many.n)} ${I.only}`, local: true });

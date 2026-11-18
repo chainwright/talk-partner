@@ -68,13 +68,18 @@ def main():
         shot('03_diary_one_tap_log')
         pg.locator('[data-act=back]').click()
         pg.wait_for_selector('main.simple.home')
-        # Friday evening: "yes" to four yes / no questions in a row
-        for i, (topic, q) in enumerate((('food', 'Are you hungry?'), ('rest', 'Are you tired?'), ('body', 'Do you need the toilet?'), ('body', 'Are you in pain?'))):
+        # Friday evening: "yes" to five yes / no questions in a row (none about pain, the toilet or a need)
+        for i, (topic, q) in enumerate((('food', 'Are you hungry?'), ('rest', 'Are you tired?'), ('fun', 'Would you like some music on?'), ('plans', 'Would you like to go for a walk?'), ('fun', 'Would you like the radio on?'))):
             e2e.ask_topic(pg, topic, q)
             e2e.answer(pg, 'yes')
-            if i < 3:
+            if i < 4:
                 e2e.new_q(pg)
-        shot('04_guard_after_the_fourth_yes')
+        shot('04_guard_after_the_fifth_yes')
+        # pain is never discounted: asked while the check is on, the screen leads on with "Where does it hurt?"
+        e2e.new_q(pg)
+        e2e.ask_topic(pg, 'body', 'Are you in pain?')
+        e2e.answer(pg, 'yes')
+        shot('25_pain_yes_while_the_check_is_on_no_guard_line')
         e2e.new_q(pg)
         e2e.ask_topic(pg, 'food', 'tea or coffee')
         shot('05_guard_next_either_or_in_a_different_order')

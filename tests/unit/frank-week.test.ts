@@ -36,7 +36,7 @@ describe('Frank\'s week', () => {
     expect(xs.map((x) => x.id)).toEqual(WEEK.expect.week);
     expect(xs[0]).toEqual({ id: 'sweets', level: 'mention', text: 'Something sweet was chosen 3 times in the last 7 days.', noted: 'Diabetes is noted here.', base: 'Chosen 3 times in 7 days. Only what was entered here.' });
     expect(COPY.simple.insights.level[xs[0].level]).toBe('Worth mentioning to the doctor or nurse');
-    expect(xs[1]).toEqual({ id: 'few-drinks', level: 'note', text: 'Few drinks were entered on Wed 18 Nov: 2.', noted: '', base: 'Chosen or logged 2 times that day. Only what was entered here.' });
+    expect(xs[1]).toEqual({ id: 'few-drinks', level: 'note', text: 'Few drinks were entered on Wed 18 Nov: 2.', noted: '', base: 'Counted that day: 2. Every "Drank" tap counts, and every drink chosen on a card (tea, coffee, water, juice, milk, or yes to "something to drink"); a card and a tap within 20 minutes count once. Only what was entered here.' });
     expect(xs[2].text.startsWith('5 answers on Fri 20 Nov are marked "less sure"')).toBe(true);
     expect(xs[2].base).toBe('5 of 25 answers in 7 days.');
   });
@@ -45,7 +45,7 @@ describe('Frank\'s week', () => {
     const day = (n: number) => d.filter((e) => e.at >= when(n, '00:00') && e.at < when(n + 1, '00:00'));
     expect([0, 1, 2, 3, 4, 5].map((n) => events(day(n), 'drink').length)).toEqual([5, 4, 2, 4, 3, 3]);
     expect(events(d, 'sweet').length).toBe(WEEK.expect.sweets);
-    expect(new Set(events(d, 'pain').map((t) => dayText(t))).size).toBe(2);
+    expect(new Set(events(d, 'pain').map((t) => dayText(t))).size).toBe(1);
   });
   it('without the diabetes note the sweets are not a line: the note is what makes them worth mentioning', () => {
     expect(insights(weekDiary(), NO_HEALTH, 'week', NOW).map((x) => x.id)).toEqual(['few-drinks', 'less-sure']);

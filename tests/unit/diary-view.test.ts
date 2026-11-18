@@ -16,7 +16,7 @@ import { NOW, WEEK, weekDiary } from './week';
 const S = COPY.simple;
 const count = (html: string, part: string) => html.split(part).length - 1;
 /** As the screens write it: an apostrophe is escaped. */
-const h = (t: string) => t.replace(/'/g, '&#39;');
+const h = (t: string) => t.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const lines = insights(weekDiary(), WEEK.health, 'week', NOW);
 const model = (o: Partial<DiaryModel> = {}): DiaryModel => ({
   name: 'Frank', tab: 'week', topic: 'all', now: NOW, entries: inSpan(weekDiary(), 'week', NOW), any: true, logged: null,
@@ -52,7 +52,8 @@ describe('the diary screen', () => {
     expect(html).toContain('data-id="sweets" data-level="mention"');
     expect(html).toMatch(/Worth mentioning to the doctor or nurse<\/span><p class="ins-text">Something sweet was chosen 3 times in the last 7 days\. <span class="noted">Diabetes is noted here\.<\/span><\/p><p class="ins-base">Chosen 3 times in 7 days\. Only what was entered here\.<\/p>/);
     expect(html).toContain('Few drinks were entered on Wed 18 Nov: 2.');
-    expect(html).toContain('Chosen or logged 2 times that day. Only what was entered here.');
+    expect(html).toContain(h(`${S.insights.fewDrinksBase(2, false)} ${S.insights.only}`));
+    expect(S.insights.fewDrinksBase(2, false)).toContain('Every "Drank" tap counts, and every drink chosen on a card');
     expect(html).toContain(h(S.insights.by.rules));
     expect(html).toContain(S.insights.footer);
     expect(html).toContain('id="ins-plainer"');

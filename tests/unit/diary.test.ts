@@ -75,11 +75,12 @@ describe('today, week, month', () => {
 });
 
 describe('what an entry counts as', () => {
-  it('a drink: named on a card, logged, or pointed to on the board; "yes" to a question and "a hot drink" are not one', () => {
+  it('a drink: named on a card, yes to "something to drink", logged, or pointed to on the board; "a hot drink" is a step on the way, not one', () => {
     expect(tags(ans('Would you like tea or coffee?', 'tea', 1, 'food'))).toEqual(['drink']);
     expect(tags(logEntry('drank', 1))).toEqual(['drink']);
     expect(tags(needEntry('drink', 1))).toEqual(['drink']);
-    expect(tags(ans('Would you like something to drink?', 'yes', 1, 'food'))).toEqual([]);
+    expect(tags(ans('Would you like something to drink?', 'yes', 1, 'food'))).toEqual(['drink']);
+    expect(tags(ans('Would you like something to drink?', 'no', 1, 'food'))).toEqual([]);
     expect(tags(ans('Would you like a hot drink or a cold drink?', 'hot drink', 1, 'food'))).toEqual([]);
     expect(tags(ans('Would you like milk in it?', 'yes', 1, 'food'))).toEqual([]);
   });
@@ -106,7 +107,19 @@ describe('what an entry counts as', () => {
   it('"tea" on a card and "Drank" tapped a few minutes later are one drink', () => {
     const t = when(0, '09:00');
     expect(SAME_EVENT_MS).toBe(20 * 60000);
-    expect(events([ans('Would you like tea or coffee?', 'tea', t, 'food'), logEntry('drank', t + 5 * 60000), logEntry('drank', t + 90 * 60000)], 'drink')).toEqual([t, t + 90 * 60000]);
+    expect(events([ans('Would you like tea or coffee?', 'tea', t, 'food'), logEntry('drank', t + 5 * 60000), logEntry('drank', t + 90 * 60000)], 'drink')).toEqual([t + 5 * 60000, t + 90 * 60000]);
+  });
+  it('every tap on the log counts: three "Drank" in the same minute are three drinks, as the timeline shows them', () => {
+    const t = when(0, '08:10');
+    expect(events([logEntry('drank', t), logEntry('drank', t), logEntry('drank', t + 20000)], 'drink').length).toBe(3);
+    // a card and ONE tap are one drink; a second tap is a second drink
+    expect(events([ans('Would you like tea or coffee?', 'tea', t, 'food'), logEntry('drank', t + 60000), logEntry('drank', t + 120000)], 'drink').length).toBe(2);
+    // a tap logged just before the card is the same drink too
+    expect(events([logEntry('drank', t - 60000), ans('Would you like tea or coffee?', 'tea', t, 'food')], 'drink').length).toBe(1);
+    // the answers of one conversation are one drink: yes to "something to drink", then "tea"
+    expect(events([ans('Would you like something to drink?', 'yes', t, 'food'), ans('Would you like tea or coffee?', 'tea', t + 60000, 'food')], 'drink').length).toBe(1);
+    // two cards hours apart are two
+    expect(events([ans('Would you like tea or coffee?', 'tea', t, 'food'), ans('Would you like water, juice or milk?', 'water', t + 3 * 3600000, 'food')], 'drink').length).toBe(2);
   });
 });
 
@@ -116,6 +129,9 @@ describe('"less sure"', () => {
     const d = [logEntry('drank', t - 1000), ans('Are you tired?', 'yes', t), logEntry('ate', t + 1000), ans('Are you hungry?', 'yes', t + 2000)];
     const m = markDiary(d, t, t + 5000);
     expect(m.map((e) => !!e.lessSure)).toEqual([false, true, false, true]);
+    // an answer about pain or the toilet is never marked, wherever it stands in the run
+    const care = [ans('Are you in pain?', 'yes', t + 100), ans('Do you need the toilet?', 'yes', t + 200), ans('How are you feeling today?', 'in pain', t + 300), ans('Are you tired?', 'yes', t + 400)];
+    expect(markDiary(care, t, t + 5000).map((e) => !!e.lessSure)).toEqual([false, false, false, true]);
     expect(markDiary(d, null, t)).toBe(d);
   });
   it('the text for a visit says it, with the time and the question, and holds no count and no advice', () => {

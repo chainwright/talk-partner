@@ -44,7 +44,16 @@ describe('the rules', () => {
   it('a day with few drinks entered: the count, the day, and "only what was entered here"', () => {
     const wed = [logEntry('drank', when(2, '08:00')), logEntry('ate', when(2, '12:00')), logEntry('drank', when(2, '15:00'))];
     const xs = insights([...days(0, 1), ...wed], NO_HEALTH, 'week', NOW);
-    expect(xs).toEqual([{ id: 'few-drinks', level: 'note', text: 'Few drinks were entered on Wed 18 Nov: 2.', noted: '', base: 'Chosen or logged 2 times that day. Only what was entered here.' }]);
+    expect(xs).toEqual([{ id: 'few-drinks', level: 'note', text: 'Few drinks were entered on Wed 18 Nov: 2.', noted: '', base: 'Counted that day: 2. Every "Drank" tap counts, and every drink chosen on a card (tea, coffee, water, juice, milk, or yes to "something to drink"); a card and a tap within 20 minutes count once. Only what was entered here.' }]);
+    // (18 Nov, the second role-play) two days with the fewest are both named, and three taps in one minute are three drinks
+    const fri = [logEntry('drank', when(4, '08:00')), logEntry('ate', when(4, '12:00'))];
+    const mon = [logEntry('ate', when(0, '09:00')), logEntry('drank', when(0, '10:00'))];
+    const tie = insights([...days(1), ...fri, ...mon], NO_HEALTH, 'week', NOW);
+    expect(tie[0].text).toBe('Few drinks were entered on Mon 16 Nov and Fri 20 Nov: 1 each.');
+    expect(tie[0].base.startsWith('Counted on each of those days: 1. Every "Drank" tap counts')).toBe(true);
+    const batch = [logEntry('ate', when(2, '08:00')), logEntry('drank', when(2, '08:10')), logEntry('drank', when(2, '08:10')), logEntry('drank', when(2, '08:10'))];
+    expect(ids(insights([...days(0, 1), ...batch], NO_HEALTH, 'week', NOW))).toEqual(['nothing']);
+    expect(insights([...days(0, 1), ...batch.slice(0, 3)], NO_HEALTH, 'week', NOW)[0].text).toBe('Few drinks were entered on Wed 18 Nov: 2.');
   });
   it('something sweet, chosen often: 6 times in a week without a note, a note only', () => {
     const sweet = (d: number, t: string) => answerEntry({ q: 'Would you like something sweet or something savoury?', label: 'something sweet', at: when(d, t) }, 'food');

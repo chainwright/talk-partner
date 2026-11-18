@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
-import { RELIABLE, SAME_POS, WINDOW_MS, YES_MIN, YES_OF, markLessSure, reliability, reorder, tapsFrom, type Tap } from '../../core/reliability';
+import { MIN_CARDS, MIN_SPAN_MS, RELIABLE, SAME_POS, WINDOW_MS, YES_MIN, YES_OF, careAnswer, markLessSure, reliability, reorder, tapsFrom, type Tap } from '../../core/reliability';
 import { needsCard } from '../../core/needs';
 import { answeredScreen, cardScreen, personSimple } from '../../web/src/simple';
 import { guardBlock } from '../../web/src/diary';
@@ -59,6 +59,39 @@ describe('the same place on the screen every time', () => {
     const r = reliability([pick(0, 0), yn(1, true), yn(2, true), yn(3, true), yn(4, true)], min(4));
     expect(r.flags).toEqual(['yes-run', 'same-position']);
     expect(r.since).toBe(min(0));
+  });
+});
+
+describe('never about pain, the toilet, help or a need; never in an ordinary fast flow', () => {
+  const sec = (n: number, yes = true): Tap => ({ at: T0 + n * 1000, yn: true, yes, pos: yes ? 0 : 1, of: 2 });
+  it('which answers the guard does not read', () => {
+    for (const q of ['Are you in pain?', 'Does it hurt?', 'Where does it hurt?', 'Do you need the toilet?', 'Do you need help?', 'How bad is the pain?', 'What do you need?']) expect(careAnswer(q, 'yes'), q).toBe(true);
+    expect(careAnswer('How are you feeling today?', 'in pain')).toBe(true);
+    for (const q of ['Are you tired?', 'Are you hungry?', 'Would you like tea or coffee?', 'Would you like some music on?']) expect(careAnswer(q, 'yes'), q).toBe(false);
+  });
+  it('a "yes" to pain or the toilet does not count toward a run, and is never marked', () => {
+    const h = [['Are you tired?', 0], ['Are you in pain?', 1], ['Do you need the toilet?', 2], ['Are you hungry?', 3], ['Would you like some music on?', 4]].map(([q, n]) => ({ q: q as string, label: 'yes', at: min(n as number), pos: 0, of: 2, yn: true }));
+    // five "yes" in a row, two of them about pain and the toilet: three count, and that is not a run
+    expect(tapsFrom(h).length).toBe(3);
+    expect(reliability(tapsFrom(h), min(4))).toBe(RELIABLE);
+    const more = [...h, { q: 'Would you like the radio on?', label: 'yes', at: min(5), pos: 0, of: 2, yn: true }];
+    const r = reliability(tapsFrom(more), min(5));
+    expect(r.flags).toContain('yes-run');
+    expect(markLessSure(more, r, min(5)).map((x) => !!(x as { lessSure?: boolean }).lessSure)).toEqual([true, false, false, true, true, true]);
+  });
+  it('pain -> where -> how bad, and three quick "yes" before it, is an ordinary flow: nothing is said', () => {
+    expect(MIN_SPAN_MS).toBe(120000); expect(MIN_CARDS).toBe(5);
+    // four "yes" in 30 seconds, four cards in all: too fast and too few to say anything
+    expect(reliability([sec(0), sec(10), sec(20), sec(30)], T0 + 30000)).toBe(RELIABLE);
+    // the same four over two minutes are a run
+    expect(reliability([sec(0), sec(40), sec(80), sec(120)], T0 + 120000).flags).toContain('yes-run');
+    // and so are five cards, however fast
+    expect(reliability([sec(0), sec(10), sec(20), sec(30), sec(40)], T0 + 40000).flags).toContain('yes-run');
+  });
+  it('the line is the headline and one sentence; the rest is under "More"', () => {
+    const html = guardBlock({ name: 'Frank', flags: ['yes-run'] });
+    expect(html).toMatch(/<b>Frank may be tired\. Try again later, or check with a different question\.<\/b><small>These answers are marked &quot;less sure&quot; in the diary\.<\/small><details class="guard-more"><summary>More<\/summary>/);
+    expect(html.slice(html.indexOf('<details'))).toContain('Answers about pain, the toilet or a need are never marked: take them as said.');
   });
 });
 

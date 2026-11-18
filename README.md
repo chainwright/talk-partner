@@ -199,6 +199,12 @@ without it, tea first on the card every morning would be flagged, and that is a 
 line, on the carer's screens only: *"Frank may be tired. Try again later, or check with a different question."* The
 answers of that run are marked "less sure" in the diary, and the next either-or shows its choices in a different
 order (none removed; a yes / no card keeps its order). The thresholds are ours, not a clinical standard.
+**It never discounts pain, the toilet, help or a need** (changed on 18 Nov after a second role-play, where the line
+stood under "Are you in pain? Yes" and a carer could have dismissed real pain): such an answer does not count
+toward a run, is never marked "less sure", and no line stands on its screen; after a pain "yes" the screen leads on
+with "Next: Where does it hurt?" as before. And it stays quiet in an ordinary fast flow: it speaks only when the run
+took 2 minutes or more, or 5 answers or more fall within the 10 minutes. The line is a headline and one sentence;
+why, and the rest, are under "More".
 
 **The diary (`core/diary.ts`, `web/src/diary.ts`).** One tap logs "Drank", "Ate", "Toilet", "Slept" or "Pain" with the
 time, with "Undo". The diary also keeps every answer the person confirmed and every need they pointed to on the
@@ -214,7 +220,10 @@ device, and are never in a cloud request.
 or nurse"): pain chosen or logged on 3 days or more; a whole past day with entries and no drink among them, said with
 its doubt ("That can simply mean nobody entered one."). Worth mentioning or to keep in mind: a day with few drinks
 entered, something sweet chosen often, bad nights on 3 days, many answers marked "less sure". Each line shows what it
-was counted from (*"Chosen or logged 2 times that day. Only what was entered here."*). The health notes change the
+was counted from (*"Counted that day: 2. Every "Drank" tap counts, and every drink chosen on a card (tea, coffee,
+water, juice, milk, or yes to "something to drink"); a card and a tap within 20 minutes count once. Only what was
+entered here."*). Every tap on the log counts by itself, so three "Drank" logged in one minute are three, as the
+timeline shows them; when two days tie on the fewest drinks, both are named. The health notes change the
 thresholds: with diabetes noted, 3 sweet choices in a week are "Worth mentioning to the doctor or nurse" (6 without
 the note, and then only "To keep in mind"); with reminders noted, a day with 3 drinks is already few; with swallowing
 difficulty noted, a day with no food entered is mentioned; **with a fluid limit noted the app never suggests more to
@@ -237,14 +246,15 @@ The diary and the answers are not in the file.
 390 px phone, with the word under it at 30 px, and three choices and "something else" stand on 390 x 844 without
 scrolling (measured by `scripts/e2e-simple.py` and `scripts/overflow-check.py`); the family's photos get the same size.
 
-**Checked** at commit `9117fdd` (production build on localhost; logs in `devlog/evidence_phase3/`): 2411 unit tests;
-`e2e-simple.py` 457/457, of which the phase 3 run (102 checks) drives the diary, the answer check, health notes, the
-Miller family's week (`tests/fixtures/frank-week.json`, fictional: `design/PERSONA_SCENARIO.md`) and its three lines,
-the sheet, the tip, save / clear / bring back, and the picture sizes; `overflow-check.py` 402/402 at 320 to 412 px;
-`contrast-check.mjs` 117 pairs; `pwa-check.py` 30/30; `update-check.py` 11/11; `e2e-needs.mjs` 12/12;
-`e2e-noconfig.mjs` 25/25. Screens at 390 px: `devlog/evidence_phase3/01_…` to `24_…` (`scripts/phase3-shots.py`).
-Not run: `e2e-cloud.mjs` and `e2e-ondevice.mjs` (nothing in a card's rules, prompt or model call changed; the two new
-wording steps have no run against a real model).
+**Checked** after the second role-play's fixes (production build on localhost; logs in `devlog/evidence_phase3/`):
+2416 unit tests; `e2e-simple.py` 462/462, of which the phase 3 run (108 checks) drives the diary, the answer check (five
+"yes" in a row, then "Are you in pain?" while it is on: no line, no mark, "Next: Where does it hurt?"), health notes,
+the Miller family's week (`tests/fixtures/frank-week.json`, fictional: `design/PERSONA_SCENARIO.md`) and its three
+lines, the sheet, the tip, save / clear / bring back, and the picture sizes; `overflow-check.py` 402/402 at 320 to
+412 px; `pwa-check.py` 30/30. At `9117fdd`, before those fixes: `contrast-check.mjs` 117 pairs, `update-check.py`
+11/11, `e2e-needs.mjs` 12/12, `e2e-noconfig.mjs` 25/25. Screens at 390 px: `devlog/evidence_phase3/01_…` to `25_…`
+(`scripts/phase3-shots.py`). Not run: `e2e-cloud.mjs` and `e2e-ondevice.mjs` (nothing in a card's rules, prompt or
+model call changed; the two new wording steps have no run against a real model).
 
 ## Changed on 18 Nov after a role-play on the phone
 One of us played Carol and Frank (`design/PERSONA_SCENARIO.md`, fictional) on the hosted copy at 390 px. What it
@@ -391,7 +401,7 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `core/pipeline.ts:733` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:848` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:878` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:646` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
+| `web/src/main.ts:647` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all, and since 17 Nov neither does any either-or whose two options the code reads whole. Every cut is visible per card in "Why this card".

@@ -364,8 +364,8 @@ def phase3(url, width, browser):
     entries.append({'id': 'long', 'at': now - 60000, 'kind': 'answer', 'q': LONG_Q, 'label': 'stay at home and watch television', 'topic': 'plans', 'lessSure': True})
     profile = dict(week['profile'], personName='Christopher-Alexander')
     health = {'text': 'Thickened fluids only, level 2, as the speech and language therapist wrote in the discharge letter; no straws. ' * 2, 'diabetes': True, 'swallowing': True, 'fluidLimit': True, 'reminders': True}
-    # four "yes" in the last few minutes: the guard is on, so the carer's screens carry its line
-    history = [{'q': f'Question {n}?', 'topic': '', 'label': 'yes', 'at': now - (5 - n) * 30000, 'pos': 0, 'of': 2, 'yn': True, 'lessSure': True} for n in range(4)]
+    # five "yes" in the last few minutes: the guard is on, so the carer's screens carry its line
+    history = [{'q': f'Question {n}?', 'topic': '', 'label': 'yes', 'at': now - (5 - n) * 30000, 'pos': 0, 'of': 2, 'yn': True, 'lessSure': True} for n in range(5)]
     asks = [{'at': now - n * 60000, 'open': False, 'two': n == 1, 'quiz': False, 'again': False} for n in range(1, 5)]
     page.goto(url)
     page.wait_for_selector('main.simple.home')

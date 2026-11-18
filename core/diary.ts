@@ -10,6 +10,7 @@
 // What a diary is not: a record of what happened. It holds only what was entered in this app. A day with no drink in
 // it may be a day when nobody logged one, and every count the app shows says so.
 
+import { careAnswer } from './reliability';
 import type { TopicId } from './topics';
 
 /** The carer's one-tap log. */
@@ -136,8 +137,9 @@ const NOT_AN_ANSWER = /^(?:yes|no|not sure|something else|someone else|somewhere
 const FOOD_Q = /\b(?:snack|meal|eat|sweet|savoury|breakfast|lunch|dinner|supper|pudding)\b/;
 
 /**
- * What an entry counts as. A drink or a food counts when the person chose it by name or it was logged; "yes" to "Are
- * you hungry?" is not a meal, and "a hot drink" is one step on the way to "tea", so neither is counted.
+ * What an entry counts as. A drink counts when the person chose it by name on a card (tea, coffee, water, juice,
+ * milk), said yes to "something to drink", pointed to it on the board, or it was logged; a food likewise. "Yes" to
+ * "Are you hungry?" is not a meal, and "a hot drink" is one step on the way to "tea", so neither is counted.
  */
 export function tags(e: DiaryEntry): Tag[] {
   const l = lc(e.label);
@@ -145,7 +147,7 @@ export function tags(e: DiaryEntry): Tag[] {
   if (e.kind === 'log') return e.log === 'drank' ? ['drink'] : e.log === 'ate' ? ['food'] : e.log === 'toilet' ? ['toilet'] : e.log === 'slept' ? ['sleep'] : ['pain'];
   if (e.kind === 'need') return l === 'drink' ? ['drink'] : l === 'food' ? ['food'] : l === 'toilet' ? ['toilet'] : l === 'pain' ? ['pain'] : l === 'tired' ? ['tired'] : [];
   const out: Tag[] = [];
-  if (DRINK.test(l)) out.push('drink');
+  if (DRINK.test(l) || (/\bsomething to drink\b/.test(q) && l === 'yes')) out.push('drink');
   if (SWEET.test(l)) out.push('sweet');
   if (!NOT_AN_ANSWER.test(l) && !DRINK.test(l) && !/\bdrink\b/.test(l) && (FOOD_Q.test(q) || (e.topic === 'food' && /^would you like\b/.test(q) && !/\bdrink\b|\bmilk in it\b|\bsome more\b/.test(q)))) out.push('food');
   if (/\btoilet\b/.test(q) && l === 'yes') out.push('toilet');
@@ -155,24 +157,35 @@ export function tags(e: DiaryEntry): Tag[] {
   return out;
 }
 
-/** Two entries of the same kind less than this apart are one event ("tea" on a card, then "drank" tapped). */
+/** A card and a tap of the same thing less than this apart are one event ("tea" on a card, then "Drank" tapped). */
 export const SAME_EVENT_MS = 20 * 60 * 1000;
 
-/** The moments something of this kind was entered, one per event, oldest first. */
+/**
+ * The moments something of this kind was entered, oldest first. Every tap on the log counts by itself: carers log
+ * afterwards, several at once, so three "Drank" in one minute are three drinks, as the timeline shows them. What is
+ * merged: a card answer and one tap of the same thing within 20 minutes (the tea on the card is the tea that was
+ * drunk), and the answers of one conversation ("something to drink? yes", then "tea").
+ */
 export function events(entries: DiaryEntry[], tag: Tag): number[] {
-  const out: number[] = [];
-  for (const e of [...entries].sort((a, b) => a.at - b.at)) {
-    if (!tags(e).includes(tag)) continue;
-    if (out.length && e.at - out[out.length - 1] < SAME_EVENT_MS) continue;
-    out.push(e.at);
+  const hits = [...entries].filter((e) => tags(e).includes(tag)).sort((a, b) => a.at - b.at);
+  const logs = hits.filter((e) => e.kind === 'log').map((e) => ({ at: e.at, paired: false }));
+  const out = logs.map((l) => l.at);
+  let lastCard = -Infinity;
+  for (const e of hits) {
+    if (e.kind === 'log') continue;
+    // one more answer of the same conversation: the same event as the one before it
+    if (e.at - lastCard < SAME_EVENT_MS) { lastCard = e.at; continue; }
+    lastCard = e.at;
+    const near = logs.filter((l) => !l.paired && Math.abs(l.at - e.at) < SAME_EVENT_MS).sort((a, b) => Math.abs(a.at - e.at) - Math.abs(b.at - e.at))[0];
+    if (near) near.paired = true; else out.push(e.at);
   }
-  return out;
+  return out.sort((a, b) => a - b);
 }
 
 /** The diary with every entry of the guard's run marked "less sure" (core/reliability.ts): answers only, never a log. */
 export function markDiary(diary: DiaryEntry[], since: number | null, now: number): DiaryEntry[] {
   if (since === null) return diary;
-  return diary.map((e) => (e.kind === 'answer' && e.at >= since && e.at <= now && !e.lessSure ? { ...e, lessSure: true } : e));
+  return diary.map((e) => (e.kind === 'answer' && e.at >= since && e.at <= now && !e.lessSure && !careAnswer(e.q ?? '', e.label) ? { ...e, lessSure: true } : e));
 }
 
 /** The span as plain text, for "Copy for a visit": day by day, a time and what was entered. No count, no advice. */
