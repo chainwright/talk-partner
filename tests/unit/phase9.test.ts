@@ -154,3 +154,40 @@ describe('3. P1 health wording', () => {
     expect(P8.passport.tiredYes).toMatch(/But a yes to pain, the toilet or 'something's wrong' is always a yes: act on it\.$/);
   });
 });
+
+// ---------------------------------------------------------------- item 4
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { emergencyNumber, localeNumber, numberSet, telHref } from '../../core/redflag';
+import { fallBlock, suddenScreen, urgentBox } from '../../web/src/phase5';
+
+describe('4. P1 the emergency number follows the locale, and asks', () => {
+  it('en-GB 999, a European Union locale 112, anything else 911', () => {
+    for (const l of ['en-GB', 'en_GB', 'cy-GB', 'gd-GB', 'en-UK']) expect(localeNumber(l), l).toBe('999');
+    for (const l of ['de-DE', 'fr-FR', 'en-IE', 'pl', 'de', 'it-IT', 'es-ES', 'nl-BE', 'sv-SE', 'pt-PT']) expect(localeNumber(l), l).toBe('112');
+    for (const l of ['en-US', 'en-CA', 'fr-CA', 'es-MX', 'pt-BR', 'en', 'ja-JP', '', undefined, 'xx']) expect(localeNumber(l), String(l)).toBe('911');
+  });
+  it('About them\'s own number always wins; with none, the locale\'s', () => {
+    expect(emergencyNumber('000', localeNumber('en-GB'))).toBe('000');
+    expect(emergencyNumber('', localeNumber('en-GB'))).toBe('999');
+    expect(emergencyNumber('', localeNumber('de-DE'))).toBe('112');
+    expect(emergencyNumber('')).toBe('911');
+    expect(numberSet('')).toBe(false);
+    expect(numberSet('999')).toBe(true);
+    expect(telHref('999')).toBe('tel:999');
+  });
+  it('while it is a guess, every call box says "Is this your emergency number? Change it", which opens About them', () => {
+    for (const html of [urgentBox('999', 'urgent', true), fallBlock({ number: '999', id: 'x', head: false, guess: true }), suddenScreen({ number: '999', guess: true })]) {
+      expect(html).toContain('Is this your emergency number? <button type="button" class="tlink" data-act="sudden-number">Change it →</button>');
+      expect(html).toContain('href="tel:999"');
+    }
+    // the number in About them: no question
+    expect(urgentBox('999', 'urgent', false)).not.toContain('Is this your emergency number?');
+  });
+  it('the web client: the locale when About them has none, and 911 with no question for the American sample family', () => {
+    const main = readFileSync(join(__dirname, '..', '..', 'web', 'src', 'main.ts'), 'utf8');
+    expect(main).toContain('const callNumber = () => emergencyNumber(state.health.emergency, state.demo ? DEFAULT_NUMBER : localeNumber(navigator.language));');
+    expect(main).toContain('const numberGuess = () => !state.demo && !numberSet(state.health.emergency);');
+    expect((main.match(/urgentBox\(callNumber\(\), 'urgent', numberGuess\(\)\)/g) ?? []).length).toBe(2);
+  });
+});

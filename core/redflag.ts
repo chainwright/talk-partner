@@ -14,11 +14,30 @@
 
 export const DEFAULT_NUMBER = '911';
 
-/** The number the call buttons use: what About them holds when it is a plausible phone number, else 911. */
-export function emergencyNumber(raw: unknown): string {
-  const s = String(raw ?? '').replace(/[^\d+]/g, '');
-  return /^\+?\d{2,14}$/.test(s) ? s : DEFAULT_NUMBER;
+// Phase 9 (judge round 8, seats 13b, 02, 02b, 05): with nothing in About them the number follows the browser's
+// language setting (the web client passes it in), not always 911: en-GB 999, a European Union locale 112, anything else 911.
+// The carer sees "Is this your emergency number? Change it" beside every call box until About them holds one. The
+// sample family is American and stays on 911. A guess from a language setting can be wrong (a British phone set to
+// en-US), which is why the line asks.
+const EU_REGIONS = new Set(['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE']);
+/** Languages spoken as a first language only, or mostly, in the European Union: a bare "de" or "pl" is taken as 112. */
+const EU_LANGS = new Set(['bg', 'hr', 'cs', 'da', 'nl', 'et', 'fi', 'fr', 'de', 'el', 'hu', 'ga', 'it', 'lv', 'lt', 'mt', 'pl', 'pt', 'ro', 'sk', 'sl', 'es', 'sv']);
+/** The emergency number a locale such as "en-GB", "de-DE", "fr" or "en-US" most likely means. */
+export function localeNumber(locale: unknown): string {
+  const [lang = '', region = ''] = String(locale ?? '').trim().replace(/_/g, '-').split('-');
+  const r = region.toUpperCase();
+  if (r === 'GB' || r === 'UK') return '999';
+  if (r) return EU_REGIONS.has(r) ? '112' : DEFAULT_NUMBER;
+  return EU_LANGS.has(lang.toLowerCase()) ? '112' : DEFAULT_NUMBER;
 }
+
+/** The number the call buttons use: what About them holds when it is a plausible phone number, else `fallback` (911 unless the caller passes the locale's). */
+export function emergencyNumber(raw: unknown, fallback: string = DEFAULT_NUMBER): string {
+  const s = String(raw ?? '').replace(/[^\d+]/g, '');
+  return /^\+?\d{2,14}$/.test(s) ? s : fallback;
+}
+/** About them holds a number of its own (so the call boxes need not ask "Is this your emergency number?"). */
+export const numberSet = (raw: unknown) => /^\+?\d{2,14}$/.test(String(raw ?? '').replace(/[^\d+]/g, ''));
 export const telHref = (number: string) => `tel:${emergencyNumber(number)}`;
 
 const lc = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();

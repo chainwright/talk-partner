@@ -17,6 +17,11 @@ export const P9 = {
     /** In the diary's timeline: a care question was left for later (core/later.ts). */
     diary: 'Left for later:',
   },
+  /** Phase 9: beside a call box while the number is the locale's guess (About them holds none). */
+  number: {
+    guess: 'Is this your emergency number?',
+    change: 'Change it',
+  },
   since: {
     /** On the visit page, "Since the last visit": the care questions left for later in this time. */
     later: (xs: { q: string; day: string }[]) => `Left for later: ${xs.slice(-5).map((x) => `"${x.q.replace(/"/g, "'")}" (${x.day})`).join(', ')}${xs.length > 5 ? `, and ${xs.length - 5} more` : ''}. Ask about it at the visit if it was not asked again.`,

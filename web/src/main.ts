@@ -53,7 +53,7 @@ import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Li
 import { P5 } from '../../core/copy5';
 import { FALL_HEAD } from '../../core/diary';
 import { CARE_TOPICS } from '../../core/reliability';
-import { WRONG_TILE, emergencyNumber, urgentAnswer, urgentAny } from '../../core/redflag';
+import { DEFAULT_NUMBER, WRONG_TILE, emergencyNumber, localeNumber, numberSet, urgentAnswer, urgentAny } from '../../core/redflag';
 import { fromIsoDay, pickedQuestions, sinceLines, sinceText, toggleQuestion } from '../../core/since';
 import { SpeakCache, isPcm, pcmRate, pcmToWav, speakText, speakable } from '../../core/speak';
 import { P6 } from '../../core/copy6';
@@ -660,8 +660,13 @@ function leaveForLater(q: string, topic: string | null) {
 const laterTime = (at: number) => (dayStart(at) === dayStart(Date.now()) ? timeText(at) : `${dayText(at)}, ${timeText(at)}`);
 /** Phase 8: the carer's line after Read aloud failed on the person's screen (never on the person's screen itself). */
 const voiceFailedHtml = () => (p5.voiceFailed ? `<p class="warn" id="voice-failed" role="status">${esc(P5.speak.failed(state.profile.personName.trim()))}</p>` : '');
-/** The emergency number the call buttons use: About them's, or 911. */
-const callNumber = () => emergencyNumber(state.health.emergency);
+/**
+ * The emergency number the call buttons use: About them's; else (phase 9) the one the browser's language setting
+ * most likely means (en-GB 999, the EU 112, else 911), with "Is this your emergency number?" beside the box. The sample
+ * family is American: 911, and no question.
+ */
+const callNumber = () => emergencyNumber(state.health.emergency, state.demo ? DEFAULT_NUMBER : localeNumber(navigator.language));
+const numberGuess = () => !state.demo && !numberSet(state.health.emergency);
 /** Read aloud can run here at all: a copy with project settings, and never the sample family. */
 const canSpeak = () => !!state.engine.speak && state.engine.cloudConfigured && !state.demo;
 const speakOn = () => canSpeak() && !!state.settings.speak;
@@ -731,7 +736,7 @@ const viaOf = (c: Card, p: Choice): Via => (p.role === 'repair' || c.kind === 'r
 /** The page for the speech therapist is built from this: the diary is handed over only when the box is ticked. */
 const practiceInput = (): PracticeInput => ({ log: state.demo ? newLog(Date.now()) : p8.log, span: p8.span, now: Date.now(), name: state.profile.personName.trim(), device: copyDevice(), speak: speakOn(), questions: p8.picked, diary: p8.health && !state.demo ? state.diary : null, number: callNumber(), lessSure: state.demo ? 0 : lessSureCount(state.history, p8.span, Date.now()), flag: !p8.health && !state.demo && practiceFlag(state.diary, p8.span, Date.now()) });
 /** The passport is built from this: About them, the answers that still count, what was learned, the photos' words (never a picture). */
-const passportInput = (): PassportInput => ({ profile: state.profile, history: learns() ? state.history.filter((h) => h.at > state.forgotten.all) : [], learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], photoWords: state.photos.map((x) => x.word), prefs: p8.pass, now: Date.now(), device: copyDevice(), number: callNumber(), numberSet: /^\+?\d{2,14}$/.test(String(state.health.emergency ?? '').replace(/[^\d+]/g, '')) ? callNumber() : '', foodCare: state.health.diabetes || state.health.swallowing || state.health.fluidLimit });
+const passportInput = (): PassportInput => ({ profile: state.profile, history: learns() ? state.history.filter((h) => h.at > state.forgotten.all) : [], learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], photoWords: state.photos.map((x) => x.word), prefs: p8.pass, now: Date.now(), device: copyDevice(), number: callNumber(), numberSet: numberSet(state.health.emergency) ? callNumber() : '', foodCare: state.health.diabetes || state.health.swallowing || state.health.fluidLimit });
 const savePassport = () => { if (!state.demo) void kvSet('passport', p8.pass); };
 /** The pictures of the printed passport: each person of About them with their own photo or an initial, then the family's other photos. Eight at most. */
 function passPictures(): PassPicture[] {
@@ -849,7 +854,7 @@ function insightsModel(span: InsightSpan): InsightsModel {
     }
   }
   const sendable = cloudLines(lines).length > 0 && !state.demo && state.engine.cloudConfigured && !!state.engine.rewordCloud && (state.device === 'unavailable' || state.device === 'downloadable');
-  return { span, lines, words: state.ins.words, source: state.ins.source, busy: state.ins.busy, note: state.ins.note, cloud: sendable ? (isOnline() ? 'ask' : 'offline') : null, number: callNumber(), open: p6.open, diary: state.diary, now: Date.now() };
+  return { span, lines, words: state.ins.words, source: state.ins.source, busy: state.ins.busy, note: state.ins.note, cloud: sendable ? (isOnline() ? 'ask' : 'offline') : null, number: callNumber(), guess: numberGuess(), open: p6.open, diary: state.diary, now: Date.now() };
 }
 /** The tip of the day (core/tip.ts: rules), and where the browser has the on-device model, its sentence in plainer words (ONLY_ON_DEVICE). */
 function tipModel() {
@@ -871,7 +876,7 @@ function diaryView(): string {
     entries: inSpan(state.diary, state.diaryTab, now, state.diaryTopic), any: state.diary.length > 0, logged: state.logged,
     insights: state.diaryTab === 'today' ? null : insightsModel(state.diaryTab), tip: tipModel(), copied: state.diaryCopied, deleted: state.diaryDeleted,
     // after a logged fall: when to call, the call button, and one tap to note a blow to the head
-    fallHtml: state.logged?.log === 'fall' ? fallBlock({ number: callNumber(), id: state.logged.id, head: state.diary.find((e) => e.id === state.logged!.id)?.label === FALL_HEAD }) : '',
+    fallHtml: state.logged?.log === 'fall' ? fallBlock({ number: callNumber(), guess: numberGuess(), id: state.logged.id, head: state.diary.find((e) => e.id === state.logged!.id)?.label === FALL_HEAD }) : '',
   });
 }
 /** The yes on the sheet: these lines, this once, to online help for their wording. The text is the one the sheet showed. */
@@ -1794,7 +1799,7 @@ function simpleScreen(): string {
       invite: state.inviteFor === c && !state.inviteOff,
       today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
       made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),
-      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) ? lowHelpLine(state.profile.personName.trim(), state.health.helpline ?? '', callNumber()) : ''}${turnHtml()}`,
+      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber(), 'urgent', numberGuess()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) ? lowHelpLine(state.profile.personName.trim(), state.health.helpline ?? '', callNumber()) : ''}${turnHtml()}`,
       outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
       // after the way out: the ways to find out what it is, in the rules' order; a step the rules make comes first
       ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),
@@ -1810,7 +1815,7 @@ function simpleScreen(): string {
       lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(), tips: state.tips,
       usual: (() => { const u = usualFor(c); return u ? usualHint(u) : ''; })(),
       // (the call box stays over the next questions of a conversation in which an answer can be urgent)
-      topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,
+      topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,
       guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c),
       // the first-letter helper: its way in from "We're stuck", who found a letter card's words, and another letter when there was no word
       extraHtml: `${c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterButton(name, true) : letterBy(c.letter.by)) : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && (speakable(c) || speakOn()) ? speakSwitch({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}${p5.spoken.has(c) ? readAloudLine() : ''}`,
@@ -2007,7 +2012,7 @@ function render(lifted = false) {
   const fresh = key !== lastKey;
   if (r !== 'person') stopSound();
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone })}`, numberHtml: numberField(state.health.emergency, state.health.helpline ?? ''), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone })}`, numberHtml: numberField(state.health.emergency, state.health.helpline ?? ''), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber(), guess: numberGuess() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   keepGuard();
   if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);

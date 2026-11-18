@@ -8,6 +8,7 @@ import { COPY } from '../../core/copy';
 import { P5 } from '../../core/copy5';
 import { dayText } from '../../core/diary';
 import { telHref } from '../../core/redflag';
+import { P9 } from '../../core/copy9';
 import { SINCE_QUESTIONS, isoDay, type Since } from '../../core/since';
 import type { DiaryEntry } from '../../core/diary';
 import { sourceBlock } from './phase6';
@@ -27,11 +28,11 @@ export const suddenLink = (id = 'sudden-link') => `<a class="btn sudden-link" id
 export const callButton = (number: string, big = false) => `<a class="btn call${big ? ' big' : ''}" data-call="1" href="${telHref(number)}">${PHONE}<span>${esc(big ? P5.sudden.call(number) : P5.sudden.boxCall(number))}</span></a>`;
 
 /** The carer's card: FAST, four more reasons to call, the big button, and what the list is and is not. No AI anywhere in it. */
-export function suddenScreen(m: { number: string }): string {
+export function suddenScreen(m: { number: string; guess?: boolean }): string {
   const S = P5.sudden;
   return `<main class="simple wrap one sudden" data-screen="sudden">${navBar({ back: true })}
   <div><h1 id="sudden-h">${S.heading}</h1><p class="sub" id="sudden-lead">${esc(S.lead(m.number))}</p></div>
-  ${callButton(m.number, true)}
+  ${callButton(m.number, true)}${guessLine(!!m.guess, 'sudden-guess')}
   <section class="fast" id="fast" aria-labelledby="fast-h"><h2 class="sec" id="fast-h">${S.fastHeading}</h2>
     <ol class="fast-list">${S.fast.map(([k, v]) => `<li><b>${k}</b><span>${v}</span></li>`).join('')}</ol></section>
   <section class="fast" id="also" aria-labelledby="also-h"><h2 class="sec" id="also-h">${S.alsoHeading}</h2>
@@ -45,11 +46,16 @@ export function suddenScreen(m: { number: string }): string {
 }
 
 /** The boxed line over an answer that can be urgent (core/redflag.ts): the sentence, the call button, the way to the list. */
-export const urgentBox = (number: string, id = 'urgent') => `<div class="urgent" id="${id}" role="alert">${ALERT}<div><b>${esc(P5.sudden.box(number))}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div></div></div>`;
+export const urgentBox = (number: string, id = 'urgent', guess = false) => `<div class="urgent" id="${id}" role="alert">${ALERT}<div><b>${esc(P5.sudden.box(number))}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, `${id}-guess`)}</div></div>`;
+/**
+ * Phase 9: while About them holds no number, the call boxes use the language setting's guess (core/redflag.ts,
+ * localeNumber), and say so: "Is this your emergency number? Change it", which opens About them at the number.
+ */
+export const guessLine = (guess: boolean, id = 'number-guess') => (guess ? `<p class="tip number-guess" id="${id}">${P9.number.guess} <button type="button" class="tlink" data-act="sudden-number">${P9.number.change} →</button></p>` : '');
 
 /** After "Fall" was logged: when to call, the call button, and one tap to note a blow to the head. */
-export function fallBlock(m: { number: string; id: string; head: boolean }): string {
-  return `<div class="urgent fall-box" id="fall-box" role="status">${ALERT}<div><b>${esc(P5.fall.box(m.number))}</b><div class="urgent-acts">${callButton(m.number)}${m.head ? `<span class="tip" id="fall-head-noted">${P5.fall.headNoted}</span>` : `<button type="button" class="btn quiet small-btn" id="fall-head" data-act="fall-head" data-id="${esc(m.id)}">${P5.fall.head}</button>`}</div></div></div>`;
+export function fallBlock(m: { number: string; id: string; head: boolean; guess?: boolean }): string {
+  return `<div class="urgent fall-box" id="fall-box" role="status">${ALERT}<div><b>${esc(P5.fall.box(m.number))}</b><div class="urgent-acts">${callButton(m.number)}${m.head ? `<span class="tip" id="fall-head-noted">${P5.fall.headNoted}</span>` : `<button type="button" class="btn quiet small-btn" id="fall-head" data-act="fall-head" data-id="${esc(m.id)}">${P5.fall.head}</button>`}</div>${guessLine(!!m.guess, 'fall-guess')}</div></div>`;
 }
 
 /** The number's field in About them, under the health notes. */

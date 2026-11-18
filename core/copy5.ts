@@ -48,7 +48,7 @@ export const P5 = {
     helplineField: 'Helpline for low mood',
     helplineHint: 'A number from the doctor or nurse, or your country\'s mental health line. The app has none of its own. It is used only in the line under a "sad" or "low" answer.',
     field: 'Emergency number',
-    fieldHint: '911 in the US and Canada, 999 in the UK, 112 in the EU. The "Call" buttons of this app use it. Empty means 911.',
+    fieldHint: '911 in the US and Canada, 999 in the UK, 112 in the EU. The "Call" buttons of this app use it. Empty: the app goes by the language setting of this device, and asks you to check it.',
   },
   speak: {
     title: 'Read aloud',
