@@ -183,7 +183,7 @@ describe('2d. what stands out', () => {
     const xs = insights([...day(0), sad(0), ...day(1), sad(1), ...day(3), sad(3)], NO_HEALTH, 'week', NOW);
     expect(ids(xs)).toEqual(['mood']);
     expect(xs[0]).toMatchObject({ level: 'mention', act: 'Talk to the GP or nurse about it. If you are worried about safety, call 911.' });
-    expect(xs[0].text).toBe('"Sad" or "bad" was the answer to "How are you feeling today?" on 3 days in the last 7 days.');
+    expect(xs[0].text).toBe('"Sad", "bad" or "low" was the answer to a question about how they feel on 3 days in the last 7 days.');
     expect(JSON.stringify(xs)).not.toMatch(/depress|diagnos|screen/i);
   });
   it('a fall is a line; with a blow to the head noted, the call box stands under it', () => {
@@ -354,7 +354,7 @@ describe('7. "Since the last visit": the diary\'s counts and up to three fixed q
       'Pain: chosen or logged on 1 day (Mon 16 Nov).',
       'Falls: 1 logged (Tue 17 Nov).',
       'Drinks: on 1 of 4 days with entries, no drink was entered.',
-      'Mood: "sad" or "bad" on 1 day (Wed 18 Nov).',
+      'Mood: "sad", "bad" or "low" on 1 day (Wed 18 Nov).',
       'Sleep: a bad night on 1 day (Thu 19 Nov).',
     ]);
     expect(s.urgent).toBe(false);
@@ -380,7 +380,7 @@ describe('7. "Since the last visit": the diary\'s counts and up to three fixed q
     expect(page.indexOf('id="visit-foot"')).toBeLessThan(page.indexOf('id="since"'));
     expect(page.indexOf('id="since"')).toBeLessThan(page.indexOf('class="no-print stack"'));
     expect(page.indexOf('id="since-controls"')).toBeGreaterThan(page.indexOf('class="no-print stack"'));
-    expect(text(page)).toContain("What the family entered in the diary. These lines are not Frank's own answers.");
+    expect(text(page)).toContain("What the family entered in the diary. These lines are not Frank's own answers, except where a line says it counts one.");
     expect(text(page)).toContain('Counted by fixed rules on this device, from the diary. No AI, nothing sent. Not a medical record.');
     expect(page.match(/data-since-q=/g)).toHaveLength(P5.since.questions.length);
     expect(sinceText(s, m.picked, 'Frank')).toContain('The family wants to ask:\n- What should we watch for at home?');

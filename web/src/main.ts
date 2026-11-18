@@ -717,7 +717,7 @@ function closeShare() {
 /** "Since the last visit", for the doctor-visit page: the diary's counts from the day the carer named, and the picked questions. */
 function sinceModel() {
   const r = state.p4.visit;
-  return { name: state.profile.personName.trim(), since: sinceLines(state.demo ? [] : state.diary, r?.since ?? null, Date.now()), picked: pickedQuestions(r?.carerAsk), number: callNumber(), open: p6.open.filter((k) => k.startsWith('since-')).map((k) => Number(k.slice(6))), diary: state.demo ? [] : state.diary };
+  return { name: state.profile.personName.trim(), since: sinceLines(state.demo ? [] : state.diary, r?.since ?? null, Date.now(), r?.answers ?? [], state.profile.personName.trim()), picked: pickedQuestions(r?.carerAsk), number: callNumber(), open: p6.open.filter((k) => k.startsWith('since-')).map((k) => Number(k.slice(6))), diary: state.demo ? [] : state.diary };
 }
 
 /** After a yes on the sheet: the step the sheet came up for is asked again (a letter, a narrowing step, or the question itself). */

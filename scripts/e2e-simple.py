@@ -1236,7 +1236,7 @@ def phase4(browser, url, live):
     page.locator('[data-confirm=yes]').click()
     give_back(page, 'main.visit #visit-page')
     pg1 = text(page, '#visit-page')
-    check('visit: the page has his six answers as given, the date, "something else" asking for time, and the fixed footer', page.locator('#visit-rows li').count() == 6 and "Frank's own answers" in pg1 and 'Answered at home, with a family member\'s help, on' in pg1 and 'There is something else, not on the list. Please give time for it.' in pg1 and "Frank's answers, in Frank's own words where possible. Not a medical record." in pg1 and 'Since the last visit' in pg1 and "These lines are not Frank's own answers." in pg1 and [x.strip() for x in page.locator('#visit-rows b').all_inner_texts()] == ['no', 'well', 'so-so', 'low', 'nothing much', 'something else'], pg1)
+    check('visit: the page has his six answers as given, the date, "something else" asking for time, and the fixed footer', page.locator('#visit-rows li').count() == 6 and "Frank's own answers" in pg1 and 'Answered at home, with a family member\'s help, on' in pg1 and 'There is something else, not on the list. Please give time for it.' in pg1 and "Frank's answers, in Frank's own words where possible. Not a medical record." in pg1 and 'Since the last visit' in pg1 and "These lines are not Frank's own answers" in pg1 and 'no "sad", "bad" or "low" day' not in pg1 and "counting Frank's own answer above" in pg1 and [x.strip() for x in page.locator('#visit-rows b').all_inner_texts()] == ['no', 'well', 'so-so', 'low', 'nothing much', 'something else'], pg1)
     check('visit: with no pain there is no pain line; nothing is marked "less sure"', page.locator('#visit-safety').count() == 0 and 'less sure' not in text(page))
     # again, with pain: where and how bad are asked; the worst case stands as given
     page.locator('#visit-again').click()
@@ -1885,7 +1885,7 @@ def phase5(browser, url, live):
     check('visit: chest pain, quite bad: the boxed "Call 999 now if this is new or sudden." is the first thing on the page, inside the printed part, with the call button', vp.startswith('Call 999 now if this is new or sudden.') and page.locator('#visit-page #visit-urgent a[href="tel:999"]').count() == 1, vp[:200])
     check('visit: the line that was there stays under the page ("If the pain is new or strong, do not wait for the visit")', 'If the pain is new or strong, do not wait for the visit' in text(page, '#visit-safety'))
     since = text(page, '#since')
-    check('visit: "Since the last visit" stands under his own answers, says whose lines they are, and counts from the diary: pain, a fall, drinks, mood, sleep', ys(page, '#since')[0][1] > ys(page, '#visit-foot')[0][1] and "These lines are not their own answers." in since and 'Pain: chosen or logged on 1 day' in since and 'Falls: 1 logged' in since and 'Mood:' in since and 'Sleep:' in since and 'No AI, nothing sent. Not a medical record.' in since, since)
+    check('visit: "Since the last visit" stands under his own answers, says whose lines they are, and counts from the diary: pain, a fall, drinks, mood, sleep', ys(page, '#since')[0][1] > ys(page, '#visit-foot')[0][1] and "These lines are not their own answers" in since and 'Pain: chosen or logged on 1 day' in since and 'Falls: 1 logged' in since and 'Mood:' in since and 'Sleep:' in since and 'No AI, nothing sent. Not a medical record.' in since, since)
     boxes = page.locator('#since-pick input[type=checkbox]')
     for k in (0, 1, 6):
         boxes.nth(k).check()

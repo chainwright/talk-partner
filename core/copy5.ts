@@ -7,6 +7,8 @@ const them = (name: string) => name || 'them';
 const They = (name: string) => name || 'They';
 const their = (name: string) => (name ? `${name}'s` : 'their');
 const days = (n: number) => `${n} day${n === 1 ? '' : 's'}`;
+/** Phase 8: ", counting Frank's own answer above" when an own answer of the page was counted in. */
+const counted = (own: string) => (own ? `, counting ${their(own.trim())} own answer above` : '');
 
 export const P5 = {
   sudden: {
@@ -86,7 +88,7 @@ export const P5 = {
     painAct: (number: string) => `Tell the doctor or nurse. If it is new or sudden, call ${number} now.`,
     noDrink: (d: string) => `No drink was chosen or logged on ${d}. If that is right, and not a gap in the diary, tell the doctor or nurse today.`,
     fewDrinksFluid: (d: string, n: number, several: boolean) => `Few drinks were entered on ${d}: ${n}${several ? ' each' : ''}. A fluid limit from the doctor is noted here: check the day against the doctor's plan.`,
-    mood: (n: number, span: string) => `"Sad" or "bad" was the answer to "How are you feeling today?" on ${days(n)} in the last ${span}.`,
+    mood: (n: number, span: string) => `"Sad", "bad" or "low" was the answer to a question about how they feel on ${days(n)} in the last ${span}.`,
     moodBase: (d: string) => `Days: ${d}.`,
     moodAct: (number: string) => `Talk to the GP or nurse about it. If you are worried about safety, call ${number}.`,
     fall: (n: number, d: string) => `${n === 1 ? 'A fall was' : `${n} falls were`} logged: ${d}.`,
@@ -100,15 +102,16 @@ export const P5 = {
   },
   since: {
     heading: 'Since the last visit',
-    sub: (name: string) => `What the family entered in the diary. These lines are not ${their(name)} own answers.`,
+    sub: (name: string) => `What the family entered in the diary. These lines are not ${their(name)} own answers, except where a line says it counts one.`,
     fromLabel: 'The last visit was on',
     span: (from: string, to: string) => `From the diary, ${from} to ${to}. Only what was entered in this app; a gap can mean nobody entered it.`,
-    pain: (n: number, d: string) => (n ? `Pain: chosen or logged on ${days(n)} (${d}).` : 'Pain: none entered.'),
+    /** `own`: an own answer above was counted in (phase 8): the name, or a space for "their". Empty: none was. */
+    pain: (n: number, d: string, own = '') => (n ? `Pain: chosen or logged on ${days(n)} (${d})${counted(own)}.` : 'Pain: none entered.'),
     strong: (d: string) => `Strong pain, or pain in the head or the chest: ${d}.`,
     falls: (n: number, d: string) => (n ? `Falls: ${n} logged (${d}).` : 'Falls: none logged.'),
     drinks: (dry: number, withEntries: number) => (withEntries ? `Drinks: on ${dry} of ${days(withEntries)} with entries, no drink was entered.` : 'Drinks: no full day with entries in this time yet.'),
-    mood: (n: number, d: string) => (n ? `Mood: "sad" or "bad" on ${days(n)} (${d}).` : 'Mood: no "sad" or "bad" day entered.'),
-    sleep: (n: number, d: string) => (n ? `Sleep: a bad night on ${days(n)} (${d}).` : 'Sleep: no bad night entered.'),
+    mood: (n: number, d: string, own = '') => (n ? `Mood: "sad", "bad" or "low" on ${days(n)} (${d})${counted(own)}.` : 'Mood: no "sad", "bad" or "low" day entered.'),
+    sleep: (n: number, d: string, own = '') => (n ? `Sleep: a bad night on ${days(n)} (${d})${counted(own)}.` : 'Sleep: no bad night entered.'),
     none: 'The diary holds nothing for this time.',
     qHeading: 'Questions for the doctor',
     qLead: 'Pick up to three. They are printed under the answers.',

@@ -137,6 +137,9 @@ export type Tag = 'drink' | 'food' | 'sweet' | 'toilet' | 'sleep' | 'bad-sleep' 
 
 const DRINK = /^(?:tea|coffee|water|juice|milk|a drink|drink|squash|cocoa|hot chocolate|lemonade|a cup of tea|a glass of water)$/;
 const SWEET = /\b(?:sweet|sweets|biscuit|biscuits|cake|chocolate|ice cream|pudding|dessert|candy|cookie|cookies|jam|honey|toffee|doughnut|pastry|pie)\b/;
+/** Phase 8 (judge round 7): every feelings question counts, not only "How are you feeling today?"; and "low" counts. */
+export const LOW_MOOD_Q = /^how (?:are you|have you been|do you) feel(?:ing)?\b/;
+export const LOW_MOOD = /^(?:sad|bad|low|down)$/;
 const NOT_AN_ANSWER = /^(?:yes|no|not sure|something else|someone else|somewhere else)$/;
 const FOOD_Q = /\b(?:snack|meal|eat|sweet|savoury|breakfast|lunch|dinner|supper|pudding)\b/;
 
@@ -163,7 +166,8 @@ export function tags(e: DiaryEntry): Tag[] {
   // (the second step of the body card asks "Where in the chest?": a place chosen there is a pain entry too)
   if (/^where in the \w+\b/.test(q) && !/^some(?:where|thing) else$/.test(l) && !out.includes('pain')) out.push('pain');
   if ((/^where in the (?:head|chest)\b/.test(q) && !/^some(?:where|thing) else$/.test(l)) || (/^where does it hurt\b/.test(q) && /\b(?:head|chest)\b/.test(l))) out.push('place-pain');
-  if (/^how are you feeling today\b/.test(q) && /^(?:sad|bad)$/.test(l)) out.push('low-mood');
+  // (phase 8) a low day: "sad", "bad", "low" or "down" to a question about how the person feels (not about a photo)
+  if (LOW_MOOD_Q.test(q) && !/\bphoto\b/.test(q) && LOW_MOOD.test(l)) out.push('low-mood');
   return out;
 }
 
