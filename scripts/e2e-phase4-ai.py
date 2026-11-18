@@ -71,7 +71,7 @@ def restore(page, before):
 def shot(page, name):
     page.wait_for_timeout(300)
     page.screenshot(path=os.path.join(OUT, f'{name}.png'), full_page=True)
-    log(f'- screenshot: `devlog/evidence_phase4/{name}.png`')
+    log(f'- screenshot: `{os.path.relpath(os.path.join(OUT, name + ".png"), os.path.join(HERE, ".."))}`')
 
 
 def on_device(p, port, url):
@@ -224,7 +224,11 @@ def main():
     ap.add_argument('--url', default='http://localhost:5179/')
     ap.add_argument('--port', type=int, default=0)
     ap.add_argument('--cloud', action='store_true')
+    ap.add_argument('--out', default=None, help='(phase 8) a folder for the log and the screenshots instead of devlog/evidence_phase4')
     a = ap.parse_args()
+    global OUT
+    if a.out:
+        OUT = os.path.abspath(a.out)
     os.makedirs(OUT, exist_ok=True)
     git = lambda c: subprocess.run(['git'] + c.split(), capture_output=True, text=True, cwd=os.path.join(HERE, '..')).stdout.strip()
     log('# Phase 4 against real models (Firebase AI Logic)\n')

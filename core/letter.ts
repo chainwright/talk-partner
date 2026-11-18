@@ -23,7 +23,7 @@ import { P4 } from './copy4';
 import { within, type CloudError } from './engine';
 import { placeOf, subjectOf, type Subject } from './kinds';
 import { finish, parseModelOutput, type PipelineEnv } from './pipeline';
-import { devicePrompt } from './prompt';
+import { devicePrompt, letterContext } from './prompt';
 import { hasNegative, inventedNameFilter, isEscapeLabel, snapToProfile } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
 import type { Card, Profile, Source, StepTrace } from './types';
@@ -146,11 +146,11 @@ export const LETTER_TASK = 'Give two or three everyday things, people by role, o
 /** The text online help gets: the question, About-them words swapped out, and the letter. Nothing else. */
 export function letterCloudText(asked: string, letter: string, profile: Profile): { text: string; map: Record<string, string> } {
   const s = asked.trim() ? stripQuestion(asked, profile) : { text: '', map: {} };
-  return { text: `${s.text ? `${s.text} ` : ''}They cannot say the word. It starts with the letter "${letter.toUpperCase()}". ${LETTER_TASK}`, map: s.map };
+  return { text: `${s.text ? `${s.text} ` : ''}They cannot say the word. It starts with the letter "${letter.toUpperCase()}". ${letterContext(subjectOf(asked, []))} ${LETTER_TASK}`, map: s.map };
 }
 /** The text the on-device step gets. It holds what did not fit and the learned words: it never goes to the cloud step. */
 export function letterDeviceAsk(i: LetterInput): string {
-  return `${i.asked.trim() ? `${i.asked.trim()} ` : ''}${i.rejected.length ? `They did not want: ${i.rejected.join(', ')}. ` : ''}They cannot say the word. It starts with the letter "${i.letter.toUpperCase()}". ${LETTER_TASK}${i.learned?.length ? ` Usual answers on this device (hints only): ${i.learned.slice(0, 6).join(', ')}.` : ''}`;
+  return `${i.asked.trim() ? `${i.asked.trim()} ` : ''}${i.rejected.length ? `They did not want: ${i.rejected.join(', ')}. ` : ''}They cannot say the word. It starts with the letter "${i.letter.toUpperCase()}". ${letterContext(subjectOf(i.asked, i.rejected))} ${LETTER_TASK}${i.learned?.length ? ` Usual answers on this device (hints only): ${i.learned.slice(0, 6).join(', ')}.` : ''}`;
 }
 
 /**

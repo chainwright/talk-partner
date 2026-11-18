@@ -60,9 +60,10 @@ TABLET_UA = 'Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML,
 OPEN_Q = 'What do you want to do this weekend?'
 FIXTURES = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tests', 'fixtures')
 FIXTURE_PHOTO = os.path.join(FIXTURES, 'photo-mug.jpg')
-# (18 Nov, phase 5, judge round 6: Beth, Bo and the lake each have their own picture, drawn by us: a monogram, a dog,
-# a lake. No real face. The mug stays for the words it fits: tea, coffee, glasses.)
-OWN_PHOTO = {'beth': 'photo-beth.jpg', 'frank': 'photo-beth.jpg', 'bo': 'photo-bo.jpg', 'the lake': 'photo-lake.jpg', 'lake': 'photo-lake.jpg'}
+# (18 Nov, phase 5, judge round 6: Beth, Bo and the lake each have their own picture, drawn by us; phase 8, judge
+# round 7: Beth is a drawn person, no longer a monogram, and Frank has his own drawing. No real face. The mug stays
+# for the words it fits: tea, coffee, glasses.)
+OWN_PHOTO = {'beth': 'photo-beth.jpg', 'frank': 'photo-frank.jpg', 'bo': 'photo-bo.jpg', 'the lake': 'photo-lake.jpg', 'lake': 'photo-lake.jpg'}
 
 
 def photo_for(word):

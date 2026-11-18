@@ -3,6 +3,17 @@
 
 import type { Profile } from './types';
 
+/**
+ * Phase 8 (judge round 7: "kombucha / kefir" on a first-letter card for a 68-year-old): the letter step is told what
+ * kind of thing the conversation is about, when the app knows it, and an age band. Fixed words: no name, nothing from
+ * About them. The age band is a fact about who has aphasia after a stroke (most are older), not about this family.
+ */
+export const LETTER_AGE = 'The person is an adult, most often 60 or older: give common, plain words that an older adult uses at home.';
+const KIND_WORDS: Record<string, string> = { drink: 'something to drink', food: 'food', place: 'a place', people: 'a person (by role)', activity: 'something to do', feeling: 'a feeling', comfort: 'comfort or the body' };
+export function letterContext(kind: string | null | undefined): string {
+  return `${kind && KIND_WORDS[kind] ? `The conversation is about ${KIND_WORDS[kind]}. ` : ''}${LETTER_AGE}`;
+}
+
 export const SYSTEM_PROMPT = `You help a family member talk with an adult who has aphasia after a stroke. Intelligence is intact; words are hard.
 Give the KEY IDEA and up to 3 short answer options the person can point at. Return JSON:
 - "topic": 1-3 plain words naming what is asked (e.g. "dinner", "therapy today", "call"). No punctuation.
