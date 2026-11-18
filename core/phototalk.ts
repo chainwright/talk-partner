@@ -88,6 +88,13 @@ export function photoQuestions(word: string, profile: Profile): PhotoQuestion[] 
   return [first, { q: Q.feel, choices: [...Q.feelChoices] }, show];
 }
 
+/** What the carer reads after an answer to "How does this photo make you feel?" ('' for any other question or answer). */
+export function photoEnd(asked: string, label: string, name: string): string {
+  if (asked !== P4.photo.q.feel) return '';
+  const l = label.toLowerCase().trim();
+  return l === 'good' ? P4.photo.felt.good : l === 'mixed' ? P4.photo.felt.mixed(name) : l === 'sad' ? P4.photo.felt.sad(name) : '';
+}
+
 /** One more question, from what the on-device model saw: null when fewer than two words could stand. */
 export function thingsQuestion(things: string[]): PhotoQuestion | null {
   return things.length >= 2 ? { q: P4.photo.q.things, choices: things.slice(0, 3), ai: true } : null;

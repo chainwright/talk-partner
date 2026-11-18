@@ -420,9 +420,11 @@ def phone(browser, url, live):
     out = text(page)
     check('after "something else": the screen says so, and the tree leads on with a broader question ("a hot drink or a cold drink?")', text(page, '#chose') == 'Would you like water, juice or milk? Something else' and nexts(page) == ['Would you like a hot drink or a cold drink?'], out[:200])
     shown = page.evaluate("[...document.querySelectorAll('#after-out button')].map((b) => b.id)")
-    check('after "something else": three things to press stay on the screen (the next question, "Narrow it down", "Ask them to show or write it"), never a dead end',
-          'None of those fitted. What now:' in out and shown == ['next-q', 'narrow', 'show-write'] and text(page, '#show-write') == 'Ask them to show or write it' and page.locator('[data-act=needs], [data-act=own], #another').count() == 0, f'{shown} {out[:300]}')
+    # (phase 4: the first-letter helper is the third; "Ask them to show or write it" is then the first thing under "More")
+    check('after "something else": three things to press stay on the screen (the next question, "Narrow it down", "Try the first letter"), never a dead end',
+          'None of those fitted. What now:' in out and shown == ['next-q', 'narrow', 'letter-go'] and page.locator('[data-act=needs], [data-act=own], #another, #show-write').count() == 0, f'{shown} {out[:300]}')
     more(page)
+    check('after "something else": "Ask them to show or write it" is the first thing under "More"', page.evaluate("document.querySelector('#out-more button')?.id") == 'show-write' and text(page, '#show-write') == 'Ask them to show or write it')
     rest = text(page, '#more-body')
     check('after "something else": the rest is under "More" (ask another question, the needs board, a new way, the advice to show or write it), and no "Try" offers a refused choice',
           all(page.locator(f'#more-body [data-act={a}]').is_visible() for a in ('needs', 'own', 'new')) and 'Ask them to show you, or to write or draw it.' in rest and not any(w in t.lower() for t in page.locator('#more-body [data-q]').all_inner_texts() for w in ('water', 'juice', 'milk')), rest[:300])
@@ -436,7 +438,7 @@ def phone(browser, url, live):
     check('the narrowing step with online help off: the sheet leads with plain words and the conversation\'s own line (the question and what did not fit, nothing they chose)', line == 'Would you like water, juice or milk? They did not want: water, juice, milk.' and "None of those fitted. Google's AI can suggest other kinds of answer. It sees only this:" in face and "and the app's fixed instructions." in face and 'Do not give more of the same kind' not in face, f'{line} | {face[:300]}')
     check('the narrowing sheet says the data use of the paid service, and what is never sent', "Google's paid service: Google does not use what is sent to improve its products." in face and 'the answers they chose' in face, face)
     page.locator('#sheet-whole summary').click()
-    whole = page.locator('#sheet-whole pre').inner_text()
+    whole = page.locator('#sheet-whole pre').text_content()
     check('the narrowing sheet: the whole request is one tap away, word for word (that line, and the fixed instructions)', f'Partner asks: {line} What else could it be? Do not give more of the same kind as the ones they did not want' in whole and '"mode": "PREFER_IN_CLOUD"' in whole, whole[:300])
     check('asking for it sent nothing to any other host', len(outside) == n0, str(outside[n0:]))
     screen_checks(page, 'the consent sheet for a narrowing step')
@@ -1111,7 +1113,7 @@ def phase4(browser, url, live):
         sheet = text(page, '#sheet')
         line = text(page, '#sheet-line')
         check('letter: with no word for "X" the sheet comes up before anything is sent, in plain words first, and shows the one line that would go', sheet.startswith('Ask online help for words?') and line == 'Would you like tea or coffee? They cannot say the word. It starts with the letter "X".' and 'Never sent: Names, photos, the answers so far, and everything in About them.' in sheet, sheet[:300])
-        whole = page.locator('#sheet-whole pre').inner_text()
+        whole = page.locator('#sheet-whole pre').text_content()
         check('letter: the whole request holds the question and the letter, and nothing of About them', 'PREFER_IN_CLOUD' in whole and 'letter \\"X\\"' in whole and not page.evaluate("/\\b(?:Frank|Carol|Beth|Tom|Bo|ginger|porridge|lake|did not want)\\b/.test(document.querySelector('#sheet-whole pre').textContent)"), whole[:200])
         screen_checks(page, 'letter: the sheet', primary=True)
         page.locator('[data-act=sheet-no]').click()

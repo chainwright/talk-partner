@@ -46,7 +46,7 @@ import { aboutSimple, answeredScreen, cardScreen, consentSheet, frameStyle, home
 import { kvClear, kvGet, kvSet } from './store';
 import { P4 } from '../../core/copy4';
 import { letterCard, letterEnd, type LetterInput } from '../../core/letter';
-import { checkedThings, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
+import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
 import { FEEL_QUESTION, menuTopic, starterOf, topicMenu, turnCard, turnLead, type Starter } from '../../core/turn';
 import { nextVisit, visitCard, visitText, type VisitRecord } from '../../core/visit';
 import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
@@ -142,7 +142,7 @@ interface State {
   /** Simple view: "More tips" on the hand-over screen and "More" on the answered screen are open (closed for each new card). */
   tips: boolean;
   more: boolean;
-  /** The family's own photos (core/photos.ts), kept on this device only (IndexedDB key 'photos'). Never sent; no model looks at them. */
+  /** The family's own photos (core/photos.ts), kept on this device only (IndexedDB key 'photos'). Never sent. No model looks at them, but for the on-device model when the carer asks it to in "Talk about a photo" (lookAtPhoto). */
   photos: Photo[];
   /** A photo being added in About them: framed by hand, then given its word. */
   photoDraft: { loaded: Loaded; frame: Frame; step: 'frame' | 'label'; framed: string; word: string; error: string } | null;
@@ -1386,6 +1386,7 @@ function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: st
   if (c.kind === 'needs' || c.kind === 'repair') return { follow: [], end: '' };
   // a first-letter card: the word is the answer; the menu the person started from: up to three questions of that topic
   if (c.letter) return out ? { follow: [], end: '' } : letterEnd(p.label);
+  if (c.photoTalk && photoEnd(c.asked, p.label, state.profile.personName.trim())) return { follow: [], end: photoEnd(c.asked, p.label, state.profile.personName.trim()) };
   if (c.turn) return { follow: out ? [] : turnLead('tell', '', menuTopic(p.label), state.profile).ask, end: '' };
   // the short question about the usual choice: a yes ends as that choice would; anything else leads to the full question
   const sc = state.shortcut;

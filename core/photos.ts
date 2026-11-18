@@ -4,8 +4,9 @@
 //
 // Rules only. The carer takes or chooses a photo in About them, frames it by hand (a square crop: move and zoom), and
 // labels it with one word or a short name. A card uses it when a choice's label IS that word (compared without
-// capitals, without "the / a / your", and whatever the plural). No model looks at a photo: nothing recognises,
-// describes, labels or cuts it out. (A cut-out by an on-device segmentation model was designed and NOT built: the
+// capitals, without "the / a / your", and whatever the plural). No model looks at a photo to do this: nothing recognises,
+// describes, labels or cuts it out. (The one place a model may be shown a photo is "Talk about a photo",
+// core/phototalk.ts: the on-device model only, after the carer's tap, and never a cloud model.) (A cut-out by an on-device segmentation model was designed and NOT built: the
 // contest's rule is that all of the app's AI inference goes through Firebase AI Logic, and a segmentation model called
 // directly would be inference outside it. README, "Personal photos".)
 //

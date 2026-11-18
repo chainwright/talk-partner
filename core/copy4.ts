@@ -130,6 +130,12 @@ export const P4 = {
       another: 'Would you like to look at another photo?',
       things: 'What in this photo shall we talk about?',
     },
+    /** What the carer reads after "How does this photo make you feel?": a sad answer is taken as said, never passed over. */
+    felt: {
+      good: 'A good one. Stay with it for a while.',
+      mixed: (name: string) => `Mixed feelings. Give it time, and ask whether ${them(name)} would like to go on or to stop.`,
+      sad: (name: string) => `This photo makes ${them(name)} sad. Stay near: you do not have to fix it. Ask whether to put it away.`,
+    },
     note: 'A question about a family photo. The photo stays on this device.',
     why: 'a question about a family photo: fixed wording, with the photo\'s word and About them',
     whyAi: 'the on-device model named things in the photo; code checked each word',

@@ -48,7 +48,8 @@ them a sweet snack."); `core/tree.ts`, walked answer by answer in `tests/unit/tr
 three confirmed answers to the same question the carer sees "Usually: coffee (3 of 3)" and that choice first; it is
 counting, not AI, it stays on the device, and About them lists every learned line with "Remove" (`core/prefs.ts`).
 *Pictures:* our own colour drawings, and the family's own photos first wherever a choice is the photo's word; no AI
-looks at a photo, and no background is removed (a segmentation model would be AI inference outside Firebase AI
+looks at a photo to put it on a card (the one place a model may be shown a photo is phase 4's "Talk about a photo",
+on the device only, after the carer's tap), and no background is removed (a segmentation model would be AI inference outside Firebase AI
 Logic, so it was not built). *Back and Home* stand at the top of every carer screen. None of this adds a model call:
 the AI is where it was, in a typed open question, the narrowing step (which now refuses "more of the same kind") and
 "Today in short".
@@ -68,6 +69,20 @@ any of it. *Health notes* change the thresholds (with a fluid limit noted the ap
 Also: a tip of the day about the carer's own questions, About them saved to a file and brought back, bigger
 pictures on the person's screen. To see it in a minute: open the hosted copy, tap "Diary" under the questions, log
 something, then Week.
+
+**Added on 18 Nov, phase 4** (`CLAIMS.md` rows 77 to 85; README "Added on 18 Nov, phase 4"; `devlog/DAY15.md`).
+*The first letter:* after "something else" the person points to the letter their word starts with on a big alphabet,
+and a card offers up to three words that start with it, the family's own first (Beth, Bo, ginger biscuits for "B":
+rules, no model). A model adds words only when the rules find fewer than two: Gemini Nano on the device, or the cloud
+after a yes on a sheet, and that request holds the question and the letter only. *The person starts:* "Frank wants to
+say something" opens his screen with three starters; the carer then reads "Frank started this: …". *Before a doctor
+visit:* eight questions at most from a fixed list, no model anywhere in it, and one page of his own answers, as
+given, "Not a medical record". *Talk about a photo:* three rule-made questions about a family photo, never "Who is
+this?". **The new hybrid step:** in desktop Chrome with Gemini Nano the carer can ask the model on the device to look
+at the photo (`ONLY_ON_DEVICE`, the picture as inline JPEG; the engine has no cloud form of this call), and code makes
+one more question from the things it names. The spike that decided it and the SDK's own
+`inferenceSource=on_device` lines are in `devlog/evidence_phase4/AI_RUN_LOG.md`. On a phone the questions are the
+rules' and the screen says so.
 
 **What happens next depends on your browser, and the status line at the top says which.** In desktop Chrome with
 Gemini Nano the first step runs by itself, with no click: when the model has loaded (a few seconds; 16 to 22 s

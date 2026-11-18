@@ -32,6 +32,8 @@ code is in **`web/src/ai/firebaseEngine.ts`**. See [Added on 17 Nov](#added-on-1
 | Narrowing card, after "something else" (`core/narrow.ts`) | on the device: the question, the choices that did not fit, today's answers so far, About me. In the cloud: the question and the choices that did not fit, About-me words swapped out; never the answers | the same two steps: `ONLY_ON_DEVICE` first, else `PREFER_IN_CLOUD` when the carer has turned online help on | The person chose the way out, so an AI suggests the next, broader choices (two levels at most). The same card rules check them, and the screen says an AI made this follow-up. Since 18 Nov a proposed choice that is more of the kind already refused is dropped, and when fewer than two are left the rules make the broader choices and the card says so (`core/kinds.ts`). On the device the prompt may also hold what was learned by counting (`core/prefs.ts`); the cloud text never does. |
 | "Today in short" (`core/summary.ts`) | today's confirmed answers | `ONLY_ON_DEVICE` (`summarizeDevice`), no cloud step | Two to four sentences for the family or the therapist. The answers are personal: where the browser has no Gemini Nano, the app's rules write the summary and no model gets them. |
 | Plainer words for the week's and the month's lines and for the tip of the day (`core/reword.ts`; [phase 3](#added-on-18-nov-phase-3-the-diary-health-notes-what-stands-out-the-answer-check-a-tip-a-copy-in-a-file)) | on the device: the lines the app's rules wrote, and the carer's health notes as context. In the cloud: the insight lines only, as shown on a sheet first; no name, no health note, nothing of the diary | `ONLY_ON_DEVICE` (`rewordDevice`); on a device with no model, `PREFER_IN_CLOUD` (`rewordCloud`) after a yes on that sheet, each time | What is counted, the thresholds and the red flags are rules. A model only rewords, and code checks its words (no new number, no name, no medical or advising word, never "more to drink"); otherwise the rules' words stay. Neither step has run against a real model yet. |
+| First-letter words, only when the rules find fewer than two (`core/letter.ts`; [phase 4](#added-on-18-nov-phase-4-the-first-letter-the-person-starts-before-a-doctor-visit-talk-about-a-photo)) | on the device: the question, the letter, what did not fit, About me, the usual answers. In the cloud: the question with About-me words swapped out, and the letter; never what was refused or learned | `ONLY_ON_DEVICE` where the browser has Gemini Nano; else `PREFER_IN_CLOUD`, only after a yes on a sheet that shows the text | The person points to a letter; a model may add everyday words that start with it. Code keeps a word only if it starts with the letter, is no invented name, and is not alcohol, tobacco or a medicine. |
+| "Talk about a photo": what is in the picture (`core/phototalk.ts`) | one of the family's own photos (a 320 px JPEG) and a fixed instruction | `ONLY_ON_DEVICE` (`lookDevice`), no cloud step, after the carer's tap | A family photo has no cloud path. The model names things; code drops every word about a person and makes one choice question. On a phone the rules write the questions from the photo's word. |
 | Stripped card | the question with every About-me word swapped for "Person A", "Place A"… and a word that looks like a name the family didn't list (a capitalised word, the word after a title such as "Dr.", a lowercase word that is not an everyday English word) swapped for "Name A" | `PREFER_IN_CLOUD` | Holds no profile data, so an offline fall-back to the device is safe. |
 
 **On a phone there is no on-device step today.** Chrome's built-in Gemini Nano exists in desktop Chrome only, not on
@@ -146,8 +148,11 @@ picture; a word with none still shows alone). Why colour: `design/IMAGES_RESEARC
 or drink, or a place: take or choose it, frame it by hand (move and zoom a square), give it one word. A card shows it
 in place of the drawing wherever a choice **is** that word (rules: compared without capitals, "the / your", and the
 plural; never a near match). The photos are kept in IndexedDB on the device, 320 px JPEGs, 60 at most; each has
-"Delete", and there are "Delete all photos" and "Delete everything on this phone". **No AI looks at a photo and none
-is ever sent:** the file is read in the page and drawn on a canvas; nothing recognises, labels or cuts it out.
+"Delete", and there are "Delete all photos" and "Delete everything on this phone". **No photo is ever sent, and no AI
+looks at a photo to put it on a card:** the file is read in the page and drawn on a canvas; nothing recognises, labels
+or cuts it out. (Since phase 4 there is one place where a model may be shown a photo: "Talk about a photo", on a
+desktop Chrome with Gemini Nano, after the carer presses "Ask the AI on this device to look at it". That call is
+`ONLY_ON_DEVICE` and has no cloud form; see [phase 4](#added-on-18-nov-phase-4-the-first-letter-the-person-starts-before-a-doctor-visit-talk-about-a-photo).)
 **Not built, on purpose: background removal.** The plan was a cut-out by MediaPipe's Interactive Segmenter, on the
 device. The contest's rule is "All of your app's AI inference must go through Firebase AI Logic, so don't call other
 model APIs directly", and a segmentation model called through MediaPipe is AI inference outside Firebase AI Logic,
@@ -255,6 +260,82 @@ lines, the sheet, the tip, save / clear / bring back, and the picture sizes; `ov
 11/11, `e2e-needs.mjs` 12/12, `e2e-noconfig.mjs` 25/25. Screens at 390 px: `devlog/evidence_phase3/01_…` to `25_…`
 (`scripts/phase3-shots.py`). Not run: `e2e-cloud.mjs` and `e2e-ondevice.mjs` (nothing in a card's rules, prompt or
 model call changed; the two new wording steps have no run against a real model).
+
+## Added on 18 Nov, phase 4: the first letter, the person starts, before a doctor visit, talk about a photo
+Four things for the moments the earlier phases left open: the word that is on the tip of the tongue, a conversation
+the person wants to start, the twelve minutes with a doctor, and talk for its own sake. Status and limits:
+`CLAIMS.md`, rows 77 to 85. Nobody it is for has tried any of it yet, and no doctor, nurse or speech and language
+therapist has read the doctor-visit list. The day's notes, the spike and what differs from the brief: `devlog/DAY15.md`.
+
+**What is rules, what is AI, and where it runs.**
+
+| Part | Made by | Where | What a model gets |
+|---|---|---|---|
+| The alphabet, and the words after a letter when About them or the app's everyday words hold two or more (`core/letter.ts`) | rules | the device | nothing: no model |
+| More words for a letter, only when the rules find fewer than two | Gemini Nano, `ONLY_ON_DEVICE`, where the browser has it | the device | the question, the letter, what did not fit, About them, the usual answers learned here. Nothing leaves the device |
+| The same on a phone | the cloud model, `PREFER_IN_CLOUD`, after a yes on a sheet that shows the text | Google's cloud | the question with About-them words swapped out, and the letter. Not what was refused, not a learned word, not a name |
+| "[Name] wants to say something": the starters, the topics as pictures, the line and the questions for the carer (`core/turn.ts`) | rules | the device | nothing: no model |
+| Before a doctor visit: the questions, the page (`core/visit.ts`) | a fixed list in the source | the device (IndexedDB, its own key) | nothing: no model, on any device |
+| Talk about a photo: three questions from the photo's word and About them (`core/phototalk.ts`) | rules | the device | nothing: no model |
+| One more question, "What in this photo shall we talk about?" | Gemini Nano, `ONLY_ON_DEVICE` (`lookDevice`), after the carer presses "Ask the AI on this device to look at it"; desktop Chrome only | the device | the photo (a 320 px JPEG) and a fixed instruction. There is no cloud form of this call |
+
+**The first letter.** After a confirmed "something else" the carer's screen offers "Try the first letter" (it is also
+on the "We're stuck" card). The person's screen then asks "Do you know how the word starts?" and "Point to the first
+letter" over a big alphabet: 26 letters, six to a row, and "No, I don't know" as the wide button of the last row. It
+is the one screen of the person's with more than three choices beside the needs board, and it fits a 390 x 844 phone
+(and a 320 x 568 one) without scrolling. A letter leads to a card of up to three words that start with it, and
+"something else". The words are the family's own first (the people, the pets and other things, the foods, the places,
+TV, music, and the usual answers counted on this device), then the everyday words the app has a drawing for, the
+question's own topic first. With Beth, Bo and ginger biscuits in About them, "B" offers exactly those three, by rules,
+with the family's photos on them, and no model is asked on any device. A model adds words only when the rules find
+fewer than two; code keeps a word only if it starts with the letter, was not already refused, is no name the family
+did not give, and is not alcohol, tobacco or a medicine. If the word is "pain", the carer's next step is "Where does
+it hurt?" at once; "toilet" says go now. "No, I don't know" goes back to the carer with one calm line ("That is fine:
+many people cannot tell the first letter"), and nothing is counted, on any screen.
+
+**The person starts.** A button under the quick needs, "Frank wants to say something", opens the person's screen with
+three starters and the way out: "I need something" (leads to the needs board), "I want to tell you something" (the
+topics as a picture menu, three to a screen), "I feel…" (the feelings card). The phone goes back to the carer only at
+the end, and the carer reads "Frank started this: there is something to tell you. It is about: People & family." with
+up to three questions of that topic, the family's own first. The answer check never counts what the person started,
+and its line ("may be tired") never stands on a screen that follows from it. On a carer's phone this works only when
+the phone is within the person's reach; a spare phone or tablet beside the chair is the honest setup.
+
+**Before a doctor visit.** Up to eight cards from a fixed list in `core/visit.ts` (six when there is no pain): "Are
+you in pain?", "Where does it hurt?" (the body map), "How bad is the pain?", "How have you been sleeping?", "How is
+your appetite?", "How have you been feeling in yourself?", "What worries you most?" (with "nothing much" on its first
+screen), "What do you want to ask the doctor?". No model writes, picks, orders or rewords a question, and none reads
+an answer: every card is made with an engine that cannot run a model. The result is one page, "Frank's own answers",
+with the date, each answer exactly as it was given with its question and time, a line that asks for time when the
+answer to the last question was "something else", and the footer "Frank's answers, in Frank's own words where
+possible. Not a medical record." It can be shown, printed or copied as text. The answers are kept on the device under
+their own key, apart from the history and the diary, so the answer check never marks them and no step that builds a
+request can read them. The app does not interpret anything on that page. Outside the printed part, after a yes to
+pain, one line says: "If the pain is new or strong, do not wait for the visit: call the nurse or doctor."
+
+**Talk about a photo.** The carer picks one of the photos added in About them and gets three questions made by rules
+from the photo's word and About them: for a person's photo "Would you like to call Beth?", for a place "Would you
+like to go to the lake again?", for a food "Would you like ginger biscuits?", and for every photo "How does this
+photo make you feel? good / mixed / sad" and "Who shall we show this photo to?". Never "Who is this?" or "Do you
+remember": those are tests, and the rules refuse them everywhere. The person sees the photo over the question, with
+three choices at most and the way out. **With images, on the device only:** the half-day spike asked whether Firebase
+AI Logic's on-device step takes a picture in this Chrome, and it does (Chrome 157 with Gemini Nano; the SDK's own
+report was `inferenceSource=on_device`, and no host was contacted; `devlog/DAY15.md`,
+`devlog/evidence_phase4/AI_RUN_LOG.md`). So on such a browser a button, "Ask the AI on this device to look at it",
+shows the model the photo and a fixed instruction; it names up to four things it sees, and code makes one more
+question from them ("What in this photo shall we talk about? mug / table"). The model is told to say nothing about
+people, and code drops every word about a person's looks, age, health or mood whatever it said. The engine's call has
+no cloud model and throws on any answer that did not come from the device. On a phone there is no such button: the
+questions are the rules', and the screen says "No AI looked at the photo."
+
+2544 unit tests (128 new: `letter`, `turn`, `visit`, `phototalk`, `privacy-phase4`); `e2e-simple.py` 550/550, of
+which the phase 4 run (83 checks, with the Miller family and three photos) walks all four as Carol and Frank at
+390 x 844, asks nothing of any other host and presses no "Yes" on a sheet, and the offline run has four phase 4
+steps; `overflow-check.py` 503/503 at 320 to 412 px (101 of them phase 4: every person's screen of it also "needs no
+scrolling" at the phone's own height); `contrast-check.mjs` 127 pairs. Against real models
+(`scripts/e2e-phase4-ai.py`, 16/16, `devlog/evidence_phase4/AI_RUN_LOG.md`): the photo step and the letter step on
+the device (Gemini Nano), and the letter step through the cloud model after the sheet's yes. Screens at 390 px:
+`devlog/evidence_phase4/01_…` to `17_…` (`scripts/phase4-shots.py`).
 
 ## Changed on 18 Nov after a role-play on the phone
 One of us played Carol and Frank (`design/PERSONA_SCENARIO.md`, fictional) on the hosted copy at 390 px. What it

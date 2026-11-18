@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { P4 } from '../../core/copy4';
 import { NullEngine } from '../../core/engine';
 import { makeCard } from '../../core/pipeline';
-import { LOOK_PROMPT, LOOK_SCHEMA, LOOK_SYSTEM_PROMPT, checkedThings, photoCard, photoKind, photoQuestions, photoTalkCard, thingsQuestion } from '../../core/phototalk';
+import { LOOK_PROMPT, LOOK_SCHEMA, LOOK_SYSTEM_PROMPT, checkedThings, photoCard, photoEnd, photoKind, photoQuestions, photoTalkCard, thingsQuestion } from '../../core/phototalk';
 import { EMPTY_PROFILE, type Profile } from '../../core/types';
 import { photoTalkScreen } from '../../web/src/phase4';
 
@@ -53,6 +53,16 @@ describe('the rules\' questions: from the photo\'s word and About them', () => {
   it('the rules themselves refuse the test question this feature never asks', async () => {
     const card = await makeCard('Who is this?', { profile: MILLER, support: 'more', engine: new NullEngine(), allowCloud: false, deviceReady: false });
     expect(card.choices.filter((x) => x.role === 'answer' && /Beth|Tom/.test(x.label))).toEqual([]);
+  });
+});
+
+describe('health safety: a sad answer about a photo is taken as said', () => {
+  it('"sad" tells the carer to stay near and offers to put the photo away; nothing says later, tired or less sure', () => {
+    const sad = photoEnd('How does this photo make you feel?', 'sad', 'Frank');
+    expect(sad).toBe('This photo makes Frank sad. Stay near: you do not have to fix it. Ask whether to put it away.');
+    for (const l of ['good', 'mixed', 'sad']) expect(photoEnd('How does this photo make you feel?', l, '')).not.toMatch(/later|tired|less sure|cheer|never mind|only a photo/i);
+    expect(photoEnd('How does this photo make you feel?', 'something else', 'Frank')).toBe('');
+    expect(photoEnd('Would you like to call Beth?', 'yes', 'Frank')).toBe('');
   });
 });
 

@@ -183,7 +183,7 @@ def cloud(p, url):
     page.locator('[data-letter=K]').click()
     page.wait_for_selector('#sheet')
     line = e2e.text(page, '#sheet-line')
-    whole = page.locator('#sheet-whole pre').inner_text()
+    whole = page.locator('#sheet-whole pre').text_content()
     log(f'- the sheet\'s line: "{line}"')
     check('before the yes nothing was asked of any other host', not seen['hosts'], ', '.join(sorted(set(seen['hosts']))))
     check('the request the sheet shows holds no word of About them', not re.search(r'\b(?:Frank|Carol|Beth|Tom|Bo|ginger|porridge|lake)\b', whole))
