@@ -1,0 +1,43 @@
+device status line: Checking whether this computer can run the private helper…
+status line once the check stands: Gemini Nano is not downloaded in this browser, so the on-device step can't run yet. The card shown is made in code. Download (several GB, once)
+PASS  no on-device model in this browser: the status line says so plainly, and the first card (made in code) stays  ({"status":"Gemini Nano is not downloaded in this browser, so the on-device step can't run yet. The card shown is made in code. Download (several GB, once)","tiles":["coffee","tea","something else"],"badge":"No AI needed","lit":"Do you want coffee or tea?"})
+recording: RECORDING Recorded on our machine on 17 Nov 2026 (UTC), at commit 8ace9f0, in Chrome 157 with Gemini Nano. Not made in this browser: nothing ran here for it and nothing was sent. What do you want to do this weekend? On this computer · nothing left this computer · lake, church from About me lake church something else What the SDK reported for that call (inferenceSource=on_device): [ai-logic] leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device ms=3059 In the same run the cloud step, which never sees About me, answered the same question with "stay home / go out". The cloud step can run here, now, and it is not a recording: read what is sent, tick the box, turn on cloud help, then ask the same question. Cloud help: read and turn on → The whole run, with screenshots: devlog/evidence_r7/final/ondevice/RUN_LOG.md. Hide the recording
+PASS  no on-device model here: the link "See what the on-device step makes" opens a card labelled as a recording, with its date, commit and inferenceSource=on_device  (See what the on-device step makes → · RECORDING · lake / church / something else)
+PASS  opening the recording made no card and left cloud help off: the first card stays, 0 bytes, and the cloud step is offered through the consent screen only  (Cloud help: off · coffee / tea / something else · 0 bytes left this computer 1 card this session · · link: Cloud help: read and turn on →)
+hosts contacted on page load (cloud help off): talk-partner.web.app×13
+PASS  page load with cloud help off contacts only the app host  (talk-partner.web.app×13)
+PASS  coffee/tea card is coffee / tea / something else  (["coffee","tea","something else"])
+PASS  coffee/tea needs no AI  (No AI needed)
+PASS  coffee/tea sent nothing to Firebase/Google  (no Google hosts)
+PASS  before any cloud request the number under the chips reads "0 bytes left this computer"  (0 bytes left this computer 2 cards this session · page load not counted)
+PASS  Remote Config is not asked while cloud help is off: "How this works" shows the three defaults in the code, and no settings host was contacted  ([{"key":"cloud_text_model","from":"default","value":"gemini-3.5-flash-lite"},{"key":"route_mood_words","from":"default","value":"2"},{"key":"route_min_choices","from":"default","value":"2"}])
+PASS  Remote Config unreachable: a card is made at once all the same, and the defaults in the code are in use  (card in 10 ms; failed: Remote Config did not answer (Failed to fetch). The defaults in the code are in use, and no card waited for it.)
+Remote Config: Remote Config answered at 13:45. Each row says whether its value came from there. [{"key":"cloud_text_model","from":"remote","value":"gemini-3.5-flash-lite"},{"key":"route_mood_words","from":"remote","value":"2"},{"key":"route_min_choices","from":"remote","value":"2"}]
+PASS  Remote Config answered: "How this works" shows the cloud model and both routing thresholds as "from Remote Config"  ({"status":"fetched","text":"Remote Config answered at 13:45. Each row says whether its value came from there.","rows":[{"key":"cloud_text_model","from":"remote","value":"gemini-3.5-flash-lite"},{"key":"route_mood_words","from":"remote","value":"2"},{"key":"route_min_choices","from":"remote","value":"2"}]})
+PASS  the settings request went to Firebase Remote Config and holds no question and no About-me word  (4 requests, 998 characters)
+PASS  cloud help turned on through the consent screen  (Cloud help: on)
+PASS  with cloud help on and no cloud card yet, the number says "0 bytes of any question left this computer" and names the settings request as not counted  (0 bytes of any question left this computer 1 card this session · page load and the settings request (no question in it) not counted)
+open question -> badge "No card", tiles [], 3652 ms
+notes: Cloud help could not confirm this browser (App Check); the service's own words are under "Where each step ran".
+FAIL  open question answered by the cloud leg (inferenceSource in_cloud)  (No card)
+PASS  judge mode, a card after the first: why / where each step ran / what was sent are behind one summary line, the receipt is closed, and one click opens all three  ({"open":false,"line":"How this card was made: no card: cloud help was asked and failed, and nothing made on this computer could stand in for it · 0 kept, 0 added, 0 dropped by a rule. Open for why, where each step ran, what was sent.","hidden":true,"receiptOpen":false,"after":true})
+FAIL  the card has at least two answers plus one escape  ([])
+SDK report: 
+FAIL  the SDK reported inferenceSource=in_cloud for the stripped leg
+FAIL  the badge line says the question left with 1 name swapped out  (· cloud help was asked and failed: the question may have left this computer)
+PASS  the sent payload has "Person A", not the name  (Partner asks: What do you want to do this weekend with Person A?)
+FAIL  the panel says it was sent
+PASS  "What was sent" shows one line and the size by default; the exact request is folded and one click opens it  ({"line":"Partner asks: What do you want to do this weekend with Person A?","size":"4,528 bytes with the fixed instructions and the answer format, which are the same for every question","open":false,"seen":false,"opened":true,"seenAfter":true,"bytes":4528})
+PASS  the request went to Firebase AI Logic  (content-firebaseappcheck.googleapis.com, firebasevertexai.googleapis.com)
+PASS  the cloud request names the model Remote Config gave  (gemini-3.5-flash-lite)
+FAIL  after the cloud answered the number is the size of that request, and it is called "handed to cloud help", not "0 bytes left"  (up to 4,528 bytes may have left this computer 1 cloud request failed after being handed ov (request counted by hand: 4528 bytes))
+next page: not offered on this run (the model gave 0 choices)
+who to call -> tiles []
+why: No model answer reached the rules · Decided by: no card: cloud help was asked and failed, and nothing made on this computer could stand in for it · Headline: the question's own words
+SDK report: 
+FAIL  "who to call" with cloud help only: no general word, at least one person About me names, "someone else" as the way out  ([])
+FAIL  the cloud answered it (inferenceSource=in_cloud) and got the bare question: no name in the request  (Partner asks: Who should we call tonight?)
+hosts contacted during the cloud card: www.google.com×3, www.gstatic.com×1, content-firebaseappcheck.googleapis.com×2, firebasevertexai.googleapis.com×3
+console: [2026-11-18T19:45:43.839Z]  @firebase/app-check: AppCheck: Requests throttled due to previous 403 error. Attempts allowed again after 23h:59m:59s (appCheck/throttled). | [2026-11-18T19:45:43.839Z]  @firebase/ai: Unable to obtain a valid App Check token: AppCheck: Requests throttled due to previous 403 error. Attempts allowed again after 23h:59m:59s (appCheck/throttled). | [2026-11-18T19:45:44.204Z]  @firebase/app-check: AppCheck: Requests throttled due to previous 403 error. Attempts allowed again after 23h:59m:59s (appCheck/throttled).
+
+commit 1a5e79f166419b5deed25d32ebc5ac794676c9a2  19/27 checks passed  2026-11-18T19:45:45.319Z
