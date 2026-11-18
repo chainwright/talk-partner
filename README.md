@@ -423,12 +423,17 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-Last done on 17 Nov 2026, 23:04 UTC: <https://talk-partner.web.app> serves the build of commit `188f03b` (each of the
-14 served files has the SHA-256 of the local build). Against it: `e2e-needs.mjs` 12/12; `e2e-simple.py --live` 97/97
-(the simple view as a phone at 390 px, a desktop and a tablet, no page error, nothing off the side; it never presses
-"Yes" there); `overflow-check.py` 145/145; `e2e-cloud.mjs` 15/27, because App Check refused our machine's browser
-(`devlog/evidence_live/`, the files with `188f03b` in the name; at the build before, `2c5673e`, 18/27 and 14/27). The last full pass of the cloud script was at the
-build of `4d7edee`, 19:06 UTC. The on-device
+Last done on 18 Nov 2026, 00:48 UTC: <https://talk-partner.web.app> serves the build of commit `fb1b3ba` (each of the
+20 served files has the SHA-256 of the local build; the manifest, the icons and the service worker are among them).
+Against it: `e2e-simple.py --live` 225/225 (the rebuilt simple view as a phone at 390 px, a desktop and a tablet, and
+the phone flow again with the connection off; no page error, nothing off the side; it never presses "Yes" there);
+`pwa-check.py` 30/30 (the manifest as Chrome parses it, Chrome's installability check, the service worker, the app
+offline); `e2e-needs.mjs` 12/12; `overflow-check.py` 293/293 (320 to 412 px); `e2e-cloud.mjs` 19/27, because App Check refused
+our machine's browser again ("Requests throttled due to previous 403 error"): the eight that fail are the ones that
+need a cloud card from this machine (`devlog/evidence_live/`, the files with `fb1b3ba` in the name; at the build
+before, `188f03b`, 15/27). On localhost at the same commit the cloud script passes 28/28, and a narrowing card was
+made by the real cloud model (`devlog/evidence_topics/narrow_cloud-card_localhost.txt`). The last full pass of the
+cloud script on the hosted copy was at the build of `4d7edee`, 17 Nov, 19:06 UTC. The on-device
 script was last run against the hosted copy at an earlier build, `deebc94`. The steps, for another project:
 ```
 # 1. console: create a reCAPTCHA Enterprise key (website; domains talk-partner.web.app, talk-partner.firebaseapp.com)
