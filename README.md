@@ -509,7 +509,20 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-Last done on 18 Nov 2026, 00:48 UTC: <https://talk-partner.web.app> serves the build of commit `fb1b3ba` (each of the
+Last done on 18 Nov 2026, about 02:20 UTC: <https://talk-partner.web.app> serves the build of commit `b9c7602` (the
+conversation trees, what the app learns, the colour pictures, the family's photos, Back and Home, and the update
+path: "Added on 18 Nov"). Each of the 20 served files has the SHA-256 of the local build. Against it:
+`e2e-simple.py --live` 341/341 (as a phone at 390 px, with the navigation, learning and photo runs, a desktop and a
+tablet, and the phone flow again with the connection off; it never presses "Yes" on the sheet there, and the photo
+run asks no other host and posts nothing); `pwa-check.py` 30/30; `e2e-needs.mjs` 12/12
+(`devlog/evidence_live/`, the files with `b9c7602` in the name). Not run against this build: `overflow-check.py` on
+the hosted copy (329/329 on localhost at the same commit), `e2e-cloud.mjs` (App Check has been refusing our machine's
+browser on the hosted copy since 17 Nov; on localhost the narrowing step ran through the real cloud model,
+`devlog/evidence_phase2/narrow_cloud_real_localhost.txt`) and `e2e-ondevice.mjs`. A phone that opened the site before
+this build has no update code yet: it needs one reload; from this build on a new deploy arrives by itself
+(`scripts/update-check.py`).
+
+The deploy before it, 18 Nov 2026, 00:48 UTC, served the build of commit `fb1b3ba` (each of the
 20 served files has the SHA-256 of the local build; the manifest, the icons and the service worker are among them).
 Against it: `e2e-simple.py --live` 225/225 (the rebuilt simple view as a phone at 390 px, a desktop and a tablet, and
 the phone flow again with the connection off; no page error, nothing off the side; it never presses "Yes" there);
