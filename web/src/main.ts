@@ -68,8 +68,8 @@ import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
 import { P8 } from '../../core/copy8';
 import { guessTopic } from '../../core/diary';
-import { NO_PASSPORT, cleanPassport, passport, passportText, toggleLine, OWN_MAX, type PassportInput, type PassportPrefs } from '../../core/passport';
-import { addEvent, cleanLog, newLog, pickedPractice, practiceReport, practiceText, practiceUrgent, togglePractice, type AskedBy, type PracticeEvent, type PracticeInput, type PracticeLog, type PracticeSpan, type Via } from '../../core/practice';
+import { NO_PASSPORT, OFF_UNTIL_TICKED, cleanPassport, passport, passportText, toggleLine, OWN_MAX, type PassportInput, type PassportPrefs } from '../../core/passport';
+import { addEvent, cleanLog, lessSureCount, newLog, pickedPractice, practiceFlag, practiceReport, practiceText, practiceUrgent, togglePractice, type AskedBy, type PracticeEvent, type PracticeInput, type PracticeLog, type PracticeSpan, type Via } from '../../core/practice';
 import { passportLink, passportScreen, practiceScreen, type PassPicture } from './care7';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
@@ -700,9 +700,9 @@ function notePractice(e: PracticeEvent) {
 /** The card an answer was confirmed on, as far as the counts need it (no word of it is kept). */
 const viaOf = (c: Card, p: Choice): Via => (p.role === 'repair' || c.kind === 'repair' ? 'repair' : c.kind === 'needs' ? 'needs' : c.turn ? 'turn' : c.letter ? 'letter' : c.typed ? 'typed' : c.more ? 'more' : c.aboutWhat ? 'about' : c.narrow ? 'narrow' : c.kind === 'body' || c.kind === 'pain' ? 'body' : 'card');
 /** The page for the speech therapist is built from this: the diary is handed over only when the box is ticked. */
-const practiceInput = (): PracticeInput => ({ log: state.demo ? newLog(Date.now()) : p8.log, span: p8.span, now: Date.now(), name: state.profile.personName.trim(), device: copyDevice(), speak: speakOn(), questions: p8.picked, diary: p8.health && !state.demo ? state.diary : null, number: callNumber() });
+const practiceInput = (): PracticeInput => ({ log: state.demo ? newLog(Date.now()) : p8.log, span: p8.span, now: Date.now(), name: state.profile.personName.trim(), device: copyDevice(), speak: speakOn(), questions: p8.picked, diary: p8.health && !state.demo ? state.diary : null, number: callNumber(), lessSure: state.demo ? 0 : lessSureCount(state.history, p8.span, Date.now()), flag: !p8.health && !state.demo && practiceFlag(state.diary, p8.span, Date.now()) });
 /** The passport is built from this: About them, the answers that still count, what was learned, the photos' words (never a picture). */
-const passportInput = (): PassportInput => ({ profile: state.profile, history: learns() ? state.history.filter((h) => h.at > state.forgotten.all) : [], learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], photoWords: state.photos.map((x) => x.word), prefs: p8.pass, now: Date.now(), device: copyDevice(), number: callNumber() });
+const passportInput = (): PassportInput => ({ profile: state.profile, history: learns() ? state.history.filter((h) => h.at > state.forgotten.all) : [], learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], photoWords: state.photos.map((x) => x.word), prefs: p8.pass, now: Date.now(), device: copyDevice(), number: callNumber(), numberSet: /^\+?\d{2,14}$/.test(String(state.health.emergency ?? '').replace(/[^\d+]/g, '')) ? callNumber() : '', foodCare: state.health.diabetes || state.health.swallowing || state.health.fluidLimit });
 const savePassport = () => { if (!state.demo) void kvSet('passport', p8.pass); };
 /** The pictures of the printed passport: each person of About them with their own photo or an initial, then the family's other photos. Eight at most. */
 function passPictures(): PassPicture[] {
@@ -2663,7 +2663,7 @@ app.addEventListener('change', (ev) => {
   // phase 7: the box of the page for the speech therapist, its questions; a line of the passport on or off, its photos
   if (t.id === 'practice-health') { p8.health = (t as HTMLInputElement).checked; render(); document.querySelector<HTMLElement>('#practice-health')?.focus({ preventScroll: true }); return; }
   if (t instanceof HTMLInputElement && t.dataset.practiceQ !== undefined) { const k = t.dataset.practiceQ; p8.picked = togglePractice(p8.picked, P8.practice.questions[Number(k)]); if (!state.demo) void kvSet('practiceAsk', p8.picked); render(); document.querySelector<HTMLElement>(`[data-practice-q="${k}"]`)?.focus({ preventScroll: true }); return; }
-  if (t instanceof HTMLInputElement && t.dataset.passLine !== undefined) { const off = p8.pass.off.includes(t.dataset.passLine); if (off === t.checked) { p8.pass = toggleLine(p8.pass, t.dataset.passLine); savePassport(); } return; }
+  if (t instanceof HTMLInputElement && t.dataset.passLine !== undefined) { const k = t.dataset.passLine; const on = OFF_UNTIL_TICKED.includes(k) ? p8.pass.on.includes(k) : !p8.pass.off.includes(k); if (on !== t.checked) { p8.pass = toggleLine(p8.pass, k); savePassport(); } return; }
   if (t.id === 'pass-photos') { p8.pass = { ...p8.pass, photos: (t as HTMLInputElement).checked }; savePassport(); return; }
   if (t.id === 'diary-topic') { state.diaryTopic = (t as HTMLSelectElement).value as DiaryTopic | 'all'; state.logged = null; render(); document.querySelector<HTMLElement>('#diary-topic')?.focus({ preventScroll: true }); return; }
   // "Since the last visit" (the doctor-visit page): the day to count from, and up to three fixed questions

@@ -20,7 +20,9 @@
 //     browser has it: for an optional short summary, and as hints for the narrowing step's on-device prompt.
 
 /** A confirmed answer, as the history keeps it. */
-export interface Seen { q: string; label: string; at: number }
+export interface Seen { q: string; label: string; at: number; /** Marked by the answer check (core/reliability.ts): never counted for a usual answer (phase 8, judge round 7). */ lessSure?: boolean }
+/** The answers a usual line may be counted from: none the answer check marked "less sure". */
+const sure = <T extends { lessSure?: boolean }>(xs: T[]): T[] => xs.filter((x) => !x.lessSure);
 /** A need pointed to on the quick-needs board. */
 export interface Need { label: string; at: number }
 
@@ -74,7 +76,7 @@ function counted<T extends { at: number }>(xs: T[], key: string, f: Forgotten): 
 export function usual(history: Seen[], q: string, f: Forgotten = NOTHING_FORGOTTEN): Usual | null {
   const k = qKey(q);
   if (!k) return null;
-  return lead(counted(history.filter((h) => qKey(h.q) === k), `q:${k}`, f).map((h) => h.label));
+  return lead(counted(sure(history).filter((h) => qKey(h.q) === k), `q:${k}`, f).map((h) => h.label));
 }
 
 /** The small line for the carer: "Usually: tea (5 of 7)". */
@@ -104,7 +106,7 @@ export interface Learned {
 export function learned(history: Seen[], needs: Need[], f: Forgotten = NOTHING_FORGOTTEN): Learned[] {
   const out: Learned[] = [];
   const byQ = new Map<string, Seen[]>();
-  for (const h of history) { const k = qKey(h.q); if (!k) continue; (byQ.get(k) ?? byQ.set(k, []).get(k)!).push(h); }
+  for (const h of sure(history)) { const k = qKey(h.q); if (!k) continue; (byQ.get(k) ?? byQ.set(k, []).get(k)!).push(h); }
   for (const [k, all] of byQ) {
     const q = bare(all[all.length - 1].q);
     // by time of day: at least three answers in a part of the day with a clear lead there, and the parts differ

@@ -60,3 +60,71 @@ describe('1. Safety (P0 6): the visit page never says "none entered" under an ow
     expect(insights(d, NO_HEALTH, 'week', NOW, '911').map((l) => l.id)).toContain('mood');
   });
 });
+
+// ---------------------------------------------------------------- item 3: the passport and the therapist page
+import { NO_PASSPORT, passport, passportText, type PassportInput } from '../../core/passport';
+import { GRADE_WORDS, lessSureCount, newLog, practiceFlag, practiceReport, practiceText, type PracticeInput } from '../../core/practice';
+import { learned, usual } from '../../core/prefs';
+import { usualForOthers } from '../../core/share';
+import { WEEK } from './week';
+
+const pass = (o: Partial<PassportInput> = {}): PassportInput => ({ profile: WEEK.profile, history: [], learned: [], photoWords: [], prefs: NO_PASSPORT, now: NOW, device: 'phone', ...o });
+const sect = (m: PassportInput, id: string) => passport(m).sections.find((s) => s.id === id)?.lines.map((l) => l.text) ?? [];
+const prac = (o: Partial<PracticeInput> = {}): PracticeInput => ({ log: newLog(when(0, '00:00')), span: 'week', now: NOW, name: 'Frank', device: 'phone', speak: false, questions: [], diary: null, ...o });
+
+describe('3. The passport (P1 7, 8, 10) and the therapist page (P1 8, 9)', () => {
+  it('"A tired yes may not mean yes" is always under how yes and no are shown, and cannot be taken off', () => {
+    const p = passport(pass());
+    const l = p.sections.find((s) => s.id === 'yesno')!.lines.find((x) => x.key === 'yesno:tired')!;
+    expect(l.text).toBe('A tired yes may not mean yes. Check it the other way. Ask about pain, drinks and the toilet every time.');
+    expect(l.removable).toBe(false);
+    expect(passportText(pass({ prefs: { ...NO_PASSPORT, off: ['yesno:tired'] } }))).toContain(l.text);
+  });
+  it('no number in About them: the page names none and says to ask the family; a number set is printed', () => {
+    const unset = sect(pass({ number: '911', numberSet: '' }), 'wrong');
+    expect(unset[0]).toBe('Emergency number: not filled in, ask the family.');
+    expect(unset.join(' ')).not.toMatch(/\b911\b|\b999\b|\b112\b/);
+    expect(unset[1]).toContain('call the emergency number now');
+    expect(sect(pass({ number: '999', numberSet: '999' }), 'wrong')[0]).toBe('Emergency number: 999.');
+  });
+  it('a food line with diabetes (or swallowing, or a fluid limit) noted says to ask the family, and names no condition', () => {
+    const f = sect(pass({ foodCare: true }), 'about').find((x) => x.startsWith('Food and drink'))!;
+    expect(f).toMatch(/^Food and drink: .+\. Ask the family what is all right\.$/);
+    expect(f).not.toMatch(/diabet|swallow|fluid|sugar/i);
+    expect(sect(pass(), 'about').find((x) => x.startsWith('Food and drink'))).not.toContain('Ask the family');
+  });
+  it('"less sure" answers count for no usual line, at home or on the passport, and a usual yes to an offer never travels', () => {
+    const at = (i: number) => when(0, '09:00') + i * 3600_000;
+    const tired = [0, 1, 2].map((i) => ({ q: 'Would you like tea or coffee?', label: 'tea', at: at(i), lessSure: true }));
+    expect(usual(tired, 'Would you like tea or coffee?')).toBeNull();
+    expect(learned(tired, [])).toEqual([]);
+    const sure = tired.map((h) => ({ ...h, lessSure: false }));
+    expect(usual(sure, 'Would you like tea or coffee?')).toMatchObject({ label: 'tea', n: 3 });
+    const yes = learned([0, 1, 2].map((i) => ({ q: 'Would you like the radio on?', label: 'yes', at: at(i) })), []);
+    expect(yes[0].text).toMatch(/^Usually says yes to/);
+    expect(yes.filter(usualForOthers)).toEqual([]);
+    // the letter words and the likes of the passport leave them out too
+    const letter = [0, 1].map((i) => ({ q: 'It starts with B. Is it one of these?', label: 'Bo', at: at(i), lessSure: true }));
+    expect(sect(pass({ history: letter }), 'words')).toEqual([]);
+  });
+  it('the therapist page: the "less sure" count stands beside the yes count, with why a yes is not proof', () => {
+    const r = practiceReport(prac({ lessSure: 5 }));
+    const turn = r.sections.find((s) => s.id === 'turn')!.lines;
+    const i = turn.findIndex((l) => l.startsWith('The check'));
+    expect(turn[i + 1]).toBe('Answers marked "less sure" by the answer check in this time (a run of yes, or the same place on the screen): 5. A yes on the check is not proof: when tired, a yes can mean no.');
+    expect(turn[i + 1].replace(/"[^"]*"/g, '')).not.toMatch(GRADE_WORDS);
+    expect(lessSureCount([{ at: NOW - 1000, lessSure: true }, { at: NOW - 2000 }, { at: when(-20, '10:00'), lessSure: true }], 'week', NOW)).toBe(1);
+  });
+  it('box off: the printed page says, without any detail, that the diary holds a pain answer or "something\'s wrong", only when true', () => {
+    const flagged = practiceText(prac({ flag: true }));
+    expect(flagged).toContain('Nothing about needs, pain or health is on this page. Those are in the diary.');
+    expect(flagged).toContain('The diary of this time holds a pain answer or "something\'s wrong": ask the family.');
+    expect(practiceText(prac({ flag: false }))).not.toContain('holds a pain answer');
+    const diary = [ans('Are you in pain?', 'yes', 5, '10:00', 'body')];
+    expect(practiceFlag(diary, 'week', NOW)).toBe(true);
+    expect(practiceFlag([ans('Are you in pain?', 'no', 5, '10:00', 'body')], 'week', NOW)).toBe(false);
+    expect(practiceFlag([{ id: 'n', at: when(5, '10:00'), kind: 'need', label: "something's wrong", topic: 'body' }], 'week', NOW)).toBe(true);
+    // with the box ticked the page holds the answers themselves, and no second line
+    expect(practiceText(prac({ diary, flag: false }))).not.toContain('holds a pain answer');
+  });
+});

@@ -59,6 +59,8 @@ export const P8 = {
     stuck: (n: number, after: number) => `"We're stuck" (show, write or draw) was opened: ${times(n)}${n ? `, ${after} of them after "something else"` : ''}.`,
     turn: (name: string, n: number) => `${name || 'The person'} started the conversation (the button "wants to say something"): ${times(n)}.`,
     check: (yes: number, no: number) => `The check ("So: tea. Right?"): "Yes" ${times(yes)}, "No, something else" ${times(no)}.`,
+    /** Phase 8 (judge round 7): beside the yes count, so that it is not read as "the yes can be relied on". */
+    lessSure: (n: number) => `Answers marked "less sure" by the answer check in this time (a run of yes, or the same place on the screen): ${n}. A yes on the check is not proof: when tired, a yes can mean no.`,
     speak: (on: boolean, device: string) => `Read aloud is ${on ? 'on' : 'off'} on this ${device} today.`,
     // ---- the needs and pain answers (only with the box ticked)
     healthSub: (name: string) => `From the diary: what ${name || 'the person'} pointed to, and what the family logged. Not a medical record.`,
@@ -69,6 +71,8 @@ export const P8 = {
     painNone: 'Pain: none entered. That does not show there was none.',
     callWhere: 'the pain lines',
     healthOffLine: 'Nothing about needs, pain or health is on this page. Those are in the diary.',
+    /** Phase 8: printed with the box off, only when the diary of this time holds a pain answer or "something's wrong". It holds none of them. */
+    healthFlag: 'The diary of this time holds a pain answer or "something\'s wrong": ask the family.',
     // ---- the questions (fixed; the carer picks up to three)
     questions: [
       'Which kinds of question fit best at home?',
@@ -99,6 +103,14 @@ export const P8 = {
     onPage: 'On the page',
     always: 'Always on the page',
     untrue: (name: string) => `Take this line off if it is not true for ${name || 'them'}.`,
+    /** Phase 8 (judge round 7): the two lines that state a fact about the person are off until the carer ticks them. */
+    tickIfTrue: (name: string) => `Tick if true for ${name || 'them'}. Off until you tick it.`,
+    /** Phase 8: always under how yes and no are shown, whatever the family filled in. */
+    tiredYes: 'A tired yes may not mean yes. Check it the other way. Ask about pain, drinks and the toilet every time.',
+    /** Phase 8: when the emergency number was not set in About them, the page names none. */
+    noNumber: 'Emergency number: not filled in, ask the family.',
+    /** Phase 8: after the food line when About them notes diabetes, swallowing difficulty or a fluid limit (the condition is not named). */
+    foodAsk: 'Ask the family what is all right.',
     sec: {
       how: 'How to talk',
       yesno: (name: string) => (name ? `How ${name} says yes and no` : 'How they say yes and no'),
@@ -124,7 +136,7 @@ export const P8 = {
     oneEmpty: '(not filled in: ask the family)',
     people: (list: string) => `People: ${list}.`,
     livesHere: 'lives here',
-    foods: (list: string) => `Food and drink: ${list}.`,
+    foods: (list: string, ask = '') => `Food and drink: ${list}.${ask ? ` ${ask}` : ''}`,
     places: (list: string) => `Places: ${list}.`,
     tv: (list: string) => `TV: ${list}.`,
     music: (list: string) => `Music: ${list}.`,

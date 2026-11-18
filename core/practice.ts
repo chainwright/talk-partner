@@ -164,6 +164,10 @@ export interface PracticeInput {
   /** The diary, ONLY when "Include the needs and pain answers" is ticked; null otherwise (the page then holds nothing of it). */
   diary: DiaryEntry[] | null;
   number?: string;
+  /** Phase 8: how many answers of the span the answer check marked "less sure" (a count only; no word of them). */
+  lessSure?: number;
+  /** Phase 8: with the box off, whether the diary of the span holds a pain answer or "something's wrong" (one yes or no; nothing of the entries). */
+  flag?: boolean;
 }
 export interface PracticeSection { id: 'asked' | 'fit' | 'turn' | 'health' | 'ask'; heading: string; lines: string[] }
 export interface PracticeReport {
@@ -183,6 +187,17 @@ const urgentEntry = (e: DiaryEntry) => tags(e).some((t) => t === 'strong-pain' |
 export function practiceUrgent(diary: DiaryEntry[], span: PracticeSpan, now: number): boolean {
   const { from, to } = practiceRange(span, now);
   return diary.some((e) => e.at >= from && e.at <= to && urgentEntry(e));
+}
+
+/** Phase 8: the diary of the span holds a pain answer or "something's wrong": the one yes or no the page may carry with the box off. */
+export function practiceFlag(diary: DiaryEntry[], span: PracticeSpan, now: number): boolean {
+  const { from, to } = practiceRange(span, now);
+  return diary.some((e) => e.at >= from && e.at <= to && (tags(e).includes('pain') || urgentEntry(e)));
+}
+/** Phase 8: the answers of the span the answer check marked "less sure", counted. */
+export function lessSureCount(history: { at: number; lessSure?: boolean }[], span: PracticeSpan, now: number): number {
+  const { from, to } = practiceRange(span, now);
+  return history.filter((h) => h.lessSure && h.at >= from && h.at <= to).length;
 }
 
 /** The lines of "Needs and pain answers": only what was entered, with the fixed sentence wherever the call box would stand in the app. */
@@ -232,7 +247,7 @@ export function practiceReport(m: PracticeInput): PracticeReport {
     ...(c.elseTalks ? [K.helpedNone(c.helpedNone)] : []),
     K.stuck(c.stuck, c.stuckAfter),
   ];
-  const turn: string[] = [K.turn(m.name, c.turns), K.check(c.checkYes, c.checkNo), K.speak(m.speak, m.device)];
+  const turn: string[] = [K.turn(m.name, c.turns), K.check(c.checkYes, c.checkNo), ...(m.lessSure !== undefined ? [K.lessSure(m.lessSure)] : []), K.speak(m.speak, m.device)];
   const questions = pickedPractice(m.questions);
   return {
     title: K.title,
@@ -243,7 +258,7 @@ export function practiceReport(m: PracticeInput): PracticeReport {
       { id: 'asked', heading: K.sec.asked, lines: asked },
       { id: 'fit', heading: K.sec.fit, lines: fit },
       { id: 'turn', heading: K.sec.turn, lines: turn },
-      { id: 'health', heading: K.sec.health, lines: health ? health.lines : [K.healthOffLine] },
+      { id: 'health', heading: K.sec.health, lines: health ? health.lines : [K.healthOffLine, ...(m.flag ? [K.healthFlag] : [])] },
       ...(questions.length ? [{ id: 'ask' as const, heading: K.sec.ask, lines: [`${K.qPrinted}:`, ...questions.map((q) => `- ${q}`)] }] : []),
     ],
     footer: K.footer(m.device),

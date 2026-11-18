@@ -45,7 +45,7 @@
   "diabetes": true,
   "swallowing": false,
   "fluidLimit": false,
-  "reminders": false
+  "reminders": false, "emergency": "911"
  },
  "entries": [
   {

@@ -43,12 +43,20 @@ export interface PassportPrefs {
   no: string;
   /** The lines taken off the page, by their keys. */
   off: string[];
+  /** Phase 8: the lines that are off until ticked (OFF_UNTIL_TICKED), ticked by the carer. */
+  on: string[];
   /** The carer's own lines. */
   own: string[];
   /** The photos and initials are on the printed page. */
   photos: boolean;
 }
-export const NO_PASSPORT: PassportPrefs = { yes: '', no: '', off: [], own: [], photos: true };
+export const NO_PASSPORT: PassportPrefs = { yes: '', no: '', off: [], on: [], own: [], photos: true };
+/**
+ * Phase 8 (judge round 7, the nurse's, the SLP's and the person's seats): "knows what to say" and "understands most
+ * of what you say" state a fact about the person that the family did not enter (false in some kinds of aphasia, and a
+ * nurse may over-read comprehension, for consent). They are off until the carer ticks them, labelled "Tick if true".
+ */
+export const OFF_UNTIL_TICKED = ['sca:knows', 'sca:understands'];
 const tidy = (s: unknown, max: number) => (typeof s === 'string' ? s.replace(/[<>{}[\]\\]/g, '').replace(/\s+/g, ' ').slice(0, max) : '');
 /** Whatever was stored, as the carer's settings of the page: unknown fields are dropped, text is cut to its length. */
 export function cleanPassport(raw: unknown): PassportPrefs {
@@ -56,12 +64,14 @@ export function cleanPassport(raw: unknown): PassportPrefs {
   return {
     yes: tidy(x.yes, YESNO_LEN), no: tidy(x.no, YESNO_LEN),
     off: Array.isArray(x.off) ? x.off.filter((k): k is string => typeof k === 'string').slice(0, 200) : [],
+    on: Array.isArray(x.on) ? x.on.filter((k): k is string => typeof k === 'string' && OFF_UNTIL_TICKED.includes(k)) : [],
     own: Array.from({ length: OWN_MAX }, (_, i) => tidy(Array.isArray(x.own) ? x.own[i] : '', OWN_LEN)),
     photos: x.photos !== false,
   };
 }
 /** A line taken off the page, or put back. */
 export function toggleLine(p: PassportPrefs, key: string): PassportPrefs {
+  if (OFF_UNTIL_TICKED.includes(key)) { const on = p.on ?? []; return { ...p, on: on.includes(key) ? on.filter((k) => k !== key) : [...on, key] }; }
   return { ...p, off: p.off.includes(key) ? p.off.filter((k) => k !== key) : [...p.off, key] };
 }
 
@@ -83,7 +93,7 @@ export interface Passport { title: string; sections: PassSection[]; footer: stri
 export interface PassportInput {
   profile: Profile;
   /** The confirmed answers on this device (core/history.ts), from after "Forget everything learned". */
-  history: { q: string; label: string; at: number }[];
+  history: { q: string; label: string; at: number; lessSure?: boolean }[];
   /** What was learned, as About them shows it (core/prefs.ts). */
   learned: Learned[];
   /** The words of the family's own photos (the pictures themselves are not handed in). */
@@ -91,7 +101,12 @@ export interface PassportInput {
   prefs: PassportPrefs;
   now: number;
   device: string;
+  /** The number the call buttons use. */
   number?: string;
+  /** Phase 8: the number as About them holds it ('' when not filled in: the page then names none). Absent: `number` stands. */
+  numberSet?: string;
+  /** Phase 8: About them notes diabetes, swallowing difficulty or a fluid limit (the food line then says to ask the family). Never which. */
+  foodCare?: boolean;
 }
 
 const lc = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
@@ -111,6 +126,7 @@ const careLine = (text: string) => careAnswer(text, '', guessTopic(text)) || /\b
 export function letterWords(history: PassportInput['history']): { word: string; n: number }[] {
   const m = new Map<string, { word: string; n: number }>();
   for (const h of history) {
+    if (h.lessSure) continue; // (phase 8: an answer the answer check marked is not counted)
     if (!LETTER_Q.test(h.q) || NOT_A_WORD.test(h.label.trim()) || !h.label.trim() || careAnswer(h.label, h.label)) continue;
     const k = lc(h.label);
     const e = m.get(k);
@@ -132,7 +148,7 @@ export function likes(history: PassportInput['history'], profile: Profile, photo
   for (const [k, word] of terms) {
     if (careAnswer(word, word)) continue;
     const named = new RegExp(`(?:^|[^\\p{L}\\p{N}])${escRe(k)}(?:$|[^\\p{L}\\p{N}])`, 'iu');
-    const n = history.filter((h) => lc(h.label) === k || (lc(h.label) === 'yes' && OFFER.test(h.q.trim()) && named.test(h.q) && !careAnswer(h.q))).length;
+    const n = history.filter((h) => !h.lessSure).filter((h) => lc(h.label) === k || (lc(h.label) === 'yes' && OFFER.test(h.q.trim()) && named.test(h.q) && !careAnswer(h.q))).length;
     if (n >= LIKE_MIN) out.push({ word, n });
   }
   return out.sort((a, b) => b.n - a.n).slice(0, LIKES_MAX);
@@ -144,22 +160,23 @@ export function passport(m: PassportInput): Passport {
   const name = m.profile.personName.trim();
   const number = m.number || DEFAULT_NUMBER;
   const off = new Set(m.prefs.off);
-  const line = (key: string, text: string, hint?: string): PassLine => ({ key, text, removable: true, on: !off.has(key), ...(hint ? { hint } : {}) });
+  const ticked = new Set(m.prefs.on ?? []);
+  const line = (key: string, text: string, hint?: string): PassLine => ({ key, text, removable: true, on: OFF_UNTIL_TICKED.includes(key) ? ticked.has(key) : !off.has(key), ...(hint ? { hint } : {}) });
   const fixed = (key: string, text: string): PassLine => ({ key, text, removable: false, on: true });
 
   const how: PassLine[] = [
-    line('sca:knows', K.knows(name)),
-    line('sca:understands', K.understands(name), K.untrue(name)),
+    line('sca:knows', K.knows(name), K.tickIfTrue(name)),
+    line('sca:understands', K.understands(name), K.tickIfTrue(name)),
     line('sca:choices', K.choices),
     line('sca:check', K.check),
     line('sca:answer', K.answer(name)),
   ];
   const yes = m.prefs.yes.trim();
   const no = m.prefs.no.trim();
-  const yesno: PassLine[] = !yes && !no ? [fixed('yesno:empty', K.yesNoEmpty)] : [fixed('yesno:yes', K.yes(yes || K.oneEmpty)), fixed('yesno:no', K.no(no || K.oneEmpty))];
+  const yesno: PassLine[] = [...(!yes && !no ? [fixed('yesno:empty', K.yesNoEmpty)] : [fixed('yesno:yes', K.yes(yes || K.oneEmpty)), fixed('yesno:no', K.no(no || K.oneEmpty))]), fixed('yesno:tired', K.tiredYes)];
 
   const people = m.profile.people.filter((p) => p.name.trim()).map((p) => { const tags = [p.relation.trim(), p.household ? K.livesHere : ''].filter(Boolean); return `${p.name.trim()}${tags.length ? ` (${tags.join(', ')})` : ''}`; });
-  const lists: [string, string[], (l: string) => string][] = [['about:foods', clean(m.profile.foods), K.foods], ['about:places', clean(m.profile.places), K.places], ['about:tv', clean(m.profile.tv), K.tv], ['about:music', clean(m.profile.music), K.music]];
+  const lists: [string, string[], (l: string) => string][] = [['about:foods', clean(m.profile.foods), (l) => K.foods(l, m.foodCare ? K.foodAsk : '')], ['about:places', clean(m.profile.places), K.places], ['about:tv', clean(m.profile.tv), K.tv], ['about:music', clean(m.profile.music), K.music]];
   const about: PassLine[] = [
     ...(people.length ? [line('about:people', K.people(people.join(', ')))] : []),
     ...lists.filter(([, xs]) => xs.length).map(([key, xs, text]) => line(key, text(xs.join(', ')))),
@@ -174,9 +191,11 @@ export function passport(m: PassportInput): Passport {
   const liked: PassLine[] = likes(m.history, m.profile, m.photoWords).map((x) => line(`like:${lc(x.word)}`, K.like(x.word, x.n)));
   const own: PassLine[] = m.prefs.own.map((t, i) => ({ t: t.trim(), i })).filter((x) => x.t).map((x) => fixed(`own:${x.i}`, x.t));
   const S = P5.sudden;
+  // (phase 8: no number in About them, no number on the page: a printed 911 in a home in Leeds would be wrong)
+  const unset = m.numberSet !== undefined && !m.numberSet.trim();
   const wrong: PassLine[] = [
-    fixed('wrong:number', K.emergency(number)),
-    fixed('wrong:lead', S.lead(number)),
+    fixed('wrong:number', unset ? K.noNumber : K.emergency(number)),
+    fixed('wrong:lead', S.lead(unset ? 'the emergency number' : number)),
     ...S.fast.map(([k, v], i) => fixed(`wrong:fast${i}`, `${k}: ${v}`)),
     fixed('wrong:also', `${S.alsoHeading}: ${S.also.join(' ')}`),
     fixed('wrong:not', S.notSudden),

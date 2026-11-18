@@ -11,7 +11,7 @@ import { P5 } from '../../core/copy5';
 import { P6 } from '../../core/copy6';
 import { P8 } from '../../core/copy8';
 import { LETTERS } from '../../core/letter';
-import { LETTER_Q, NO_PASSPORT, OWN_LEN, OWN_MAX, YESNO_LEN, cleanPassport, letterAsk, letterWords, likes, passport, passportText, printed, toggleLine, type PassportInput, type PassportPrefs } from '../../core/passport';
+import { LETTER_Q, NO_PASSPORT, OFF_UNTIL_TICKED, OWN_LEN, OWN_MAX, YESNO_LEN, cleanPassport, letterAsk, letterWords, likes, passport, passportText, printed, toggleLine, type PassportInput, type PassportPrefs } from '../../core/passport';
 import { learned } from '../../core/prefs';
 import { EMPTY_PROFILE, type Profile } from '../../core/types';
 import { passportLink, passportPage, passportScreen } from '../../web/src/care7';
@@ -53,7 +53,7 @@ describe('the builder with nothing in About them', () => {
   it('holds the fixed lines, how yes and no are shown (not filled in), and "If something is wrong"; no section stands empty', () => {
     expect(passport(m).title).toBe('How to talk with this person');
     expect(passport(m).sections.map((s) => s.id)).toEqual(['how', 'yesno', 'wrong']);
-    expect(texts(m, 'yesno')).toEqual(['Not filled in yet: ask the family how yes and no are shown.']);
+    expect(texts(m, 'yesno')).toEqual(['Not filled in yet: ask the family how yes and no are shown.', K.tiredYes]);
     for (const s of passport(m).sections) expect(s.lines.length, s.id).toBeGreaterThan(0);
   });
   it('with no name the lines say "they", in the right form: no "They likes", no "They understands", no "them can"', () => {
@@ -123,7 +123,8 @@ describe('no habit about pain, the body, a feeling or a need; no usual "no"', ()
     expect(kinds).toEqual(expect.arrayContaining(['no:Are you in pain', 'no:Would you like something to drink', 'usual:How are you feeling today', 'need:']));
     const w = texts(input(), 'words');
     expect(w).toContain('"Would you like tea or coffee": usually tea (3 of 4).');
-    for (const l of [...all(input()), ...passportText(input()).split('\n')]) expect(l, l).not.toMatch(/in pain|feeling today|usually sad|Usually says no|says no to|needs board|toilet/i);
+    // (phase 8: the fixed line under yes and no names pain, drinks and the toilet to ask about every time: it is no habit)
+    for (const l of [...all(input()), ...passportText(input()).split('\n')].filter((x) => !x.includes(K.tiredYes))) expect(l, l).not.toMatch(/in pain|feeling today|usually sad|Usually says no|says no to|needs board|toilet/i);
     expect(sec(input(), 'words')!.notes).toEqual(['Counted from the answers Frank confirmed. A hint for you: Frank still chooses every time.', 'Nothing about pain, the body or feelings is in this list: ask those every time.']);
   });
   it('"Words that worked": the words found by their first letter, with how often; never the way out, never a care word', () => {
@@ -184,10 +185,11 @@ describe('the carer decides every other line', () => {
     const p = passport(input());
     const removable = p.sections.filter((s) => !['yesno', 'wrong', 'own'].includes(s.id)).flatMap((s) => s.lines);
     expect(removable.length).toBeGreaterThanOrEqual(10);
-    expect(removable.every((l) => l.removable && l.on)).toBe(true);
+    // (phase 8: the two lines that state a fact about the person are off until ticked; every other one is on)
+    expect(removable.every((l) => l.removable && l.on === !OFF_UNTIL_TICKED.includes(l.key))).toBe(true);
     expect(new Set(p.sections.flatMap((s) => s.lines.map((l) => l.key))).size).toBe(p.sections.flatMap((s) => s.lines).length);
     let pr = NO_PASSPORT;
-    for (const l of removable) pr = toggleLine(pr, l.key);
+    for (const l of removable.filter((x) => x.on)) pr = toggleLine(pr, l.key);
     const off = input({ prefs: pr });
     expect(printed(passport(off)).map((s) => s.id)).toEqual(['yesno', 'wrong']);
     const t = passportText(off);
@@ -197,18 +199,28 @@ describe('the carer decides every other line', () => {
     expect(t).not.toContain(K.wordsNever);
     expect(toggleLine(toggleLine(NO_PASSPORT, 'sca:check'), 'sca:check').off).toEqual([]);
   });
-  it('the line that says how much is understood can be wrong for a person: it carries that note for the carer, and it goes when unticked', () => {
-    const l = sec(input(), 'how')!.lines.find((x) => x.key === 'sca:understands')!;
-    expect(l.hint).toBe('Take this line off if it is not true for Frank.');
-    expect(passportText(input({ prefs: prefs({ off: ['sca:understands'] }) }))).not.toContain('understands most');
+  it('(phase 8) the two lines that state a fact about the person are off until the carer ticks them, labelled "Tick if true"', () => {
+    for (const key of ['sca:knows', 'sca:understands']) {
+      const l = sec(input(), 'how')!.lines.find((x) => x.key === key)!;
+      expect(l.on, key).toBe(false);
+      expect(l.hint).toBe('Tick if true for Frank. Off until you tick it.');
+    }
+    expect(passportText(input())).not.toMatch(/understands most|knows what to say/);
+    const on = input({ prefs: prefs({ on: ['sca:understands'] }) });
+    expect(passportText(on)).toContain('Frank understands most of what you say.');
+    expect(passportText(on)).not.toContain('knows what to say');
+    expect(toggleLine(toggleLine(NO_PASSPORT, 'sca:knows'), 'sca:knows').on).toEqual([]);
+    expect(toggleLine(NO_PASSPORT, 'sca:knows').off).toEqual([]);
+    expect(cleanPassport({ on: ['sca:knows', 'sca:check', 5] }).on).toEqual(['sca:knows']);
     // the note is for the carer's screen: it is never in the text
-    expect(passportText(input())).not.toContain('Take this line off');
+    expect(passportText(on)).not.toContain('Tick if true');
   });
   it('how yes and no are shown is what the carer typed, and nothing the app worked out', () => {
-    expect(texts(input({ prefs: prefs({ yes: 'nods, or thumb up', no: 'pushes the hand away' }) }), 'yesno')).toEqual(['Yes: nods, or thumb up', 'No: pushes the hand away']);
-    expect(texts(input({ prefs: prefs({ yes: 'nods' }) }), 'yesno')).toEqual(['Yes: nods', 'No: (not filled in: ask the family)']);
+    expect(texts(input({ prefs: prefs({ yes: 'nods, or thumb up', no: 'pushes the hand away' }) }), 'yesno')).toEqual(['Yes: nods, or thumb up', 'No: pushes the hand away', K.tiredYes]);
+    expect(texts(input({ prefs: prefs({ yes: 'nods' }) }), 'yesno')).toEqual(['Yes: nods', 'No: (not filled in: ask the family)', K.tiredYes]);
     const src = read('core/passport.ts');
-    expect(src).not.toMatch(/lessSure|\byn\b|reliability\(|tapsFrom/);
+    // (the app never works out how yes and no are shown; phase 8 reads "less sure" only to leave such answers out of the counts)
+    expect(src).not.toMatch(/\byn\b|reliability\(|tapsFrom/);
     expect(src).toContain("const yes = m.prefs.yes.trim();");
   });
   it('up to three lines of the carer\'s own, cut to their length, with no markup', () => {
@@ -241,7 +253,8 @@ describe('the text for the share sheet, and the two screens', () => {
   it('first screen: every removable line has its box, the emergency part has none, and nothing can be printed or shared from here', () => {
     const html = passportScreen(model(false));
     const p = passport(input());
-    for (const l of p.sections.flatMap((s) => s.lines).filter((l) => l.removable)) expect(html, l.key).toContain(`data-pass-line="${l.key.replace(/"/g, '&quot;')}" checked`);
+    for (const l of p.sections.flatMap((s) => s.lines).filter((l) => l.removable && l.on)) expect(html, l.key).toContain(`data-pass-line="${l.key.replace(/"/g, '&quot;')}" checked`);
+    for (const k of OFF_UNTIL_TICKED) expect(html, k).toMatch(new RegExp(`data-pass-line="${k}"\\s+aria-label`));
     for (const l of sec(input(), 'wrong')!.lines) expect(html, l.key).not.toContain(`data-pass-line="${l.key}"`);
     expect(html).toContain('Always on the page');
     expect(html).toContain('id="pass-yes"');
@@ -257,7 +270,7 @@ describe('the text for the share sheet, and the two screens', () => {
     expect(passportScreen(model(false, { profile: { ...EMPTY_PROFILE } }))).toContain('href="#/about"');
   });
   it('second screen: the page as it prints, then Print, Share and the way back to the lines; the lines taken off are not on it', () => {
-    const html = unesc(passportScreen(model(true, { prefs: prefs({ off: ['sca:knows'], yes: 'nods' }) })));
+    const html = unesc(passportScreen(model(true, { prefs: prefs({ on: ['sca:understands'], yes: 'nods' }) })));
     expect(html).toContain('data-step="page"');
     expect(html).not.toContain('Frank knows what to say');
     expect(html).toContain('Frank understands most of what you say.');
@@ -298,7 +311,8 @@ describe('the boundary', () => {
     expect(main).toContain("history: learns() ? state.history.filter((h) => h.at > state.forgotten.all) : []");
     expect(main).toContain('photoWords: state.photos.map((x) => x.word)');
     const built = main.slice(main.indexOf('const passportInput ='), main.indexOf('const savePassport'));
-    expect(built).not.toMatch(/state\.diary|state\.health\b(?!\.emergency)|\.data\b/);
+    // (phase 8: of the health notes only the number and one yes or no for the food line: "ask the family what is all right")
+    expect(built).not.toMatch(/state\.diary|state\.health\b(?!\.(?:emergency|diabetes|swallowing|fluidLimit)\b)|state\.health\.text|\.data\b/);
     expect(imports('core/passport.ts').sort()).toEqual(['./copy4', './copy5', './copy6', './copy8', './diary', './prefs', './redflag', './reliability', './share', './types']);
     expect(read('core/passport.ts')).not.toMatch(/insights|HealthNotes|photos'/);
   });

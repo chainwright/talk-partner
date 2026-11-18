@@ -1741,6 +1741,17 @@ def phase5(browser, url, live):
     page.locator('[data-act=home]').click()
     page.wait_for_selector('main.simple.home')
 
+    # (phase 8, judge round 7: the sample family uses one number everywhere, the one of the phase 7 pages: 911, set in About them)
+    page.locator('#sudden-link').click()
+    page.wait_for_selector('main.simple.sudden')
+    page.locator('[data-act=sudden-number]').click()
+    page.wait_for_selector('#emergency-number')
+    page.fill('#emergency-number', '911')
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    page.wait_for_timeout(300)
+    check('sudden: the number is set to 911 for the rest of the run, and kept', page.evaluate(KV_GET, 'health')['emergency'] == '911', str(page.evaluate(KV_GET, 'health')))
+
     # ---------------------------------------------------------------- the boxed line over an urgent answer
     ask_topic(page, 'body', 'Are you in pain?')
     check('urgent: before any answer the carer\'s screen has no call box', page.locator('#urgent').count() == 0)
@@ -1754,7 +1765,7 @@ def phase5(browser, url, live):
     tap_yes(page, 'top of head')
     give_back(page)
     box = text(page, '#urgent') if page.locator('#urgent').count() else ''
-    check('urgent: head pain: the boxed line "Call 999 now if this is new or sudden." with the call button stands at the top, over the answer', 'Call 999 now if this is new or sudden.' in box and page.locator('#urgent a[href="tel:999"]').count() == 1 and ys(page, '#urgent')[0][1] < ys(page, '#chose')[0][1], box)
+    check('urgent: head pain: the boxed line "Call 911 now if this is new or sudden." with the call button stands at the top, over the answer', 'Call 911 now if this is new or sudden.' in box and page.locator('#urgent a[href="tel:911"]').count() == 1 and ys(page, '#urgent')[0][1] < ys(page, '#chose')[0][1], box)
     check('urgent: the pain flow that was there stays under it ("Next: How bad is the pain?")', nexts(page)[:1] == ['How bad is the pain?'], str(nexts(page)))
     ratio = page.evaluate(CONTRAST, '#next-q small')
     check(f'"Next:" label on the main button: contrast {ratio:.1f}:1, at least 4.5:1', ratio >= 4.5, str(ratio))
@@ -1856,7 +1867,7 @@ def phase5(browser, url, live):
     page.locator('[data-log=fall]').click()
     page.wait_for_selector('#fall-box')
     fb = text(page, '#fall-box')
-    check('diary: after "Fall", when to call and the call button, at once: "A fall: call 999 now if the head was hit, if getting up is not possible, or if there is new pain."', 'A fall: call 999 now if the head was hit, if getting up is not possible, or if there is new pain.' in fb and page.locator('#fall-box a[href="tel:999"]').count() == 1, fb)
+    check('diary: after "Fall", when to call and the call button, at once: "A fall: call 911 now if the head was hit, if getting up is not possible, or if there is new pain."', 'A fall: call 911 now if the head was hit, if getting up is not possible, or if there is new pain.' in fb and page.locator('#fall-box a[href="tel:911"]').count() == 1, fb)
     screen_checks(page, 'diary: after a fall', primary=False)
     shot(page, '09_diary_fall_logged_when_to_call')
     page.locator('#fall-head').click()
@@ -1864,8 +1875,8 @@ def phase5(browser, url, live):
     page.locator('#tab-week').click()
     page.wait_for_selector('#insights')
     ins = text(page, '#insights')
-    check('diary, week: the fall is a line ("Worth mentioning"), with the blow to the head, whom to tell, and the call box', 'A fall was logged' in ins and 'A fall with a blow to the head was logged' in ins and 'Tell the doctor or nurse about every fall.' in ins and page.locator('#insights .urgent a[href="tel:999"]').count() >= 1, ins[:500])
-    check('diary, week: the head pain of this morning is a line of one day, with when to call', 'Pain in the head or the chest was chosen on' in ins and 'head (top of head)' in ins and 'If it is new or sudden, call 999 now.' in ins, ins[:700])
+    check('diary, week: the fall is a line ("Worth mentioning"), with the blow to the head, whom to tell, and the call box', 'A fall was logged' in ins and 'A fall with a blow to the head was logged' in ins and 'Tell the doctor or nurse about every fall.' in ins and page.locator('#insights .urgent a[href="tel:911"]').count() >= 1, ins[:500])
+    check('diary, week: the head pain of this morning is a line of one day, with when to call', 'Pain in the head or the chest was chosen on' in ins and 'head (top of head)' in ins and 'If it is new or sudden, call 911 now.' in ins, ins[:700])
     screen_checks(page, 'diary, week: the urgent lines', primary=False)
     shot(page, '10_what_stands_out_one_day_of_head_pain_and_a_fall', full=True)
 
@@ -1882,7 +1893,7 @@ def phase5(browser, url, live):
         tap_yes(page, label)
     give_back(page, 'main.visit #visit-page')
     vp = text(page, '#visit-page')
-    check('visit: chest pain, quite bad: the boxed "Call 999 now if this is new or sudden." is the first thing on the page, inside the printed part, with the call button', vp.startswith('Call 999 now if this is new or sudden.') and page.locator('#visit-page #visit-urgent a[href="tel:999"]').count() == 1, vp[:200])
+    check('visit: chest pain, quite bad: the boxed "Call 911 now if this is new or sudden." is the first thing on the page, inside the printed part, with the call button', vp.startswith('Call 911 now if this is new or sudden.') and page.locator('#visit-page #visit-urgent a[href="tel:911"]').count() == 1, vp[:200])
     check('visit: the line that was there stays under the page ("If the pain is new or strong, do not wait for the visit")', 'If the pain is new or strong, do not wait for the visit' in text(page, '#visit-safety'))
     since = text(page, '#since')
     check('visit: "Since the last visit" stands under his own answers, says whose lines they are, and counts from the diary: pain, a fall, drinks, mood, sleep', ys(page, '#since')[0][1] > ys(page, '#visit-foot')[0][1] and "These lines are not their own answers" in since and 'Pain: chosen or logged on 1 day' in since and 'Falls: 1 logged' in since and 'Mood:' in since and 'Sleep:' in since and 'No AI, nothing sent. Not a medical record.' in since, since)
@@ -2727,6 +2738,7 @@ def phase7(browser, url, live):
                  '"Something else" was chosen: 1 time, in 1 conversation.', 'After it, an answer was confirmed by:', 'the first letter: 1', 'After it, no answer was confirmed: 0 times.',
                  '"We\'re stuck" (show, write or draw) was opened: 1 time, 0 of them after "something else".',
                  'Frank started the conversation (the button "wants to say something"): 1 time.', 'The check ("So: tea. Right?"): "Yes" 6 times, "No, something else" 1 time.',
+                 'Answers marked "less sure" by the answer check in this time (a run of yes, or the same place on the screen):', 'A yes on the check is not proof: when tired, a yes can mean no.',
                  'Read aloud is off on this phone today.', 'Nothing about needs, pain or health is on this page. Those are in the diary.',
                  'Counted by fixed rules on this phone. No AI. Not an assessment and not a medical record.'):
         check(f'part 1, the page counts what was done: "{want[:70]}"', want in pg, pg[:900])
@@ -2754,6 +2766,7 @@ def phase7(browser, url, live):
     warn = text(page, '#practice-warn') if page.locator('#practice-warn').count() else ''
     check('part 2, worst case (a pain in the chest, quite bad, in the diary of this time): with the box off the SCREEN says so, with whom to tell and when to call', 'It is not on this page unless you tick the box. Tell the doctor or nurse. If it is new or sudden, call 911 now.' in warn, warn)
     check('part 2, box off: the page itself holds nothing of the diary (no "chest", no "toilet", no call sentence)', not re.search(r'chest|toilet|quite bad|Call 911', text(page, '#practice-page')))
+    check('part 2, box off (phase 8): the printed page still says, with no detail, that the diary holds a pain answer: ask the family', 'The diary of this time holds a pain answer or "something\'s wrong": ask the family.' in text(page, '#practice-page'), text(page, '#practice-page')[-500:])
     check('part 2: the counting began before this week, so the page does not say "began to count"', 'began to count' not in text(page, '#practice-page'))
     screen_checks(page, 'part 2: "For the speech therapist"')
     shot(page, '02_for_the_speech_therapist_box_off_the_screen_warns', full=True)
@@ -2874,7 +2887,9 @@ def phase7(browser, url, live):
     check('passport, first screen: the title with the name, what it is for, that every line is the carer\'s to decide, and that the app sends nothing', 'How to talk with Frank' in text(page, '#pass-title') and 'You decide every line.' in lead and 'No AI, and the app sends nothing: the page leaves only when you print it or share it yourself.' in text(page, '#pass-lock'), lead[:400])
     boxes = page.evaluate("[...document.querySelectorAll('[data-pass-line]')].map((b) => [b.dataset.passLine, b.checked, b.closest('label').innerText.replace(/\\s+/g, ' ').trim()])")
     keys = [b[0] for b in boxes]
-    check('passport: the five "how to talk" lines carry the name, each with its box, all ticked', [b[2] for b in boxes[:5]] == ['Frank knows what to say. The words are hard to find.', 'Frank understands most of what you say. Speak in short sentences, one thing at a time. Take this line off if it is not true for Frank.', 'Write two or three choices, or point to pictures. Wait: count to ten.', 'Check: "So: tea. Right?"', "Don't answer for Frank, and don't quiz: no testing questions."] and all(b[1] for b in boxes), str(boxes[:5]))
+    check('passport: the five "how to talk" lines carry the name, each with its box; (phase 8) the two that state a fact about Frank are off until ticked, "Tick if true"', [b[2] for b in boxes[:5]] == ['Frank knows what to say. The words are hard to find. Tick if true for Frank. Off until you tick it.', 'Frank understands most of what you say. Speak in short sentences, one thing at a time. Tick if true for Frank. Off until you tick it.', 'Write two or three choices, or point to pictures. Wait: count to ten.', 'Check: "So: tea. Right?"', "Don't answer for Frank, and don't quiz: no testing questions."] and [b[1] for b in boxes[:2]] == [False, False] and all(b[1] for b in boxes[2:]), str(boxes[:5]))
+    check('passport (phase 8): under how yes and no are shown, the fixed line on a tired yes, with no box', 'A tired yes may not mean yes. Check it the other way. Ask about pain, drinks and the toilet every time.' in lead, lead[:900])
+    check('passport (phase 8): with diabetes noted in About them, the food line says to ask the family, and names no condition', re.search(r'Food and drink: [^.]+\. Ask the family what is all right\.', lead) is not None and 'diabet' not in lead.lower(), lead[:900])
     check('passport: About Frank from About them (people, food and drink, places, TV, the family\'s own fact)', all(k in keys for k in ('about:people', 'about:foods', 'about:places', 'about:tv')) and 'People: Carol (wife, lives here), Beth (daughter), Tom (brother).' in lead and 'Bo is his dog' in lead, str(keys))
     check('passport, "Words that worked": the words found by their first letter with how often, and the usual choice with its count', 'Bo: found by its first letter, 2 times.' in lead and 'biscuits (ginger): found by its first letter, 1 time.' in lead and '"Would you like tea or coffee": usually tea (3 of 4).' in lead, lead[900:1500])
     check('passport, "Things Frank likes to talk about": Bo and Tom with their counts; not Beth (three times "no")', 'Bo: chosen, or yes to an offer about it, 4 times.' in lead and 'Tom: chosen, or yes to an offer about it, 3 times.' in lead and 'Beth: chosen' not in lead and 'It says what was chosen, not what is felt.' in lead)
@@ -2886,19 +2901,19 @@ def phase7(browser, url, live):
     screen_checks(page, 'passport, the lines')
     shot(page, '07_passport_every_line_with_its_box', full=True)
     # the carer decides: one fixed line off, one learned line off, yes and no typed, one line of her own
-    page.locator('[data-pass-line="sca:knows"]').uncheck()
+    page.locator('[data-pass-line="sca:understands"]').check()
     page.locator('[data-pass-line="word:biscuits (ginger)"]').uncheck()
     page.fill('#pass-yes', 'nods, or thumb up')
     page.fill('#pass-no', 'pushes the hand away')
     page.fill('#pass-own-0', 'Points with the left hand. Tires after lunch.')
     page.wait_for_timeout(200)
     kept = page.evaluate(KV_GET, 'passport')
-    check('passport: what the carer set is kept on this phone (two lines off, yes and no, her own line)', kept['off'] == ['sca:knows', 'word:biscuits (ginger)'] and kept['yes'] == 'nods, or thumb up' and kept['no'] == 'pushes the hand away' and kept['own'][0] == 'Points with the left hand. Tires after lunch.', str(kept))
+    check('passport: what the carer set is kept on this phone (one line ticked, one off, yes and no, her own line)', kept['on'] == ['sca:understands'] and kept['off'] == ['word:biscuits (ginger)'] and kept['yes'] == 'nods, or thumb up' and kept['no'] == 'pushes the hand away' and kept['own'][0] == 'Points with the left hand. Tires after lunch.', str(kept))
     shot(page, '08_passport_two_lines_off_yes_no_and_an_own_line', full=True)
     page.locator('#pass-look').click()
     page.wait_for_selector('main.simple.passport[data-step=page] #pass-page')
     pp = text(page, '#pass-page')
-    check('passport, the page: the lines left on, in their sections; the two taken off are not there; yes and no as typed; her own line under "Also"', 'How to talk with Frank' in text(page, '#pass-h') and 'Frank knows what to say' not in pp and 'biscuits (ginger): found' not in pp and 'Frank understands most of what you say.' in pp and 'Yes: nods, or thumb up' in pp and 'No: pushes the hand away' in pp and 'Also Points with the left hand. Tires after lunch.' in pp and 'Take this line off' not in pp, pp[:700])
+    check('passport, the page: the lines left on, in their sections; the two taken off are not there; yes and no as typed; her own line under "Also"', 'How to talk with Frank' in text(page, '#pass-h') and 'Frank knows what to say' not in pp and 'biscuits (ginger): found' not in pp and 'Frank understands most of what you say.' in pp and 'Yes: nods, or thumb up' in pp and 'No: pushes the hand away' in pp and 'Also Points with the left hand. Tires after lunch.' in pp and 'Take this line off' not in pp and 'Tick if true' not in pp and 'A tired yes may not mean yes.' in pp, pp[:700])
     check('passport, the page: "If something is wrong" stands on it whole, and the footer says what the page is not', 'Emergency number: 911.' in pp and 'Speech: Speech is suddenly worse, slurred or gone: more than on other days.' in pp and "It holds no health notes: ask the family, and go by the doctor's plan." in pp and 'Not a medical record. No doctor, nurse or speech therapist wrote or checked it.' in text(page, '#pass-foot'))
     pics = page.evaluate("[...document.querySelectorAll('#pass-pics li')].map((li) => [li.querySelector('b').innerText.trim(), !!li.querySelector('img'), (li.querySelector('.mono') || {}).innerText || ''])")
     check('passport, the page: the family\'s own pictures where there is one (Beth, Bo, the lake), an initial otherwise (Carol, Tom)', pics == [['Carol', False, 'C'], ['Beth', True, ''], ['Tom', False, 'T'], ['Bo', True, ''], ['the lake', True, '']], str(pics))

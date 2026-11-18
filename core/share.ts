@@ -104,7 +104,9 @@ export function handoverUsual(learned: Learned[]): string[] {
 }
 /** One learned line may be read by someone outside the family (the next carer, a nurse): the rule of `handoverUsual`, also used by the communication passport (core/passport.ts). */
 export function usualForOthers(l: Learned): boolean {
-  return (l.kind === 'usual' || l.kind === 'time') && !!l.q && !careAnswer(l.q, '', guessTopic(l.q)) && !/\busually says no\b|(?:: |, )no in the /i.test(l.text);
+  // (phase 8, judge round 7: and never a usual "yes" to an offer: for a person whose tired yes may mean no, a printed
+  // "usually says yes" is the line a new carer would lean on)
+  return (l.kind === 'usual' || l.kind === 'time') && !!l.q && !careAnswer(l.q, '', guessTopic(l.q)) && !/\busually says (?:no|yes)\b|(?:: |, )(?:no|yes) in the /i.test(l.text);
 }
 
 export interface HandoverShare {
