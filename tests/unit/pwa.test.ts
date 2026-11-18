@@ -56,7 +56,8 @@ describe('the service worker', () => {
     expect(fetchHandler.indexOf('url.origin !== self.location.origin')).toBeLessThan(fetchHandler.indexOf('respondWith'));
   });
   it('the page comes from the network first, so a new build is seen at once; the kept copy is for no connection', () => {
-    expect(sw).toMatch(/if \(req\.mode === 'navigate'\) \{\s*ev\.respondWith\(fetch\(req\)/);
+    // the network first, and never the browser's own HTTP cache: an old page cannot come back from it
+    expect(sw).toMatch(/if \(req\.mode === 'navigate'\) \{[^}]*ev\.respondWith\(fetch\(req\.url, \{ cache: 'no-store'/);
     expect(sw).toContain("caches.match('/', { cacheName: CACHE })");
   });
   it('holds nothing of the family: it never reads IndexedDB, storage or a message from the page', () => {
@@ -64,7 +65,8 @@ describe('the service worker', () => {
   });
   it('is registered by the page in a production build only, and a failure leaves the page as it was', () => {
     const main = read('web/src/main.ts');
-    expect(main).toMatch(/if \(import\.meta\.env\.PROD && 'serviceWorker' in navigator\)[^\n]*navigator\.serviceWorker\.register\('\/sw\.js'\)\.catch\(/);
+    expect(main).toMatch(/if \(import\.meta\.env\.PROD && 'serviceWorker' in navigator\) \{/);
+    expect(main).toMatch(/navigator\.serviceWorker\.register\('\/sw\.js', \{ updateViaCache: 'none' \}\)\.then\([\s\S]*?\}\)\.catch\(/);
     expect(main.match(/serviceWorker\.register\(/g)).toHaveLength(1);
   });
   it('the hosting config never lets the worker or the manifest be served stale', () => {

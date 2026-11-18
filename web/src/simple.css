@@ -41,6 +41,25 @@
 .s-top .brand::before { box-shadow: -7px 5px 0 -1px var(--accent), 0 0 0 1px var(--line); }
 .s-top .with { font-size: 15px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
 
+.s-top .navbtn { min-height: 48px; padding: 4px 12px 4px 6px; border: 2px solid var(--field); border-radius: 14px; background: var(--panel); color: var(--ink); font: inherit; font-weight: 700; font-size: 17px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; min-width: 0; }
+.s-top .navhome { padding: 4px 12px; gap: 12px; }
+.s-top .navhome .brand { font-size: 18px; margin-right: 0; min-height: 0; pointer-events: none; }
+.s-top .navhome .home-word { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.s-top .navhome:only-child, .home .s-top .navhome { border-color: transparent; background: none; padding-left: 0; }
+.s-top .navbtn .sg { width: 22px; height: 22px; }
+.simple .update-bar, .update-bar { width: 100%; min-height: 52px; padding: 8px 14px; border: 0; background: var(--accent); color: var(--on-accent); font: inherit; font-weight: 700; font-size: 17px; cursor: pointer; display: block; }
+/* the end of a path: what to do now */
+.simple .do-now { display: flex; align-items: flex-start; gap: 10px; font-size: 20px; font-weight: 700; line-height: 1.3; border: 2px solid var(--accent); background: var(--panel); border-radius: 16px; padding: 12px 14px; }
+.simple .do-now .sg { color: var(--accent); width: 26px; height: 26px; margin-top: 2px; }
+.simple .do-now span, .simple #next-q span { display: grid; min-width: 0; text-align: left; }
+.simple .do-now small { font-size: 15px; font-weight: 600; color: var(--muted); }
+.simple #next-q { justify-content: flex-start; }
+.simple #next-q small { font-size: 15px; font-weight: 600; opacity: .9; }
+.simple .chose .asked { font-size: 17px; color: var(--ink); overflow-wrap: anywhere; }
+.simple .tips { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 16px; color: var(--muted); }
+.simple .more-tips { justify-self: start; }
+.simple .more-body { display: grid; gap: 14px; }
+
 /* buttons: every one at least 44 px tall; the main one 64 px */
 .simple .btn { min-height: 56px; padding: 10px 18px; border-radius: 16px; border: 2px solid var(--field); background: var(--panel); color: var(--ink); font-weight: 600; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; text-align: center; text-decoration: none; cursor: pointer; overflow-wrap: anywhere; }
 .simple .btn.primary { min-height: 64px; font-size: 21px; font-weight: 700; background: var(--accent); border-color: var(--accent); color: var(--on-accent); }

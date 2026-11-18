@@ -25,6 +25,7 @@ export const SIGN = {
   maybe: sign('<path d="M28 72a16 16 0 01-2-32 22 22 0 0142-6 18 18 0 014 38z" stroke-dasharray="9 9"/>'),
   info: sign('<circle cx="48" cy="48" r="36"/><path d="M48 44v24"/><circle cx="48" cy="29" r="2" fill="currentColor"/>'),
   back: sign('<path d="M56 20L28 48l28 28"/>'),
+  home: sign('<path d="M14 46L48 16l34 30"/><path d="M24 40v40h48V40"/><path d="M40 80V58h16v22"/>'),
   grid: sign('<rect x="14" y="14" width="28" height="28" rx="6"/><rect x="54" y="14" width="28" height="28" rx="6"/><rect x="14" y="54" width="28" height="28" rx="6"/><rect x="54" y="54" width="28" height="28" rx="6"/>'),
   person: sign('<circle cx="48" cy="30" r="14"/><path d="M20 84c2-18 14-28 28-28s26 10 28 28"/>'),
   tick: sign('<path d="M20 50l18 18 38-40"/>'),
@@ -71,7 +72,15 @@ export interface HomeModel {
   voiceHtml: string;
 }
 
-const top = (m: { name: string }) => `<header class="s-top"><a class="brand" href="#/">${COPY.app.name}</a>${m.name ? `<span class="with">${SIGN.person}${esc(COPY.simple.with(m.name))}</span>` : ''}</header>`;
+/**
+ * The bar at the top of every carer screen: "Back" (one step back in the flow; not on the first screen, which has
+ * nowhere to go back to) and "Home" (the app's name with the word "Home": always to the first screen). The phone's own
+ * back button does what "Back" does (web/src/main.ts, backStep).
+ */
+export const navBar = (o: { back: boolean; name?: string }) => {
+  const N = COPY.simple.nav;
+  return `<header class="s-top" id="s-top">${o.back ? `<button type="button" class="navbtn navback" data-act="back">${SIGN.back}<span>${N.back}</span></button>` : ''}<button type="button" class="navbtn navhome" data-act="home" aria-label="${N.homeLabel}"><span class="brand">${COPY.app.name}</span>${o.back ? `<span class="home-word">${SIGN.home}${N.home}</span>` : ''}</button>${!o.back && o.name ? `<span class="with">${SIGN.person}${esc(COPY.simple.with(o.name))}</span>` : ''}</header>`;
+};
 const insideLink = (act: 'inside' | 'inside-card', label: string) => `<button type="button" class="tlink inside" data-act="${act}">${label} →</button>`;
 const privacyBlock = (lines: string[], extra = '') => `<p class="lock" id="s-privacy">${SIGN.lock}<span>${lines.map(esc).join(' ')}${extra ? ` ${esc(extra)}` : ''}</span></p>`;
 
@@ -111,7 +120,7 @@ export function homeScreen(m: HomeModel): string {
   const S = COPY.simple;
   const status = m.busy ? `<p class="making" role="status"><span class="dot wait"></span>${S.making}</p>` : m.error ? `<p class="warn" role="alert">${esc(m.error)}</p>` : '';
   return `<main class="simple wrap home" data-screen="home">
-  ${top(m)}
+  ${navBar({ back: false, name: m.name })}
   <div class="col">
     <h1 id="hope">${esc(S.hope(m.name))}</h1>
     <button type="button" class="btn needs" data-act="needs">${SIGN.grid}<span><b>${S.needs}</b><small>${S.needsSub}</small></span></button>
@@ -245,6 +254,8 @@ export interface CardModel {
   lastTime: string;
   /** "Today in short", shown while the answers are gone over. */
   short?: ShortModel | null;
+  /** "More tips" is open: the rest of the advice, under the two lines that always show. */
+  tips?: boolean;
 }
 
 /** Where this card was made: on the screen itself, under the card, never only behind a link. */
@@ -275,7 +286,7 @@ export function cardScreen(m: CardModel): string {
   const K = COPY.card;
   const c = m.card;
   const { primary, rest } = actionButtons(m, m.actions);
-  const back = `<button type="button" class="backrow" data-act="new">${SIGN.back}${S.back}</button>`;
+  const back = navBar({ back: true });
   const foot = `<footer class="foot">${insideLink('inside-card', S.madeLink)}</footer>`;
   const coach = c.coach ? `<p class="coach">${esc(c.coach)}</p>` : '';
   const safety = c.kind === 'body' || c.kind === 'pain' ? `<p class="safety">${COPY.safety}</p>` : '';
@@ -303,12 +314,13 @@ export function cardScreen(m: CardModel): string {
   <div class="c-go">${step(2, S.step2(m.name))}
     ${primary}
     ${primary ? waitLine(m.name) : ''}
-    ${primary ? `<p class="tip">${esc(tip)} ${esc(S.tipExit(m.name))}</p>` : ''}
+    ${primary ? `<p class="tip" id="tip">${esc(tip)}</p>
+    <button type="button" class="tlink more-tips" id="more-tips" data-act="tips" aria-expanded="${!!m.tips}" aria-controls="tips">${m.tips ? S.tipsLess : S.tipsMore}</button>
+    ${m.tips ? `<ul class="tips" id="tips">${[...(c.kind === 'repair' || c.kind === 'needs' ? [] : [S.tipWeak]), S.tipExit(m.name), ...(canHide ? [S.lessHint(m.name)] : [])].map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}` : ''}
   </div>
   <div class="c-card"><p class="steplabel muted">${esc(S.preview(m.name))}</p>
     <section id="person" class="person mini pv" aria-label="${esc(S.preview(m.name))}" data-kind="${c.kind}">${m.personHtml}</section>
     ${rest}
-    ${canHide ? `<p class="hint">${esc(S.lessHint(m.name))}</p>` : ''}
     ${safety}
     ${m.recap || m.recapDone ? shortBlock(m.short ?? null) : ''}
     ${madeBlock(m.made)}
@@ -320,14 +332,20 @@ export interface AnsweredModel {
   name: string;
   /** The label they chose and confirmed. */
   label: string;
+  /** The question it answers, shown over the answer ("Are you tired?" then "Yes"): '' for the quick-needs board. */
+  question: string;
+  /** "More" is open: the other buttons, today's answers, "Today in short", how the card was made, the privacy lines. */
+  more: boolean;
   /** They chose the way out ("something else", "not sure"): the screen then says what to do now. */
   out: boolean;
   /** The carer's next move for this answer, already drawn (a need's line, a repair way): '' for a plain answer. */
   afterHtml: string;
   /** "Next: second question", when the question was two in one. */
   next: PartnerAction | null;
-  /** Questions that follow from this answer (core/topics.ts, followUps): one tap each, made by the rules. */
+  /** The questions that follow from this answer (core/tree.ts): the first is the main button ("Next: …"), made by the rules. */
   follow: string[];
+  /** The end of a path: what the carer does now, in one short line (core/tree.ts). '' while a next question is offered. */
+  end: string;
   /** After the way out: the next question of the same topic to try, or null. */
   tryNext: string | null;
   /**
@@ -354,7 +372,11 @@ export function answeredScreen(m: AnsweredModel): string {
   const S = COPY.simple;
   const today = m.today.length ? `<div class="before"><p class="steplabel muted">${S.today}</p><ul>${m.today.map((t) => `<li><span>${esc(t.q)}</span><b>${esc(t.label)}</b></li>`).join('')}</ul></div>` : '';
   const qBtn = (q: string, label = q) => `<button type="button" class="btn ask-next" data-q="${esc(q)}">${esc(label)}</button>`;
-  const another = `<button type="button" class="btn${m.next ? '' : ' primary'}" data-act="new">${S.another}</button>`;
+  // the carer is led: the next question of the tree is the main button, and "Ask something else" stands under it
+  const lead = !m.next && m.follow.length > 0;
+  const nextBtn = lead ? `<button type="button" class="btn primary ask-next" id="next-q" data-q="${esc(m.follow[0])}" data-next="1"><span><small>${S.nextLabel}</small>${esc(m.follow[0])}</span></button>` : '';
+  const another = `<button type="button" class="btn${m.next || lead ? '' : ' primary'}" id="another" data-act="new">${lead ? S.anotherElse : S.another}</button>`;
+  const end = m.end && !lead ? `<p class="do-now" id="do-now">${SIGN.tick}<span><small>${S.doNow}</small>${esc(m.end)}</span></p>` : '';
   // the way out was chosen: what to do now, in order of how often it helps (never a dead end)
   const narrow = m.narrow ? `<button type="button" class="btn narrow" id="narrow" data-act="narrow" ${m.narrow === 'offline' ? 'disabled' : ''}>${SIGN.spark}<span>${S.narrow.go}</span></button>
       <p class="tip" id="narrow-where">${esc(S.narrow[m.narrow])}</p>` : '';
@@ -365,26 +387,32 @@ export function answeredScreen(m: AnsweredModel): string {
       <button type="button" class="btn" data-act="needs">${S.out.needs}</button>
       <button type="button" class="btn" data-act="own">${S.out.own}</button>
       <button type="button" class="btn" data-act="stuck">${esc(S.out.stuck)}</button></div>` : '';
-  const follow = m.follow.length ? `<div class="next-steps" id="follow"><p class="steplabel muted">${S.nextHeading}</p>${m.follow.map((q) => qBtn(q)).join('')}</div>` : '';
+  const rest = m.follow.slice(lead ? 1 : 0);
+  const follow = rest.length ? `<div class="next-steps" id="follow"><p class="steplabel muted">${S.nextHeading}</p>${rest.map((q) => qBtn(q).replace('data-q=', 'data-next="1" data-q=')).join('')}</div>` : '';
   const who = m.who ? `<form id="who" class="who-form"><label for="who-name">${S.who.label}</label><div class="row"><input id="who-name" class="field" autocomplete="off"><button type="submit" class="btn">${S.who.go}</button></div></form>` : '';
   const invite = m.invite ? `<div class="invite" id="invite"><b>${esc(S.invite.title(m.name))}</b><p>${S.invite.body}</p>
       <a class="btn" href="#/about">${S.invite.add}</a><button type="button" class="btn quiet" data-act="invite-later">${S.invite.later}</button></div>` : '';
+  const big = m.label.charAt(0).toUpperCase() + m.label.slice(1);
+  const others = `<div class="two-btn">${m.out ? '' : `<button type="button" class="btn quiet" data-act="needs">${S.needsShort}</button>`}${m.hasAnswers ? `<button type="button" class="btn quiet" data-act="recap">${S.recap}</button>` : ''}${m.out ? '' : `<button type="button" class="btn quiet" data-act="stuck">${esc(COPY.card.stuck)}</button>`}</div>`;
+  // one line stays on the screen: what left for this card (it is "Nothing was sent." for every card the rules made)
+  const oneLine = `<p class="lock" id="left-line" data-left="${m.made.left}">${m.made.left === 'nothing' ? SIGN.lock : m.made.left === 'sent' ? SIGN.cloud : SIGN.maybe}<span>${esc(m.made.lines.slice(1).join(' '))}</span></p>`;
   return `<main class="simple wrap s-answered" data-screen="answered">
-  ${top(m)}
+  ${navBar({ back: true })}
   <div class="col">
-    <div class="chose${m.out ? ' out' : ''}" role="status">${m.out ? SIGN.out : SIGN.tick}<div><span class="muted small">${esc(m.out ? S.choseOut(m.name) : S.chose(m.name))}</span><b>${esc(m.label)}</b></div></div>
+    <div class="chose${m.out ? ' out' : ''}" id="chose" role="status">${m.out ? SIGN.out : SIGN.tick}<div>${m.question ? `<span class="asked" id="chose-q">${esc(m.question)}</span>` : `<span class="muted small">${esc(S.choseNeed(m.name))}</span>`}<b id="chose-a">${esc(big)}</b></div></div>
     ${m.afterHtml}
+    ${end}
     ${m.next ? `<button type="button" class="btn primary" data-act="${m.next.act}">${esc(m.next.label)}</button>` : ''}
+    ${nextBtn}${follow}
     ${another}
-    ${outBlock}${follow}${who}
+    ${outBlock}${who}
     ${invite}
-    <div class="two-btn">${m.out ? '' : `<button type="button" class="btn quiet" data-act="needs">${S.needsShort}</button>`}${m.hasAnswers ? `<button type="button" class="btn quiet" data-act="recap">${S.recap}</button>` : ''}${m.out ? '' : `<button type="button" class="btn quiet" data-act="stuck">${esc(COPY.card.stuck)}</button>`}</div>
+    ${oneLine}
+    <button type="button" class="btn quiet more-btn" id="more" data-act="more" aria-expanded="${m.more}" aria-controls="more-body">${m.more ? S.less : S.more}</button>
   </div>
-  <div class="col">${today}${shortBlock(m.short)}${madeBlock(m.made)}</div>
-  <footer class="foot">
+  ${m.more ? `<div class="col more-body" id="more-body">${others}${today}${shortBlock(m.short)}${madeBlock(m.made)}
     ${privacyBlock(m.privacy, S.privacy.answers)}
-    ${insideLink('inside-card', S.madeLink)}
-  </footer>
+    ${insideLink('inside-card', S.madeLink)}</div>` : ''}
 </main>`;
 }
 
@@ -443,7 +471,7 @@ export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved:
     </fieldset>`).join('');
   const names = [p.personName, p.partnerName].filter(Boolean);
   return `<main class="simple wrap one about-simple" data-screen="about">
-  <a class="backrow" href="#/">${SIGN.back}${COPY.app.nav.home}</a>
+  ${navBar({ back: true })}
   <div><h1>${esc(A.heading(p.personName))}</h1><p class="sub">${esc(S.sub(p.personName))}</p></div>
   <p class="lock banner">${SIGN.lock}<span>${S.lock}</span></p>
   <p class="tip">${esc(A.nudge(p.personName))}</p>

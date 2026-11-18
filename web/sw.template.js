@@ -25,10 +25,11 @@ self.addEventListener('fetch', (ev) => {
   if (url.origin !== self.location.origin) return; // another host: never handled here
   // the page itself: the network first (so a new build is seen at once), the kept copy when there is no connection
   if (req.mode === 'navigate') {
-    ev.respondWith(fetch(req).then((res) => {
-      if (res.ok) { const copy = res.clone(); void caches.open(CACHE).then((c) => c.put('/', copy)); }
-      return res;
-    }).catch(() => caches.match('/', { cacheName: CACHE }).then((hit) => hit ?? Response.error())));
+    // `no-store`: the browser's own HTTP cache is never asked, so an old page cannot come back from it
+    // The kept copy of the page is the one this build was installed with: a newer page is shown, not kept here (its
+    // files are not in this cache; the newer build's own worker installs them and takes over).
+    ev.respondWith(fetch(req.url, { cache: 'no-store', credentials: 'same-origin' }).then((res) => (res.ok ? res : caches.match('/', { cacheName: CACHE }).then((hit) => hit ?? res)))
+      .catch(() => caches.match('/', { cacheName: CACHE }).then((hit) => hit ?? Response.error())));
     return;
   }
   // the build's own files (their names carry a hash of their content): the kept copy first

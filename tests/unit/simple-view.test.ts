@@ -245,10 +245,28 @@ describe("simple view: the carer's screen before handing over", () => {
     expect(html.indexOf('id="wait-line"')).toBeLessThan(html.indexOf('id="person"'));
     expect(text(cardScreen(cardModel(await make('Do you want coffee or tea?'), { name: '' })))).toContain("Don't answer for them.");
   });
-  it('how to come back is said here, before the phone is handed over', async () => {
-    const t = text(cardScreen(cardModel(await make('Do you want coffee or tea?'))));
+  it('at most two short lines of advice under the main button: the "wait" line and one tip; the rest is behind "More tips"', async () => {
+    const c = await make('Do you want coffee or tea?');
+    const closed = cardScreen(cardModel(c));
+    const go = closed.slice(closed.indexOf('<button type="button" class="btn primary" data-act="show"'), closed.indexOf('<div class="c-card"'));
+    expect(text(go)).toBe(`Show Alan the choices Wait. Count to ten. Don't answer for Alan. ${S.tip} ${S.tipsMore}`);
+    expect(S.tip.length).toBeLessThanOrEqual(40);
+    expect(closed).toContain('id="more-tips" data-act="tips" aria-expanded="false"');
+    expect(closed).not.toContain('id="tips"');
+    expect(text(closed)).not.toContain('Give the computer back');
+    // how to come back, the weak hand and "Hide the choices" are one tap away
+    const t = text(cardScreen(cardModel(c, { tips: true })));
     expect(t).toContain('"Give the computer back"');
     expect(t).toContain('"Carer: hold here to go back"');
+    expect(t).toContain(S.tipWeak);
+    expect(t).toContain(S.lessHint('Alan'));
+    expect(t).toContain(S.tipsLess);
+  });
+  it('Back and Home stand at the top of the screen', async () => {
+    const html = cardScreen(cardModel(await make('Do you want coffee or tea?')));
+    expect(html).toContain('class="navbtn navback" data-act="back"');
+    expect(html).toContain('class="navbtn navhome" data-act="home"');
+    expect(text(html.slice(0, html.indexOf('</header>')))).toBe('Back Talk Partner Home');
   });
   it('"We\'re stuck" and "Hide the choices" are on this screen, before any answer', async () => {
     const html = cardScreen(cardModel(await make('Do you want coffee or tea?')));
@@ -314,35 +332,68 @@ describe("simple view: the carer's screen before handing over", () => {
 describe('simple view: after an answer', () => {
   const made = { maker: 'code' as const, left: 'nothing' as const, spoken: false, lines: [S.made.code, S.left.nothing] };
   const model = (over: Partial<AnsweredModel> = {}): AnsweredModel => ({
-    name: 'Alan', label: 'tea', out: false, afterHtml: '', next: null, follow: [], tryNext: null, who: false, invite: false, narrow: null, narrowLast: false, short: null,
+    name: 'Alan', label: 'tea', question: 'Do you want coffee or tea?', more: false, end: '', out: false, afterHtml: '', next: null, follow: [], tryNext: null, who: false, invite: false, narrow: null, narrowLast: false, short: null,
     hasAnswers: true, today: [{ q: 'Do you want coffee or tea?', label: 'tea' }], made, privacy: [S.privacy.none], ...over,
   });
   const html = answeredScreen(model());
-  it('what they chose, and "Ask another question" as the main button right under it', () => {
-    expect(text(html)).toContain('Alan chose, and said yes to: tea');
-    expect(html).toContain(`class="btn primary" data-act="new">${S.another}</button>`);
-    expect(count(html, 'class="btn primary"')).toBe(1);
-    expect(html.indexOf('class="chose"')).toBeLessThan(html.indexOf('data-act="new"'));
-    for (const act of ['needs', 'recap', 'stuck']) expect(html).toContain(`data-act="${act}"`);
-    expect(html).toContain(S.today);
-    expect(text(answeredScreen(model({ name: '' })))).toContain('They chose, and said yes to: tea');
+  it('the question with its answer under it, big: a choice ("Do you want coffee or tea?" then "Tea")', () => {
+    expect(html).toContain('<span class="asked" id="chose-q">Do you want coffee or tea?</span><b id="chose-a">Tea</b>');
+    expect(text(html)).not.toContain('said yes to');
   });
-  it('says where the answers are kept and where the choices were made', () => {
-    expect(html).toContain(S.privacy.answers);
-    expect(html).toContain('id="made-where"');
-    expect(html).toContain('data-act="inside-card"');
+  it('the question with its answer under it, big: a yes / no ("Are you tired?" then "Yes"), never "said yes to: yes"', () => {
+    const h = answeredScreen(model({ question: 'Are you tired?', label: 'yes' }));
+    expect(h).toContain('<span class="asked" id="chose-q">Are you tired?</span><b id="chose-a">Yes</b>');
+    expect(text(h)).not.toMatch(/yes to|chose/i);
+    expect(answeredScreen(model({ question: 'Are you tired?', label: 'not sure', out: true }))).toContain('<b id="chose-a">Not sure</b>');
+    // the quick-needs board has no question: the need they pointed to
+    expect(text(answeredScreen(model({ question: '', label: 'toilet' })))).toContain('Alan pointed to: Toilet');
+    expect(text(answeredScreen(model({ question: '', label: 'toilet', name: '' })))).toContain('They pointed to: Toilet');
+  });
+  it('little on the screen: the answer, "Ask another question" as the main button, one line on what left, and "More"', () => {
+    expect(html).toContain(`class="btn primary" id="another" data-act="new">${S.another}</button>`);
+    expect(count(html, 'class="btn primary"')).toBe(1);
+    expect(html.indexOf('id="chose"')).toBeLessThan(html.indexOf('data-act="new"'));
+    expect(text(html)).toBe(`Back Talk Partner Home Do you want coffee or tea? Tea ${S.another} ${S.left.nothing} ${S.more}`);
+    expect(html).toContain('id="more" data-act="more" aria-expanded="false"');
+    for (const gone of ['id="made-where"', 'id="today-short"', 'id="s-privacy"', 'data-act="recap"', 'data-act="inside-card"']) expect(html).not.toContain(gone);
+  });
+  it('"More" holds the rest: the other buttons, today, where the answers are kept and where the choices were made', () => {
+    const open = answeredScreen(model({ more: true }));
+    for (const act of ['needs', 'recap', 'stuck', 'inside-card']) expect(open).toContain(`data-act="${act}"`);
+    expect(open).toContain(S.today);
+    expect(open).toContain(S.privacy.answers);
+    expect(open).toContain('id="made-where"');
+    expect(open).toContain(`aria-expanded="true" aria-controls="more-body">${S.less}</button>`);
+  });
+  it('what left for this card is never behind "More": a card that went to online help says so on the screen', () => {
+    const sent = answeredScreen(model({ made: { maker: 'cloud', left: 'sent', spoken: false, lines: [S.made.cloud, S.left.sent('About Alan')] } }));
+    expect(sent).toContain('id="left-line" data-left="sent"');
+    expect(text(sent)).toContain('Sent to Google: your question');
+  });
+  it('the end of a path: one line that says what to do now, above "Ask another question"', () => {
+    const h = answeredScreen(model({ question: 'Would you like something sweet or something savoury?', label: 'something sweet', end: 'Bring Alan a sweet snack.' }));
+    expect(h).toContain('id="do-now"');
+    expect(text(h)).toContain('Something sweet Now: Bring Alan a sweet snack. Ask another question');
+    expect(html).not.toContain('id="do-now"');
+  });
+  it('the tree leads: the next question is the main button ("Next: …"), "Ask something else" stands under it, and the end line waits', () => {
+    const h = answeredScreen(model({ question: 'Are you hungry?', label: 'yes', follow: ['Would you like a snack or a meal?'], end: 'Bring Alan something to eat.' }));
+    expect(h).toContain('class="btn primary ask-next" id="next-q" data-q="Would you like a snack or a meal?" data-next="1"');
+    expect(text(h)).toContain('Yes Next: Would you like a snack or a meal? Ask something else');
+    expect(count(h, 'class="btn primary')).toBe(1);
+    expect(h).toContain(`class="btn" id="another" data-act="new">${S.anotherElse}</button>`);
+    expect(h).not.toContain('id="do-now"');
+    // a second next question is offered under the main one
+    const two = answeredScreen(model({ question: 'Are you comfortable?', label: 'no', follow: ['Are you in pain?', 'Are you too hot or too cold?'] }));
+    expect(two).toContain('id="follow"');
+    expect(two).toContain('class="btn ask-next" data-next="1" data-q="Are you too hot or too cold?">Are you too hot or too cold?</button>');
+    expect(two.indexOf('id="next-q"')).toBeLessThan(two.indexOf('id="follow"'));
+    expect(two.indexOf('id="follow"')).toBeLessThan(two.indexOf('id="another"'));
   });
   it('a question that was two in one: the second question is the main button, "Ask another question" stays', () => {
     const two = answeredScreen(model({ next: { act: 'next', label: COPY.card.nextSecond } }));
     expect(two).toContain(`class="btn primary" data-act="next">${COPY.card.nextSecond}</button>`);
-    expect(two).toContain(`class="btn" data-act="new">${S.another}</button>`);
-  });
-  it('the next step after a "yes" that would lead nowhere: one-tap questions under the main button', () => {
-    const h = answeredScreen(model({ label: 'yes', follow: ['Where does it hurt?'] }));
-    expect(h).toContain('id="follow"');
-    expect(h).toContain('class="btn ask-next" data-q="Where does it hurt?">Where does it hurt?</button>');
-    expect(h.indexOf('data-act="new"')).toBeLessThan(h.indexOf('id="follow"'));
-    expect(html).not.toContain('id="follow"');
+    expect(two).toContain(`class="btn" id="another" data-act="new">${S.another}</button>`);
   });
   it('About them is offered here, after the first card, with "Ask another question" above it and never as the main button', () => {
     const h = answeredScreen(model({ invite: true, name: '' }));
@@ -357,7 +408,7 @@ describe('simple view: after an answer', () => {
   });
   it('after "something else": what to do now, never a dead end', () => {
     const h = answeredScreen(model({ label: 'something else', out: true, tryNext: 'Would you like some more?' }));
-    expect(text(h)).toContain('Alan chose: something else');
+    expect(text(h)).toContain('Do you want coffee or tea? Something else');
     expect(h).toContain('id="after-out"');
     expect(text(h)).toContain(S.out.show);
     expect(h).toContain('data-q="Would you like some more?">Try: Would you like some more?</button>');
@@ -388,7 +439,7 @@ describe('simple view: after an answer', () => {
     expect(html).not.toContain('id="who"');
   });
   it('"Today in short": the sentences, who wrote them, a Copy button', () => {
-    const h = answeredScreen(model({ short: { sentences: ['Alan answered 2 questions today.', 'What they chose: tea.'], source: 'rules', busy: false, copied: false } }));
+    const h = answeredScreen(model({ more: true, short: { sentences: ['Alan answered 2 questions today.', 'What they chose: tea.'], source: 'rules', busy: false, copied: false } }));
     expect(h).toContain('id="today-short" data-source="rules"');
     expect(text(h)).toContain('Today in short Alan answered 2 questions today. What they chose: tea.');
     expect(text(h)).toContain(S.short.rules);

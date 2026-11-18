@@ -22,6 +22,7 @@ import { canNarrow, narrowCard, narrowInput, type NarrowInput } from '../../core
 import { aiPlace } from '../../core/simple';
 import { daySummary, rulesSummary, todays, type DaySummary } from '../../core/summary';
 import { asksWho, awayNames, callQuestion, followUps, nextInTopic, topics, type TopicId } from '../../core/topics';
+import { after } from '../../core/tree';
 import { stripQuestion } from '../../core/strip';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
@@ -117,6 +118,13 @@ interface State {
   aboutRow: AboutRow | null;
   /** Simple view, first screen: the topic whose questions are open (one at a time; kept while a question is asked). */
   topicOpen: TopicId | null;
+  /** Simple view: "More tips" on the hand-over screen and "More" on the answered screen are open (closed for each new card). */
+  tips: boolean;
+  more: boolean;
+  /** Simple view: the questions asked in this conversation, in order (core/tree.ts: three at most, none twice). A question from the topics or the field starts a new one. */
+  chain: string[];
+  /** A newer build has taken over in this browser (the service worker changed): the bar offers to load it. */
+  updateReady: boolean;
   /** Simple view: the answered card About them is offered on (at most one a visit), and "Not now". */
   inviteFor: Card | null;
   inviteOff: boolean;
@@ -160,6 +168,10 @@ const state: State = {
   sheet: false,
   aboutRow: null,
   topicOpen: null,
+  tips: false,
+  more: false,
+  chain: [],
+  updateReady: false,
   inviteFor: null,
   inviteOff: false,
   narrowPending: null,
@@ -191,8 +203,88 @@ function route(): Route {
 /** Changes the hash (the hashchange event draws the screen); draws directly when the hash is already there. */
 function go(r: Route | 'demo' | 'needs' | '') {
   const h = r ? `#/${r}` : '';
-  if (location.hash.replace(/^#\/?$/, '') === h) draw(); else location.hash = h;
+  if (location.hash.replace(/^#\/?$/, '') === h) { draw(); return; }
+  // the simple view keeps one entry of its own in the browser's history (the guard below), so a step inside the app
+  // changes the address in place: the phone's back button then goes one step back in the app, not through old screens.
+  // The entry under the guard keeps the first screen's address, so going back to it never opens an inner screen again.
+  if (simpleView() && r !== 'demo') {
+    const url = h || location.pathname + location.search;
+    if (h && !onGuard()) pushGuard(url); else history.replaceState(history.state, '', url);
+    draw();
+    return;
+  }
+  location.hash = h;
 }
+
+// ---------------------------------------------------------------- Back and Home (the simple view)
+/**
+ * One step back in the flow, for the "Back" button and for the phone's own back button or gesture. `from` is the
+ * screen's address before the step ('' / 'person' / 'needs' / 'about'). Returns the address to be on afterwards, or
+ * null when there was no step to take: from the first screen the browser's back leaves the app, as it should.
+ */
+function backStep(from: string): string | null {
+  if (state.sheet) { state.sheet = false; return from; }
+  if (from === 'person' || from === 'needs') {
+    const c = state.card;
+    // the check ("So: tea. Right?") goes back to the choices; the choices go back to the carer's screen
+    if (c && state.picked && !state.confirmed && !state.recap) { state.picked = null; return from; }
+    if (c?.kind === 'needs' && !state.confirmed) resetCard();
+    return '';
+  }
+  if (from) return '';
+  const c = state.card;
+  if (!c && !state.busy) return null;
+  if (state.recap || state.recapDone) { state.recap = false; state.recapDone = false; return ''; }
+  // from the answer: back to the same card, to show it again; from a card: back to the first screen
+  if (c && state.confirmed && state.picked && !c.blocked && c.kind !== 'needs') { state.picked = null; state.confirmed = false; state.more = false; return ''; }
+  makeSeq++; state.busy = false; state.lastQuestion = ''; state.error = null; dictated = false; resetCard();
+  return '';
+}
+/** "Home": the first screen, from anywhere. */
+function goHome() {
+  makeSeq++; state.busy = false; state.lastQuestion = ''; state.error = null; dictated = false; resetCard();
+  history.replaceState(history.state, '', location.pathname + location.search);
+  render(); window.scrollTo(0, 0);
+}
+const hashNow = () => location.hash.replace(/^#\/?/, '');
+/** True on the first screen of the simple view (nothing to go back to inside the app). */
+const atHome = () => !hashNow() && !state.card && !state.busy && !state.sheet;
+/**
+ * The guard: while the simple view is past its first screen, one extra history entry stands over the page's own, so
+ * the phone's back button fires `popstate` here instead of leaving. Each back press takes one step back in the app;
+ * the guard is put back while there is still a step to take, and taken away when "Home" brought the first screen.
+ */
+/** True while the entry the browser is on is the guard (read from the entry itself, so a reload or a typed address cannot leave it stale). */
+const onGuard = () => !!(history.state as { tpGuard?: boolean } | null)?.tpGuard;
+/** Puts the guard over the entry the browser is on, and marks that entry as the one under it (a back press lands there). */
+function pushGuard(url: string) {
+  if (!(history.state as { tpBase?: boolean } | null)?.tpBase) history.replaceState({ tpBase: true }, '', location.href);
+  history.pushState({ tpGuard: true }, '', url);
+}
+let skipPop = false;
+/** The address the screen was drawn at last: after a back press the browser has already left it. */
+let drawnAt = hashNow();
+function keepGuard() {
+  drawnAt = hashNow();
+  if (!simpleView()) return;
+  if (!atHome() && !onGuard()) pushGuard(location.href);
+  else if (atHome() && onGuard()) { skipPop = true; history.back(); }
+}
+/** One step back, taken now (the "Back" button where no guard stands, and every back press of the browser). */
+function stepBack(from: string) {
+  const to = backStep(from);
+  if (to === null) return;
+  const url = to ? `#/${to}` : location.pathname + location.search;
+  // the browser is on the entry under the guard: an inner address goes on a new guard, never on that entry
+  if (to && !onGuard()) pushGuard(url); else history.replaceState(history.state, '', url);
+  render(); window.scrollTo(0, 0);
+}
+window.addEventListener('popstate', () => {
+  if (skipPop) { skipPop = false; return; }
+  // only a step back onto the entry under the guard: a typed or linked address is a new entry, drawn by `hashchange`
+  if (!simpleView() || !(history.state as { tpBase?: boolean } | null)?.tpBase) return;
+  stepBack(drawnAt);
+});
 
 function enterDemo(): Promise<void> {
   if (state.demo) return Promise.resolve();
@@ -228,7 +320,7 @@ async function leaveDemo() {
   resetCard();
   go('');
 }
-function resetCard() { state.sheet = false; state.card = null; state.first = false; state.before = null; state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.recapDone = false; state.waitStart = null; }
+function resetCard() { state.tips = false; state.more = false; state.sheet = false; state.card = null; state.first = false; state.before = null; state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.recapDone = false; state.waitStart = null; }
 /**
  * Every new card the person is shown (a made card, a body-map step, the next page, the override) bumps this counter.
  * The render keys the entrance animation on it and on the route, so an animation plays once per real event and never
@@ -1012,6 +1104,17 @@ async function runNarrow(i: NarrowInput) {
  * "/" in the simple view: the first screen, the screen before handing over or the screen after an answer, by the same
  * state the full view reads. The consent sheet is drawn over it when a question needs online help (state.sheet).
  */
+/**
+ * What comes after this answer (core/tree.ts): the next questions and, at the end of a path, the line that says what
+ * to do now. For a question the trees do not know (a typed one) the older follow-ups of core/topics.ts stand.
+ */
+function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: string } {
+  if (c.kind === 'needs' || c.kind === 'repair') return { follow: [], end: '' };
+  const step = after(c, p.label, state.profile, state.chain.length ? state.chain : [c.asked]);
+  if (step.next.length || step.end) return { follow: step.next, end: step.end };
+  return { follow: out || p.role !== 'answer' ? [] : followUps(c, p.label, state.profile), end: '' };
+}
+
 function simpleScreen(): string {
   const c = state.card;
   const name = state.profile.personName.trim();
@@ -1022,9 +1125,9 @@ function simpleScreen(): string {
     // the way out of a card (not of the needs board, which has its own line, and not a way to try from the repair card)
     const out = p.role === 'escape' && c.kind !== 'needs';
     screen = answeredScreen({
-      name, label: p.label, next, out, hasAnswers: state.answers.length > 0,
+      name, label: p.label, question: c.kind === 'needs' ? '' : c.asked, more: state.more, next, out, hasAnswers: state.answers.length > 0,
       afterHtml: afterAnswer(c, p, 'btn'),
-      follow: out || p.role !== 'answer' ? [] : followUps(c, p.label, state.profile),
+      ...treeStep(c, p, out),
       tryNext: out ? nextInTopic(state.lastQuestion, state.profile) : null,
       narrow: out ? narrowPlace(c, p.label) : null, narrowLast: out && !!c.narrow && !canNarrow(c, p.label), short: shortModel(),
       who: p.role === 'answer' && asksWho(c, p.label, state.profile),
@@ -1040,7 +1143,7 @@ function simpleScreen(): string {
       made: simpleMade(c), personHtml: personSimple(personModel(false)),
       canAskOnline: sheetWanted(c, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured }),
       offline: needsInternet(c, { online: isOnline(), cloudConfigured: state.engine.cloudConfigured }),
-      lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(),
+      lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(), tips: state.tips,
     });
   } else {
     const p = state.profile;
@@ -1083,6 +1186,8 @@ function render(lifted = false) {
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
   app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved }) : aboutScreen()) : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
+  keepGuard();
+  if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);
   // the sheet is a dialog: the keyboard starts on its heading, and the screen under it is inert
   if (simple && state.sheet) document.querySelector<HTMLElement>('#sheet-h')?.focus();
   if (r === 'trial') {
@@ -1225,6 +1330,8 @@ function useSettings() {
 }
 const routing = () => ({ moodWords: state.remote.values.routeMoodWords, minChoices: state.remote.values.routeMinChoices });
 
+/** The question being made was tapped on the answered screen (a next step or a new start): its chain is already set. */
+let chained = false;
 async function make(q: string) {
   if (!q.trim()) return;
   if (step === 'waiting') step = 'cancelled'; // the judge asked something first: the automatic step stands down
@@ -1232,6 +1339,9 @@ async function make(q: string) {
   useSettings();
   // was this question spoken, and its recording sent to the cloud? (the card then says so, onVoice)
   const spoken = dictated; dictated = false; voiceHeard = false; voiceAsk = false; voice.cancel();
+  // a question that was not tapped as a next step of the tree starts a new conversation
+  if (!chained) state.chain = [q];
+  chained = false;
   state.busy = true; state.error = null; state.lastQuestion = q; resetCard(); render();
   // a question asked before the capability check has answered waits for it: the card must not be made as if this
   // computer could not run the private step
@@ -1324,6 +1434,11 @@ function act(el: HTMLElement) {
       state.settings.view = 'simple'; saveSettings();
       if (state.demo) void leaveDemo(); else go('');
       break;
+    case 'back': if (onGuard()) history.back(); else stepBack(hashNow()); break;
+    case 'home': goHome(); break;
+    case 'tips': state.tips = !state.tips; render(); document.querySelector<HTMLElement>('#more-tips')?.focus({ preventScroll: true }); break;
+    case 'more': state.more = !state.more; render(); document.querySelector<HTMLElement>('#more')?.focus({ preventScroll: true }); break;
+    case 'update': location.reload(); break;
     case 'how': state.settings.howFolded = !state.settings.howFolded; saveSettings(); render(); document.querySelector<HTMLElement>('#how[data-act], #how [data-act=how]')?.focus({ preventScroll: true }); break;
     case 'topic': { const id = el.dataset.topic as TopicId; state.topicOpen = state.topicOpen === id ? null : id; render(); document.querySelector<HTMLElement>(`.topic[data-topic="${id}"]`)?.focus({ preventScroll: true }); break; }
     // the finish screen's button: the phone goes back to the carer, who sees the answer
@@ -1430,11 +1545,14 @@ async function download() {
 // ---------------------------------------------------------------- events (delegated)
 const app = document.querySelector('#app')!;
 app.addEventListener('click', (ev) => {
+  // a link to a screen of the app, in the simple view: the address changes in place (see `go`), no new history entry
+  const link = (ev.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#/"]');
+  if (link && simpleView() && !link.target) { ev.preventDefault(); go(link.getAttribute('href')!.replace(/^#\/?/, '') as Route | ''); window.scrollTo(0, 0); return; }
   const t = (ev.target as HTMLElement).closest<HTMLElement>('button, [data-act]');
   if (!t) return;
   if (t.dataset.act) { act(t); return; }
   if (t.dataset.q) dictated = false; // a tapped question was not spoken, whatever the field held
-  if (t.dataset.q) { state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
+  if (t.dataset.q) { state.chain = t.dataset.next ? [...state.chain, t.dataset.q] : [t.dataset.q]; chained = true; state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
   if (t.closest('#person')) onPersonTap(t);
 });
 app.addEventListener('submit', (ev) => {
@@ -1486,13 +1604,35 @@ app.addEventListener('pointercancel', cancelHold);
 app.addEventListener('pointerleave', cancelHold, true);
 // with a keyboard there is no press and hold: Enter on the carer's way back leaves the person's screen
 app.addEventListener('keydown', (ev) => { if ((ev as KeyboardEvent).key === 'Enter' && (ev.target as HTMLElement).id === 'exit') { ev.preventDefault(); lift = true; go(''); } });
-window.addEventListener('hashchange', () => draw());
+// (a back press in the simple view is drawn by `popstate` above; the address change it brings is not drawn twice)
+window.addEventListener('hashchange', () => { if (simpleView() && hashNow() === drawnAt) return; draw(); });
 // the consent sheet: Escape is its "No"
 window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && state.sheet) { state.sheet = false; render(); } });
 
 // The app shell is kept by a service worker (web/public/sw.js, its file list written at build time), so the page, the
 // rules, the topics, quick needs and About them open with no connection. Production builds only: the dev server has none.
-if (import.meta.env.PROD && 'serviceWorker' in navigator) window.addEventListener('load', () => { void navigator.serviceWorker.register('/sw.js').catch(() => { /* no offline copy: the page works as before */ }); });
+//
+// A new deploy reaches people (18 Nov 2026: a phone showed a build an hour old). Three things together: the worker
+// asks the network for the page first and never the browser's own cache (sw.template.js); the page asks for a newer
+// worker when it is opened and every time it comes back to the front (an installed app can stay in memory for days);
+// and when a newer worker takes over while this page is open, the page loads the new build by itself if the carer is
+// on the first screen, and otherwise shows "A newer version is ready. Tap to update." (never in the middle of a card).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  const hadWorker = !!navigator.serviceWorker.controller;
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then((reg) => {
+      const look = () => { if (document.visibilityState === 'visible' && navigator.onLine) void reg.update().catch(() => { /* offline: the kept copy stands */ }); };
+      document.addEventListener('visibilitychange', look);
+      window.addEventListener('online', look);
+    }).catch(() => { /* no offline copy: the page works as before */ });
+  });
+  // the first worker claiming a fresh page is not an update; a change of worker after that is
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadWorker && !state.updateReady && !sessionStorage.getItem('tp-had-worker')) { sessionStorage.setItem('tp-had-worker', '1'); return; }
+    if (simpleView() && atHome() && !($('#q') as HTMLInputElement | null)?.value) { location.reload(); return; }
+    state.updateReady = true; render();
+  });
+}
 
 // Opened straight on judge mode: the first card is made before the first draw, so there is no empty frame before it.
 void Promise.all([load(), loadTrial()]).then(async () => {

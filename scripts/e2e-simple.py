@@ -97,6 +97,27 @@ def ask_topic(page, topic, question):
     page.wait_for_selector('main.simple.card #made-where, #sheet, main.simple.nocard')
 
 
+def new_q(page):
+    """A new question: "Ask another question" / "Ask something else" after an answer, "Home" on any other carer screen."""
+    if page.locator('#another').count():
+        page.locator('#another').click()
+    else:
+        page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+
+
+def nexts(page):
+    """The next questions the tree offers after this answer: the main button first."""
+    return page.evaluate("[...document.querySelectorAll('main.s-answered [data-next]')].map((e) => e.dataset.q)")
+
+
+def more(page):
+    """Opens "More" on the answered screen (the other buttons, today, "Today in short", how it was made)."""
+    if page.locator('#more[aria-expanded=false]').count():
+        page.locator('#more').click()
+        page.wait_for_selector('#more-body')
+
+
 def answer(page, label):
     """The carer shows the choices; the person points, says Yes, and gives the phone back."""
     page.locator('[data-act=show]').click()
@@ -107,6 +128,104 @@ def answer(page, label):
     page.wait_for_selector('.p-give')
     page.locator('.p-give').click()
     page.wait_for_selector('main.simple.s-answered')
+
+
+def navigation(page, url):
+    """Back and Home on every carer screen, and the phone's own back button: one step back inside the app, never out of it."""
+    def back(how):
+        if how == 'bar':
+            page.locator('#s-top [data-act=back]').click()
+        else:
+            page.go_back()
+        page.wait_for_timeout(350)
+
+    def screen():
+        if page.locator('#sheet').count():
+            return 'sheet'
+        m = page.locator('#app > main').first
+        return m.get_attribute('data-screen') or ('person' if 'pv' in (m.get_attribute('class') or '') else '?')
+
+    bar = lambda: page.locator('#s-top [data-act=back]').is_visible() and page.locator('#s-top [data-act=home]').is_visible() and text(page, '#s-top') == 'Back Talk Partner Home'
+    new_q(page)
+    check('navigation: the first screen has the app\'s name at the top and no "Back" (there is nowhere to go back to)', page.locator('#s-top [data-act=home]').is_visible() and page.locator('#s-top [data-act=back]').count() == 0)
+    for how in ('bar', 'browser'):
+        name = 'the "Back" button' if how == 'bar' else "the browser's back button"
+        seen = []
+        ask_topic(page, 'food', 'tea or coffee')
+        seen.append(bar())
+        back(how)
+        check(f'navigation, {name}: from the hand-over screen back to the first screen, the topic still open', screen() == 'home' and page.locator('.tq').count() >= 6, screen())
+        ask_topic(page, 'food', 'tea or coffee')
+        page.locator('[data-act=show]').click()
+        page.wait_for_selector('main.pv .pt')
+        if how == 'browser':
+            page.go_back()
+            page.wait_for_timeout(350)
+            check("navigation, the browser's back button on the person's choices: back to the carer's screen, the same question", screen() == 'card' and 'Would you like tea or coffee?' in text(page), screen())
+            page.locator('[data-act=show]').click()
+            page.wait_for_selector('main.pv .pt')
+            page.locator('main.pv .pt', has_text='tea').click()
+            page.wait_for_selector('[data-confirm=yes]')
+            page.go_back()
+            page.wait_for_timeout(350)
+            check("navigation, the browser's back button on the check (\"So: tea. Right?\"): back to the choices", page.locator('main.pv .pt').count() == 3 and 'Point to your answer' in text(page))
+        page.locator('main.pv .pt', has_text='tea').click()
+        page.locator('[data-confirm=yes]').click()
+        page.locator('.p-give').click()
+        page.wait_for_selector('main.simple.s-answered')
+        seen.append(bar())
+        back(how)
+        check(f'navigation, {name}: from the answer back to the same question, ready to show again', screen() == 'card' and 'Would you like tea or coffee?' in text(page) and page.locator('[data-act=show]').is_visible(), screen())
+        back(how)
+        check(f'navigation, {name}: and once more, to the first screen', screen() == 'home', screen())
+        # About them, the consent sheet, no card
+        page.locator('.foot a[href="#/about"]').click()
+        page.wait_for_selector('main.about-simple')
+        seen.append(bar())
+        back(how)
+        check(f'navigation, {name}: from About them back to the first screen', screen() == 'home' and not page.url.endswith('#/about'), f'{screen()} {page.url}')
+        page.fill('#q', OPEN_Q)
+        page.locator('#make').click()
+        page.wait_for_selector('#sheet, main.simple.nocard')
+        if page.locator('#sheet').count():
+            if how == 'browser':
+                page.go_back()
+                page.wait_for_timeout(350)
+                check("navigation, the browser's back button on the consent sheet: the sheet closes (it is its \"No\")", screen() == 'nocard', screen())
+            else:
+                page.locator('[data-act=sheet-no]').click()
+        page.wait_for_selector('main.simple.nocard')
+        seen.append(bar())
+        back(how)
+        check(f'navigation, {name}: from "No card for this one" back to the first screen', screen() == 'home', screen())
+        check(f'navigation: "Back" and "Home" are at the top of every carer screen (hand-over, answer, About them, no card)', all(seen), str(seen))
+    # the needs board (the person's screen): the browser's back goes to the first screen
+    page.locator('.btn.needs').click()
+    page.wait_for_selector('main.pv .p-tiles.board')
+    page.go_back()
+    page.wait_for_timeout(350)
+    check("navigation, the browser's back button on the needs board: back to the first screen", screen() == 'home', screen())
+    # Home from deep in the flow, then the browser's back does not bring an old screen
+    ask_topic(page, 'food', 'tea or coffee')
+    answer(page, 'tea')
+    page.locator('#next-q').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    page.locator('#s-top [data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    check('navigation: "Home" from two questions deep goes to the first screen in one tap', screen() == 'home' and page.evaluate('scrollY') == 0)
+    # from the first screen the browser's back leaves the app (nothing is trapped): one step, to the page before it
+    page.goto('about:blank')
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
+    ask_topic(page, 'food', 'tea or coffee')
+    page.go_back()
+    page.wait_for_timeout(350)
+    inside = screen() == 'home' and page.url.startswith(url)
+    page.go_back()
+    page.wait_for_timeout(500)
+    check("navigation: the browser's back stays inside the app while there is a step to take, and leaves it from the first screen", inside and page.url == 'about:blank', page.url)
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
 
 
 def phone(browser, url, live):
@@ -169,7 +288,15 @@ def phone(browser, url, live):
     check('before handing over: "Wait. Count to ten. Don\'t answer for them." is on the screen, in normal size, under the main button',
           page.locator('#wait-line').is_visible() and text(page, '#wait-line') == "Wait. Count to ten. Don't answer for them." and float(page.evaluate("getComputedStyle(document.querySelector('#wait-line')).fontSize").replace('px', '')) >= 18
           and ys(page, '#wait-line')[0][1] > ys(page, '[data-act=show]')[0][1])
-    check('before handing over: the carer sees what they will see (the question and three choices), and how to come back', 'What they will see:' in card and page.locator('#person.mini .pt').count() == 3 and '"Give the phone back"' in card and '"Carer: hold here to go back"' in card)
+    check('before handing over: the carer sees what they will see (the question and three choices), and how to come back', 'What they will see:' in card and page.locator('#person.mini .pt').count() == 3)
+    go = text(page, '.c-go')
+    check('before handing over: two short lines of advice at most (the "wait" line and one tip), the rest behind "More tips"', go == "2 Turn the phone to them Show them the choices Wait. Count to ten. Don't answer for them. Point to each choice as you say it. More tips" and page.locator('#tips').count() == 0, go)
+    page.locator('#more-tips').click()
+    tips = text(page, '#tips')
+    check('"More tips": how to come back, the weak hand, "Hide the choices"; and it folds again', '"Give the phone back"' in tips and '"Carer: hold here to go back"' in tips and 'If their hand is weak' in tips and 'Hide the choices' in tips and page.locator('#more-tips').inner_text().strip() == 'Fewer tips', tips)
+    screen_checks(page, 'before handing over, more tips open')
+    page.locator('#more-tips').click()
+    check('the top bar: "Back" and "Talk Partner / Home"', text(page, '#s-top') == 'Back Talk Partner Home' and page.locator('#s-top [data-act=back]').is_visible() and page.locator('#s-top [data-act=home]').is_visible(), text(page, '#s-top'))
     check("before handing over: \"We're stuck\" and \"Hide the choices\" are on this screen", page.locator('button[data-act=stuck]').is_visible() and page.locator('button[data-act=less]').is_visible())
     made = page.locator('#made-where')
     check('before handing over: the screen itself says where the choices were made (rules on this phone, no AI, nothing sent)',
@@ -221,16 +348,29 @@ def phone(browser, url, live):
     # ---- after an answer
     done = text(page)
     btns = page.locator('main.s-answered .col button, main.s-answered .col a.btn')
-    check('after an answer: "They chose, and said yes to: tea", and "Ask another question" is the main button, the first one under the answer',
-          'They chose, and said yes to: tea' in done and btns.first.inner_text().strip() == 'Ask another question' and 'primary' in btns.first.get_attribute('class') and page.locator('main.s-answered .btn.primary').count() == 1, done[:200])
+    check('after an answer: the question with its answer under it ("Would you like tea or coffee?" then "Tea"), never "said yes to"',
+          text(page, '#chose') == 'Would you like tea or coffee? Tea' and 'said yes to' not in done, text(page, '#chose'))
+    check('after an answer the tree leads: "Next: Would you like milk in it?" is the main button, the first one under the answer, and "Ask something else" stands under it',
+          ' '.join(btns.first.inner_text().split()) == 'Next: Would you like milk in it?' and 'primary' in btns.first.get_attribute('class') and page.locator('main.s-answered .btn.primary').count() == 1 and page.locator('#another').inner_text().strip() == 'Ask something else' and nexts(page) == ['Would you like milk in it?'], done[:200])
+    check('after an answer: little on the screen: one line on what left ("Nothing was sent."), the rest behind "More"', text(page, '#left-line') == 'Nothing was sent.' and page.locator('#made-where, #today-short, #s-privacy').count() == 0 and page.locator('#more').inner_text().strip() == 'More', done)
+    check('the top bar is on this screen too', text(page, '#s-top') == 'Back Talk Partner Home')
+    screen_checks(page, 'after an answer, "More" closed')
+    more(page)
+    done = text(page)
     check('after the first card: About them is offered, below the main button, never as the main button', page.locator('#invite').is_visible() and "Want their family's names on the questions?" in done and ys(page, '#invite')[0][1] > ys(page, 'main.s-answered .btn.primary')[0][1] and page.locator('#invite .primary').count() == 0)
     check("after an answer: today's answers, and \"Today in short\" written by the app's rules with a Copy button", 'Today Would you like tea or coffee? tea' in done and page.locator('#today-short[data-source=rules]').count() == 1 and 'They answered 1 question today by pointing, and confirmed each answer.' in text(page, '#today-short') and 'never sent to online help' in text(page, '#today-short') and page.locator('[data-act=copy-short]').is_visible(), text(page, '#today-short') if page.locator('#today-short').count() else done[-300:])
     check('after an answer: says the answers are kept on this phone only, and where the choices were made', 'Answers are kept on this phone only.' in done and page.locator('#made-where').count() == 1)
     screen_checks(page, 'after an answer')
     page.locator('[data-act=invite-later]').click()
-    check('"Not now": the offer goes, and nothing else changes', page.locator('#invite').count() == 0 and 'They chose, and said yes to: tea' in text(page))
-    page.locator('[data-act=new]').click()
-    page.wait_for_selector('main.simple.home')
+    check('"Not now": the offer goes, and nothing else changes', page.locator('#invite').count() == 0 and text(page, '#chose') == 'Would you like tea or coffee? Tea')
+    # ---- the tree: tea -> milk in it? -> yes -> the end of the path, with what to do
+    page.locator('#next-q').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check('the next question is made by the rules: "Would you like milk in it?" yes / no / not sure', page.locator('#person .pt').all_inner_texts() == ['yes', 'no', 'not sure'] and page.locator('#made-where').get_attribute('data-maker') == 'code')
+    answer(page, 'yes')
+    check('the end of a path: "Now: Make it with milk.", and "Ask another question" is the main button again', text(page, '#do-now') == 'Now: Make it with milk.' and text(page, '#chose') == 'Would you like milk in it? Yes' and page.locator('#next-q').count() == 0 and page.locator('main.s-answered .btn.primary').inner_text().strip() == 'Ask another question', text(page)[:200])
+    screen_checks(page, 'the end of a path')
+    new_q(page)
     check('after the first card the how-to block is one highlighted line at the top, and the topic is still open', page.locator('button.how-line').count() == 1 and page.locator('section.how').count() == 0 and text(page, '.how-line') == 'How it works: 4 steps Show' and page.locator('.tq').count() == 6 and ys(page, '.how-line')[0][1] < ys(page, '#topics')[0][1])
     check('the field does not take the cursor (no keyboard over the topics on a phone)', page.evaluate("document.activeElement && document.activeElement.id") != 'q')
     check('About them is now one small link at the foot', page.locator('.foot a[href="#/about"]').inner_text().strip() == 'About them →')
@@ -258,7 +398,7 @@ def phone(browser, url, live):
     page.locator('.p-give').click()
     page.wait_for_selector('main.simple.s-answered #after-out')
     out = text(page)
-    check('after "something else": the screen says so, and "Ask another question" is still the main button', 'They chose: something else' in out and page.locator('main.s-answered .btn.primary').inner_text().strip() == 'Ask another question')
+    check('after "something else": the screen says so, and the tree leads on with a broader question ("a hot drink or a cold drink?")', text(page, '#chose') == 'Would you like water, juice or milk? Something else' and nexts(page) == ['Would you like a hot drink or a cold drink?'], out[:200])
     check('after "something else": what to do now, never a dead end (show or write it; the next question of the topic; the needs board; a new way; other ways)',
           'None of those fitted. What now:' in out and 'Ask them to show you, or to write or draw it.' in out and page.locator('#after-out [data-q]').inner_text().strip() == 'Try: Would you like some more?'
           and all(page.locator(f'#after-out [data-act={a}]').is_visible() for a in ('needs', 'own', 'stuck')), out[:400])
@@ -268,21 +408,20 @@ def phone(browser, url, live):
     page.locator('#narrow').click()
     page.wait_for_selector('#sheet')
     line = page.locator('#sheet-line').inner_text().strip()
-    check('the narrowing step with online help off: the consent sheet, with the exact line (the question and what did not fit, nothing they chose)', line == 'Partner asks: Would you like water, juice or milk? They did not want: water, juice, milk. What else could it be? Give two or three broader kinds of answer to narrow it down.', line)
+    check('the narrowing step with online help off: the consent sheet, with the exact line (the question and what did not fit, nothing they chose)', line == 'Partner asks: Would you like water, juice or milk? They did not want: water, juice, milk. What else could it be? Do not give more of the same kind as the ones they did not want. Give two or three broader, different kinds of answer: a kind such as "something cold" or "something to eat", not one more single thing.', line)
     check('asking for it sent nothing to any other host', len(outside) == n0, str(outside[n0:]))
     screen_checks(page, 'the consent sheet for a narrowing step')
     page.locator('[data-act=sheet-no]').click()
     page.wait_for_selector('#sheet', state='detached')
     check('"No": no narrowing card, nothing sent, and the screen says what to do', page.locator('main.simple.nocard').count() == 1 and 'Nothing was sent.' in text(page) and len(outside) == n0)
-    page.locator('[data-act=new]').click()
-    page.wait_for_selector('main.simple.home')
+    new_q(page)
 
     # ---- no dead end after a "yes"
     ask_topic(page, 'body', 'Are you in pain?')
     answer(page, 'yes')
-    check('"Are you in pain?" yes: the next question is one tap away ("Where does it hurt?")', page.locator('#follow [data-q]').all_inner_texts() == ['Where does it hurt?'])
+    check('"Are you in pain?" yes: the next question is the main button ("Next: Where does it hurt?")', nexts(page) == ['Where does it hurt?'] and page.locator('#next-q').is_visible())
     screen_checks(page, 'after a yes, with the next question')
-    page.locator('#follow [data-q]').click()
+    page.locator('[data-next]').first.click()
     page.wait_for_selector('main.simple.card #made-where')
     page.locator('[data-act=show]').click()
     page.wait_for_selector('main.pv .pt')
@@ -299,19 +438,22 @@ def phone(browser, url, live):
     page.locator('[data-confirm=yes]').click()
     page.locator('.p-give').click()
     page.wait_for_selector('main.simple.s-answered')
-    check('a part with two sides: "Which side? Left or right?" and "How bad is the pain?" are offered next', page.locator('#follow [data-q]').all_inner_texts() == ['Which side? Left or right?', 'How bad is the pain?'], str(page.locator('#follow [data-q]').all_inner_texts()))
-    page.locator('#follow [data-q]', has_text='How bad').click()
+    check('a part with two sides: "How bad is the pain?" is the main button, "Which side? Left or right?" is offered under it', nexts(page) == ['How bad is the pain?', 'Which side? Left or right?'], str(nexts(page)))
+    page.locator('[data-next]', has_text='How bad').click()
     page.wait_for_selector('main.simple.card #made-where')
     check('the pain scale: three steps and "not sure", made by the rules', page.locator('#person .pt').all_inner_texts() == ['a little', 'quite bad', 'very bad', 'not sure'] and page.locator('#made-where').get_attribute('data-maker') == 'code', str(page.locator('#person .pt').all_inner_texts()))
     screen_checks(page, 'the pain scale, before handing over')
-    page.locator('[data-act=new]').click()
+    answer(page, 'very bad')
+    check('the third question of a conversation ends it with what to do: "Very bad. Call their nurse or doctor now. …"', 'Call their nurse or doctor now.' in text(page, '#do-now') and nexts(page) == [], text(page)[:300])
+    new_q(page)
     ask_topic(page, 'body', 'too hot or too cold')
     check('hot or cold has a neutral answer: hot, cold, just right', page.locator('#person .pt').all_inner_texts() == ['hot', 'cold', 'just right', 'something else'], str(page.locator('#person .pt').all_inner_texts()))
-    page.locator('[data-act=new]').click()
+    new_q(page)
     ask_topic(page, 'feel', 'Is something bothering you?')
     answer(page, 'yes')
-    check('Feelings, after "yes": no dead end ("What is bothering you? Your body, people, or plans?")', page.locator('#follow [data-q]').all_inner_texts() == ['What is bothering you? Your body, people, or plans?'])
-    page.locator('#follow [data-q]').click()
+    check('Feelings, after "yes": no dead end ("What is bothering you? Your body, people, or plans?")', nexts(page) == ['What is bothering you? Your body, people, or plans?'])
+    page.locator('#another').scroll_into_view_if_needed()
+    page.locator('[data-next]').first.click()
     page.wait_for_selector('main.simple.card #made-where')
     check('that question is one idea with three answers and a way out, made by the rules', page.locator('#person .pt').all_inner_texts() == ['body', 'people', 'plans', 'something else'] and page.locator('#made-where').get_attribute('data-maker') == 'code')
     page.locator('[data-act=show]').click()
@@ -325,7 +467,7 @@ def phone(browser, url, live):
     page.keyboard.press('Enter')
     page.wait_for_selector('main.simple.card', timeout=4000)
     check('with a keyboard, Enter on it goes back too', page.locator('main.simple.card').count() == 1)
-    page.locator('[data-act=new]').click()
+    new_q(page)
     ask_topic(page, 'people', 'call someone')
     answer(page, 'yes')
     check('"Do you want to call someone?" yes, nobody in About them: a field for one name', page.locator('#who #who-name').is_visible())
@@ -333,7 +475,7 @@ def phone(browser, url, live):
     page.locator('#who button').click()
     page.wait_for_selector('main.simple.card #made-where')
     check('the name becomes one yes / no question, made by the rules', 'Would you like to call Tyler? Yes, no, or not sure?' in text(page) and page.locator('#made-where').get_attribute('data-maker') == 'code')
-    page.locator('[data-act=new]').click()
+    new_q(page)
     page.wait_for_selector('main.simple.home')
 
     # ---- an open question: the sheet, and nothing asked of any other host before a yes
@@ -376,12 +518,12 @@ def phone(browser, url, live):
         check('with every other host refused, cloud help fails: no card, and the line does not say "nothing was sent"',
               w.get_attribute('data-maker') == 'none' and ((w.get_attribute('data-left') == 'maybe' and 'may have left this phone' in line and 'Nothing was sent' not in line) or (w.get_attribute('data-left') == 'nothing')), line)
         maybe = w.get_attribute('data-left') == 'maybe'
-        page.locator('[data-act=new]').click()
+        new_q(page)
         page.wait_for_selector('main.simple.home')
         foot = text(page, '.foot')
         check('the first screen then no longer says "Nothing you asked has left this phone"; the AI line says online help is on', 'Nothing you asked has left' not in foot and ('may have left this phone' in foot if maybe else 'No question has left this phone.' in foot) and 'online help is on' in text(page, '#ai-line'), foot)
     else:
-        page.locator('[data-act=new]').click()
+        new_q(page)
         page.wait_for_selector('main.simple.home')
         check('--live: "Yes" was never pressed, so this run asked nothing of any other host for a card', len(outside) == before, str(outside[before:]))
 
@@ -397,12 +539,14 @@ def phone(browser, url, live):
     check('a need is checked and finished like any answer: "Thank you. Toilet."', text(page) == 'Thank you. Toilet. Give the phone back', text(page))
     page.locator('.p-give').click()
     page.wait_for_selector('main.simple.s-answered')
-    check('back from the board: the carer sees the need and what to do ("Go now. The rest can wait.")', 'They chose, and said yes to: toilet' in text(page) and 'Go now. The rest can wait.' in text(page) and page.locator('#made-where').get_attribute('data-maker') == 'code')
+    check('back from the board: the carer sees the need and what to do ("Go now. The rest can wait.")', 'They pointed to: Toilet' in text(page) and 'Go now. The rest can wait.' in text(page) and text(page, '#left-line') == 'Nothing was sent.', text(page)[:200])
     screen_checks(page, 'after a need')
 
     # ---- About them
-    page.locator('[data-act=new]').click()
+    new_q(page)
     page.locator('.foot a[href="#/about"]').click()
+    page.wait_for_selector('main.about-simple')
+    check('About them has the top bar: "Back" and "Talk Partner / Home"', text(page, '#s-top') == 'Back Talk Partner Home')
     page.wait_for_selector('main.about-simple')
     about = text(page)
     check('About them: four rows, "Everything here stays on this phone.", nothing required', page.locator('.rowhead').count() == 4 and 'Everything here stays on this phone.' in about and page.locator('input').count() == 0, about[:200])
@@ -436,6 +580,8 @@ def phone(browser, url, live):
     card = text(page)
     check('the carer\'s screen names the person: "Turn the phone to Frank", "Show Frank the choices", "Don\'t answer for Frank."', 'Turn the phone to Frank' in card and page.locator('[data-act=show]').inner_text().strip() == 'Show Frank the choices' and "Wait. Count to ten. Don't answer for Frank." in card and 'What Frank will see:' in card, card[:300])
     check('the call question is a yes / no about that one person', page.locator('#person .pt').all_inner_texts() == ['yes', 'no', 'not sure'] and 'Would you like to call Jenny?' in text(page, '#person'))
+    navigation(page, url)
+    ask_topic(page, 'people', 'call Jenny')
 
     # ---- inside, and back; remembered
     page.locator('[data-act=inside-card]').click()
@@ -451,9 +597,10 @@ def phone(browser, url, live):
     check('every inner page of the full view has the way back', True)
     page.locator('.top nav .pill').click()
     page.wait_for_selector('main.simple.home')
+    page.wait_for_timeout(400)  # the choice of view is written to IndexedDB; the screen is drawn before that write ends
     page.reload()
     page.wait_for_selector('#app > *')
-    check('"Simple view" goes back, and that is remembered too; About them is kept', page.locator('main.simple.home').count() == 1 and 'with Frank' in text(page))
+    check('"Simple view" goes back, and that is remembered too; About them is kept', page.locator('main.simple.home').count() == 1 and 'with Frank' in text(page), f'{page.url} {text(page)[:160]}')
 
     # judge mode by its address: the full view, with the person's card as it was
     page.goto(url + '#/demo')
@@ -503,14 +650,14 @@ def offline(browser, url):
     ask_topic(page, 'food', 'tea or coffee')
     check('offline: a topic question makes its choices by the rules', page.locator('#made-where').get_attribute('data-maker') == 'code' and page.locator('#person .pt').count() == 3)
     answer(page, 'coffee')
-    check('offline: topic -> question -> the person points -> check -> finish -> give back: the carer sees the answer', 'They chose, and said yes to: coffee' in text(page))
-    page.locator('[data-act=new]').click()
+    check('offline: topic -> question -> the person points -> check -> finish -> give back: the carer sees the answer, and the next question of the tree', text(page, '#chose') == 'Would you like tea or coffee? Coffee' and nexts(page) == ['Would you like milk in it?'], text(page)[:200])
+    new_q(page)
     page.locator('.btn.needs').click()
     page.wait_for_selector('main.pv .p-tiles.board')
     check('offline: "Needs it now?" opens', page.locator('main.pv .pt').count() == 9)
     hold_exit(page)
     page.wait_for_selector('main.simple.card', timeout=4000)
-    page.locator('[data-act=new]').click()
+    new_q(page)
     page.locator('.foot a[href="#/about"]').click()
     page.wait_for_selector('main.about-simple')
     check('offline: About them opens', page.locator('.rowhead').count() == 4)
@@ -544,15 +691,18 @@ def words(browser, url, ua, word, label, width, height):
     check(f'{label}: the carer\'s screen says "Made by the app\'s rules on this {word}" and "Turn the {word} to them"', f"Made by the app's rules on this {word}." in text(page, '#made-where') and f'Turn the {word} to them' in text(page))
     screen_checks(page, f'{label}, before handing over')
     answer(page, 'tea')
-    check(f'{label}: the finish button said "Give the {word} back", and the carer sees the answer', 'They chose, and said yes to: tea' in text(page) and f'this {word} only' in text(page))
+    more(page)
+    check(f'{label}: the carer sees the answer, and "More" says the answers are kept on this {word} only', text(page, '#chose') == 'Would you like tea or coffee? Tea' and f'this {word} only' in text(page))
     screen_checks(page, f'{label}, after an answer')
-    page.locator('[data-act=new]').click()
+    new_q(page)
     ask_topic(page, 'plans', 'this weekend')
     if page.locator('#sheet').count():
         check(f'{label}: the sheet says "This {word} has no AI of its own"', f'This {word} has no AI of its own' in text(page, '#sheet'))
         b = page.locator('[data-act=sheet-no]').bounding_box()
         check(f'{label}: the sheet\'s two buttons are on the screen', b['y'] + b['height'] <= height, str(b))
         page.locator('[data-act=sheet-no]').click()
+    if not page.locator('[data-act=inside-card]').count():
+        more(page)
     page.locator('[data-act=inside-card]').click()
     page.wait_for_selector('.layout')
     full = text(page)

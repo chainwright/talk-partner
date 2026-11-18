@@ -367,7 +367,18 @@ const COPY = {
     step1: 'Say it out loud',
     step2: (name: string) => `Turn the computer to ${name || 'them'}`,
     preview: (name: string) => `What ${name || 'they'} will see:`,
-    tip: 'Point to each choice as you say it. If their hand is weak, they can point and you tap.',
+    tip: 'Point to each choice as you say it.',
+    tipWeak: 'If their hand is weak, they can point and you tap.',
+    tipsMore: 'More tips',
+    tipsLess: 'Fewer tips',
+    /** The bar at the top of every carer screen. */
+    nav: { back: 'Back', home: 'Home', homeLabel: 'Talk Partner: Home, the first screen' },
+    more: 'More',
+    less: 'Less',
+    /** A newer build is in this browser (web/src/main.ts): one tap loads it. Never shown on the person's screen. */
+    update: 'A newer version is ready. Tap to update.',
+    /** The quick-needs board has no question: the old line stands over the need they pointed to. */
+    choseNeed: (name: string) => `${name || 'They'} pointed to:`,
     tipExit: (name: string) => `After the answer, ${name ? `${name}'s` : 'their'} screen says "Give the computer back". To come back sooner, press and hold "Carer: hold here to go back" at its top.`,
     lessHint: (name: string) => `"Hide the choices" lets ${name || 'them'} try to say it first.`,
     /** The person's own screens: adult words, one thing to do. `label` is the choice they pointed to. */
@@ -387,6 +398,10 @@ const COPY = {
     chose: (name: string) => `${name || 'They'} chose, and said yes to:`,
     choseOut: (name: string) => `${name || 'They'} chose:`,
     another: 'Ask another question',
+    /** After an answer the tree leads on (core/tree.ts): the next question is the main button, this one stands under it. */
+    anotherElse: 'Ask something else',
+    nextLabel: 'Next:',
+    doNow: 'Now:',
     nextHeading: 'Or ask next:',
     /** The carer's screen after the person chose the way out: what to do now, never a dead end. */
     out: {
