@@ -645,9 +645,12 @@ async function sendInsights() {
 /** Nothing is learned from, or shown for, the sample family of judge mode. */
 const learns = () => !state.demo;
 const saveForgotten = () => { if (!state.demo) void kvSet('learned', state.forgotten); };
-/** The person's usual answer to this card's question, for the carer's hint: null before three answers, and never for the body map, a scale or a narrowing card. */
+/** The person's usual answer to this card's question, for the carer's hint: null before three answers, and never for the body map, a scale, a narrowing card or a care question (core/reliability.ts, careAnswer). */
 function usualFor(c: Card) {
   if (!learns() || c.blocked || c.narrow || c.scale || !['choice', 'yesno', 'feeling'].includes(c.kind)) return null;
+  // never on a question about pain, the body, a feeling or a need (role-play round 4, 18 Nov: "Are you in pain? Usually: yes (4 of 4)"
+  // could lead a carer to take the answer for granted, or to stop asking): such a question is asked fresh every time
+  if (careAnswer(c.asked, '', careTopic(c))) return null;
   const u = usual(state.history, c.asked, state.forgotten);
   return u && c.choices.some((x) => x.label.toLowerCase() === u.label.toLowerCase()) ? u : null;
 }
@@ -1509,7 +1512,7 @@ function simpleScreen(): string {
       ...(() => {
         const step = treeStep(c, p, out);
         // a shorter way, as a suggestion: the usual side of the next either-or, asked first (the full question stays)
-        const sc = learns() && step.follow[0] ? shortcut(state.history, step.follow[0], state.forgotten) : null;
+        const sc = learns() && step.follow[0] && !careAnswer(step.follow[0], '', careTopic(c)) ? shortcut(state.history, step.follow[0], state.forgotten) : null;
         return { ...step, shortcut: sc ? { q: sc.q, line: sc.line, of: step.follow[0], label: sc.usual.label } : null };
       })(),
       // (never a question that offers a refused choice again, and one about the same kind of thing: core/topics.ts)
