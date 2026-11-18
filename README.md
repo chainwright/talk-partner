@@ -28,7 +28,17 @@ code is in **`web/src/ai/firebaseEngine.ts`**. See [Added on 17 Nov](#added-on-1
 | Step | Gets | Mode | Why |
 |---|---|---|---|
 | Private card | question + the family's About-me lists | `ONLY_ON_DEVICE` | Family data must never fall back to the cloud. `PREFER_ON_DEVICE` would send this prompt to the cloud while Gemini Nano is missing or downloading. |
+| Narrowing card, after "something else" (`core/narrow.ts`) | on the device: the question, the choices that did not fit, today's answers so far, About me. In the cloud: the question and the choices that did not fit, About-me words swapped out; never the answers | the same two steps: `ONLY_ON_DEVICE` first, else `PREFER_IN_CLOUD` when the carer has turned online help on | The person chose the way out, so an AI suggests the next, broader choices (two levels at most). The same card rules check them, and the screen says an AI made this follow-up. |
+| "Today in short" (`core/summary.ts`) | today's confirmed answers | `ONLY_ON_DEVICE` (`summarizeDevice`), no cloud step | Two to four sentences for the family or the therapist. The answers are personal: where the browser has no Gemini Nano, the app's rules write the summary and no model gets them. |
 | Stripped card | the question with every About-me word swapped for "Person A", "Place A"… and a word that looks like a name the family didn't list (a capitalised word, the word after a title such as "Dr.", a lowercase word that is not an everyday English word) swapped for "Name A" | `PREFER_IN_CLOUD` | Holds no profile data, so an offline fall-back to the device is safe. |
+
+**On a phone there is no on-device step today.** Chrome's built-in Gemini Nano exists in desktop Chrome only, not on
+Android or iOS, and a carer mostly holds a phone. So on a phone the topic questions, quick needs, the person's screens,
+About them and "Today in short" are made by the app's rules with no AI, and a question the carer types that the rules
+cannot turn into choices (an open question) uses online help, asked for at that moment on a sheet that shows the exact
+line that would go. The first screen says this in one line ("On this phone that AI is online (Google's): the app asks
+you first…"). The two rows marked `ONLY_ON_DEVICE` have run in our tests with scripted engines only: neither the
+narrowing step nor "Today in short" has been run against the real Gemini Nano yet (`CLAIMS.md`, rows 53 and 54).
 
 The same question through the two steps, in our recorded run: "What do you want to do this weekend?" gives
 *lake / church* on this computer (the family's own places, read from About me by Gemini Nano; nothing sent) and
@@ -36,7 +46,7 @@ The same question through the two steps, in our recorded run: "What do you want 
 [Where the AI runs, in detail](#where-the-ai-runs-in-detail).
 
 Built for #BuildHybridAI 2026. Status on 17 Nov 2026, in three lines:
-- **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo> (the full view, in judge mode; the bare address opens the simple view for families, added 17 Nov). It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI), a microphone for the partner's question (through Firebase AI Logic, in the cloud) and a feedback form (Cloud Firestore), all untried by anyone they are for.
+- **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo> (the full view, in judge mode; the bare address opens the simple view for families, added 17 Nov and rebuilt the same evening around topics, the person's own screens and a how-to block: [Screens](#screens)). It can be installed to the home screen and opens with no connection. It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI), a microphone for the partner's question (through Firebase AI Logic, in the cloud) and a feedback form (Cloud Firestore), all untried by anyone they are for.
 - **One number, at commit `7dd16a1`:** on the 18 open questions of our own labelled set, rules alone make no card (0 of 18); the on-device model made a card matching our label for 15, 16 and 15 of 18 in three runs (17 Nov, the last commit that changes code), 12, 13 and 12 of them with the family's own people, places or foods. Three runs an hour earlier, at `2aeb1d0`, gave 16 each time, and so did the three before that day's rule changes, at `c346d3d`: the model's answers vary, so the number is 15 to 16. Our labels and a set the rules have since been changed around: not a held-out test, not a trial with people.
 - **Every claim with its status:** `CLAIMS.md` (and `JUDGES.md` for the 60-second path, `EVIDENCE.md` for claim → file, command, saved output). No video yet, no trial with people yet. How it got here, day by day: `devlog/` (the long form of this paragraph is kept in `devlog/DAY12.md`).
 
@@ -299,21 +309,44 @@ can miss one and that anything else typed is sent as written. `npm audit` report
 under `@firebase/firestore`, which this app does not import.
 
 ## Screens
-- **Simple view** (`/`, the default since 17 Nov; direction A of `design/simple_shell_2026-11-17/PROPOSAL.md`): what a
-  carer on a phone gets. First screen: one sentence, the question field with the microphone, "Make a card", three
-  ready questions (each with a small line saying how its card is made here), "Quick needs", About them, and at the
-  foot what has left this session, where the AI runs, and **See how it works inside →**. A card: "1 Say this out
-  loud", "2 Show <name> the card", the card, the main button, "Hide the choices" and "We're stuck", and under the card
-  where it was made (by the app's rules, by the AI built into Chrome on this computer, or with online help, and what
-  was sent). After the tick: what they chose, "Ask another question", today's answers. A question that needs cloud
-  help while it is off brings up a sheet: the exact line that would go, what else is in the request, what can be
-  missed, what is never sent, the data use, and two buttons of the same size ("Yes, send open questions to Google" /
-  "No, not for this question"); nothing is asked of any other host before a yes. About them is four rows over the
-  same fields. Light by default, dark when the system asks for it. The words say "this phone", "this tablet" or
-  "this computer" by what the browser reports (`deviceKindFrom` in `core/copy.ts`). It draws less than the full view
-  and computes nothing: the same `makeCard` makes every card (`web/src/simple.ts`, `core/simple.ts`). **Nobody it is
-  for has tried it.** "See how it works inside" opens the full view below and the browser keeps that choice;
-  "Simple view", first among its links, goes back.
+- **Simple view** (`/`, the default since 17 Nov; rebuilt that evening after the owner could not tell on his phone
+  who holds it and what the person does: `design/USER_FIRST.md`, `design/topics_2026-11-17/`). **The first screen**,
+  top to bottom: the hope line ("When the words won't come, let Frank point.", with the name from About them, else
+  "them"; never a default "him"); **Needs it now?** (the quick-needs board, one tap); **How it works: 4 steps**, a
+  highlighted block with a picture per step and the line "Wait. Count to ten. Don't answer for them." (open on the
+  first visit; one highlighted line after the first confirmed answer, remembered in this browser); **seven topics**
+  (Food & drink, Body & care, Rest & sleep, People & family, Feelings, Today & plans, TV, music & hobbies), each
+  opening 5 to 7 one-tap questions, 41 in all, 40 of them made by the rules (`core/topics.ts`); "Or ask your own
+  question" with the field, the microphone and "Show them the choices"; one line on what the AI is for and where it
+  runs on this device; one small privacy line. The family's own questions from About them are added under the generic
+  one, never in its place ("tea or coffee" stays; "pot roast or chili" comes under it), and each person who does not
+  live there gets one yes / no row ("Would you like to call Jen?"). **Before handing over:** "1 Say it out loud" with
+  the line, "2 Turn the phone to them" with the main button, the "wait" line again, and what they will see.
+  **The person's screens:** "Point to your answer" and the question itself, no category word, one column of
+  full-width choices (at most three and the way out; the word under its picture), then "So: tea. Right?" with "Yes" /
+  "No, something else", then "Thank you. Tea." and one button, "Give the phone back". The carer's way back before an
+  answer is a labelled control that needs a press and hold (Enter with a keyboard). **After an answer:** what they
+  chose, "Ask another question" as the main button, the next question where a "yes" would lead nowhere (pain → where →
+  which side → how bad; "is something bothering you" → what it is about; "call someone" → one name), About them
+  offered once (after the first card, never before), today's answers and **Today in short** with a Copy button.
+  **After "something else":** what to do now (show or write it, the next question of the topic, the needs board, a
+  new way, "We're stuck"), and **Narrow it down**, where an AI suggests the next choices (`core/narrow.ts`; on a
+  phone that is online help, asked first). A question that needs online help while it is off brings up a sheet: the
+  exact line that would go, what else is in the request, what can be missed, what is never sent, the data use, and
+  two buttons of the same size; nothing is asked of any other host before a yes. With no connection the same
+  question says "This question needs the internet, and you are offline", and everything the rules make still works.
+  About them is four rows over the same fields. Light by default, dark when the system asks for it; the person's
+  screens are always white. The words say "this phone", "this tablet" or "this computer" by what the browser reports.
+  It draws less than the full view and computes nothing about a card: the same `makeCard` makes every card
+  (`web/src/simple.ts`, `core/simple.ts`). **Nobody it is for has tried it**: one owner on his phone and three review
+  seats on a mockup. "How it works inside" opens the full view below and the browser keeps that choice; "Simple
+  view", first among its links, goes back. Judge mode and the full view keep their own person screen (below).
+- **Installed, and offline** (since 17 Nov): a web app manifest (`web/public/manifest.webmanifest`: Talk Partner,
+  standalone, icons) and a service worker (`web/sw.template.js`; the file list of the build is written into it by
+  `vite.config.ts`) that keeps the app shell. After one visit the page, the topic questions, quick needs, the
+  person's screens and About them open with no connection; the worker never handles a request to another host and
+  holds nothing of the family. Checked in Chromium with the connection off (`scripts/pwa-check.py`); **not tried on
+  a real phone's "Add to Home screen", and not on iOS**.
 - **Partner screen** (the full view; `/#/demo` opens it in judge mode whatever view was chosen): in the top bar, **Quick needs** (the board below, in one tap); next to the question
   field, where the browser can record, a microphone for the partner's own question (through Firebase AI Logic) (the words go into the
   field and wait there). Above the question field, up to three one-tap chips with the questions answered most
@@ -323,7 +356,7 @@ under `@firebase/firestore`, which this app does not import.
   the size of the request; the exact request handed to the SDK, or what would have been sent, is one click further) and "Where each step ran".
   "Show to person" lifts the card: the white pane grows into the whole screen in a quarter of a second (a view
   transition on the card itself; none under reduced-motion settings or where the browser has no view transitions).
-- **Person screen** (`#/person`): only the keyword, two or three big tiles (with a picture where one is drawn, the word alone otherwise), one way out, then "So: lake. Right?"
+- **Person screen** (`#/person`, in the full view and judge mode; the simple view has its own, above): only the keyword, two or three big tiles (with a picture where one is drawn, the word alone otherwise), one way out, then "So: lake. Right?"
   with yes / change. The exit is top-right and needs a press-and-hold. "We're stuck" replaces the card with the fixed
   repair card (show me / write it / draw / later / change topic); a tap gives the partner the next move for that way.
 - **Quick needs** (`#/needs`): the person's screen with one fixed board, eight needs and the way out, each a
@@ -333,7 +366,7 @@ under `@firebase/firestore`, which this app does not import.
   Saved only in this browser (IndexedDB). "Delete everything on this computer" also resets cloud help consent.
   **Answers so far**: each answer the person confirms with the tick is kept here, on this computer only. When the
   same question is asked again the partner sees one quiet line ("Last time (yesterday) they chose "lake". Ask again
-  all the same: today's answer is theirs."); the person's card never shows it and no model ever gets it
+  all the same: today's answer is theirs."); the person's card never shows it, no card is made from it and no cloud step ever gets it (since 17 Nov today's answers are read on the device by the narrowing step and by "Today in short", where the browser has Gemini Nano)
   (`core/history.ts`, `tests/unit/history.test.ts`). With the sample family it lasts until judge mode is left.
   The same list feeds the "Asked before" chips on the partner screen: a chip holds the question only, and a tap asks
   it again like a typed question (so with cloud help on, an open question goes the usual way; the earlier answers do not).
@@ -352,6 +385,10 @@ under `@firebase/firestore`, which this app does not import.
   pictograms (provenance and licence per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper;
   `voice.ts` is the microphone's state machine (record, stop, send the clip once through the engine; no DOM, so it
   is tested with a scripted microphone, recorder and engine); `mic.ts` is the browser's side; `feedback.ts` the form. `core/needs.ts` is the quick-needs board.
+  `web/src/simple.ts` draws the simple view (the carer's screens and the person's); `web/sw.template.js` is the service worker, `web/public/manifest.webmanifest` the manifest.
+- `core/topics.ts`: the topics and their questions, the family's own questions, what to ask next after an answer.
+  `core/narrow.ts`: the narrowing card after "something else" (AI, both steps). `core/summary.ts`: "Today in short"
+  (on-device AI, or the rules).
 - `tests/unit/`: unit, property and matrix tests, plus a guard that fails on any direct model API call.
   `engine-matrix.test.ts` runs seven card shapes through every combination of on-device model state and cloud
   state; `card.property.test.ts` and `strip.property.test.ts` are seeded property tests over random questions,
@@ -374,8 +411,9 @@ npm run check                # lint + typecheck + unit tests
 npm run build                # production build + check that no debug token is bundled
 node scripts/e2e-cloud.mjs   # with the dev server running: real Firebase AI Logic end-to-end (cloud step)
 node scripts/e2e-noconfig.mjs # starts its own server with no settings: rules-only cards from a bare clone, and the quick-needs board with the network off
-python3 scripts/e2e-simple.py     # with the dev server running: the simple view in a browser, as a phone, a desktop and a tablet (99 checks; --live for a hosted copy: it then never presses "Yes")
-python3 scripts/overflow-check.py # with the dev server running: nothing runs off the side at 320, 360, 390 and 412 px (the simple view at all four, the full view from 360)
+python3 scripts/e2e-simple.py     # with `npm run build && npx vite preview` running: the simple view in a browser, as a phone, a desktop and a tablet, and with the connection off (227 checks; --live for a hosted copy: it then never presses "Yes"; --dev for the dev server, which has no service worker)
+python3 scripts/pwa-check.py      # the same server: the manifest as Chrome parses it, Chrome's installability check, the service worker, the app with the connection off (30 checks)
+python3 scripts/overflow-check.py # with either server running: nothing runs off the side at 320, 360, 390 and 412 px (the simple view at all four, the full view from 360)
 node scripts/contrast-check.mjs   # the simple view's colours, read from the stylesheet: text 4.5:1, controls 3:1, light and dark
 node scripts/e2e-needs.mjs   # with the dev server running (or --url <a hosted copy>): the quick-needs board with the network off, the microphone's notice
 node scripts/e2e-ondevice.mjs --port 9335   # with the dev server and a Chrome that has Gemini Nano on that debugging port

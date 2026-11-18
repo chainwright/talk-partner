@@ -158,7 +158,7 @@ try {
   // screen, nine tiles (each a picture and its word), the tick / cross check, the partner's line, the way out, and
   // "pain" leading on to the body card. Everything from here on runs offline.
   await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
-  const offline = await js(`fetch('/?offline-probe=' + Date.now()).then(() => false, () => true)`);
+  const offline = await js(`fetch('/offline-probe-' + Date.now()).then(() => false, () => true)`);
   check('the network is off for the rest of this run (a request to the app\'s own host fails)', offline === true && (await js('navigator.onLine')) === false, `fetch failed: ${offline}`);
   const made0 = Number((await js(`document.querySelector('#bytes')?.innerText ?? ''`)).match(/(\d+) cards? this session/)?.[1] ?? -1);
   await js(`document.querySelector('[data-act="needs"]').click()`);

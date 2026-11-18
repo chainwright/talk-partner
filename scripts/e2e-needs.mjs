@@ -52,7 +52,7 @@ try {
     if (m.method === 'Network.requestWillBeSent' && /^https?:/.test(m.params.request.url)) {
       const u = new URL(m.params.request.url);
       hosts.set(u.host, (hosts.get(u.host) ?? 0) + 1);
-      if (isOffline && !u.search.includes('offline-probe')) offlineAsked.push(`${u.host}${u.pathname}`);
+      if (isOffline && !u.pathname.includes('offline-probe')) offlineAsked.push(`${u.host}${u.pathname}`);
     }
     if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails?.exception?.description ?? m.params.exceptionDetails?.text ?? 'exception');
   });
@@ -68,6 +68,10 @@ try {
   const settled = () => waitFor(`document.querySelector('#make') && !document.querySelector('#make').disabled && !!document.querySelector('#result .badge')`);
 
   await send('Network.enable');
+  // A production build has a service worker, and the offline switch below acts on the page, not on a worker: the
+  // page's requests skip the worker here, so "the network is off" is true of every request this run can make.
+  // (The app with its worker and the connection off is driven by scripts/pwa-check.py and scripts/e2e-simple.py.)
+  await send('Network.setBypassServiceWorker', { bypass: true });
   await send('Runtime.enable');
   await send('Page.enable');
   console.log(`url: ${URL_}`);
@@ -102,7 +106,8 @@ try {
   const before = [...hosts.entries()].map(([h, n]) => `${h}×${n}`).join(', ');
   await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
   isOffline = true;
-  const off = await js(`fetch('/?offline-probe=' + Date.now(), { cache: 'no-store' }).then(() => false, () => true)`);
+  // (a path the service worker of a production build does not keep: the page itself would come from its kept copy)
+  const off = await js(`fetch('/offline-probe-' + Date.now(), { cache: 'no-store' }).then(() => false, () => true)`);
   check('the network is off for the rest of this run (a request to the app\'s own host fails)', off === true && (await js('navigator.onLine')) === false, `fetch failed: ${off}`);
 
   await js(`document.querySelector('[data-act="needs"]').click()`);
