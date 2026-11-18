@@ -99,6 +99,8 @@ about a person is dropped by code, and the three rule-made questions never depen
   checked by us against the rule "no illness, no medicine, no advice", not by a doctor, nurse or therapist.
 - **The on-device steps ran in one Chrome on one Mac**, a few times each (the log above). No measurement of how often
   the model's words are useful.
-- **The cloud letter step ran against the real model for two letters** ("K": kombucha, kefir, kale juice; "X":
-  nothing usable, and the screen said so). The words are the model's; the app only checks them.
+- **The cloud letter step ran against the real model for two letters** (in the saved run "K": kombucha, kefir; "X":
+  nothing usable, and the screen said so). On the device the model added "soup, spice" for "S" and "honey, herb" for
+  "H" after "tea or coffee?": words that start with the letter, not all of them likely answers. The words are the
+  model's; the app only checks them, and nobody has measured how often they help.
 - **The printed page** was not printed on paper (the print rules hide the buttons; a screenshot of the page stands in).

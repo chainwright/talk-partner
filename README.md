@@ -335,7 +335,12 @@ steps; `overflow-check.py` 503/503 at 320 to 412 px (101 of them phase 4: every 
 scrolling" at the phone's own height); `contrast-check.mjs` 127 pairs. Against real models
 (`scripts/e2e-phase4-ai.py`, 16/16, `devlog/evidence_phase4/AI_RUN_LOG.md`): the photo step and the letter step on
 the device (Gemini Nano), and the letter step through the cloud model after the sheet's yes. Screens at 390 px:
-`devlog/evidence_phase4/01_…` to `17_…` (`scripts/phase4-shots.py`).
+`devlog/evidence_phase4/01_…` to `17_…` (`scripts/phase4-shots.py`). The saved outputs of the two long runs are next
+to them (`e2e-simple_localhost_…txt`, made one small commit before `9ff3e9d`, and `overflow-check_localhost_…txt`).
+At `9ff3e9d`, on the production build on localhost: the phase 4 run again 83/83, its overflow screens 101/101,
+`pwa-check.py` 30/30, `update-check.py` 11/11, `e2e-needs.mjs` 12/12, `e2e-noconfig.mjs` 25/25. Not run:
+`e2e-cloud.mjs` and `e2e-ondevice.mjs` (nothing in the rules, the prompt or the model call of an ordinary card
+changed), and the two wording steps of phase 3 still have no run against a real model.
 
 ## Changed on 18 Nov after a role-play on the phone
 One of us played Carol and Frank (`design/PERSONA_SCENARIO.md`, fictional) on the hosted copy at 390 px. What it
