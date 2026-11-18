@@ -180,5 +180,11 @@ the table.
 | 157 | `a99cbf3` | `c97de09` | 2026-11-17 21:54 | The hosted copy is the build of d04e530 (18 Nov, 03:52 UTC): 20 of 20 served files have … |
 | 158 | `3a9cf34` | `884702b` | 2026-11-17 22:12 | The answer check never discounts pain, and drinks are counted as the timeline shows them… |
 | 159 | `95eb1bd` | `f41931a` | 2026-11-17 22:15 | The hosted copy is the build of 3a9cf34 (18 Nov, 04:13 UTC): 20 of 20 served files have … |
+| 160 | `2396775` | `b92212d` | 2026-11-17 22:46 | Phase 4: the first-letter helper, "[Name] wants to say something", "Before a doctor visi… |
+| 161 | `9ff3e9d` | `1d002d3` | 2026-11-17 22:58 | The documents follow phase 4, and three things found while writing them. README has 'Add… |
+| 162 | `43e9293` | `1cf8842` | 2026-11-17 23:01 | Evidence for phase 4 at 9ff3e9d (devlog/evidence_phase4). 17 screens at 390 x 844 (scrip… |
+| 163 | `6ee90fc` | `080d620` | 2026-11-17 23:05 | The hosted copy is the build of 43e9293 (18 Nov, 05:02 UTC), phase 4: 20 of 20 served fi… |
+| 164 | `421dae0` | `d0745d6` | 2026-11-17 23:14 | Three findings of a third role-play on the hosted copy (Carol and Frank, 390 px, build 4… |
+| 165 | `985a529` | `0509b78` | 2026-11-17 23:17 | The hosted copy is the build of 421dae0 (18 Nov, 05:14 UTC), the three fixes of the thir… |
 
-Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152 and 153–159 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
+Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159 and 160–165 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
