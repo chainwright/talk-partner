@@ -345,14 +345,32 @@ function go(r: Route | 'demo' | 'needs' | '') {
   location.hash = h;
 }
 
-// ---------------------------------------------------------------- Back and Home (the simple view)
+// ---------------------------------------------------------------- Back and Home (every view)
 // The Back stack (18 Nov 2026, after the owner's walk on his phone: one tap on Back from the second question of a
-// conversation landed on the first screen). Every carer's screen that is drawn is a step: the first screen, a
-// question before it is handed over, the answer, the next question, the diary, the visit page. "Back" and the
-// phone's own back button pop exactly one step and show that screen as it was; the first screen is the bottom, and
-// "Home" empties the stack. The person's screens are not steps of it: there the press and hold goes back.
+// conversation landed on the first screen). Every screen that is drawn is a step: the first screen, a question
+// before it is handed over, the answer, the next question, the diary, the visit page. "Back" and the phone's own
+// back button pop exactly one step and show that screen as it was; the first screen is the bottom, and "Home"
+// empties the stack.
+// Phase 8 (judge round 7): the same in the full view and with the sample family, and the person's screens are steps
+// too, with two folds, so that one step is one screen a person would call a step:
+// - the check ("So: tea. Right?") and "Thank you" fold into the choices they confirm (`sub`): Back never lands on them;
+// - a card handed over from the carer's screen folds into that carer's screen (`entry`): Back on the carer's side
+//   goes from the answer to the question on the carer's screen, as before. A person's screen that followed another
+//   person's screen (their own start, its topics and "Who is it about?", the alphabet and its words, the next
+//   doctor-visit question) is a step of its own: Back from the carer's screen after it lands on it.
+// The press and hold on the person's screen is "give the phone back": to the last carer's screen of the stack.
 const VIEW = ['card', 'first', 'before', 'picked', 'confirmed', 'less', 'recap', 'recapDone', 'tips', 'more', 'lastQuestion', 'chain', 'topicOpen', 'error', 'cardAt', 'narrowPending', 'inviteFor'] as const;
-interface Snap { key: string; route: string; view: Pick<State, typeof VIEW[number]>; p4: Pick<P4State, 'letterNo' | 'letterPending' | 'turn' | 'talk'>; extra: unknown }
+interface Snap {
+  key: string; route: string; view: Pick<State, typeof VIEW[number]>;
+  p4: Pick<P4State, 'letterNo' | 'letterPending' | 'turn' | 'talk' | 'letter' | 'visitRun' | 'visitEnd'>;
+  extra: unknown;
+  /** How many doctor-visit answers there were (a step back to a visit question takes the later answers off again). */
+  visitN: number;
+  /** The call box of the conversation was up. */
+  urgent: boolean;
+  /** A person's screen (key "person:…"); `sub`: the check or "Thank you" of one; `entry`: handed over from a carer's screen. */
+  person: boolean; sub: boolean; entry: boolean;
+}
 const trail = { stack: [] as Snap[], current: null as Snap | null };
 const cardIds = new WeakMap<Card, number>();
 let cardIdSeq = 0;
@@ -364,9 +382,16 @@ function cardId(c: Card): number {
   for (let p: Card | null | undefined = c; p; p = p.nextPage) if (!cardIds.has(p)) cardIds.set(p, id);
   return id;
 }
-/** Which carer's screen is on: null for a person's screen and while a card is being made (neither is a step). */
+/** Which screen is on: null while a card is being made (not a step). A person's screen starts with "person". */
 function screenKey(r: Route): string | null {
-  if (r === 'person' || state.busy) return null;
+  if (state.busy) return null;
+  if (r === 'person') {
+    if (state.p4.visitEnd) return 'person:visit-end';
+    if (state.p4.letter) return `person:letter:${state.p4.letter.asked}`;
+    const c = state.card;
+    if (!c) return null;
+    return `person:${cardId(c)}${state.recapDone ? ':recap-done' : state.recap ? ':recap' : state.confirmed ? ':done' : state.picked ? ':check' : ''}`;
+  }
   if (r === 'phototalk') return `phototalk:${state.p4.talk?.id ?? ''}`;
   // the passport is two steps: the lines to decide on, then the page as it prints
   if (r === 'passport') return p8.page ? 'passport:page' : 'passport';
@@ -377,27 +402,39 @@ function screenKey(r: Route): string | null {
 }
 /** A hook for a later screen that is a step of its own on the same card (the ways after "something else"). */
 const navExtra = { key: (): string => '', take: (): unknown => ({ passPage: p8.page }), put: (x: unknown): void => { p8.page = !!(x as { passPage?: boolean } | null)?.passPage; } };
-function takeSnap(key: string): Snap {
+function takeSnap(key: string, entry: boolean): Snap {
   const view = Object.fromEntries(VIEW.map((k) => [k, k === 'chain' ? [...state.chain] : state[k]])) as Snap['view'];
-  return { key, route: hashNow() === 'needs' ? '' : hashNow(), view, p4: { letterNo: state.p4.letterNo, letterPending: state.p4.letterPending, turn: state.p4.turn, talk: state.p4.talk }, extra: navExtra.take() };
+  const person = key.startsWith('person');
+  const P = state.p4;
+  return {
+    key, route: person ? 'person' : hashNow() === 'needs' || hashNow() === 'person' ? '' : hashNow(), view,
+    p4: { letterNo: P.letterNo, letterPending: P.letterPending, turn: P.turn, talk: P.talk, letter: person ? P.letter : null, visitRun: person && P.visitRun, visitEnd: person && P.visitEnd },
+    extra: navExtra.take(), visitN: P.visit?.answers.length ?? 0, urgent: p5.urgent,
+    person, sub: person && /:(?:check|done|recap|recap-done)$/.test(key), entry: person && entry,
+  };
 }
-/** Called at every draw: a new carer's screen puts the one before it on the stack; a screen that is already on the stack cuts the stack back to it. */
+/** Called at every draw: a new screen puts the one before it on the stack; a screen that is already on the stack cuts the stack back to it. */
 function trackScreen(r: Route) {
-  if (!simpleView()) { trail.stack = []; trail.current = null; return; }
   const key = screenKey(r);
   if (key === null) return;
-  if (trail.current && trail.current.key !== key) {
+  const cur = trail.current;
+  let entry = key.startsWith('person') && !cur?.person;
+  if (cur && cur.key !== key) {
     const at = trail.stack.findIndex((x) => x.key === key);
-    if (at >= 0) trail.stack.length = at; else trail.stack.push(trail.current);
-  }
+    if (at >= 0) { entry = trail.stack[at].entry; trail.stack.length = at; } else trail.stack.push(cur);
+  } else if (cur) entry = cur.entry;
   if (key === 'home') trail.stack = [];
-  trail.current = takeSnap(key);
+  trail.current = takeSnap(key, entry);
 }
-/** Puts a step back on the screen as it was. The call box of a conversation is not taken back with it. */
+/** Puts a step back on the screen as it was, with the call box as it was then. */
 function putSnap(x: Snap) {
   Object.assign(state, x.view, { chain: [...x.view.chain] });
-  Object.assign(state.p4, x.p4, { letter: null, visitRun: false, visitEnd: false });
+  Object.assign(state.p4, x.p4);
+  // a step back to a doctor-visit question: the answers given after it come off again (it is asked once more)
+  const v = state.p4.visit;
+  if (x.p4.visitRun && v && v.answers.length > x.visitN) { v.answers = v.answers.slice(0, x.visitN); v.done = false; void kvSet('visit', v); }
   navExtra.put(x.extra);
+  p5.urgent = x.urgent;
   state.sheet = false; state.waitStart = null; state.busy = false;
   trail.current = x;
 }
@@ -413,16 +450,18 @@ function backStep(from: string): string | null {
   if (state.insSheet) { state.insSheet = null; return from; }
   if (state.importDraft) { state.importDraft = null; return from; }
   if (p6.share) { p6.share = null; return from; }
-  // a carer's screen: exactly one step back on the stack (the person's screens keep their own way back, below)
-  if (simpleView() && from !== 'person' && from !== 'needs' && trail.current) {
+  // exactly one step back on the stack, in every view (the folds are in the note above the stack)
+  if (trail.current) {
     stopSound();
     // while a card is being made the step is not taken yet: the making is called off and the screen before it stays
     if (state.busy) { makeSeq++; putSnap(trail.current); return trail.current.route; }
-    const to = trail.stack.pop();
+    const onPerson = trail.current.person;
+    let to = trail.stack.pop();
+    while (to && (to.sub || (!onPerson && to.entry))) to = trail.stack.pop();
     if (to) { putSnap(to); return to.route; }
   }
+  // nothing under this screen (it was opened by its own address, or after a reload): the screen it belongs to
   if (from === 'sudden') return '';
-  // (the full view keeps no stack: the passport's page still goes back to its lines, one step)
   if (from === 'passport' && p8.page) { p8.page = false; return from; }
   if (from === 'visit' || from === 'phototalk') { if (from === 'phototalk' && state.p4.talk) { state.p4.talk = null; return from; } return ''; }
   // the alphabet goes back to the carer's screen it was opened from; the visit questions go back to their page
@@ -446,6 +485,16 @@ function backStep(from: string): string | null {
   if (c && state.confirmed && state.picked && !c.blocked && c.kind !== 'needs') { state.picked = null; state.confirmed = false; state.more = false; return ''; }
   makeSeq++; state.busy = false; state.lastQuestion = ''; state.error = null; dictated = false; resetCard();
   return '';
+}
+/** The press and hold on the person's screen: the phone goes back to the last carer's screen on the stack, as it was. Null: none is there. */
+function backToCarer(): string | null {
+  let at = trail.stack.length - 1;
+  while (at >= 0 && trail.stack[at].person) at--;
+  if (at < 0) return null;
+  const to = trail.stack[at];
+  trail.stack.length = at;
+  putSnap(to);
+  return to.route;
 }
 /** "Home": the first screen, from anywhere. */
 function goHome() {
@@ -486,7 +535,7 @@ function stepBack(from: string) {
   if (to === null) return;
   const url = to ? `#/${to}` : location.pathname + location.search;
   // the browser is on the entry under the guard: an inner address goes on a new guard, never on that entry
-  if (to && !onGuard()) pushGuard(url); else history.replaceState(history.state, '', url);
+  if (simpleView() && to && !onGuard()) pushGuard(url); else history.replaceState(history.state, '', url);
   render(); window.scrollTo(0, 0);
 }
 window.addEventListener('popstate', () => {
@@ -1761,6 +1810,10 @@ function clearP4() { state.p4.letter = null; state.p4.letterNo = false; state.p4
 /** The carer takes the phone back from the person's screen (the press and hold): to the visit page while its questions run, else to the carer's screen. */
 function leavePerson() {
   lift = true;
+  // (phase 8) to the carer's screen the phone was handed over from, as it was: also from a needs board opened inside a
+  // conversation, from the person's own start and from the alphabet's words
+  const to = backToCarer();
+  if (to !== null) { stopSound(); go(to as Route | ''); return; }
   if (state.p4.visitRun || state.p4.visitEnd) { state.p4.visitRun = false; state.p4.visitEnd = false; resetCard(); go('visit'); return; }
   state.p4.letter = null;
   go('');

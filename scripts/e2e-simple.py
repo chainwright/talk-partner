@@ -1901,7 +1901,7 @@ def phase5(browser, url, live):
 
 
 SIG = """(() => { const m = document.querySelector('#app main'); const t = (s) => ((document.querySelector(s) || {}).innerText || '').replace(/\\s+/g, ' ').trim();
-  return [m ? (m.dataset.screen || (m.classList.contains('pv') ? 'person' : m.className)) : '?', t('#chose-q'), t('#chose-a'), t('main.card .say').slice(0, 70), location.hash.replace(/^#\\/?/, '')].join(' | '); })()"""
+  return [m ? (m.dataset.screen || (m.classList.contains('pv') ? 'person' : m.className)) : '?', t('#chose-q'), t('#chose-a'), (t('main.card .say') || t('main.pv .p-ask') || t('main.pv .p-do')).slice(0, 70), location.hash.replace(/^#\\/?/, '')].join(' | '); })()"""
 
 
 def backstack(browser, url):
@@ -1931,10 +1931,12 @@ def backstack(browser, url):
         want = list(reversed(seen[:-1]))
         got = []
         for _ in want:
-            if not browser_back and not page.locator('main [data-act=back]').count():
+            # (phase 8: a person's screen is a step too; it has no Back button by design, so there the phone's back is pressed)
+            on_person = page.locator('main.pv').count() > 0
+            if not browser_back and not on_person and not page.locator('main [data-act=back]').count():
                 got.append('(no Back button)')
                 break
-            if browser_back:
+            if browser_back or on_person:
                 page.go_back()
             else:
                 page.locator('main [data-act=back]').first.click()
@@ -2001,14 +2003,18 @@ def backstack(browser, url):
         seen.append(sig(page))
         page.locator('[data-act=show]').click()
         page.wait_for_selector('main.pv[data-kind=body] .pt')
+        seen.append(sig(page))
         page.locator('main.pv .pt', has_text='chest').first.click()
+        # (phase 8: "Where in the chest?" follows on the person's screen: a step of its own; the body card was handed over, so it folds into the carer's question)
+        page.wait_for_selector('main.pv .pt:has-text("middle")')
+        seen.append(sig(page))
         tap_yes(page, 'middle')
         give_back(page)
         seen.append(sig(page))
         page.locator('main.s-answered a[href="#/sudden"]').first.click()
         page.wait_for_selector('main.simple.sudden')
         seen.append(sig(page))
-        check('back, the needs board: the way was first screen, "pain" on the board, "Where does it hurt?", the answer with the call box, "Something new or sudden?"', [x.split(' | ')[0] for x in seen] == ['home', 'answered', 'card', 'answered', 'sudden'], str(seen))
+        check('back, the needs board: the way was first screen, "pain" on the board, "Where does it hurt?", the body card and "Where in the chest?" on the person\'s screen, the answer with the call box, "Something new or sudden?"', [x.split(' | ')[0] for x in seen] == ['home', 'answered', 'card', 'person', 'person', 'answered', 'sudden'], str(seen))
         walk_back(page, seen, 'the needs board, the body card and the call list', browser_back=bb)
         check('back, the needs board: no page error', not errors, '; '.join(errors))
         ctx.close()
@@ -2023,22 +2029,71 @@ def backstack(browser, url):
         seen.append(sig(page))
         page.locator('main.s-answered [data-act=letter]').first.click()
         page.wait_for_selector('main [data-letter=B]')
+        seen.append(sig(page))
         page.locator('main [data-letter=B]').click()
         page.wait_for_selector('main.pv .pt')
+        seen.append(sig(page))
         first = page.locator('main.pv .pt').first.inner_text().strip()
         tap_yes(page, first)
         give_back(page)
         seen.append(sig(page))
-        check('back, the first letter: the way was first screen, the question, "something else", the word found by its letter', [x.split(' | ')[0] for x in seen] == ['home', 'card', 'answered', 'answered'] and 'Something else' in seen[2], str(seen))
+        check('back, the first letter: the way was first screen, the question, "something else", the alphabet, its words (phase 8: each a step), the word found by its letter', [x.split(' | ')[0] for x in seen] == ['home', 'card', 'answered', 'person', 'person', 'answered'] and 'Something else' in seen[2] and seen[3] != seen[4], str(seen))
         walk_back(page, seen, 'the first letter', browser_back=bb)
         # "wants to say something": the person starts, the carer gets a question, asks it, gets the answer
         seen = [sig(page)]
         page.locator('#turn-go').click()
+        page.wait_for_selector('main.pv .pt:has-text("I feel")')
+        seen.append(sig(page))
         tap_yes(page, 'I feel')
+        page.wait_for_selector('main.pv .pt:has-text("good")')
+        seen.append(sig(page))
         tap_yes(page, 'good')
         give_back(page)
         seen.append(sig(page))
+        check('back, "wants to say something": the way was the first screen, the three starters, the feelings card (both on the person\'s screen), the answer', [x.split(' | ')[0] for x in seen] == ['home', 'person', 'person', 'answered'], str(seen))
         walk_back(page, seen, '"wants to say something"', browser_back=bb)
+        # "I want to tell you something": the topics, then the carer's screen; Back walks the person's chain one screen at a time
+        seen = [sig(page)]
+        page.locator('#turn-go').click()
+        page.wait_for_selector('main.pv .pt:has-text("tell you")')
+        seen.append(sig(page))
+        tap_yes(page, 'tell you')
+        page.wait_for_selector('main.pv .pt:has-text("Today & plans")')
+        seen.append(sig(page))
+        tap_yes(page, 'Today & plans')
+        # ("What is it about?" may follow on the person's screen: a step of its own too)
+        page.wait_for_selector('.p-give, main.pv .pt')
+        if not page.locator('.p-give').count():
+            seen.append(sig(page))
+            tap_yes(page, page.locator('main.pv .pt').first.inner_text().strip())
+        give_back(page, 'main.simple')
+        seen.append(sig(page))
+        check('back, "I want to tell you something": the way was the first screen, the starters, the topics, the carer\'s screen', [x.split(' | ')[0] for x in seen][:3] == ['home', 'person', 'person'] and not seen[-1].startswith('person') and not seen[-1].startswith('home'), str(seen))
+        walk_back(page, seen, '"I want to tell you something"', browser_back=bb)
+        # the needs board opened inside a conversation: Back from it is the answer it was opened from, not the first screen
+        seen = [sig(page)]
+        ask_topic(page, 'food', TEA)
+        seen.append(sig(page))
+        answer(page, 'tea')
+        seen.append(sig(page))
+        more(page)
+        page.locator('main.s-answered [data-act=needs]').first.click()
+        page.wait_for_selector('main.pv[data-kind=needs] .pt')
+        seen.append(sig(page))
+        check('back, the needs board inside a conversation: the way was the first screen, the question, the answer, the board', [x.split(' | ')[0] for x in seen] == ['home', 'card', 'answered', 'person'], str(seen))
+        walk_back(page, seen, 'the needs board opened inside a conversation', browser_back=bb)
+        # the press and hold on the board gives the phone back to that same answer
+        ask_topic(page, 'food', TEA)
+        answer(page, 'tea')
+        more(page)
+        ans = sig(page)
+        page.locator('main.s-answered [data-act=needs]').first.click()
+        page.wait_for_selector('main.pv[data-kind=needs] .pt')
+        hold_exit(page)
+        page.wait_for_selector('main.simple.s-answered')
+        check('back, the needs board inside a conversation: the press and hold gives the phone back to the answer it was opened from', sig(page) == ans, f'{ans} / {sig(page)}')
+        page.locator('[data-act=home]').first.click()
+        page.wait_for_selector('main.simple.home')
         check('back, the first letter and the person\'s turn: no page error', not errors, '; '.join(errors))
         ctx.close()
 
@@ -2077,7 +2132,65 @@ def backstack(browser, url):
         check('back, the visit page: the questions run on the person\'s screen, and the page of answers is the same step as the page they started from', sig(page).split(' | ')[0] == 'visit')
         seen[-1] = sig(page)
         walk_back(page, seen, 'the doctor-visit page', browser_back=bb)
+        # (phase 8) inside the visit questions: Back is the question before, asked again (its answer comes off), then the page
+        page.locator('a[href="#/visit"]').first.click()
+        page.wait_for_selector('#visit-start, #visit-again')
+        page.locator('#visit-again, #visit-start').first.click()
+        page.wait_for_selector('main.pv .pt')
+        q1 = sig(page)
+        tap_yes(page, 'no')
+        page.wait_for_function("() => !document.querySelector('[data-confirm]') && [...document.querySelectorAll('main.pv .pt')].some((e) => e.innerText.trim() === 'so-so')")
+        q2 = sig(page)
+        page.go_back()
+        back1 = sig(page)
+        kept = page.evaluate(KV_GET, 'visit')
+        check('back, the visit questions: from the second question, the phone\'s back is the first question again, and its answer is taken off to be given again', back1 == q1 and q1 != q2 and kept is not None and len(kept.get('answers', [])) == 0, f'{q1} / {q2} / {back1} / {str(kept)[:160]}')
+        page.go_back()
+        check('back, the visit questions: from the first question, the visit page', sig(page).startswith('visit'), sig(page))
+        page.locator('[data-act=home]').first.click()
+        page.wait_for_selector('main.simple.home')
         check('back, the diary and the visit page: no page error', not errors, '; '.join(errors))
+        ctx.close()
+
+    # ---- (phase 8) the full view and the sample family: the same one-step Back on the inner pages they open
+    for mode in ('full', 'demo'):
+        ctx, page, errors = start()
+        if mode == 'full':
+            page.evaluate(KV_PUT, {'settings': {'cloudHelp': False, 'support': 'more', 'welcomed': True, 'firstCard': True, 'howFolded': True, 'view': 'full'}})
+            page.reload()
+            page.wait_for_selector('.layout')
+        else:
+            page.goto(url + '#/demo')
+            page.wait_for_selector('.layout')
+            page.wait_for_timeout(600)
+        desk = sig(page)
+        page.evaluate("location.hash = '#/diary'")
+        page.wait_for_selector('main.simple.diary')
+        diary = sig(page)
+        page.evaluate("location.hash = '#/sudden'")
+        page.wait_for_selector('main.simple.sudden')
+        page.locator('main [data-act=back]').first.click()
+        check(f'back, the {mode} view: from "Something new or sudden?" opened from the diary, Back is the diary, not the first screen', sig(page) == diary, f'{diary} / {sig(page)}')
+        page.locator('main [data-act=back]').first.click()
+        page.wait_for_selector('.layout')
+        check(f'back, the {mode} view: from the diary, Back is the screen it was opened from', sig(page) == desk, f'{desk} / {sig(page)}')
+        page.evaluate("location.hash = '#/passport'")
+        page.wait_for_selector('#pass-look')
+        lines = sig(page)
+        page.locator('#pass-look').click()
+        page.wait_for_selector('#pass-page')
+        page.locator('main [data-act=back]').first.click()
+        page.wait_for_selector('#pass-look')
+        check(f'back, the {mode} view: the passport\'s page goes back to its lines', sig(page) == lines, f'{lines} / {sig(page)}')
+        page.locator('main [data-act=back]').first.click()
+        page.wait_for_selector('.layout')
+        check(f'back, the {mode} view: from the passport\'s lines, Back is the screen it was opened from', sig(page) == desk, f'{desk} / {sig(page)}')
+        page.evaluate("location.hash = '#/visit'")
+        page.wait_for_selector('main.simple.visit')
+        page.locator('main [data-act=back]').first.click()
+        page.wait_for_selector('.layout')
+        check(f'back, the {mode} view: from the visit page, Back is the screen it was opened from', sig(page) == desk, f'{desk} / {sig(page)}')
+        check(f'back, the {mode} view: no page error', not errors, '; '.join(errors))
         ctx.close()
 
 
