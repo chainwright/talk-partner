@@ -684,3 +684,10 @@
   .simple.wrap.practice, .simple.wrap.passport { max-width: none; width: auto; padding: 0; margin: 0; gap: 6px; }
   .simple .page-sec.wrong, .simple .page-sec.wrong li { border-color: #000; }
 }
+
+/* phase 8: the written key word on the how-to box and its folded line; "Left for later" on Home */
+.simple .how .kw { display: block; margin-top: 4px; font-weight: 700; }
+.simple .how-line .how-tip { font-size: 16px; font-weight: 400; margin-left: 4px; }
+.simple .later { display: grid; gap: 8px; }
+.simple .later-item { border: 2px solid var(--accent); background: var(--accent-soft); border-radius: 16px; padding: 12px 14px; display: grid; gap: 8px; color: var(--ink); }
+.simple .later-item b { font-size: 18px; line-height: 1.3; }

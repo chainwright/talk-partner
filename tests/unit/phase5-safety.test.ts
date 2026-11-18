@@ -117,8 +117,8 @@ describe('2b. the boxed line: head, chest, breathing, a sudden weakness, pain ra
     expect(urgentAny([{ q: 'Are you in pain?', label: 'yes' }, { q: 'Where in the legs?', label: 'your left knee' }, { q: 'How bad is the pain?', label: 'a little' }])).toBe(false);
     const main = read('web/src/main.ts');
     expect(main).toContain('if (state.picked && urgentAnswer(c.asked, state.picked.label)) p5.urgent = true;');
-    expect(main).toContain("leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber()) : ''}${turnHtml()}`,");
-    expect(main).toContain("topHtml: p5.urgent && !c.blocked ? urgentBox(callNumber()) : '',");
+    expect(main).toContain("leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}${turnHtml()}`,");
+    expect(main).toContain("topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}`,");
     // the visit page of the nurse's walk: head, quite bad, at night
     const record = { startedAt: NOW, done: true, answers: [{ id: 'pain' as const, q: 'Are you in pain?', label: 'yes', at: NOW }, { id: 'where' as const, q: 'Where in the head?', label: 'top of head', at: NOW }, { id: 'bad' as const, q: 'How bad is the pain?', label: 'quite bad', at: NOW }] };
     const page = visitScreen({ name: 'Frank', record, copied: false, urgentHtml: urgentAny(record.answers) ? urgentBox('911', 'visit-urgent') : '' });
@@ -323,7 +323,12 @@ describe('3. Read aloud: Gemini text-to-speech through Firebase AI Logic, after 
   it('the button on the person\'s screen is a control, not a fourth choice', () => {
     expect(hearButton('ready')).toContain('data-hear="1"');
     expect(hearButton('ready')).not.toContain('class="pt');
-    expect(text(hearButton('failed'))).toBe('The voice did not come. Say it out loud yourself.');
+    // (phase 8, judge round 7: nothing on the person's screen asks them to speak; the carer's screen says what to do)
+    expect(text(hearButton('failed'))).toBe('No sound');
+    expect(hearButton('failed')).toContain('disabled');
+    expect(hearButton('failed')).not.toMatch(/say it|yourself|out loud/i);
+    expect(P5.speak.failed('Frank')).toBe('Read aloud did not work for that card. Read the question out loud to Frank.');
+    expect(P5.speak.failed('')).toBe('Read aloud did not work for that card. Read the question out loud to them.');
   });
 });
 

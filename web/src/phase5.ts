@@ -87,7 +87,8 @@ export function speakSheet(m: { text: string; request: string }): string {
 /** The button on the person's screen, over the choices: a control, not a choice. Not drawn when Read aloud is off or cannot run. */
 export function hearButton(state: 'ready' | 'loading' | 'failed'): string {
   const K = P5.speak;
-  if (state === 'failed') return `<p class="hear-failed" id="hear-failed" role="status">${K.failed}</p>`;
+  // (phase 8: no instruction on the person's screen: the button only says there was no sound; the carer's screen says what to do)
+  if (state === 'failed') return `<button type="button" class="hear failed" id="hear-failed" disabled aria-disabled="true">${SOUND}<span>${K.noSound}</span></button>`;
   return `<button type="button" class="hear" id="hear" data-hear="1"${state === 'loading' ? ' disabled' : ''}>${SOUND}<span>${state === 'loading' ? K.loading : K.again}</span></button>`;
 }
 /** Under a card whose words were sent to be spoken. */

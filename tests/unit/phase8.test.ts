@@ -128,3 +128,57 @@ describe('3. The passport (P1 7, 8, 10) and the therapist page (P1 8, 9)', () =>
     expect(practiceText(prac({ diary, flag: false }))).not.toContain('holds a pain answer');
   });
 });
+
+// ---------------------------------------------------------------- item 5: Home and the person's screen
+import { COPY } from '../../core/copy';
+import { P5 } from '../../core/copy5';
+import { LATER_MS, addLater, cleanLater, laterOf, shownLater } from '../../core/later';
+import { hearButton } from '../../web/src/phase5';
+import { homeScreen, howBlock, laterBlock } from '../../web/src/simple';
+
+describe('5. Home and the person\'s screen (P1 12, 14, 15)', () => {
+  it('"Needs something now?", and the red card says what it is for', () => {
+    expect(COPY.simple.needs).toBe('Needs something now?');
+    expect(P5.sudden.linkSub).toBe('Signs of a new stroke, chest pain, a fall: call.');
+    expect(JSON.stringify(COPY)).not.toContain('Needs it now');
+  });
+  it('the 4 steps hold "Write the key word big", open and folded to one line', () => {
+    expect(howBlock('', true)).toContain('Write the key word big as you say it: TEA?');
+    const folded = howBlock('', false);
+    expect(folded).toContain('Write the key word big.');
+    expect(folded).not.toContain('<li>');
+  });
+  it('Read aloud failed: the person\'s screen asks nothing of them; the line is for the carer', () => {
+    const p = hearButton('failed');
+    expect(p.replace(/<[^>]+>/g, ' ').trim()).toBe('No sound');
+    expect(p).not.toMatch(/yourself|say it/i);
+    expect(P5.speak.failed('')).toMatch(/Read the question out loud to them\.$/);
+  });
+  it('"later": the tile of "We\'re stuck" and "later" to talking now or later keep the question; "a wash later" is an answer, kept nowhere', () => {
+    expect(laterOf({ asked: "Let's try another way.", label: 'later', repair: true, before: 'Would you like tea or coffee?' })).toBe('Would you like tea or coffee?');
+    expect(laterOf({ asked: 'Do you want to tell me now or later?', label: 'later', repair: false, before: null })).toBe('Do you want to tell me now or later?');
+    expect(laterOf({ asked: 'Would you like to talk about how you feel now, or later?', label: 'later', repair: false, before: null })).toBe('Would you like to talk about how you feel now, or later?');
+    expect(laterOf({ asked: 'Would you like a wash now or later?', label: 'later', repair: false, before: null })).toBeNull();
+    expect(laterOf({ asked: "Let's try another way.", label: 'show me', repair: true, before: 'Are you in pain?' })).toBeNull();
+  });
+  it('Home shows the newest two of the last day, each with "Ask it again" and "Done"; the same question once', () => {
+    let xs = addLater([], 'Are you in pain?', NOW - 3_600_000);
+    xs = addLater(xs, 'Would you like tea or coffee?', NOW - 60_000);
+    xs = addLater(xs, 'Are you in pain?', NOW - 30_000);
+    xs = addLater(xs, 'Old one?', NOW - LATER_MS - 1);
+    const shown = shownLater(xs, NOW);
+    expect(shown.map((x) => x.q)).toEqual(['Are you in pain?', 'Would you like tea or coffee?']);
+    const html = laterBlock(shown.map((x, i) => ({ q: x.q, time: '15:30', i })));
+    expect(html).toContain('Left for later: Are you in pain?, 15:30');
+    expect((html.match(/data-act="later-ask"/g) ?? []).length).toBe(2);
+    expect((html.match(/data-act="later-done"/g) ?? []).length).toBe(2);
+    expect(laterBlock([])).toBe('');
+    expect(cleanLater([{ q: 'x?', at: 1 }, { q: '', at: 2 }, { at: 3 }, null, 'y'])).toEqual([{ q: 'x?', at: 1 }]);
+  });
+  it('on Home it stands under how it works and above the topics', () => {
+    const base = { name: '', aboutLink: false, busy: false, error: null, question: '', howOpen: false, topics: [], topicOpen: null, aiTag: '', ai: [], privacy: [], micHtml: '', voiceHtml: '', diaryHtml: '' } as unknown as Parameters<typeof homeScreen>[0];
+    const html = homeScreen({ ...base, laterHtml: laterBlock([{ q: 'Are you in pain?', time: '15:30', i: 0 }]) });
+    expect(html.indexOf('id="how"')).toBeLessThan(html.indexOf('id="later"'));
+    expect(html.indexOf('id="later"')).toBeLessThan(html.indexOf('id="topics"'));
+  });
+});

@@ -74,6 +74,8 @@ export interface HomeModel {
   diaryHtml?: string;
   /** The button "[Name] wants to say something" (web/src/phase4.ts), drawn by main.ts: under the quick needs. */
   turnHtml?: string;
+  /** Phase 8: "Left for later" cards (core/later.ts), under how it works. */
+  laterHtml?: string;
   /** The way to "Something new or sudden?" at the top of "Body & care" (web/src/phase5.ts), drawn by main.ts. */
   bodyHtml?: string;
 }
@@ -93,10 +95,17 @@ const privacyBlock = (lines: string[], extra = '') => `<p class="lock" id="s-pri
 /** "How it works: 4 steps": the highlighted block, or its one folded line. The "wait" line is always under step 3. */
 export function howBlock(name: string, open: boolean): string {
   const H = COPY.simple.how;
-  if (!open) return `<button type="button" class="how-line" id="how" data-act="how" aria-expanded="false"><span>${H.title}</span><span class="tog">${H.show}</span></button>`;
+  if (!open) return `<button type="button" class="how-line" id="how" data-act="how" aria-expanded="false"><span>${H.title} <small class="how-tip">${H.foldTip}</small></span><span class="tog">${H.show}</span></button>`;
   const signs = [SIGN.ask, SIGN.turn, SIGN.point, SIGN.check];
-  const steps = H.steps(name).map((line, i) => `<li><span class="num">${i + 1}</span>${signs[i]}<span class="st">${esc(line)}${i === 2 ? `<b class="wait">${esc(COPY.simple.wait(name))}</b>` : ''}</span></li>`).join('');
+  const steps = H.steps(name).map((line, i) => `<li><span class="num">${i + 1}</span>${signs[i]}<span class="st">${esc(line)}${i === 0 ? `<b class="kw" id="how-keyword">${esc(H.keyword)}</b>` : ''}${i === 2 ? `<b class="wait">${esc(COPY.simple.wait(name))}</b>` : ''}</span></li>`).join('');
   return `<section class="how" id="how" aria-labelledby="how-h"><div class="how-head"><h2 id="how-h">${H.title}</h2><button type="button" class="tog" data-act="how" aria-expanded="true">${H.hide}</button></div><ol>${steps}</ol></section>`;
+}
+
+/** Phase 8: one card for each question left for later, newest first: tap to ask it again, or "Done". */
+export function laterBlock(items: { q: string; time: string; i: number }[]): string {
+  const L = COPY.simple.later;
+  if (!items.length) return '';
+  return `<div class="later" id="later">${items.map((x) => `<div class="later-item" data-later="${x.i}"><p><b>${esc(L.line(x.q, x.time))}</b></p><div class="two-btn"><button type="button" class="btn" data-act="later-ask" data-i="${x.i}">${L.ask}</button><button type="button" class="btn quiet" data-act="later-done" data-i="${x.i}">${L.done}</button></div></div>`).join('')}<p class="tip">${L.note}</p></div>`;
 }
 
 /**
@@ -132,6 +141,7 @@ export function homeScreen(m: HomeModel): string {
     <button type="button" class="btn needs" data-act="needs">${SIGN.grid}<span><b>${S.needs}</b><small>${esc(S.needsSub(m.name))}</small></span></button>
     ${m.turnHtml ?? ''}
     ${howBlock(m.name, m.howOpen)}
+    ${m.laterHtml ?? ''}
   </div>
   <div class="col">
     <div class="stack"><h2 class="sec">${S.topicsHeading}</h2>${topicGrid(m)}</div>

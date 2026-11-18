@@ -331,12 +331,15 @@ const COPY = {
     hope: (name: string) => `When the words won't come, let ${name || 'them'} point.`,
     with: (name: string) => `with ${name}`,
     /** The board for needs that cannot wait: at the top of the first screen, above everything else. */
-    needs: 'Needs it now?',
+    needs: 'Needs something now?',
     needsSub: (name: string) => `Toilet, drink, pain, too hot: one tap, then ${name ? `${name} points` : 'they point'}.`,
     needsShort: 'Quick needs',
     /** The highlighted block at the top: open on the first visit, one line after the first card (remembered). */
     how: {
       title: 'How it works: 4 steps',
+      /** Phase 8 (judge round 7, the SLP's seat): the written key word of supported conversation, inside the box and on its folded line. */
+      keyword: 'Write the key word big as you say it: TEA?',
+      foldTip: 'Write the key word big.',
       hide: 'Hide',
       show: 'Show',
       steps: (name: string) => [
@@ -345,6 +348,13 @@ const COPY = {
         `${name ? `${name} points` : 'They point'} at the answer. No words needed`,
         `Check: "So: tea. Right?" ${name ? `${name} taps` : 'They tap'} Yes or No`,
       ],
+    },
+    /** Phase 8: on Home after "later", until it is asked again or done (core/later.ts). */
+    later: {
+      line: (q: string, time: string) => `Left for later: ${q}, ${time}`,
+      ask: 'Ask it again',
+      done: 'Done',
+      note: 'Kept on this computer for a day. Nothing is sent.',
     },
     /** The one skill that makes a choice card work (SCA: give time). Visible on the steps and on the hand-over screen. */
     wait: (name: string) => `Wait. Count to ten. Don't answer for ${name || 'them'}.`,
@@ -364,7 +374,7 @@ const COPY = {
       ask: "On this computer that AI is online (Google's): the app asks you first, and shows the line that would go.",
       cloudOn: "On this computer that AI is online (Google's), and online help is on.",
       none: 'This copy has no AI set up: a question you type works when it is yes / no or either-or.',
-      offline: 'You are offline, and that AI needs the internet. The topic questions and "Needs it now?" work without it.',
+      offline: 'You are offline, and that AI needs the internet. The topic questions and "Needs something now?" work without it.',
     },
     aboutLink: (name: string) => (name ? `About ${name}` : 'About them'),
     inside: 'How it works inside',
@@ -449,7 +459,7 @@ const COPY = {
       show: 'Ask them to show you, or to write or draw it. Then ask it as a new question.',
       notSure: 'Not sure is an answer too. Ask it another way, or come back to it later.',
       tryNext: (q: string) => `Try: ${q}`,
-      needs: 'Open "Needs it now?"',
+      needs: 'Open "Needs something now?"',
       own: 'Ask it a new way',
       stuck: "We're stuck: other ways to get it across",
       /** One of the three things that stay on the screen after the way out: it opens the ways to show, write or draw it. */
@@ -491,7 +501,7 @@ const COPY = {
     askChoice: 'Or ask it as a choice, with both options in the question: "This, or that?"',
     useOnline: 'Use online help for this question',
     /** A question that needs online help, asked with no connection: said plainly, and what still works. */
-    offline: 'This question needs the internet, and you are offline. The topic questions and "Needs it now?" work without it.',
+    offline: 'This question needs the internet, and you are offline. The topic questions and "Needs something now?" work without it.',
     /** Where this card was made: one sentence for who made it, one for what left. Read from the card, never assumed. */
     made: {
       code: "Made by the app's rules on this computer. No AI used.",

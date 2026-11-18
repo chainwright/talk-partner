@@ -105,7 +105,7 @@ def main():
         check('offline: the page loads again from the kept copy, with the first screen whole', "When the words won't come, let them point." in home and 'How it works: 4 steps' in home and page.locator('.topic').count() == 7, home[:160])
         check('offline: the fonts are the app\'s own, loaded from the kept copy', page.evaluate("document.fonts.check('700 20px \"Instrument Sans\"')"))
         page.wait_for_timeout(1500)
-        check('offline: the AI line says the AI needs the internet, and what works without it', 'You are offline, and that AI needs the internet. The topic questions and "Needs it now?" work without it.' in text(page, '#ai-line'), text(page, '#ai-line'))
+        check('offline: the AI line says the AI needs the internet, and what works without it', 'You are offline, and that AI needs the internet. The topic questions and "Needs something now?" work without it.' in text(page, '#ai-line'), text(page, '#ai-line'))
         page.locator('.topic[data-topic=food]').click()
         page.locator('.tq', has_text='tea or coffee').click()
         page.wait_for_selector('main.simple.card #made-where')

@@ -105,7 +105,8 @@ describe('simple view: "How it works: 4 steps"', () => {
   it('folded: one highlighted line that opens it again, still at the top', () => {
     const html = howBlock('', false);
     expect(html).toMatch(/^<button type="button" class="how-line" id="how" data-act="how" aria-expanded="false">/);
-    expect(text(html)).toBe('How it works: 4 steps Show');
+    // (phase 8: the folded line keeps the written key word of supported conversation)
+    expect(text(html)).toBe('How it works: 4 steps Write the key word big. Show');
     expect(html).not.toContain('<li>');
     const screen = homeScreen(home({ howOpen: false }));
     expect(screen.indexOf('class="how-line"')).toBeLessThan(screen.indexOf('id="topics"'));
@@ -316,7 +317,7 @@ describe("simple view: the carer's screen before handing over", () => {
     const c = await makeCard('What do you want to do this weekend?', { profile: PROFILE, support: 'more', engine: Object.assign(new NullEngine(), { cloudConfigured: true }), allowCloud: false, deviceReady: false });
     const html = cardScreen(cardModel(c, { canAskOnline: true, offline: true }));
     expect(html).toContain('id="offline"');
-    expect(text(html)).toContain('This question needs the internet, and you are offline. The topic questions and "Needs it now?" work without it.');
+    expect(text(html)).toContain('This question needs the internet, and you are offline. The topic questions and "Needs something now?" work without it.');
     expect(html).not.toContain('data-act="sheet"');
     expect(html).toContain(COPY.card.justAsk);
   });

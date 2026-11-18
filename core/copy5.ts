@@ -13,7 +13,8 @@ const counted = (own: string) => (own ? `, counting ${their(own.trim())} own ans
 export const P5 = {
   sudden: {
     link: 'Something new or sudden?',
-    linkSub: 'What to look for, and one button to call.',
+    /** Phase 8 (judge round 7): what it is for, in the words a frightened relative would look for. */
+    linkSub: 'Signs of a new stroke, chest pain, a fall: call.',
     heading: 'Something new or sudden?',
     lead: (number: string) => `If you see any one of these, and it is new or sudden, call ${number} now. Do not wait to see if it passes.`,
     fastHeading: 'FAST',
@@ -53,7 +54,10 @@ export const P5 = {
     hear: 'Hear it',
     again: 'Hear it again',
     loading: 'Getting the voice…',
-    failed: 'The voice did not come. Say it out loud yourself.',
+    /** Phase 8 (judge round 7, the person's seat): on the person's screen nothing asks them to speak; the button says there was no sound. */
+    noSound: 'No sound',
+    /** The carer's side, when the phone comes back: whose task it is, and what to do. */
+    failed: (name: string) => `Read aloud did not work for that card. Read the question out loud to ${name || 'them'}.`,
     sheet: {
       heading: 'Turn on Read aloud?',
       /** The brief's sentence, word for word. */
