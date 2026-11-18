@@ -186,5 +186,11 @@ the table.
 | 163 | `6ee90fc` | `080d620` | 2026-11-17 23:05 | The hosted copy is the build of 43e9293 (18 Nov, 05:02 UTC), phase 4: 20 of 20 served fi… |
 | 164 | `421dae0` | `d0745d6` | 2026-11-17 23:14 | Three findings of a third role-play on the hosted copy (Carol and Frank, 390 px, build 4… |
 | 165 | `985a529` | `0509b78` | 2026-11-17 23:17 | The hosted copy is the build of 421dae0 (18 Nov, 05:14 UTC), the three fixes of the thir… |
+| 166 | `17571ae` | `7fe4323` | 2026-11-18 00:32 | Phase 5, the fixes of judge round 6 (code). The first screen: "Hand over the phone: they… |
+| 167 | `d198eb0` | `135e65a` | 2026-11-18 00:50 | Phase 5 in a browser: three things the browser run found, the family's three pictures, a… |
+| 168 | `de631b1` | `27f8196` | 2026-11-18 01:01 | Phase 5: the needs board with nine tiles fits in the full view too, and the last scripts… |
+| 169 | `9d141b0` | `15657be` | 2026-11-18 01:04 | The documents follow phase 5, and the evidence (devlog/evidence_phase5). README: the fir… |
+| 170 | `08f3e6f` | `99279d1` | 2026-11-18 01:11 | The hosted copy is the build of 9d141b0 (18 Nov, 07:05 UTC), phase 5: 20 of 20 served fi… |
+| 171 | `2a83e97` | `cb47a59` | 2026-11-18 01:17 | No usual-answer hint and no shortcut on a care question |
 
-Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159 and 160–165 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
+Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165 and 166–171 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
