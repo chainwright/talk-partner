@@ -1899,6 +1899,187 @@ def phase5(browser, url, live):
     ctx.close()
 
 
+SIG = """(() => { const m = document.querySelector('#app main'); const t = (s) => ((document.querySelector(s) || {}).innerText || '').replace(/\\s+/g, ' ').trim();
+  return [m ? (m.dataset.screen || (m.classList.contains('pv') ? 'person' : m.className)) : '?', t('#chose-q'), t('#chose-a'), t('main.card .say').slice(0, 70), location.hash.replace(/^#\\/?/, '')].join(' | '); })()"""
+
+
+def backstack(browser, url):
+    """Back goes exactly one step (18 Nov 2026, the owner's walk on his phone: one tap on Back from the second question
+    of a conversation landed on the first screen). Every carer's screen that was on the way is written down; then
+    "Back" is tapped until the first screen, and each screen must be the one before, in reverse. Once with the Back
+    button, once with the browser's own back (the phone's button or gesture); through a topic's tree six steps deep,
+    the needs board, the first letter, "wants to say something", the diary and the doctor-visit page."""
+    host = urlparse(url).hostname
+
+    def start():
+        ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
+        ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else r.abort())
+        page = ctx.new_page()
+        errors = []
+        page.on('pageerror', lambda e: errors.append(str(e)))
+        page.goto(url)
+        page.wait_for_selector('main.simple.home')
+        return ctx, page, errors
+
+    def sig(page):
+        page.wait_for_timeout(200)
+        return page.evaluate(SIG)
+
+    def walk_back(page, seen, label, browser_back=False):
+        """`seen` is every carer's screen on the way, the first screen first, the screen that is on now last."""
+        want = list(reversed(seen[:-1]))
+        got = []
+        for _ in want:
+            if not browser_back and not page.locator('main [data-act=back]').count():
+                got.append('(no Back button)')
+                break
+            if browser_back:
+                page.go_back()
+            else:
+                page.locator('main [data-act=back]').first.click()
+            got.append(sig(page))
+        how = "the browser's own back" if browser_back else 'Back'
+        for k, (w, g) in enumerate(zip(want, got)):
+            check(f'back, {label}: {how} no. {k + 1} of {len(want)} lands on the screen before ({w.split(" | ")[0]}{": " + w.split(" | ")[1] + " " + w.split(" | ")[2] if w.split(" | ")[1] else ""})', w == g, f'wanted {w} / got {g}')
+        check(f'back, {label}: {len(want)} steps back with {how}, never a jump to the first screen before the last step', got == want and all(not g.startswith('home') for g in got[:-1]) and got[-1].startswith('home'), str(got))
+        check(f'back, {label}: the first screen is the bottom: it has no Back button', page.locator('main [data-act=back]').count() == 0)
+
+    DRINK, HOT_COLD, TEA = 'Would you like something to drink?', 'Would you like a hot drink or a cold drink?', 'Would you like tea or coffee?'
+
+    def tree(page):
+        seen = [sig(page)]
+        ask_topic(page, 'food', DRINK)
+        seen.append(sig(page))
+        for label, nxt in (('yes', HOT_COLD), ('hot drink', TEA), ('tea', None)):
+            answer(page, label)
+            seen.append(sig(page))
+            if nxt:
+                page.locator(f'main.s-answered .ask-next[data-q="{nxt}"]').first.click()
+                page.wait_for_selector('main.simple.card #made-where')
+                seen.append(sig(page))
+        return seen
+
+    # ---- the owner's own case, then six steps deep and all the way back, with the Back button
+    ctx, page, errors = start()
+    home = sig(page)
+    ask_topic(page, 'food', DRINK)
+    answer(page, 'yes')
+    answered = sig(page)
+    page.locator(f'#next-q[data-q="{HOT_COLD}"]').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check('back, the case found on the phone: on the carer\'s screen of "Would you like a hot drink or a cold drink?" …', 'hot drink' in sig(page) and sig(page).startswith('card'), sig(page))
+    shot(page, 'r1_01_the_second_question_on_the_carers_screen')
+    page.locator('main [data-act=back]').first.click()
+    now = sig(page)
+    shot(page, 'r1_02_one_tap_on_back_the_answer_before_not_the_first_screen')
+    check('back, the case found on the phone: … one tap on Back lands on "Would you like something to drink? Yes" with its "Next:" button, not on the first screen', now == answered and now.startswith('answered | Would you like something to drink? | Yes') and page.locator(f'#next-q[data-q="{HOT_COLD}"]').count() == 1, now)
+    page.locator('main [data-act=back]').first.click()
+    check('back: from the answer, Back shows the question again on the carer\'s screen (before it is handed over)', sig(page).startswith('card |') and 'something to drink' in sig(page), sig(page))
+    page.locator('main [data-act=back]').first.click()
+    check('back: from the first question, Back lands on the first screen with the topic still open (the topic\'s questions are there)', sig(page) == home and page.locator('.tq', has_text=DRINK).count() == 1, sig(page))
+    seen = tree(page)
+    check('back: six carer\'s screens after the first one (question, answer, question, answer, question, answer: the tree is three questions deep)', len(seen) == 7 and [x.split(' | ')[0] for x in seen] == ['home', 'card', 'answered', 'card', 'answered', 'card', 'answered'], str([x.split(' | ')[0] for x in seen]))
+    walk_back(page, seen, 'a topic\'s tree, six steps deep')
+    # ---- the same with the browser's own back (the phone's back button or gesture)
+    seen = tree(page)
+    walk_back(page, seen, 'a topic\'s tree, six steps deep', browser_back=True)
+    check('back, the tree: no page error', not errors, '; '.join(errors))
+    ctx.close()
+
+    # ---- the needs board (a person's screen: its own way back is the press and hold), then the question it leads to
+    for bb in (False, True):
+        ctx, page, errors = start()
+        seen = [sig(page)]
+        page.locator('main.home [data-act=needs]').first.click()
+        page.wait_for_selector('main.pv[data-kind=needs] .pt')
+        tap_yes(page, 'pain')
+        give_back(page)
+        seen.append(sig(page))
+        page.locator('main.s-answered button[data-q="Where does it hurt?"]').click()
+        page.wait_for_selector('main.simple.card #made-where')
+        seen.append(sig(page))
+        page.locator('[data-act=show]').click()
+        page.wait_for_selector('main.pv[data-kind=body] .pt')
+        page.locator('main.pv .pt', has_text='chest').first.click()
+        tap_yes(page, 'middle')
+        give_back(page)
+        seen.append(sig(page))
+        page.locator('main.s-answered a[href="#/sudden"]').first.click()
+        page.wait_for_selector('main.simple.sudden')
+        seen.append(sig(page))
+        check('back, the needs board: the way was first screen, "pain" on the board, "Where does it hurt?", the answer with the call box, "Something new or sudden?"', [x.split(' | ')[0] for x in seen] == ['home', 'answered', 'card', 'answered', 'sudden'], str(seen))
+        walk_back(page, seen, 'the needs board, the body card and the call list', browser_back=bb)
+        check('back, the needs board: no page error', not errors, '; '.join(errors))
+        ctx.close()
+
+    # ---- the first letter (after "something else"), and "wants to say something"
+    for bb in (False, True):
+        ctx, page, errors = start()
+        seen = [sig(page)]
+        ask_topic(page, 'food', TEA)
+        seen.append(sig(page))
+        answer(page, 'something else')
+        seen.append(sig(page))
+        page.locator('main.s-answered [data-act=letter]').first.click()
+        page.wait_for_selector('main [data-letter=B]')
+        page.locator('main [data-letter=B]').click()
+        page.wait_for_selector('main.pv .pt')
+        first = page.locator('main.pv .pt').first.inner_text().strip()
+        tap_yes(page, first)
+        give_back(page)
+        seen.append(sig(page))
+        check('back, the first letter: the way was first screen, the question, "something else", the word found by its letter', [x.split(' | ')[0] for x in seen] == ['home', 'card', 'answered', 'answered'] and 'Something else' in seen[2], str(seen))
+        walk_back(page, seen, 'the first letter', browser_back=bb)
+        # "wants to say something": the person starts, the carer gets a question, asks it, gets the answer
+        seen = [sig(page)]
+        page.locator('#turn-go').click()
+        tap_yes(page, 'I feel')
+        tap_yes(page, 'good')
+        give_back(page)
+        seen.append(sig(page))
+        walk_back(page, seen, '"wants to say something"', browser_back=bb)
+        check('back, the first letter and the person\'s turn: no page error', not errors, '; '.join(errors))
+        ctx.close()
+
+    # ---- the diary and the doctor-visit page
+    for bb in (False, True):
+        ctx, page, errors = start()
+        seen = [sig(page)]
+        page.locator('#diary-link').click()
+        page.wait_for_selector('main.simple.diary')
+        page.locator('[data-log=drank]').click()
+        page.wait_for_selector('#logged')
+        page.locator('#tab-week').click()
+        page.wait_for_selector('#insights')
+        seen.append(sig(page))
+        check('back, the diary: a log and a change of tab are not steps: the way was first screen, the diary', [x.split(' | ')[0] for x in seen] == ['home', 'diary'], str(seen))
+        walk_back(page, seen, 'the diary', browser_back=bb)
+        seen = [sig(page)]
+        page.locator('#sudden-link').click()
+        page.wait_for_selector('main.simple.sudden')
+        seen.append(sig(page))
+        page.locator('[data-act=sudden-number]').click()
+        page.wait_for_selector('main.about-simple')
+        seen.append(sig(page))
+        check('back, "Something new or sudden?": the way was first screen, the list, About them (to change the number)', [x.split(' | ')[0] for x in seen] == ['home', 'sudden', 'about'], str(seen))
+        walk_back(page, seen, '"Something new or sudden?" and About them', browser_back=bb)
+        seen = [sig(page)]
+        page.locator('a[href="#/visit"]').first.click()
+        page.wait_for_selector('#visit-start')
+        seen.append(sig(page))
+        page.locator('#visit-start').click()
+        tap_yes(page, 'no')
+        for label in ['so-so', 'so-so', 'low', 'my body', 'my tablets']:
+            page.wait_for_function("(l) => !document.querySelector('[data-confirm]') && [...document.querySelectorAll('main.pv .pt')].some((e) => e.innerText.trim() === l)", arg=label)
+            tap_yes(page, label)
+        give_back(page, 'main.visit #visit-page')
+        check('back, the visit page: the questions run on the person\'s screen, and the page of answers is the same step as the page they started from', sig(page).split(' | ')[0] == 'visit')
+        seen[-1] = sig(page)
+        walk_back(page, seen, 'the doctor-visit page', browser_back=bb)
+        check('back, the diary and the visit page: no page error', not errors, '; '.join(errors))
+        ctx.close()
+
+
 SHARE_STUB = """() => { window.__shared = []; Object.defineProperty(Navigator.prototype, 'share', { configurable: true, writable: true, value: function (d) { window.__shared.push(d); return Promise.resolve(); } }); }"""
 NO_SHARE = """() => { try { delete Navigator.prototype.share; } catch (e) {} Object.defineProperty(navigator, 'share', { configurable: true, value: undefined }); }"""
 
@@ -2154,8 +2335,11 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch()
         print(f'browser: Chromium {browser.version} (headless)')
+        if a.only == 'back':
+            backstack(browser, url)
         if a.only in ('phase5', 'phase6'):
             (phase5 if a.only == 'phase5' else phase6)(browser, url, a.live)
+        if a.only in ('phase5', 'phase6', 'back'):
             browser.close()
             bad = results.count(False)
             print(f'\n{len(results) - bad} of {len(results)} checks passed')
@@ -2173,6 +2357,7 @@ def main():
         else:
             phase5(browser, url, a.live)
         phase6(browser, url, a.live)
+        backstack(browser, url)
         if a.dev:
             print('SKIP  offline: --dev (the dev server has no service worker; run against a production build)')
         else:
