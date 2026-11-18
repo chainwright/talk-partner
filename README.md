@@ -624,7 +624,18 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-Last done on 18 Nov 2026, about 02:20 UTC: <https://talk-partner.web.app> serves the build of commit `b9c7602` (the
+Last done on 18 Nov 2026, 03:52 UTC: <https://talk-partner.web.app> serves the build of commit `d04e530` (phase 3:
+the diary, health notes, what stands out, the answer check, the tip, About them in a file, bigger pictures; the
+full view's empty card area in words; the five role-play fixes, the paid tier's data-use line among them). Each of
+the 20 served files has the SHA-256 of the local build, and `/` equals `dist/index.html`. Against it:
+`e2e-simple.py --live` 454/454 (as a phone at 390 px with the navigation, learning, photo and phase 3 runs, a desktop
+and a tablet, and the phone flow again with the connection off; it never presses "Yes" on a sheet there, so neither
+an open question nor the insight lines were sent, and the phase 3 run asked nothing of any other host);
+`pwa-check.py` 30/30; `e2e-needs.mjs` 12/12 (`devlog/evidence_live/`, the files with `d04e530` in the name). Not run
+against this build: `overflow-check.py` on the hosted copy (402/402 on localhost at the same code), `e2e-cloud.mjs`
+and `e2e-ondevice.mjs`, and no wording step against a real model.
+
+The deploy before it, 18 Nov 2026, about 02:20 UTC: <https://talk-partner.web.app> serves the build of commit `b9c7602` (the
 conversation trees, what the app learns, the colour pictures, the family's photos, Back and Home, and the update
 path: "Added on 18 Nov"). Each of the 20 served files has the SHA-256 of the local build. Against it:
 `e2e-simple.py --live` 341/341 (as a phone at 390 px, with the navigation, learning and photo runs, a desktop and a
