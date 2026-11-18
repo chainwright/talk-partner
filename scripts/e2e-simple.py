@@ -1,20 +1,32 @@
 #!/usr/bin/env python3
-"""Browser test of the simple view ("/"), driven as a carer would on a phone, then on a desktop and a tablet.
+"""Browser test of the simple view ("/"), driven as a carer and the person would on a phone, then on a desktop and a tablet.
 
-What is checked: the first screen is the simple one; a ready question makes a card and the screen shows the numbered
-steps, "We're stuck" and where the card was made; the person's card, the tick and the answered screen; the consent
-sheet comes up only for a question that needs online help, with the exact line that would go, and nothing is asked of
-any other host before a yes; quick needs; About them; "See how it works inside" opens the full view, the choice is
-remembered across a reload, and /#/demo is the full view whatever was chosen; the device word (phone, tablet,
-computer); every control at least 24 px, every button at least 44 px, the main button at least 60 px; no page error
-and no sideways overflow on any screen.
+What is checked (design/USER_FIRST.md, design/topics_2026-11-17):
+  - the first visit: the hope line with no default "him", "Needs it now?" at the top, "How it works: 4 steps" open
+    with the visible "wait" line, seven topics, "Or ask your own question" second, one plain AI line, one small
+    privacy line; no video slot, no walkthrough, no About-them form;
+  - a topic opens its questions without moving a tile; a question leads to the carer's screen before handing over
+    ("Say it out loud", "Turn the phone to them", "Wait. Count to ten. Don't answer for them.", what they will see);
+  - the person's screens: "Point to your answer" and the question, no category word, one column of full-width
+    choices; "So: tea. Right?" with "Yes" / "No, something else"; "Thank you. Tea." and "Give the phone back"; a tap
+    on the carer's control does nothing, a press and hold (or Enter) goes back;
+  - after an answer: "Ask another question" is the main button, About them is offered below it, "Today in short";
+    the how-to block is folded to one line from then on, and that is remembered across a reload;
+  - the "something else" path: what to do now, the next question of the topic, and the AI narrowing step, which
+    with online help off brings the consent sheet with the exact line (nothing is asked of any other host);
+  - no dead end after a "yes": pain -> where -> how bad; "is something bothering you" -> what it is about;
+  - the consent sheet for an open question, quick needs, About them (the family's own questions are added, the
+    generic ones stay), "How it works inside" and back, /#/demo, the device word (phone, tablet, computer);
+  - with a production build or the hosted copy (a service worker is there): the same flow with the connection off;
+  - every control at least 24 px, every button at least 44 px, the main button at least 60 px, the person's choices
+    at least 80 px; no page error and no sideways overflow on any screen.
 
 Every request that is not to the page's own host is refused (and counted), so no model answers and nothing reaches
 Firebase: after the "yes" on the sheet the cloud step fails, and the screen must then say that the question may have
 left. With --live (a hosted copy) the "yes" is not pressed at all, so the test sends nothing.
 
-Usage: npm run dev (in another shell), then
-  python3 scripts/e2e-simple.py [--url http://localhost:5179/] [--live]
+Usage: npm run build && npx vite preview (in another shell; or npm run dev with --dev: no service worker there), then
+  python3 scripts/e2e-simple.py [--url http://localhost:5179/] [--live] [--dev]
 Exit code 0 when every check passes, 1 otherwise.
 """
 import argparse
@@ -73,9 +85,33 @@ def hold_exit(page):
     page.locator('#exit').dispatch_event('pointerdown')
 
 
+def ys(page, sel):
+    return page.evaluate("(s) => [...document.querySelectorAll(s)].map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)]; })", sel)
+
+
+def ask_topic(page, topic, question):
+    """From the first screen: open the topic if it is not open, tap the question, wait for the carer's screen."""
+    if not page.locator(f'.tq', has_text=question).count():
+        page.locator(f'.topic[data-topic={topic}]').click()
+    page.locator('.tq', has_text=question).click()
+    page.wait_for_selector('main.simple.card #made-where, #sheet, main.simple.nocard')
+
+
+def answer(page, label):
+    """The carer shows the choices; the person points, says Yes, and gives the phone back."""
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    page.locator('main.pv .pt', has_text=label).first.click()
+    page.wait_for_selector('[data-confirm=yes]')
+    page.locator('[data-confirm=yes]').click()
+    page.wait_for_selector('.p-give')
+    page.locator('.p-give').click()
+    page.wait_for_selector('main.simple.s-answered')
+
+
 def phone(browser, url, live):
     host = urlparse(url).hostname
-    ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA)
+    ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
     outside = []
 
     def route(r):
@@ -90,69 +126,228 @@ def phone(browser, url, live):
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
 
+    # ---- the first visit
     page.goto(url)
     page.wait_for_selector('#app > *')
     check('"/" on a first visit is the simple first screen, not the first-run page and not judge mode', page.locator('main.simple.home').count() == 1 and page.locator('main.welcome, .layout').count() == 0)
     check('the simple view carries its own look (data-view="simple")', page.evaluate('document.documentElement.dataset.view') == 'simple')
     page.wait_for_timeout(7000)  # the device check is asked again after 2 s and 6 s
     home = text(page)
-    check('first screen: one sentence of purpose, the field, "Make a card", three ready questions, quick needs', all(s in home for s in ['Ask a question. Get a card they can point to.', 'Make a card', 'Do you want coffee or tea?', 'Are you in pain?', OPEN_Q, 'Quick needs']), home[:200])
-    check('first screen, on a phone: says "this phone" and never "this computer"', 'Nothing you asked has left this phone.' in home and 'this computer' not in home, home[-400:])
-    check('first screen: where the AI runs is said in one line (rules on this phone; open questions need online help, asked first)', 'Open questions need online help, and the app asks you first.' in home and "On a computer with Chrome's built-in AI" in home)
-    check('first screen: the open ready question says it needs online help', 'Needs online help: the app asks you first' in text(page, '.try'))
-    check('first screen: "See how it works inside" is on it', page.locator('[data-act=inside]').is_visible())
-    check('first screen: nothing technical (no status box, badge, byte count or judge mode)', page.locator('#status, .badge, #bytes, .judge').count() == 0)
-    screen_checks(page, 'first screen')
+    check('first visit: the header is the hope line, with "them" and no default "him"', page.locator('h1#hope').inner_text().strip() == "When the words won't come, let them point." and not any(w in home.split() for w in ('him', 'his', 'He', 'he', 'her', 'she')), page.locator('h1#hope').inner_text())
+    top = {k: ys(page, sel)[0][1] for k, sel in (('needs', '.btn.needs'), ('how', '#how'), ('topics', '#topics'), ('own', '#q'), ('ai', '#ai-line'), ('privacy', '#s-privacy'))}
+    check('first visit, top to bottom: "Needs it now?", how it works, topics, your own question, the AI line, the privacy line', list(top.values()) == sorted(top.values()), str(top))
+    check('first visit: "Needs it now?" is at the top, on the first screenful', top['needs'] < 300 and 'Needs it now?' in home, str(top['needs']))
+    check('first visit: "How it works: 4 steps" is open: four numbered steps, each with a picture', page.locator('section.how h2').inner_text().strip() == 'How it works: 4 steps' and page.locator('section.how li').count() == 4 and page.locator('section.how li svg').count() == 4)
+    check('first visit: the line "Wait. Count to ten. Don\'t answer for them." is visible in the steps', page.locator('section.how .wait').is_visible() and page.locator('section.how .wait').inner_text().strip() == "Wait. Count to ten. Don't answer for them.")
+    check('first visit: no empty video slot and no walkthrough over the screen', page.locator('video, .g-vid, .walk, .dim, [role=dialog]').count() == 0 and 'video' not in home.lower() and 'Watch how' not in home)
+    check('first visit: About them is not offered before the first card', page.locator('a[href="#/about"], .offer').count() == 0)
+    check('first visit: seven topics, closed; "Or ask your own question" comes after them', page.locator('.topic').count() == 7 and page.locator('.tq').count() == 0 and 'Or ask your own question' in home)
+    ai = text(page, '#ai-line')
+    check('first visit: one plain AI line: what the AI is for, and that on this phone it is online and the app asks first', ai == "For a question you type, AI suggests the answers they can point to. The topic questions above do not need it. On this phone that AI is online (Google's): the app asks you first, and shows the line that would go.", ai)
+    check('first visit: one small privacy line, "Nothing you asked has left this phone."; never "this computer"', page.locator('.foot .lock').count() == 1 and text(page, '#s-privacy') == 'Nothing you asked has left this phone.' and 'this computer' not in home and 'the computer' not in home, text(page, '.foot'))
+    check('first visit: "How it works inside" is on it', page.locator('[data-act=inside]').is_visible())
+    check('first visit: nothing technical (no status box, badge, byte count or judge mode), and the word "card" is not used', page.locator('#status, .badge, #bytes, .judge').count() == 0 and ' card' not in home.lower())
+    screen_checks(page, 'first visit')
 
-    # a ready question -> the card is ready
-    page.locator('.try .ready', has_text='coffee or tea').click()
+    # ---- a topic, a question
+    before = ys(page, '.topic')
+    page.locator('.topic[data-topic=food]').click()
+    after = ys(page, '.topic')
+    check('a topic opens its questions in place: six one-tap rows under a lead line', page.locator('.tq').count() == 6 and 'Tap one. Then say it out loud as you turn the phone to them.' in text(page, '.tqs'))
+    check('no tile moves sideways or changes row partner when a topic opens (the panel goes under the row)', [b[0] for b in before] == [x[0] for x in after] and after[0][1] == after[1][1] and after[2][1] == after[3][1] and after[2][1] > after[0][1] + 300, f'{before} {after}')
+    check('every question row is at least 54 px tall', min(r[3] for r in ys(page, '.tq')) >= 54, str(ys(page, '.tq')))
+    screen_checks(page, 'first visit, a topic open')
+    page.locator('.tq', has_text='tea or coffee').click()
     page.wait_for_selector('main.simple.card #made-where')
+
+    # ---- the carer's screen before handing over
     card = text(page)
-    steps = [''.join(x.split()) for x in page.locator('.steplabel').all_inner_texts()]
-    check('card ready: "1 Say this out loud" with the line, then "2 Show them the card" with the card and the main button',
-          steps == ['1Saythisoutloud', '2Showthemthecard'] and 'Do you want coffee or tea? Coffee, tea, or something else?' in card
-          and page.locator('#person .tile').count() == 3 and page.locator('.btn.primary[data-act=show]').inner_text().strip() == 'Show them the card', f'{steps} {card[:200]}')
-    check("card ready: \"We're stuck\" is on this screen, before any answer", page.locator('button[data-act=stuck]').is_visible())
+    steps = [''.join(x.split()) for x in page.locator('.steplabel .num').locator('xpath=..').all_inner_texts()]
+    check('before handing over: "1 Say it out loud" with the line, "2 Turn the phone to them" with the main button',
+          steps == ['1Sayitoutloud', '2Turnthephonetothem'] and 'Would you like tea or coffee? Tea, coffee, or something else?' in card
+          and page.locator('.btn.primary[data-act=show]').inner_text().strip() == 'Show them the choices', f'{steps} {card[:200]}')
+    check('before handing over: "Wait. Count to ten. Don\'t answer for them." is on the screen, in normal size, under the main button',
+          page.locator('#wait-line').is_visible() and text(page, '#wait-line') == "Wait. Count to ten. Don't answer for them." and float(page.evaluate("getComputedStyle(document.querySelector('#wait-line')).fontSize").replace('px', '')) >= 18
+          and ys(page, '#wait-line')[0][1] > ys(page, '[data-act=show]')[0][1])
+    check('before handing over: the carer sees what they will see (the question and three choices), and how to come back', 'What they will see:' in card and page.locator('#person.mini .pt').count() == 3 and '"Give the phone back"' in card and '"Carer: hold here to go back"' in card)
+    check("before handing over: \"We're stuck\" and \"Hide the choices\" are on this screen", page.locator('button[data-act=stuck]').is_visible() and page.locator('button[data-act=less]').is_visible())
     made = page.locator('#made-where')
-    check('card ready: the screen itself says where the card was made (rules on this phone, no AI, nothing sent)',
+    check('before handing over: the screen itself says where the choices were made (rules on this phone, no AI, nothing sent)',
           made.get_attribute('data-maker') == 'code' and made.get_attribute('data-left') == 'nothing' and "Made by the app's rules on this phone. No AI used. Nothing was sent." in text(page, '#made-where'), text(page, '#made-where'))
-    check('card ready: "How was this card made?" leads inside', page.locator('[data-act=inside-card]').is_visible())
-    screen_checks(page, 'card ready')
+    check('before handing over: "How was this made?" leads inside', page.locator('[data-act=inside-card]').is_visible())
+    screen_checks(page, 'before handing over')
     page.locator('button[data-act=stuck]').click()
-    page.wait_for_selector('#person .tiles.repair')
-    check("We're stuck, pressed before any answer: the repair card is up, with the way back to the choices", page.locator('button[data-act=unstuck]').is_visible() and 'another way' in text(page, '#person'))
-    screen_checks(page, "the repair card")
+    page.wait_for_selector('#person .p-tiles.ways')
+    check("We're stuck, pressed before any answer: five other ways, with the way back to the choices", page.locator('button[data-act=unstuck]').is_visible() and page.locator('#person .pt').count() == 5)
+    screen_checks(page, "the other ways, carer's side")
     page.locator('button[data-act=unstuck]').click()
-    page.wait_for_selector('#person .tile >> text=tea')
+    page.wait_for_selector('#person .pt >> text=tea')
 
-    # show the person, they choose and confirm
+    # ---- the person's screens
     page.locator('[data-act=show]').click()
-    page.wait_for_selector('main.person.full .tile')
-    check("the person's card takes the whole screen, white, with three tiles", page.url.endswith('#/person') and page.locator('main.person.full .tile').count() == 3 and page.evaluate('document.documentElement.dataset.view') == 'person')
-    screen_checks(page, "the person's card", primary=False)
-    page.locator('#person .tile', has_text='tea').click()
+    page.wait_for_selector('main.pv .pt')
+    person = text(page)
+    check("the person's screen takes the whole screen, white", page.url.endswith('#/person') and page.evaluate('document.documentElement.dataset.view') == 'person' and page.evaluate("getComputedStyle(document.querySelector('main.pv')).backgroundColor") == 'rgb(255, 255, 255)')
+    check('the person: "Point to your answer", then the question itself, then the choices', person == 'Carer: hold here to go back Point to your answer Would you like tea or coffee? tea coffee something else', person)
+    check('the person: no category word above the choices (no headline, no "drink")', page.locator('main.pv .headline, main.pv h2').count() == 0 and 'drink' not in person.split())
+    tiles = ys(page, 'main.pv .pt')
+    check('the person: one centred column, every choice as wide as the screen and at least 80 px tall, the way out last', len(tiles) == 3 and all(t[2] >= 350 and t[3] >= 80 and t[0] == tiles[0][0] for t in tiles) and tiles[0][1] < tiles[1][1] < tiles[2][1] and page.locator('main.pv .pt').nth(2).inner_text().strip() == 'something else', str(tiles))
+    check('the person: each choice has its picture with the word under it', page.evaluate("[...document.querySelectorAll('main.pv .pt:not(.esc)')].every((t) => { const s = t.querySelector('svg').getBoundingClientRect(); const w = t.querySelector('span').getBoundingClientRect(); return w.top >= s.bottom - 1; })"))
+    check('the person: the question and the choices are one unit (the first choice starts right under the question)', tiles[0][1] - (ys(page, 'main.pv .p-ask')[0][1] + ys(page, 'main.pv .p-ask')[0][3]) <= 28, str(tiles[0]))
+    check('the person: nothing but the choices and the carer\'s labelled control can be pressed', page.locator('main.pv button').count() == 4 and page.locator('main.pv a').count() == 0)
+    check('the person: nothing on the screen is animated', page.evaluate("[...document.querySelectorAll('main.pv, main.pv *')].every((e) => getComputedStyle(e).animationName === 'none')"))
+    screen_checks(page, "the person's choices", primary=False)
+    page.locator('#exit').click()
+    page.wait_for_timeout(300)
+    check("a tap on the carer's control does nothing: it needs a press and hold", page.url.endswith('#/person') and page.locator('main.pv .pt').count() == 3)
+    page.locator('main.pv .pt', has_text='tea').click()
     page.wait_for_selector('[data-confirm=yes]')
+    chk = text(page)
+    check('the check: "So: tea. Right?", the picture with its word, "Yes" above "No, something else"', chk == 'Carer: hold here to go back So: tea. Right? tea Yes No, something else' and page.locator('main.pv .p-pick svg').count() == 1 and ys(page, '[data-confirm=yes]')[0][1] < ys(page, '[data-confirm=change]')[0][1], chk)
+    screen_checks(page, "the person's check", primary=False)
+    page.locator('[data-confirm=change]').click()
+    page.wait_for_selector('main.pv .pt.esc')
+    check('"No, something else" brings the choices back, with the way out among them', page.locator('main.pv .pt').count() == 3 and 'Point to your answer' in text(page))
+    page.locator('main.pv .pt', has_text='tea').click()
     page.locator('[data-confirm=yes]').click()
-    page.wait_for_selector('.answered')
-    hold_exit(page)
+    page.wait_for_selector('.p-give')
+    fin = text(page)
+    give = ys(page, '.p-give')[0]
+    check('the finish: "Thank you. Tea." and one big button, "Give the phone back"; no press-and-hold needed', fin == 'Thank you. Tea. Give the phone back' and page.locator('main.pv button').count() == 1 and page.locator('#exit').count() == 0 and give[3] >= 60 and give[2] >= 350, f'{fin} {give}')
+    screen_checks(page, "the person's finish", primary=False)
+    page.locator('.p-give').click()
     page.wait_for_selector('main.simple.s-answered', timeout=4000)
-    done = text(page)
-    check('answered: "They chose and said yes to tea", "Ask another question", and today\'s answers', 'They chose and said yes to tea' in done and 'Ask another question' in done and 'Today Do you want coffee or tea? tea' in done, done[:300])
-    check('answered: says the answers are kept on this phone only, and where the card was made', 'Answers are kept on this phone only.' in done and page.locator('#made-where').count() == 1)
-    screen_checks(page, 'answered')
 
-    # an open question: the sheet, and nothing asked of any other host before a yes
+    # ---- after an answer
+    done = text(page)
+    btns = page.locator('main.s-answered .col button, main.s-answered .col a.btn')
+    check('after an answer: "They chose, and said yes to: tea", and "Ask another question" is the main button, the first one under the answer',
+          'They chose, and said yes to: tea' in done and btns.first.inner_text().strip() == 'Ask another question' and 'primary' in btns.first.get_attribute('class') and page.locator('main.s-answered .btn.primary').count() == 1, done[:200])
+    check('after the first card: About them is offered, below the main button, never as the main button', page.locator('#invite').is_visible() and "Want their family's names on the questions?" in done and ys(page, '#invite')[0][1] > ys(page, 'main.s-answered .btn.primary')[0][1] and page.locator('#invite .primary').count() == 0)
+    check("after an answer: today's answers, and \"Today in short\" written by the app's rules with a Copy button", 'Today Would you like tea or coffee? tea' in done and page.locator('#today-short[data-source=rules]').count() == 1 and 'They answered 1 question today by pointing, and confirmed each answer.' in text(page, '#today-short') and 'never sent to online help' in text(page, '#today-short') and page.locator('[data-act=copy-short]').is_visible(), text(page, '#today-short') if page.locator('#today-short').count() else done[-300:])
+    check('after an answer: says the answers are kept on this phone only, and where the choices were made', 'Answers are kept on this phone only.' in done and page.locator('#made-where').count() == 1)
+    screen_checks(page, 'after an answer')
+    page.locator('[data-act=invite-later]').click()
+    check('"Not now": the offer goes, and nothing else changes', page.locator('#invite').count() == 0 and 'They chose, and said yes to: tea' in text(page))
     page.locator('[data-act=new]').click()
     page.wait_for_selector('main.simple.home')
+    check('after the first card the how-to block is one highlighted line at the top, and the topic is still open', page.locator('button.how-line').count() == 1 and page.locator('section.how').count() == 0 and text(page, '.how-line') == 'How it works: 4 steps Show' and page.locator('.tq').count() == 6 and ys(page, '.how-line')[0][1] < ys(page, '#topics')[0][1])
+    check('the field does not take the cursor (no keyboard over the topics on a phone)', page.evaluate("document.activeElement && document.activeElement.id") != 'q')
+    check('About them is now one small link at the foot', page.locator('.foot a[href="#/about"]').inner_text().strip() == 'About them →')
+    screen_checks(page, 'returning visit, how-to folded')
+    page.reload()
+    page.wait_for_selector('main.simple.home')
+    check('the fold is remembered across a reload', page.locator('button.how-line').count() == 1 and page.locator('section.how').count() == 0)
+    page.locator('.how-line').click()
+    check('"Show" opens the four steps again, and "Hide" folds them', page.locator('section.how li').count() == 4)
+    page.locator('section.how [data-act=how]').click()
+    check('folded again', page.locator('button.how-line').count() == 1)
+
+    # ---- "something else"
+    ask_topic(page, 'food', 'water, juice or milk')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    four = ys(page, 'main.pv .pt')
+    check('three choices and the way out: still one column, all on a phone screen without scrolling', len(four) == 4 and all(t[0] == four[0][0] for t in four) and four[3][1] + four[3][3] <= 844, str(four))
+    screen_checks(page, "the person's choices, three and the way out", primary=False)
+    page.locator('main.pv .pt.esc').click()
+    page.wait_for_selector('[data-confirm=yes]')
+    check('the way out is checked like any answer: "So: something else. Right?"', 'So: something else. Right?' in text(page))
+    page.locator('[data-confirm=yes]').click()
+    page.wait_for_selector('.p-give')
+    page.locator('.p-give').click()
+    page.wait_for_selector('main.simple.s-answered #after-out')
+    out = text(page)
+    check('after "something else": the screen says so, and "Ask another question" is still the main button', 'They chose: something else' in out and page.locator('main.s-answered .btn.primary').inner_text().strip() == 'Ask another question')
+    check('after "something else": what to do now, never a dead end (show or write it; the next question of the topic; the needs board; a new way; other ways)',
+          'None of those fitted. What now:' in out and 'Ask them to show you, or to write or draw it.' in out and page.locator('#after-out [data-q]').inner_text().strip() == 'Try: Would you like some more?'
+          and all(page.locator(f'#after-out [data-act={a}]').is_visible() for a in ('needs', 'own', 'stuck')), out[:400])
+    check('after "something else": an AI can narrow it down, and the screen says that on this phone it uses online help and asks first', page.locator('#narrow').is_visible() and text(page, '#narrow') == 'Narrow it down: AI suggests the next choices' and text(page, '#narrow-where') == 'This uses online help: the app asks you first, and shows the line that would go.', text(page, '#after-out')[:300])
+    screen_checks(page, 'after "something else"')
+    n0 = len(outside)
+    page.locator('#narrow').click()
+    page.wait_for_selector('#sheet')
+    line = page.locator('#sheet-line').inner_text().strip()
+    check('the narrowing step with online help off: the consent sheet, with the exact line (the question and what did not fit, nothing they chose)', line == 'Partner asks: Would you like water, juice or milk? They did not want: water, juice, milk. What else could it be? Give two or three broader kinds of answer to narrow it down.', line)
+    check('asking for it sent nothing to any other host', len(outside) == n0, str(outside[n0:]))
+    screen_checks(page, 'the consent sheet for a narrowing step')
+    page.locator('[data-act=sheet-no]').click()
+    page.wait_for_selector('#sheet', state='detached')
+    check('"No": no narrowing card, nothing sent, and the screen says what to do', page.locator('main.simple.nocard').count() == 1 and 'Nothing was sent.' in text(page) and len(outside) == n0)
+    page.locator('[data-act=new]').click()
+    page.wait_for_selector('main.simple.home')
+
+    # ---- no dead end after a "yes"
+    ask_topic(page, 'body', 'Are you in pain?')
+    answer(page, 'yes')
+    check('"Are you in pain?" yes: the next question is one tap away ("Where does it hurt?")', page.locator('#follow [data-q]').all_inner_texts() == ['Where does it hurt?'])
+    screen_checks(page, 'after a yes, with the next question')
+    page.locator('#follow [data-q]').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    check('the body map: two parts and "somewhere else", each with its picture', page.locator('main.pv .pt').count() == 3 and page.locator('main.pv .pt svg').count() == 3 and 'Where does it hurt?' in text(page))
+    page.locator('main.pv .pt', has_text='somewhere else').click()
+    page.locator('main.pv .pt', has_text='somewhere else').click()
+    page.wait_for_selector('main.pv .pt >> text=arms')
+    page.locator('main.pv .pt', has_text='arms').click()
+    page.wait_for_selector('main.pv .pt >> text=your left arm')
+    check('the body map names left and right: "your left arm", "your right arm"', page.locator('main.pv .pt').all_inner_texts()[:2] == ['your left arm', 'your right arm'])
+    page.locator('main.pv .pt', has_text='somewhere else').click()
+    page.wait_for_selector('main.pv .pt >> text=hands')
+    page.locator('main.pv .pt', has_text='hands').click()
+    page.locator('[data-confirm=yes]').click()
+    page.locator('.p-give').click()
+    page.wait_for_selector('main.simple.s-answered')
+    check('a part with two sides: "Which side? Left or right?" and "How bad is the pain?" are offered next', page.locator('#follow [data-q]').all_inner_texts() == ['Which side? Left or right?', 'How bad is the pain?'], str(page.locator('#follow [data-q]').all_inner_texts()))
+    page.locator('#follow [data-q]', has_text='How bad').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check('the pain scale: three steps and "not sure", made by the rules', page.locator('#person .pt').all_inner_texts() == ['a little', 'quite bad', 'very bad', 'not sure'] and page.locator('#made-where').get_attribute('data-maker') == 'code', str(page.locator('#person .pt').all_inner_texts()))
+    screen_checks(page, 'the pain scale, before handing over')
+    page.locator('[data-act=new]').click()
+    ask_topic(page, 'body', 'too hot or too cold')
+    check('hot or cold has a neutral answer: hot, cold, just right', page.locator('#person .pt').all_inner_texts() == ['hot', 'cold', 'just right', 'something else'], str(page.locator('#person .pt').all_inner_texts()))
+    page.locator('[data-act=new]').click()
+    ask_topic(page, 'feel', 'Is something bothering you?')
+    answer(page, 'yes')
+    check('Feelings, after "yes": no dead end ("What is bothering you? Your body, people, or plans?")', page.locator('#follow [data-q]').all_inner_texts() == ['What is bothering you? Your body, people, or plans?'])
+    page.locator('#follow [data-q]').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check('that question is one idea with three answers and a way out, made by the rules', page.locator('#person .pt').all_inner_texts() == ['body', 'people', 'plans', 'something else'] and page.locator('#made-where').get_attribute('data-maker') == 'code')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    hold_exit(page)
+    page.wait_for_selector('main.simple.card', timeout=4000)
+    check("a press and hold on the carer's control goes back before any answer", page.locator('main.simple.card').count() == 1)
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv #exit')
+    page.locator('#exit').focus()
+    page.keyboard.press('Enter')
+    page.wait_for_selector('main.simple.card', timeout=4000)
+    check('with a keyboard, Enter on it goes back too', page.locator('main.simple.card').count() == 1)
+    page.locator('[data-act=new]').click()
+    ask_topic(page, 'people', 'call someone')
+    answer(page, 'yes')
+    check('"Do you want to call someone?" yes, nobody in About them: a field for one name', page.locator('#who #who-name').is_visible())
+    page.fill('#who-name', 'Tyler')
+    page.locator('#who button').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check('the name becomes one yes / no question, made by the rules', 'Would you like to call Tyler? Yes, no, or not sure?' in text(page) and page.locator('#made-where').get_attribute('data-maker') == 'code')
+    page.locator('[data-act=new]').click()
+    page.wait_for_selector('main.simple.home')
+
+    # ---- an open question: the sheet, and nothing asked of any other host before a yes
     before = len(outside)
-    page.locator('.try .ready', has_text='this weekend').click()
+    page.locator('.topic[data-topic=plans]').click()
+    check('the one open question in the topics is tagged "needs internet"', text(page, '#ai-tag') == 'needs internet' and page.locator('.tag.net').count() == 1)
+    page.locator('.tq', has_text='this weekend').click()
     page.wait_for_selector('#sheet')
     sheet = text(page, '#sheet')
     check('an open question on a phone with online help off brings up the consent sheet (a dialog over an inert screen)',
           page.locator('#sheet[role=dialog][aria-modal=true]').count() == 1 and page.locator('main.simple[inert]').count() == 1 and page.evaluate("document.activeElement && document.activeElement.id") == 'sheet-h')
     check('the sheet shows the exact line that would go', page.locator('#sheet-line').inner_text().strip() == f'Partner asks: {OPEN_Q}', page.locator('#sheet-line').inner_text())
     check('the sheet says what is sent (the line and the fixed instructions; names can be missed), what is never sent, and the data use; never "nothing else"',
-          all(s in sheet for s in ["fixed instructions", 'can be missed', 'leave out health details', 'Never sent:', 'who lives at home', "Google's free tier: Google may use what is sent", "Google's Gemini, through Firebase AI Logic", 'This phone has no AI of its own']) and 'nothing else' not in sheet.lower() and 'only the question' not in sheet.lower(), sheet)
+          all(s in sheet for s in ["fixed instructions", 'can be missed', 'leave out health details', 'Never sent:', 'who lives at home', 'the answers they chose', "Google's free tier: Google may use what is sent", "Google's Gemini, through Firebase AI Logic", 'This phone has no AI of its own']) and 'nothing else' not in sheet.lower() and 'only the question' not in sheet.lower(), sheet)
     yes = page.locator('[data-act=sheet-yes]').bounding_box()
     no = page.locator('[data-act=sheet-no]').bounding_box()
     check('the sheet: "Yes" and "No" are the same size, at least 60 px tall, and both are on the screen without scrolling', abs(yes['height'] - no['height']) < 1 and yes['height'] >= 60 and abs(yes['width'] - no['width']) < 1 and no['y'] + no['height'] <= 844, f"{yes} {no}")
@@ -184,26 +379,30 @@ def phone(browser, url, live):
         page.locator('[data-act=new]').click()
         page.wait_for_selector('main.simple.home')
         foot = text(page, '.foot')
-        check('the first screen then no longer says "Nothing you asked has left this phone"; online help shows as on', 'Nothing you asked has left' not in foot and ('may have left this phone' in foot if maybe else 'No question has left this phone.' in foot) and 'Uses online help' in text(page, '.try'), foot)
-
+        check('the first screen then no longer says "Nothing you asked has left this phone"; the AI line says online help is on', 'Nothing you asked has left' not in foot and ('may have left this phone' in foot if maybe else 'No question has left this phone.' in foot) and 'online help is on' in text(page, '#ai-line'), foot)
     else:
         page.locator('[data-act=new]').click()
         page.wait_for_selector('main.simple.home')
         check('--live: "Yes" was never pressed, so this run asked nothing of any other host for a card', len(outside) == before, str(outside[before:]))
 
-    # quick needs
-    page.locator('[data-act=needs]').click()
-    page.wait_for_selector('main.person.full .tiles.needs')
-    check('quick needs: one tap opens the board full screen, nine tiles', page.url.endswith('#/needs') and page.locator('#person .tile').count() == 9)
-    screen_checks(page, 'quick needs board', primary=False)
-    hold_exit(page)
-    page.wait_for_selector('main.simple.card')
-    check('back from the board: the card screen, made by rules, nothing sent', page.locator('#made-where').get_attribute('data-maker') == 'code' and page.locator('#person .tiles.needs').count() == 1)
-    screen_checks(page, 'quick needs, partner side')
+    # ---- quick needs
+    page.locator('.btn.needs').click()
+    page.wait_for_selector('main.pv .p-tiles.board')
+    board = ys(page, 'main.pv .pt')
+    check('"Needs it now?": one tap opens the board full screen: "Point to your answer", "What do you need?", eight needs two to a row and the way out', page.url.endswith('#/needs') and len(board) == 9 and board[0][1] == board[1][1] and board[0][0] < board[1][0] and board[8][2] >= 350 and 'Point to your answer What do you need?' in text(page), str(board[:3]))
+    screen_checks(page, 'the needs board', primary=False)
+    page.locator('main.pv .pt', has_text='toilet').click()
+    page.locator('[data-confirm=yes]').click()
+    page.wait_for_selector('.p-give')
+    check('a need is checked and finished like any answer: "Thank you. Toilet."', text(page) == 'Thank you. Toilet. Give the phone back', text(page))
+    page.locator('.p-give').click()
+    page.wait_for_selector('main.simple.s-answered')
+    check('back from the board: the carer sees the need and what to do ("Go now. The rest can wait.")', 'They chose, and said yes to: toilet' in text(page) and 'Go now. The rest can wait.' in text(page) and page.locator('#made-where').get_attribute('data-maker') == 'code')
+    screen_checks(page, 'after a need')
 
-    # About them
+    # ---- About them
     page.locator('[data-act=new]').click()
-    page.locator('a.offer').click()
+    page.locator('.foot a[href="#/about"]').click()
     page.wait_for_selector('main.about-simple')
     about = text(page)
     check('About them: four rows, "Everything here stays on this phone.", nothing required', page.locator('.rowhead').count() == 4 and 'Everything here stays on this phone.' in about and page.locator('input').count() == 0, about[:200])
@@ -217,18 +416,31 @@ def phone(browser, url, live):
     page.wait_for_timeout(500)
     screen_checks(page, 'About them, a row open')
     page.locator('.rowhead[data-row=foods]').click()
+    page.fill('textarea[data-list=foods]', 'pot roast\nchili')
     check('About them: the rows show what was typed', 'Frank · Carol' in text(page) and 'Jenny (daughter)' in text(page), text(page)[:300])
+    page.wait_for_timeout(500)
     page.locator('a.btn.primary').click()
     page.wait_for_selector('main.simple.home')
-    check('the first screen now names the person ("with Frank", "About Frank")', 'with Frank' in text(page) and 'About Frank' in text(page))
-    page.locator('.try .ready', has_text='coffee or tea').click()
+    home = text(page)
+    check('the first screen now names the person: "let Frank point", "with Frank", "Show Frank the choices", "About Frank"', "When the words won't come, let Frank point." in home and 'with Frank' in home and 'Show Frank the choices' in home and 'About Frank →' in home, home[:200])
+    if not page.locator('.tq', has_text='tea or coffee').count():
+        page.locator('.topic[data-topic=food]').click()
+    food = page.locator('.tq > span:first-child').all_inner_texts()
+    check("the family's own question is added under the generic one, never in its place: tea or coffee, then pot roast or chili (tagged \"Frank's own\")", 'Would you like tea or coffee?' in food and food.index('Would you like pot roast or chili?') == food.index('Would you like tea or coffee?') + 1 and len(food) == 7 and text(page, '.tq .tag') == "Frank's own", str(food))
+    page.locator('.topic[data-topic=people]').click()
+    people = page.locator('.tq > span:first-child').all_inner_texts()
+    check('People: one yes / no "call Jenny?" row under "Do you want to call someone?", which stays', people[people.index('Do you want to call someone?') + 1] == 'Would you like to call Jenny?' and 'Would you like a visitor today?' in people and 'Would you like to see Jenny?' in people, str(people))
+    screen_checks(page, 'first screen with a name, People open')
+    page.locator('.tq', has_text='call Jenny').click()
     page.wait_for_selector('main.simple.card #made-where')
-    check('the card screen names the person: "Show Frank the card"', text(page).count('Show Frank the card') == 2)
+    card = text(page)
+    check('the carer\'s screen names the person: "Turn the phone to Frank", "Show Frank the choices", "Don\'t answer for Frank."', 'Turn the phone to Frank' in card and page.locator('[data-act=show]').inner_text().strip() == 'Show Frank the choices' and "Wait. Count to ten. Don't answer for Frank." in card and 'What Frank will see:' in card, card[:300])
+    check('the call question is a yes / no about that one person', page.locator('#person .pt').all_inner_texts() == ['yes', 'no', 'not sure'] and 'Would you like to call Jenny?' in text(page, '#person'))
 
-    # inside, and back; remembered
+    # ---- inside, and back; remembered
     page.locator('[data-act=inside-card]').click()
     page.wait_for_selector('.layout #made')
-    check('"How was this card made?" opens the full view on the same card, its fold open', page.evaluate("document.querySelector('#made').open") is True and page.locator('#result .badge').count() == 1 and page.evaluate('document.documentElement.dataset.view') == 'full')
+    check('"How was this made?" opens the full view on the same card, its fold open', page.evaluate("document.querySelector('#made').open") is True and page.locator('#result .badge').count() == 1 and page.evaluate('document.documentElement.dataset.view') == 'full')
     check('the full view has the way back on it ("Simple view")', page.locator('.top nav .pill').is_visible() and 'Simple view' in text(page, '.top'))
     page.reload()
     page.wait_for_selector('#app > *')
@@ -243,10 +455,15 @@ def phone(browser, url, live):
     page.wait_for_selector('#app > *')
     check('"Simple view" goes back, and that is remembered too; About them is kept', page.locator('main.simple.home').count() == 1 and 'with Frank' in text(page))
 
-    # judge mode by its address
+    # judge mode by its address: the full view, with the person's card as it was
     page.goto(url + '#/demo')
     page.wait_for_selector('#result > .badge-line')
     check('/#/demo opens the full judge view directly, whatever view was chosen', page.locator('.layout').count() == 1 and page.locator('.chipgroups').count() == 1 and 'Leave judge mode' in text(page, '.top'))
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.person.full .tile')
+    check("judge mode keeps the full view's own card for the person (its headline, its tiles)", page.locator('main.person.full.pv').count() == 0 and page.locator('main.person.full .headline').count() == 1)
+    hold_exit(page)
+    page.wait_for_selector('.layout', timeout=4000)
     page.locator('.top nav .pill').click()
     page.wait_for_selector('main.simple.home')
     check('"Simple view" in judge mode leaves it: the simple first screen, with the family\'s own About them', 'with Frank' in text(page))
@@ -258,9 +475,60 @@ def phone(browser, url, live):
     ctx.close()
 
 
+def offline(browser, url):
+    """With the service worker of a production build: the same flow with the connection off."""
+    ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='allow')
+    page = ctx.new_page()
+    errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
+    try:
+        page.wait_for_function('navigator.serviceWorker && navigator.serviceWorker.controller !== null', timeout=15000)
+        sw = True
+    except Exception:
+        sw = False
+    check('offline: this copy has a service worker that controls the page (a production build)', sw)
+    if not sw:
+        ctx.close()
+        return
+    page.wait_for_timeout(1500)
+    ctx.set_offline(True)
+    page.reload()
+    page.wait_for_selector('main.simple.home', timeout=15000)
+    check('offline: the first screen opens with no connection (first visit: how-to open, seven topics)', page.locator('section.how li').count() == 4 and page.locator('.topic').count() == 7)
+    page.wait_for_timeout(1200)
+    check('offline: the AI line says that AI needs the internet', 'You are offline, and that AI needs the internet.' in text(page, '#ai-line'), text(page, '#ai-line'))
+    screen_checks(page, 'offline, first screen')
+    ask_topic(page, 'food', 'tea or coffee')
+    check('offline: a topic question makes its choices by the rules', page.locator('#made-where').get_attribute('data-maker') == 'code' and page.locator('#person .pt').count() == 3)
+    answer(page, 'coffee')
+    check('offline: topic -> question -> the person points -> check -> finish -> give back: the carer sees the answer', 'They chose, and said yes to: coffee' in text(page))
+    page.locator('[data-act=new]').click()
+    page.locator('.btn.needs').click()
+    page.wait_for_selector('main.pv .p-tiles.board')
+    check('offline: "Needs it now?" opens', page.locator('main.pv .pt').count() == 9)
+    hold_exit(page)
+    page.wait_for_selector('main.simple.card', timeout=4000)
+    page.locator('[data-act=new]').click()
+    page.locator('.foot a[href="#/about"]').click()
+    page.wait_for_selector('main.about-simple')
+    check('offline: About them opens', page.locator('.rowhead').count() == 4)
+    page.locator('a.btn.primary').click()
+    page.wait_for_selector('main.simple.home')
+    page.fill('#q', OPEN_Q)
+    page.locator('#make').click()
+    page.wait_for_selector('main.simple.nocard')
+    check('offline: a question that needs online help gets a clear "needs the internet" state, and no sheet', page.locator('#offline').is_visible() and 'This question needs the internet, and you are offline.' in text(page) and page.locator('#sheet, [data-act=sheet]').count() == 0, text(page)[:200])
+    screen_checks(page, 'offline, needs the internet', primary=False)
+    ctx.set_offline(False)
+    check('offline: no page error', not errors, '; '.join(errors))
+    ctx.close()
+
+
 def words(browser, url, ua, word, label, width, height):
     host = urlparse(url).hostname
-    ctx = browser.new_context(viewport={'width': width, 'height': height}, **({'user_agent': ua} if ua else {}))
+    ctx = browser.new_context(viewport={'width': width, 'height': height}, service_workers='block', **({'user_agent': ua} if ua else {}))
     ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else r.abort())
     page = ctx.new_page()
     errors = []
@@ -270,14 +538,16 @@ def words(browser, url, ua, word, label, width, height):
     page.wait_for_timeout(7000)
     home = text(page)
     others = [w for w in ('phone', 'tablet', 'computer') if w != word]
-    check(f'{label}: the first screen says "this {word}"', f'Nothing you asked has left this {word}.' in home and not any(f'this {o}' in home for o in others), home[-300:])
-    page.locator('.try .ready', has_text='coffee or tea').click()
-    page.wait_for_selector('#made-where')
-    check(f'{label}: the card says "Made by the app\'s rules on this {word}"', f"Made by the app's rules on this {word}." in text(page, '#made-where'))
-    screen_checks(page, f'{label}, card ready')
+    check(f'{label}: the first screen says "this {word}" and "Turn the {word} to them"', f'Nothing you asked has left this {word}.' in home and f'Turn the {word} to them and say it out loud' in home and not any(f'this {o}' in home or f'the {o} ' in home for o in others), home[-300:])
+    screen_checks(page, f'{label}, first screen')
+    ask_topic(page, 'food', 'tea or coffee')
+    check(f'{label}: the carer\'s screen says "Made by the app\'s rules on this {word}" and "Turn the {word} to them"', f"Made by the app's rules on this {word}." in text(page, '#made-where') and f'Turn the {word} to them' in text(page))
+    screen_checks(page, f'{label}, before handing over')
+    answer(page, 'tea')
+    check(f'{label}: the finish button said "Give the {word} back", and the carer sees the answer', 'They chose, and said yes to: tea' in text(page) and f'this {word} only' in text(page))
+    screen_checks(page, f'{label}, after an answer')
     page.locator('[data-act=new]').click()
-    page.locator('.try .ready', has_text='this weekend').click()
-    page.wait_for_selector('#sheet, #made-where')
+    ask_topic(page, 'plans', 'this weekend')
     if page.locator('#sheet').count():
         check(f'{label}: the sheet says "This {word} has no AI of its own"', f'This {word} has no AI of its own' in text(page, '#sheet'))
         b = page.locator('[data-act=sheet-no]').bounding_box()
@@ -295,6 +565,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--url', default='http://localhost:5179/')
     ap.add_argument('--live', action='store_true', help='a hosted copy: never press "Yes" on the sheet, so nothing is sent')
+    ap.add_argument('--dev', action='store_true', help='the dev server: it has no service worker, so the offline run is left out (and said so)')
     a = ap.parse_args()
     url = a.url if a.url.endswith('/') else a.url + '/'
     print(f'url: {url}')
@@ -302,6 +573,10 @@ def main():
         browser = p.chromium.launch()
         print(f'browser: Chromium {browser.version} (headless)')
         phone(browser, url, a.live)
+        if a.dev:
+            print('SKIP  offline: --dev (the dev server has no service worker; run against a production build)')
+        else:
+            offline(browser, url)
         words(browser, url, None, 'computer', 'desktop, 1440 x 900', 1440, 900)
         words(browser, url, TABLET_UA, 'tablet', 'tablet, 800 x 1280', 800, 1280)
         browser.close()

@@ -38,8 +38,10 @@ const TEXT = [
   ['ink', 'warn-soft', 'where the card was made (may have left)'],
   ['warn', 'bg', 'the safety line, an error'],
   ['warn', 'panel', 'the safety line on a panel'],
-  ['ink', 'line', 'a button that is off ("Make a card" while a card is being made)'],
-];
+  ['ink', 'line', 'a button that is off (the main button while the choices are being found)'],
+  ['how-ink', 'how-bg', '"How it works: 4 steps" (the steps, the folded line) and the "Wait. Count to ten." line'],
+  ['how-bg', 'how-ink', 'the step numbers in that block'],
+  ];
 const UI = [
   ['field', 'bg', 'the edge of every button, field and row'],
   ['field', 'panel', 'the edge of a field inside a row or the sheet'],
@@ -56,9 +58,20 @@ const UI = [
   ['muted', 'panel', 'the arrow in a ready question'],
   ['ink', 'bg', 'the focus ring of the main button'],
   ['ink', 'panel', 'the focus ring on the sheet'],
+  ['how-edge', 'bg', 'the edge of the how-to block, its folded line and the "wait" line'],
+  ['how-ink', 'how-bg', 'the step pictures, the sign in the "wait" line, the focus ring inside the block'],
+  ['accent', 'panel', 'the topic signs, the spark of the AI line and of the narrowing button'],
+  ['accent', 'accent-soft', 'the sign of an open topic'],
+  ['muted', 'panel', 'the "?" sign after the way out'],
+  ['field', 'panel', 'the edge of the "needs internet" tag'],
 ];
 // the person's card: a white sheet in every theme (web/src/styles.css, .person)
-const CARD = [['#0f141a', '#ffffff', 'card ink on the card'], ['#4a5361', '#ffffff', 'card muted ("something else") on the card']];
+const CARD = [
+  ['#0f141a', '#ffffff', 'the person\'s screen: the instruction, the question, the choices, "No, something else"'],
+  ['#4a5361', '#ffffff', 'the person\'s screen: "Carer: hold here to go back", the edge of the way out'],
+  ['#0b6e4f', '#ffffff', 'the person\'s screen: "Yes" and its tick, the finish tick, the edge of "Yes"'],
+  ['#ffffff', '#0b6e4f', 'the person\'s screen: "Give the phone back"'],
+];
 
 let bad = 0;
 const lines = ['# Contrast of the simple view', '', `Read from \`web/src/simple.css\` by \`scripts/contrast-check.mjs\`. Text needs 4.5:1, a control edge or sign 3:1 (WCAG 2.2, 1.4.3 and 1.4.11).`, ''];

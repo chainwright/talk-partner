@@ -2,7 +2,7 @@
 """Screenshots of the simple view ("/"), every screen, at 390 x 844 (a phone) and 1440 x 900 (a desktop).
 
 The phone context reports a phone (so the copy says "this phone"), the desktop one a computer. Light is the default
-look; the first screen and the card-ready screen are also saved with the system set to dark. Makes code cards only:
+look; the first visit and the screen before handing over are also saved with the system set to dark. Makes code cards only:
 every request that is not to the page's own host is refused, so nothing reaches Firebase and no model answers.
 
 Usage: npm run dev (in another shell), then
@@ -33,46 +33,64 @@ def run(browser, url, out, tag, width, height, scheme, phone, only=None):
         if only and name not in only:
             return
         page.evaluate('document.fonts.ready')
-        page.wait_for_timeout(1300)  # a new card rises tile by tile: wait for the last one
+        page.wait_for_timeout(600)
         suffix = '' if scheme == 'light' else '_dark'
         page.screenshot(path=str(out / f"{tag}{suffix}_{n[0]:02d}-{name}.png"), full_page=full)
 
     page.goto(url)
     page.wait_for_selector('main.simple.home')
     page.wait_for_timeout(7000)  # the device check is asked again after 2 s and 6 s; the lines that depend on it stand after that
-    shot('first-screen', full=True)
-    page.locator('.try .ready', has_text='coffee or tea').click()
+    shot('first-visit', full=True)
+    page.locator('.topic[data-topic=food]').click()
+    shot('topic-open', full=True)
+    page.locator('.tq', has_text='tea or coffee').click()
     page.wait_for_selector('main.simple.card #made-where')
-    shot('card-ready', full=True)
-    if not only or len(only) > 2:
+    shot('before-handing-over', full=True)
+    if not only:
         page.locator('[data-act=show]').click()
-        page.wait_for_selector('main.person.full .tile')
-        shot('person-card')
-        page.locator('#person .tile', has_text='tea').click()
+        page.wait_for_selector('main.pv .pt')
+        shot('person-choices')
+        page.locator('main.pv .pt', has_text='tea').click()
         page.wait_for_selector('[data-confirm=yes]')
         shot('person-check')
         page.locator('[data-confirm=yes]').click()
-        page.wait_for_selector('.answered')
-        page.locator('#exit').dispatch_event('pointerdown')
+        page.wait_for_selector('.p-give')
+        shot('person-finish')
+        page.locator('.p-give').click()
         page.wait_for_selector('main.simple.s-answered', timeout=4000)
-        shot('answered', full=True)
+        shot('after-an-answer', full=True)
         page.locator('[data-act=new]').click()
         page.wait_for_selector('main.simple.home')
-        page.locator('.try .ready', has_text='this weekend').click()
+        shot('returning-visit', full=True)
+        page.locator('.tq', has_text='water, juice or milk').click()
+        page.wait_for_selector('main.simple.card #made-where')
+        page.locator('[data-act=show]').click()
+        page.wait_for_selector('main.pv .pt')
+        shot('person-three-choices')
+        page.locator('main.pv .pt.esc').click()
+        page.locator('[data-confirm=yes]').click()
+        page.locator('.p-give').click()
+        page.wait_for_selector('#after-out')
+        shot('after-something-else', full=True)
+        page.locator('[data-act=recap]').click()
+        shot('going-over-the-answers', full=True)
+        page.locator('[data-act=new]').click()
+        page.wait_for_selector('main.simple.home')
+        page.locator('.topic[data-topic=plans]').click()
+        page.locator('.tq', has_text='this weekend').click()
         page.wait_for_selector('#sheet')
         shot('online-help-sheet')
         page.locator('[data-act=sheet-no]').click()
         page.wait_for_selector('main.simple.nocard')
         shot('no-card', full=True)
         page.locator('[data-act=new]').click()
-        page.locator('[data-act=needs]').click()
-        page.wait_for_selector('main.person.full .tiles.needs')
-        shot('quick-needs')
+        page.locator('.btn.needs').click()
+        page.wait_for_selector('main.pv .p-tiles.board')
+        shot('needs-board')
         page.locator('#exit').dispatch_event('pointerdown')
         page.wait_for_selector('main.simple.card')
-        shot('quick-needs-back', full=True)
         page.locator('[data-act=new]').click()
-        page.locator('a.offer').click()
+        page.locator('.foot a[href="#/about"]').click()
         page.wait_for_selector('main.about-simple')
         page.locator('.rowhead[data-row=names]').click()
         page.fill('input[data-field=personName]', 'Frank')
@@ -102,8 +120,8 @@ def main():
         browser = p.chromium.launch()
         errors += run(browser, a.url, out, 'phone_390', 390, 844, 'light', True)
         errors += run(browser, a.url, out, 'desktop_1440', 1440, 900, 'light', False)
-        errors += run(browser, a.url, out, 'phone_390', 390, 844, 'dark', True, only=('first-screen', 'card-ready'))
-        errors += run(browser, a.url, out, 'desktop_1440', 1440, 900, 'dark', False, only=('first-screen', 'card-ready'))
+        errors += run(browser, a.url, out, 'phone_390', 390, 844, 'dark', True, only=('first-visit', 'before-handing-over'))
+        errors += run(browser, a.url, out, 'desktop_1440', 1440, 900, 'dark', False, only=('first-visit', 'before-handing-over'))
         browser.close()
     print(f"{len(list(out.glob('*.png')))} images in {out}; page errors: {len(errors)}")
     for e in errors:
