@@ -1,0 +1,48 @@
+url: http://localhost:5179/
+browser: Chromium 148.0.7778.96 (headless)
+PASS  ways: the screen opens with one line in plain words: "None of these. Find out what it is: one step at a time."
+PASS  ways, the drinks example: the first and main button is "More choices like these", and it says what comes next (water, juice, milk)
+PASS  ways: then the first letter, then "Ask them to show or write it", and the AI's step last (where there is one)
+PASS  ways: one main button on the screen, and it is the first way
+PASS  ways: no question of another topic on the screen ("Are you hungry?" is gone), shown or under "More"
+PASS  ways: under "More": "Ask something else" / "Ask another question" and "Ask it a new way"; still no question of another topic
+PASS  ways: after "something else" to a drink: every control is at least 24 x 24 px
+PASS  ways: after "something else" to a drink: every button and stand-alone link is at least 44 px tall
+PASS  ways: after "something else" to a drink: the main button is at least 60 px tall
+PASS  ways: after "something else" to a drink: nothing runs off the side of the screen
+PASS  ways, more choices: the carer's screen says what to say out loud ("Which drink? Water, juice, milk, or something else"), and that the rules made it and nothing was sent
+PASS  ways: the carer's screen of more drinks: every control is at least 24 x 24 px
+PASS  ways: the carer's screen of more drinks: every button and stand-alone link is at least 44 px tall
+PASS  ways: the carer's screen of more drinks: the main button is at least 60 px tall
+PASS  ways: the carer's screen of more drinks: nothing runs off the side of the screen
+PASS  ways, more choices, the person's screen: water, juice, milk and "something else", each with a picture
+PASS  ways: more drinks on the person's screen: fits the screen without scrolling (844 px tall)
+PASS  ways, more choices: "something else" on the first page brings the next three (tea, coffee), not the same ones
+PASS  ways: Back from the card of more choices lands on the list of ways again
+PASS  ways, the drinks example to the end: something else -> more drinks -> "juice" -> confirmed by the person: the carer reads "Which drink? Juice"
+PASS  ways: after a real answer the screen is the usual one: "Ask another question" is the main button, and no list of ways
+PASS  ways: the answer is in the diary under its question ("Which drink?" juice), kept on this phone
+PASS  ways: after every drink the rules have was refused, the same list is not offered again: the first letter is the next step
+PASS  ways, "show me": the carer's screen goes on: "Did you understand?", "Yes: type it" with a field, and "Not yet: try another way"
+PASS  ways: after "show me": every control is at least 24 x 24 px
+PASS  ways: after "show me": every button and stand-alone link is at least 44 px tall
+PASS  ways: after "show me": nothing runs off the side of the screen
+PASS  ways, "Not yet: try another way": back on the list of ways of the same question, not on the first screen
+PASS  ways, "Yes: type it" with nothing typed: nothing happens, the field waits
+PASS  ways, typed: the word goes onto the person's screen as a choice, with "something else"; nothing is picked for them
+PASS  ways: the typed word on the person's screen: fits the screen without scrolling (844 px tall)
+PASS  ways, typed: the person points to it and is asked "So: lemonade. Right?"
+PASS  ways, typed: confirmed by the person: the carer reads "Lemonade"
+PASS  ways, typed: it is in the diary as an answer, and counts as a drink like any other
+PASS  ways, no kind known: the first and main button is "What is it about?"
+PASS  ways, "What is it about?": a picture card: a drink, food, a person, and "something else" for the next three
+PASS  ways: "What is it about?" on the person's screen: fits the screen without scrolling (844 px tall)
+PASS  ways, "What is it about?" -> a person: the main button is "Next: Who?"
+PASS  ways, "Who?": the choices are people (a friend, a neighbour, the carer) with nothing in About them
+PASS  ways, worst case, "Body & care" ("Are you comfortable?" -> not sure): "Show me where" is the main button, the needs board second; no list of guesses, no other topic
+PASS  ways, "Show me where": the body card ("Where does it hurt?")
+PASS  ways, worst case: a place in the chest chosen on that card brings the boxed "Call 911 now if this is new or sudden." as before
+PASS  ways: nothing was asked of any other host in the whole run (rules only)
+PASS  ways: no page error
+
+44 of 44 checks passed

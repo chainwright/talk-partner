@@ -1,0 +1,90 @@
+url: http://localhost:5179/
+browser: Chromium 148.0.7778.96 (headless)
+PASS  back, the case found on the phone: on the carer's screen of "Would you like a hot drink or a cold drink?" …
+PASS  back, the case found on the phone: … one tap on Back lands on "Would you like something to drink? Yes" with its "Next:" button, not on the first screen
+PASS  back: from the answer, Back shows the question again on the carer's screen (before it is handed over)
+PASS  back: from the first question, Back lands on the first screen with the topic still open (the topic's questions are there)
+PASS  back: six carer's screens after the first one (question, answer, question, answer, question, answer: the tree is three questions deep)
+PASS  back, a topic's tree, six steps deep: Back no. 1 of 6 lands on the screen before (card)
+PASS  back, a topic's tree, six steps deep: Back no. 2 of 6 lands on the screen before (answered: Would you like a hot drink or a cold drink? Hot drink)
+PASS  back, a topic's tree, six steps deep: Back no. 3 of 6 lands on the screen before (card)
+PASS  back, a topic's tree, six steps deep: Back no. 4 of 6 lands on the screen before (answered: Would you like something to drink? Yes)
+PASS  back, a topic's tree, six steps deep: Back no. 5 of 6 lands on the screen before (card)
+PASS  back, a topic's tree, six steps deep: Back no. 6 of 6 lands on the screen before (home)
+PASS  back, a topic's tree, six steps deep: 6 steps back with Back, never a jump to the first screen before the last step
+PASS  back, a topic's tree, six steps deep: the first screen is the bottom: it has no Back button
+PASS  back, a topic's tree, six steps deep: the browser's own back no. 1 of 6 lands on the screen before (card)
+PASS  back, a topic's tree, six steps deep: the browser's own back no. 2 of 6 lands on the screen before (answered: Would you like a hot drink or a cold drink? Hot drink)
+PASS  back, a topic's tree, six steps deep: the browser's own back no. 3 of 6 lands on the screen before (card)
+PASS  back, a topic's tree, six steps deep: the browser's own back no. 4 of 6 lands on the screen before (answered: Would you like something to drink? Yes)
+PASS  back, a topic's tree, six steps deep: the browser's own back no. 5 of 6 lands on the screen before (card)
+PASS  back, a topic's tree, six steps deep: the browser's own back no. 6 of 6 lands on the screen before (home)
+PASS  back, a topic's tree, six steps deep: 6 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, a topic's tree, six steps deep: the first screen is the bottom: it has no Back button
+PASS  back, the tree: no page error
+PASS  back, the needs board: the way was first screen, "pain" on the board, "Where does it hurt?", the answer with the call box, "Something new or sudden?"
+PASS  back, the needs board, the body card and the call list: Back no. 1 of 4 lands on the screen before (answered: Where in the chest? Middle)
+PASS  back, the needs board, the body card and the call list: Back no. 2 of 4 lands on the screen before (card)
+PASS  back, the needs board, the body card and the call list: Back no. 3 of 4 lands on the screen before (answered)
+PASS  back, the needs board, the body card and the call list: Back no. 4 of 4 lands on the screen before (home)
+PASS  back, the needs board, the body card and the call list: 4 steps back with Back, never a jump to the first screen before the last step
+PASS  back, the needs board, the body card and the call list: the first screen is the bottom: it has no Back button
+PASS  back, the needs board: no page error
+PASS  back, the needs board: the way was first screen, "pain" on the board, "Where does it hurt?", the answer with the call box, "Something new or sudden?"
+PASS  back, the needs board, the body card and the call list: the browser's own back no. 1 of 4 lands on the screen before (answered: Where in the chest? Middle)
+PASS  back, the needs board, the body card and the call list: the browser's own back no. 2 of 4 lands on the screen before (card)
+PASS  back, the needs board, the body card and the call list: the browser's own back no. 3 of 4 lands on the screen before (answered)
+PASS  back, the needs board, the body card and the call list: the browser's own back no. 4 of 4 lands on the screen before (home)
+PASS  back, the needs board, the body card and the call list: 4 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, the needs board, the body card and the call list: the first screen is the bottom: it has no Back button
+PASS  back, the needs board: no page error
+PASS  back, the first letter: the way was first screen, the question, "something else", the word found by its letter
+PASS  back, the first letter: Back no. 1 of 3 lands on the screen before (answered: Would you like tea or coffee? Something else)
+PASS  back, the first letter: Back no. 2 of 3 lands on the screen before (card)
+PASS  back, the first letter: Back no. 3 of 3 lands on the screen before (home)
+PASS  back, the first letter: 3 steps back with Back, never a jump to the first screen before the last step
+PASS  back, the first letter: the first screen is the bottom: it has no Back button
+PASS  back, "wants to say something": Back no. 1 of 1 lands on the screen before (home)
+PASS  back, "wants to say something": 1 steps back with Back, never a jump to the first screen before the last step
+PASS  back, "wants to say something": the first screen is the bottom: it has no Back button
+PASS  back, the first letter and the person's turn: no page error
+PASS  back, the first letter: the way was first screen, the question, "something else", the word found by its letter
+PASS  back, the first letter: the browser's own back no. 1 of 3 lands on the screen before (answered: Would you like tea or coffee? Something else)
+PASS  back, the first letter: the browser's own back no. 2 of 3 lands on the screen before (card)
+PASS  back, the first letter: the browser's own back no. 3 of 3 lands on the screen before (home)
+PASS  back, the first letter: 3 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, the first letter: the first screen is the bottom: it has no Back button
+PASS  back, "wants to say something": the browser's own back no. 1 of 1 lands on the screen before (home)
+PASS  back, "wants to say something": 1 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, "wants to say something": the first screen is the bottom: it has no Back button
+PASS  back, the first letter and the person's turn: no page error
+PASS  back, the diary: a log and a change of tab are not steps: the way was first screen, the diary
+PASS  back, the diary: Back no. 1 of 1 lands on the screen before (home)
+PASS  back, the diary: 1 steps back with Back, never a jump to the first screen before the last step
+PASS  back, the diary: the first screen is the bottom: it has no Back button
+PASS  back, "Something new or sudden?": the way was first screen, the list, About them (to change the number)
+PASS  back, "Something new or sudden?" and About them: Back no. 1 of 2 lands on the screen before (sudden)
+PASS  back, "Something new or sudden?" and About them: Back no. 2 of 2 lands on the screen before (home)
+PASS  back, "Something new or sudden?" and About them: 2 steps back with Back, never a jump to the first screen before the last step
+PASS  back, "Something new or sudden?" and About them: the first screen is the bottom: it has no Back button
+PASS  back, the visit page: the questions run on the person's screen, and the page of answers is the same step as the page they started from
+PASS  back, the doctor-visit page: Back no. 1 of 1 lands on the screen before (home)
+PASS  back, the doctor-visit page: 1 steps back with Back, never a jump to the first screen before the last step
+PASS  back, the doctor-visit page: the first screen is the bottom: it has no Back button
+PASS  back, the diary and the visit page: no page error
+PASS  back, the diary: a log and a change of tab are not steps: the way was first screen, the diary
+PASS  back, the diary: the browser's own back no. 1 of 1 lands on the screen before (home)
+PASS  back, the diary: 1 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, the diary: the first screen is the bottom: it has no Back button
+PASS  back, "Something new or sudden?": the way was first screen, the list, About them (to change the number)
+PASS  back, "Something new or sudden?" and About them: the browser's own back no. 1 of 2 lands on the screen before (sudden)
+PASS  back, "Something new or sudden?" and About them: the browser's own back no. 2 of 2 lands on the screen before (home)
+PASS  back, "Something new or sudden?" and About them: 2 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, "Something new or sudden?" and About them: the first screen is the bottom: it has no Back button
+PASS  back, the visit page: the questions run on the person's screen, and the page of answers is the same step as the page they started from
+PASS  back, the doctor-visit page: the browser's own back no. 1 of 1 lands on the screen before (home)
+PASS  back, the doctor-visit page: 1 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, the doctor-visit page: the first screen is the bottom: it has no Back button
+PASS  back, the diary and the visit page: no page error
+
+86 of 86 checks passed

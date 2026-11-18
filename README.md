@@ -565,6 +565,13 @@ the first letter or by showing it. What a question is about is read from its wor
 person's yes is to that word. Nobody the app is for has tried the new screen; the owner's own walk is what found
 the two faults.
 
+**Counts for phase 6 and the two fixes** (the code of `e4b67eb`; `devlog/evidence_phase6/`). 2698 unit tests (89 new:
+`phase6-source` 30, `phase6-share` 39, `out-ways` 20). On the production build on localhost: `e2e-simple.py` 811/811
+(its phase 6 run is 61 of them, the Back run 86, the "something else" run 44; `e2e-simple_local.txt`); `pwa-check.py`
+30/30; `e2e-needs.mjs` 12/12; `overflow-check.py` 510/510 (it has no screens of phase 6 or of the two fixes of its
+own: those are checked at 390 px only, in their own runs); `contrast-check.mjs` 144 pairs. Not run: `update-check.py`,
+`e2e-noconfig.mjs`, and every script that needs a real model (none of this phase calls one).
+
 ## Changed on 18 Nov after a role-play on the phone
 One of us played Carol and Frank (`design/PERSONA_SCENARIO.md`, fictional) on the hosted copy at 390 px. What it
 found, and what changed (`CLAIMS.md` rows 73 to 76):

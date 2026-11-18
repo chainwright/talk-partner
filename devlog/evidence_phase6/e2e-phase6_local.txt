@@ -1,0 +1,65 @@
+url: http://localhost:5179/
+browser: Chromium 148.0.7778.96 (headless)
+PASS  phase 6, first screen with an empty diary: no "For the next carer" yet (there is nothing to hand over)
+PASS  phase 6, first screen: "For the next carer" stands under "Diary" once the diary holds something
+PASS  phase 6, first screen: every control is at least 24 x 24 px
+PASS  phase 6, first screen: every button and stand-alone link is at least 44 px tall
+PASS  phase 6, first screen: the main button is at least 60 px tall
+PASS  phase 6, first screen: nothing runs off the side of the screen
+PASS  diary: the privacy line is true with sharing in the app: kept here only, never sent by the app, leaves only when the carer shares it as a text seen first
+PASS  D: every line of "What stands out" has "See the entries (N)", closed at first
+PASS  D: the week has the chest pain of one day, the fall, the sweets, Wednesday's drinks
+PASS  D: "Few drinks … : 2" opens to Wednesday's two drinks, each with its time: the tea on a card and one "Drank"
+PASS  D: the button now reads "Hide the entries", and the entries stand inside the same line, on the same screen
+PASS  D, worst case (a pain in the chest): the opened line keeps "Tell the doctor or nurse. If it is new or sudden, call 911 now." and the call box, above its entries
+PASS  D, worst case (a fall with a blow to the head): its entry reads "Fall  Noted: a blow to the head.", under the call box
+PASS  D: the week with three lines opened: every control is at least 24 x 24 px
+PASS  D: the week with three lines opened: every button and stand-alone link is at least 44 px tall
+PASS  D: the week with three lines opened: nothing runs off the side of the screen
+PASS  D: "Hide the entries" closes the line again; the others stay open
+PASS  D: the 30-day view has the same button on every line
+PASS  A: "Share with family" and "For the next carer" stand on the diary
+PASS  A, the sheet: "This text leaves the phone through the app you pick (message, email). Talk Partner keeps no copy and has no server."
+PASS  A, the sheet: the text starts "Shared from Talk Partner on [date]. Counted by the app's rules from what was entered here; not a medical record."
+PASS  A, worst case: a line carries a call box, so the call sentence is the second line of the text
+PASS  A: the span is the tab's (the last 7 days), with "What stands out", each line's base, and the entries by day
+PASS  A, worst cases in the text: the chest pain and the fall with a blow to the head each have whom to tell and "Call 911 now if this is new or sudden."
+PASS  A: "Include the health notes" is off, and the text holds no health note (no "Diabetes", none of the carer's own words)
+PASS  A: while the box is off, the sheet names the note the reader will not know (diabetes)
+PASS  A: no photo and no data URL in the text; "Photos never go in."
+PASS  A: Share, Copy and Cancel, in that order, under the text
+PASS  A: the sheet fits a 390 x 844 screen with its three buttons in reach (the long text scrolls inside its own box)
+PASS  A: nothing has left before a button is pressed
+PASS  A, the sheet: every button at least 44 px tall, the box at least 24 px
+PASS  A, the sheet: nothing runs off the side of the screen
+PASS  A: with the box ticked the text has the health notes as the family noted them, and the line that rests on one says so
+PASS  A, Copy: the clipboard holds the sheet's text, character for character; the button says "Copied" and the last one "Close"
+PASS  A, Share: navigator.share is called once, with { text } and nothing else, and the text is the sheet's, character for character
+PASS  A, Share: the sheet says "Handed to the app you picked. Talk Partner kept no copy."
+PASS  A: the box is off again every time the sheet opens
+PASS  A: Escape is "Cancel": the sheet is gone and nothing more was handed over
+PASS  A, worst case, the Today tab (the chest pain and the fall were yesterday): the text is about today, and still carries this week's lines and the call sentence
+PASS  A, handover: the same sheet ("Share this with the next carer?"), the same first sentence, the last 24 hours
+PASS  A, handover, worst cases: the call sentence at the top; the pain as it was answered, with whom to tell and when to call; the fall with the blow to the head
+PASS  A, handover: drinks, food, toilet and tablets of the last 24 hours; the tablets line says to check before giving any
+PASS  A, handover: the usual choices learned ("usually tea"), and never one about pain, the body, a feeling or a need
+PASS  A, handover: no health note with the box off
+PASS  A, handover, Share: the stub was handed { text } with the note, character for character
+PASS  A, handover from the first screen: the same sheet over the first screen
+PASS  A, worst case, a fluid limit noted and the box off: the sheet names it to the carer; the text states no limit and never suggests more to drink
+PASS  A, worst case, a fluid limit noted and the box ticked: the drinks line points to the doctor's plan; still never "more"
+PASS  D, the visit page: a line of "Since the last visit" that counted something has "See the entries (N)"; one that counted nothing has no button
+PASS  D, the visit page: the falls line opens to the fall, with its time and the blow to the head
+PASS  D, the visit page: the call box is still the first thing on the page
+PASS  D: the visit page with a line opened: every control is at least 24 x 24 px
+PASS  D: the visit page with a line opened: every button and stand-alone link is at least 44 px tall
+PASS  D: the visit page with a line opened: the main button is at least 60 px tall
+PASS  D: the visit page with a line opened: nothing runs off the side of the screen
+PASS  D, print: the page prints clean: no "See the entries", no entry list, no control; the lines and the call box are printed
+PASS  phase 6: nothing was asked of any other host in the whole run (no AI, no server: the text left through the stub and the clipboard only)
+PASS  phase 6: no page error
+PASS  A, no Web Share in the browser: only "Copy" and "Cancel", and the sheet says the text leaves only if the carer pastes it
+PASS  A, no Web Share: Copy works, with the sheet's text
+PASS  phase 6, no Web Share: no page error
+
+61 of 61 checks passed
