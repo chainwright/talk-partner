@@ -100,11 +100,11 @@ export const HANDOVER_MS = 24 * 60 * 60 * 1000;
  * no to a drink" could stop the next carer from offering one).
  */
 export function handoverUsual(learned: Learned[]): string[] {
-  return learned
-    .filter((l) => (l.kind === 'usual' || l.kind === 'time') && !!l.q)
-    .filter((l) => !careAnswer(l.q, '', guessTopic(l.q)))
-    .filter((l) => !/\busually says no\b|(?:: |, )no in the /i.test(l.text))
-    .map((l) => `- ${l.text}`);
+  return learned.filter(usualForOthers).map((l) => `- ${l.text}`);
+}
+/** One learned line may be read by someone outside the family (the next carer, a nurse): the rule of `handoverUsual`, also used by the communication passport (core/passport.ts). */
+export function usualForOthers(l: Learned): boolean {
+  return (l.kind === 'usual' || l.kind === 'time') && !!l.q && !careAnswer(l.q, '', guessTopic(l.q)) && !/\busually says no\b|(?:: |, )no in the /i.test(l.text);
 }
 
 export interface HandoverShare {

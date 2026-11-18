@@ -58,7 +58,10 @@ export const shareButtons = () => `<div class="two-btn share-row" id="share-row"
 export const handoverLink = () => `<button type="button" class="btn diary-link handover-link" id="handover-link" data-act="share-open" data-kind="handover">${NOTE}<span><b>${P6.share.handover}</b><small>${P6.share.handoverSub}</small></span></button>`;
 
 export interface ShareSheetModel {
-  kind: 'family' | 'handover';
+  /** 'practice' and 'passport' (phase 7): a page the carer has on the screen already, shared as its text. */
+  kind: 'family' | 'handover' | 'practice' | 'passport';
+  /** For a page of phase 7: its heading, and the line that says what is and is not in the text. There is no box on the sheet then: what goes in was decided on the page. */
+  page?: { heading: string; note: string };
   /** The exact text: what "Share" hands over and what "Copy" copies, character for character. */
   text: string;
   /** "Include the health notes" is ticked. */
@@ -80,13 +83,13 @@ export interface ShareSheetModel {
  */
 export function shareSheet(m: ShareSheetModel): string {
   const K = P6.share.sheet;
-  const state = !m.hasHealth ? K.healthNone : m.health ? K.healthOn : K.healthOff;
+  const state = m.page ? m.page.note : !m.hasHealth ? K.healthNone : m.health ? K.healthOn : K.healthOff;
   const said = m.status === 'shared' ? K.shared : m.status === 'shareFailed' ? K.shareFailed : m.status === 'copyFailed' ? K.copyFailed : '';
   return `<div class="dim"></div>
 <div class="sheet share-sheet" id="share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-h" data-kind="${m.kind}" data-health="${m.health ? 1 : 0}">
-  <h2 id="share-h" tabindex="-1">${K.heading[m.kind]}</h2>
+  <h2 id="share-h" tabindex="-1">${m.page ? esc(m.page.heading) : K.heading[m.kind]}</h2>
   <p id="share-leaves">${esc(m.canShare ? K.leaves(m.device) : K.leavesCopy(m.device))}</p>
-  <label class="check" id="share-health-row"><input type="checkbox" id="share-health" ${m.health ? 'checked' : ''} ${m.hasHealth ? '' : 'disabled'}><span>${K.healthBox}</span></label>
+  ${m.page ? '' : `<label class="check" id="share-health-row"><input type="checkbox" id="share-health" ${m.health ? 'checked' : ''} ${m.hasHealth ? '' : 'disabled'}><span>${K.healthBox}</span></label>`}
   <p class="small muted" id="share-health-state">${state} ${K.photos}</p>
   ${!m.health && m.risky.length ? `<p class="warn" id="share-health-warn" role="status">${esc(K.healthWarn(m.risky.join(', ')))}</p>` : ''}
   <div class="goes"><p class="small muted" id="share-exact">${K.exact} ${K.names}</p><pre class="q" id="share-text" tabindex="0">${esc(m.text)}</pre></div>

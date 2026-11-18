@@ -19,6 +19,7 @@ import { P5 } from '../../core/copy5';
 import { DEFAULT_NUMBER } from '../../core/redflag';
 import { urgentBox } from './phase5';
 import { shareButtons, sourceBlock } from './phase6';
+import { practiceLink } from './care7';
 import { SIGN, navBar } from './simple';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -135,6 +136,7 @@ export function diaryScreen(m: DiaryModel): string {
   ${insightsBlock(m.insights)}
   ${m.tab === 'today' ? tipBlock(m.tip) : ''}
   ${m.any ? shareButtons() : ''}
+  ${practiceLink()}
   ${m.any ? `<div class="two-btn"><button type="button" class="btn quiet" id="diary-copy" data-act="diary-copy" aria-live="polite">${m.copied ? D.copied : D.copy}</button><button type="button" class="btn quiet danger" id="diary-del" data-act="diary-del">${D.del}</button></div>` : ''}
 </main>`;
 }

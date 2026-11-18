@@ -66,6 +66,11 @@ import { fallBlock, hearButton, numberField, sinceBlock, sinceControls, speakShe
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
+import { P8 } from '../../core/copy8';
+import { guessTopic } from '../../core/diary';
+import { NO_PASSPORT, cleanPassport, passport, passportText, toggleLine, OWN_MAX, type PassportInput, type PassportPrefs } from '../../core/passport';
+import { addEvent, cleanLog, newLog, pickedPractice, practiceReport, practiceText, practiceUrgent, togglePractice, type AskedBy, type PracticeEvent, type PracticeInput, type PracticeLog, type PracticeSpan, type Via } from '../../core/practice';
+import { passportLink, passportScreen, practiceScreen, type PassPicture } from './care7';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -80,7 +85,7 @@ const C = COPY;
 const dw = (text: string) => deviceWords(text, copyDevice());
 
 /** 'trial' is the hidden stopwatch for devlog/TRIAL_PROTOCOL.md: reachable only by typing #/trial, never linked. */
-type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'feedback' | 'trial' | 'diary' | 'visit' | 'phototalk' | 'sudden';
+type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'feedback' | 'trial' | 'diary' | 'visit' | 'phototalk' | 'sudden' | 'practice' | 'passport';
 
 interface Settings {
   cloudHelp: boolean;
@@ -316,6 +321,8 @@ function route(): Route {
   if (h === 'visit') return 'visit';
   if (h === 'phototalk') return 'phototalk';
   if (h === 'sudden') return 'sudden';
+  if (h === 'practice') return 'practice';
+  if (h === 'passport') return 'passport';
   if (h === 'feedback') return 'feedback';
   if (h === 'trial') return 'trial';
   // the simple view has no first-run screen: its first screen is the product
@@ -361,13 +368,15 @@ function cardId(c: Card): number {
 function screenKey(r: Route): string | null {
   if (r === 'person' || state.busy) return null;
   if (r === 'phototalk') return `phototalk:${state.p4.talk?.id ?? ''}`;
+  // the passport is two steps: the lines to decide on, then the page as it prints
+  if (r === 'passport') return p8.page ? 'passport:page' : 'passport';
   if (r !== 'partner') return r;
   const c = state.card;
   if (!c) return 'home';
   return `card:${cardId(c)}:${state.confirmed && state.picked && !state.recap && !state.recapDone ? `answered:${state.picked.label}` : state.recap ? 'recap' : state.recapDone ? 'recap-done' : 'ask'}${navExtra.key()}`;
 }
 /** A hook for a later screen that is a step of its own on the same card (the ways after "something else"). */
-const navExtra = { key: (): string => '', take: (): unknown => null, put: (x: unknown): void => { void x; } };
+const navExtra = { key: (): string => '', take: (): unknown => ({ passPage: p8.page }), put: (x: unknown): void => { p8.page = !!(x as { passPage?: boolean } | null)?.passPage; } };
 function takeSnap(key: string): Snap {
   const view = Object.fromEntries(VIEW.map((k) => [k, k === 'chain' ? [...state.chain] : state[k]])) as Snap['view'];
   return { key, route: hashNow() === 'needs' ? '' : hashNow(), view, p4: { letterNo: state.p4.letterNo, letterPending: state.p4.letterPending, turn: state.p4.turn, talk: state.p4.talk }, extra: navExtra.take() };
@@ -413,6 +422,8 @@ function backStep(from: string): string | null {
     if (to) { putSnap(to); return to.route; }
   }
   if (from === 'sudden') return '';
+  // (the full view keeps no stack: the passport's page still goes back to its lines, one step)
+  if (from === 'passport' && p8.page) { p8.page = false; return from; }
   if (from === 'visit' || from === 'phototalk') { if (from === 'phototalk' && state.p4.talk) { state.p4.talk = null; return from; } return ''; }
   // the alphabet goes back to the carer's screen it was opened from; the visit questions go back to their page
   if (from === 'person' && state.p4.letter) { state.p4.letter = null; return ''; }
@@ -549,6 +560,12 @@ async function load() {
   if (Array.isArray(a)) state.asks = a;
   const v = await kvGet<VisitRecord>('visit');
   if (v && Array.isArray(v.answers)) state.p4.visit = v;
+  // phase 7: the log of the conversations starts the first time a build that has it runs here, and says so on its page
+  const pr = await kvGet<PracticeLog>('practice');
+  p8.log = cleanLog(pr, Date.now());
+  if (!pr) void kvSet('practice', p8.log);
+  p8.picked = pickedPractice(await kvGet<string[]>('practiceAsk'));
+  p8.pass = cleanPassport(await kvGet<PassportPrefs>('passport'));
 }
 
 // ---------------------------------------------------------------- phase 5: the call box, Read aloud, since the last visit
@@ -605,6 +622,52 @@ async function hear() {
     if (state.card === c) patchHear();
   }
 }
+// ---------------------------------------------------------------- phase 7: for the speech therapist, and the passport
+/**
+ * What phase 7 keeps. `log`: the conversations as rows with no word of a question or an answer (core/practice.ts;
+ * IndexedDB key 'practice'), from the day this build first ran here. `span`, `health`: the page for the speech
+ * therapist as it stands on the screen; the box for the needs and pain answers is off every time the page is opened.
+ * `picked`: the questions for the therapist (key 'practiceAsk'). `pass`: the carer's settings of the passport (key
+ * 'passport'); `page`: the passport is shown as it prints (the second step). On this device only; nothing is sent.
+ */
+const p8 = {
+  log: newLog(Date.now()) as PracticeLog,
+  span: 'week' as PracticeSpan,
+  health: false,
+  picked: [] as string[],
+  pass: NO_PASSPORT as PassportPrefs,
+  page: false,
+  /** Where the last question came from, for when it is asked again after a yes on the consent sheet. */
+  lastBy: { q: '', by: 'typed' as AskedBy },
+};
+/** Set just before `make` by the caller that knows where the question came from; 'none' for a question that is not counted (asked again, or the person's own start). */
+let askBy: AskedBy | 'none' | null = null;
+/** One row of the log. Never for the sample family. */
+function notePractice(e: PracticeEvent) {
+  if (state.demo) return;
+  p8.log = addEvent(p8.log, e);
+  void kvSet('practice', p8.log);
+}
+/** The card an answer was confirmed on, as far as the counts need it (no word of it is kept). */
+const viaOf = (c: Card, p: Choice): Via => (p.role === 'repair' || c.kind === 'repair' ? 'repair' : c.kind === 'needs' ? 'needs' : c.turn ? 'turn' : c.letter ? 'letter' : c.typed ? 'typed' : c.more ? 'more' : c.aboutWhat ? 'about' : c.narrow ? 'narrow' : c.kind === 'body' || c.kind === 'pain' ? 'body' : 'card');
+/** The page for the speech therapist is built from this: the diary is handed over only when the box is ticked. */
+const practiceInput = (): PracticeInput => ({ log: state.demo ? newLog(Date.now()) : p8.log, span: p8.span, now: Date.now(), name: state.profile.personName.trim(), device: copyDevice(), speak: speakOn(), questions: p8.picked, diary: p8.health && !state.demo ? state.diary : null, number: callNumber() });
+/** The passport is built from this: About them, the answers that still count, what was learned, the photos' words (never a picture). */
+const passportInput = (): PassportInput => ({ profile: state.profile, history: learns() ? state.history.filter((h) => h.at > state.forgotten.all) : [], learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], photoWords: state.photos.map((x) => x.word), prefs: p8.pass, now: Date.now(), device: copyDevice(), number: callNumber() });
+const savePassport = () => { if (!state.demo) void kvSet('passport', p8.pass); };
+/** The pictures of the printed passport: each person of About them with their own photo or an initial, then the family's other photos. Eight at most. */
+function passPictures(): PassPicture[] {
+  const out = new Map<string, PassPicture>();
+  for (const x of state.profile.people) { const n = x.name.trim(); if (n) out.set(n.toLowerCase(), { word: n, data: x.photo ?? photoFor(n, state.photos)?.data ?? '' }); }
+  for (const x of state.photos) if (!out.has(x.word.toLowerCase())) out.set(x.word.toLowerCase(), { word: x.word, data: x.data });
+  return [...out.values()].slice(0, 8);
+}
+function practiceView(): string {
+  const now = Date.now();
+  return practiceScreen({ name: state.profile.personName.trim(), device: copyDevice(), span: p8.span, report: practiceReport(practiceInput()), health: p8.health, warn: !p8.health && !state.demo && practiceUrgent(state.diary, p8.span, now) ? P8.practice.healthWarn(callNumber()) : '', picked: p8.picked, any: !state.demo && p8.log.events.length > 0 });
+}
+const passportView = () => passportScreen({ name: state.profile.personName.trim(), device: copyDevice(), passport: passport(passportInput()), prefs: p8.pass, page: p8.page, pictures: passPictures() });
+
 // ---------------------------------------------------------------- phase 6: where a line came from, and sharing
 /** "See the entries": the lines that are open, by key (an insight id, or "since-N" on the doctor-visit page). In memory only. */
 const p6 = {
@@ -614,13 +677,16 @@ const p6 = {
    * time the sheet opens), the exact text as the sheet shows it, and what happened. "Share" and "Copy" hand over this
    * text and no other. In memory only: nothing of it is stored.
    */
-  share: null as { kind: 'family' | 'handover'; health: boolean; text: string; status: '' | 'shared' | 'copied' | 'shareFailed' | 'copyFailed'; from: string } | null,
+  share: null as { kind: 'family' | 'handover' | 'practice' | 'passport'; health: boolean; text: string; status: '' | 'shared' | 'copied' | 'shareFailed' | 'copyFailed'; from: string } | null,
   /** How many times a text was handed to the share sheet or copied this session (the privacy line says so). */
   shared: 0,
 };
 const canShare = () => typeof (navigator as Navigator & { share?: unknown }).share === 'function';
 /** The text of the open sheet, built again by the rules: with the health notes only when the box is ticked (the builder is not handed them otherwise). */
-function shareTextNow(kind: 'family' | 'handover', health: boolean): string {
+function shareTextNow(kind: 'family' | 'handover' | 'practice' | 'passport', health: boolean): string {
+  // (phase 7: the text of a page that is on the screen; what is in it was decided there, not on the sheet)
+  if (kind === 'practice') return practiceText(practiceInput());
+  if (kind === 'passport') return passportText(passportInput());
   const base = { diary: state.diary, health: health ? state.health : null, name: state.profile.personName.trim(), now: Date.now(), number: callNumber() };
   return kind === 'family' ? familyText({ ...base, span: state.diaryTab }) : handoverText({ ...base, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [] });
 }
@@ -1669,7 +1735,7 @@ function simpleScreen(): string {
       aboutLink: !!state.settings.firstCard || !!(name || p.people.length || p.foods.length || p.places.length || p.tv.length || p.music.length),
       busy: state.busy, error: state.error, question: state.lastQuestion,
       howOpen: !state.settings.howFolded, topics: topics(p), topicOpen: state.topicOpen, aiTag: aiTag(whereInput()), ai: aiLines(whereInput()),
-      privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: `${diaryLink()}${!state.demo && state.diary.length ? handoverLink() : ''}${p4Links(name)}`,
+      privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: `${diaryLink()}${!state.demo && state.diary.length ? handoverLink() : ''}${p4Links(name)}${passportLink(name)}`,
       bodyHtml: suddenLink('sudden-body'),
       turnHtml: `${turnButton(name)}${suddenLink()}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
     });
@@ -1738,7 +1804,7 @@ function p4Confirm(c: Card, picked: Choice): boolean {
     const s = starterOf(picked.label);
     state.p4.turn = { starter: s ?? 'else', topic: null };
     if (s === 'need' || s === 'tell') { const card = s === 'need' ? needsCard() : topicMenu(); setCard(card); state.made.push(card); state.picked = null; state.waitStart = Date.now(); render(); return true; }
-    if (s === 'feel') { turnKeep = true; void make(FEEL_QUESTION); return true; }
+    if (s === 'feel') { turnKeep = true; askBy = 'none'; void make(FEEL_QUESTION); return true; }
   } else if (c.turn === 'topics' && state.p4.turn) {
     const topic = picked.role === 'answer' ? menuTopic(picked.label) : null;
     state.p4.turn = { starter: 'tell', topic };
@@ -1815,6 +1881,7 @@ async function askAboutPhoto(pq: PhotoQuestion) {
   if (seq !== makeSeq) return;
   state.busy = false; state.error = null; state.lastQuestion = q; state.chain = [q]; resetCard(); clearP4();
   state.made.push(card); setCard(card); state.waitStart = Date.now();
+  notePractice({ k: 'ask', at: Date.now(), topic: topicOf(q, state.profile)?.id ?? guessTopic(q), by: 'app', start: true });
   go(''); window.scrollTo(0, 0);
 }
 
@@ -1828,7 +1895,10 @@ function render(lifted = false) {
   // the route goes on #app with a prefix: a bare "person" or "welcome" class made #app pick up the card pane's frame
   // and the welcome padding (the thin frame around the full-screen card, DESIGN_DIRECTIONS "must fix")
   // the diary is a carer's screen of the simple view, whichever view the rest is in
-  const simple = (simpleView() && (r === 'partner' || r === 'about')) || r === 'diary' || r === 'visit' || r === 'phototalk' || r === 'sudden';
+  const simple = (simpleView() && (r === 'partner' || r === 'about')) || r === 'diary' || r === 'visit' || r === 'phototalk' || r === 'sudden' || r === 'practice' || r === 'passport';
+  // (phase 7) the box for the needs and pain answers is off again once the page was left; the passport opens on its lines
+  if (r !== 'practice') p8.health = false;
+  if (r !== 'passport') p8.page = false;
   app.className = `route-${r}${simple ? ' view-simple' : ''}`;
   // the simple view has its own light look (dark by the system setting); the full view and the person's card do not change
   document.documentElement.dataset.view = simple ? 'simple' : r === 'person' ? 'person' : 'full';
@@ -1841,7 +1911,7 @@ function render(lifted = false) {
   const fresh = key !== lastKey;
   if (r !== 'person') stopSound();
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: backupBlock({ error: state.backupError, done: state.backupDone }), numberHtml: numberField(state.health.emergency), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone })}`, numberHtml: numberField(state.health.emergency), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   keepGuard();
   if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);
@@ -1870,11 +1940,12 @@ function render(lifted = false) {
     document.querySelector<HTMLElement>('#ins-sheet-h')?.focus();
   }
   // phase 6: the exact text before it is shared with the family or the next carer
-  if (p6.share && r !== 'diary' && r !== 'partner') p6.share = null;
-  if (p6.share && (r === 'diary' || r === 'partner')) {
+  const sharing = r === 'diary' || r === 'partner' || r === 'practice' || r === 'passport';
+  if (p6.share && !sharing) p6.share = null;
+  if (p6.share && sharing) {
     const sh = p6.share;
     app.querySelector('main')?.setAttribute('inert', '');
-    app.insertAdjacentHTML('beforeend', shareSheet({ kind: sh.kind, text: sh.text, health: sh.health, hasHealth: hasHealth(state.health), risky: riskyNotes(state.health), canShare: canShare(), device: copyDevice(), status: sh.status }));
+    app.insertAdjacentHTML('beforeend', shareSheet({ kind: sh.kind, text: sh.text, health: sh.health, hasHealth: hasHealth(state.health), risky: riskyNotes(state.health), canShare: canShare(), device: copyDevice(), status: sh.status, ...(sh.kind === 'practice' ? { page: { heading: P8.practice.sheetHeading, note: sh.health ? P8.practice.sheetHealthOn : P8.practice.sheetHealthOff } } : sh.kind === 'passport' ? { page: { heading: P8.passport.sheetHeading, note: P8.passport.sheetNote } } : {}) }));
   }
   if (simple && r === 'about' && state.importDraft) {
     app.querySelector('main')?.setAttribute('inert', '');
@@ -2023,7 +2094,11 @@ const routing = () => ({ moodWords: state.remote.values.routeMoodWords, minChoic
 
 /** The question being made was tapped on the answered screen (a next step or a new start): its chain is already set. */
 let chained = false;
+/** The question being made is the second half of one the app split in two ("Next"). */
+let askSecond = false;
 async function make(q: string) {
+  // (phase 7) where this question came from, as the caller said; taken here so that it never stays for a later question
+  const from = askBy; const second = askSecond; askBy = null; askSecond = false;
   if (!q.trim()) return;
   if (step === 'waiting') step = 'cancelled'; // the judge asked something first: the automatic step stands down
   const seq = ++makeSeq;
@@ -2033,6 +2108,9 @@ async function make(q: string) {
   // a question that was not tapped as a next step of the tree starts a new conversation
   if (!chained) { state.chain = [q]; p5.urgent = false; }
   chained = false;
+  // (phase 7) where this question came from: the caller says so; a question asked again after the sheet keeps what it was
+  const by = from ?? (p8.lastBy.q === q ? p8.lastBy.by : spoken ? 'spoken' : 'typed');
+  if (by !== 'none') p8.lastBy = { q, by };
   // "Just this once" on the sheet: this one request may use online help, and the switch stays off
   const once = p5.once; p5.once = false;
   if (!turnKeep) state.p4.turn = null;
@@ -2050,7 +2128,11 @@ async function make(q: string) {
     if (spoken) voiceCards.add(card);
     if (seq !== makeSeq) return; // a later question was asked meanwhile: its card is the one to show
     // (a question that waits for a yes on the consent sheet is noted when it is asked again, not twice)
-    if (!(card.blocked && card.unsentPayload)) noteAsk(card);
+    if (!(card.blocked && card.unsentPayload)) {
+      noteAsk(card);
+      // (phase 7) one row for the page of the speech therapist: the topic and where the question came from, none of its words
+      if (by !== 'none') notePractice({ k: 'ask', at: Date.now(), topic: topicOf(state.chain[0] ?? q, state.profile)?.id ?? guessTopic(q), by, ...(card.pending ? { two: true as const } : {}), ...(card.kind === 'no-quiz' ? { quiz: true as const } : {}), ...(state.chain.length <= 1 ? { start: true as const } : {}), ...(second ? { second: true as const } : {}) });
+    }
     setCard(simpleView() ? guardOrder(usualOrder(card)) : card);
     // simple view: a question that needs online help, with cloud help off, brings up the consent sheet (never a page)
     // (with no connection the sheet could send nothing: the screen then says the question needs the internet)
@@ -2071,6 +2153,10 @@ function onPersonTap(t: HTMLElement) {
   if (t.dataset.confirm === 'recap-yes') { state.recap = false; state.recapDone = true; render(); return; }
   if (t.dataset.confirm === 'recap-change') { state.recap = false; render(); return; }
   if (!c) return;
+  // (phase 7) the check, for the page of the speech therapist: a yes with the kind of card it was on, a "No, something
+  // else"; no word of the answer. Never a doctor-visit question: those answers are read by nothing.
+  if (t.dataset.confirm === 'yes' && state.picked && !c.visit) notePractice({ k: 'answer', at: Date.now(), via: viaOf(c, state.picked), ...(state.picked.role === 'escape' && c.kind !== 'needs' && c.kind !== 'repair' ? { esc: true as const } : {}) });
+  if (t.dataset.confirm === 'change' && state.picked && !c.visit) notePractice({ k: 'no', at: Date.now() });
   // a doctor-visit question, or a card the person started from: the confirmed answer leads on, on this screen (p4Confirm)
   if (t.dataset.confirm === 'yes' && state.picked && (c.visit || c.turn) && p4Confirm(c, state.picked)) return;
   if (t.dataset.confirm === 'yes') {
@@ -2179,6 +2265,8 @@ function savePhoto() {
 function act(el: HTMLElement) {
   const a = el.dataset.act;
   const i = Number(el.dataset.person ?? -1);
+  // (phase 7: the needs board opened from the first screen starts a new conversation; as a way after "something else" it is a step of that one)
+  if (a === 'needs' && !(state.card && state.confirmed && state.picked?.role === 'escape')) notePractice({ k: 'board', at: Date.now() });
   switch (a) {
     case 'show': lift = true; go('person'); break;
     // ---- the simple view
@@ -2224,6 +2312,7 @@ function act(el: HTMLElement) {
       if (step === 'waiting') step = 'cancelled';
       makeSeq++; clearP4(); state.busy = false; state.error = null; state.lastQuestion = ''; resetCard();
       const card = turnCard(); setCard(card); state.made.push(card); state.waitStart = Date.now(); lift = true; go('person');
+      notePractice({ k: 'turn', at: Date.now() });
       break;
     }
     case 'visit-start': state.p4.visit = { startedAt: Date.now(), answers: [], done: false, ...(state.p4.visit?.since ? { since: state.p4.visit.since } : {}), ...(state.p4.visit?.carerAsk ? { carerAsk: state.p4.visit.carerAsk } : {}) }; state.p4.visitCopied = false; void kvSet('visit', state.p4.visit); void visitNext(); break;
@@ -2283,6 +2372,22 @@ function act(el: HTMLElement) {
       document.querySelector<HTMLElement>('#share-h')?.focus();
       break;
     }
+    // ---- phase 7: the page for the speech therapist and the passport. Both are on the screen before they are printed or
+    // shared; "Share" goes through the sheet of phase 6, which shows the exact text first.
+    case 'share-page': {
+      if (state.demo) break;
+      const kind = el.dataset.kind === 'passport' ? 'passport' : 'practice';
+      if (kind === 'passport' && !p8.page) break;
+      const health = kind === 'practice' && p8.health;
+      p6.share = { kind, health, text: shareTextNow(kind, health), status: '', from: el.id };
+      render();
+      document.querySelector<HTMLElement>('#share-h')?.focus();
+      break;
+    }
+    case 'page-print': window.print(); break;
+    case 'practice-span': p8.span = el.dataset.span === 'month' ? 'month' : 'week'; render(); document.querySelector<HTMLElement>(`#practice-${p8.span}`)?.focus({ preventScroll: true }); break;
+    case 'practice-del': if (confirm(P8.practice.delConfirm)) { p8.log = newLog(Date.now()); void kvSet('practice', p8.log); render(); window.scrollTo(0, 0); } break;
+    case 'pass-look': p8.page = true; render(); window.scrollTo(0, 0); break;
     case 'share-cancel': closeShare(); break;
     case 'share-go': {
       const sh = p6.share;
@@ -2364,10 +2469,10 @@ function act(el: HTMLElement) {
     case 'row': { const row = el.dataset.row as AboutRow; state.aboutRow = state.aboutRow === row ? null : row; render(); break; }
     case 'less': state.less = !state.less; render(); break;
     case 'next':
-      if (state.card?.pending) void make(state.card.pending);
+      if (state.card?.pending) { askBy = p8.lastBy.by; askSecond = true; void make(state.card.pending); }
       else if (state.card?.nextPage) { setCard(state.card.nextPage); state.picked = null; state.confirmed = false; render(); }
       break;
-    case 'retry': if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else if (state.card?.retry) void make(state.card.retry); break;
+    case 'retry': if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else if (state.card?.retry) { askBy = 'none'; void make(state.card.retry); } break;
     case 'recap': state.recap = true; state.recapDone = false; if (simpleView() && !state.short) refreshShort(); render(); break;
     // ---- after "something else" (core/more.ts): more choices of the same kind, or "What is it about?". Rules only.
     case 'more-like': {
@@ -2394,13 +2499,13 @@ function act(el: HTMLElement) {
     }
     case 'stuck':
       // the repair card takes the person's screen; the question card waits behind it
-      if (state.card && state.card.kind !== 'repair') { state.before = state.card; setCard(repairCard(state.profile)); state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.waitStart = Date.now(); render(); }
+      if (state.card && state.card.kind !== 'repair') { notePractice({ k: 'stuck', at: Date.now(), ...(state.confirmed && state.picked?.role === 'escape' ? { after: true as const } : {}) }); state.before = state.card; setCard(repairCard(state.profile)); state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.waitStart = Date.now(); render(); }
       break;
     case 'unstuck':
       if (state.card?.kind === 'repair') { setCard(state.before); state.before = null; state.picked = null; state.confirmed = false; state.waitStart = Date.now(); render(); }
       break;
     case 'override':
-      if (state.card) { const c = quizOverrideCard(state.card.asked, state.profile, state.settings.support); setCard(c); state.made.push(c); state.waitStart = Date.now(); render(); }
+      if (state.card) { notePractice({ k: 'anyway', at: Date.now() }); const c = quizOverrideCard(state.card.asked, state.profile, state.settings.support); setCard(c); state.made.push(c); state.waitStart = Date.now(); render(); }
       break;
     case 'export-receipt': {
       const r = sessionReceipt(state.made, state.profile);
@@ -2441,7 +2546,7 @@ function act(el: HTMLElement) {
       break;
     case 'delete-all':
       if (confirm(C.about.deleteConfirm)) {
-        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.needsLog = []; state.forgotten = NOTHING_FORGOTTEN; state.learnedShort = null; state.photos = []; state.photoDraft = null; state.made = []; state.diary = []; state.health = NO_HEALTH; state.asks = []; state.logged = null; state.importDraft = null; state.backupError = ''; state.backupDone = false; state.ins = { key: '', words: null, source: 'rules', busy: false, note: '' }; state.p4.visit = null; clearP4(); resetCard(); go(simpleView() ? '' : 'welcome'); });
+        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.needsLog = []; state.forgotten = NOTHING_FORGOTTEN; state.learnedShort = null; state.photos = []; state.photoDraft = null; state.made = []; state.diary = []; state.health = NO_HEALTH; state.asks = []; state.logged = null; state.importDraft = null; state.backupError = ''; state.backupDone = false; state.ins = { key: '', words: null, source: 'rules', busy: false, note: '' }; state.p4.visit = null; p8.log = newLog(Date.now()); void kvSet('practice', p8.log); p8.picked = []; p8.pass = NO_PASSPORT; p8.page = false; p8.health = false; clearP4(); resetCard(); go(simpleView() ? '' : 'welcome'); });
       }
       break;
     default:
@@ -2475,6 +2580,7 @@ app.addEventListener('click', (ev) => {
   if (!t) return;
   if (t.dataset.act) { act(t); return; }
   if (t.dataset.q) dictated = false; // a tapped question was not spoken, whatever the field held
+  if (t.dataset.q) askBy = 'app'; // (phase 7) and it is one of the app's own questions, for the page of the speech therapist
   if (t.dataset.q && t.dataset.short) state.shortcut = { q: t.dataset.q, of: t.dataset.of ?? '', label: t.dataset.label ?? '' };
   if (t.dataset.q && t.dataset.short) { if (t.dataset.of && !state.chain.includes(t.dataset.of)) state.chain = [...state.chain, t.dataset.of]; chained = true; state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
   // (a question that is not a next step of the tree starts a new conversation: the call box of the last one goes)
@@ -2483,11 +2589,11 @@ app.addEventListener('click', (ev) => {
   if (t.closest('#person')) onPersonTap(t);
 });
 app.addEventListener('submit', (ev) => {
-  if ((ev.target as HTMLElement).id === 'ask') { ev.preventDefault(); void make(($('#q') as HTMLInputElement).value); }
+  if ((ev.target as HTMLElement).id === 'ask') { ev.preventDefault(); askBy = dictated ? 'spoken' : 'typed'; void make(($('#q') as HTMLInputElement).value); }
   else if ((ev.target as HTMLElement).id === 'fb') { ev.preventDefault(); void submitFeedback(); }
   else if ((ev.target as HTMLElement).id === 'photo-form') { ev.preventDefault(); savePhoto(); }
   // "Who? Type one name": one yes / no question about that one person, made by the rules
-  else if ((ev.target as HTMLElement).id === 'who') { ev.preventDefault(); const n = ($('#who-name') as HTMLInputElement).value.trim(); if (n) { dictated = false; void make(callQuestion(n)); } }
+  else if ((ev.target as HTMLElement).id === 'who') { ev.preventDefault(); const n = ($('#who-name') as HTMLInputElement).value.trim(); if (n) { dictated = false; askBy = 'app'; void make(callQuestion(n)); } }
   else if ((ev.target as HTMLElement).id === 'understood-form') { ev.preventDefault(); checkTyped(($('#understood-word') as HTMLInputElement).value); }
   else ev.preventDefault();
 });
@@ -2495,12 +2601,17 @@ app.addEventListener('change', (ev) => {
   const t = ev.target as HTMLInputElement | HTMLSelectElement;
   if (t.id.startsWith('trial-')) { trialInput(t); return; }
   if (t.id === 'fb-role') { fb.role = t.value; return; }
-  if (t.id === 'support') { state.settings.support = (t as HTMLSelectElement).value as SupportLevel; saveSettings(); if (state.lastQuestion) void make(state.lastQuestion); return; }
+  if (t.id === 'support') { state.settings.support = (t as HTMLSelectElement).value as SupportLevel; saveSettings(); if (state.lastQuestion) { askBy = 'none'; void make(state.lastQuestion); } return; }
   if (t.id === 'consent') { state.consentChecked = (t as HTMLInputElement).checked; render(); return; }
   if (t instanceof HTMLInputElement && t.dataset.photo !== undefined && t.files?.[0]) { void addPhoto(Number(t.dataset.photo), t.files[0]); return; }
   if (t instanceof HTMLInputElement && t.id === 'photo-file' && t.files?.[0]) { void openPhoto(t.files[0]); return; }
   // the share sheet's box: the text is built again, with the health notes or without them, and shown before anything leaves
   if (t.id === 'share-health' && p6.share) { const on = (t as HTMLInputElement).checked; p6.share = { ...p6.share, health: on, text: shareTextNow(p6.share.kind, on), status: '' }; render(); document.querySelector<HTMLElement>('#share-health')?.focus({ preventScroll: true }); return; }
+  // phase 7: the box of the page for the speech therapist, its questions; a line of the passport on or off, its photos
+  if (t.id === 'practice-health') { p8.health = (t as HTMLInputElement).checked; render(); document.querySelector<HTMLElement>('#practice-health')?.focus({ preventScroll: true }); return; }
+  if (t instanceof HTMLInputElement && t.dataset.practiceQ !== undefined) { const k = t.dataset.practiceQ; p8.picked = togglePractice(p8.picked, P8.practice.questions[Number(k)]); if (!state.demo) void kvSet('practiceAsk', p8.picked); render(); document.querySelector<HTMLElement>(`[data-practice-q="${k}"]`)?.focus({ preventScroll: true }); return; }
+  if (t instanceof HTMLInputElement && t.dataset.passLine !== undefined) { const off = p8.pass.off.includes(t.dataset.passLine); if (off === t.checked) { p8.pass = toggleLine(p8.pass, t.dataset.passLine); savePassport(); } return; }
+  if (t.id === 'pass-photos') { p8.pass = { ...p8.pass, photos: (t as HTMLInputElement).checked }; savePassport(); return; }
   if (t.id === 'diary-topic') { state.diaryTopic = (t as HTMLSelectElement).value as DiaryTopic | 'all'; state.logged = null; render(); document.querySelector<HTMLElement>('#diary-topic')?.focus({ preventScroll: true }); return; }
   // "Since the last visit" (the doctor-visit page): the day to count from, and up to three fixed questions
   if (t.id === 'since-from' && state.p4.visit) { const d = fromIsoDay(t.value); if (d !== null) { state.p4.visit.since = d; void kvSet('visit', state.p4.visit); render(); } return; }
@@ -2552,6 +2663,9 @@ app.addEventListener('input', (ev) => {
   const t = ev.target as HTMLInputElement | HTMLTextAreaElement;
   if (t.id === 'crop-zoom' && state.photoDraft) { setFrame({ ...state.photoDraft.frame, zoom: Number(t.value) }); return; }
   if (t.id === 'photo-word' && state.photoDraft) { state.photoDraft.word = t.value; return; }
+  // the passport: how yes and no are shown, and the carer's own lines (kept as typed; no redraw, so the cursor stays)
+  if (t instanceof HTMLInputElement && (t.dataset.pass === 'yes' || t.dataset.pass === 'no')) { p8.pass = cleanPassport({ ...p8.pass, [t.dataset.pass]: t.value }); savePassport(); return; }
+  if (t instanceof HTMLInputElement && t.dataset.passOwn !== undefined) { const own = Array.from({ length: OWN_MAX }, (_, i) => (i === Number(t.dataset.passOwn) ? t.value : p8.pass.own[i] ?? '')); p8.pass = cleanPassport({ ...p8.pass, own }); savePassport(); return; }
   if (t instanceof HTMLInputElement && t.dataset.health === 'emergency') { state.health = cleanHealth({ ...state.health, emergency: t.value }); if (!state.demo) void kvSet('health', state.health); return; }
   if (t instanceof HTMLTextAreaElement && t.dataset.health === 'text') { state.health = cleanHealth({ ...state.health, text: t.value }); if (!state.demo) void kvSet('health', state.health); return; }
   // typing takes over from the microphone; an emptied field holds no spoken question any more
