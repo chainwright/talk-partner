@@ -523,6 +523,90 @@ line now reads "The app never sends it anywhere: it leaves only when you share i
 first." The Share button was pressed in a test browser against a stub of `navigator.share`; it was pressed on no
 real phone by us.
 
+## Added on 18 Nov, phase 7: for the speech therapist, and "How to talk with Frank"
+Two more things the judges of round 6 asked for (their items D and F; `CLAIMS.md` rows 108 to 113;
+`devlog/evidence_phase7/`; `devlog/DAY18.md`). **This phase has no AI in it at all**: both pages are built by rules
+and fixed text on the device, and no model reads, writes or is handed any of it. **No carer, no person with aphasia,
+no speech therapist and no nurse has used or read either page.**
+
+**"For the speech therapist": how the conversations at home went (`core/practice.ts`, `web/src/care7.ts`).** A speech
+therapist coaches the partner; this page shows what happened between sessions. It is on the diary screen, for the
+last 7 or 30 days, and it is counts only:
+- questions asked, and by topic; how many were picked from the app's own one-thought questions, typed, or spoken;
+- how often the app flagged a question (two things in one, a memory question) and what it did with it;
+- how often "something else" was confirmed, in how many conversations, and what led to a confirmed answer after it
+  (more choices of the same kind, the first letter, a word the carer typed after showing or writing, choices suggested
+  by AI, the needs board, the body card, another question) or that none was;
+- how often "We're stuck" was opened, how often the person started, "Yes" and "No, something else" on the check, and
+  whether Read aloud is on.
+
+Every line says what it counts, under "Counted by the app from this phone. Only what was entered here." **No line
+grades the carer or the person, and none says what to do**: a test reads every line of the page on its fixtures for
+good, bad, well done, poor, should, must and failed. The carer picks up to three of ten fixed questions for the
+therapist; they close the page.
+
+*Where the counts come from.* A small log on the device (IndexedDB key `practice`): one row for a question, for a
+"Yes" or a "No, something else" on the check, for a start by the person, for "We're stuck". **A row holds no word of
+a question or an answer**: a time, a kind, one of the app's seven topics, and yes / no marks. The log starts the
+first time this build runs on the device, so nothing from before is in it, and the page names that day while it
+falls inside the span. "Delete these counts" empties it; the diary stays.
+
+*The person's own data stays out by default.* The page holds nothing of the diary unless the carer ticks "Include
+the needs and pain answers" (off every time the page is opened). Ticked, it lists the needs pointed to with their
+counts, and the pain entered (a card answer and a tap within 20 minutes count once) with the answers as given;
+where a pain was strong, or in the head or the chest, or "something's wrong" was pointed to, "Call 911 now if this
+is new or sudden" stands at the top of the page and "Tell the doctor or nurse…" under the answers. With the box off
+and such an entry in the diary of the span, the screen (not the page) tells the carer so, with the same sentence.
+
+**The communication passport: "How to talk with Frank" (`core/passport.ts`).** One printable page that travels with
+the person, for a new paid carer, a hospital nurse, a grandchild. It is reached from the first screen and from About
+them, and it is two screens: first every line the page could hold, each with its box; then the page as it prints.
+- *How to talk*: five fixed lines with the person's name. "Frank knows what to say. The words are hard to find.";
+  "Frank understands most of what you say. Speak in short sentences, one thing at a time."; "Write two or three
+  choices, or point to pictures. Wait: count to ten."; `Check: "So: tea. Right?"`; "Don't answer for Frank, and don't
+  quiz: no testing questions." With no name the lines say "they" in the right form; no line guesses "he" or "she".
+- *How Frank says yes and no*: typed by the carer. The app never infers it.
+- *About Frank*: the people, food and drink, places, TV and music of About them, and the facts the family kept.
+- *Words that worked*: the words found by their first letter with how often, and the usual choices with their
+  counts.
+- *Things Frank likes to talk about*: a person of About them or the word of a family photo, with how often it was
+  the confirmed answer or the answer was yes to an offer that names it; twice at least. It says what was chosen, not
+  what is felt, and the page says so.
+- *Also*: up to three lines of the carer's own.
+- *If something is wrong*: the emergency number and the fixed text of phase 5 word for word (FAST, four more reasons
+  to call, "call the doctor or nurse today").
+
+**The carer decides every line**: each "how to talk" line, each line of About them and each counted line can be
+taken off, and the line "understands most of what you say" says beside its box "Take this line off if it is not
+true for Frank." The one part that cannot be taken off is "If something is wrong". **What never goes on it**: a
+habit about pain, the body, a feeling or a need, a usual "no" (the rule of the note for the next carer), the needs
+board, the health notes, the diary. The family's own photos, or an initial, stand on the printed page; a photo is
+never in the shared text. Print and Share are on the second screen only, after the page has been seen.
+
+**Printing and sharing.** Print is the browser's own print of the page that is on the screen (the controls are not
+printed). Share goes through the sheet of phase 6: the exact text first, "This text leaves the phone through the app
+you pick (message, email). Talk Partner keeps no copy and has no server.", then Share (`navigator.share({ text })`),
+Copy, Cancel. Back from each page goes exactly one step: the passport's page to its lines, the lines to where they
+were opened from; "For the speech therapist" to the diary.
+
+**Limits.** The counts begin with this build, so a first report covers little. Where a tapped question came from is
+known ("the app's own"); a question tapped again from "asked before" in the full view counts as the app's own even
+if it was typed the first time. A "something else" is closed as "no answer confirmed" after 30 minutes or when a new
+conversation starts: the number is ours. The numbers say how often, never how well: whether a page of counts helps a
+speech therapist coach a partner is not known, and none has seen it. "Understands most of what you say" is true for
+many people with aphasia and false for some; the app cannot tell, which is why the carer must leave it on or take it
+off. "Likes to talk about" is counted from choices, and a choice is not a liking. The passport fits one A4 sheet for
+the Miller family of the tests; a family with long lists gets a second sheet. No sheet of paper was printed: the
+print was looked at as the browser renders it for print, and as a PDF.
+
+**Counts for phase 7** (the code of `5f05b8d`; `devlog/evidence_phase7/`). 2762 unit tests (62 new:
+`phase7-practice` 36, `phase7-passport` 26). On the production build on localhost (`npx vite preview`, port 5197):
+`e2e-simple.py` 935/935 (its phase 7 run is 125 of them); `pwa-check.py` 30/30; `e2e-needs.mjs` 12/12;
+`overflow-check.py` 534/534 (24 of them are the two new pages and their sheet at 320, 360, 390 and 412 px);
+`contrast-check.mjs` 144 pairs. **Not deployed**: the Firebase login expired on 18 Nov, 12:11 UTC, and signing in
+is the owner's step, so the hosted copy still serves the build before phase 6. Not run for that reason: "live =
+dist", and every `--live` run.
+
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104
 to 107; `devlog/evidence_phase6/r1_*.png`, `r2_*.png`; `devlog/DAY17.md`). Both fixes are rules: no AI was added.

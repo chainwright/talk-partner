@@ -92,6 +92,20 @@ these" (water, juice, milk, then tea, coffee and the family's own), or "What is 
 or, for the body and feelings, "Show me where" and the needs board. The AI's narrowing step is the last on the list.
 "Show me" goes on to "Did you understand?": the carer types the word and the person confirms it.
 
+**Added on 18 Nov, phase 7: for the speech therapist, and "How to talk with Frank"** (`CLAIMS.md` rows 108 to 113;
+README "Added on 18 Nov, phase 7"; `devlog/evidence_phase7/`). **No AI is in this phase**: rules and fixed text on the
+device. **Not on the hosted copy yet** (the deploy is the owner's step: the Firebase login expired); it runs from a
+local build. Open the diary: **"For the speech therapist"** is one page of counts for the last 7 or 30 days (questions
+asked and by topic, picked from the app's lists or typed, what the app flagged, "something else" and what led to an
+answer after it, who started, the check, Read aloud). No line grades anyone. The counts come from a log that holds
+no word of a question or an answer and starts with this build. The needs and pain answers are on the page only when
+the carer ticks the box (off every time). From the first screen: **"How to talk with Frank"**, a communication
+passport. First every line with its box (five fixed "how to talk" lines, how yes and no are shown as the carer
+types it, About them, the words found by their first letter and the usual choices, what was chosen to talk about),
+then the page as it prints; "If something is wrong" (the emergency number, FAST) is always on it. Both pages print
+with the browser's own print and share through the sheet of phase 6 (the exact text first). Nobody they are for has
+seen either; no sheet of paper was printed.
+
 **Added on 18 Nov, phase 6: share with the care circle, and where a line came from** (`CLAIMS.md` rows 98 to 103;
 README "Added on 18 Nov, phase 6"; `devlog/evidence_phase6/`). **No AI is in this phase**: rules and fixed text on the
 device. Open the diary, tab Week: under every line of "What stands out" is **"See the entries (N)"**, which shows in
@@ -189,7 +203,7 @@ has the same two questions answered by the cloud alone); the same run against th
 `devlog/ondevice_proof_1/RUN_LOG.md`.
 
 **If you have five minutes more**
-- `npm run check` (lint, types, 2698 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
+- `npm run check` (lint, types, 2762 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
 - `npm run eval`: the labelled set of 60 questions against the rules alone (it writes its report to a new folder under
   `devlog/eval_runs/`): 40 of 42 code-decided questions, 0 of 18 open. What the on-device model adds on the 18 open
   questions: `devlog/evidence_phase5/heldout_at_d198eb0/` (three runs at `d198eb0`); our reading of the cards of the first runs:

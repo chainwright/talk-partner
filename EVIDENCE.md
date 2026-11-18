@@ -210,3 +210,17 @@ every request to another host is refused and counted (none was made).
 
 Not run for phase 6: any of it with a carer, a family member, a paid carer or a clinician; Share on a real phone (the
 phone's own share sheet was never opened by us); the print on paper.
+
+## Phase 7 (18 Nov 2026): rows 108 to 113
+No model is part of phase 7, so there is no AI run to save: the proof is the unit tests and one browser run in which
+every request to another host is refused and counted (none was made). All of it on a production build on localhost
+(`npx vite preview`, port 5197): the phase was not deployed (the Firebase login expired; `devlog/DAY18.md`).
+
+| Row | File | Command | Saved output |
+|---|---|---|---|
+| 108 to 110 | `core/practice.ts`, `core/copy8.ts`, `web/src/care7.ts` (`practiceScreen`), `web/src/main.ts` (`notePractice`, `practiceInput`), `tests/unit/phase7-practice.test.ts` | `npx vitest run tests/unit/phase7-practice.test.ts`; `python3 scripts/e2e-simple.py --url http://localhost:5197/ --only phase7 --shots devlog/evidence_phase7` | `01_for_the_speech_therapist_counts_of_real_conversations.png` to `06_for_the_speech_therapist_nothing_counted.png`; `e2e-phase7_local.txt` |
+| 111, 112 | `core/passport.ts`, `core/copy8.ts`, `web/src/care7.ts` (`passportScreen`), `tests/unit/phase7-passport.test.ts` | `npx vitest run tests/unit/phase7-passport.test.ts`; the phase 7 browser run | `07_passport_every_line_with_its_box.png` to `10_passport_as_it_prints.png`, `10b_passport_as_it_prints.pdf` (A4, 12 mm margins, one sheet), `12_passport_with_nothing_in_about_them.png` |
+| 113 | `web/src/main.ts` (`share-page`, `page-print`, `screenKey`), `web/src/phase6.ts` (`shareSheet`, `page`) | the phase 7 browser run (`navigator.share` replaced by a stub that records what it is handed; the clipboard read back; `window.print` counted; Back by the button and by the browser's back) | `04_for_the_speech_therapist_sheet_with_the_exact_text.png`, `05_for_the_speech_therapist_as_it_prints.png`, `11_passport_sheet_with_the_exact_text.png`; `overflow-check_local.txt` (the two pages and their sheet at 320, 360, 390 and 412 px) |
+
+Not run for phase 7: any of it with a carer, a speech therapist, a nurse or a paid carer; Share on a real phone; a
+print on paper; the hosted copy (not deployed).

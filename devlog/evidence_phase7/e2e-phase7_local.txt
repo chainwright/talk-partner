@@ -1,0 +1,130 @@
+url: http://localhost:5197/
+browser: Chromium 148.0.7778.96 (headless)
+PASS  phase 7, first run: the log of the conversations starts now, empty, and holds a day and rows only
+PASS  phase 7, first screen: "How to talk with Frank" stands with the other ways in, under "Talk about a photo"
+PASS  phase 7, first screen: every control is at least 24 x 24 px
+PASS  phase 7, first screen: every button and stand-alone link is at least 44 px tall
+PASS  phase 7, first screen: the main button is at least 60 px tall
+PASS  phase 7, first screen: nothing runs off the side of the screen
+PASS  part 1, the check: "So: coffee. Right?" with "Yes" and "No, something else"
+PASS  part 1: "something else", then the first letter: the word is Bo
+PASS  part 1: a typed question with two things in it is asked one at a time ("Next: second question" is there)
+PASS  part 1: a memory question gets no card and a line to say instead
+PASS  part 1, the log: one row for each question, each "Yes" on the check, the "No, something else", Frank's start and "We're stuck"
+PASS  part 1, the log holds no word of a question or an answer (no "tea", no "Bo", no "hungry", no "lunch")
+PASS  part 1, the log: where each question came from, its topic, and what the app flagged
+PASS  part 1: "For the speech therapist" stands on the diary screen, under the two share buttons
+PASS  part 1: the diary with the way in: every control is at least 24 x 24 px
+PASS  part 1: the diary with the way in: every button and stand-alone link is at least 44 px tall
+PASS  part 1: the diary with the way in: nothing runs off the side of the screen
+PASS  part 1, the page counts what was done: "Conversations with Frank, the last 7 days"
+PASS  part 1, the page counts what was done: "Counted by the app from this phone. Only what was entered here."
+PASS  part 1, the page counts what was done: "These are counts to talk over. They are not a score of the family or o"
+PASS  part 1, the page counts what was done: "Questions asked: 6. Counted: each question that became a card or a lin"
+PASS  part 1, the page counts what was done: "By topic: Food & drink 4, Rest & sleep 2."
+PASS  part 1, the page counts what was done: "Picked from the app's own questions (one thought each): 3. Typed by th"
+PASS  part 1, the page counts what was done: "Two things in one question: 1 time. The app asked them one at a time."
+PASS  part 1, the page counts what was done: "The second of the two was then asked: 1 time."
+PASS  part 1, the page counts what was done: "A question that asked to remember something: 1 time. The app made no c"
+PASS  part 1, the page counts what was done: ""Something else" was chosen: 1 time, in 1 conversation."
+PASS  part 1, the page counts what was done: "After it, an answer was confirmed by:"
+PASS  part 1, the page counts what was done: "the first letter: 1"
+PASS  part 1, the page counts what was done: "After it, no answer was confirmed: 0 times."
+PASS  part 1, the page counts what was done: ""We're stuck" (show, write or draw) was opened: 1 time, 0 of them afte"
+PASS  part 1, the page counts what was done: "Frank started the conversation (the button "wants to say something"): "
+PASS  part 1, the page counts what was done: "The check ("So: tea. Right?"): "Yes" 6 times, "No, something else" 1 t"
+PASS  part 1, the page counts what was done: "Read aloud is off on this phone today."
+PASS  part 1, the page counts what was done: "Nothing about needs, pain or health is on this page. Those are in the "
+PASS  part 1, the page counts what was done: "Counted by fixed rules on this phone. No AI. Not an assessment and not"
+PASS  part 1: the app began to count today, and the page says from which day
+PASS  part 1: no line of the page grades anyone (good, bad, well done, poor, should, must, failed), and none has an exclamation mark
+PASS  part 2: opened again, the box "Include the needs and pain answers" is off
+PASS  part 2, worst case (a pain in the chest, quite bad, in the diary of this time): with the box off the SCREEN says so, with whom to tell and when to call
+PASS  part 2, box off: the page itself holds nothing of the diary (no "chest", no "toilet", no call sentence)
+PASS  part 2: the counting began before this week, so the page does not say "began to count"
+PASS  part 2: "For the speech therapist": every control is at least 24 x 24 px
+PASS  part 2: "For the speech therapist": every button and stand-alone link is at least 44 px tall
+PASS  part 2: "For the speech therapist": the main button is at least 60 px tall
+PASS  part 2: "For the speech therapist": nothing runs off the side of the screen
+PASS  part 2, box ticked: the call sentence stands at the top of the page
+PASS  part 2, box ticked: the needs with their counts; the pain entered once (three answers and a tap ten minutes later are one entry); the answers as given; whom to tell
+PASS  part 2, box ticked: the warning for the carer is gone (the page now says it itself)
+PASS  part 2, box ticked: still no line of the app's own wording grades anyone (the answer "quite bad" is Frank's, in quotes)
+PASS  part 2: "Last 30 days" counts the older questions as well (11), and names its span
+PASS  part 2: three questions picked; the other seven cannot be ticked; they close the page
+PASS  part 2: the picks are kept on this phone
+PASS  part 2: the page with the box ticked and three questions: every control is at least 24 x 24 px
+PASS  part 2: the page with the box ticked and three questions: every button and stand-alone link is at least 44 px tall
+PASS  part 2: the page with the box ticked and three questions: the main button is at least 60 px tall
+PASS  part 2: the page with the box ticked and three questions: nothing runs off the side of the screen
+PASS  part 2, the sheet: its own heading, where the text goes, that this is the exact text, and no box (what is in it was decided on the page)
+PASS  part 2, the text: the first line of every shared text, then the call sentence, then the page line for line
+PASS  part 2, the text and the page are the same lines
+PASS  part 2, the sheet fits the 390 x 844 screen: Share, Copy and Cancel can all be reached
+PASS  part 2: nothing was handed over before a button was pressed
+PASS  part 2, Share: `navigator.share` was called once, with { text } and nothing else, and the text is the one the sheet showed
+PASS  part 2, Copy: the clipboard holds exactly the text the sheet showed
+PASS  part 2: the sheet closes back onto the page; the box is as it was
+PASS  part 2: with the sheet up, the phone's back button closes the sheet and stays on the page
+PASS  part 2, printed: the page, and nothing around it (no bar, no box, no questions to pick, no buttons)
+PASS  part 2: "Print this page" calls the browser's own print, once
+PASS  Back from the page opened by its own address: the first screen
+PASS  opened again from the diary: the box is off again, and the screen warns again
+PASS  Back from "For the speech therapist": exactly one step, to the diary it was opened from
+PASS  the phone's own back button does the same: one step, to the diary
+PASS  Back from the diary: the first screen
+PASS  "Delete these counts" (after a yes): the log is empty and starts now; the page says nothing was counted; the diary is as it was
+PASS  the page with nothing counted: every control is at least 24 x 24 px
+PASS  the page with nothing counted: every button and stand-alone link is at least 44 px tall
+PASS  the page with nothing counted: the main button is at least 60 px tall
+PASS  the page with nothing counted: nothing runs off the side of the screen
+PASS  passport, first screen: the title with the name, what it is for, that every line is the carer's to decide, and that the app sends nothing
+PASS  passport: the five "how to talk" lines carry the name, each with its box, all ticked
+PASS  passport: About Frank from About them (people, food and drink, places, TV, the family's own fact)
+PASS  passport, "Words that worked": the words found by their first letter with how often, and the usual choice with its count
+PASS  passport, "Things Frank likes to talk about": Bo and Tom with their counts; not Beth (three times "no")
+PASS  passport, worst case: no habit about pain, the body or a need, and no usual "no", anywhere on it (the answers held "no" to pain and to a drink three times each, and "toilet" four times)
+PASS  passport, "If something is wrong": the emergency number and the fixed text of phase 5 (FAST), always on the page, with no box
+PASS  passport, first screen: nothing can be printed or shared from here (only "Look at the page")
+PASS  passport: no guessed pronoun on the screen but in the family's own fact ("Bo is his dog")
+PASS  passport, the lines: every control is at least 24 x 24 px
+PASS  passport, the lines: every button and stand-alone link is at least 44 px tall
+PASS  passport, the lines: the main button is at least 60 px tall
+PASS  passport, the lines: nothing runs off the side of the screen
+PASS  passport: what the carer set is kept on this phone (two lines off, yes and no, her own line)
+PASS  passport, the page: the lines left on, in their sections; the two taken off are not there; yes and no as typed; her own line under "Also"
+PASS  passport, the page: "If something is wrong" stands on it whole, and the footer says what the page is not
+PASS  passport, the page: the family's own pictures where there is one (Beth, Bo, the lake), an initial otherwise (Carol, Tom)
+PASS  passport, the page: Print, Share and "Change the lines" stand under it
+PASS  passport, the page: every control is at least 24 x 24 px
+PASS  passport, the page: every button and stand-alone link is at least 44 px tall
+PASS  passport, the page: the main button is at least 60 px tall
+PASS  passport, the page: nothing runs off the side of the screen
+PASS  passport, printed: the page, and nothing around it
+PASS  passport, printed on A4 with 12 mm margins: one sheet
+PASS  passport: "Print this page" calls the browser's own print, once
+PASS  passport, the sheet: its heading, where the text goes, no box, and that no health notes and no photos are in it
+PASS  passport, the text: the title, the sections, only the lines left on, no photo and no data URL
+PASS  passport, the text and the page are the same lines
+PASS  passport, Share: handed over once, as { text }, exactly the text the sheet showed
+PASS  Back from the passport's page: exactly one step, to its lines, as the carer left them
+PASS  "Change the lines" is the same one step back
+PASS  the phone's own back button from the page: the lines
+PASS  Back from the passport's lines: the first screen it was opened from
+PASS  About them has the way in as well
+PASS  opened from About them, Back goes back to About them
+PASS  after a reload the passport opens on its lines, with what the carer set
+PASS  with no name the way in reads "How to talk together"
+PASS  passport with nothing in About them: "this person" and "they", in the right form, and the way to About them
+PASS  passport with nothing in About them: no empty section and no broken line ("They likes", "People: .", "undefined")
+PASS  passport with nothing in About them: the page still holds how to talk, "Not filled in yet", and "If something is wrong" whole
+PASS  passport with nothing in About them, the page: every control is at least 24 x 24 px
+PASS  passport with nothing in About them, the page: every button and stand-alone link is at least 44 px tall
+PASS  passport with nothing in About them, the page: the main button is at least 60 px tall
+PASS  passport with nothing in About them, the page: nothing runs off the side of the screen
+PASS  phase 7: "Home" from the passport's page is the first screen
+PASS  phase 7: no request went to any other host (no model, no server: rules on the device)
+PASS  phase 7: no page error
+
+125 of 125 checks passed
+exit=0
