@@ -802,7 +802,7 @@ def learning(browser, url):
     lines = page.locator('#learned-list li > span:first-child').all_inner_texts()
     check('learning: About them lists what was learned, in plain words with the counts (the usual choice, and the need asked for three times)',
           len(lines) == 2 and lines[0] == '"Would you like tea or coffee": usually coffee (3 of 3).' and lines[1].startswith('Asked for "drink" on the needs board 3 times'), str(lines))
-    check('learning: it says how it was learned (counted on this phone, no AI, never sent by the app, only a hint)', 'Counted on this phone from the answers they confirmed: no AI, and the app never sends it anywhere (the usual choices leave only in a note for the next carer, if you share one yourself).' in text(page, '#learned') and 'they always choose for themselves' in text(page, '#learned'))
+    check('learning: it says how it was learned (counted on this phone, no AI, never sent by the app, only a hint)', 'Counted on this phone from the answers they confirmed: no AI, and the app never sends it anywhere (the usual choices leave only in a note for the next carer or on the page "How to talk", if you share or print one yourself).' in text(page, '#learned') and 'they always choose for themselves' in text(page, '#learned'))
     check('learning: each line has "Keep as a fact" and "Remove", and there is "Forget everything learned"', page.locator('[data-act=learned-keep]').count() == 2 and page.locator('[data-act=learned-remove]').count() == 2 and page.locator('[data-act=learned-forget]').is_visible())
     screen_checks(page, 'learning: About them, what was learned', primary=False)
     page.locator('#learned-list li', has_text='drink').locator('[data-act=learned-keep]').click()
@@ -2495,13 +2495,397 @@ def phase6(browser, url, live):
     ctx.close()
 
 
+PRINT_VIEW = """() => { const seen = (sel) => [...document.querySelectorAll(sel)].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).display !== 'none'; }).length; return { top: seen('#s-top'), controls: seen('.no-print'), page: seen('.visit-page'), sheet: seen('#share-sheet') }; }"""
+GRADE = r"\b(?:good|bad|well done|poor|should|must|failed)\b"
+
+
+def phase7(browser, url, live):
+    """Phase 7 of the build (18 Nov 2026), as Carol on a 390 x 844 phone. Part 1: a few real conversations (a tapped
+    question, a typed one that holds two things, a memory question, "something else" and the first letter, "No,
+    something else" on the check, Frank's own start, "We're stuck"), and the page "For the speech therapist" counts
+    exactly them. Part 2: the page on its worst case (a pain in the chest in the diary): the box is off, the screen
+    says so, the box puts the call sentence on the page; the questions; the sheet with the exact text, Share (a stub
+    records what it is handed), Copy; as it prints; Back, one step at a time. Part 3: the communication passport: every
+    line with its box, the emergency part with none, how yes and no are shown, a line of the carer's own, the page as
+    it prints, the sheet, Back from the page to the lines to where it was opened from; and with nothing in About them.
+    No model is part of any of it: every request to another host is refused and counted, and none is expected."""
+    import re
+    host = urlparse(url).hostname
+    origin = f'{urlparse(url).scheme}://{urlparse(url).netloc}'
+    ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
+    ctx.grant_permissions(['clipboard-read', 'clipboard-write'], origin=origin)
+    ctx.add_init_script(f'({SHARE_STUB})()')
+    outside = []
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    page = ctx.new_page()
+    errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('dialog', lambda d: d.accept())
+    profile, photos = miller_p4()
+    page.goto(url)
+    page.wait_for_selector('main.simple.home')
+    log0 = page.evaluate(KV_GET, 'practice')
+    check('phase 7, first run: the log of the conversations starts now, empty, and holds a day and rows only', isinstance(log0, dict) and log0.get('events') == [] and abs(log0.get('since', 0) - time.time() * 1000) < 60000, str(log0)[:200])
+    page.evaluate(KV_PUT, {'profile': profile, 'photos': photos, 'settings': {'cloudHelp': False, 'support': 'more', 'welcomed': False, 'firstCard': True, 'howFolded': True}})
+    page.reload()
+    page.wait_for_selector('main.simple.home')
+    check('phase 7, first screen: "How to talk with Frank" stands with the other ways in, under "Talk about a photo"', 'How to talk with Frank' in text(page, '#passport-link') and 'One page for a new carer, a nurse or a visitor.' in text(page, '#passport-link') and ys(page, '#passport-link')[0][1] > ys(page, '#phototalk-link')[0][1], text(page, '#passport-link'))
+    screen_checks(page, 'phase 7, first screen')
+
+    # ---------------------------------------------------------------- part 1: real conversations, then their counts
+    # 1. a question of the app's own, answered: tea
+    ask_topic(page, 'food', 'Would you like tea or coffee?')
+    answer(page, 'tea')
+    # 2. the same question; "No, something else" on the check, then "something else", then the first letter: Bo
+    new_q(page)
+    ask_topic(page, 'food', 'Would you like tea or coffee?')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    page.locator('main.pv .pt', has_text='coffee').first.click()
+    page.wait_for_selector('[data-confirm=change]')
+    check('part 1, the check: "So: coffee. Right?" with "Yes" and "No, something else"', 'So: coffee. Right?' in text(page, '#person') and text(page, '[data-confirm=change]') == 'No, something else')
+    page.locator('[data-confirm=change]').click()
+    page.wait_for_selector('main.pv .pt')
+    tap_yes(page, 'something else')
+    give_back(page)
+    page.locator('#letter-go').click()
+    page.wait_for_selector('#abc')
+    page.locator('[data-letter=B]').click()
+    tap_yes(page, 'Bo')
+    give_back(page)
+    check('part 1: "something else", then the first letter: the word is Bo', 'The word is: Bo.' in text(page, '#do-now'), text(page)[:300])
+    # 3. a typed question that holds two things: the app asks them one at a time; the second is then asked
+    new_q(page)
+    page.fill('#q', 'Are you hungry and are you tired?')
+    page.locator('#make').click()
+    page.wait_for_selector('main.simple.card #made-where, main.simple.nocard')
+    two = text(page)
+    check('part 1: a typed question with two things in it is asked one at a time ("Next: second question" is there)', page.locator('[data-act=next]').count() == 1, two[:300])
+    answer(page, 'yes')
+    more(page)
+    page.locator('main.s-answered [data-act=next]').first.click()
+    page.wait_for_selector('main.simple.card #made-where')
+    answer(page, 'no')
+    # 4. a typed memory question: no card, a line to say instead
+    new_q(page)
+    page.fill('#q', 'Do you remember what you had for lunch?')
+    page.locator('#make').click()
+    page.wait_for_selector('main.simple.nocard')
+    check('part 1: a memory question gets no card and a line to say instead', 'This one asks them to remember' in text(page) or 'asks Frank to remember' in text(page), text(page)[:300])
+    # 5. Frank starts; the phone comes back with a press and hold
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    page.locator('#turn-go').click()
+    page.wait_for_selector('main.pv .pt')
+    tap_yes(page, 'I want to tell you something')
+    page.wait_for_selector('main.pv .pt')
+    hold_exit(page)
+    page.wait_for_timeout(800)
+    page.wait_for_selector('main.simple')
+    # 6. "We're stuck" on a card
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    ask_topic(page, 'rest', 'Are you tired?')
+    page.locator('[data-act=stuck]').click()
+    page.wait_for_function("document.querySelector('[data-act=unstuck]')")
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+
+    log = page.evaluate(KV_GET, 'practice')
+    kinds = [e['k'] + (':esc' if e.get('esc') else '') + (':' + e['via'] if e['k'] == 'answer' and not e.get('esc') else '') for e in log['events']]
+    check('part 1, the log: one row for each question, each "Yes" on the check, the "No, something else", Frank\'s start and "We\'re stuck"', kinds == ['ask', 'answer:card', 'ask', 'no', 'answer:esc', 'answer:letter', 'ask', 'answer:card', 'ask', 'answer:card', 'ask', 'turn', 'answer:turn', 'ask', 'stuck'], str(kinds))
+    words = json.dumps(log)
+    check('part 1, the log holds no word of a question or an answer (no "tea", no "Bo", no "hungry", no "lunch")', not re.search(r'tea|coffee|\bbo\b|hungry|tired|lunch|remember|tell you', words, re.I), words[:400])
+    asks = [e for e in log['events'] if e['k'] == 'ask']
+    check('part 1, the log: where each question came from, its topic, and what the app flagged', [(e['by'], e['topic'], bool(e.get('two')), bool(e.get('second')), bool(e.get('quiz'))) for e in asks] == [('app', 'food', False, False, False), ('app', 'food', False, False, False), ('typed', 'food', True, False, False), ('typed', 'rest', False, True, False), ('typed', 'food', False, False, True), ('app', 'rest', False, False, False)], str(asks))
+
+    page.locator('#diary-link').click()
+    page.wait_for_selector('main.simple.diary')
+    check('part 1: "For the speech therapist" stands on the diary screen, under the two share buttons', 'For the speech therapist' in text(page, '#practice-link') and 'counts only, no grade' in text(page, '#practice-link') and ys(page, '#practice-link')[0][1] > ys(page, '#share-row')[0][1], text(page, '#practice-link'))
+    screen_checks(page, 'part 1: the diary with the way in', primary=False)
+    page.locator('#practice-link').click()
+    page.wait_for_selector('main.simple.practice #practice-page')
+    pg = text(page, '#practice-page')
+    for want in ('Conversations with Frank, the last 7 days', 'Counted by the app from this phone. Only what was entered here.', 'These are counts to talk over. They are not a score of the family or of Frank.',
+                 'Questions asked: 6. Counted: each question that became a card or a line to say.', 'By topic: Food & drink 4, Rest & sleep 2.',
+                 "Picked from the app's own questions (one thought each): 3. Typed by the carer: 3. Spoken by the carer: 0.",
+                 'Two things in one question: 1 time. The app asked them one at a time.', 'The second of the two was then asked: 1 time.',
+                 'A question that asked to remember something: 1 time. The app made no card and offered a line to say instead.',
+                 '"Something else" was chosen: 1 time, in 1 conversation.', 'After it, an answer was confirmed by:', 'the first letter: 1', 'After it, no answer was confirmed: 0 times.',
+                 '"We\'re stuck" (show, write or draw) was opened: 1 time, 0 of them after "something else".',
+                 'Frank started the conversation (the button "wants to say something"): 1 time.', 'The check ("So: tea. Right?"): "Yes" 6 times, "No, something else" 1 time.',
+                 'Read aloud is off on this phone today.', 'Nothing about needs, pain or health is on this page. Those are in the diary.',
+                 'Counted by fixed rules on this phone. No AI. Not an assessment and not a medical record.'):
+        check(f'part 1, the page counts what was done: "{want[:70]}"', want in pg, pg[:900])
+    today = datetime.date.today()
+    check('part 1: the app began to count today, and the page says from which day', f'The app began to count these on {today:%a} {today.day} {today:%b}: nothing from before that day is in the numbers.' in pg, pg[:500])
+    check('part 1: no line of the page grades anyone (good, bad, well done, poor, should, must, failed), and none has an exclamation mark', not re.search(GRADE, re.sub(r'"[^"]*"', '""', pg), re.I) and '!' not in pg, pg)
+    shot(page, '01_for_the_speech_therapist_counts_of_real_conversations', full=True)
+
+    # ---------------------------------------------------------------- part 2: the page on its worst case; print, share, Back
+    at = lambda d, h, m: int(datetime.datetime.combine(datetime.date.today() - datetime.timedelta(days=d), datetime.time(h, m)).timestamp() * 1000)
+    diary = [
+        {'id': 'x1', 'at': at(1, 9, 0), 'kind': 'answer', 'q': 'Are you in pain?', 'label': 'yes', 'topic': 'body'},
+        {'id': 'x2', 'at': at(1, 9, 1), 'kind': 'answer', 'q': 'Where does it hurt?', 'label': 'chest', 'topic': 'body'},
+        {'id': 'x3', 'at': at(1, 9, 2), 'kind': 'answer', 'q': 'How bad is the pain?', 'label': 'quite bad', 'topic': 'body'},
+        {'id': 'x4', 'at': at(1, 9, 10), 'kind': 'log', 'log': 'pain', 'label': 'pain', 'topic': 'body'},
+        {'id': 'x5', 'at': at(2, 10, 0), 'kind': 'need', 'label': 'toilet', 'topic': 'body'},
+        {'id': 'x6', 'at': at(2, 15, 0), 'kind': 'need', 'label': 'toilet', 'topic': 'body'},
+        {'id': 'x7', 'at': at(3, 8, 0), 'kind': 'log', 'log': 'drank', 'label': 'drank', 'topic': 'food'},
+    ]
+    old = [{'k': 'ask', 'at': at(12, 10, i), 'topic': 'people', 'by': 'app', 'start': True} for i in range(5)]
+    page.evaluate(KV_PUT, {'diary': diary, 'practice': {'since': at(20, 8, 0), 'events': old + log['events']}})
+    page.reload()
+    page.wait_for_selector('main.simple.practice #practice-page')
+    check('part 2: opened again, the box "Include the needs and pain answers" is off', not page.locator('#practice-health').is_checked() and 'Off: nothing about needs, pain or health is on the page.' in text(page, '#practice-health-state'))
+    warn = text(page, '#practice-warn') if page.locator('#practice-warn').count() else ''
+    check('part 2, worst case (a pain in the chest, quite bad, in the diary of this time): with the box off the SCREEN says so, with whom to tell and when to call', 'It is not on this page unless you tick the box. Tell the doctor or nurse. If it is new or sudden, call 911 now.' in warn, warn)
+    check('part 2, box off: the page itself holds nothing of the diary (no "chest", no "toilet", no call sentence)', not re.search(r'chest|toilet|quite bad|Call 911', text(page, '#practice-page')))
+    check('part 2: the counting began before this week, so the page does not say "began to count"', 'began to count' not in text(page, '#practice-page'))
+    screen_checks(page, 'part 2: "For the speech therapist"')
+    shot(page, '02_for_the_speech_therapist_box_off_the_screen_warns', full=True)
+    page.locator('#practice-health').check()
+    page.wait_for_selector('#practice-call')
+    pg = text(page, '#practice-page')
+    yday = datetime.date.today() - datetime.timedelta(days=1)
+    yd = f'{yday:%a} {yday.day} {yday:%b}'
+    check('part 2, box ticked: the call sentence stands at the top of the page', text(page, '#practice-call') == 'Call 911 now if this is new or sudden: see the pain lines below.' and ys(page, '#practice-call')[0][1] < ys(page, '.page-sec[data-sec=asked]')[0][1])
+    check('part 2, box ticked: the needs with their counts; the pain entered once (three answers and a tap ten minutes later are one entry); the answers as given; whom to tell',
+          'Needs board, pointed to: toilet 2.' in pg and f'Pain: entered 1 time ({yd} 09:10). A card answer and a tap within 20 minutes count once.' in pg and f'{yd} 09:01 "Where does it hurt?" "chest"' in pg and f'{yd} 09:02 "How bad is the pain?" "quite bad"' in pg and 'Tell the doctor or nurse. If it is new or sudden, call 911 now.' in pg and 'Drank' not in pg, pg[-700:])
+    check('part 2, box ticked: the warning for the carer is gone (the page now says it itself)', page.locator('#practice-warn').count() == 0)
+    check('part 2, box ticked: still no line of the app\'s own wording grades anyone (the answer "quite bad" is Frank\'s, in quotes)', not re.search(GRADE, re.sub(r'"[^"]*"', '""', pg), re.I))
+    shot(page, '03_for_the_speech_therapist_needs_and_pain_answers_ticked', full=True)
+    # the last 30 days hold the five older questions
+    page.locator('#practice-month').click()
+    page.wait_for_function("document.querySelector('#practice').dataset.span === 'month'")
+    check('part 2: "Last 30 days" counts the older questions as well (11), and names its span', 'Questions asked: 11.' in text(page, '#practice-page') and 'the last 30 days' in text(page, '#practice-sub') and page.locator('#practice-health').is_checked())
+    page.locator('#practice-week').click()
+    page.wait_for_function("document.querySelector('#practice').dataset.span === 'week'")
+    # the questions for the therapist: three at most
+    for i in (1, 6, 9):
+        page.locator(f'[data-practice-q="{i}"]').check()
+        page.wait_for_timeout(120)
+    check('part 2: three questions picked; the other seven cannot be ticked; they close the page', page.locator('[data-practice-q]:checked').count() == 3 and page.locator('[data-practice-q]:disabled').count() == 7 and 'The family wants to ask: What helps after "something else"? What helps the person to start a conversation? What to practise before the next session?' in text(page, '.page-sec[data-sec=ask]'), text(page, '#practice-page')[-300:])
+    check('part 2: the picks are kept on this phone', page.evaluate(KV_GET, 'practiceAsk') == ['What helps after "something else"?', 'What helps the person to start a conversation?', 'What to practise before the next session?'], str(page.evaluate(KV_GET, 'practiceAsk')))
+    screen_checks(page, 'part 2: the page with the box ticked and three questions')
+
+    # ---- the sheet: the exact text first; Share hands over exactly that; Copy copies exactly that
+    page.locator('#practice-share').click()
+    page.wait_for_selector('#share-sheet')
+    sheet = text(page, '#share-sheet')
+    shown = page.locator('#share-text').inner_text()
+    check('part 2, the sheet: its own heading, where the text goes, that this is the exact text, and no box (what is in it was decided on the page)', 'Share this with the speech therapist?' in sheet and 'This text leaves the phone through the app you pick (message, email). Talk Partner keeps no copy and has no server.' in sheet and 'This is the exact text. Nothing else goes with it.' in sheet and 'The needs and pain answers are in this text, as you ticked on the page.' in sheet and page.locator('#share-health').count() == 0, sheet[:400])
+    lines = shown.split('\n')
+    check('part 2, the text: the first line of every shared text, then the call sentence, then the page line for line', lines[0].startswith('Shared from Talk Partner on ') and lines[0].endswith("Counted by the app's rules from what was entered here; not a medical record.") and lines[1] == 'Call 911 now if this is new or sudden: see the pain lines below.' and 'For the speech therapist: How the conversations at home went' in lines and 'QUESTIONS FOR THE THERAPIST' in lines and lines[-1] == 'Counted by fixed rules on this phone. No AI. Not an assessment and not a medical record.', '\n'.join(lines[:6]))
+    check('part 2, the text and the page are the same lines', all(l in shown for l in page.locator('#practice-page .page-sec li').all_inner_texts()))
+    check('part 2, the sheet fits the 390 x 844 screen: Share, Copy and Cancel can all be reached', all(y[1] + y[3] <= 844 for y in ys(page, '#share-go, #share-copy, #share-cancel')), str(ys(page, '#share-go, #share-copy, #share-cancel')))
+    shot(page, '04_for_the_speech_therapist_sheet_with_the_exact_text')
+    check('part 2: nothing was handed over before a button was pressed', page.evaluate('window.__shared.length') == 0)
+    page.locator('#share-go').click()
+    page.wait_for_function("document.querySelector('#share-status').innerText.includes('Handed')")
+    handed = page.evaluate('window.__shared')
+    check('part 2, Share: `navigator.share` was called once, with { text } and nothing else, and the text is the one the sheet showed', len(handed) == 1 and list(handed[0].keys()) == ['text'] and handed[0]['text'] == shown, str(handed)[:200])
+    page.locator('#share-copy').click()
+    page.wait_for_function("document.querySelector('#share-copy').innerText === 'Copied'")
+    check('part 2, Copy: the clipboard holds exactly the text the sheet showed', page.evaluate('navigator.clipboard.readText()') == shown)
+    page.locator('#share-cancel').click()
+    page.wait_for_function("!document.querySelector('#share-sheet')")
+    check('part 2: the sheet closes back onto the page; the box is as it was', page.locator('main.simple.practice').count() == 1 and page.locator('#practice-health').is_checked())
+    # the phone's back button with the sheet up closes the sheet, and nothing more
+    page.locator('#practice-share').click()
+    page.wait_for_selector('#share-sheet')
+    page.go_back()
+    page.wait_for_function("!document.querySelector('#share-sheet')")
+    check('part 2: with the sheet up, the phone\'s back button closes the sheet and stays on the page', page.locator('main.simple.practice').count() == 1)
+
+    # ---- as it prints
+    page.emulate_media(media='print')
+    page.wait_for_timeout(200)
+    pv = page.evaluate(PRINT_VIEW)
+    check('part 2, printed: the page, and nothing around it (no bar, no box, no questions to pick, no buttons)', pv['top'] == 0 and pv['controls'] == 0 and pv['page'] == 1, str(pv))
+    shot(page, '05_for_the_speech_therapist_as_it_prints', full=True)
+    page.emulate_media(media='screen')
+    stub = page.evaluate("(() => { let n = 0; window.print = () => { n++; window.__printed = n; }; return true; })()")
+    page.locator('#practice-print').click()
+    check('part 2: "Print this page" calls the browser\'s own print, once', stub and page.evaluate('window.__printed') == 1)
+
+    # ---- Back, exactly one step at a time (PERSONA 12): the page -> the diary -> the first screen
+    # (the page was loaded again for part 2, so there is no step under it: Back is the first screen, as on every screen opened by its address)
+    page.locator('[data-act=back]').click()
+    page.wait_for_selector('main.simple.home')
+    check('Back from the page opened by its own address: the first screen', page.locator('main.simple.home').count() == 1)
+    page.locator('#diary-link').click()
+    page.wait_for_selector('main.simple.diary')
+    page.locator('#practice-link').click()
+    page.wait_for_selector('main.simple.practice')
+    check('opened again from the diary: the box is off again, and the screen warns again', not page.locator('#practice-health').is_checked() and page.locator('#practice-warn').count() == 1)
+    page.locator('[data-act=back]').click()
+    page.wait_for_selector('main.simple.diary')
+    check('Back from "For the speech therapist": exactly one step, to the diary it was opened from', page.locator('main.simple.diary').count() == 1 and page.locator('main.simple.practice').count() == 0)
+    page.locator('#practice-link').click()
+    page.wait_for_selector('main.simple.practice')
+    page.go_back()
+    page.wait_for_selector('main.simple.diary')
+    check('the phone\'s own back button does the same: one step, to the diary', page.locator('main.simple.diary').count() == 1)
+    page.locator('[data-act=back]').click()
+    page.wait_for_selector('main.simple.home')
+    check('Back from the diary: the first screen', page.locator('main.simple.home').count() == 1)
+    # "Delete these counts": the log starts again, the diary stays
+    page.locator('#diary-link').click()
+    page.wait_for_selector('main.simple.diary')
+    page.locator('#practice-link').click()
+    page.wait_for_selector('main.simple.practice')
+    page.locator('#practice-del').click()
+    page.wait_for_function("!document.querySelector('#practice-del')")
+    after = page.evaluate(KV_GET, 'practice')
+    check('"Delete these counts" (after a yes): the log is empty and starts now; the page says nothing was counted; the diary is as it was', after['events'] == [] and 'Nothing was counted in this time.' in text(page, '#practice-page') and 'Questions asked: 0.' in text(page, '#practice-page') and len(page.evaluate(KV_GET, 'diary')) == len(diary), text(page, '#practice-page')[:400])
+    screen_checks(page, 'the page with nothing counted')
+    shot(page, '06_for_the_speech_therapist_nothing_counted', full=True)
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+
+    # ---------------------------------------------------------------- part 3: the communication passport
+    H = 3600000
+    now_ms = int(time.time() * 1000)
+    seen = lambda q, labels, back: [{'q': q, 'topic': '', 'label': l, 'at': now_ms - back * H + i * 60000} for i, l in enumerate(labels)]
+    history = (seen('Would you like tea or coffee?', ['tea', 'tea', 'tea', 'coffee'], 90) + seen('Are you in pain?', ['no', 'no', 'no'], 80) + seen('Would you like something to drink?', ['no', 'no', 'no'], 70)
+               + seen('It starts with B. Is it one of these?', ['Bo', 'Bo', 'biscuits (ginger)'], 60) + seen('Who is it about?', ['Tom', 'Tom'], 50) + seen('Would you like to call Tom?', ['yes'], 49)
+               + seen('Shall we talk more about Bo?', ['yes', 'yes'], 40) + seen('Would you like to see Beth?', ['no', 'no', 'no'], 30))
+    needs = [{'label': 'toilet', 'at': now_ms - 20 * H + i * 60000} for i in range(4)]
+    page.evaluate(KV_PUT, {'history': history, 'needs': needs})
+    page.reload()
+    page.wait_for_selector('main.simple.home')
+    page.locator('#passport-link').click()
+    page.wait_for_selector('main.simple.passport[data-step=lines]')
+    lead = text(page)
+    check('passport, first screen: the title with the name, what it is for, that every line is the carer\'s to decide, and that the app sends nothing', 'How to talk with Frank' in text(page, '#pass-title') and 'You decide every line.' in lead and 'No AI, and the app sends nothing: the page leaves only when you print it or share it yourself.' in text(page, '#pass-lock'), lead[:400])
+    boxes = page.evaluate("[...document.querySelectorAll('[data-pass-line]')].map((b) => [b.dataset.passLine, b.checked, b.closest('label').innerText.replace(/\\s+/g, ' ').trim()])")
+    keys = [b[0] for b in boxes]
+    check('passport: the five "how to talk" lines carry the name, each with its box, all ticked', [b[2] for b in boxes[:5]] == ['Frank knows what to say. The words are hard to find.', 'Frank understands most of what you say. Speak in short sentences, one thing at a time. Take this line off if it is not true for Frank.', 'Write two or three choices, or point to pictures. Wait: count to ten.', 'Check: "So: tea. Right?"', "Don't answer for Frank, and don't quiz: no testing questions."] and all(b[1] for b in boxes), str(boxes[:5]))
+    check('passport: About Frank from About them (people, food and drink, places, TV, the family\'s own fact)', all(k in keys for k in ('about:people', 'about:foods', 'about:places', 'about:tv')) and 'People: Carol (wife, lives here), Beth (daughter), Tom (brother).' in lead and 'Bo is his dog' in lead, str(keys))
+    check('passport, "Words that worked": the words found by their first letter with how often, and the usual choice with its count', 'Bo: found by its first letter, 2 times.' in lead and 'biscuits (ginger): found by its first letter, 1 time.' in lead and '"Would you like tea or coffee": usually tea (3 of 4).' in lead, lead[900:1500])
+    check('passport, "Things Frank likes to talk about": Bo and Tom with their counts; not Beth (three times "no")', 'Bo: chosen, or yes to an offer about it, 4 times.' in lead and 'Tom: chosen, or yes to an offer about it, 3 times.' in lead and 'Beth: chosen' not in lead and 'It says what was chosen, not what is felt.' in lead)
+    check('passport, worst case: no habit about pain, the body or a need, and no usual "no", anywhere on it (the answers held "no" to pain and to a drink three times each, and "toilet" four times)', not re.search(r'in pain|says no|something to drink|needs board|toilet', lead, re.I), lead)
+    wrong = text(page, '.pass-sec[data-sec=wrong]')
+    check('passport, "If something is wrong": the emergency number and the fixed text of phase 5 (FAST), always on the page, with no box', 'Always on the page' in wrong and 'Emergency number: 911.' in wrong and 'If you see any one of these, and it is new or sudden, call 911 now. Do not wait to see if it passes.' in wrong and 'Face: One side of the face has dropped, or the smile is uneven.' in wrong and 'Time: Call now. Note the time it started: the ambulance crew will ask.' in wrong and 'Worried, and it is not sudden: call the doctor or nurse today.' in wrong and page.locator('.pass-sec[data-sec=wrong] input').count() == 0, wrong)
+    check('passport, first screen: nothing can be printed or shared from here (only "Look at the page")', page.locator('[data-act=page-print], [data-act=share-page]').count() == 0 and text(page, '#pass-look') == 'Look at the page')
+    check('passport: no guessed pronoun on the screen but in the family\'s own fact ("Bo is his dog")', not re.search(r'\b(?:he|she|him|her|his|hers)\b', lead.replace('Bo is his dog', ''), re.I))
+    screen_checks(page, 'passport, the lines')
+    shot(page, '07_passport_every_line_with_its_box', full=True)
+    # the carer decides: one fixed line off, one learned line off, yes and no typed, one line of her own
+    page.locator('[data-pass-line="sca:knows"]').uncheck()
+    page.locator('[data-pass-line="word:biscuits (ginger)"]').uncheck()
+    page.fill('#pass-yes', 'nods, or thumb up')
+    page.fill('#pass-no', 'pushes the hand away')
+    page.fill('#pass-own-0', 'Points with the left hand. Tires after lunch.')
+    page.wait_for_timeout(200)
+    kept = page.evaluate(KV_GET, 'passport')
+    check('passport: what the carer set is kept on this phone (two lines off, yes and no, her own line)', kept['off'] == ['sca:knows', 'word:biscuits (ginger)'] and kept['yes'] == 'nods, or thumb up' and kept['no'] == 'pushes the hand away' and kept['own'][0] == 'Points with the left hand. Tires after lunch.', str(kept))
+    shot(page, '08_passport_two_lines_off_yes_no_and_an_own_line', full=True)
+    page.locator('#pass-look').click()
+    page.wait_for_selector('main.simple.passport[data-step=page] #pass-page')
+    pp = text(page, '#pass-page')
+    check('passport, the page: the lines left on, in their sections; the two taken off are not there; yes and no as typed; her own line under "Also"', 'How to talk with Frank' in text(page, '#pass-h') and 'Frank knows what to say' not in pp and 'biscuits (ginger): found' not in pp and 'Frank understands most of what you say.' in pp and 'Yes: nods, or thumb up' in pp and 'No: pushes the hand away' in pp and 'Also Points with the left hand. Tires after lunch.' in pp and 'Take this line off' not in pp, pp[:700])
+    check('passport, the page: "If something is wrong" stands on it whole, and the footer says what the page is not', 'Emergency number: 911.' in pp and 'Speech: Speech is suddenly worse, slurred or gone: more than on other days.' in pp and "It holds no health notes: ask the family, and go by the doctor's plan." in pp and 'Not a medical record. No doctor, nurse or speech therapist wrote or checked it.' in text(page, '#pass-foot'))
+    pics = page.evaluate("[...document.querySelectorAll('#pass-pics li')].map((li) => [li.querySelector('b').innerText.trim(), !!li.querySelector('img'), (li.querySelector('.mono') || {}).innerText || ''])")
+    check('passport, the page: the family\'s own pictures where there is one (Beth, Bo, the lake), an initial otherwise (Carol, Tom)', pics == [['Carol', False, 'C'], ['Beth', True, ''], ['Tom', False, 'T'], ['Bo', True, ''], ['the lake', True, '']], str(pics))
+    check('passport, the page: Print, Share and "Change the lines" stand under it', ys(page, '#pass-print')[0][1] > ys(page, '#pass-foot')[0][1] and page.locator('#pass-share').count() == 1 and text(page, '#pass-change') == 'Change the lines')
+    screen_checks(page, 'passport, the page')
+    shot(page, '09_passport_the_page_as_approved', full=True)
+    page.emulate_media(media='print')
+    page.wait_for_timeout(200)
+    pv = page.evaluate(PRINT_VIEW)
+    check('passport, printed: the page, and nothing around it', pv['top'] == 0 and pv['controls'] == 0 and pv['page'] == 1, str(pv))
+    shot(page, '10_passport_as_it_prints', full=True)
+    if SHOTS:
+        page.pdf(path=os.path.join(SHOTS, '10b_passport_as_it_prints.pdf'), format='A4', margin={'top': '12mm', 'bottom': '12mm', 'left': '12mm', 'right': '12mm'})
+        sheets = len(re.findall(rb'/Type\s*/Page[^s]', open(os.path.join(SHOTS, '10b_passport_as_it_prints.pdf'), 'rb').read()))
+        check('passport, printed on A4 with 12 mm margins: one sheet', sheets == 1, str(sheets))
+    page.emulate_media(media='screen')
+    page.evaluate("(() => { window.__printed = 0; window.print = () => { window.__printed++; }; })()")
+    page.locator('#pass-print').click()
+    check('passport: "Print this page" calls the browser\'s own print, once', page.evaluate('window.__printed') == 1)
+    before = page.evaluate('window.__shared.length')
+    page.locator('#pass-share').click()
+    page.wait_for_selector('#share-sheet')
+    shown = page.locator('#share-text').inner_text()
+    sheet = text(page, '#share-sheet')
+    check('passport, the sheet: its heading, where the text goes, no box, and that no health notes and no photos are in it', 'Share this page as text?' in sheet and 'This text leaves the phone through the app you pick' in sheet and 'Every line in this text is one you left on the page. No health notes and no photos are in it. Photos never go in.' in sheet and page.locator('#share-health').count() == 0, sheet[:400])
+    check('passport, the text: the title, the sections, only the lines left on, no photo and no data URL', 'HOW TO TALK WITH FRANK' in shown and '- Yes: nods, or thumb up' in shown and 'IF SOMETHING IS WRONG' in shown and '- Emergency number: 911.' in shown and 'Frank knows what to say' not in shown and not re.search(r'data:|base64|<img', shown), shown[:400])
+    check('passport, the text and the page are the same lines', all(l in shown for l in page.locator('#pass-page .page-sec li[data-key]').all_inner_texts()))
+    shot(page, '11_passport_sheet_with_the_exact_text')
+    page.locator('#share-go').click()
+    page.wait_for_function("document.querySelector('#share-status').innerText.includes('Handed')")
+    handed = page.evaluate('window.__shared')
+    check('passport, Share: handed over once, as { text }, exactly the text the sheet showed', len(handed) == before + 1 and list(handed[-1].keys()) == ['text'] and handed[-1]['text'] == shown)
+    page.locator('#share-cancel').click()
+    page.wait_for_function("!document.querySelector('#share-sheet')")
+    # ---- Back, one step at a time: the page -> the lines (as they were left) -> the first screen
+    page.locator('[data-act=back]').first.click()
+    page.wait_for_selector('main.simple.passport[data-step=lines]')
+    check('Back from the passport\'s page: exactly one step, to its lines, as the carer left them', not page.locator('[data-pass-line="sca:knows"]').is_checked() and page.locator('[data-pass-line="sca:check"]').is_checked() and page.input_value('#pass-yes') == 'nods, or thumb up' and page.input_value('#pass-own-0') == 'Points with the left hand. Tires after lunch.')
+    page.locator('#pass-look').click()
+    page.wait_for_selector('main.simple.passport[data-step=page]')
+    page.locator('#pass-change').click()
+    page.wait_for_selector('main.simple.passport[data-step=lines]')
+    check('"Change the lines" is the same one step back', page.locator('#pass-look').count() == 1)
+    page.locator('#pass-look').click()
+    page.wait_for_selector('main.simple.passport[data-step=page]')
+    page.go_back()
+    page.wait_for_selector('main.simple.passport[data-step=lines]')
+    check('the phone\'s own back button from the page: the lines', page.locator('#pass-look').count() == 1)
+    page.locator('[data-act=back]').click()
+    page.wait_for_selector('main.simple.home')
+    check('Back from the passport\'s lines: the first screen it was opened from', page.locator('main.simple.home').count() == 1)
+    # from About them: the same page, and Back returns to About them
+    page.goto(url + '#/about')
+    page.wait_for_selector('main.simple.about-simple')
+    check('About them has the way in as well', 'How to talk with Frank' in text(page, '#passport-about'))
+    page.locator('#passport-about').click()
+    page.wait_for_selector('main.simple.passport[data-step=lines]')
+    page.locator('[data-act=back]').click()
+    page.wait_for_selector('main.simple.about-simple')
+    check('opened from About them, Back goes back to About them', page.locator('main.simple.about-simple').count() == 1)
+    page.reload()
+    page.wait_for_selector('main.simple')
+    page.goto(url + '#/passport')
+    page.wait_for_selector('main.simple.passport[data-step=lines]')
+    check('after a reload the passport opens on its lines, with what the carer set', not page.locator('[data-pass-line="sca:knows"]').is_checked() and page.input_value('#pass-no') == 'pushes the hand away')
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+
+    # ---- with nothing in About them
+    page.evaluate(KV_PUT, {'profile': {'personName': '', 'partnerName': '', 'people': [], 'foods': [], 'places': [], 'tv': [], 'music': [], 'other': []}, 'photos': [], 'history': [], 'needs': [], 'passport': None})
+    page.reload()
+    page.wait_for_selector('main.simple.home')
+    check('with no name the way in reads "How to talk together"', 'How to talk together' in text(page, '#passport-link'))
+    page.locator('#passport-link').click()
+    page.wait_for_selector('main.simple.passport[data-step=lines]')
+    bare = text(page)
+    check('passport with nothing in About them: "this person" and "they", in the right form, and the way to About them', 'How to talk with this person' in text(page, '#pass-title') and 'They understand most of what you say.' in bare and "Don't answer for them, and don't quiz: no testing questions." in bare and 'How they say yes and no' in bare and page.locator('#pass-noname a[href="#/about"]').count() == 1, bare[:500])
+    check('passport with nothing in About them: no empty section and no broken line ("They likes", "People: .", "undefined")', not re.search(r'They (?:likes|understands|knows|says)|People: \.|undefined|Words that worked|likes? to talk about', bare) and page.locator('.pass-sec[data-sec=about], .pass-sec[data-sec=words], .pass-sec[data-sec=likes]').count() == 0, bare)
+    page.locator('#pass-look').click()
+    page.wait_for_selector('#pass-page')
+    pp = text(page, '#pass-page')
+    check('passport with nothing in About them: the page still holds how to talk, "Not filled in yet", and "If something is wrong" whole', 'They know what to say.' in pp and 'Not filled in yet: ask the family how yes and no are shown.' in pp and 'Emergency number: 911.' in pp and 'Face: One side of the face has dropped' in pp and page.locator('#pass-pics').count() == 0, pp[:500])
+    screen_checks(page, 'passport with nothing in About them, the page')
+    shot(page, '12_passport_with_nothing_in_about_them', full=True)
+    page.locator('[data-act=home]').click()
+    page.wait_for_selector('main.simple.home')
+    check('phase 7: "Home" from the passport\'s page is the first screen', page.locator('main.simple.home').count() == 1)
+
+    check('phase 7: no request went to any other host (no model, no server: rules on the device)', not outside, str(outside[:3]))
+    check('phase 7: no page error', not errors, '; '.join(errors[:3]))
+    ctx.close()
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--url', default='http://localhost:5179/')
     ap.add_argument('--live', action='store_true', help='a hosted copy: never press "Yes" on the sheet, so nothing is sent')
     ap.add_argument('--dev', action='store_true', help='the dev server: it has no service worker, so the offline run is left out (and said so)')
     ap.add_argument('--shots', default=None, help='a folder for pictures of the phase 5 or phase 6 screens (devlog/evidence_phase5, devlog/evidence_phase6)')
-    ap.add_argument('--only', default=None, help='run one part only: phase5 or phase6')
+    ap.add_argument('--only', default=None, help='run one part only: phase5, phase6, phase7, back or ways')
     a = ap.parse_args()
     global SHOTS
     SHOTS = a.shots
@@ -2516,7 +2900,9 @@ def main():
             ways(browser, url)
         if a.only in ('phase5', 'phase6'):
             (phase5 if a.only == 'phase5' else phase6)(browser, url, a.live)
-        if a.only in ('phase5', 'phase6', 'back', 'ways'):
+        if a.only == 'phase7':
+            phase7(browser, url, a.live)
+        if a.only in ('phase5', 'phase6', 'phase7', 'back', 'ways'):
             browser.close()
             bad = results.count(False)
             print(f'\n{len(results) - bad} of {len(results)} checks passed')
@@ -2526,14 +2912,21 @@ def main():
         photos(browser, url)
         diary(browser, url, a.live)
         phase4(browser, url, a.live)
-        if SHOTS and 'phase6' in SHOTS:
+        if SHOTS and ('phase6' in SHOTS or 'phase7' in SHOTS):
             # (the pictures of each phase go to its own folder: this run writes phase 6's only)
             keep, SHOTS = SHOTS, None
             phase5(browser, url, a.live)
             SHOTS = keep
         else:
             phase5(browser, url, a.live)
-        phase6(browser, url, a.live)
+        if SHOTS and 'phase7' in SHOTS:
+            # (the pictures of each phase go to its own folder: this run writes phase 7's only)
+            keep, SHOTS = SHOTS, None
+            phase6(browser, url, a.live)
+            SHOTS = keep
+        else:
+            phase6(browser, url, a.live)
+        phase7(browser, url, a.live)
         backstack(browser, url)
         ways(browser, url)
         if a.dev:

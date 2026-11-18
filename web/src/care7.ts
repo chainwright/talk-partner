@@ -1,4 +1,4 @@
-// The screens of phase 7 of the build (19 Nov 2026): "For the speech therapist" (how the conversations went, in
+// The screens of phase 7 of the build (18 Nov 2026): "For the speech therapist" (how the conversations went, in
 // counts) and the communication passport ("How to talk with Frank": first the lines to decide on, then the page as it
 // prints). Like web/src/simple.ts these functions only draw: every value is handed in by main.ts, there is no DOM
 // here, and every word comes from core/copy8.ts or from the page the rules built (core/practice.ts,

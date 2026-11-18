@@ -1,4 +1,4 @@
-// The words of phase 7 of the build (19 Nov 2026): "For the speech therapist" (how the conversations at home went, in
+// The words of phase 7 of the build (18 Nov 2026): "For the speech therapist" (how the conversations at home went, in
 // counts) and the communication passport ("How to talk with Frank"). The file is numbered 8 because core/copy7.ts was
 // taken by the fix of 18 Nov. Same rules as core/copy.ts: plain, adult, no praise, no exclamation marks, never "him"
 // or "her" (the name, or "they").
@@ -57,7 +57,7 @@ export const P8 = {
     helpedLine: (what: string, n: number) => `- ${what}: ${n}`,
     helpedNone: (n: number) => `After it, no answer was confirmed: ${times(n)}. Counted: a new conversation started, or 30 minutes passed.`,
     stuck: (n: number, after: number) => `"We're stuck" (show, write or draw) was opened: ${times(n)}${n ? `, ${after} of them after "something else"` : ''}.`,
-    turn: (name: string, n: number) => `${name || 'The person'} started the conversation ("${name ? `${name} wants to say something` : 'They want to say something'}"): ${times(n)}.`,
+    turn: (name: string, n: number) => `${name || 'The person'} started the conversation (the button "wants to say something"): ${times(n)}.`,
     check: (yes: number, no: number) => `The check ("So: tea. Right?"): "Yes" ${times(yes)}, "No, something else" ${times(no)}.`,
     speak: (on: boolean, device: string) => `Read aloud is ${on ? 'on' : 'off'} on this ${device} today.`,
     // ---- the needs and pain answers (only with the box ticked)
@@ -109,11 +109,11 @@ export const P8 = {
       wrong: 'If something is wrong',
     },
     /** The fixed lines: the brief's four, and one that says the person is competent. Each can be taken off. */
-    knows: (name: string) => (name ? `${name} knows what ${name} wants to say. The words are hard to find.` : 'They know what they want to say. The words are hard to find.'),
+    knows: (name: string) => (name ? `${name} knows what to say. The words are hard to find.` : 'They know what to say. The words are hard to find.'),
     understands: (name: string) => (name ? `${name} understands most of what you say. Speak in short sentences, one thing at a time.` : 'They understand most of what you say. Speak in short sentences, one thing at a time.'),
     choices: 'Write two or three choices, or point to pictures. Wait: count to ten.',
     check: 'Check: "So: tea. Right?"',
-    answer: (name: string) => `Don't answer for ${name || 'them'}, and don't test ${name || 'them'}.`,
+    answer: (name: string) => `Don't answer for ${name || 'them'}, and don't quiz: no testing questions.`,
     yesLabel: 'Yes is shown by',
     noLabel: 'No is shown by',
     yesHint: 'For example: nods, thumb up, taps "Yes" on the screen.',

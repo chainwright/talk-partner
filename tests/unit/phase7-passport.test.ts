@@ -1,4 +1,4 @@
-// Phase 7, part C (19 Nov 2026): the communication passport, "How to talk with Frank". One printable page built by
+// Phase 7, part C (18 Nov 2026): the communication passport, "How to talk with Frank". One printable page built by
 // rules from About them, from what was counted from the confirmed answers, and from fixed lines. Pinned here: the
 // builder with an empty profile (no dangling "They likes"), the names, no habit about pain, the body, a feeling or a
 // need, the emergency text of phase 5 word for word and never removable, every other line removable, how yes and no
@@ -58,11 +58,11 @@ describe('the builder with nothing in About them', () => {
   });
   it('with no name the lines say "they", in the right form: no "They likes", no "They understands", no "them can"', () => {
     expect(texts(m, 'how')).toEqual([
-      'They know what they want to say. The words are hard to find.',
+      'They know what to say. The words are hard to find.',
       'They understand most of what you say. Speak in short sentences, one thing at a time.',
       'Write two or three choices, or point to pictures. Wait: count to ten.',
       'Check: "So: tea. Right?"',
-      "Don't answer for them, and don't test them.",
+      "Don't answer for them, and don't quiz: no testing questions.",
     ]);
     expect(sec(m, 'yesno')!.heading).toBe('How they say yes and no');
     for (const l of [...all(m), ...passportText(m).split('\n')]) {
@@ -86,11 +86,11 @@ describe('the builder with nothing in About them', () => {
 describe('the names, and what About them holds', () => {
   it('the brief\'s four lines carry the name, and one more says the person is competent', () => {
     expect(texts(input(), 'how')).toEqual([
-      'Frank knows what Frank wants to say. The words are hard to find.',
+      'Frank knows what to say. The words are hard to find.',
       'Frank understands most of what you say. Speak in short sentences, one thing at a time.',
       'Write two or three choices, or point to pictures. Wait: count to ten.',
       'Check: "So: tea. Right?"',
-      "Don't answer for Frank, and don't test Frank.",
+      "Don't answer for Frank, and don't quiz: no testing questions.",
     ]);
     expect(sec(input(), 'yesno')!.heading).toBe('How Frank says yes and no');
     expect(sec(input(), 'about')!.heading).toBe('About Frank');
@@ -259,7 +259,7 @@ describe('the text for the share sheet, and the two screens', () => {
   it('second screen: the page as it prints, then Print, Share and the way back to the lines; the lines taken off are not on it', () => {
     const html = unesc(passportScreen(model(true, { prefs: prefs({ off: ['sca:knows'], yes: 'nods' }) })));
     expect(html).toContain('data-step="page"');
-    expect(html).not.toContain('Frank knows what Frank wants to say');
+    expect(html).not.toContain('Frank knows what to say');
     expect(html).toContain('Frank understands most of what you say.');
     expect(html).toContain('Yes: nods');
     expect(html).not.toContain('Take this line off');

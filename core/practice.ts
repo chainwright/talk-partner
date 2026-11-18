@@ -1,4 +1,4 @@
-// "For the speech therapist" (phase 7, 19 Nov 2026): how the conversations at home went, as counts, on one page the
+// "For the speech therapist" (phase 7, 18 Nov 2026): how the conversations at home went, as counts, on one page the
 // carer takes to the session. A speech therapist coaches the partner; this shows what happened between sessions.
 //
 // Rules only. The page is built here, on the device, from a small log of what was done in the app: one row for a

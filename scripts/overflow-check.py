@@ -596,6 +596,37 @@ def phase4(url, width, browser):
     check(page, width, "phase 4: the photo over the question on the person's screen")
     if tall >= 844:
         fits('phase 4: the photo, three choices and the way out')
+    # phase 7 of the build: the page for the speech therapist and the passport, with the long name and the long words
+    import time
+    now = int(time.time() * 1000)
+    seen = lambda q, labels, back: [{'q': q, 'topic': '', 'label': l, 'at': now - back * 3600000 + i * 60000} for i, l in enumerate(labels)]
+    history = seen('Would you like blackcurrant and apple crumble or porridge?', ['blackcurrant and apple crumble'] * 4, 50) + seen('It starts with B. Is it one of these?', ['Bartholomew-Christopher', 'Bartholomew-Christopher', 'blackcurrant and apple crumble'], 40) + seen('Would you like to see Bartholomew-Christopher?', ['yes', 'yes'], 30)
+    diary = [{'id': 'o1', 'at': now - 26 * 3600000, 'kind': 'answer', 'q': 'Where does it hurt?', 'label': 'chest', 'topic': 'body'}, {'id': 'o2', 'at': now - 25 * 3600000, 'kind': 'need', 'label': "something's wrong", 'topic': 'body'}, {'id': 'o3', 'at': now - 24 * 3600000, 'kind': 'answer', 'q': 'Is the pain in the shoulder that was operated on last year worse than yesterday?', 'label': 'yes', 'topic': 'body'}]
+    events = [{'k': 'ask', 'at': now - 3600000 + i * 1000, 'topic': t, 'by': 'typed', 'two': True, 'quiz': True, 'start': True} for i, t in enumerate(['food', 'body', 'rest', 'people', 'feel', 'plans', 'fun', 'other'] * 40)]
+    events += [{'k': 'answer', 'at': now - 1800000 + i * 1000, 'via': v, 'esc': True} for i, v in enumerate(['card'] * 3)] + [{'k': 'answer', 'at': now - 1700000 + i * 60000, 'via': v} for i, v in enumerate(['letter'])]
+    for i, v in enumerate(['more', 'typed', 'narrow', 'needs', 'body', 'card']):
+        events += [{'k': 'ask', 'at': now - 1500000 + i * 10000, 'topic': 'food', 'by': 'spoken', 'start': True}, {'k': 'answer', 'at': now - 1500000 + i * 10000 + 1000, 'via': 'card', 'esc': True}, {'k': 'answer', 'at': now - 1500000 + i * 10000 + 2000, 'via': v}]
+    page.evaluate(KV_PUT, {'history': history, 'diary': diary, 'practice': {'since': now - 2 * 86400000, 'events': events}, 'practiceAsk': ['Is it worth writing the key word down while we talk?', 'When can a yes or a no be relied on, and when not?', 'What helps the person to start a conversation?'], 'passport': {'yes': 'nods-and-raises-the-left-thumb-as-high-as-it-will-go, or taps the screen twice', 'no': 'pushes the hand away', 'off': [], 'own': ['Points-with-the-left-hand-only-since-the-stroke-in-July and tires after lunch.', '', ''], 'photos': True}})
+    page.goto(url + '#/practice')
+    page.reload()
+    page.wait_for_selector('main.simple.practice #practice-page')
+    check(page, width, 'phase 7: "For the speech therapist", the box off, the warning for the carer (long name, every line)')
+    page.locator('#practice-health').check()
+    page.wait_for_selector('#practice-call')
+    check(page, width, 'phase 7: "For the speech therapist", the needs and pain answers ticked, three questions')
+    page.locator('#practice-share').click()
+    page.wait_for_selector('#share-sheet')
+    check(page, width, 'phase 7: "For the speech therapist", the sheet with the exact text')
+    page.locator('#share-cancel').click()
+    page.goto(url + '#/passport')
+    page.wait_for_selector('main.simple.passport[data-step=lines]')
+    check(page, width, 'phase 7: the passport, every line with its box (long name, long words)')
+    page.locator('#pass-look').click()
+    page.wait_for_selector('#pass-page')
+    check(page, width, 'phase 7: the passport, the page with its pictures')
+    page.locator('#pass-share').click()
+    page.wait_for_selector('#share-sheet')
+    check(page, width, 'phase 7: the passport, the sheet with the exact text')
     ctx.close()
 
 

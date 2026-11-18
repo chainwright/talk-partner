@@ -632,7 +632,7 @@
 .simple .understood .row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .simple .understood .row .field { width: 100%; min-height: 56px; font-size: 20px; }
 
-/* ---------------------------------------------------------------- phase 7 of the build (19 Nov 2026) */
+/* ---------------------------------------------------------------- phase 7 of the build (18 Nov 2026) */
 /* "For the speech therapist" and the communication passport: a page on the screen that prints as it stands. Both use
    the frame of the doctor-visit page (.visit-page); the controls around it are never printed. */
 .simple .tabs.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -666,18 +666,21 @@
 .simple .pass-fields label { font-size: 16px; font-weight: 600; margin-top: 6px; }
 .simple .pass-fields label small { display: block; font-weight: 400; font-size: 15px; color: var(--muted); }
 @media print {
-  .simple .practice-page, .simple .pass-page { gap: 6px; }
-  .simple .visit-page .page-title { font-size: 20pt; }
-  .simple .page-sec ul { font-size: 11.5pt; gap: 3px; }
-  .simple .page-sec h3, .simple .pass-page .page-sec h3 { font-size: 12pt; }
-  .simple .page-notes, .simple .page-sec .page-note, .simple .practice-page .visit-foot, .simple .pass-page .visit-foot { font-size: 10pt; }
-  .simple .page-sec { padding-top: 5px; gap: 3px; }
+  .simple .practice-page, .simple .pass-page { gap: 4px; }
+  .simple .visit-page .page-title { font-size: 17pt; }
+  .simple .page-sec ul { font-size: 10.5pt; line-height: 1.25; gap: 1px; }
+  .simple .page-sec h3, .simple .pass-page .page-sec h3 { font-size: 11.5pt; }
+  .simple .page-notes, .simple .page-sec .page-note, .simple .practice-page .visit-foot, .simple .pass-page .visit-foot { font-size: 9pt; line-height: 1.25; }
+  .simple .practice-page .visit-foot, .simple .pass-page .visit-foot { padding-top: 4px; }
+  .simple .page-sec { padding-top: 4px; gap: 2px; }
   .simple .page-sec li { break-inside: avoid; }
-  .simple .pass-pics { grid-template-columns: repeat(auto-fill, minmax(60px, 80px)); }
-  .simple .pass-pics .photo, .simple .pass-pics .mono { width: 42px; height: 42px; }
-  .simple .pass-pics .mono { border: 2px solid #000; font-size: 20px; }
-  .simple .pass-pics li { font-size: 9.5pt; }
+  /* "If something is wrong" is never cut in two by the end of a sheet */
+  .simple .page-sec.wrong { break-inside: avoid; }
+  .simple .pass-pics { grid-template-columns: repeat(auto-fill, minmax(56px, 72px)); gap: 4px; margin-top: 2px; }
+  .simple .pass-pics .photo, .simple .pass-pics .mono { width: 34px; height: 34px; border-radius: 8px; }
+  .simple .pass-pics .mono { border: 2px solid #000; font-size: 17px; }
+  .simple .pass-pics li { font-size: 9pt; }
   /* the page takes the paper's own width: on a phone's column a passport ran to two sheets */
-  .simple.wrap.practice, .simple.wrap.passport { max-width: none; width: auto; padding: 0; margin: 0; }
+  .simple.wrap.practice, .simple.wrap.passport { max-width: none; width: auto; padding: 0; margin: 0; gap: 6px; }
   .simple .page-sec.wrong, .simple .page-sec.wrong li { border-color: #000; }
 }

@@ -1,4 +1,4 @@
-// The communication passport (phase 7, 19 Nov 2026): "How to talk with Frank", one printable page that travels with
+// The communication passport (phase 7, 18 Nov 2026): "How to talk with Frank", one printable page that travels with
 // the person, for a new paid carer, a hospital nurse, a grandchild. The classic AAC artefact, built from what the
 // family already put into the app.
 //

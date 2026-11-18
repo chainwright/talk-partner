@@ -403,7 +403,7 @@ const COPY = {
     /** About them: what the app counted from the answers on this device (core/prefs.ts). */
     learned: {
       heading: (name: string) => `What we've learned about ${name || 'them'}`,
-      how: (name: string) => `Counted on this computer from the answers ${name || 'they'} confirmed: no AI, and the app never sends it anywhere (the usual choices leave only in a note for the next carer, if you share one yourself). A line appears after three answers to the same question. It is only ever a hint for you: ${name ? `${name} always chooses, not the app` : 'they always choose for themselves'}.`,
+      how: (name: string) => `Counted on this computer from the answers ${name || 'they'} confirmed: no AI, and the app never sends it anywhere (the usual choices leave only in a note for the next carer or on the page "How to talk", if you share or print one yourself). A line appears after three answers to the same question. It is only ever a hint for you: ${name ? `${name} always chooses, not the app` : 'they always choose for themselves'}.`,
       none: (name: string) => `Nothing yet. After three answers to the same question, ${name ? `${name}'s` : 'their'} usual choice shows here.`,
       keep: 'Keep as a fact',
       remove: 'Remove',

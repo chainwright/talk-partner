@@ -336,7 +336,7 @@ describe('the diary screen and the first screen', () => {
     expect(lock).toBe("The diary is kept on this computer only. The app never sends it anywhere: it leaves only when you share it yourself, as a text you see first. It is never shown on Frank's screen.");
     expect(diaryScreen(model(true))).toContain('it leaves only when you share it yourself, as a text you see first');
     expect(COPY.simple.health.lock).toContain('They leave only if you tick them into a text you share yourself.');
-    expect(COPY.simple.learned.how('Frank')).toContain('the usual choices leave only in a note for the next carer, if you share one yourself');
+    expect(COPY.simple.learned.how('Frank')).toContain('the usual choices leave only in a note for the next carer or on the page "How to talk", if you share or print one yourself');
     expect(COPY.simple.about.lock).toBe('Everything here stays on this computer, unless you share it yourself.');
   });
   it('no sentence of the app but the photos\' own still says "never sent anywhere" (a photo never goes into a shared text)', () => {

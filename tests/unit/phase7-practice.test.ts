@@ -1,4 +1,4 @@
-// Phase 7, part B (19 Nov 2026): "For the speech therapist", how the conversations at home went. Counts only, from a
+// Phase 7, part B (18 Nov 2026): "For the speech therapist", how the conversations at home went. Counts only, from a
 // log that holds no word of a question or an answer; never a grade. Pinned here: every count (no events at all, one
 // question, the two spans), the conversations with a "something else" (each ends one way, so the ways add up), the
 // needs and pain answers only when ticked, with the 20-minute merge and the call sentence on the worst case, the
@@ -123,7 +123,7 @@ describe('no days, one question, and the two spans', () => {
     expect(all).toContain(K.empty);
     expect(sec(m, 'asked')).toEqual(['Questions asked: 0. Counted: each question that became a card or a line to say.', "Picked from the app's own questions (one thought each): 0. Typed by the carer: 0. Spoken by the carer: 0.", K.noFlags]);
     expect(sec(m, 'fit')).toEqual(['"Something else" was chosen: 0 times.', '"We\'re stuck" (show, write or draw) was opened: 0 times.']);
-    expect(sec(m, 'turn')).toEqual(['The person started the conversation ("They want to say something"): 0 times.', 'The check ("So: tea. Right?"): "Yes" 0 times, "No, something else" 0 times.', 'Read aloud is off on this phone today.']);
+    expect(sec(m, 'turn')).toEqual(['The person started the conversation (the button "wants to say something"): 0 times.', 'The check ("So: tea. Right?"): "Yes" 0 times, "No, something else" 0 times.', 'Read aloud is off on this phone today.']);
     for (const l of all) expect(l, l).not.toMatch(/undefined|NaN|null|\[object/);
   });
   it('one question and one answer: singular words, and no line for what did not happen', () => {
@@ -244,7 +244,7 @@ describe('never a grade, never advice, never a guessed pronoun', () => {
       expect(ownWording(l), l).not.toMatch(/\b(?:he|she|him|her|his|hers|himself|herself)\b/i);
       expect(l, l).not.toMatch(/\bthem (?:can|is|has|are|have|was|will|started)\b/i);
     }
-    expect(sec(input(FULL), 'turn')[0]).toBe('Frank started the conversation ("Frank wants to say something"): 1 time.');
+    expect(sec(input(FULL), 'turn')[0]).toBe('Frank started the conversation (the button "wants to say something"): 1 time.');
     expect(practiceReport(input(FULL, { name: '' })).notes[1]).toBe('These are counts to talk over. They are not a score of the family or of the person.');
   });
 });
