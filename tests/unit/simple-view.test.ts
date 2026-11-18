@@ -410,18 +410,31 @@ describe('simple view: after an answer', () => {
     const h = answeredScreen(model({ label: 'something else', out: true, tryNext: 'Would you like some more?' }));
     expect(text(h)).toContain('Do you want coffee or tea? Something else');
     expect(h).toContain('id="after-out"');
-    expect(text(h)).toContain(S.out.show);
-    expect(h).toContain('data-q="Would you like some more?">Try: Would you like some more?</button>');
-    for (const act of ['needs', 'own', 'stuck', 'new']) expect(h).toContain(`data-act="${act}"`);
-    expect(count(h, 'data-act="stuck"')).toBe(1);
-    expect(text(answeredScreen(model({ label: 'not sure', out: true })))).toContain(S.out.notSure);
+    // (18 Nov, the role-play) three things stay on the screen: the next question as the main button, the AI's broader
+    // choices where there is an AI, and "Ask them to show or write it"; everything else is under "More"
+    expect(h).toContain('class="btn primary ask-next" id="next-q" data-q="Would you like some more?"');
+    expect(h).toContain(`id="show-write" data-act="stuck">${S.out.showWrite}</button>`);
+    const three = answeredScreen(model({ label: 'something else', out: true, narrow: 'ask', follow: ['Would you like a hot drink or a cold drink?'], tryNext: 'Would you like water, juice or milk?' }));
+    const shown = three.slice(three.indexOf('id="after-out"'), three.indexOf('id="left-line"'));
+    expect([...shown.matchAll(/<button[^>]*>/g)].map((m) => (m[0].match(/id="([^"]+)"/) ?? [])[1])).toEqual(['next-q', 'narrow', 'show-write']);
+    expect(three).toContain('data-q="Would you like a hot drink or a cold drink?" data-next="1"');
+    for (const act of ['needs', 'own', 'new']) expect(three).not.toContain(`data-act="${act}"`);
+    expect(three).not.toContain('Try: ');
+    const open = answeredScreen(model({ label: 'something else', out: true, more: true, narrow: 'ask', follow: ['Would you like a hot drink or a cold drink?'], tryNext: 'Would you like water, juice or milk?' }));
+    const rest = open.slice(open.indexOf('id="more-body"'));
+    for (const act of ['needs', 'own', 'new']) expect(rest).toContain(`data-act="${act}"`);
+    expect(rest).toContain('data-q="Would you like water, juice or milk?">Try: Would you like water, juice or milk?</button>');
+    expect(text(rest)).toContain(S.out.show);
+    expect(count(open, 'data-act="stuck"')).toBe(1);
+    expect(count(open, 'id="next-q"')).toBe(1);
+    expect(text(answeredScreen(model({ label: 'not sure', out: true, more: true })))).toContain(S.out.notSure);
   });
   it('after "something else" an AI can narrow it down: the button, and where that AI runs, in plain words', () => {
     const cloud = answeredScreen(model({ label: 'something else', out: true, narrow: 'cloudOn' }));
     expect(cloud).toContain('id="narrow" data-act="narrow"');
     expect(text(cloud)).toContain('Narrow it down: AI suggests the next choices');
     expect(text(cloud)).toContain(S.narrow.cloudOn);
-    expect(cloud.indexOf('id="narrow"')).toBeLessThan(cloud.indexOf(S.out.show));
+    expect(cloud.indexOf('id="narrow"')).toBeLessThan(cloud.indexOf('id="show-write"'));
     expect(text(answeredScreen(model({ label: 'something else', out: true, narrow: 'device' })))).toContain('Nothing is sent.');
     expect(text(answeredScreen(model({ label: 'something else', out: true, narrow: 'ask' })))).toContain('the app asks you first');
     const off = answeredScreen(model({ label: 'something else', out: true, narrow: 'offline' }));
@@ -471,10 +484,27 @@ describe('simple view: the consent sheet', () => {
   });
   it('what is sent, what can be missed, what is never sent and the data use stand above the buttons', () => {
     const yes = html.indexOf('data-act="sheet-yes"');
-    for (const s of [K.sentLabel, 'fixed instructions', 'can be missed', K.neverLabel, K.dataLabel, 'may use what is sent']) {
+    for (const s of [K.sentLabel, 'fixed instructions', 'can be missed', K.neverLabel, K.dataLabel, 'does not use what is sent to improve its products']) {
       expect(html.indexOf(s)).toBeGreaterThan(-1);
       expect(html.indexOf(s)).toBeLessThan(yes);
     }
+  });
+  it('for a narrowing step the sheet leads with plain words and the conversation\'s own line; the fixed instructions and the whole request are one tap away', () => {
+    const request = JSON.stringify({ mode: 'PREFER_IN_CLOUD', contents: [{ role: 'user', parts: [{ text: 'Would you like tea or coffee? They did not want: tea, coffee. What else could it be? Do not give more of the same kind' }] }] }, null, 2);
+    const n = consentSheet({ about: 'About Frank', line: 'Would you like tea or coffee? They did not want: tea, coffee.', deviceThere: false, narrow: { request } });
+    const N = K.narrow;
+    expect(n).toContain(`<h2 id="sheet-h" tabindex="-1">${N.heading.replace(/'/g, '&#39;') === N.heading ? N.heading : N.heading}</h2>`);
+    expect(n).toContain('It sees only this:');
+    expect(n).toContain('<p class="q" id="sheet-line">Would you like tea or coffee? They did not want: tea, coffee.</p>');
+    // the raw instructions are not on the face of the sheet: they are inside "The whole request"
+    const face = n.slice(0, n.indexOf('<details'));
+    expect(face).not.toContain('Do not give more of the same kind');
+    expect(face).toContain('fixed instructions');
+    expect(face).toContain('does not use what is sent to improve its products');
+    expect(face.indexOf('id="sheet-line"')).toBeLessThan(face.indexOf('data-act="sheet-yes"'));
+    expect(n.slice(n.indexOf('<details'))).toContain('Do not give more of the same kind');
+    expect(n).toContain(`<summary>${N.whole}</summary>`);
+    expect(n.replace(/<[^>]+>/g, ' ').split(/\s+/).length).toBeLessThan(html.replace(/<[^>]+>/g, ' ').split(/\s+/).length + 40);
   });
   it('two buttons that say what they do, a link to the exact request and to Google\'s terms', () => {
     expect(html).toContain(`data-act="sheet-yes">${K.yes}</button>`);

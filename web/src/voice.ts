@@ -13,7 +13,7 @@
 // recognition in the app: the browser's Web Speech API, used for a few hours on 17 Nov 2026, was removed because it
 // is AI inference outside Firebase AI Logic.
 //
-// One model call per recording, and none for a clip with no sound in it (the free tier allows 15 requests a minute).
+// One model call per recording, and none for a clip with no sound in it (the API has a limit per minute).
 //
 // This file has no DOM and no globals: the microphone, the recorder, the decoder and the engine call are handed in,
 // so the state machine is tested with scripted ones (tests/unit/voice.test.ts). The browser's side is web/src/mic.ts.
@@ -105,7 +105,7 @@ function micError(e: unknown): VoiceError {
   if (name === 'NotFoundError' || name === 'OverconstrainedError' || name === 'NotReadableError') return 'no-mic';
   return 'failed';
 }
-/** A refused request for being one too many (the free tier's limit per minute). */
+/** A refused request for being one too many (the API's limit per minute). */
 const overQuota = (e: unknown) => /\b429\b|quota|resource[-_ ]exhausted|rate limit/i.test(String((e as { message?: string } | null)?.message ?? e));
 
 export interface VoiceDeps {

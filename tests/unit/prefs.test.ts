@@ -157,11 +157,17 @@ describe('About them: "What we\'ve learned"', () => {
     expect(html).toContain(`data-act="learned-remove" data-key="${lines[0].key}"`);
     expect(html).toContain('data-act="learned-forget"');
     expect(html).toContain('no AI, and it is never sent anywhere');
-    expect(html).toContain('they always choose for themselves');
+    expect(html).toContain('Frank always chooses, not the app');
+    expect(learnedBlock({ name: '', lines, facts: [], short: null })).toContain('they always choose for themselves');
   });
   it('nothing learned yet: said plainly, and no "forget" button', () => {
     const html = learnedBlock({ name: '', lines: [], facts: [], short: null });
-    expect(html).toContain(COPY.simple.learned.none);
+    expect(html).toContain(COPY.simple.learned.none(''));
+    // once the name is set the lines use it, not "they"
+    const named = learnedBlock({ name: 'Frank', lines: [], facts: [], short: null });
+    expect(named).toContain('Frank&#39;s usual choice shows here.');
+    expect(named).toContain('from the answers Frank confirmed');
+    expect(named.slice(named.indexOf('class="lock"'))).not.toMatch(/\bthey\b|\btheir\b/);
     expect(html).not.toContain('learned-forget');
     expect(aboutSimple({ profile: SAMPLE_PROFILE, open: null, saved: false })).toContain('id="learned"');
   });

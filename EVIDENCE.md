@@ -107,6 +107,10 @@ those runs) and one comment (`git diff c346d3d..deebc94 -- core web`); the rules
 | 70 | `core/backup.ts`, `web/src/diary.ts` (`backupBlock`, `importSheet`) | `npx vitest run tests/unit/backup.test.ts`; `python3 scripts/e2e-simple.py` | `devlog/evidence_phase3/15_keep_a_copy.png`, `16_file_preview_before_it_replaces.png` |
 | 71 | `web/src/simple.css` (the last block) | `python3 scripts/e2e-simple.py`; `python3 scripts/overflow-check.py` | `devlog/evidence_phase3/17_person_three_choices_no_scrolling.png`, `18_…`, `19_…`, `overflow_localhost.txt` |
 | 72 | `package.json`, `web/src/ai/firebaseEngine.ts` | `npx vitest run tests/unit/privacy-phase3.test.ts tests/unit/no-direct-model-calls.test.ts tests/unit/judge-path.test.ts` | not saved as a log |
+| 73 | `core/copy.ts` | `npx vitest run tests/unit/simple.test.ts`; `python3 scripts/e2e-simple.py` | <https://aistudio.google.com/docs/terms> (read 18 Nov 2026); the tier itself: the owner's statement, no log |
+| 74 | `web/src/simple.ts` (`consentSheet`), `web/src/main.ts` | `npx vitest run tests/unit/simple-view.test.ts`; `python3 scripts/e2e-simple.py` | `devlog/evidence_phase3/22_narrowing_sheet_plain_words.png` |
+| 75 | `web/src/simple.ts` (`answeredScreen`), `core/topics.ts` | `npx vitest run tests/unit/simple-view.test.ts tests/unit/topics.test.ts`; `python3 scripts/e2e-simple.py` | `devlog/evidence_phase3/23_after_something_else_three_actions.png` |
+| 76 | `core/tree.ts` (`who`, `shaped`) | `npx vitest run tests/unit/tree.test.ts`; `python3 scripts/e2e-simple.py` | `devlog/evidence_phase3/24_who_would_you_like_to_call.png` |
 
 The badge "Made in code (AI answer not used)" (row 2): `core/receipt.ts` (`badgeKind`, `modelAsked`), `tests/unit/sim-e-classes.test.ts`, group E-10.
 

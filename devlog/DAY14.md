@@ -29,6 +29,15 @@ Brief: `design/PHASE3_BRIEF.md`. What was built, in the brief's order, and what 
   past day with other entries and no drink among them, and says "That can simply mean nobody entered one."
 - **"tea" on a card and "Drank" tapped within 20 minutes are one drink**, so the same cup is not counted twice.
 
+## After a role-play on the hosted copy (Carol and Frank, 390 px)
+| # | Finding | Done |
+|---|---|---|
+| 1 | The sheets said the free tier's data use; the project is on the paid tier since 17 Nov (the owner's statement) | Done: every place says the paid terms' use, with the terms' URL in `CLAIMS.md` row 73. Not checked by us: the billing account itself |
+| 2 | The narrowing sheet led with the raw instructions | Done: plain words and the conversation's own line; the whole request behind a fold |
+| 3 | Six things to press after "something else"; "Try: strong tea with milk or porridge" after tea was refused | Done: three stay; a refused choice is never offered again and the kind is kept (a test over every topic question) |
+| 4 | "Call someone" asked one name at a time | Done: "Who would you like to call?" with up to three names and "someone else"; the same for a visitor |
+| 5 | "Chrome's built-in AI" in About them; "they" after the name was set | Done: the sentence is in the inside view only; the learned, photos and diary lines use the name |
+
 ## Not done, or true only with a limit
 - Neither wording step has run against a real model: no desktop Chrome with Gemini Nano was driven for it, and the
   browser test refuses the cloud request (the screen then says the lines may have left).

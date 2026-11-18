@@ -18,7 +18,7 @@ import { badgeKind, countSwaps, sentLine, sessionReceipt, sessionTally } from '.
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS, SAMPLE_STEP } from '../../core/sample';
 import { aiLines, aiTag, madeWhere, needsInternet, privacyLines, sheetWanted } from '../../core/simple';
-import { canNarrow, narrowCard, narrowInput, type NarrowInput } from '../../core/narrow';
+import { NARROW_TASK, canNarrow, narrowCard, narrowInput, type NarrowInput } from '../../core/narrow';
 import { aiPlace } from '../../core/simple';
 import { daySummary, rulesSummary, todays, type DaySummary } from '../../core/summary';
 import { asksWho, awayNames, callQuestion, followUps, nextInTopic, topics, type TopicId } from '../../core/topics';
@@ -1123,6 +1123,7 @@ function aboutScreen(): string {
     `<label>${label} <small>(${A.onePerLine})</small><textarea data-list="${key}" rows="3">${esc(p[key].join('\n'))}</textarea></label>`;
   return `${nav()}<main class="screen">
     <h1>${esc(A.heading(p.personName))}</h1>
+    <p class="muted" id="about-device-note">${A.deviceNote}</p>
     <p class="note">${A.note}</p>
     <p class="nudge">${esc(A.nudge(p.personName))}</p>
     ${state.demo ? `<p class="sample">${C.app.sample}</p>` : ''}
@@ -1364,7 +1365,8 @@ function simpleScreen(): string {
         const sc = learns() && step.follow[0] ? shortcut(state.history, step.follow[0], state.forgotten) : null;
         return { ...step, shortcut: sc ? { q: sc.q, line: sc.line, of: step.follow[0], label: sc.usual.label } : null };
       })(),
-      tryNext: out ? nextInTopic(state.lastQuestion, state.profile) : null,
+      // (never a question that offers a refused choice again, and one about the same kind of thing: core/topics.ts)
+      tryNext: out ? nextInTopic(state.lastQuestion, state.profile, [...(c.narrow?.rejected ?? []), ...c.choices.filter((x) => x.role === 'answer').map((x) => x.label)]) : null,
       narrow: out ? narrowPlace(c, p.label) : null, narrowLast: out && !!c.narrow && !canNarrow(c, p.label), short: shortModel(),
       who: p.role === 'answer' && asksWho(c, p.label, state.profile),
       invite: state.inviteFor === c && !state.inviteOff,
@@ -1394,7 +1396,7 @@ function simpleScreen(): string {
     });
   }
   if (!state.sheet || !c?.unsentPayload) return screen;
-  return `${screen.replace('<main class="simple', '<main inert aria-hidden="true" class="simple')}${consentSheet({ about: aboutName(), line: sentLine(c.unsentPayload).text, deviceThere: state.device === 'available' })}`;
+  return `${screen.replace('<main class="simple', '<main inert aria-hidden="true" class="simple')}${consentSheet({ about: aboutName(), line: c.narrow ? sentLine(c.unsentPayload).text.split(` ${NARROW_TASK}`)[0].replace(/^Partner asks:\s*/, '') : sentLine(c.unsentPayload).text, deviceThere: state.device === 'available', ...(c.narrow ? { narrow: { request: c.unsentPayload } } : {}) })}`;
 }
 /** The simple view's lines that depend on the device check or the connection, updated in place (no redraw). */
 function patchSimple() {

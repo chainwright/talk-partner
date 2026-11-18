@@ -10,6 +10,7 @@
 //  - each person who does not live there gets one yes / no row, "Would you like to call <name>?" (one thing at a
 //    time: an either-or of two names asks "which", not "whether").
 
+import { subjectOf } from './kinds';
 import type { Card, Profile } from './types';
 
 export type TopicId = 'food' | 'body' | 'rest' | 'people' | 'feel' | 'plans' | 'fun';
@@ -81,11 +82,24 @@ export function topicOf(q: string, profile: Profile): Topic | null {
   return topics(profile).find((t) => t.questions.some((x) => x.q === q)) ?? null;
 }
 
-/** The question after `q` in its topic, for "Try: …" when the person chose the way out. Null at the end of a topic. */
-export function nextInTopic(q: string, profile: Profile): string | null {
+const STOP = new Set(['something', 'someone', 'somewhere', 'some', 'the', 'and', 'with', 'your', 'else', 'hot', 'cold']);
+/** True when the question offers again something that was just refused ("strong tea with milk" after "tea" was not wanted). */
+export function offersRefused(q: string, refused: string[]): boolean {
+  const words = new Set(q.toLowerCase().replace(/[^a-z' ]+/g, ' ').split(/\s+/).filter(Boolean));
+  return refused.some((r) => r.toLowerCase().replace(/[^a-z' ]+/g, ' ').split(/\s+/).some((w) => w.length >= 3 && !STOP.has(w) && words.has(w)));
+}
+
+/**
+ * The question after `q` in its topic, for "Try: …" when the person chose the way out. Null at the end of a topic.
+ * `refused` is every choice that was offered and not taken: a question that offers one of them again is passed over
+ * ("tea or coffee" refused: never "strong tea with milk or porridge"), and the next question stays with what the
+ * question was about (a drink stays a drink: never a food in its place; core/kinds.ts).
+ */
+export function nextInTopic(q: string, profile: Profile, refused: string[] = []): string | null {
   const t = topicOf(q, profile);
   if (!t) return null;
-  const rest = t.questions.slice(t.questions.findIndex((x) => x.q === q) + 1).filter((x) => !x.ai);
+  const subject = refused.length ? subjectOf(q, refused) : null;
+  const rest = t.questions.slice(t.questions.findIndex((x) => x.q === q) + 1).filter((x) => !x.ai && !offersRefused(x.q, refused) && (!subject || subjectOf(x.q, []) === subject));
   return rest[0]?.q ?? null;
 }
 

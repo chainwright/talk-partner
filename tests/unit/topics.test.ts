@@ -7,7 +7,7 @@ import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { bodyDetailCard, makeCard, needsNoModel } from '../../core/pipeline';
 import { cloudTextRequest } from '../../core/requests';
 import { SAMPLE_PROFILE } from '../../core/sample';
-import { AI_QUESTION, HOW_BAD, TOPIC_BASE, WHAT_BOTHERS, WHERE_HURTS, WHICH_SIDE, asksWho, awayNames, callQuestion, followUps, nextInTopic, ownQuestions, topicOf, topics } from '../../core/topics';
+import { AI_QUESTION, HOW_BAD, TOPIC_BASE, WHAT_BOTHERS, WHERE_HURTS, WHICH_SIDE, asksWho, awayNames, callQuestion, followUps, nextInTopic, offersRefused, ownQuestions, topicOf, topics } from '../../core/topics';
 import { EMPTY_PROFILE, type Card, type Profile } from '../../core/types';
 import { PROFILE } from './fixtures';
 
@@ -124,6 +124,21 @@ describe('the family\'s own questions are added under the generic one, never in 
     expect(topicOf('Something I typed?', SAMPLE_PROFILE)).toBeNull();
     expect(nextInTopic('Are you hungry?', EMPTY_PROFILE)).toBe('Would you like something to drink?');
     expect(nextInTopic('Would you like some more?', EMPTY_PROFILE)).toBeNull();
+    // (18 Nov, the role-play) after "tea or coffee -> something else" the next question to try never offers a refused
+    // choice again, and stays with drinks: not "strong tea with milk or porridge" (tea again, and a food beside a drink)
+    const family = { ...EMPTY_PROFILE, foods: ['strong tea with milk', 'porridge', 'ginger biscuits'] };
+    expect(nextInTopic('Would you like tea or coffee?', family)).toBe('Would you like strong tea with milk or porridge?');
+    expect(nextInTopic('Would you like tea or coffee?', family, ['tea', 'coffee'])).toBe('Would you like a hot drink or a cold drink?');
+    expect(offersRefused('Would you like strong tea with milk or porridge?', ['tea', 'coffee'])).toBe(true);
+    expect(offersRefused('Would you like a hot drink or a cold drink?', ['hot drink', 'cold drink'])).toBe(true);
+    expect(offersRefused('Would you like water, juice or milk?', ['tea', 'coffee'])).toBe(false);
+    // every topic question, with its own choices refused: what is tried next never names one of them
+    for (const t of topics(family)) for (const x of t.questions) {
+      const refused = x.q.replace(/^.*?\b(?:like|want)\b/i, '').replace(/[?]/g, '').split(/,| or /).map((w) => w.trim()).filter((w) => w.split(' ').length <= 3 && w.length > 2);
+      const next = nextInTopic(x.q, family, refused);
+      if (next) expect(offersRefused(next, refused), `${x.q} -> ${next}`).toBe(false);
+    }
+    expect(nextInTopic('Would you like water, juice or milk?', family, ['water', 'juice', 'milk'])).toBeNull(); // "some more" is not a drink question
     // the open question is never offered as the next try
     expect(nextInTopic('Do you want to do your exercises now or later?', EMPTY_PROFILE)).toBeNull();
   });

@@ -33,7 +33,9 @@ describe('the diary screen', () => {
     expect(count(html, '<option')).toBe(9);
     expect(html).toContain('data-act="back"');
     expect(html).toContain('data-act="home"');
-    expect(html).toContain(S.diary.lock);
+    expect(html).toContain(h(S.diary.lock('Frank')));
+    expect(html).toContain('never shown on Frank&#39;s screen');
+    expect(html).toContain('answers Frank confirmed, needs Frank pointed to');
     expect(html).toContain("<h1>Frank&#39;s diary</h1>");
   });
   it('the timeline: a section per day, the newest first, each entry with its time; "less sure" is said on the entry', () => {

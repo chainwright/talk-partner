@@ -8,7 +8,8 @@
 //   - `end`: one short line that tells the carer what to do now ("Bring them a sweet snack."), shown when there is no
 //     next question, or when the conversation is three questions deep (TREE_DEPTH). Never a silent end.
 // What About them names is slotted in where it fits: the family's foods under "a meal", the people who do not live
-// there under a call or a visit, their places under going out.
+// there under a call or a visit (one question, "Who would you like to call?", with up to three names as the choices
+// and "someone else"; a yes / no when there is one name), their places under going out.
 // tests/unit/tree.test.ts walks every topic question and every answer, down every path, and fails on a path with
 // neither a next question nor an end line, on a question the rules cannot make a card for, and on a path deeper than
 // three questions.
@@ -323,13 +324,22 @@ const norm = (s: string) => s.toLowerCase().replace(/[^a-z ]+/g, ' ').replace(/\
 const key = (label: string) => label.toLowerCase().replace(/\s+/g, ' ').trim();
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/** "Who would you like to call? Beth, Tom or Anna?": the rules make it a choice card, each name with its photo or initial. */
+export function who(verb: 'call' | 'see', names: string[]): string[] {
+  if (!names.length) return [];
+  if (names.length === 1) return [`Would you like to ${verb} ${names[0]}?`];
+  const xs = names.slice(0, 3);
+  return [`Who would you like to ${verb}? ${xs.slice(0, -1).join(', ')} or ${xs[xs.length - 1]}?`];
+}
+
 /** The family's own questions that stand for a marker in the tree ("@foods", "@call" …): none when About them has none. */
 function own(marker: string, profile: Profile): string[] {
   const under = (q: string) => ownQuestions(profile).filter((o) => o.under === q).map((o) => o.q);
   switch (marker) {
     case '@foods': return under('Would you like tea or coffee?');
-    case '@call': return awayNames(profile).map((n) => `Would you like to call ${n}?`);
-    case '@see': return awayNames(profile).map((n) => `Would you like to see ${n}?`);
+    // one question with the family's names as the choices (three at most, and "someone else"); with one name, a yes / no
+    case '@call': return who('call', awayNames(profile));
+    case '@see': return who('see', awayNames(profile));
     case '@places': return under('Would you like to go for a drive?');
     case '@tv': return under('Would you like to watch the news or a film?');
     case '@music': return under('Would you like some music on?');
@@ -355,6 +365,8 @@ function shaped(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string):
   if ((m = a.match(/^Would you like to watch (.+)\?$/))) return yn(`Put ${m[1]} on.`, m[1]);
   if ((m = a.match(/^Would you like to listen to (.+)\?$/))) return yn(`Put ${m[1]} on.`, m[1]);
   const out = l === 'something else' || l === 'somewhere else' || l === 'someone else';
+  if (/^Who would you like to call\?/.test(a)) return out ? { end: 'Someone else. Say one name at a time, or show photos, and wait for a yes.' } : { end: `Call ${label} now, together.` };
+  if (/^Who would you like to see\?/.test(a)) return out ? { end: 'Someone else. Say one name at a time, or show photos, and wait for a yes.' } : { end: `Ask ${label} to come, and tell {them} when.` };
   if (/^Where would you like to go\?/.test(a)) return out ? { end: 'Somewhere else. Show {them} photos of places, and let {them} point.' } : { end: `Plan to go to ${label}. Tell {them} when.` };
   // the family's foods: "Would you like pot roast or chili?", "Would you like porridge?"
   if (/^Would you like [^?]+ or [^?]+\?$/.test(a)) return out ? { next: [SNACK_MEAL], end: 'Show {them} what is in the kitchen, and let {them} point.' } : { end: `${cap(label)}. Get it ready.` };
@@ -366,7 +378,7 @@ function shaped(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string):
 function rawStep(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string, profile: Profile): Raw | null {
   const hit = TREE[norm(card.asked)]?.[key(label)];
   if (hit) return hit;
-  const known = card.kind === 'body' || card.kind === 'feeling' || ownQuestions(profile).some((o) => o.q === card.asked || `${o.q.split('?')[0]}?` === card.asked.trim()) || /^Would you like to (?:call|see) .+\?$/.test(card.asked.trim());
+  const known = card.kind === 'body' || card.kind === 'feeling' || ownQuestions(profile).some((o) => o.q === card.asked || `${o.q.split('?')[0]}?` === card.asked.trim()) || /^Would you like to (?:call|see) .+\?$/.test(card.asked.trim()) || /^Who would you like to (?:call|see)\?/.test(card.asked.trim());
   return known ? shaped(card, label) : null;
 }
 

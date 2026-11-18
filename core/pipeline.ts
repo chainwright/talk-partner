@@ -563,7 +563,7 @@ export interface PipelineEnv {
 
 /**
  * How long to wait before asking the cloud once more, or null when a second try is pointless or would take too long.
- * Retried: "too many requests" (HTTP 429: the free tier allows 15 requests a minute), a busy or unavailable service
+ * Retried: "too many requests" (HTTP 429: a limit per minute; 15 on the free tier, which this project used until 17 Nov 2026), a busy or unavailable service
  * (500 / 502 / 503 / 504) and a network error. When the service names its own wait ("retry in 37s") and it is over
  * 3 s, there is no second try: the partner is told now, not after a long silence. Also retried, once: a passing App
  * Check fault (the token exchange was unavailable, the service did not take the token). Not retried: App Check
@@ -835,7 +835,7 @@ async function cloudCard(
     try {
       r = await within(env.engine.runCloud(stripped.text), env.cloudWaitMs);
     } catch (e) {
-      // Busy (429 on the free tier's 15 requests a minute) or a network error: one more try after a short wait, when
+      // Busy (429: too many requests in a minute) or a network error: one more try after a short wait, when
       // the service allows it within about 3 s. Otherwise the error stands and the partner is told at once.
       const wait = cloudRetryWait(e);
       if (wait === null) throw e;

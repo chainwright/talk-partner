@@ -383,19 +383,25 @@ export function answeredScreen(m: AnsweredModel): string {
   const qBtn = (q: string, label = q) => `<button type="button" class="btn ask-next" data-q="${esc(q)}">${esc(label)}</button>`;
   // the carer is led: the next question of the tree is the main button, and "Ask something else" stands under it
   const lead = !m.next && m.follow.length > 0;
-  const nextBtn = lead ? `<button type="button" class="btn primary ask-next" id="next-q" data-q="${esc(m.follow[0])}" data-next="1"><span><small>${S.nextLabel}</small>${esc(m.follow[0])}</span></button>` : '';
-  const another = `<button type="button" class="btn${m.next || lead ? '' : ' primary'}" id="another" data-act="new">${lead ? S.anotherElse : S.another}</button>`;
+  // after the way out with nothing from the tree, the next question of the topic is the main button instead
+  const tryMain = m.out && !lead && !m.next && !!m.tryNext;
+  const nextBtn = lead ? `<button type="button" class="btn primary ask-next" id="next-q" data-q="${esc(m.follow[0])}" data-next="1"><span><small>${S.nextLabel}</small>${esc(m.follow[0])}</span></button>`
+    : tryMain ? `<button type="button" class="btn primary ask-next" id="next-q" data-q="${esc(m.tryNext!)}"><span><small>${S.nextLabel}</small>${esc(m.tryNext!)}</span></button>` : '';
+  const another = `<button type="button" class="btn${m.next || lead || m.out ? '' : ' primary'}" id="another" data-act="new">${lead ? S.anotherElse : S.another}</button>`;
   const end = m.end && !lead ? `<p class="do-now" id="do-now">${SIGN.tick}<span><small>${S.doNow}</small>${esc(m.end)}</span></p>` : '';
   // the way out was chosen: what to do now, in order of how often it helps (never a dead end)
   const narrow = m.narrow ? `<button type="button" class="btn narrow" id="narrow" data-act="narrow" ${m.narrow === 'offline' ? 'disabled' : ''}>${SIGN.spark}<span>${S.narrow.go}</span></button>
       <p class="tip" id="narrow-where">${esc(S.narrow[m.narrow])}</p>` : '';
+  // (18 Nov, the role-play: six things to press were too many for a tired carer. Three stay on the screen: the next
+  // question, the AI's broader choices, and "Ask them to show or write it"; the rest is under "More".)
   const outBlock = m.out ? `<div class="next-steps" id="after-out"><p class="steplabel">${S.out.heading}</p>
-      ${narrow}${m.narrowLast ? `<p class="tip">${S.narrow.last}</p>` : ''}
-      <p class="tip">${esc(m.label === 'not sure' ? S.out.notSure : S.out.show)}</p>
-      ${m.tryNext ? qBtn(m.tryNext, S.out.tryNext(m.tryNext)) : ''}
+      ${nextBtn}
+      ${narrow}${m.narrowLast ? `<p class="tip">${S.narrow.last} ${esc(S.out.show)}</p>` : ''}
+      <button type="button" class="btn" id="show-write" data-act="stuck">${S.out.showWrite}</button></div>` : '';
+  const outMore = m.out ? `<div class="next-steps" id="out-more">${m.narrowLast ? '' : `<p class="tip">${esc(m.label === 'not sure' ? S.out.notSure : S.out.show)}</p>`}
+      ${m.tryNext && !tryMain ? qBtn(m.tryNext, S.out.tryNext(m.tryNext)) : ''}
       <button type="button" class="btn" data-act="needs">${S.out.needs}</button>
-      <button type="button" class="btn" data-act="own">${S.out.own}</button>
-      <button type="button" class="btn" data-act="stuck">${esc(S.out.stuck)}</button></div>` : '';
+      <button type="button" class="btn" data-act="own">${S.out.own}</button></div>` : '';
   const rest = m.follow.slice(lead ? 1 : 0);
   const follow = rest.length ? `<div class="next-steps" id="follow"><p class="steplabel muted">${S.nextHeading}</p>${rest.map((q) => qBtn(q).replace('data-q=', 'data-next="1" data-q=')).join('')}</div>` : '';
   const who = m.who ? `<form id="who" class="who-form"><label for="who-name">${S.who.label}</label><div class="row"><input id="who-name" class="field" autocomplete="off"><button type="submit" class="btn">${S.who.go}</button></div></form>` : '';
@@ -413,14 +419,14 @@ export function answeredScreen(m: AnsweredModel): string {
     ${m.afterHtml}
     ${end}
     ${m.next ? `<button type="button" class="btn primary" data-act="${m.next.act}">${esc(m.next.label)}</button>` : ''}
-    ${nextBtn}${lead && m.shortcut ? `<div class="shortcut" id="shortcut"><p class="tip">${SIGN.person}<span>${esc(m.shortcut.line)}</span></p><button type="button" class="btn ask-next" data-short="1" data-of="${esc(m.shortcut.of)}" data-label="${esc(m.shortcut.label)}" data-q="${esc(m.shortcut.q)}">${esc(m.shortcut.q)}</button></div>` : ''}${follow}
-    ${another}
+    ${m.out ? '' : nextBtn}${!m.out && lead && m.shortcut ? `<div class="shortcut" id="shortcut"><p class="tip">${SIGN.person}<span>${esc(m.shortcut.line)}</span></p><button type="button" class="btn ask-next" data-short="1" data-of="${esc(m.shortcut.of)}" data-label="${esc(m.shortcut.label)}" data-q="${esc(m.shortcut.q)}">${esc(m.shortcut.q)}</button></div>` : ''}${m.out ? '' : follow}
+    ${m.out ? '' : another}
     ${outBlock}${who}
     ${invite}
     ${oneLine}
     <button type="button" class="btn quiet more-btn" id="more" data-act="more" aria-expanded="${m.more}" aria-controls="more-body">${m.more ? S.less : S.more}</button>
   </div>
-  ${m.more ? `<div class="col more-body" id="more-body">${others}${today}${shortBlock(m.short)}${madeBlock(m.made)}
+  ${m.more ? `<div class="col more-body" id="more-body">${m.out ? `${another}${follow}${outMore}` : ''}${others}${today}${shortBlock(m.short)}${madeBlock(m.made)}
     ${privacyBlock(m.privacy, S.privacy.answers)}
     ${insideLink('inside-card', S.madeLink)}</div>` : ''}
 </main>`;
@@ -432,6 +438,11 @@ export interface SheetModel {
   line: string;
   /** This browser has the on-device model (it made no card for this question): the sheet then does not say it has none. */
   deviceThere: boolean;
+  /**
+   * The sheet is for a narrowing step (after "something else"): `line` is then the part of the request that comes from
+   * the conversation, word for word (the question and the choices that did not fit), and `request` the whole request.
+   */
+  narrow?: { request: string };
 }
 
 /**
@@ -440,6 +451,26 @@ export interface SheetModel {
  */
 export function consentSheet(m: SheetModel): string {
   const K = COPY.consent.sheet;
+  // a narrowing step: plain words first ("It sees only this: …"), the app's fixed instructions named in one line, and
+  // the whole request, word for word, one tap away (18 Nov, the role-play: the raw instructions led the sheet)
+  if (m.narrow) {
+    const N = K.narrow;
+    return `<div class="dim"></div>
+<div class="sheet narrow-sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-h">
+  <h2 id="sheet-h" tabindex="-1">${N.heading}</h2>
+  <p>${N.body}</p>
+  <div class="goes"><p class="q" id="sheet-line">${esc(m.line)}</p><p class="small muted">${N.plus}</p></div>
+  <ul class="facts">
+    <li class="n">${SIGN.lock}<span><b>${K.neverLabel}</b> ${esc(N.never(m.about))}</span></li>
+    <li class="w">${SIGN.info}<span><b>${K.dataLabel}</b> ${esc(K.data)}</span></li>
+  </ul>
+  <div class="choice"><button type="button" class="btn primary" data-act="sheet-yes">${N.yes}</button>
+  <button type="button" class="btn" data-act="sheet-no">${N.no}</button></div>
+  <p class="small muted after">${esc(K.after)}</p>
+  <details class="whole" id="sheet-whole"><summary>${N.whole}</summary><pre>${esc(m.narrow.request)}</pre></details>
+  <p class="links"><a class="tlink" href="${COPY.consent.termsLink}" target="_blank" rel="noopener">${K.terms}</a></p>
+</div>`;
+  }
   return `<div class="dim"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-h">
   <h2 id="sheet-h" tabindex="-1">${K.heading}</h2>
@@ -469,9 +500,9 @@ export function learnedBlock(m: { name: string; lines: Learned[]; facts: string[
   const lines = m.lines.map((l) => `<li data-key="${esc(l.key)}"><span>${esc(l.text)}</span><span class="acts"><button type="button" class="btn quiet small-btn" data-act="learned-keep" data-key="${esc(l.key)}">${L.keep}</button><button type="button" class="btn quiet small-btn" data-act="learned-remove" data-key="${esc(l.key)}">${L.remove}</button></span></li>`).join('');
   const facts = m.facts.map((f, i) => `<li><span>${esc(f)}</span><span class="acts"><button type="button" class="btn quiet small-btn" data-act="fact-remove" data-fact="${i}">${L.remove}</button></span></li>`).join('');
   return `<section class="learned" id="learned" aria-labelledby="learned-h"><h2 id="learned-h">${esc(L.heading(m.name))}</h2>
-    <p class="lock">${SIGN.lock}<span>${L.how}</span></p>
+    <p class="lock">${SIGN.lock}<span>${esc(L.how(m.name))}</span></p>
     ${m.short ? `<p class="learned-short" id="learned-short">${SIGN.spark}<span>${m.short.map(esc).join(' ')} <small>${L.shortBy}</small></span></p>` : ''}
-    ${lines ? `<ul class="learned-list" id="learned-list">${lines}</ul>` : `<p class="tip" id="learned-none">${L.none}</p>`}
+    ${lines ? `<ul class="learned-list" id="learned-list">${lines}</ul>` : `<p class="tip" id="learned-none">${esc(L.none(m.name))}</p>`}
     ${facts ? `<p class="steplabel muted">${L.kept}</p><ul class="learned-list" id="learned-kept">${facts}</ul>` : ''}
     ${lines ? `<button type="button" class="btn quiet" data-act="learned-forget">${L.forget}</button>` : ''}</section>`;
 }
@@ -482,7 +513,7 @@ export function photosBlock(m: { name: string; photos: Photo[]; error?: string }
   const tiles = m.photos.map((p) => `<li data-id="${esc(p.id)}"><img class="photo own" src="${p.data}" alt=""><b>${esc(p.word)}</b><button type="button" class="btn quiet small-btn" data-act="photo-del" data-id="${esc(p.id)}" aria-label="${P.del}: ${esc(p.word)}">${P.del}</button></li>`).join('');
   const full = m.photos.length >= PHOTO_CAP;
   return `<section class="photos" id="photos" aria-labelledby="photos-h"><h2 id="photos-h">${esc(P.heading(m.name))}</h2>
-    <p class="tip">${P.why}</p>
+    <p class="tip">${esc(P.why(m.name))}</p>
     <p class="lock" id="photos-lock">${SIGN.lock}<span>${P.lock}</span></p>
     ${tiles ? `<ul class="photo-list" id="photo-list">${tiles}</ul>` : `<p class="tip" id="photos-none">${P.none}</p>`}
     ${m.error ? `<p class="warn" role="alert" id="photo-error">${esc(m.error)}</p>` : ''}

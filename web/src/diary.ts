@@ -112,12 +112,12 @@ export function diaryScreen(m: DiaryModel): string {
   return `<main class="simple wrap one diary" id="diary" data-screen="diary" data-tab="${m.tab}">
   ${navBar({ back: true })}
   <div><h1>${esc(D.heading(m.name))}</h1></div>
-  <p class="lock banner" id="diary-lock">${SIGN.lock}<span>${D.lock}</span></p>
+  <p class="lock banner" id="diary-lock">${SIGN.lock}<span>${esc(D.lock(m.name))}</span></p>
   <section class="logrow" aria-labelledby="log-h"><h2 class="sec" id="log-h">${D.logHeading}</h2><div class="logbtns" id="log-row">${log}</div>${logged}</section>
   <div class="tabs" role="tablist" aria-label="${D.tabsLabel}" id="tabs">${tabs}</div>
   <label class="topic-pick" for="diary-topic"><span>${D.topic}</span><select id="diary-topic" class="field">${topics}</select></label>
   <div class="timeline" id="timeline" role="tabpanel" aria-labelledby="tab-${m.tab}">${timeline}</div>
-  <p class="tip" id="diary-base">${D.base}</p>
+  <p class="tip" id="diary-base">${esc(D.base(m.name))}</p>
   ${insightsBlock(m.insights)}
   ${m.tab === 'today' ? tipBlock(m.tip) : ''}
   ${m.any ? `<div class="two-btn"><button type="button" class="btn quiet" id="diary-copy" data-act="diary-copy" aria-live="polite">${m.copied ? D.copied : D.copy}</button><button type="button" class="btn quiet danger" id="diary-del" data-act="diary-del">${D.del}</button></div>` : ''}

@@ -261,6 +261,8 @@ const COPY = {
 
   about: {
     heading: (name: string) => (name ? `About ${name}` : 'About me'),
+    /** Where the lists shape the choices (the inside view only: for a carer on the simple screen this is jargon). */
+    deviceNote: "People and places go onto the cards on any device. On a computer with Chrome's built-in AI, the foods and favourites shape the choices of an open question too.",
     theirName: 'Their name',
     yourName: "Your name (shows as 'you' on cards)",
     people: 'People',
@@ -379,7 +381,7 @@ const COPY = {
     /** About them: the family's own photos (core/photos.ts). Framed by hand, labelled with one word, kept on this device. */
     photos: {
       heading: (name: string) => `${name ? `${name}'s` : 'Their'} own photos`,
-      why: 'A photo of a person, a food or drink, or a place they know. A card shows it in place of the drawing wherever its word is one of the choices.',
+      why: (name: string) => `A photo of a person, a food or drink, or a place ${name ? `${name} knows` : 'they know'}. A card shows it in place of the drawing wherever its word is one of the choices.`,
       lock: 'Photos stay on this computer only. They are never sent anywhere, and no AI looks at them.',
       add: 'Add a photo',
       full: 'That is the most photos the app keeps (60). Delete one to add another.',
@@ -395,8 +397,8 @@ const COPY = {
     /** About them: what the app counted from the answers on this device (core/prefs.ts). */
     learned: {
       heading: (name: string) => `What we've learned about ${name || 'them'}`,
-      how: 'Counted on this computer from the answers they confirmed: no AI, and it is never sent anywhere. A line appears after three answers to the same question. It is only ever a hint for you: they always choose for themselves.',
-      none: 'Nothing yet. After three answers to the same question, their usual choice shows here.',
+      how: (name: string) => `Counted on this computer from the answers ${name || 'they'} confirmed: no AI, and it is never sent anywhere. A line appears after three answers to the same question. It is only ever a hint for you: ${name ? `${name} always chooses, not the app` : 'they always choose for themselves'}.`,
+      none: (name: string) => `Nothing yet. After three answers to the same question, ${name ? `${name}'s` : 'their'} usual choice shows here.`,
       keep: 'Keep as a fact',
       remove: 'Remove',
       kept: 'Facts you kept:',
@@ -443,6 +445,8 @@ const COPY = {
       needs: 'Open "Needs it now?"',
       own: 'Ask it a new way',
       stuck: "We're stuck: other ways to get it across",
+      /** One of the three things that stay on the screen after the way out: it opens the ways to show, write or draw it. */
+      showWrite: 'Ask them to show or write it',
     },
     /** After the way out: an AI suggests the next, broader choices (core/narrow.ts). Two levels at most. */
     narrow: {
@@ -510,7 +514,7 @@ const COPY = {
       answers: 'Answers are kept on this computer only.',
     },
     about: {
-      sub: (name: string) => `${name ? `${name}'s` : 'Their'} people and places go onto the cards. On a computer with Chrome's built-in AI, their foods and favourites shape the choices too.`,
+      sub: (name: string) => `${name ? `${name}'s` : 'Their'} people, foods and places go onto the cards.`,
       lock: 'Everything here stays on this computer.',
       rows: { names: 'Their name, and yours', people: 'Family and friends', foods: 'Food and drink they like', places: 'Places, TV and music' },
       none: 'Nothing added yet',
@@ -538,7 +542,7 @@ const COPY = {
       open: 'Diary',
       openSub: 'Log a drink, a meal, the toilet. See the day and the week.',
       heading: (name: string) => (name ? `${name}'s diary` : 'Diary'),
-      lock: 'The diary is kept on this computer only. It is never sent anywhere, and it is never shown on their screen.',
+      lock: (name: string) => `The diary is kept on this computer only. It is never sent anywhere, and it is never shown on ${name ? `${name}'s` : 'their'} screen.`,
       logHeading: 'Log it now, one tap:',
       log: { drank: 'Drank', ate: 'Ate', toilet: 'Toilet', slept: 'Slept', pain: 'Pain' } as Record<string, string>,
       logged: (what: string, time: string) => `Logged: ${what}, ${time}.`,
@@ -551,7 +555,7 @@ const COPY = {
       need: 'Pointed to:',
       empty: { today: 'Nothing entered today yet.', week: 'Nothing entered in the last 7 days.', month: 'Nothing entered in the last 30 days.' } as Record<string, string>,
       emptyTopic: 'Nothing on this topic here.',
-      base: 'The diary holds only what was entered in this app: answers they confirmed, needs they pointed to, and what you logged.',
+      base: (name: string) => `The diary holds only what was entered in this app: answers ${name || 'they'} confirmed, needs ${name || 'they'} pointed to, and what you logged.`,
       copy: 'Copy as text, for a visit',
       copied: 'Copied',
       del: 'Delete the diary',
@@ -620,7 +624,7 @@ const COPY = {
         neverLabel: 'Never sent:',
         never: 'names, photos, the diary itself, the health notes, the answers they chose.',
         dataLabel: 'Data use:',
-        data: "Google's free tier: Google may use what is sent to improve its products.",
+        data: "Google's paid service: Google does not use what is sent to improve its products. It keeps it for a limited time to check for misuse.",
         yes: 'Yes, send these lines once',
         no: 'No, keep the app\'s own words',
         once: 'This is for these lines, this once. It does not turn online help on for anything else.',
@@ -695,12 +699,12 @@ const COPY = {
     exampleHeading: 'Your last question would be sent like this:',
     exampleNone: 'Type a question first and this shows exactly what would be sent.',
     whoHeading: 'Who receives it',
-    who: "Google's Gemini API, through Firebase AI Logic, on the free tier.",
+    who: "Google's Gemini API, through Firebase AI Logic, on the paid tier.",
     /** Remote Config is asked when cloud help is turned on (web/src/ai/remoteConfig.ts): said here, before the tick. */
     settings: 'When cloud help is on, the app also asks Firebase Remote Config once for its current settings (which cloud model to use). That request holds no question and nothing from About me.',
     neverHeading: 'Never sent',
     termsHeading: 'Data use',
-    terms: 'On the free tier, Google may use what is sent to improve its products (Gemini API Additional Terms, in force since 23 March 2026). The paid tier does not.',
+    terms: 'This app uses the paid tier of the Gemini API. On the paid tier Google does not use prompts or responses to improve its products; it logs them for a limited time, only to detect and prevent misuse (Gemini API Additional Terms, in force since 23 March 2026). On the free tier Google may use them, and people may read them.',
     termsLink: 'https://aistudio.google.com/docs/terms',
     termsLinkText: 'Read the terms',
     checkbox: 'I understand. Turn on cloud help.',
@@ -724,12 +728,22 @@ const COPY = {
       neverLabel: 'Never sent:',
       never: (about: string) => `your ${about} lists, photos, who lives at home, the answers they chose.`,
       dataLabel: 'Data use:',
-      data: "Google's free tier: Google may use what is sent to improve its products.",
+      data: "Google's paid service: Google does not use what is sent to improve its products. It keeps it for a limited time to check for misuse.",
       yes: 'Yes, send open questions to Google',
       no: 'No, not for this question',
       after: 'It stays on until you turn it off (inside, under Cloud help). With it on, the app also asks Firebase once for its settings: no question is in that.',
       exact: 'See the exact request',
       terms: "Google's data terms",
+      /** The same sheet for a narrowing step (after "something else"): plain words first, the whole request one tap away. */
+      narrow: {
+        heading: "Ask Google's AI for other ideas?",
+        body: "None of those fitted. Google's AI can suggest other kinds of answer. It sees only this:",
+        plus: 'and the app\'s fixed instructions. Names you listed are swapped first ("Person A").',
+        never: (about: string) => `your ${about} lists, photos, the answers they chose.`,
+        yes: "Yes, ask Google's AI",
+        no: 'No, not now',
+        whole: 'The whole request',
+      },
     },
     pictures: 'Pictures from the cloud are not part of this version: every picture is built in.',
     scope: 'This choice is kept only on this computer. "Delete everything on this computer" also resets it.',

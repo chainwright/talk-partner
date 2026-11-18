@@ -117,10 +117,14 @@ describe('the simple view\'s privacy lines say what is sent, never more', () => 
     expect(COPY.consent.sheet.sent).toMatch(/can be missed/);
     expect(COPY.consent.sheet.sent).toMatch(/leave out health details/);
   });
-  it('the sheet names the receiver, the free tier\'s data use and the settings request', () => {
+  it('the sheet names the receiver, the paid tier\'s data use and the settings request', () => {
     const K = COPY.consent.sheet;
     expect(K.bodyNoDevice(ABOUT)).toMatch(/Google's Gemini, through Firebase AI Logic/);
-    expect(K.data).toMatch(/free tier.*may use what is sent/);
+    expect(K.data).toMatch(/paid service.*does not use what is sent to improve its products.*limited time/);
+    expect(K.data).not.toMatch(/free tier|may use/);
+    expect(COPY.simple.insights.sheet.data).toBe(K.data);
+    expect(COPY.consent.terms).toMatch(/paid tier.*does not use prompts or responses to improve its products.*limited time/);
+    expect(COPY.consent.termsLink).toBe('https://aistudio.google.com/docs/terms');
     expect(K.after).toMatch(/asks Firebase once for its settings/);
     expect(K.no).not.toMatch(/all on this/); // the microphone still sends a recording, so "No" does not promise that
   });

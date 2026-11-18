@@ -237,6 +237,29 @@ The diary and the answers are not in the file.
 390 px phone, with the word under it at 30 px, and three choices and "something else" stand on 390 x 844 without
 scrolling (measured by `scripts/e2e-simple.py` and `scripts/overflow-check.py`); the family's photos get the same size.
 
+## Changed on 18 Nov after a role-play on the phone
+One of us played Carol and Frank (`design/PERSONA_SCENARIO.md`, fictional) on the hosted copy at 390 px. What it
+found, and what changed (`CLAIMS.md` rows 73 to 76):
+
+- **The data-use line was out of date.** The sheets said "Google's free tier: Google may use what is sent to improve
+  its products". The project's Gemini API has been on the paid tier since 17 Nov (the owner's statement; we did not
+  read the billing account). They now say what the paid terms say: Google does not use what is sent to improve its
+  products, and keeps it for a limited time to check for misuse (Gemini API Additional Terms of Service,
+  <https://aistudio.google.com/docs/terms>, effective 23 March 2026, read 18 Nov 2026). **If you build your own copy
+  with an unpaid key, that sentence is wrong for it**: under the unpaid terms Google may use what is sent and people
+  may read it. Change `consent.sheet.data`, `consent.terms` and `consent.who` in `core/copy.ts`.
+- **The sheet before a narrowing step led with the raw instructions.** It now says "None of those fitted. Google's AI
+  can suggest other kinds of answer. It sees only this:" and the conversation's own line; the fixed instructions are
+  named in one line, and the whole request is behind "The whole request".
+- **After "something else" there were about six things to press.** Three stay: the next question, "Narrow it down",
+  and "Ask them to show or write it"; the rest is under "More". The question to try next no longer offers what was
+  just refused ("tea or coffee" refused: it suggested "strong tea with milk or porridge"), and stays with drinks.
+- **"Do you want to call someone?" → yes asked one name at a time.** The next question is now one card, "Who would
+  you like to call?", with up to three of the family's names, each with the person's photo or initial, and "someone
+  else". The same after "Would you like a visitor today?".
+- **About them spoke of "Chrome's built-in AI"** to a carer; that sentence is now in the inside view only. Once the
+  name is set, the lines about what was learned, the photos and the diary say "Frank", not "they".
+
 ## Changed on 17 Nov after the second rehearsal run
 A second run of our rehearsal set E (simulated partners and answers, not people; its numbers are not quoted anywhere)
 left seven things. Each was fixed as a class and tested on new phrasings (`tests/unit/sim-e2-classes.test.ts`, 63

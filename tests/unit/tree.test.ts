@@ -9,8 +9,8 @@ import { NullEngine } from '../../core/engine';
 import { bodyDetailCard, makeCard } from '../../core/pipeline';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_PROFILE } from '../../core/sample';
-import { AI_QUESTION, HOW_BAD, WHERE_HURTS, topics } from '../../core/topics';
-import { TREE_DEPTH, TREE_QUESTIONS, after, treeSize } from '../../core/tree';
+import { AI_QUESTION, HOW_BAD, WHERE_HURTS, awayNames, topics } from '../../core/topics';
+import { TREE_DEPTH, TREE_QUESTIONS, after, treeSize, who } from '../../core/tree';
 import { EMPTY_PROFILE, type Card, type Profile } from '../../core/types';
 
 const env = (profile: Profile) => ({ profile, support: 'more' as const, engine: new NullEngine(), allowCloud: false, deviceReady: false });
@@ -118,14 +118,30 @@ describe('the paths the owner asked for', () => {
     const meal = await step('Would you like a snack or a meal?', 'meal', ['Are you hungry?'], P);
     expect(meal.next[0]).toMatch(/^Would you like .+ or .+\?$/);
     expect(meal.next[0]).toContain(P.foods[0]);
-    expect((await step('Do you want to call someone?', 'yes', [], P)).next[0]).toMatch(/^Would you like to call /);
-    expect((await step('Would you like a visitor today?', 'yes', [], P)).next[0]).toMatch(/^Would you like to see /);
+    // (18 Nov, the role-play: one question with the family's names as the choices, not one name at a time)
+    const away = awayNames(P);
+    expect(away.length).toBeGreaterThanOrEqual(2);
+    expect((await step('Do you want to call someone?', 'yes', [], P)).next).toEqual([`Who would you like to call? ${away.slice(0, -1).join(', ')} or ${away[away.length - 1]}?`]);
+    expect((await step('Would you like a visitor today?', 'yes', [], P)).next[0]).toMatch(/^Who would you like to see\? .+ or .+\?$/);
     expect((await step('Would you like to go for a drive?', 'yes', [], P)).next[0]).toMatch(/^Where would you like to go\?/);
     // and the end lines use the person's name, with the verb in the singular
     expect((await step('Would you like some more?', 'no', [], P)).end).toBe(`${P.personName} has had enough. Clear it away.`);
     expect((await step('Shall we stop for now?', 'yes', [], P)).end).toBe(`Stop here. ${P.personName} does not want to go on now, and that is fine.`);
     const call = (await step('Do you want to call someone?', 'yes', [], P)).next[0];
-    expect((await step(call, 'yes', ['Do you want to call someone?'], P)).end).toMatch(/^Call .+ now, together\.$/);
+    const card = await makeCard(call, { profile: P, support: 'more', engine: new NullEngine(), allowCloud: false, deviceReady: false });
+    // the rules make it a choice card: up to three names, each with the person's photo or initial, and "someone else"
+    expect(card.source).toBe('code');
+    expect(card.choices.map((c) => c.label)).toEqual([...away.slice(0, 3), 'someone else']);
+    expect(card.choices.slice(0, -1).every((c) => c.picture.type === 'person')).toBe(true);
+    expect((await step(call, away[0], ['Do you want to call someone?'], P)).end).toBe(`Call ${away[0]} now, together.`);
+    expect((await step(call, 'someone else', ['Do you want to call someone?'], P)).end).toBe('Someone else. Say one name at a time, or show photos, and wait for a yes.');
+    const see = (await step('Would you like a visitor today?', 'yes', [], P)).next[0];
+    expect((await step(see, away[1], ['Would you like a visitor today?'], P)).end).toBe(`Ask ${away[1]} to come, and tell ${P.personName} when.`);
+    // one name: a yes / no about that person; no name: nothing to slot in
+    const one = { ...P, people: P.people.filter((x) => x.household || (x.nickname?.trim() || x.name) === away[0]) };
+    expect(who('call', awayNames(one))).toEqual([`Would you like to call ${away[0]}?`]);
+    expect(who('see', [])).toEqual([]);
+    expect(who('call', ['A', 'B', 'C', 'D'])).toEqual(['Who would you like to call? A, B or C?']);
   });
   it('pain leads to where, where to how bad, and how bad ends on what to do', async () => {
     expect((await step('Are you in pain?', 'yes', [])).next).toEqual([WHERE_HURTS]);
