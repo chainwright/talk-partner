@@ -55,8 +55,8 @@ import { TTS_MODEL, TTS_STYLE, TTS_VOICE, speakRequest } from '../../../core/spe
 import { LOOK_PROMPT, LOOK_SCHEMA, LOOK_SYSTEM_PROMPT } from '../../../core/phototalk';
 import { CLOUD_TEXT_MODEL } from '../../../core/models';
 import { SUMMARY_SCHEMA, SUMMARY_SYSTEM_PROMPT } from '../../../core/summary';
-import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, SYSTEM_PROMPT, TRANSCRIBE_PROMPT, TRANSCRIBE_SCHEMA, TRANSCRIBE_SYSTEM_PROMPT, cloudPrompt } from '../../../core/prompt';
-import { cloudTextRequest } from '../../../core/requests';
+import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, LETTER_SCHEMA, LETTER_SYSTEM_PROMPT, SYSTEM_PROMPT, TRANSCRIBE_PROMPT, TRANSCRIBE_SCHEMA, TRANSCRIBE_SYSTEM_PROMPT, cloudPrompt } from '../../../core/prompt';
+import { cloudTextRequest, letterRequest } from '../../../core/requests';
 import { REWORD_SCHEMA, REWORD_SYSTEM_PROMPT, rewordRequest } from '../../../core/reword';
 import { appCheckConfigured, appWithAppCheck, namedAppCheckFailure, type WebConfig } from './app';
 
@@ -73,7 +73,7 @@ const sys = (text: string) => [{ role: 'system' as const, content: [{ type: 'tex
  * One console line per answered model call: which leg, its mode, and the SDK's own `inferenceSource` value as it came
  * back. No prompt and no answer text is logged. The run logs in devlog/ quote these lines.
  */
-function report(leg: 'private' | 'stripped' | 'voice' | 'summary' | 'reword' | 'look' | 'speak', mode: string, inferenceSource: unknown, ms: number) {
+function report(leg: 'private' | 'stripped' | 'voice' | 'summary' | 'reword' | 'look' | 'speak' | 'letter', mode: string, inferenceSource: unknown, ms: number) {
   console.info(`[ai-logic] leg=${leg} mode=${mode} inferenceSource=${String(inferenceSource)} ms=${ms}`);
 }
 
@@ -89,6 +89,7 @@ export class FirebaseEngine implements Engine {
   private rewordOnline: GenerativeModel | null = null;
   private lookLocal: GenerativeModel | null = null;
   private ttsModel: GenerativeModel | null = null;
+  private letterModel: GenerativeModel | null = null;
   private localAi: ReturnType<typeof getAI> | null = null;
   /** The cloud text model in use: the in-code default until Remote Config gives a checked name (core/models.ts). */
   private textModel = CLOUD_TEXT_MODEL;
@@ -202,6 +203,7 @@ export class FirebaseEngine implements Engine {
     this.cloudModel = null;
     this.voiceModel = null;
     this.rewordOnline = null;
+    this.letterModel = null;
   }
 
   cloudRequest(strippedQuestion: string) {
@@ -219,6 +221,32 @@ export class FirebaseEngine implements Engine {
     const source = r.response.inferenceSource === InferenceSource.ON_DEVICE ? 'on-device' : 'in-cloud';
     const ms = Math.round(performance.now() - t0);
     report('stripped', 'PREFER_IN_CLOUD', r.response.inferenceSource, ms);
+    return { text: r.response.text(), source, ms };
+  }
+
+  letterRequest(text: string) {
+    return letterRequest(text, this.textModel);
+  }
+
+  /**
+   * Phase 9: the cloud letter step, after the carer's yes: the same cloud text model and app (App Check), with its own
+   * fixed instructions and schema (`{"kind", "words"}`, exactly 4 words; core/prompt.ts). The text holds the stripped
+   * question and the letter only (core/letter.ts, letterCloudText). The source is what the SDK reports.
+   */
+  async runLetter(text: string): Promise<ModelResult> {
+    if (!this.cloudConfigured) throw Object.assign(new Error('cloud help is not set up (App Check)'), { notSent: true });
+    this.letterModel ??= getGenerativeModel(this.ai, {
+      mode: InferenceMode.PREFER_IN_CLOUD,
+      inCloudParams: { model: this.textModel, systemInstruction: LETTER_SYSTEM_PROMPT, generationConfig: { responseMimeType: 'application/json', responseJsonSchema: LETTER_SCHEMA as any } },
+      onDeviceParams: { createOptions: { ...IO, initialPrompts: sys(LETTER_SYSTEM_PROMPT) }, promptOptions: { responseConstraint: LETTER_SCHEMA } },
+    });
+    const t0 = performance.now();
+    const r = await this.letterModel.generateContent(text).catch(async (e: Error) => {
+      throw Object.assign(await namedAppCheckFailure(e), { notSent: typeof navigator !== 'undefined' && navigator.onLine === false });
+    });
+    const source = r.response.inferenceSource === InferenceSource.ON_DEVICE ? 'on-device' : 'in-cloud';
+    const ms = Math.round(performance.now() - t0);
+    report('letter', 'PREFER_IN_CLOUD', r.response.inferenceSource, ms);
     return { text: r.response.text(), source, ms };
   }
 
@@ -382,6 +410,8 @@ export class LazyFirebaseEngine implements Engine {
   rewordCloud(text: string) { return this.e.rewordCloud(text); }
   cloudRequest(strippedQuestion: string) { return cloudTextRequest(strippedQuestion, this.textModel); }
   runCloud(strippedQuestion: string) { return this.e.runCloud(strippedQuestion); }
+  letterRequest(text: string) { return letterRequest(text, this.textModel); }
+  runLetter(text: string) { return this.e.runLetter(text); }
   transcribe(clip: AudioClip) { return this.e.transcribe(clip); }
   speakRequest(text: string) { return speakRequest(text); }
   speak(text: string) { return this.e.speak(text); }

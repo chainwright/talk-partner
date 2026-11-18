@@ -14,6 +14,28 @@ export function letterContext(kind: string | null | undefined): string {
   return `${kind && KIND_WORDS[kind] ? `The conversation is about ${KIND_WORDS[kind]}. ` : ''}${LETTER_AGE}`;
 }
 
+/**
+ * Phase 9 (judge round 8, seats 01f and 05: K and X gave 0 words in the cloud, `AI_RUN_LOG.md:48`): the cloud letter
+ * step gets its own fixed instructions and schema, not the card's. The kind is a schema enum (the model names what the
+ * conversation is about from a closed list), the words are exactly 4 (the card's schema allowed 3 and asked for the
+ * question's own choices, so a letter often got none), and code keeps only words that start with the letter
+ * (core/letter.ts, letterChoices). Fixed app text: no name, nothing from About them.
+ */
+export const LETTER_KINDS = [...Object.keys(KIND_WORDS), 'other'];
+export const LETTER_SYSTEM_PROMPT = `You help a family member talk with an adult who has aphasia after a stroke. The person knows the word they want but cannot say it. They pointed to the first letter of the word.
+Return JSON:
+- "kind": what the conversation is about, one of: ${LETTER_KINDS.join(', ')}.
+- "words": exactly 4 different everyday words or short phrases, 1 or 2 words each, in lower case, that could be the answer AND start with the given letter. Plain words an older adult uses at home.
+No names of people, no brands, no alcohol, tobacco or medicines. Never answer for the person.`;
+export const LETTER_SCHEMA = {
+  type: 'object',
+  properties: {
+    kind: { type: 'string', enum: LETTER_KINDS },
+    words: { type: 'array', items: { type: 'string' }, minItems: 4, maxItems: 4 },
+  },
+  required: ['kind', 'words'],
+} as const;
+
 export const SYSTEM_PROMPT = `You help a family member talk with an adult who has aphasia after a stroke. Intelligence is intact; words are hard.
 Give the KEY IDEA and up to 3 short answer options the person can point at. Return JSON:
 - "topic": 1-3 plain words naming what is asked (e.g. "dinner", "therapy today", "call"). No punctuation.

@@ -338,3 +338,43 @@ describe('7. P0 the hybrid moment in 10 s: one tap on Home, the sample open ques
     expect(main).toContain('if (!(card.blocked && card.unsentPayload) && !sample) {');
   });
 });
+
+// ---------------------------------------------------------------- item 8
+import { LETTER_CLOUD_TASK, letterCard, letterCloudText, letterWordsOf } from '../../core/letter';
+import { LETTER_KINDS, LETTER_SCHEMA, LETTER_SYSTEM_PROMPT } from '../../core/prompt';
+import { letterRequest } from '../../core/requests';
+
+class Letters extends Slow {
+  sent: string[] = [];
+  viaCard = 0;
+  constructor(private words: string[]) { super(); }
+  letterRequest(text: string) { return letterRequest(text); }
+  runLetter(text: string): Promise<ModelResult> { this.sent.push(text); return Promise.resolve({ text: JSON.stringify({ kind: 'drink', words: this.words }), source: 'in-cloud', ms: 11 }); }
+  runCloud(): Promise<ModelResult> { this.viaCard++; return Promise.reject(new Error('the card step must not be asked for a letter')); }
+}
+
+describe('8. P1 the cloud letter step: its own schema (the kind as an enum, exactly 4 words), filtered by the letter in code', () => {
+  it('the schema: kind from a closed list, words exactly 4; fixed instructions with no name', () => {
+    expect(LETTER_SCHEMA.properties.kind.enum).toEqual(LETTER_KINDS);
+    expect(LETTER_KINDS).toEqual(expect.arrayContaining(['drink', 'food', 'place', 'people', 'activity', 'feeling', 'comfort', 'other']));
+    expect(LETTER_SCHEMA.properties.words).toMatchObject({ minItems: 4, maxItems: 4 });
+    expect(LETTER_SYSTEM_PROMPT).toContain('exactly 4');
+    expect(LETTER_CLOUD_TASK).toContain('exactly 4');
+    expect(letterRequest('x')).toMatchObject({ mode: 'PREFER_IN_CLOUD', systemInstruction: LETTER_SYSTEM_PROMPT, generationConfig: { responseJsonSchema: LETTER_SCHEMA } });
+  });
+  it('the answer is read from {"words"}, or from a card\'s {"choices"} for an engine without the letter step', () => {
+    expect(letterWordsOf('{"kind":"drink","words":["kettle","kefir","ketchup","kiwi"]}')).toEqual(['kettle', 'kefir', 'ketchup', 'kiwi']);
+    expect(letterWordsOf('{"topic":"x","kind":"choice","choices":["kettle","kiwi"]}')).toEqual(['kettle', 'kiwi']);
+    expect(letterWordsOf('not json')).toEqual([]);
+  });
+  it('worst case of round 8 (K gave no word): 4 words, those that do not start with K are dropped by code, the rest make the card; the card step is not asked', async () => {
+    const e = new Letters(['kettle', 'tea', 'kiwi juice', 'coffee']);
+    const c = await letterCard({ asked: 'Would you like tea or coffee?', letter: 'K', rejected: ['tea', 'coffee'] }, { profile: EMPTY_PROFILE, support: 'more', engine: e, allowCloud: true, deviceReady: false });
+    expect(e.viaCard).toBe(0);
+    expect(e.sent).toEqual([letterCloudText('Would you like tea or coffee?', 'K', EMPTY_PROFILE).text]);
+    expect(c.choices.filter((x) => x.role === 'answer').map((x) => x.label)).toEqual(['kettle', 'kiwi juice']);
+    expect(c.why?.dropped.map((d) => d.label)).toEqual(expect.arrayContaining(['tea', 'coffee']));
+    expect(c.cloudPayload).toBe(JSON.stringify(letterRequest(e.sent[0]), null, 2));
+    expect(c.letter?.by).toBe('cloud');
+  });
+});

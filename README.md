@@ -847,42 +847,46 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | Where | Line holds | What it is |
 |---|---|---|
 | `web/src/ai/firebaseEngine.ts:52` | `from 'firebase/ai'` | the only import of the SDK in the repo (guarded by `tests/unit/no-direct-model-calls.test.ts`) |
-| `web/src/ai/firebaseEngine.ts:103` | `getAI(` | the AI Logic instance of the private step: its own Firebase app with no App Check, so a card made on this computer contacts no host |
-| `web/src/ai/firebaseEngine.ts:109` | `getGenerativeModel(` | private step model |
-| `web/src/ai/firebaseEngine.ts:110` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
-| `web/src/ai/firebaseEngine.ts:122` | `getAI(` | the AI Logic instance of the cloud step (Gemini Developer API backend), on the app that has App Check; it uses the App Check session token (limited-use tokens per request were tried on 17 Nov and taken out the same day, see "Where the AI runs, in detail") |
-| `web/src/ai/firebaseEngine.ts:128` | `getGenerativeModel(` | stripped step model |
-| `web/src/ai/firebaseEngine.ts:129` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
-| `web/src/ai/firebaseEngine.ts:156` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
-| `web/src/ai/firebaseEngine.ts:170` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
-| `web/src/ai/firebaseEngine.ts:171` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
-| `web/src/ai/firebaseEngine.ts:186` | `getGenerativeModel(` | summary step model ("Today in short", `core/summary.ts`): the day's answers, on the same no-App-Check app as the private step |
-| `web/src/ai/firebaseEngine.ts:187` | `InferenceMode.ONLY_ON_DEVICE` | its mode: the person's answers never fall back to the cloud; where the browser has no model the app's rules write the summary |
-| `web/src/ai/firebaseEngine.ts:191` | `generateContent(` | summary step call |
-| `web/src/ai/firebaseEngine.ts:192` | `inferenceSource !== InferenceSource.ON_DEVICE` | the summary step rejects any answer not from the device |
-| `web/src/ai/firebaseEngine.ts:214` | `generateContent(` | stripped step call |
-| `web/src/ai/firebaseEngine.ts:219` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
-| `web/src/ai/firebaseEngine.ts:231` | `getGenerativeModel(` | voice step model: the same cloud model, asked only for the words of a recording (`{"transcript": string}`) |
-| `web/src/ai/firebaseEngine.ts:232` | `InferenceMode.ONLY_IN_CLOUD` | its mode: the SDK's on-device step takes text and JPEG / PNG only, so sound cannot run on the device; the app says "cloud" before the first use |
-| `web/src/ai/firebaseEngine.ts:248` | `generateContent(` | voice step call: one per recording, the sound as `inlineData` (WAV), after a yes to the notice |
-| `web/src/ai/firebaseEngine.ts:251` | `inferenceSource === InferenceSource.ON_DEVICE` | where the recording was turned into text, from the SDK's report |
-| `web/src/ai/firebaseEngine.ts:262` | `getGenerativeModel(` | wording step model on the device ("plainer words" for the insight lines and the tip of the day, `core/reword.ts`), on the same no-App-Check app as the private step |
-| `web/src/ai/firebaseEngine.ts:263` | `InferenceMode.ONLY_ON_DEVICE` | its mode: the prompt may hold the carer's health notes, so there is no cloud fall-back; without a model the rules' own words stand |
-| `web/src/ai/firebaseEngine.ts:267` | `generateContent(` | wording step call on the device |
-| `web/src/ai/firebaseEngine.ts:268` | `inferenceSource !== InferenceSource.ON_DEVICE` | the on-device wording step rejects any answer not from the device |
-| `web/src/ai/firebaseEngine.ts:285` | `getGenerativeModel(` | photo step model ("Talk about a photo", `core/phototalk.ts`): one of the family's own photos and a fixed instruction, on the same no-App-Check app as the private step; the carer starts it with one button |
-| `web/src/ai/firebaseEngine.ts:286` | `InferenceMode.ONLY_ON_DEVICE` | its mode: a family photo has no cloud path, in any mode; on a phone and wherever the browser has no model, the rules write the questions from the photo's word |
-| `web/src/ai/firebaseEngine.ts:293` | `generateContent(` | photo step call: the picture as `inlineData` (JPEG), which the SDK's on-device step hands to Gemini Nano as an image |
-| `web/src/ai/firebaseEngine.ts:294` | `inferenceSource !== InferenceSource.ON_DEVICE` | the photo step rejects any answer not from the device |
-| `web/src/ai/firebaseEngine.ts:306` | `getGenerativeModel(` | wording step model for online help: the insight lines the rules wrote, called only after a yes on the sheet that shows the exact text (`web/src/main.ts`, `sendInsights`) |
-| `web/src/ai/firebaseEngine.ts:307` | `InferenceMode.PREFER_IN_CLOUD` | its mode: the text holds no name, no health note and no diary entry, only the rules' counted lines (`core/insights.ts`, `insightCloudText`) |
-| `web/src/ai/firebaseEngine.ts:312` | `generateContent(` | wording step call through online help |
-| `web/src/ai/firebaseEngine.ts:315` | `inferenceSource === InferenceSource.ON_DEVICE` | where the lines were worded, from the SDK's report |
-| `web/src/ai/firebaseEngine.ts:332` | `getGenerativeModel(` | Read aloud model (`core/speak.ts`, added 18 Nov, phase 5): a Gemini text-to-speech model, asked for the words on one card as sound; called only after the carer turned Read aloud on, on a sheet that says what goes |
-| `web/src/ai/firebaseEngine.ts:333` | `InferenceMode.ONLY_IN_CLOUD` | its mode: the SDK has no on-device speech, so the mode says what happens, and the sheet says it first |
-| `web/src/ai/firebaseEngine.ts:337` | `generateContent(` | Read aloud call: one per card text (the sound is kept, so "Hear it again" sends nothing); never a doctor-visit card |
-| `web/src/ai/firebaseEngine.ts:342` | `inferenceSource === InferenceSource.ON_DEVICE` | where the words were spoken, from the SDK's report |
-| `web/src/ai/firebaseEngine.ts:364` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
+| `web/src/ai/firebaseEngine.ts:104` | `getAI(` | the AI Logic instance of the private step: its own Firebase app with no App Check, so a card made on this computer contacts no host |
+| `web/src/ai/firebaseEngine.ts:110` | `getGenerativeModel(` | private step model |
+| `web/src/ai/firebaseEngine.ts:111` | `InferenceMode.ONLY_ON_DEVICE` | its mode: family data must never fall back to the cloud |
+| `web/src/ai/firebaseEngine.ts:123` | `getAI(` | the AI Logic instance of the cloud step (Gemini Developer API backend), on the app that has App Check; it uses the App Check session token (limited-use tokens per request were tried on 17 Nov and taken out the same day, see "Where the AI runs, in detail") |
+| `web/src/ai/firebaseEngine.ts:129` | `getGenerativeModel(` | stripped step model |
+| `web/src/ai/firebaseEngine.ts:130` | `InferenceMode.PREFER_IN_CLOUD` | its mode: no profile data, so an offline fall-back to the device is safe |
+| `web/src/ai/firebaseEngine.ts:157` | `initializeDeviceModel(` | the one-time download of the private helper, from a user gesture |
+| `web/src/ai/firebaseEngine.ts:171` | `generateContent(` | private step call (also the warm-up: one fixed sentence, no About me) |
+| `web/src/ai/firebaseEngine.ts:172` | `inferenceSource !== InferenceSource.ON_DEVICE` | the private step rejects any answer not from the device |
+| `web/src/ai/firebaseEngine.ts:187` | `getGenerativeModel(` | summary step model ("Today in short", `core/summary.ts`): the day's answers, on the same no-App-Check app as the private step |
+| `web/src/ai/firebaseEngine.ts:188` | `InferenceMode.ONLY_ON_DEVICE` | its mode: the person's answers never fall back to the cloud; where the browser has no model the app's rules write the summary |
+| `web/src/ai/firebaseEngine.ts:192` | `generateContent(` | summary step call |
+| `web/src/ai/firebaseEngine.ts:193` | `inferenceSource !== InferenceSource.ON_DEVICE` | the summary step rejects any answer not from the device |
+| `web/src/ai/firebaseEngine.ts:216` | `generateContent(` | stripped step call |
+| `web/src/ai/firebaseEngine.ts:221` | `inferenceSource === InferenceSource.ON_DEVICE` | the badge source for the stripped step |
+| `web/src/ai/firebaseEngine.ts:238` | `getGenerativeModel(` | letter step model for online help (phase 9): the first-letter helper's own fixed instructions and schema (`core/prompt.ts`, `LETTER_SCHEMA`: the kind as an enum, exactly 4 words), called only after the carer's yes |
+| `web/src/ai/firebaseEngine.ts:239` | `InferenceMode.PREFER_IN_CLOUD` | its mode: the text holds the stripped question and the letter only (`core/letter.ts`, `letterCloudText`), so an offline fall-back to the device is safe |
+| `web/src/ai/firebaseEngine.ts:244` | `generateContent(` | letter step call; code keeps only the words that start with the letter (`core/letter.ts`, `letterChoices`) |
+| `web/src/ai/firebaseEngine.ts:247` | `inferenceSource === InferenceSource.ON_DEVICE` | where the letter's words were made, from the SDK's report |
+| `web/src/ai/firebaseEngine.ts:259` | `getGenerativeModel(` | voice step model: the same cloud model, asked only for the words of a recording (`{"transcript": string}`) |
+| `web/src/ai/firebaseEngine.ts:260` | `InferenceMode.ONLY_IN_CLOUD` | its mode: the SDK's on-device step takes text and JPEG / PNG only, so sound cannot run on the device; the app says "cloud" before the first use |
+| `web/src/ai/firebaseEngine.ts:276` | `generateContent(` | voice step call: one per recording, the sound as `inlineData` (WAV), after a yes to the notice |
+| `web/src/ai/firebaseEngine.ts:279` | `inferenceSource === InferenceSource.ON_DEVICE` | where the recording was turned into text, from the SDK's report |
+| `web/src/ai/firebaseEngine.ts:290` | `getGenerativeModel(` | wording step model on the device ("plainer words" for the insight lines and the tip of the day, `core/reword.ts`), on the same no-App-Check app as the private step |
+| `web/src/ai/firebaseEngine.ts:291` | `InferenceMode.ONLY_ON_DEVICE` | its mode: the prompt may hold the carer's health notes, so there is no cloud fall-back; without a model the rules' own words stand |
+| `web/src/ai/firebaseEngine.ts:295` | `generateContent(` | wording step call on the device |
+| `web/src/ai/firebaseEngine.ts:296` | `inferenceSource !== InferenceSource.ON_DEVICE` | the on-device wording step rejects any answer not from the device |
+| `web/src/ai/firebaseEngine.ts:313` | `getGenerativeModel(` | photo step model ("Talk about a photo", `core/phototalk.ts`): one of the family's own photos and a fixed instruction, on the same no-App-Check app as the private step; the carer starts it with one button |
+| `web/src/ai/firebaseEngine.ts:314` | `InferenceMode.ONLY_ON_DEVICE` | its mode: a family photo has no cloud path, in any mode; on a phone and wherever the browser has no model, the rules write the questions from the photo's word |
+| `web/src/ai/firebaseEngine.ts:321` | `generateContent(` | photo step call: the picture as `inlineData` (JPEG), which the SDK's on-device step hands to Gemini Nano as an image |
+| `web/src/ai/firebaseEngine.ts:322` | `inferenceSource !== InferenceSource.ON_DEVICE` | the photo step rejects any answer not from the device |
+| `web/src/ai/firebaseEngine.ts:334` | `getGenerativeModel(` | wording step model for online help: the insight lines the rules wrote, called only after a yes on the sheet that shows the exact text (`web/src/main.ts`, `sendInsights`) |
+| `web/src/ai/firebaseEngine.ts:335` | `InferenceMode.PREFER_IN_CLOUD` | its mode: the text holds no name, no health note and no diary entry, only the rules' counted lines (`core/insights.ts`, `insightCloudText`) |
+| `web/src/ai/firebaseEngine.ts:340` | `generateContent(` | wording step call through online help |
+| `web/src/ai/firebaseEngine.ts:343` | `inferenceSource === InferenceSource.ON_DEVICE` | where the lines were worded, from the SDK's report |
+| `web/src/ai/firebaseEngine.ts:360` | `getGenerativeModel(` | Read aloud model (`core/speak.ts`, added 18 Nov, phase 5): a Gemini text-to-speech model, asked for the words on one card as sound; called only after the carer turned Read aloud on, on a sheet that says what goes |
+| `web/src/ai/firebaseEngine.ts:361` | `InferenceMode.ONLY_IN_CLOUD` | its mode: the SDK has no on-device speech, so the mode says what happens, and the sheet says it first |
+| `web/src/ai/firebaseEngine.ts:365` | `generateContent(` | Read aloud call: one per card text (the sound is kept, so "Hear it again" sends nothing); never a doctor-visit card |
+| `web/src/ai/firebaseEngine.ts:370` | `inferenceSource === InferenceSource.ON_DEVICE` | where the words were spoken, from the SDK's report |
+| `web/src/ai/firebaseEngine.ts:392` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
 | `web/src/ai/app.ts:32` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started by the first cloud call (a card, a recording) or the first feedback note, never at page load |
 | `core/pipeline.ts:738` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:856` | `ran: r.source` | the stripped step's trace line is the engine's report |

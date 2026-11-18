@@ -143,10 +143,23 @@ export function letterChoices(raw: string[], i: Pick<LetterInput, 'letter' | 're
 
 /** The app's own fixed wording of the request: the same for every family. */
 export const LETTER_TASK = 'Give two or three everyday things, people by role, or places that could be the answer and start with that letter. One or two words each, written in lower case. No names of people.';
+/** Phase 9: the cloud step's own task: exactly 4 words (its schema holds 4); code keeps those that start with the letter. */
+export const LETTER_CLOUD_TASK = 'Give exactly 4 everyday words that start with that letter and could be the answer. One or two words each, in lower case. No names of people.';
 /** The text online help gets: the question, About-them words swapped out, and the letter. Nothing else. */
 export function letterCloudText(asked: string, letter: string, profile: Profile): { text: string; map: Record<string, string> } {
   const s = asked.trim() ? stripQuestion(asked, profile) : { text: '', map: {} };
-  return { text: `${s.text ? `${s.text} ` : ''}They cannot say the word. It starts with the letter "${letter.toUpperCase()}". ${letterContext(subjectOf(asked, []))} ${LETTER_TASK}`, map: s.map };
+  return { text: `${s.text ? `${s.text} ` : ''}They cannot say the word. It starts with the letter "${letter.toUpperCase()}". ${letterContext(subjectOf(asked, []))} ${LETTER_CLOUD_TASK}`, map: s.map };
+}
+/**
+ * Phase 9: the words of a letter answer: `{"kind", "words"}` from the letter step's own schema, or a card's
+ * `{"choices"}` from an engine without it. Anything else gives none.
+ */
+export function letterWordsOf(text: string): string[] {
+  try {
+    const o = JSON.parse(text) as { words?: unknown };
+    if (Array.isArray(o?.words)) return o.words.filter((w): w is string => typeof w === 'string').slice(0, 8);
+  } catch { /* not the letter step's JSON: the card's parser below */ }
+  return parseModelOutput(text)?.choices ?? [];
 }
 /** The text the on-device step gets. It holds what did not fit and the learned words: it never goes to the cloud step. */
 export function letterDeviceAsk(i: LetterInput): string {
@@ -227,19 +240,19 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
 
   // 3. online help, only after the carer's yes: the question (About-them words swapped out) and the letter
   const stripped = letterCloudText(i.asked, letter, profile);
-  const preview = JSON.stringify(engine.cloudRequest(stripped.text), null, 2);
+  const preview = JSON.stringify(engine.letterRequest ? engine.letterRequest(stripped.text) : engine.cloudRequest(stripped.text), null, 2);
   const swaps = Object.entries(stripped.map).map(([k, v]) => `${v} → ${k}`);
   const orRules = (blocked: string, extra: Partial<Card> = {}) => (rules.length ? make(rules, 'rules', 'code', 0, null, [], extra.cloudAttempted ? extra : {}) : none(blocked, extra));
   if (!engine.cloudConfigured) { trace.push(T('stripped', 'skipped', 'cloud help is not configured on this copy')); return orRules(L.none(profile.personName.trim(), letter)); }
   if (findLeaks(stripped.text, profile).length) { trace.push(T('stripped', 'skipped', 'not sent: the question still held an About me word')); return orRules(L.none(profile.personName.trim(), letter)); }
   if (!env.allowCloud) { trace.push(T('stripped', 'skipped', 'cloud help is off')); return orRules(L.none(profile.personName.trim(), letter), { unsentPayload: preview, cloudSwaps: swaps }); }
   try {
-    const r = await within(engine.runCloud(stripped.text), env.cloudWaitMs);
+    const r = await within(engine.runLetter ? engine.runLetter(stripped.text) : engine.runCloud(stripped.text), env.cloudWaitMs);
     trace.push(T('stripped', r.source, 'got the question and the letter, About me words swapped out', false, r.ms));
     const sent = r.source === 'in-cloud';
     const left: Partial<Card> = { cloudPayload: sent ? preview : null, unsentPayload: sent ? null : preview, ranOffline: !sent, cloudSwaps: swaps };
-    const o = parseModelOutput(r.text);
-    const proposed = (o?.choices ?? []).map((c) => restoreNames(c, stripped.map));
+    // (phase 9) the 4 words of the letter step's own schema; code keeps those that start with the letter (letterChoices)
+    const proposed = letterWordsOf(r.text).map((c) => restoreNames(c, stripped.map));
     const { kept, dropped } = letterChoices(proposed, i, profile);
     const words = [...rules, ...kept.filter((k) => !rules.some((x) => lc(x) === lc(k)))];
     if (words.length) return make(words, kept.length ? 'cloud' : 'rules', kept.length ? r.source : 'code', r.ms, proposed, dropped, left);

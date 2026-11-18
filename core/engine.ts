@@ -74,6 +74,13 @@ export interface Engine {
   /** Cloud step: receives only the stripped question. Throws if the cloud is not configured. */
   runCloud(strippedQuestion: string): Promise<ModelResult>;
   /**
+   * Optional (phase 9): the cloud letter step, with its own instructions and schema (core/prompt.ts, LETTER_SCHEMA:
+   * `{"kind", "words"}`, exactly 4 words). An engine without it is asked through `runCloud` with the card's schema.
+   */
+  runLetter?(text: string): Promise<ModelResult>;
+  /** The exact request `runLetter` would send. */
+  letterRequest?(text: string): unknown;
+  /**
    * Optional: voice input. One recording of the PARTNER's spoken question (never the person's) goes to the model
    * through Firebase AI Logic and comes back as JSON `{"transcript": string}`. `source` is the SDK's report of where
    * it ran. An engine without it (a copy with no project settings) has no microphone button.

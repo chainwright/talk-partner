@@ -46,8 +46,9 @@ describe('what the new modules can reach', () => {
   it('the engine: the one new call is the on-device photo step; no new cloud model, mode or library', () => {
     const src = read('web/src/ai/firebaseEngine.ts');
     // (18 Nov, phase 5: Read aloud is the eighth model and the fourth cloud mode line: a text-to-speech model, ONLY_IN_CLOUD)
-    expect(src.match(/getGenerativeModel\(/g)).toHaveLength(8);
-    expect(src.match(/InferenceMode\.(?:PREFER_IN_CLOUD|ONLY_IN_CLOUD)/g)).toHaveLength(4);
+    // (phase 9: the cloud letter step is the ninth model and the fifth cloud mode line: the same cloud text model, its own schema)
+    expect(src.match(/getGenerativeModel\(/g)).toHaveLength(9);
+    expect(src.match(/InferenceMode\.(?:PREFER_IN_CLOUD|ONLY_IN_CLOUD)/g)).toHaveLength(5);
     expect(src).not.toMatch(/InferenceMode\.PREFER_ON_DEVICE/);
   });
 });

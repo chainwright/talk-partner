@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { P4 } from '../../core/copy4';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
 import { LETTER_AGE } from '../../core/prompt';
-import { EVERYDAY, LETTERS, LETTER_COLUMNS, LETTER_TASK, letterCard, letterEnd, letterLabel, letterChoices, letterCloudText, letterDeviceAsk, letterWords, ownWords, startsWith } from '../../core/letter';
+import { EVERYDAY, LETTERS, LETTER_CLOUD_TASK, LETTER_COLUMNS, letterCard, letterEnd, letterLabel, letterChoices, letterCloudText, letterDeviceAsk, letterWords, ownWords, startsWith } from '../../core/letter';
 import { cloudTextRequest } from '../../core/requests';
 import { BUILTIN } from '../../core/pictures';
 import { SAMPLE_PROFILE } from '../../core/sample';
@@ -155,7 +155,8 @@ describe('a model adds words only when the rules find fewer than two', () => {
     const e = new Fake(true, { cloud: ['xylophone', 'x-ray'] });
     const card = await letterCard(Q, env(e, MILLER, { allowCloud: true }));
     // (phase 8: the kind of the conversation and an age band, fixed words: no name, nothing from About them)
-    expect(e.cloud).toEqual([`Would you like tea or coffee? They cannot say the word. It starts with the letter "X". The conversation is about something to drink. ${LETTER_AGE} ${LETTER_TASK}`]);
+    // (phase 9: the cloud is asked for exactly 4 words; code keeps those that start with the letter)
+    expect(e.cloud).toEqual([`Would you like tea or coffee? They cannot say the word. It starts with the letter "X". The conversation is about something to drink. ${LETTER_AGE} ${LETTER_CLOUD_TASK}`]);
     expect(labels(card)).toEqual(['xylophone', 'x-ray']);
     expect(card.letter?.by).toBe('cloud');
     expect(card.source).toBe('in-cloud');
