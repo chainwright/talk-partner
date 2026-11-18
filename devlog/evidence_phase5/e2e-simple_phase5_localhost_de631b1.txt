@@ -1,0 +1,70 @@
+url: http://localhost:5179/
+browser: Chromium 148.0.7778.96 (headless)
+PASS  phase 5, first screen with no name: "Hand over the phone: they can start." (never "them can")
+PASS  phase 5, first screen: "Something new or sudden?" stands under the two top buttons, above "How it works"
+PASS  phase 5, first screen: every control is at least 24 x 24 px
+PASS  phase 5, first screen: every button and stand-alone link is at least 44 px tall
+PASS  phase 5, first screen: the main button is at least 60 px tall
+PASS  phase 5, first screen: nothing runs off the side of the screen
+PASS  sudden: FAST (face, arm, speech, time), four more reasons to call, and "Call emergency services: 911" twice
+PASS  sudden: the call button is a plain tel: link, at least 60 px tall, on the first screenful
+PASS  sudden: it says to call when unsure, names 911 / 999 / 112, and says what it is: a fixed list, no AI, nothing sent, not checked by a clinician
+PASS  sudden: every control is at least 24 x 24 px
+PASS  sudden: every button and stand-alone link is at least 44 px tall
+PASS  sudden: nothing runs off the side of the screen
+PASS  sudden: it is also the first thing in "Body & care"
+PASS  sudden: the number set in About them (999) is the one the button calls, and it is kept on this phone
+PASS  urgent: before any answer the carer's screen has no call box
+PASS  urgent: "Are you in pain? yes" alone has no box yet: the next question is "Where does it hurt?"
+PASS  urgent: head pain: the boxed line "Call 999 now if this is new or sudden." with the call button stands at the top, over the answer
+PASS  urgent: the pain flow that was there stays under it ("Next: How bad is the pain?")
+PASS  "Next:" label on the main button: contrast 6.3:1, at least 4.5:1
+PASS  urgent: the answered screen: every control is at least 24 x 24 px
+PASS  urgent: the answered screen: every button and stand-alone link is at least 44 px tall
+PASS  urgent: the answered screen: the main button is at least 60 px tall
+PASS  urgent: the answered screen: nothing runs off the side of the screen
+PASS  urgent: the box stays on the next question of the same conversation
+PASS  urgent: "a little" does not take the box away (the head was named in this conversation)
+PASS  urgent: a new conversation starts without the box
+PASS  read aloud: the switch is on the carer's screen of an everyday topic card, and it is off
+PASS  read aloud: the sheet says "The words on this card, including names on it, go to Google to be spoken. Nothing else." and shows the words of this card
+PASS  read aloud: the sheet is a dialog over an inert screen; nothing was asked of another host to show it
+PASS  read aloud: "No, keep it off" leaves it off
+PASS  read aloud off: the person's screen has no "Hear it" button, and nothing was sent
+PASS  read aloud on: the switch says where the words go ("On. The words on each card you show go to Google to be spoken.")
+PASS  read aloud on: the person's screen has the button over the three choices (a control, not a choice); here the request is refused like every request to another host, and the screen says "Say it out loud yourself."
+PASS  read aloud on: the person's screen: fits the screen without scrolling (844 px tall)
+PASS  read aloud on: a card whose words were handed over never says "Nothing was sent"
+PASS  read aloud on: the first screen's privacy line counts it
+PASS  read aloud: one tap turns it off again
+PASS  sheet: one plain name ("online help", which is Google's AI), and the first yes is "Just this once"; the technical words are folded inside
+PASS  sheet: "Just this once": every control is at least 24 x 24 px
+PASS  sheet: "Just this once": every button and stand-alone link is at least 44 px tall
+PASS  sheet: "Just this once": the main button is at least 60 px tall
+PASS  sheet: "Just this once": nothing runs off the side of the screen
+PASS  sheet: "Just this once" hands this one question to online help (the card says it was sent, or may have left: every request to another host is refused here) and leaves online help off
+PASS  needs board: nine needs and the way out; the ninth is "something's wrong"
+PASS  needs board with nine tiles, 390 x 844: fits the screen without scrolling (844 px tall)
+PASS  needs board: after "something's wrong" the carer is on "Something new or sudden?" as soon as the phone comes back
+PASS  diary: "Tablets taken" is one tap and one line: no count, no reminder, no box
+PASS  diary: after "Fall", when to call and the call button, at once: "A fall: if they hit their head, cannot get up, or have new pain, call 999 now."
+PASS  diary: after a fall: every control is at least 24 x 24 px
+PASS  diary: after a fall: every button and stand-alone link is at least 44 px tall
+PASS  diary: after a fall: nothing runs off the side of the screen
+PASS  diary, week: the fall is a line ("Worth mentioning"), with the blow to the head, whom to tell, and the call box
+PASS  diary, week: the head pain of this morning is a line of one day, with when to call
+PASS  diary, week: the urgent lines: every control is at least 24 x 24 px
+PASS  diary, week: the urgent lines: every button and stand-alone link is at least 44 px tall
+PASS  diary, week: the urgent lines: nothing runs off the side of the screen
+PASS  visit: chest pain, quite bad: the boxed "Call 999 now if this is new or sudden." is the first thing on the page, inside the printed part, with the call button
+PASS  visit: the line that was there stays under the page ("If the pain is new or strong, do not wait for the visit")
+PASS  visit: "Since the last visit" stands under his own answers, says whose lines they are, and counts from the diary: pain, a fall, drinks, mood, sleep
+PASS  visit: up to three questions for the doctor, picked from a fixed list; a fourth cannot be ticked; they are printed under the lines
+PASS  visit: the picks are kept on this phone with the answers
+PASS  visit: the page with the box and "Since the last visit": every control is at least 24 x 24 px
+PASS  visit: the page with the box and "Since the last visit": every button and stand-alone link is at least 44 px tall
+PASS  visit: the page with the box and "Since the last visit": the main button is at least 60 px tall
+PASS  visit: the page with the box and "Since the last visit": nothing runs off the side of the screen
+PASS  phase 5: no page error
+
+66 of 66 checks passed

@@ -26,7 +26,7 @@ the counts are the older ones (1714 tests, 16/16, 87/87).
 
 **Commit hashes.** The hashes in these documents and in the saved logs are from our working history. The public history has the same commits, in the same order and with the same dates, re-made under new hashes; `devlog/PUBLIC_HASH_MAP.md` gives working hash → public hash for each. The name `ondevice-proof-1` in some log headers is a tag of the working history on commit `1092be7`; it is not in the public repository. The commits of 17 Nov after `335d604` (`7080ebf`, `a1e1b2d`, `8810f8f`, `0eeca4e`, `20d2b19` and the document commits after them) get their rows in that map when they are put into the public history.
 
-**The labelled set on the on-device model (row 16)** was run three times on 17 Nov at `7dd16a1`, the last commit that changes code, on a clean tree:
+**The labelled set on the on-device model (row 16)** was run three times again on 18 Nov at `d198eb0` (the code of phase 5): 15, 16 and 16 of 18, `devlog/evidence_phase5/heldout_at_d198eb0/`. Before that it was run three times on 17 Nov at `7dd16a1` (the last code commit of that day; the topic, tree, card-rule and phase 3 to 5 commits came after it), on a clean tree:
 `devlog/evidence_r11/heldout_at_7dd16a1/` (`run_a`, `run_b`, `run_c`), and three times an hour earlier at `2aeb1d0`:
 `devlog/evidence_r11/heldout_at_2aeb1d0/` (`run_a`, `run_b`, `run_c` and the rules-alone pass in `rules/`). **An earlier set of three** was run on
 17 Nov at `c346d3d`, on a clean tree: `devlog/evidence_r8/heldout_at_c346d3d/` (three on-device runs and the
@@ -131,7 +131,7 @@ import; exit 1 is the audit's own), `fonts-check.txt` (no request leaves the app
 Rows 6, 13 and 14 (live part) need a Firebase project's web config in `.env.local`. Rows 5, 7 and the on-device pass
 of 16 need desktop Chrome with Gemini Nano. For those we can only show our saved runs.
 
-**The hosted copy** serves the build of `2c5673e` since 17 Nov 2026, 20:55 UTC (every served file has the SHA-256 of
+**The hosted copy**: which build it serves now, and the runs against it, are in README "Deploy" and `devlog/evidence_live/` (kept current). What follows is the record of 17 Nov: it served the build of `2c5673e` from 17 Nov 2026, 20:55 UTC (every served file has the SHA-256 of
 the local build; deploy log `devlog/evidence_live/deploy_2026-11-17_2c5673e.txt`; `check` and `build` at that commit:
 `devlog/evidence_r11/`). Runs against it, in `devlog/evidence_live/`: `e2e-needs_live_2026-11-17_2c5673e.txt` (12/12);
 `live_browsers_2026-11-17_2c5673e.txt` (Chromium 148 and Chrome 157: judge mode, three code-decided cards, the
@@ -180,3 +180,16 @@ The logs of the earlier deploys, at `8ace9f0`, `0afbf77`, `24793c1` and `c37e4c4
 held-out run record uncommitted changes in the tree, so we do not call them clean),
 `devlog/evidence_r3/cold_start_at_67fb3e2/RUN_LOG.md` (an on-device run right after a browser start: 21.7 s to
 "Ready"; the log only, its screenshots were not kept), `devlog/DAY1.md`–`DAY12.md`.
+
+## Phase 5 (18 Nov 2026, after judge round 6): rows 86 to 97
+| Row | File | Command | Saved output |
+|---|---|---|---|
+| 86 | `core/copy4.ts`, `tests/unit/phase5-grammar.test.ts` | `npx vitest run tests/unit/phase5-grammar.test.ts` | `devlog/evidence_phase5/01_first_screen_they_can_start_and_something_new_or_sudden.png` |
+| 87, 88 | `core/redflag.ts`, `web/src/phase5.ts`, `tests/unit/phase5-safety.test.ts` | `python3 scripts/e2e-simple.py --only phase5 --shots devlog/evidence_phase5` (a production build on localhost) | `02_something_new_or_sudden_fast_and_call.png`, `03_head_pain_call_box_over_the_answer.png`, `08_needs_board_with_somethings_wrong.png`, `11_visit_page_call_box_and_since_the_last_visit.png`; `e2e-simple_localhost_d198eb0.txt`, `e2e-simple_phase5_localhost_de631b1.txt` |
+| 89 to 92 | `core/reliability.ts`, `core/insights.ts`, `core/reword.ts`, `core/diary.ts` | `npm run check` (2609 tests) | `09_diary_fall_logged_when_to_call.png`, `10_what_stands_out_one_day_of_head_pain_and_a_fall.png` |
+| 93 | `core/speak.ts`, `web/src/ai/firebaseEngine.ts` (`speak`) | `python3 scripts/e2e-speak.py` (the dev server; the real model) | `AI_RUN_LOG.md`, `ai_01_read_aloud_sheet.png`, `ai_02_person_screen_hear_it_again.png`; `04_…`, `05_…`, `06_…` (the switch, the sheet, the person's screen in the run where every other host is refused) |
+| 94, 95 | `core/copy.ts`, `web/src/simple.ts` | the phase 5 browser run | `07_consent_sheet_just_this_once.png` |
+| 96 | `core/since.ts` | the phase 5 browser run | `11_visit_page_call_box_and_since_the_last_visit.png` |
+| 97 | `tests/fixtures/photo-beth.jpg`, `photo-bo.jpg`, `photo-lake.jpg` | `python3 scripts/phase4-shots.py --out devlog/evidence_phase5/reshoot_phase4` | `reshoot_phase4/04_person_words_with_B_beth_bo_biscuits.png`, `15_phototalk_pick_a_photo.png`, `16_…`, `17_person_photo_over_the_question.png` |
+
+Not run for phase 5: any of it with a carer, a person with aphasia or a clinician; the `tel:` link on a real phone; the wording steps against a real model.

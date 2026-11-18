@@ -10,19 +10,28 @@ the person, or tests them, is the everyday way that competence stays hidden (the
 the Institute's words).
 
 After a stroke, many adults with aphasia understand what is said but can't find the words to answer.
-Talk Partner helps **the partner** ask the way a speech therapist would: it turns the partner's own question into a
+**Talk Partner coaches the partner, not the person.** It helps the partner ask in the way Supported Conversation
+materials describe (our reading; no speech therapist has reviewed it): it says when the question itself is the
+problem (two things in one, a memory test), and it turns the partner's own question into a
 written-choice card (a keyword, two choices, pictured where we have drawn a picture, an escape every time, a
 tick/cross check) and gives the partner the exact line to say. It never picks or confirms the person's answer: only
-their tap does. Pictures (since 18 Nov our own colour drawings, 120 of them: `PICTOGRAMS.md`): yes / no, feelings, the body
+their tap does. Pictures (since 18 Nov our own colour drawings, 123 of them: `PICTOGRAMS.md`): yes / no, feelings, the body
 map, people, drinks and food, rest, TV and music, going out, the ways out, the needs of the quick-needs board. The
 family's own places and foods ("lake", "pot roast") show the family's own photo where one was added, and the word
 alone otherwise.
+
+**Three kinds of data, three places they may go** (the hybrid split, fixed in code, not a setting): what the family
+wrote about the person (names, lists, photos, health notes, the diary, the answers) is read by a model only on the
+device (`ONLY_ON_DEVICE`, Gemini Nano in desktop Chrome), or by no model; the partner's question with every
+About-them word swapped out may go to the cloud (`PREFER_IN_CLOUD`) after a yes on a sheet that shows the exact
+line; the words on one card may go to the cloud to be spoken (Read aloud, `ONLY_IN_CLOUD`) after a yes on a sheet
+that says so. What the app says about health (what stands out, when to call) is rules and fixed text, never a model.
 
 Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a therapy, not a diagnosis.
 
 ## Where the AI runs (Firebase AI Logic hybrid inference)
 **Family data → `ONLY_ON_DEVICE`; the stripped question → `PREFER_IN_CLOUD`, which falls back to Gemini Nano when
-offline; `inferenceSource` drives every badge.** Every model call goes through Firebase AI Logic, the
+offline on a desktop Chrome that has it (on a phone there is no fallback and no card); `inferenceSource` drives every badge.** Every model call goes through Firebase AI Logic, the
 optional microphone included (it sends the partner's recorded question to Gemini, `ONLY_IN_CLOUD`, for its words). The
 code is in **`web/src/ai/firebaseEngine.ts`**. See [Added on 17 Nov](#added-on-17-nov-quick-needs-voice-input-feedback).
 
@@ -31,9 +40,10 @@ code is in **`web/src/ai/firebaseEngine.ts`**. See [Added on 17 Nov](#added-on-1
 | Private card | question + the family's About-me lists | `ONLY_ON_DEVICE` | Family data must never fall back to the cloud. `PREFER_ON_DEVICE` would send this prompt to the cloud while Gemini Nano is missing or downloading. |
 | Narrowing card, after "something else" (`core/narrow.ts`) | on the device: the question, the choices that did not fit, today's answers so far, About me. In the cloud: the question and the choices that did not fit, About-me words swapped out; never the answers | the same two steps: `ONLY_ON_DEVICE` first, else `PREFER_IN_CLOUD` when the carer has turned online help on | The person chose the way out, so an AI suggests the next, broader choices (two levels at most). The same card rules check them, and the screen says an AI made this follow-up. Since 18 Nov a proposed choice that is more of the kind already refused is dropped, and when fewer than two are left the rules make the broader choices and the card says so (`core/kinds.ts`). On the device the prompt may also hold what was learned by counting (`core/prefs.ts`); the cloud text never does. |
 | "Today in short" (`core/summary.ts`) | today's confirmed answers | `ONLY_ON_DEVICE` (`summarizeDevice`), no cloud step | Two to four sentences for the family or the therapist. The answers are personal: where the browser has no Gemini Nano, the app's rules write the summary and no model gets them. |
-| Plainer words for the week's and the month's lines and for the tip of the day (`core/reword.ts`; [phase 3](#added-on-18-nov-phase-3-the-diary-health-notes-what-stands-out-the-answer-check-a-tip-a-copy-in-a-file)) | on the device: the lines the app's rules wrote, and the carer's health notes as context. In the cloud: the insight lines only, as shown on a sheet first; no name, no health note, nothing of the diary | `ONLY_ON_DEVICE` (`rewordDevice`); on a device with no model, `PREFER_IN_CLOUD` (`rewordCloud`) after a yes on that sheet, each time | What is counted, the thresholds and the red flags are rules. A model only rewords, and code checks its words (no new number, no name, no medical or advising word, never "more to drink"); otherwise the rules' words stay. Neither step has run against a real model yet. |
+| Plainer words for the week's and the month's lines and for the tip of the day (`core/reword.ts`; [phase 3](#added-on-18-nov-phase-3-the-diary-health-notes-what-stands-out-the-answer-check-a-tip-a-copy-in-a-file)) | on the device: the lines the app's rules wrote, and the carer's health notes as context. In the cloud: the insight lines only, as shown on a sheet first; no name, no health note and no diary entry (the lines carry dates and counts taken from the diary), and since phase 5 no line that says whom to tell or when to call | `ONLY_ON_DEVICE` (`rewordDevice`); on a device with no model, `PREFER_IN_CLOUD` (`rewordCloud`) after a yes on that sheet, each time | What is counted, the thresholds and the red flags are rules. A model only rewords, and code checks its words (no new or dropped number, no name, no medical or advising word, never "more to drink", and since phase 5 the same call / doctor / nurse words and no word that plays the line down); otherwise the rules' words stay. Neither step has run against a real model yet. |
 | First-letter words, only when the rules find fewer than two (`core/letter.ts`; [phase 4](#added-on-18-nov-phase-4-the-first-letter-the-person-starts-before-a-doctor-visit-talk-about-a-photo)) | on the device: the question, the letter, what did not fit, About me, the usual answers. In the cloud: the question with About-me words swapped out, and the letter; never what was refused or learned | `ONLY_ON_DEVICE` where the browser has Gemini Nano; else `PREFER_IN_CLOUD`, only after a yes on a sheet that shows the text | The person points to a letter; a model may add everyday words that start with it. Code keeps a word only if it starts with the letter, is no invented name, and is not alcohol, tobacco or a medicine. |
 | "Talk about a photo": what is in the picture (`core/phototalk.ts`) | one of the family's own photos (a 320 px JPEG) and a fixed instruction | `ONLY_ON_DEVICE` (`lookDevice`), no cloud step, after the carer's tap | A family photo has no cloud path. The model names things; code drops every word about a person and makes one choice question. On a phone the rules write the questions from the photo's word. |
+| Read aloud (`core/speak.ts`; [phase 5](#added-on-18-nov-phase-5-after-judge-round-6)) | the words on one card: its question and its choices, names on it included; the voice and the style | `ONLY_IN_CLOUD` (`speak`), a Gemini text-to-speech model; only after the carer turned it on on a sheet that says what goes | The one AI step a phone can use on every card. The SDK has no on-device speech, so the mode says what happens. Off by default; never a doctor-visit card; a card that was read aloud says so. |
 | Stripped card | the question with every About-me word swapped for "Person A", "Place A"… and a word that looks like a name the family didn't list (a capitalised word, the word after a title such as "Dr.", a lowercase word that is not an everyday English word) swapped for "Name A" | `PREFER_IN_CLOUD` | Holds no profile data, so an offline fall-back to the device is safe. |
 
 **On a phone there is no on-device step today.** Chrome's built-in Gemini Nano exists in desktop Chrome only, not on
@@ -42,17 +52,35 @@ About them and "Today in short" are made by the app's rules with no AI, and a qu
 cannot turn into choices (an open question) uses online help, asked for at that moment on a sheet that shows the exact
 line that would go. The first screen says this in one line ("On this phone that AI is online (Google's): the app asks
 you first…"). Neither the narrowing step nor "Today in short" has been run against the real Gemini Nano yet: on the device both
-are tested with scripted engines only. The narrowing step has one recorded run through the real cloud model
-(`CLAIMS.md`, rows 53 and 54).
+are tested with scripted engines only. The narrowing step has two recorded runs through the real cloud model on
+localhost and none on the hosted copy (`CLAIMS.md`, rows 53 and 54).
+
+### Where the sponsor runs on a phone
+A carer mostly holds a phone, and Chrome's Gemini Nano is not on phones. So on a phone every AI step is a cloud call
+through Firebase AI Logic, each behind a sheet that shows what goes, and the card rules do the rest:
+
+| On a phone | Firebase AI Logic call | When | Run against the real model |
+|---|---|---|---|
+| **Read aloud**: the question and the choices of the card, spoken on the person's screen (`core/speak.ts`) | Gemini text-to-speech (`gemini-3.8-flash-tts`), `ONLY_IN_CLOUD`, the words of that one card, the voice and the style | every card the carer shows, the 40 topic questions and the needs board included, once the carer turned it on on a sheet ("The words on this card, including names on it, go to Google to be spoken. Nothing else."); off by default; never a doctor-visit card | yes, on localhost: `leg=speak mode=ONLY_IN_CLOUD inferenceSource=in_cloud`, 4.4 s for about 8 s of sound ("Would you like tea or coffee? Tea. Coffee. Or something else."), "Hear it again" asked nothing, 10 of 10 checks at `de631b1` on the dev server with the App Check debug token (`devlog/evidence_phase5/AI_RUN_LOG.md`); not on the hosted copy by us |
+| A question the carer types that the rules cannot turn into choices | `PREFER_IN_CLOUD`, the question with About-them words swapped out | after "Just this once" or "Yes, every time" on the sheet | yes (`devlog/evidence_live/`, last on the hosted copy at `4d7edee`; see Deploy for this build) |
+| "Narrow it down" after "something else"; words for a first letter the rules have fewer than two for | the same step | after "Just this once" on its sheet | yes, on localhost (`CLAIMS.md` rows 53, 79) |
+| "What stands out" in plainer words | `PREFER_IN_CLOUD`, the counted lines only | after "Just this once", each time; never a line that says whom to tell or when to call | no |
+| The carer's spoken question as text | `ONLY_IN_CLOUD`, one recording | after a yes to its notice | yes, on the hosted copy at `40fedec` |
+
+What a phone never gets: the on-device step (the family's own names and places in an open question's choices), and
+"Talk about a photo" by a model. What needs no AI on a phone, by design: the topic questions and their trees, quick
+needs, "Something new or sudden?" and every line about health, the diary, the doctor-visit page. With Firebase AI
+Logic taken out, those still work; what goes is every voice, every open question and every plainer wording.
+
 
 The same question through the two steps, in our recorded run: "What do you want to do this weekend?" gives
 *lake / church* on this computer (the family's own places, read from About me by Gemini Nano; nothing sent) and
 *stay home / go out* from the cloud, which gets the question only. The details are under
 [Where the AI runs, in detail](#where-the-ai-runs-in-detail).
 
-Built for #BuildHybridAI 2026. Status on 17 Nov 2026, in three lines:
+Built for #BuildHybridAI 2026. Status on 18 Nov 2026, in three lines:
 - **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo> (the full view, in judge mode; the bare address opens the simple view for families, added 17 Nov and rebuilt the same evening around topics, the person's own screens and a how-to block: [Screens](#screens)). It can be installed to the home screen and opens with no connection. It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI), a microphone for the partner's question (through Firebase AI Logic, in the cloud) and a feedback form (Cloud Firestore), all untried by anyone they are for.
-- **One number, at commit `7dd16a1`:** on the 18 open questions of our own labelled set, rules alone make no card (0 of 18); the on-device model made a card matching our label for 15, 16 and 15 of 18 in three runs (17 Nov, the last commit that changes code), 12, 13 and 12 of them with the family's own people, places or foods. Three runs an hour earlier, at `2aeb1d0`, gave 16 each time, and so did the three before that day's rule changes, at `c346d3d`: the model's answers vary, so the number is 15 to 16. Our labels and a set the rules have since been changed around: not a held-out test, not a trial with people.
+- **One number, at commit `d198eb0`:** on the 18 open questions of our own labelled set, rules alone make no card (0 of 18); the on-device model made a card matching our label for 15, 16 and 16 of 18 in three runs at commit `d198eb0` (18 Nov, the code of phase 5), 12, 13 and 13 of them with the family's own people, places or foods (`devlog/evidence_phase5/heldout_at_d198eb0/`). Earlier runs, at `7dd16a1` on 17 Nov, before the topic, tree, card-rule and phase 3 to 5 commits: 15, 16 and 15 of 18. Three runs an hour earlier, at `2aeb1d0`, gave 16 each time, and so did the three before that day's rule changes, at `c346d3d`: the model's answers vary, so the number is 15 to 16. Our labels and a set the rules have since been changed around: not a held-out test, not a trial with people.
 - **Every claim with its status:** `CLAIMS.md` (and `JUDGES.md` for the 60-second path, `EVIDENCE.md` for claim → file, command, saved output). No video yet, no trial with people yet. How it got here, day by day: `devlog/` (the long form of this paragraph is kept in `devlog/DAY12.md`).
 
 ## Added on 17 Nov: quick needs, voice input, feedback
@@ -66,8 +94,9 @@ tick and a cross); after the tick the person's screen shows the need and nothing
 short line for it ("Go now. The rest can wait."; after *pain*, one tap asks "Where does it hurt?", the body card).
 *Something else* is checked the same way and hands back to the question box and "We're stuck". The board is made in
 code (`core/needs.ts`, which imports the copy and the types and nothing else): no model, no About me, no request, so
-it works with no connection **once the page is open**. There is no offline install: a page that has never loaded, or
-is reloaded with no network, does not open. Nine tiles is more than the two or three of a card; that is our choice
+it works with no connection **once the page is open**. (Written on 17 Nov: "there is no offline install". Since the
+service worker of 18 Nov the app opens with no connection after one visit; a first visit with no connection does not
+open.) Ten tiles since phase 5 (nine needs and the way out) is more than the two or three of a card; that is our choice
 for needs that cannot wait for a question to be typed, not something the sources measured.
 
 **Voice input, for the partner's question only, through Firebase AI Logic.** A microphone button sits between the
@@ -105,8 +134,8 @@ something else" under it; at the end of a path the line stands in its place ("No
 questions deep at most and never asks the same question twice. What About them names is slotted in: the family's
 foods under "a meal", their people under a call and a visit, their places under going out. The table holds 48
 questions with an entry for every answer of their card, and the body map has its own rule: 49 questions and 172
-question × answer pairs with nothing in About them, 57 and 196 with the sample family; `tests/unit/tree.test.ts` walks every topic question and every answer down every path (596
-paths, 685 with the sample family) and fails on a silent end, on a next question the rules cannot make a card for, and
+question × answer pairs with nothing in About them, 58 and 199 with the sample family; `tests/unit/tree.test.ts` walks every topic question and every answer down every path (596
+paths, 679 with the sample family) and fails on a silent end, on a next question the rules cannot make a card for, and
 on a fourth question. The lines are ours: plain household actions, and for pain "tell the nurse or doctor"; no
 clinician has read them yet.
 
@@ -139,7 +168,7 @@ One run; the model's answers vary.
 
 **Colour pictures (`web/src/pictos.ts`, `PICTOGRAMS.md`).** The black line drawings were replaced by simple,
 realistic colour drawings, all our own (no third-party set, no AI-generated image): real-object colours, one object,
-a plain background, light shading, the word under each. 120 pictures and the monogram; 39 of them are new, for the
+a plain background, light shading, the word under each. 123 pictures and the monogram (three were added in phase 5); 39 of them are new, for the
 words the topic questions and their trees offer (all 128 choices of the 40 rule-made topic questions now have a
 picture; a word with none still shows alone). Why colour: `design/IMAGES_RESEARCH_2026-11-17.md`. The sheet at
 390 px: `devlog/evidence_pictures/pictures_390.png`.
@@ -184,7 +213,7 @@ nurse, doctor or speech and language therapist has read the wording.
 | The diary and its one-tap log (`core/diary.ts`) | rules | the device (IndexedDB) | nothing: no model |
 | What stands out: what is counted, the thresholds, the red flags, how serious a line is, the base of each line, the footer (`core/insights.ts`) | rules | the device | nothing: no model |
 | The wording of those lines, in plainer words (`core/reword.ts`) | Gemini Nano, `ONLY_ON_DEVICE`, where the browser has it (desktop Chrome) | the device | the lines the rules wrote, and the carer's health notes as context |
-| The same wording on a phone | Google's cloud model, `PREFER_IN_CLOUD`, only after a yes on a sheet that shows the exact text, each time | Google | the lines the rules wrote: no name, no photo, no health note, nothing of the diary. A line whose own words state a health note is not sent |
+| The same wording on a phone | Google's cloud model, `PREFER_IN_CLOUD`, only after a yes on a sheet that shows the exact text, each time | Google | the lines the rules wrote: no name, no photo, no health note and no diary entry, only the rules' counted lines, which carry dates and counts taken from the diary. A line whose own words state a health note is not sent |
 | The tip of the day (`core/tip.ts`): which tip, and its sentence | rules | the device | nothing |
 | The tip's sentence in plainer words | Gemini Nano, `ONLY_ON_DEVICE`, where the browser has it; no cloud step | the device | that one sentence |
 | Health notes, the copy of About them in a file (`core/backup.ts`) | rules | the device | nothing: no model |
@@ -351,13 +380,93 @@ At `9ff3e9d`, on the production build on localhost: the phase 4 run again 83/83,
 `e2e-cloud.mjs` and `e2e-ondevice.mjs` (nothing in the rules, the prompt or the model call of an ordinary card
 changed), and the two wording steps of phase 3 still have no run against a real model.
 
+## Added on 18 Nov, phase 5: after judge round 6
+What thirteen judge seats found on the hosted copy of `421dae0`, and what was changed (`CLAIMS.md` rows 86 to 97;
+`devlog/evidence_phase5/`). **No carer, no person with aphasia and no clinician has used or read any of it.**
+
+**What is rules and what is AI.** Everything about health and safety here is rules and fixed text, on the device:
+no model writes, picks or rewords a line that says what to look for, whom to tell or when to call. The one new AI
+step is Read aloud.
+
+- **"Hand over the phone: they can start."** With no name set the first screen said "them can start".
+  `tests/unit/phase5-grammar.test.ts` scans every string of `core/copy.ts`, `copy4.ts`, `copy5.ts` and every end line
+  of the trees with an empty name.
+- **"Something new or sudden?"** (`core/redflag.ts`, `web/src/phase5.ts`): one fixed card, reached from the first
+  screen and from the top of "Body & care". It holds FAST (face, arm, speech, time), four more reasons to call (a
+  sudden very bad headache; chest pain or trouble breathing; a fall with a blow to the head or a fall and cannot get
+  up; suddenly very drowsy or confused), "Not on this list, and you are still worried? Call.", and a button
+  **Call emergency services** that is a plain `tel:` link (the phone's own dialler opens; the app dials nothing). The
+  number is set in About them under the health notes; it is 911 when nothing is set, and the card names 999 (UK) and
+  112 (EU). The needs board has a ninth tile, "something's wrong": when the person confirms it and the phone comes
+  back, the carer is on that card. The card says what it is: a fixed list, no AI, nothing sent, the app cannot tell
+  what is wrong, and no doctor or nurse has checked the wording.
+- **The boxed line "Call [number] now if this is new or sudden."**, with the call button, stands at the top of the
+  carer's screen after an answer about the head or the chest (any place of them on the body card), a pain rated
+  "quite bad" or "very bad", a yes to a question about breathing, weakness, numbness, the chest, dizziness or a
+  fall, and "something's wrong"; it stays for the rest of that conversation, and it is the first thing on the
+  doctor-visit page, inside the part that is printed, when an answer there or a diary entry since the last visit is
+  one of these. The pain flow that was there (where, which side, how bad, "tell the nurse or doctor") stays under
+  it. The rules are written so that the usual mistake is a box that was not needed
+  (`tests/unit/phase5-safety.test.ts` walks every place of the head and chest, and checks that no everyday question
+  puts the box up).
+- **The answer check exempts every "Body & care" and "Feelings" answer**, by the topic of the conversation and by
+  the words of the question (headache, chest, breath, fall, dizzy, sick, numb, swallow were added): such an answer
+  is never counted toward "yes to everything", never marked "less sure", and "may be tired" never stands on its screen.
+- **What stands out** (`core/insights.ts`): one day with "quite bad" or "very bad" pain, or pain in the head or
+  chest, is a line ("Worth mentioning") with "Tell the doctor or nurse. If it is new or sudden, call 911 now." and
+  the call box; before, only pain on three days showed. "No drink was chosen or logged on …" lost the sentence
+  that excused it and says "If that is right, and not a gap in the diary, tell the doctor or nurse today." A day
+  with few drinks is "Worth mentioning" (it was "To keep in mind"), and under a fluid limit it still shows, with
+  "check the day against the doctor's plan" and never "more" (the brief asked for the words "fewer drinks than
+  usual"; the app does not know what is usual, so the line keeps "Few drinks were entered on …: 2"). "Sad" or "bad"
+  on three days is a line with "Talk to the GP or nurse about it. If you are worried about safety, call 911." A
+  fall is a line, with the call box when a blow to the head was noted. The 30-day view keeps the lines of the last
+  7 days, marked "From the last 7 days.". A line with such a fixed sentence is never handed to a model, on the
+  device or online.
+- **A reworded line is refused** (`core/reword.ts`) when it adds or drops a number, adds or drops a
+  call / doctor / nurse / emergency word, or brings in a word that plays the line down (just, only, fine, probably,
+  nothing to worry and their kin) that its source does not hold; the rules' words then stand. The model is no longer
+  asked for "warmer" words, and is told not to make a line sound less or more serious.
+- **The diary's one-tap log** has "Fall" (when to call and the call button at once, and one tap to note a blow to
+  the head) and "Tablets taken" (a log line: no dose, no count, no reminder, no line drawn from it).
+- **Read aloud** (`core/speak.ts`; engine `speak`): a Gemini text-to-speech model through Firebase AI Logic reads
+  the question and the choices on the person's screen, and a button there repeats it. Off by default. The carer
+  turns it on on the screen before handing over; the first time, a sheet says "The words on this card, including
+  names on it, go to Google to be spoken. Nothing else." and shows those words and the whole request (the text, the
+  voice, "calm, slow and clear"). The sound is kept per card text for the session, so "Hear it again" sends
+  nothing; with no connection the switch is not offered; a doctor-visit card is never read aloud (that page says
+  nothing of it is sent). A card whose words went says so under it and never says "Nothing was sent", and the
+  session's privacy line counts it. Run against the real model on localhost: `leg=speak mode=ONLY_IN_CLOUD inferenceSource=in_cloud`, 4.4 s for about 8 s of sound ("Would you like tea or coffee? Tea. Coffee. Or something else."), "Hear it again" asked nothing, 10 of 10 checks at `de631b1` on the dev server with the App Check debug token.
+  **Limits: one voice, English; not run on the hosted copy or on a real phone by us; whether hearing the card helps
+  the person is untested.**
+- **Consent sheets**: one plain name ("online help", which is Google's AI; the technical words are one tap inside),
+  and the first yes is **"Just this once"**: that one request may use online help and the switch stays off. "Yes,
+  every time" is the second button of the sheet for an open question.
+- **The photo line is true on every device.** It said "no AI looks at them", which was false on a desktop Chrome
+  with Gemini Nano since phase 4. On a phone it now reads "On this phone no AI looks at them. On a desktop computer
+  with Chrome's built-in AI, it can look at one on that computer itself, never online."; where the browser has the
+  model it names the one exception ("Talk about a photo", after the carer's tap).
+- **"Since the last visit"** (`core/since.ts`) on the doctor-visit page, under the person's own answers and marked
+  as not theirs: pain days, falls, days with no drink entered, low days and bad nights from the diary since a day the
+  carer names (30 days back when none is named), each with its days; and up to three questions for the doctor that
+  the carer picks from a fixed list of ten. Rules only; in "Copy as text" too.
+- **Smaller things**: the "Next:" label on the main button takes the button's own text colour (it stood at about
+  1.2:1; `scripts/contrast-check.mjs` checks the rule and 144 pairs); Beth, Bo and the lake have their own pictures
+  in every script and screenshot (a monogram, a drawn dog, a drawn lake: `tests/fixtures/photo-*.jpg`, our own
+  drawings, no real face); the needs board's tiles are 100 px tall so that nine and the way out fit 390 x 844.
+
+Not built from round 6: sharing with a second carer, a practice report for the therapist, insight lines that open
+their entries, a "words that worked" list. Not done by us: a nurse's or therapist's read of any wording here.
+
+2609 unit tests (50 new: `phase5-grammar`, `phase5-safety`). On the production build on localhost: `e2e-simple.py` 620/620 at `d198eb0` (its phase 5 run, 66 checks, again at `de631b1` after the board's height changed in the full view); `pwa-check.py` 30/30, `e2e-needs.mjs` 12/12 and `e2e-noconfig.mjs` 25/25 at `de631b1`; `overflow-check.py` 510/510 at `d198eb0` (it has no phase 5 screens of its own; the phase 5 run checks its screens at 390 px only).
+
 ## Changed on 18 Nov after a role-play on the phone
 One of us played Carol and Frank (`design/PERSONA_SCENARIO.md`, fictional) on the hosted copy at 390 px. What it
 found, and what changed (`CLAIMS.md` rows 73 to 76):
 
 - **The data-use line was out of date.** The sheets said "Google's free tier: Google may use what is sent to improve
   its products". The project's Gemini API has been on the paid tier since 17 Nov (the owner's statement; we did not
-  read the billing account). They now say what the paid terms say: Google does not use what is sent to improve its
+  read the billing account, and no dated screenshot of it is in the repository yet). They now say what the paid terms say: Google does not use what is sent to improve its
   products, and keeps it for a limited time to check for misuse (Gemini API Additional Terms of Service,
   <https://aistudio.google.com/docs/terms>, effective 23 March 2026, read 18 Nov 2026). **If you build your own copy
   with an unpaid key, that sentence is wrong for it**: under the unpaid terms Google may use what is sent and people
@@ -419,7 +528,7 @@ No account, no sign-in. What you get depends on what the copy has:
 | the Firebase web config in `.env.local` (see **Run**) | the above, plus cloud help for open questions once you turn it on |
 | the config and desktop Chrome with Gemini Nano | the above, plus the private step on this computer: open questions answered with the family's own names and places, nothing sent |
 
-Hosted copy: <https://talk-partner.web.app/#/demo>. It is the build of commit `188f03b`, deployed 17 Nov 2026, 23:04 UTC (the simple view at the bare address is in it), with our project settings, so it is the second or the third row of this table, depending on your browser. **Cloud help on the hosted copy is not reliable as of 17 Nov, 23:11 UTC:** from our machine reCAPTCHA Enterprise refuses the App Check attestation (HTTP 403 at 21:20 UTC; "ReCAPTCHA error" in the console at 23:11), and without a valid App Check token the service gives no answer, so `e2e-cloud.mjs --url` got 18/27 and 14/27 at the build of `2c5673e` and 15/27 at this one (the same script on localhost, with the debug token, 28/28 at this commit); the card says "Cloud help could not confirm this browser". We do not know yet whether a browser on another network passes (`devlog/evidence_live/appcheck_probe_2026-11-17_2c5673e.md`). Both rows were recorded on the hosted copy at earlier builds (`devlog/evidence_live/`): the cloud step in a browser without the model, last at the build of `4d7edee` (28/28 at 19:06 UTC), and the on-device step in a Chrome that has Gemini Nano at `deebc94` (at `30db57a` the on-device script was run on localhost, `devlog/evidence_r10/`; the labelled set at `7dd16a1`, on localhost; on the hosted copy the first step was last watched by hand at the build of `8810f8f`: `devlog/DAY13.md`). In a browser without Gemini Nano the "Sample family" line ends with **See what the on-device step makes →**: a recording of that step from our machine, labelled as a recording.
+Hosted copy: <https://talk-partner.web.app/#/demo>. Which build it serves, and what was run against it, is under [Deploy](#deploy-firebase-hosting), which is kept current; this paragraph was written on 17 Nov about the build of `188f03b`. It has our project settings, so it is the second or the third row of this table, depending on your browser. **Cloud help on the hosted copy is not reliable as of 17 Nov, 23:11 UTC:** from our machine reCAPTCHA Enterprise refuses the App Check attestation (HTTP 403 at 21:20 UTC; "ReCAPTCHA error" in the console at 23:11), and without a valid App Check token the service gives no answer, so `e2e-cloud.mjs --url` got 18/27 and 14/27 at the build of `2c5673e` and 15/27 at this one (the same script on localhost, with the debug token, 28/28 at this commit); the card says "Cloud help could not confirm this browser". We do not know yet whether a browser on another network passes (`devlog/evidence_live/appcheck_probe_2026-11-17_2c5673e.md`). Both rows were recorded on the hosted copy at earlier builds (`devlog/evidence_live/`): the cloud step in a browser without the model, last at the build of `4d7edee` (28/28 at 19:06 UTC), and the on-device step in a Chrome that has Gemini Nano at `deebc94` (at `30db57a` the on-device script was run on localhost, `devlog/evidence_r10/`; the labelled set at `7dd16a1`, on localhost; on the hosted copy the first step was last watched by hand at the build of `8810f8f`: `devlog/DAY13.md`). In a browser without Gemini Nano the "Sample family" line ends with **See what the on-device step makes →**: a recording of that step from our machine, labelled as a recording.
 
 `#/demo` loads a made-up family (Frank; Carol asking) and opens with one card already made, so the first thing on screen is a card and not an empty pane: "Do you want coffee or tea?", read in code, no model, nothing sent (its chip is lit). **Then the first step runs by itself, with no click:** as soon as the on-device model has loaded (about 3 s when it is already in the browser's memory, 16 to 22 s right after a browser start; the card takes about 3 s more, and the status line says where it stands), the app asks "What do you want to do this weekend?" and Gemini Nano makes the card on this computer from About me ("lake / church" in the recorded run), with the badge "On this computer" from the SDK's `inferenceSource`. That step is made with cloud help left out, whatever the setting, so nothing can be sent by a step you did not click; it stands down if you ask or type anything first; and if the model gives no card, the first card stays and the status line says so. **In a browser with no Gemini Nano nothing runs by itself:** the status line says "No Gemini Nano in this browser, so the on-device step can't run here. The card shown is made in code." (or "… is not downloaded …", with the download link), and everything else is as before. Under the question box are one-tap questions, in three groups (open question: a model proposes / the app corrects the partner / read in code, no AI); each chip shows the short form, the hover text has the full question and what to look for. Under every card, in reading order: the badge with what left this computer, the coaching line if any, the line to say, the card on the right, then **Why this card**, **Where each step ran**, **What was sent**, the **privacy receipt** and the session line. In judge mode those panels are one closed line under every card, the first included, **"How this card was made: …"** (who decided; how many choices code kept, added and dropped); one click opens all three, and the receipt is closed below it (until 17 Nov, evening, they stood open under the first card). Click these, in order:
 
@@ -492,7 +601,7 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:293` | `generateContent(` | photo step call: the picture as `inlineData` (JPEG), which the SDK's on-device step hands to Gemini Nano as an image |
 | `web/src/ai/firebaseEngine.ts:294` | `inferenceSource !== InferenceSource.ON_DEVICE` | the photo step rejects any answer not from the device |
 | `web/src/ai/firebaseEngine.ts:306` | `getGenerativeModel(` | wording step model for online help: the insight lines the rules wrote, called only after a yes on the sheet that shows the exact text (`web/src/main.ts`, `sendInsights`) |
-| `web/src/ai/firebaseEngine.ts:307` | `InferenceMode.PREFER_IN_CLOUD` | its mode: the text holds no name, no health note and nothing of the diary (`core/insights.ts`, `insightCloudText`) |
+| `web/src/ai/firebaseEngine.ts:307` | `InferenceMode.PREFER_IN_CLOUD` | its mode: the text holds no name, no health note and no diary entry, only the rules' counted lines (`core/insights.ts`, `insightCloudText`) |
 | `web/src/ai/firebaseEngine.ts:312` | `generateContent(` | wording step call through online help |
 | `web/src/ai/firebaseEngine.ts:315` | `inferenceSource === InferenceSource.ON_DEVICE` | where the lines were worded, from the SDK's report |
 | `web/src/ai/firebaseEngine.ts:332` | `getGenerativeModel(` | Read aloud model (`core/speak.ts`, added 18 Nov, phase 5): a Gemini text-to-speech model, asked for the words on one card as sound; called only after the carer turned Read aloud on, on a sheet that says what goes |
@@ -519,6 +628,12 @@ Checked on the primary pages on 11 Nov 2026, Livox on 17 Nov (the same list is o
 | [AACessTalk](https://arxiv.org/abs/2409.09641) (CHI 2025; [code](https://github.com/naver-ai/aacesstalk-monorepo)) | "Real-time guides to the parent to engage the child in conversation" and "contextual vocabulary cards to the child"; minimally verbal autistic children; 11 pairs over two weeks | Adults with aphasia; the partner's own question is rewritten (split, de-quizzed) and shown as choices; the answer is never written for the person. The closest ancestor, and the one we learned the partner-side coaching line from |
 | [Livox, a student project at Worcester Polytechnic Institute](https://sites.google.com/view/livox-mqp/home) (© 2020) | "Livox is a pictogram-based alternative communication application"; the project "incorporated a ML and NLP-based classifier to detect specific questions and present the most relevant pictograms to users", for people with "a wide range of visual and motor impairments" | The same starting point, a question someone asks. Talk Partner is for adults with aphasia and works on the partner's side: written choices with a way out on every card, the line to say, coaching when the question itself is the problem (two in one, a memory test), and the family's own people and places read on the computer |
 | [Tobii Dynavox TD Snap Aphasia](https://us.tobiidynavox.com/pages/td-snap-aphasia) | A Whiteboard, "a shared space for people with aphasia and their communication partners", rating scales, word lists, scripts, a "Communication Breakdown Repair" activity; no AI on that page. Tobii's [RESNA session on AI in AAC](https://www.resna.org/Events/Events-Calendar/tech-tuesday-with-tobii-dynavox-1) (22 Sep 2026) asks for "clearly defined, user-centered use cases" | The same shared screen, written for each question as it is asked; the model only ever touches the partner's question; a fixed repair card on every card. We agree with the caution: nothing generative reaches the person's side |
+
+| [Broca AI Speech](https://aphasia.org/resource/broca-ai-speech/) (a listing of the National Aphasia Association; date not confirmed) | As the listing is summarised in judge round 6: it listens to a conversation and suggests reply cards that are spoken aloud, for people who cannot speak, write or type. **We did not open the page ourselves** | It drafts the person's replies. Talk Partner never drafts or speaks a reply for the person: the partner's question becomes a card, and Read aloud speaks the question and the choices, not an answer |
+| [RealTalk Aid](https://www.producthunt.com/products/realtalk-aid) (Product Hunt, 1 Oct 2025) | As summarised in judge round 6 from a search result: real-time transcription and suggested responses for stroke survivors. **We did not open the page ourselves** | The same difference: suggested responses for the person, from a live transcript in the cloud. Here nothing listens to the person, and the choices come from the partner's own question |
+| [Nemo Speak AAC](https://ai.google.dev/competition/projects/nemo-speak-aac) (an entry on a Google AI competition page) | As a search snippet in judge round 6 has it: an AAC app built on Gemini in the cloud. **We did not open the page ourselves** | An AAC board for the person. Talk Partner is the partner's tool, rules first, with the family's own data read only on the device |
+
+The last three rows were added on 18 Nov from judge round 6's searches; unlike the rows above them, their pages were not read by us, and each row says so.
 
 Not verified by us and therefore not quoted: a 14 Oct 2026 interview in which Tobii Dynavox is reported to say it keeps generative AI out of its language systems.
 
@@ -551,8 +666,9 @@ no second request is made, because after a 403 App Check refuses every try for a
 (`namedAppCheckFailure` in `web/src/ai/app.ts`, `cloudRetryWait` in `core/pipeline.ts`). What was measured, step by step:
 `devlog/evidence_live/appcheck_probe_2026-11-17_2c5673e.md`. Why reCAPTCHA began to refuse our machine that evening
 we do not know (many automated runs from one address is a guess), nor whether a judge's browser passes. One availability probe (`LanguageModel.availability`, a capability query, no inference) is
-the only direct touch of Chrome's API. Firebase's own guide to hybrid inference on the web checks the same flag
-(`await LanguageModel.availability();` in its setup steps, <https://firebase.google.com/docs/ai-logic/hybrid/web/get-started>,
+the only direct touch of Chrome's API. Firebase's own guide to hybrid inference on the web runs the same query by hand
+in the DevTools console; we run it in code as a capability probe, with no inference
+(`await LanguageModel.availability();` in the guide's setup steps, <https://firebase.google.com/docs/ai-logic/hybrid/web/get-started>,
 read 17 Nov 2026), and the one availability method in the SDK we have installed (`ChromeAdapter.isAvailable`,
 `@firebase/ai` 3.1.0) is documented with "These methods should not be called directly by the user".
 
@@ -665,7 +781,7 @@ under `@firebase/firestore`, which this app does not import.
 - **Person screen** (`#/person`, in the full view and judge mode; the simple view has its own, above): only the keyword, two or three big tiles (with a picture where one is drawn, the word alone otherwise), one way out, then "So: lake. Right?"
   with yes / change. The exit is top-right and needs a press-and-hold. "We're stuck" replaces the card with the fixed
   repair card (show me / write it / draw / later / change topic); a tap gives the partner the next move for that way.
-- **Quick needs** (`#/needs`): the person's screen with one fixed board, eight needs and the way out, each a
+- **Quick needs** (`#/needs`): the person's screen with one fixed board, nine needs (eight, and since phase 5 "something's wrong") and the way out, each a
   picture and its word; a tap is checked with the tick and the cross like any choice. No AI, nothing sent. A confirmed
   need is in the session recap and is not kept in "Answers so far".
 - **About me** (`#/about`): names, people (name, relation, lives here, photo, nickname), foods, places, TV, music, other.

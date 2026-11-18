@@ -61,7 +61,7 @@ each with what it was counted from ("Chosen or logged 2 times that day. Only wha
 marked "Tell the doctor or nurse", never medical advice. **Counting, thresholds and red flags are rules; the AI only
 rewords.** In desktop Chrome with Gemini Nano the lines are put into plainer words on the device (`ONLY_ON_DEVICE`); on
 a phone the same wording is offered through the cloud (`PREFER_IN_CLOUD`), only after a yes on a sheet that shows the
-exact text, each time, and that text holds no name, no health note and nothing of the diary. Code checks the words
+exact text, each time, and that text holds no name, no health note and no diary entry (only the rules' counted lines, with their dates and counts). Code checks the words
 that come back and keeps its own otherwise. Neither wording step has run against a real model yet. An *answer check*
 (rules) notices "yes" to nearly every yes / no question or the same place on the screen every time, tells the carer
 gently, marks those answers "less sure" and changes the order of the next either-or; the person's screen never shows
@@ -83,6 +83,19 @@ at the photo (`ONLY_ON_DEVICE`, the picture as inline JPEG; the engine has no cl
 one more question from the things it names. The spike that decided it and the SDK's own
 `inferenceSource=on_device` lines are in `devlog/evidence_phase4/AI_RUN_LOG.md`. On a phone the questions are the
 rules' and the screen says so.
+
+**Added on 18 Nov, phase 5, after judge round 6** (`CLAIMS.md` rows 86 to 97; README "Added on 18 Nov, phase 5").
+On the bare address, as a phone: the first screen has **"Something new or sudden?"** (FAST, four more reasons to
+call, a call button that is a `tel:` link; the number is set in About them, 911 by default). Ask "Are you in pain?"
+from "Body & care", answer yes, then head, top of head: the carer's screen opens with the boxed line **"Call 911 now
+if this is new or sudden."** and keeps it for that conversation. All of that is rules and fixed text; no clinician has
+read it. **Where the sponsor runs on a phone:** on the screen before handing over, turn on **Read aloud** (a sheet
+first: "The words on this card, including names on it, go to Google to be spoken. Nothing else."), then show the card:
+a Gemini text-to-speech model, through Firebase AI Logic (`ONLY_IN_CLOUD`), reads the question and the choices, on
+every card, the topic questions included. It is the one AI step in the phone's everyday loop; the others on a phone
+are the typed open question, "Narrow it down", first-letter words and plainer wording, each a cloud call behind a
+sheet whose first yes is "Just this once". On a phone there is no on-device step (README, "Where the sponsor runs on
+a phone"). Our run of Read aloud against the real model: `devlog/evidence_phase5/AI_RUN_LOG.md` (localhost).
 
 **What happens next depends on your browser, and the status line at the top says which.** In desktop Chrome with
 Gemini Nano the first step runs by itself, with no click: when the model has loaded (a few seconds; 16 to 22 s
@@ -138,9 +151,9 @@ them yet):
 
 The second and third rows are the same question answered by the two steps: general choices from the cloud, the
 family's own from this computer. On our labelled set of 60 questions, 18 are open like these: rules alone make no card
-for any of them, and the on-device step made a matching card for 15, 16 and 15 of them in three runs at commit `7dd16a1`
-(17 Nov, the last commit that changes code; 16 each time in three runs an hour earlier), 12, 13 and 12 of them with
-the family's own entries (`devlog/evidence_r11/heldout_at_7dd16a1/`; our labels, not a trial with people, and the rules have been changed
+for any of them, and the on-device step made a matching card for 15, 16 and 16 of them in three runs at commit `d198eb0`
+(18 Nov, the code of phase 5; 15, 16 and 15 at `7dd16a1` on 17 Nov, before the topic, tree and phase 3 to 5 commits), 12, 13 and 13 of them with
+the family's own entries (`devlog/evidence_phase5/heldout_at_d198eb0/`; our labels, not a trial with people, and the rules have been changed
 since the questions were written, so it is not a held-out set).
 
 We cannot give you the third row without the model on your machine, and the second needs our project settings, which
@@ -151,10 +164,10 @@ has the same two questions answered by the cloud alone); the same run against th
 `devlog/ondevice_proof_1/RUN_LOG.md`.
 
 **If you have five minutes more**
-- `npm run check` (lint, types, 2076 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
+- `npm run check` (lint, types, 2609 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
 - `npm run eval`: the labelled set of 60 questions against the rules alone (it writes its report to a new folder under
   `devlog/eval_runs/`): 40 of 42 code-decided questions, 0 of 18 open. What the on-device model adds on the 18 open
-  questions: `devlog/evidence_r11/heldout_at_7dd16a1/` (three runs); our reading of the cards of the first runs:
+  questions: `devlog/evidence_phase5/heldout_at_d198eb0/` (three runs at `d198eb0`); our reading of the cards of the first runs:
   `devlog/evidence_r2/heldout_r2_NOTES.md`.
 - `CLAIMS.md`: every claim we make, with its status. `EVIDENCE.md`: where each one is proved.
 - `DISCLOSURE.md`: what existed before the contest period.
