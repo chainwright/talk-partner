@@ -63,7 +63,7 @@ export const P6 = {
     hNothing: 'Nothing was entered in the last 24 hours. That is a gap in the diary, not a report: ask the family how the day went.',
     usual: (name: string) => `USUAL CHOICES (counted from the answers ${name || 'they'} confirmed; a hint for you, and ${name || 'they'} still choose${name ? 's' : ''} every time)`,
     usualNone: 'Nothing learned yet.',
-    usualNever: 'Nothing about pain, the body, feelings or a need is in this list: ask those every time.',
+    usualNever: 'Nothing about pain, the body or feelings is in this list: ask those every time.',
     /** In the privacy line of the session, once a text was handed over or copied. */
     sessionLine: (n: number) => `A text from the diary was handed to an app you picked, or copied, ${n === 1 ? 'once' : `${n} times`} this session, after you saw it. Talk Partner itself sent nothing and kept no copy.`,
     // ---- the sheet

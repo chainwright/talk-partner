@@ -131,7 +131,7 @@ export const P8 = {
     fact: (text: string) => text,
     letterWord: (word: string, n: number) => `${word}: found by its first letter, ${times(n)}.`,
     wordsNote: (name: string) => `Counted from the answers ${name || 'they'} confirmed. A hint for you: ${name || 'they'} still choose${name ? 's' : ''} every time.`,
-    wordsNever: 'Nothing about pain, the body, feelings or a need is in this list: ask those every time.',
+    wordsNever: 'Nothing about pain, the body or feelings is in this list: ask those every time.',
     like: (word: string, n: number) => `${word}: chosen, or yes to an offer about it, ${times(n)}.`,
     likesNote: 'Counted from the answers. It says what was chosen, not what is felt.',
     ownLabel: (i: number) => `Your own line ${i}`,

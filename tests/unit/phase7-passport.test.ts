@@ -124,7 +124,7 @@ describe('no habit about pain, the body, a feeling or a need; no usual "no"', ()
     const w = texts(input(), 'words');
     expect(w).toContain('"Would you like tea or coffee": usually tea (3 of 4).');
     for (const l of [...all(input()), ...passportText(input()).split('\n')]) expect(l, l).not.toMatch(/in pain|feeling today|usually sad|Usually says no|says no to|needs board|toilet/i);
-    expect(sec(input(), 'words')!.notes).toEqual(['Counted from the answers Frank confirmed. A hint for you: Frank still chooses every time.', 'Nothing about pain, the body, feelings or a need is in this list: ask those every time.']);
+    expect(sec(input(), 'words')!.notes).toEqual(['Counted from the answers Frank confirmed. A hint for you: Frank still chooses every time.', 'Nothing about pain, the body or feelings is in this list: ask those every time.']);
   });
   it('"Words that worked": the words found by their first letter, with how often; never the way out, never a care word', () => {
     expect(letterWords(HISTORY)).toEqual([{ word: 'Bo', n: 2 }, { word: 'biscuits', n: 1 }]);

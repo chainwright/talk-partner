@@ -270,7 +270,7 @@ describe('"For the next carer": the last 24 hours', () => {
     expect(handoverUsual(lines)).toEqual(['- "Would you like tea or coffee": usually tea (7 of 7).', '- "Would you like tea or water": tea in the morning (3 of 3), water in the evening (3 of 4).']);
     const t = handover(plain(6), { learned: lines });
     expect(t).toContain('USUAL CHOICES (counted from the answers Frank confirmed; a hint for you, and Frank still chooses every time)\n- "Would you like tea or coffee": usually tea (7 of 7).');
-    expect(t).toContain('Nothing about pain, the body, feelings or a need is in this list: ask those every time.');
+    expect(t).toContain('Nothing about pain, the body or feelings is in this list: ask those every time.');
     expect(t).not.toMatch(/Are you in pain" \(|needs board|says no to/);
     expect(handover(plain(6), { name: '' })).toContain('a hint for you, and they still choose every time)\nNothing learned yet.');
   });
