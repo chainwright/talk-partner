@@ -281,7 +281,7 @@ const COPY = {
     nudge: (name: string) => `Fill this in together with ${name || 'them'} if you can.`,
     saved: 'Saved on this computer.',
     historyHeading: 'Answers so far',
-    historyNote: 'Each answer confirmed with the tick is kept here, on this computer only, so you can see what they chose last time. It is never sent anywhere and never given to a model.',
+    historyNote: 'Each answer confirmed with the tick is kept here, on this computer only, so you can see what they chose last time. It is never sent anywhere. On a computer with Chrome\'s built-in AI, that AI reads today\'s answers on this computer, to write "Today in short" and to narrow down after "something else"; online help never gets them.',
     historyNoteSample: 'With the sample family the answers are kept only until you leave judge mode.',
     historyEmpty: 'No confirmed answers yet.',
     historyForget: 'Forget these answers',

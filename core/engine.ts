@@ -54,6 +54,19 @@ export interface Engine {
   transcribe?(clip: AudioClip): Promise<ModelResult>;
 }
 
+/** How long the cloud step is waited for before the card says that online help did not answer. */
+export const CLOUD_WAIT_MS = 25000;
+/**
+ * A cloud call that neither answers nor fails (a blocked script, a connection that hangs) must not leave the carer
+ * in front of "Finding the choices…" for ever: after `ms` it counts as a failed call that may have left the device.
+ */
+export function within<T>(call: Promise<T>, ms: number = CLOUD_WAIT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(`online help gave no answer within ${Math.round(ms / 1000)} seconds`)), ms);
+    call.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e as Error); });
+  });
+}
+
 /** A short recording as it is handed to the SDK: base64 of a WAV file. */
 export interface AudioClip { mimeType: string; base64: string }
 

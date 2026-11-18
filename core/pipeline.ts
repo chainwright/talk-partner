@@ -4,7 +4,7 @@
 // "Why this card" (Card.why) is written here, on the values the rules worked on, as they are worked on.
 
 import { COPY } from './copy';
-import type { CloudError, Engine } from './engine';
+import { within, type CloudError, type Engine } from './engine';
 import { pictureFor } from './pictures';
 import { cloudPrompt, devicePrompt } from './prompt';
 import {
@@ -557,6 +557,8 @@ export interface PipelineEnv {
   routing?: { moodWords: number; minChoices: number };
   /** The wait before the one retry of a failed cloud call. Only tests pass it (so they need not wait); the app uses a timer. */
   sleep?: (ms: number) => Promise<void>;
+  /** How long the cloud step is waited for (core/engine.ts, CLOUD_WAIT_MS). Only tests pass it. */
+  cloudWaitMs?: number;
 }
 
 /**
@@ -831,7 +833,7 @@ async function cloudCard(
     left = 'maybe';
     let r: Awaited<ReturnType<Engine['runCloud']>>;
     try {
-      r = await env.engine.runCloud(stripped.text);
+      r = await within(env.engine.runCloud(stripped.text), env.cloudWaitMs);
     } catch (e) {
       // Busy (429 on the free tier's 15 requests a minute) or a network error: one more try after a short wait, when
       // the service allows it within about 3 s. Otherwise the error stands and the partner is told at once.
@@ -839,7 +841,7 @@ async function cloudCard(
       if (wait === null) throw e;
       firstTryFailed = true;
       await (env.sleep ?? ((ms: number) => new Promise<void>((res) => setTimeout(res, ms))))(wait);
-      r = await env.engine.runCloud(stripped.text);
+      r = await within(env.engine.runCloud(stripped.text), env.cloudWaitMs);
     }
     left = r.source === 'in-cloud' ? 'yes' : 'no';
     // the badge and the trace come from inferenceSource: PREFER_IN_CLOUD runs on the device when offline

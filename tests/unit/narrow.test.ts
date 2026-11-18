@@ -125,6 +125,19 @@ describe('where it runs: on this device first, online help only when it is on', 
     expect(off.cloudAttempted ?? null).toBeNull();
     expect(madeWhere(off, { about: 'About Frank' }).left).toBe('nothing');
   });
+  it('online help that neither answers nor fails is not waited for for ever: no card, and "may have left"', async () => {
+    const hang = new Fake({ cloud: out(['a', 'b']) });
+    hang.runCloud = () => new Promise<never>(() => { /* never settles */ });
+    const c = await narrowCard(await input(), { ...env(hang, { allowCloud: true }), cloudWaitMs: 20 });
+    expect(c.blocked).toBeTruthy();
+    expect(c.cloudAttempted).toBeTruthy();
+    expect(c.trace?.find((t) => t.step === 'stripped')?.why).toMatch(/no answer within/);
+    // the same limit holds for an open question
+    const q = await makeCard('What do you want to do this weekend?', { ...env(hang, { allowCloud: true }), cloudWaitMs: 20 });
+    expect(q.blocked).toBeTruthy();
+    expect(q.retry).toBeTruthy();
+    expect(madeWhere(q, { about: 'About Frank' }).left).toBe('maybe');
+  });
   it('a question that still holds an About-me word after stripping is not sent', async () => {
     // a nickname inside another word is not swapped by the stripper; the leak gate is the last check
     const i: NarrowInput = { asked: 'Would you like chili?', rejected: ['yes'], level: 1, sofar: [] };

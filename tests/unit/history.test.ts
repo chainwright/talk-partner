@@ -75,8 +75,18 @@ describe('the questions asked most often, for the one-tap chips above the questi
   });
 });
 
-describe('an answer never reaches a model', () => {
-  // the files that build what a model sees (on this computer or in the cloud) and the engine that sends it
+describe('an answer never reaches a cloud model, and no card is made from an earlier answer', () => {
+  // (since 17 Nov two on-device steps are handed today's answers by the page: core/narrow.ts, whose cloud text never
+  // holds them, and core/summary.ts, which has no cloud step at all; tests/unit/narrow.test.ts and summary.test.ts)
+  it('the only modules that take the answers are the two on-device steps', () => {
+    const narrow = readFileSync(join(ROOT, 'core/narrow.ts'), 'utf8');
+    // the answers so far appear in the on-device text only: the cloud text is built from narrowFacts, which has none
+    expect(narrow).toMatch(/runDevice\(devicePrompt\(narrowDeviceAsk\(i\), profile\)\)/);
+    expect(narrow).toMatch(/const facts = stripQuestion\(narrowFacts\(i\), profile\);/);
+    expect(narrow.slice(narrow.indexOf('const narrowFacts'), narrow.indexOf('const NARROW_TASK'))).not.toMatch(/sofar/);
+    expect(readFileSync(join(ROOT, 'core/summary.ts'), 'utf8')).not.toMatch(/runCloud|cloudRequest/);
+  });
+  // the files that build what a model sees for a card (on this computer or in the cloud) and the engine that sends it
   it.each(['core/prompt.ts', 'core/requests.ts', 'core/strip.ts', 'core/pipeline.ts', 'core/rules.ts', 'core/engine.ts', 'core/receipt.ts', 'web/src/ai/firebaseEngine.ts', 'web/src/ai/pick.ts'])('%s does not import the history', (f) => {
     expect(readFileSync(join(ROOT, f), 'utf8')).not.toMatch(/history/i);
   });

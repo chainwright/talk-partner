@@ -96,7 +96,7 @@ interface State {
   recapDone: boolean;
   lastQuestion: string;
   error: string | null;
-  /** Confirmed answers kept on this computer (IndexedDB key 'history'); in judge mode, in memory only. Never sent, never in a prompt. */
+  /** Confirmed answers kept on this computer (IndexedDB key 'history'); in judge mode, in memory only. Never sent. Today's answers are read by two on-device steps only (core/narrow.ts, core/summary.ts), never by a cloud step. */
   history: Answered[];
   /** When the card on screen was made: "last time" only looks at answers from before it. */
   cardAt: number;

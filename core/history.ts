@@ -1,7 +1,10 @@
 // Answers the person confirmed, kept on this computer only, so the partner can see what they chose the last time the
 // same question was asked. Pure data and functions: no DOM, no storage (the web client keeps the list in IndexedDB).
 // Privacy boundary: nothing in this file is imported by the prompts, the privacy swap, the requests or the pipeline
-// (tests/unit/history.test.ts checks the imports), so an answer never reaches a model, on this computer or anywhere.
+// (tests/unit/history.test.ts checks the imports), so no card is made from an earlier answer and no answer is in a
+// request to the cloud. Since 17 Nov 2026 the page hands TODAY's answers to two on-device steps, and to nothing else:
+// the narrowing card's ONLY_ON_DEVICE prompt (core/narrow.ts; its cloud text never holds them) and "Today in short"
+// (core/summary.ts, ONLY_ON_DEVICE, no cloud step). Where the browser has no on-device model, no model gets them.
 
 export interface Answered {
   /** The question as the card showed it. */

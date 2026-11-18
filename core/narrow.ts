@@ -18,7 +18,7 @@
 // title. The card is marked (`Card.narrow`) and the screen says in plain words that an AI made this follow-up.
 
 import { COPY } from './copy';
-import type { CloudError } from './engine';
+import { within, type CloudError } from './engine';
 import { finish, noEscapeOnly, parseModelOutput, type PipelineEnv } from './pipeline';
 import { devicePrompt } from './prompt';
 import { hasNegative, inventedNameFilter, isEscapeLabel, snapToProfile, validTopic } from './rules';
@@ -145,7 +145,7 @@ export async function narrowCard(i: NarrowInput, env: PipelineEnv): Promise<Card
   if (findLeaks(stripped.text, profile).length) { trace.push({ step: 'stripped', ran: 'skipped', why: T.cloudLeak, used: false }); return none(N.narrowNone, { notes: [...base.notes, N.leak] }); }
   if (!env.allowCloud) { trace.push({ step: 'stripped', ran: 'skipped', why: T.cloudOff, used: false }); return none(N.narrowNeedsAi, { unsentPayload: preview, cloudSwaps: swaps }); }
   try {
-    const r = await engine.runCloud(stripped.text);
+    const r = await within(engine.runCloud(stripped.text), env.cloudWaitMs);
     trace.push({ step: 'stripped', ran: r.source, why: r.source === 'in-cloud' ? T.narrowCloud : T.cloudOffline, ms: r.ms, used: false });
     const sent = r.source === 'in-cloud';
     const left: Partial<Card> = { cloudPayload: sent ? preview : null, unsentPayload: sent ? null : preview, ranOffline: !sent, cloudSwaps: swaps };
