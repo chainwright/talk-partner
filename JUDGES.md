@@ -2,7 +2,7 @@ Repository: <https://github.com/chainwright/talk-partner> (public, Apache-2.0)
 
 # For judges: the 60-second path
 
-**Live: the build of `1a5e79f`** (README "Deploy" says what was run against it).
+**Live: the build of `32dd0dd`** (README "Deploy" says what was run against it).
 
 Nothing here needs an account. Hosted copy: <https://talk-partner.web.app/#/demo> (our project settings are in it, so
 cloud help can be turned on there; the on-device step needs Gemini Nano in your own Chrome). **Cloud help there may

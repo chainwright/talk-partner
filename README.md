@@ -1128,13 +1128,17 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-**Live: the build of `1a5e79f`** (phase 8), deployed 18 Nov 2026 about 19:42 UTC. The hosted `index.html` and
-script (`index-DqTcMoYv.js`) have the same SHA-256 as our `dist/`. Run against the hosted copy: `e2e-simple.py --live`
-991/991, `pwa-check.py` 30/30, `e2e-needs.mjs` 12/12, `phase8-shots.py` 20/20. `e2e-cloud.mjs` five times from fresh
-headless profiles: 28/28 once, 19/27 four times. In those four, App Check refused the headless browser (a 403, then
-"Requests throttled"), so no cloud card was made and the card said so; the rules kept working. Logs:
-`devlog/evidence_live/*1a5e79f*`. Whoever deploys next writes the new commit here; `tests/unit/docs-truth.test.ts`
-fails while an older build is named as the live one.
+**Live: the build of `32dd0dd`** (phase 8 and the "No card for this question" line), deployed 18 Nov 2026 about
+20:19 UTC. The hosted script (`index-aXtqJJit.js`) has the same SHA-256 as our `dist/`. Run against the hosted copy:
+`e2e-simple.py --live` 991/991, `pwa-check.py` 30/30, `e2e-needs.mjs` 12/12, `phase8-shots.py` 21/21, and
+`HEADED=1 e2e-cloud.mjs` (a normal Chrome window, fresh profile) 28/28. Logs: `devlog/evidence_live/*32dd0dd*`.
+
+The deploy before it, `1a5e79f` (about 19:42 UTC): `e2e-simple.py --live` 991/991, `pwa-check.py` 30/30,
+`e2e-needs.mjs` 12/12, `phase8-shots.py` 20/20. `e2e-cloud.mjs` from fresh headless profiles: 28/28 once, 19/27 four
+times; in those four App Check refused the headless browser (a 403, then "Requests throttled"), so no cloud card was
+made and the card said so. The same check in a normal Chrome window (`HEADED=1`), five times: 28/28 each,
+`inferenceSource=in_cloud`. Logs: `devlog/evidence_live/*1a5e79f*`. Whoever deploys next writes the new commit above;
+`tests/unit/docs-truth.test.ts` fails while an older build is named as the live one.
 
 The deploy before it, 18 Nov 2026, about 16:52 UTC: <https://talk-partner.web.app> served the build of commit
 `45e8095` (phases 6 and 7). The organiser of judge round 7 found its `index.html`, script and stylesheet SHA-256
