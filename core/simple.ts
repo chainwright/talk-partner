@@ -29,7 +29,7 @@ export function madeWhere(c: Card, o: { spoken?: boolean; about: string }): Made
   const maker = badgeKind(c);
   const left = c.cloudPayload ? 'sent' : c.cloudAttempted ? 'maybe' : 'nothing';
   const who = maker === 'device' && c.why?.personal?.length ? S.made.devicePersonal(o.about) : S.made[maker];
-  const what = left === 'sent' ? S.left.sent(o.about) : left === 'maybe' ? S.left.maybe : S.left.nothing;
+  const what = left === 'sent' ? (c.narrow ? S.left.sentNarrow(o.about) : S.left.sent(o.about)) : left === 'maybe' ? S.left.maybe : S.left.nothing;
   const lines = [who, what];
   if (o.spoken) lines.push(S.left.voice);
   return { maker, left, spoken: !!o.spoken, lines };

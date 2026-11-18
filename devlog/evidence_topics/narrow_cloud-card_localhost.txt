@@ -1,0 +1,20 @@
+commit 200f6cf3726c512a62a43b38f137d9c31f8d3111  2026-11-18T00:45:33.223948Z  http://localhost:5179/ (dev server, App Check debug token), Chromium 148.0.7778.96, as a phone (no on-device model)
+--- level 1: the person sees: ['tea', 'coffee', 'something else']
+carer: They chose: something else | narrow offered: True | This uses online help: the app asks you first, and shows the line that would go.
+sheet line: Partner asks: Would you like tea or coffee? They did not want: tea, coffee. What else could it be? Give two or three broader kinds of answer to narrow it down.
+other hosts asked before the yes: []
+result screen: card | maker=cloud left=sent | Made with online help: Google's AI suggested the choices. Sent to Google: the question and the choices that did not fit, with any names you listed swapped out, and the app's fixed instructions. Nothing from About me, and never the answers they chose.
+label: AI suggested these next choices with online help, because none of the first ones fitted (step 1 of 2).
+line to say: Something else, then: water, juice, milk, or something else?
+choices: ['water', 'juice', 'milk', 'something else']
+hosts asked for it: ['content-firebaseappcheck.googleapis.com', 'firebaseinstallations.googleapis.com', 'firebaseremoteconfig.googleapis.com', 'firebasevertexai.googleapis.com', 'fonts.gstatic.com', 'www.google.com', 'www.gstatic.com']
+--- level 2: the person sees: ['water', 'juice', 'milk', 'something else']
+carer: They chose: something else | narrow offered: True | Google's online AI does this. It gets the question and the choices that did not fit, with any names you listed swapped out, and the app's fixed instructions. Never the answers they chose.
+result screen: card | maker=cloud left=sent | Made with online help: Google's AI suggested the choices. Sent to Google: the question and the choices that did not fit, with any names you listed swapped out, and the app's fixed instructions. Nothing from About me, and never the answers they chose.
+label: AI suggested these next choices with online help, because none of the first ones fitted (step 2 of 2).
+line to say: Something else, then: hot chocolate, malt drink, herbal tea, or something else?
+choices: ['hot chocolate', 'malt drink', 'herbal tea', 'something else']
+hosts asked for it: ['firebasevertexai.googleapis.com']
+after the second step: narrow offered: False | None of those fitted. What now: That was the last narrowing step. Ask them to show you, or to write or draw it. Then ask it as a new question. Try: Would you li
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=1540
+SDK report: [ai-logic] leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud ms=834

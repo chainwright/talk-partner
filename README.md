@@ -37,8 +37,9 @@ Android or iOS, and a carer mostly holds a phone. So on a phone the topic questi
 About them and "Today in short" are made by the app's rules with no AI, and a question the carer types that the rules
 cannot turn into choices (an open question) uses online help, asked for at that moment on a sheet that shows the exact
 line that would go. The first screen says this in one line ("On this phone that AI is online (Google's): the app asks
-you first…"). The two rows marked `ONLY_ON_DEVICE` have run in our tests with scripted engines only: neither the
-narrowing step nor "Today in short" has been run against the real Gemini Nano yet (`CLAIMS.md`, rows 53 and 54).
+you first…"). Neither the narrowing step nor "Today in short" has been run against the real Gemini Nano yet: on the device both
+are tested with scripted engines only. The narrowing step has one recorded run through the real cloud model
+(`CLAIMS.md`, rows 53 and 54).
 
 The same question through the two steps, in our recorded run: "What do you want to do this weekend?" gives
 *lake / church* on this computer (the family's own places, read from About me by Gemini Nano; nothing sent) and

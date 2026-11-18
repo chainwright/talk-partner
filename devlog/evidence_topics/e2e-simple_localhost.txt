@@ -1,0 +1,231 @@
+url: http://localhost:5179/
+browser: Chromium 148.0.7778.96 (headless)
+PASS  "/" on a first visit is the simple first screen, not the first-run page and not judge mode
+PASS  the simple view carries its own look (data-view="simple")
+PASS  first visit: the header is the hope line, with "them" and no default "him"
+PASS  first visit, top to bottom: "Needs it now?", how it works, topics, your own question, the AI line, the privacy line
+PASS  first visit: "Needs it now?" is at the top, on the first screenful
+PASS  first visit: "How it works: 4 steps" is open: four numbered steps, each with a picture
+PASS  first visit: the line "Wait. Count to ten. Don't answer for them." is visible in the steps
+PASS  first visit: no empty video slot and no walkthrough over the screen
+PASS  first visit: About them is not offered before the first card
+PASS  first visit: seven topics, closed; "Or ask your own question" comes after them
+PASS  first visit: one plain AI line: what the AI is for, and that on this phone it is online and the app asks first
+PASS  first visit: one small privacy line, "Nothing you asked has left this phone."; never "this computer"
+PASS  first visit: "How it works inside" is on it
+PASS  first visit: nothing technical (no status box, badge, byte count or judge mode), and the word "card" is not used
+PASS  first visit: every control is at least 24 x 24 px
+PASS  first visit: every button and stand-alone link is at least 44 px tall
+PASS  first visit: the main button is at least 60 px tall
+PASS  first visit: nothing runs off the side of the screen
+PASS  a topic opens its questions in place: six one-tap rows under a lead line
+PASS  no tile moves sideways or changes row partner when a topic opens (the panel goes under the row)
+PASS  every question row is at least 54 px tall
+PASS  first visit, a topic open: every control is at least 24 x 24 px
+PASS  first visit, a topic open: every button and stand-alone link is at least 44 px tall
+PASS  first visit, a topic open: the main button is at least 60 px tall
+PASS  first visit, a topic open: nothing runs off the side of the screen
+PASS  before handing over: "1 Say it out loud" with the line, "2 Turn the phone to them" with the main button
+PASS  before handing over: "Wait. Count to ten. Don't answer for them." is on the screen, in normal size, under the main button
+PASS  before handing over: the carer sees what they will see (the question and three choices), and how to come back
+PASS  before handing over: "We're stuck" and "Hide the choices" are on this screen
+PASS  before handing over: the screen itself says where the choices were made (rules on this phone, no AI, nothing sent)
+PASS  before handing over: "How was this made?" leads inside
+PASS  before handing over: every control is at least 24 x 24 px
+PASS  before handing over: every button and stand-alone link is at least 44 px tall
+PASS  before handing over: the main button is at least 60 px tall
+PASS  before handing over: nothing runs off the side of the screen
+PASS  We're stuck, pressed before any answer: five other ways, with the way back to the choices
+PASS  the other ways, carer's side: every control is at least 24 x 24 px
+PASS  the other ways, carer's side: every button and stand-alone link is at least 44 px tall
+PASS  the other ways, carer's side: the main button is at least 60 px tall
+PASS  the other ways, carer's side: nothing runs off the side of the screen
+PASS  the person's screen takes the whole screen, white
+PASS  the person: "Point to your answer", then the question itself, then the choices
+PASS  the person: no category word above the choices (no headline, no "drink")
+PASS  the person: one centred column, every choice as wide as the screen and at least 80 px tall, the way out last
+PASS  the person: each choice has its picture with the word under it
+PASS  the person: the question and the choices are one unit (the first choice starts right under the question)
+PASS  the person: nothing but the choices and the carer's labelled control can be pressed
+PASS  the person: nothing on the screen is animated
+PASS  the person's choices: every control is at least 24 x 24 px
+PASS  the person's choices: every button and stand-alone link is at least 44 px tall
+PASS  the person's choices: nothing runs off the side of the screen
+PASS  a tap on the carer's control does nothing: it needs a press and hold
+PASS  the check: "So: tea. Right?", the picture with its word, "Yes" above "No, something else"
+PASS  the person's check: every control is at least 24 x 24 px
+PASS  the person's check: every button and stand-alone link is at least 44 px tall
+PASS  the person's check: nothing runs off the side of the screen
+PASS  "No, something else" brings the choices back, with the way out among them
+PASS  the finish: "Thank you. Tea." and one big button, "Give the phone back"; no press-and-hold needed
+PASS  the person's finish: every control is at least 24 x 24 px
+PASS  the person's finish: every button and stand-alone link is at least 44 px tall
+PASS  the person's finish: nothing runs off the side of the screen
+PASS  after an answer: "They chose, and said yes to: tea", and "Ask another question" is the main button, the first one under the answer
+PASS  after the first card: About them is offered, below the main button, never as the main button
+PASS  after an answer: today's answers, and "Today in short" written by the app's rules with a Copy button
+PASS  after an answer: says the answers are kept on this phone only, and where the choices were made
+PASS  after an answer: every control is at least 24 x 24 px
+PASS  after an answer: every button and stand-alone link is at least 44 px tall
+PASS  after an answer: the main button is at least 60 px tall
+PASS  after an answer: nothing runs off the side of the screen
+PASS  "Not now": the offer goes, and nothing else changes
+PASS  after the first card the how-to block is one highlighted line at the top, and the topic is still open
+PASS  the field does not take the cursor (no keyboard over the topics on a phone)
+PASS  About them is now one small link at the foot
+PASS  returning visit, how-to folded: every control is at least 24 x 24 px
+PASS  returning visit, how-to folded: every button and stand-alone link is at least 44 px tall
+PASS  returning visit, how-to folded: the main button is at least 60 px tall
+PASS  returning visit, how-to folded: nothing runs off the side of the screen
+PASS  the fold is remembered across a reload
+PASS  "Show" opens the four steps again, and "Hide" folds them
+PASS  folded again
+PASS  three choices and the way out: still one column, all on a phone screen without scrolling
+PASS  the person's choices, three and the way out: every control is at least 24 x 24 px
+PASS  the person's choices, three and the way out: every button and stand-alone link is at least 44 px tall
+PASS  the person's choices, three and the way out: nothing runs off the side of the screen
+PASS  the way out is checked like any answer: "So: something else. Right?"
+PASS  after "something else": the screen says so, and "Ask another question" is still the main button
+PASS  after "something else": what to do now, never a dead end (show or write it; the next question of the topic; the needs board; a new way; other ways)
+PASS  after "something else": an AI can narrow it down, and the screen says that on this phone it uses online help and asks first
+PASS  after "something else": every control is at least 24 x 24 px
+PASS  after "something else": every button and stand-alone link is at least 44 px tall
+PASS  after "something else": the main button is at least 60 px tall
+PASS  after "something else": nothing runs off the side of the screen
+PASS  the narrowing step with online help off: the consent sheet, with the exact line (the question and what did not fit, nothing they chose)
+PASS  asking for it sent nothing to any other host
+PASS  the consent sheet for a narrowing step: every control is at least 24 x 24 px
+PASS  the consent sheet for a narrowing step: every button and stand-alone link is at least 44 px tall
+PASS  the consent sheet for a narrowing step: the main button is at least 60 px tall
+PASS  the consent sheet for a narrowing step: nothing runs off the side of the screen
+PASS  "No": no narrowing card, nothing sent, and the screen says what to do
+PASS  "Are you in pain?" yes: the next question is one tap away ("Where does it hurt?")
+PASS  after a yes, with the next question: every control is at least 24 x 24 px
+PASS  after a yes, with the next question: every button and stand-alone link is at least 44 px tall
+PASS  after a yes, with the next question: the main button is at least 60 px tall
+PASS  after a yes, with the next question: nothing runs off the side of the screen
+PASS  the body map: two parts and "somewhere else", each with its picture
+PASS  the body map names left and right: "your left arm", "your right arm"
+PASS  a part with two sides: "Which side? Left or right?" and "How bad is the pain?" are offered next
+PASS  the pain scale: three steps and "not sure", made by the rules
+PASS  the pain scale, before handing over: every control is at least 24 x 24 px
+PASS  the pain scale, before handing over: every button and stand-alone link is at least 44 px tall
+PASS  the pain scale, before handing over: the main button is at least 60 px tall
+PASS  the pain scale, before handing over: nothing runs off the side of the screen
+PASS  hot or cold has a neutral answer: hot, cold, just right
+PASS  Feelings, after "yes": no dead end ("What is bothering you? Your body, people, or plans?")
+PASS  that question is one idea with three answers and a way out, made by the rules
+PASS  a press and hold on the carer's control goes back before any answer
+PASS  with a keyboard, Enter on it goes back too
+PASS  "Do you want to call someone?" yes, nobody in About them: a field for one name
+PASS  the name becomes one yes / no question, made by the rules
+PASS  the one open question in the topics is tagged "needs internet"
+PASS  an open question on a phone with online help off brings up the consent sheet (a dialog over an inert screen)
+PASS  the sheet shows the exact line that would go
+PASS  the sheet says what is sent (the line and the fixed instructions; names can be missed), what is never sent, and the data use; never "nothing else"
+PASS  the sheet: "Yes" and "No" are the same size, at least 60 px tall, and both are on the screen without scrolling
+PASS  showing the sheet asked nothing of any other host
+PASS  the consent sheet: every control is at least 24 x 24 px
+PASS  the consent sheet: every button and stand-alone link is at least 44 px tall
+PASS  the consent sheet: the main button is at least 60 px tall
+PASS  the consent sheet: nothing runs off the side of the screen
+PASS  Escape is "No": the sheet closes, there is no card, and the screen says so and what to do
+PASS  still nothing asked of any other host
+PASS  no card: every control is at least 24 x 24 px
+PASS  no card: every button and stand-alone link is at least 44 px tall
+PASS  no card: nothing runs off the side of the screen
+PASS  "Use online help for this question" brings the sheet back; "No, not for this question" closes it again
+PASS  "Yes" asks the question again at once, through cloud help (other hosts are asked only now)
+PASS  with every other host refused, cloud help fails: no card, and the line does not say "nothing was sent"
+PASS  the first screen then no longer says "Nothing you asked has left this phone"; the AI line says online help is on
+PASS  "Needs it now?": one tap opens the board full screen: "Point to your answer", "What do you need?", eight needs two to a row and the way out
+PASS  the needs board: every control is at least 24 x 24 px
+PASS  the needs board: every button and stand-alone link is at least 44 px tall
+PASS  the needs board: nothing runs off the side of the screen
+PASS  a need is checked and finished like any answer: "Thank you. Toilet."
+PASS  back from the board: the carer sees the need and what to do ("Go now. The rest can wait.")
+PASS  after a need: every control is at least 24 x 24 px
+PASS  after a need: every button and stand-alone link is at least 44 px tall
+PASS  after a need: the main button is at least 60 px tall
+PASS  after a need: nothing runs off the side of the screen
+PASS  About them: four rows, "Everything here stays on this phone.", nothing required
+PASS  About them, a row open: every control is at least 24 x 24 px
+PASS  About them, a row open: every button and stand-alone link is at least 44 px tall
+PASS  About them, a row open: the main button is at least 60 px tall
+PASS  About them, a row open: nothing runs off the side of the screen
+PASS  About them: the rows show what was typed
+PASS  the first screen now names the person: "let Frank point", "with Frank", "Show Frank the choices", "About Frank"
+PASS  the family's own question is added under the generic one, never in its place: tea or coffee, then pot roast or chili (tagged "Frank's own")
+PASS  People: one yes / no "call Jenny?" row under "Do you want to call someone?", which stays
+PASS  first screen with a name, People open: every control is at least 24 x 24 px
+PASS  first screen with a name, People open: every button and stand-alone link is at least 44 px tall
+PASS  first screen with a name, People open: the main button is at least 60 px tall
+PASS  first screen with a name, People open: nothing runs off the side of the screen
+PASS  the carer's screen names the person: "Turn the phone to Frank", "Show Frank the choices", "Don't answer for Frank."
+PASS  the call question is a yes / no about that one person
+PASS  "How was this made?" opens the full view on the same card, its fold open
+PASS  the full view has the way back on it ("Simple view")
+PASS  the full view is remembered across a reload
+PASS  every inner page of the full view has the way back
+PASS  "Simple view" goes back, and that is remembered too; About them is kept
+PASS  /#/demo opens the full judge view directly, whatever view was chosen
+PASS  judge mode keeps the full view's own card for the person (its headline, its tiles)
+PASS  "Simple view" in judge mode leaves it: the simple first screen, with the family's own About them
+PASS  the first-run page is still there by its address
+PASS  phone: no page error in the whole run
+PASS  offline: this copy has a service worker that controls the page (a production build)
+PASS  offline: the first screen opens with no connection (first visit: how-to open, seven topics)
+PASS  offline: the AI line says that AI needs the internet
+PASS  offline, first screen: every control is at least 24 x 24 px
+PASS  offline, first screen: every button and stand-alone link is at least 44 px tall
+PASS  offline, first screen: the main button is at least 60 px tall
+PASS  offline, first screen: nothing runs off the side of the screen
+PASS  offline: a topic question makes its choices by the rules
+PASS  offline: topic -> question -> the person points -> check -> finish -> give back: the carer sees the answer
+PASS  offline: "Needs it now?" opens
+PASS  offline: About them opens
+PASS  offline: a question that needs online help gets a clear "needs the internet" state, and no sheet
+PASS  offline, needs the internet: every control is at least 24 x 24 px
+PASS  offline, needs the internet: every button and stand-alone link is at least 44 px tall
+PASS  offline, needs the internet: nothing runs off the side of the screen
+PASS  offline: no page error
+PASS  desktop, 1440 x 900: the first screen says "this computer" and "Turn the computer to them"
+PASS  desktop, 1440 x 900, first screen: every control is at least 24 x 24 px
+PASS  desktop, 1440 x 900, first screen: every button and stand-alone link is at least 44 px tall
+PASS  desktop, 1440 x 900, first screen: the main button is at least 60 px tall
+PASS  desktop, 1440 x 900, first screen: nothing runs off the side of the screen
+PASS  desktop, 1440 x 900: the carer's screen says "Made by the app's rules on this computer" and "Turn the computer to them"
+PASS  desktop, 1440 x 900, before handing over: every control is at least 24 x 24 px
+PASS  desktop, 1440 x 900, before handing over: every button and stand-alone link is at least 44 px tall
+PASS  desktop, 1440 x 900, before handing over: the main button is at least 60 px tall
+PASS  desktop, 1440 x 900, before handing over: nothing runs off the side of the screen
+PASS  desktop, 1440 x 900: the finish button said "Give the computer back", and the carer sees the answer
+PASS  desktop, 1440 x 900, after an answer: every control is at least 24 x 24 px
+PASS  desktop, 1440 x 900, after an answer: every button and stand-alone link is at least 44 px tall
+PASS  desktop, 1440 x 900, after an answer: the main button is at least 60 px tall
+PASS  desktop, 1440 x 900, after an answer: nothing runs off the side of the screen
+PASS  desktop, 1440 x 900: the sheet says "This computer has no AI of its own"
+PASS  desktop, 1440 x 900: the sheet's two buttons are on the screen
+PASS  desktop, 1440 x 900: the full view uses the same word
+PASS  desktop, 1440 x 900: no page error
+PASS  tablet, 800 x 1280: the first screen says "this tablet" and "Turn the tablet to them"
+PASS  tablet, 800 x 1280, first screen: every control is at least 24 x 24 px
+PASS  tablet, 800 x 1280, first screen: every button and stand-alone link is at least 44 px tall
+PASS  tablet, 800 x 1280, first screen: the main button is at least 60 px tall
+PASS  tablet, 800 x 1280, first screen: nothing runs off the side of the screen
+PASS  tablet, 800 x 1280: the carer's screen says "Made by the app's rules on this tablet" and "Turn the tablet to them"
+PASS  tablet, 800 x 1280, before handing over: every control is at least 24 x 24 px
+PASS  tablet, 800 x 1280, before handing over: every button and stand-alone link is at least 44 px tall
+PASS  tablet, 800 x 1280, before handing over: the main button is at least 60 px tall
+PASS  tablet, 800 x 1280, before handing over: nothing runs off the side of the screen
+PASS  tablet, 800 x 1280: the finish button said "Give the tablet back", and the carer sees the answer
+PASS  tablet, 800 x 1280, after an answer: every control is at least 24 x 24 px
+PASS  tablet, 800 x 1280, after an answer: every button and stand-alone link is at least 44 px tall
+PASS  tablet, 800 x 1280, after an answer: the main button is at least 60 px tall
+PASS  tablet, 800 x 1280, after an answer: nothing runs off the side of the screen
+PASS  tablet, 800 x 1280: the sheet says "This tablet has no AI of its own"
+PASS  tablet, 800 x 1280: the sheet's two buttons are on the screen
+PASS  tablet, 800 x 1280: the full view uses the same word
+PASS  tablet, 800 x 1280: no page error
+
+227 of 227 checks passed

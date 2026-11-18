@@ -447,6 +447,8 @@ const COPY = {
     left: {
       nothing: 'Nothing was sent.',
       sent: (about: string) => `Sent to Google: your question, with any names you listed swapped out, and the app's fixed instructions. Nothing from ${about}.`,
+      /** A narrowing step (core/narrow.ts): what went is the question and the choices that did not fit. */
+      sentNarrow: (about: string) => `Sent to Google: the question and the choices that did not fit, with any names you listed swapped out, and the app's fixed instructions. Nothing from ${about}, and never the answers they chose.`,
       maybe: 'Online help was asked and did not answer: your question may have left this computer.',
       voice: 'You spoke this question: its recording went to Google to be typed out.',
     },

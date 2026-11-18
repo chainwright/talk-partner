@@ -85,6 +85,8 @@ describe('where it runs: on this device first, online help only when it is on', 
     expect(c.cloudPayload).toBeTruthy();
     expect(questionInPayload(c.cloudPayload!)).toBe(e.cloud[0]);
     expect(madeWhere(c, { about: 'About Frank' })).toMatchObject({ maker: 'cloud', left: 'sent' });
+    // the line under it says what went for THIS step: the question and what did not fit, never an answer
+    expect(madeWhere(c, { about: 'About Frank' }).lines[1]).toBe("Sent to Google: the question and the choices that did not fit, with any names you listed swapped out, and the app's fixed instructions. Nothing from About Frank, and never the answers they chose.");
     // it is counted in the session's receipt like any card that left
     expect(sessionReceipt([c], SAMPLE_PROFILE).cardsLeft).toBe(1);
   });
