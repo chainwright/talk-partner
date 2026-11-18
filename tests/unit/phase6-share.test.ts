@@ -45,7 +45,8 @@ describe('"Share with family": the text', () => {
     expect(lines[0]).toBe(STAMP);
     expect(lines[1]).toBe('');
     expect(lines[2]).toBe("Frank's diary, the last 7 days (Mon 16 Nov to Sun 22 Nov).");
-    expect(t).toContain('WHAT STANDS OUT (the last 7 days)\n1. Worth mentioning to the doctor or nurse: Few drinks were entered on Wed 18 Nov: 2.\n   How it was counted: Counted that day: 2. Every "Drank" tap counts');
+    // (phase 9: Tuesday's pain is a line of its own, with its fixed sentence)
+    expect(t).toContain('WHAT STANDS OUT (the last 7 days)\n1. Worth mentioning to the doctor or nurse: Pain was chosen or logged on 1 day in the last 7 days.\n   Ask again today, and tell the doctor or nurse if it is new or still there.\n   How it was counted: Days with pain: Tue 17 Nov. Only what was entered here.\n2. Worth mentioning to the doctor or nurse: Few drinks were entered on Wed 18 Nov: 2.\n   How it was counted: Counted that day: 2. Every "Drank" tap counts');
     expect(t).toContain(COPY.simple.insights.footer);
     expect(t).toContain('ENTRIES BY DAY\nMon 16 Nov\n  07:40  Would you like tea or coffee? tea\n');
     expect(t.endsWith(`${P6.share.gap}\n${P6.share.noAdvice}`)).toBe(true);

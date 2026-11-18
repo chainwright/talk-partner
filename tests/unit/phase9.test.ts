@@ -2,7 +2,8 @@
 // make a tired carer dismiss pain or a need?
 import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
-import { LATER_LABEL, answerEntry, diaryText, laterEntry, logEntry, tags, type DiaryEntry } from '../../core/diary';
+import { LATER_LABEL, answerEntry, diaryText, laterEntry, logEntry, needEntry, tags, type DiaryEntry } from '../../core/diary';
+import { NO_HEALTH, cloudLines, insights } from '../../core/insights';
 import { LATER_MS, addLater, cleanLater, doneLater, laterCare, laterPain, shownLater } from '../../core/later';
 import { sinceLines } from '../../core/since';
 import { laterBlock } from '../../web/src/simple';
@@ -81,5 +82,55 @@ describe('1. P0 health: a care question left for later (pain, the body, the toil
     expect(s.sources[s.lines.indexOf(line)].ids).toEqual([e.id]);
     // nothing left for later: no such line
     expect(sinceLines([logEntry('drank', when(4, '09:00')), answerEntry({ q: 'Tea?', label: 'tea', at: when(4, '10:00') })], when(0, '00:00'), NOW).lines.join(' ')).not.toContain('Left for later');
+  });
+});
+
+describe('2. P0 health: "Nothing stands out" never stands over a pain, a fall, a low day, "something\'s wrong" or a day with no drink', () => {
+  const day = (d: number) => [logEntry('drank', when(d, '08:00')), logEntry('ate', when(d, '08:30')), logEntry('drank', when(d, '12:00')), logEntry('drank', when(d, '16:00'))];
+  const calm = [...day(0), ...day(1), ...day(2), ...day(3), ...day(4), ...day(5)];
+  const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
+  it('a calm week: "Nothing stands out", and only then', () => {
+    expect(ids(insights(calm, NO_HEALTH, 'week', NOW))).toEqual(['nothing']);
+  });
+  it('worst case of the round: a yes to pain on 2 days gives its own line, with the fixed "ask again, tell" sentence', () => {
+    const pain = (d: number) => answerEntry({ q: 'Are you in pain?', label: 'yes', at: when(d, '09:00') }, 'body');
+    const xs = insights([...calm, pain(1), pain(3)], NO_HEALTH, 'week', NOW);
+    expect(ids(xs)).toEqual(['pain-some']);
+    expect(xs[0]).toMatchObject({ level: 'mention', text: 'Pain was chosen or logged on 2 days in the last 7 days.', act: 'Ask again today, and tell the doctor or nurse if it is new or still there.' });
+    expect(`${xs[0].text} ${xs[0].act}`).toBe('Pain was chosen or logged on 2 days in the last 7 days. Ask again today, and tell the doctor or nurse if it is new or still there.');
+    // a line with a fixed sentence is never handed to a model to reword
+    expect(cloudLines(xs)).toEqual([]);
+  });
+  it('one pain of each kind: a logged "Pain", "pain" on the needs board, a place on the body card, "a little" pain', () => {
+    for (const e of [logEntry('pain', when(2, '10:00')), needEntry('pain', when(2, '10:00')), answerEntry({ q: 'Where does it hurt?', label: 'right shoulder', at: when(2, '10:00') }, 'body'), answerEntry({ q: 'How bad is the pain?', label: 'a little', at: when(2, '10:00') }, 'body')]) {
+      const xs = insights([...calm, e], NO_HEALTH, 'week', NOW);
+      expect(ids(xs), e.label).toEqual(['pain-some']);
+      expect(xs[0].text).toBe('Pain was chosen or logged on 1 day in the last 7 days.');
+    }
+    // over 30 days too
+    expect(ids(insights([...calm, logEntry('pain', when(2, '10:00'))], NO_HEALTH, 'month', NOW))).toContain('pain-some');
+  });
+  it('a fall', () => {
+    expect(ids(insights([...calm, logEntry('fall', when(2, '10:00'))], NO_HEALTH, 'week', NOW))).toEqual(['fall']);
+  });
+  it('one low day', () => {
+    const xs = insights([...calm, answerEntry({ q: 'How are you feeling?', label: 'low', at: when(2, '10:00') }, 'feel')], NO_HEALTH, 'week', NOW);
+    expect(ids(xs)).toEqual(['mood']);
+    expect(xs[0].text).toBe('"Sad", "bad" or "low" was the answer to a question about how they feel on 1 day in the last 7 days.');
+  });
+  it('"something\'s wrong", on the needs board or on a card: a line with whom to tell and the call box', () => {
+    for (const e of [needEntry("something's wrong", when(2, '10:00')), answerEntry({ q: 'What is it?', label: "something's wrong", at: when(2, '10:00') }, 'body')]) {
+      const xs = insights([...calm, e], NO_HEALTH, 'week', NOW, '999');
+      expect(ids(xs), e.kind).toEqual(['wrong']);
+      expect(xs[0]).toMatchObject({ level: 'call', urgent: true, text: '"Something\'s wrong" was pointed to on 1 day: Wed 18 Nov. Ask what it was.', act: 'Tell the doctor or nurse. If it is new or sudden, call 999 now.' });
+    }
+  });
+  it('a day with entries and no drink', () => {
+    const dry = [...day(0), ...day(1), logEntry('ate', when(2, '09:00')), ...day(3), ...day(4), ...day(5)];
+    expect(ids(insights(dry, NO_HEALTH, 'week', NOW))).toEqual(['no-drink']);
+  });
+  it('never "Nothing stands out" beside any of them, in a week or a month', () => {
+    const one = [logEntry('pain', when(2, '10:00')), logEntry('fall', when(2, '10:00')), answerEntry({ q: 'How are you feeling?', label: 'sad', at: when(2, '10:00') }, 'feel'), needEntry("something's wrong", when(2, '10:00'))];
+    for (const e of one) for (const span of ['week', 'month'] as const) expect(ids(insights([...calm, e], NO_HEALTH, span, NOW)), `${e.label} ${span}`).not.toContain('nothing');
   });
 });

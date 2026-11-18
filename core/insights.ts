@@ -24,7 +24,8 @@
 
 import { COPY } from './copy';
 import { P5 } from './copy5';
-import { DEFAULT_NUMBER } from './redflag';
+import { P9 } from './copy9';
+import { DEFAULT_NUMBER, WRONG_TILE } from './redflag';
 import { P6 } from './copy6';
 import { byDay, dayStart, dayText, eventGroups, events, inSpan, tags, SPAN_DAYS, type DiaryEntry, type Tag } from './diary';
 
@@ -75,7 +76,7 @@ export type InsightSpan = 'week' | 'month';
 /** Phase 8 (judge round 7, the nurse's seat): 'call' is the level of a line with the call box (a strong pain, the head or the chest, a fall with a blow to the head): its own label, and first. */
 export type Level = 'call' | 'tell' | 'mention' | 'note';
 export interface Insight {
-  id: 'pain' | 'pain-day' | 'no-drink' | 'few-drinks' | 'many-drinks' | 'sweets' | 'no-food' | 'sleep' | 'mood' | 'fall' | 'less-sure' | 'nothing';
+  id: 'pain' | 'pain-some' | 'wrong' | 'pain-day' | 'no-drink' | 'few-drinks' | 'many-drinks' | 'sweets' | 'no-food' | 'sleep' | 'mood' | 'fall' | 'less-sure' | 'nothing';
   /** 'tell': a red flag. 'mention': worth mentioning to the doctor or nurse. 'note': for the carer to keep in mind. */
   level: Level;
   /** What was counted, in plain words. The only part a model may put into plainer words. */
@@ -134,7 +135,8 @@ export function thresholds(h: HealthNotes, span: InsightSpan): Thresholds {
     noFoodDay: h.swallowing,
     badSleepDays: 3,
     lessSure: 3,
-    lowMoodDays: 3,
+    // (phase 9: one low day is a line; "Nothing stands out" never stands over a "sad", "bad" or "low")
+    lowMoodDays: 1,
   };
 }
 
@@ -175,6 +177,13 @@ function spanInsights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpa
   // pain on three days or more: a red flag
   const painDays = daysOf(events(entries, 'pain'));
   if (painDays.length >= T.painDays) out.push({ id: 'pain', level: 'tell', text: I.pain(painDays.length, S), noted: '', base: `${I.painBase(names(painDays, 7))} ${I.only}`, source: src(tagged(entries, 'pain')) });
+  // (phase 9, judge round 8, a health P0: a yes to pain on 2 days said "Nothing stands out") a pain on fewer days is a line too
+  // (the fixed "ask again, tell" sentence is its act: the line is never handed to a model; a day that the strong-pain
+  // line below already names is not counted twice, so with only such days this line is not there)
+  else if (painDays.length) {
+    const hardDays = new Set(entries.filter((e) => tags(e).some((t) => t === 'strong-pain' || t === 'place-pain')).map((e) => dayStart(e.at)));
+    if (painDays.some((d) => !hardDays.has(d))) out.push({ id: 'pain-some', level: 'mention', text: P9.insights.painSome(painDays.length, S), noted: '', base: `${I.painBase(names(painDays, 7))} ${I.only}`, act: P9.insights.painSomeAct, source: src(tagged(entries, 'pain')) });
+  }
 
   // one day is enough for a strong pain ("quite bad", "very bad") or a pain in the head or the chest: the latest such
   // day is a line of its own, with whom to tell and when to call (judge round 6: a single day never showed)
@@ -189,6 +198,10 @@ function spanInsights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpa
     const others = hardDays.slice(0, -1);
     out.push({ id: 'pain-day', level: 'mention', text, noted: '', base: `${[strong.length ? I5.strongPainBase : '', places.length ? I5.placePainBase : ''].filter(Boolean).join(' ')}${others.length ? ` Also on: ${names(others, 5)}.` : ''} ${I.only}`, act: I5.painAct(number), urgent: true, source: src(hard) });
   }
+
+  // (phase 9) "something's wrong", pointed to on the needs board or chosen on a card: one is enough, with whom to tell and when to call
+  const wrong = entries.filter((e) => (e.kind === 'need' || e.kind === 'answer') && e.label.toLowerCase().trim() === WRONG_TILE);
+  if (wrong.length) { const wd = daysOf(wrong.map((e) => e.at)); out.push({ id: 'wrong', level: 'mention', text: P9.insights.wrong(wd.length, names(wd, 5)), noted: '', base: `${P9.insights.wrongBase} ${I.only}`, act: I5.painAct(number), urgent: true, source: src(wrong) }); }
 
   // a whole day with entries and no drink among them: a red flag (18 Nov: said without the sentence that excused it)
   const dry = past.filter((d) => events(d.entries, 'drink').length === 0).map((d) => d.day);

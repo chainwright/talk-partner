@@ -48,7 +48,9 @@ describe('the diary screen', () => {
     expect(count(html, `class="tag unsure">${S.guard.lessSure}<`)).toBe(5);
   });
   it('what stands out: the level, the line, its base, who worded it, the fixed footer', () => {
-    expect(count(html, '<li class="ins ')).toBe(3);
+    // (phase 9: Tuesday's pain, the sweets, Wednesday's drinks, Friday's "less sure")
+    expect(count(html, '<li class="ins ')).toBe(4);
+    expect(html).toContain('data-id="pain-some" data-level="mention"');
     expect(html).toContain('data-id="sweets" data-level="mention"');
     expect(html).toMatch(/Worth mentioning to the doctor or nurse<\/span><p class="ins-text">Something sweet was chosen 3 times in the last 7 days\. <span class="noted">Diabetes is noted here\.<\/span><\/p><p class="ins-base">Chosen 3 times in 7 days\. Only what was entered here\.<\/p>/);
     expect(html).toContain('Few drinks were entered on Wed 18 Nov: 2.');
@@ -93,7 +95,7 @@ describe('the diary screen', () => {
 describe('who worded the lines', () => {
   const base = { span: 'week' as const, lines, busy: false, note: '' as const, cloud: null };
   it('a model\'s words replace the line\'s text only: the level, the health note and the base stay the rules\' own', () => {
-    const html = insightsBlock({ ...base, words: ['Sweet things were picked 3 times this week.', null, null], source: 'on-device' });
+    const html = insightsBlock({ ...base, words: [null, 'Sweet things were picked 3 times this week.', null, null], source: 'on-device' });
     expect(html).toContain('<p class="ins-text">Sweet things were picked 3 times this week. <span class="noted">Diabetes is noted here.</span></p><p class="ins-base">Chosen 3 times in 7 days. Only what was entered here.</p>');
     expect(html).toContain('Few drinks were entered on Wed 18 Nov: 2.');
     expect(html).toContain(h(S.insights.by.device));

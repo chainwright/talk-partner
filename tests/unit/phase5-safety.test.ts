@@ -166,7 +166,8 @@ describe('2d. what stands out', () => {
     expect(text(html)).toContain('Call 999 now if this is new or sudden.');
     // worst case: "Nothing stands out" after such a day
     expect(ids(insights([...day(0), ans('How bad is the pain?', 'quite bad', 0)], NO_HEALTH, 'month', NOW))).not.toContain('nothing');
-    expect(ids(insights([...day(0), ans('How bad is the pain?', 'a little', 0)], NO_HEALTH, 'week', NOW))).toEqual(['nothing']);
+    // (phase 9: "a little" pain is a pain day, so it is a line of its own and "Nothing stands out" is not said)
+    expect(ids(insights([...day(0), ans('How bad is the pain?', 'a little', 0)], NO_HEALTH, 'week', NOW))).toEqual(['pain-some']);
   });
   it('"no drink all day" no longer excuses itself; under a fluid limit low intake still shows, and never "more"', () => {
     const dry = [...day(0), logEntry('ate', when(1, '09:00')), ...day(2)];
