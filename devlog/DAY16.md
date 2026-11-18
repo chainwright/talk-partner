@@ -49,3 +49,8 @@ answer of "today" was still in the future; the script counts up to now.
 pressed on no real phone. Read aloud was not run on the hosted copy by us before this was written (README "Deploy"
 has what was run there). The wording steps have still not run against a real model. Sharing with a second carer, a
 report for the therapist, tappable insight lines and "words that worked" (round 6, IMPROVE & ADD) are not built.
+
+**The hosted copy (07:05 UTC, build `9d141b0`).** 20 of 20 served files equal the local build. `e2e-simple.py --live`
+611/611, `pwa-check.py` 30/30, `e2e-needs.mjs` 12/12. The cloud step five times from new profiles: 28/28 once, 19/27
+four times (App Check: reCAPTCHA Enterprise 403, then throttled for a day). Read aloud once: refused the same way,
+no sound. README "Deploy" has it in full; `devlog/evidence_live/` has every log.

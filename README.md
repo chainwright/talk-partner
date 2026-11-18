@@ -61,7 +61,7 @@ through Firebase AI Logic, each behind a sheet that shows what goes, and the car
 
 | On a phone | Firebase AI Logic call | When | Run against the real model |
 |---|---|---|---|
-| **Read aloud**: the question and the choices of the card, spoken on the person's screen (`core/speak.ts`) | Gemini text-to-speech (`gemini-3.8-flash-tts`), `ONLY_IN_CLOUD`, the words of that one card, the voice and the style | every card the carer shows, the 40 topic questions and the needs board included, once the carer turned it on on a sheet ("The words on this card, including names on it, go to Google to be spoken. Nothing else."); off by default; never a doctor-visit card | yes, on localhost: `leg=speak mode=ONLY_IN_CLOUD inferenceSource=in_cloud`, 4.4 s for about 8 s of sound ("Would you like tea or coffee? Tea. Coffee. Or something else."), "Hear it again" asked nothing, 10 of 10 checks at `de631b1` on the dev server with the App Check debug token (`devlog/evidence_phase5/AI_RUN_LOG.md`); not on the hosted copy by us |
+| **Read aloud**: the question and the choices of the card, spoken on the person's screen (`core/speak.ts`) | Gemini text-to-speech (`gemini-3.8-flash-tts`), `ONLY_IN_CLOUD`, the words of that one card, the voice and the style | every card the carer shows, the 40 topic questions and the needs board included, once the carer turned it on on a sheet ("The words on this card, including names on it, go to Google to be spoken. Nothing else."); off by default; never a doctor-visit card | yes, on localhost: `leg=speak mode=ONLY_IN_CLOUD inferenceSource=in_cloud`, 4.4 s for about 8 s of sound ("Would you like tea or coffee? Tea. Coffee. Or something else."), "Hear it again" asked nothing, 10 of 10 checks at `de631b1` on the dev server with the App Check debug token (`devlog/evidence_phase5/AI_RUN_LOG.md`); on the hosted copy our headless test browser was refused by App Check (no sound; see Deploy) |
 | A question the carer types that the rules cannot turn into choices | `PREFER_IN_CLOUD`, the question with About-them words swapped out | after "Just this once" or "Yes, every time" on the sheet | yes (`devlog/evidence_live/`, last on the hosted copy at `4d7edee`; see Deploy for this build) |
 | "Narrow it down" after "something else"; words for a first letter the rules have fewer than two for | the same step | after "Just this once" on its sheet | yes, on localhost (`CLAIMS.md` rows 53, 79) |
 | "What stands out" in plainer words | `PREFER_IN_CLOUD`, the counted lines only | after "Just this once", each time; never a line that says whom to tell or when to call | no |
@@ -437,8 +437,8 @@ step is Read aloud.
   nothing; with no connection the switch is not offered; a doctor-visit card is never read aloud (that page says
   nothing of it is sent). A card whose words went says so under it and never says "Nothing was sent", and the
   session's privacy line counts it. Run against the real model on localhost: `leg=speak mode=ONLY_IN_CLOUD inferenceSource=in_cloud`, 4.4 s for about 8 s of sound ("Would you like tea or coffee? Tea. Coffee. Or something else."), "Hear it again" asked nothing, 10 of 10 checks at `de631b1` on the dev server with the App Check debug token.
-  **Limits: one voice, English; not run on the hosted copy or on a real phone by us; whether hearing the card helps
-  the person is untested.**
+  **Limits: one voice, English; on the hosted copy our headless test browser got no App Check token and so no voice
+  (see Deploy); not run on a real phone by us; whether hearing the card helps the person is untested.**
 - **Consent sheets**: one plain name ("online help", which is Google's AI; the technical words are one tap inside),
   and the first yes is **"Just this once"**: that one request may use online help and the switch stays off. "Yes,
   every time" is the second button of the sheet for an open question.
@@ -853,7 +853,32 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-Last done on 18 Nov 2026, 05:14 UTC: <https://talk-partner.web.app> serves the build of commit `421dae0` (the three
+Last done on 18 Nov 2026, 07:05 UTC: <https://talk-partner.web.app> serves the build of commit `9d141b0` (phase 5, the
+fixes of judge round 6: "they can start", "Something new or sudden?" and the call box, the answer check's exemptions,
+the new lines of "what stands out", a fall and tablets in the diary, Read aloud, "Just this once", the photo line,
+"Since the last visit"). Each of the 20 served files has the SHA-256 of the local build, and `/` equals
+`dist/index.html` (`devlog/evidence_live/served-files_live_2026-11-18_9d141b0.txt`; the deploy log is next to it).
+Against it, all in `devlog/evidence_live/` with `9d141b0` in the name:
+- `e2e-simple.py --live` 611/611 (a phone at 390 px with the navigation, learning, photo, phase 3, phase 4 and phase 5
+  runs, a desktop, a tablet, and the phone with the connection off; no "Yes" is pressed on a sheet, so Read aloud was
+  not turned on and no question was sent in this run);
+- `pwa-check.py` 30/30; `e2e-needs.mjs` 12/12;
+- **the cloud step, five runs of `e2e-cloud.mjs --url`, each from a new browser profile, 07:05 to 07:07 UTC: 28/28
+  once, 19/27 four times.** In the four, App Check gave the browser no token (reCAPTCHA Enterprise answered 403, and
+  App Check then holds further attempts back for a day: "Requests throttled due to previous 403 error"), the service
+  gave no card, and the screen said "Cloud help could not confirm this browser". The runs come from one Mac, one
+  network and a headless Chrome; whether a judge's browser or a real phone passes we still do not know. This is the
+  open risk of the hosted copy: every AI step on a phone is behind that check;
+- **Read aloud on the hosted copy, one run of `e2e-speak.py --url` (headless Chromium as a phone): refused the same
+  way.** The sheet, the switch and the card worked; the speech request got no App Check token, no sound came, and the
+  person's screen said "The voice did not come. Say it out loud yourself." (`speak_live_2026-11-18_9d141b0/AI_RUN_LOG.md`,
+  6 of 10 checks). The same script on the dev server, with the debug token, 10/10 with sound
+  (`devlog/evidence_phase5/AI_RUN_LOG.md`).
+Not run against this build: `overflow-check.py` (510/510 on localhost at `d198eb0`), `update-check.py`,
+`e2e-noconfig.mjs` (25/25 on localhost at `de631b1`), `e2e-ondevice.mjs`, `e2e-phase4-ai.py`; nothing on a real phone;
+the App Check enforcement state and the billing tier in the console were not read by us.
+
+The deploy before it, 18 Nov 2026, 05:14 UTC: <https://talk-partner.web.app> serves the build of commit `421dae0` (the three
 fixes of the third role-play: every first-letter tile starts with the letter and the conversation's kind comes
 first; "Who is it about?" and the questions about the telling after "I want to tell you something"; the doctor-visit
 screen names the person). Each of the 20 served files has the SHA-256 of the local build, and `/` equals

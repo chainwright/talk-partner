@@ -95,7 +95,11 @@ a Gemini text-to-speech model, through Firebase AI Logic (`ONLY_IN_CLOUD`), read
 every card, the topic questions included. It is the one AI step in the phone's everyday loop; the others on a phone
 are the typed open question, "Narrow it down", first-letter words and plainer wording, each a cloud call behind a
 sheet whose first yes is "Just this once". On a phone there is no on-device step (README, "Where the sponsor runs on
-a phone"). Our run of Read aloud against the real model: `devlog/evidence_phase5/AI_RUN_LOG.md` (localhost).
+a phone"). Our run of Read aloud against the real model: `devlog/evidence_phase5/AI_RUN_LOG.md` (localhost, with sound).
+**On the hosted copy every one of these cloud steps is behind App Check, and it refused our headless test browsers in
+four of five runs of the cloud step and in the one run of Read aloud at build `9d141b0`** (README "Deploy"); the
+screen then says "Cloud help could not confirm this browser" or "The voice did not come. Say it out loud yourself.",
+and everything made by rules goes on working.
 
 **What happens next depends on your browser, and the status line at the top says which.** In desktop Chrome with
 Gemini Nano the first step runs by itself, with no click: when the model has loaded (a few seconds; 16 to 22 s
