@@ -29,7 +29,7 @@ import { START_FRAME, addPhoto as addOwnPhoto, clampFrame, cleanWord, photoFor, 
 import { framed, loadPhoto, type Loaded } from './photo';
 import { stripQuestion } from '../../core/strip';
 import { backupText, makeBackup, readBackup, type Backup, type BackupPreview } from '../../core/backup';
-import { addEntry, answerEntry, diaryText, inSpan, logEntry, markDiary, needEntry, removeEntry, type DiaryEntry, type DiaryTopic, type LogKind, type Span } from '../../core/diary';
+import { addEntry, answerEntry, dayStart, dayText, diaryText, inSpan, laterEntry, logEntry, markDiary, needEntry, removeEntry, type DiaryEntry, type DiaryTopic, type LogKind, type Span } from '../../core/diary';
 import { within, type CloudError } from '../../core/engine';
 import { hasHealth, NO_HEALTH, cleanHealth, cloudLines, insightCloudText, insightDevicePrompt, insights, type HealthNotes, type Insight, type InsightSpan } from '../../core/insights';
 import { RELIABLE, careAnswer, guardExempt, markLessSure, reliability, reorder, tapsFrom } from '../../core/reliability';
@@ -70,7 +70,7 @@ import { P8 } from '../../core/copy8';
 import { LOW_MOOD, LOW_MOOD_Q, guessTopic, timeText } from '../../core/diary';
 /** Phase 8: "sad", "bad", "low" or "down" to a question about how the person feels (not a photo): the helpline line follows on the carer's side. */
 const lowMoodAnswer = (q: string, label: string) => LOW_MOOD_Q.test(q.trim().toLowerCase()) && !/\bphoto\b/i.test(q) && LOW_MOOD.test(label.trim().toLowerCase());
-import { addLater, cleanLater, laterOf, shownLater, type Later } from '../../core/later';
+import { addLater, cleanLater, doneLater, laterOf, shownLater, type Later } from '../../core/later';
 import { NO_PASSPORT, OFF_UNTIL_TICKED, cleanPassport, passport, passportText, toggleLine, OWN_MAX, type PassportInput, type PassportPrefs } from '../../core/passport';
 import { addEvent, cleanLog, lessSureCount, newLog, pickedPractice, practiceFlag, practiceReport, practiceText, practiceUrgent, togglePractice, type AskedBy, type PracticeEvent, type PracticeInput, type PracticeLog, type PracticeSpan, type Via } from '../../core/practice';
 import { passportLink, passportScreen, practiceScreen, type PassPicture } from './care7';
@@ -643,8 +643,21 @@ const p5 = {
   audio: null as HTMLAudioElement | null,
 };
 /** Phase 8: the questions left for later (IndexedDB key 'later'; core/later.ts). */
-const p8later = { list: [] as Later[] };
+const p8later = { list: [] as Later[], /** Phase 9: the care question whose "Done" asks "Did you find out?" now. */ asking: null as Later | null };
 const saveLater = () => { if (!state.demo) void kvSet('later', p8later.list); };
+/**
+ * Phase 9: a question is left for later (the tile "later", the answer "later" to talking now or later, or the person's
+ * own "Not now"). A care question is pinned on Home and written to the diary, so the visit page names it. Never for
+ * the sample family.
+ */
+function leaveForLater(q: string, topic: string | null) {
+  if (state.demo) return;
+  const at = Date.now();
+  p8later.list = addLater(p8later.list, q, at, topic); saveLater();
+  if (p8later.list.find((x) => x.q === q)?.care) { state.diary = addEntry(state.diary, laterEntry(q, at, (topic as DiaryTopic | null) ?? null)); saveDiary(); }
+}
+/** "14:37" today; "Tue 17 Nov, 14:37" for an older one (a care question stays for days). */
+const laterTime = (at: number) => (dayStart(at) === dayStart(Date.now()) ? timeText(at) : `${dayText(at)}, ${timeText(at)}`);
 /** Phase 8: the carer's line after Read aloud failed on the person's screen (never on the person's screen itself). */
 const voiceFailedHtml = () => (p5.voiceFailed ? `<p class="warn" id="voice-failed" role="status">${esc(P5.speak.failed(state.profile.personName.trim()))}</p>` : '');
 /** The emergency number the call buttons use: About them's, or 911. */
@@ -1805,7 +1818,7 @@ function simpleScreen(): string {
       howOpen: !state.settings.howFolded, topics: topics(p), topicOpen: state.topicOpen, aiTag: aiTag(whereInput()), ai: aiLines(whereInput()),
       privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: `${diaryLink()}${!state.demo && state.diary.length ? handoverLink() : ''}${p4Links(name)}${passportLink(name)}`,
       bodyHtml: suddenLink('sudden-body'),
-      laterHtml: laterBlock(shownLater(p8later.list, Date.now()).map((x) => ({ q: x.q, time: timeText(x.at), i: p8later.list.indexOf(x) }))),
+      laterHtml: laterBlock(shownLater(p8later.list, Date.now()).map((x) => ({ q: x.q, time: laterTime(x.at), i: p8later.list.indexOf(x), care: !!x.care, pain: !!x.pain, asking: p8later.asking === x }))),
       turnHtml: `${turnButton(name)}${suddenLink()}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
     });
   }
@@ -2242,7 +2255,7 @@ function onPersonTap(t: HTMLElement) {
     if (state.picked && urgentAnswer(c.asked, state.picked.label)) p5.urgent = true;
     // (phase 8) "later": the question is kept for Home, to come back to (core/later.ts); never for the sample family
     const left = state.picked ? laterOf({ asked: c.asked, label: state.picked.label, repair: c.kind === 'repair', before: state.before?.asked ?? state.chain[0] ?? null }) : null;
-    if (left && !state.demo) { p8later.list = addLater(p8later.list, left, Date.now()); saveLater(); }
+    if (left) leaveForLater(left, careTopic(c));
     if (simpleView()) {
       // the first confirmed answer folds "How it works" to its one line (remembered), and About them is offered once,
       // on this answer's screen, when it names nobody yet
@@ -2412,10 +2425,14 @@ function act(el: HTMLElement) {
     case 'own': state.lastQuestion = ''; state.error = null; dictated = false; resetCard(); render(); document.querySelector<HTMLInputElement>('#q')?.focus(); break;
     case 'invite-later': state.inviteOff = true; render(); break;
     // (phase 8) "Left for later": ask it again (a new conversation of that question), or done; either way it goes off Home
-    case 'later-ask': case 'later-done': {
+    // (phase 9) a care question's "Done" asks "Did you find out?" first: "Yes" takes it off, "Not yet" keeps it
+    case 'later-ask': case 'later-done': case 'later-found': case 'later-notyet': {
       const x = p8later.list[Number(el.dataset.i)];
       if (!x) break;
-      p8later.list = p8later.list.filter((y) => y !== x); saveLater();
+      if (a === 'later-done' && x.care) { p8later.asking = x; render(); document.querySelector<HTMLElement>(`#later-found-${p8later.list.indexOf(x)}`)?.focus(); break; }
+      p8later.asking = null;
+      if (a === 'later-notyet') { render(); break; }
+      p8later.list = a === 'later-ask' ? p8later.list.filter((y) => y !== x) : doneLater(p8later.list, x, true); saveLater();
       if (a === 'later-ask') { askBy = 'none'; void make(x.q); } else render();
       break;
     }

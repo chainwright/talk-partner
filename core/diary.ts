@@ -27,8 +27,11 @@ export interface DiaryEntry {
   id: string;
   /** When (ms since the epoch, this device's clock). */
   at: number;
-  /** 'log': the carer tapped it. 'answer': the person confirmed it on a card. 'need': the person pointed to it on the needs board. */
-  kind: 'log' | 'answer' | 'need';
+  /**
+   * 'log': the carer tapped it. 'answer': the person confirmed it on a card. 'need': the person pointed to it on the needs board.
+   * 'later' (phase 9): a care question was left for later (core/later.ts); `q` is the question, and it is no answer.
+   */
+  kind: 'log' | 'answer' | 'need' | 'later';
   /** For a log: which one. */
   log?: LogKind;
   /** For an answer: the question as the card showed it. */
@@ -71,6 +74,12 @@ export function needEntry(label: string, at: number): DiaryEntry {
 /** `topic` is the topic the conversation started from, when it started from one; else it is guessed from the words. */
 export function answerEntry(a: { q: string; label: string; at: number; lessSure?: boolean }, topic?: DiaryTopic | null): DiaryEntry {
   return { id: newId(a.at), at: a.at, kind: 'answer', q: a.q, label: a.label, topic: topic ?? guessTopic(a.q), ...(a.lessSure ? { lessSure: true } : {}) };
+}
+
+/** Phase 9: a question about pain, the body, the toilet, a drink or feelings was left for later. Counts as nothing (`tags` gives none). */
+export const LATER_LABEL = 'left for later';
+export function laterEntry(q: string, at: number, topic?: DiaryTopic | null): DiaryEntry {
+  return { id: newId(at), at, kind: 'later', q, label: LATER_LABEL, topic: topic ?? guessTopic(q) };
 }
 
 /** A new list with the entry added, oldest first; the oldest fall off past the cap. */
@@ -152,6 +161,7 @@ export function tags(e: DiaryEntry): Tag[] {
   const l = lc(e.label);
   const q = lc(e.q ?? '');
   if (e.kind === 'log') return e.log === 'drank' ? ['drink'] : e.log === 'ate' ? ['food'] : e.log === 'toilet' ? ['toilet'] : e.log === 'slept' ? ['sleep'] : e.log === 'fall' ? (l === FALL_HEAD ? ['fall', 'fall-head'] : ['fall']) : e.log === 'tablets' ? ['tablets'] : ['pain'];
+  if (e.kind === 'later') return [];
   if (e.kind === 'need') return l === 'drink' ? ['drink'] : l === 'food' ? ['food'] : l === 'toilet' ? ['toilet'] : l === 'pain' ? ['pain'] : l === 'tired' ? ['tired'] : [];
   const out: Tag[] = [];
   if (DRINK.test(l) || (/\bsomething to drink\b/.test(q) && l === 'yes')) out.push('drink');
@@ -216,5 +226,5 @@ export function markDiary(diary: DiaryEntry[], since: number | null, now: number
 
 /** The span as plain text, for "Copy for a visit": day by day, a time and what was entered. No count, no advice. */
 export function diaryText(entries: DiaryEntry[], words: { log: Record<LogKind, string>; lessSure: string; need: string }): string {
-  return byDay(entries).reverse().map((d) => `${dayText(d.day)}\n${d.entries.map((e) => `  ${timeText(e.at)}  ${e.kind === 'log' ? words.log[e.log!] : e.kind === 'need' ? `${words.need} ${e.label}` : `${e.q} ${e.label}`}${e.lessSure ? ` (${words.lessSure})` : ''}`).join('\n')}`).join('\n');
+  return byDay(entries).reverse().map((d) => `${dayText(d.day)}\n${d.entries.map((e) => `  ${timeText(e.at)}  ${e.kind === 'log' ? words.log[e.log!] : e.kind === 'need' ? `${words.need} ${e.label}` : e.kind === 'later' ? `Left for later: ${e.q}` : `${e.q} ${e.label}`}${e.lessSure ? ` (${words.lessSure})` : ''}`).join('\n')}`).join('\n');
 }

@@ -10,6 +10,7 @@
 
 import { P5 } from './copy5';
 import { P6 } from './copy6';
+import { P9 } from './copy9';
 import { byDay, dayStart, dayText, daysBefore, events, tags, type DiaryEntry } from './diary';
 
 export const SINCE_DAYS = 30;
@@ -70,6 +71,7 @@ export function sinceLines(diary: DiaryEntry[], since: number | null | undefined
   const hardEntries = entries.filter((e) => tags(e).some((t) => t === 'strong-pain' || t === 'place-pain'));
   const hard = uniqueDays([...hardEntries.map((e) => e.at), ...ownDays('hard')]);
   const falls = tagged('fall');
+  const left = entries.filter((e) => e.kind === 'later' && (e.q ?? '').trim());
   const days = byDay(entries);
   const dryDays = days.filter((d) => d.day !== dayStart(now) && events(d.entries, 'drink').length === 0);
   const dry = dryDays.length;
@@ -81,6 +83,8 @@ export function sinceLines(diary: DiaryEntry[], since: number | null | undefined
   const rows: [string, SinceSource][] = [
     [S.pain(pain.length, named(pain), with_('pain')), { ids: ids(tagged('pain')), note: '' }],
     ...(hard.length ? [[S.strong(named(hard)), { ids: ids(hardEntries), note: '' }] as [string, SinceSource]] : []),
+    // (phase 9) a care question left for later is named, so the visit hears of it even when it was never asked again
+    ...(left.length ? [[P9.since.later(left.map((e) => ({ q: e.q ?? '', day: dayText(e.at) }))), { ids: ids(left), note: '' }] as [string, SinceSource]] : []),
     [S.falls(falls.length, named(uniqueDays(falls.map((e) => e.at)))), { ids: ids(falls), note: '' }],
     [S.drinks(dry, full.length, least ? { n: least.n, day: dayText(least.day) } : undefined), { ids: ids(dryDays.flatMap((d) => d.entries)), note: dry ? P6.source.noDrink : '' }],
     [S.mood(low.length, named(low), with_('low')), { ids: ids(tagged('low-mood')), note: '' }],

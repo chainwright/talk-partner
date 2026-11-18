@@ -691,6 +691,10 @@
 .simple .later { display: grid; gap: 8px; }
 .simple .later-item { border: 2px solid var(--accent); background: var(--accent-soft); border-radius: 16px; padding: 12px 14px; display: grid; gap: 8px; color: var(--ink); }
 .simple .later-item b { font-size: 18px; line-height: 1.3; }
+/* phase 9: a care question left for later is pinned first and marked by its border, not by colour alone (the pain line says it in words) */
+.simple .later-item.care { border-width: 3px; border-style: double; }
+.simple .later-item .later-pain { margin: 0; }
+.simple .later-found { margin: 0; }
 /* phase 8: the routing chip over a card an AI made (where the SDK ran it, and why) */
 .simple .route-chip { display: flex; gap: 8px; align-items: flex-start; font-size: 15px; line-height: 1.35; color: var(--ink); margin: 0; }
 .simple .route-chip .sg { width: 22px; height: 22px; flex: none; margin-top: 1px; }

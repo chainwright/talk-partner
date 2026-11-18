@@ -356,6 +356,12 @@ const COPY = {
       ask: 'Ask it again',
       done: 'Done',
       note: 'Kept on this computer for a day. Nothing is sent.',
+      /** Phase 9 (judge round 8, a health P0): a care question stays pinned until the carer has found out. */
+      careNote: 'A question about pain, the body, the toilet, a drink or feelings stays here until you have found out. Kept on this computer. Nothing is sent.',
+      painLine: "If the pain is new or strong, don't wait: call the nurse or doctor.",
+      found: 'Did you find out?',
+      foundYes: 'Yes',
+      foundNo: 'Not yet',
     },
     /** The one skill that makes a choice card work (SCA: give time). Visible on the steps and on the hand-over screen. */
     wait: (name: string) => `Wait. Count to ten. Don't answer for ${name || 'them'}.`,

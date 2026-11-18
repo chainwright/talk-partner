@@ -101,11 +101,19 @@ export function howBlock(name: string, open: boolean): string {
   return `<section class="how" id="how" aria-labelledby="how-h"><div class="how-head"><h2 id="how-h">${H.title}</h2><button type="button" class="tog" data-act="how" aria-expanded="true">${H.hide}</button></div><ol>${steps}</ol></section>`;
 }
 
-/** Phase 8: one card for each question left for later, newest first: tap to ask it again, or "Done". */
-export function laterBlock(items: { q: string; time: string; i: number }[]): string {
+/**
+ * Phase 8: one card for each question left for later, newest first: tap to ask it again, or "Done". Phase 9: a care
+ * question (pain, the body, the toilet, a drink, feelings) is pinned first; its "Done" first asks "Did you find out?"
+ * (`asking`), and under a pain question stands the line that new or strong pain does not wait.
+ */
+export function laterBlock(items: { q: string; time: string; i: number; care?: boolean; pain?: boolean; asking?: boolean }[]): string {
   const L = COPY.simple.later;
   if (!items.length) return '';
-  return `<div class="later" id="later">${items.map((x) => `<div class="later-item" data-later="${x.i}"><p><b>${esc(L.line(x.q, x.time))}</b></p><div class="two-btn"><button type="button" class="btn" data-act="later-ask" data-i="${x.i}">${L.ask}</button><button type="button" class="btn quiet" data-act="later-done" data-i="${x.i}">${L.done}</button></div></div>`).join('')}<p class="tip">${L.note}</p></div>`;
+  const buttons = (x: (typeof items)[number]) => (x.asking
+    ? `<p class="later-found" id="later-found-${x.i}" tabindex="-1"><b>${L.found}</b></p><div class="two-btn"><button type="button" class="btn" data-act="later-found" data-i="${x.i}">${L.foundYes}</button><button type="button" class="btn quiet" data-act="later-notyet" data-i="${x.i}">${L.foundNo}</button></div>`
+    : `<div class="two-btn"><button type="button" class="btn" data-act="later-ask" data-i="${x.i}">${L.ask}</button><button type="button" class="btn quiet" data-act="later-done" data-i="${x.i}">${L.done}</button></div>`);
+  const item = (x: (typeof items)[number]) => `<div class="later-item${x.care ? ' care' : ''}" data-later="${x.i}"${x.care ? ' data-care="1"' : ''}><p><b>${esc(L.line(x.q, x.time))}</b></p>${x.pain ? `<p class="warn later-pain">${esc(L.painLine)}</p>` : ''}${buttons(x)}</div>`;
+  return `<div class="later" id="later">${items.map(item).join('')}<p class="tip">${items.some((x) => x.care) ? L.careNote : L.note}</p></div>`;
 }
 
 /**
