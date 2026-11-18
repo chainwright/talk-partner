@@ -11,10 +11,12 @@
 import type { PartnerAction } from '../../core/actions';
 import { COPY } from '../../core/copy';
 import { NARROW_LEVELS } from '../../core/narrow';
+import { cropRect, PHOTO_CAP, WORD_MAX, type Frame, type Photo } from '../../core/photos';
 import type { Learned } from '../../core/prefs';
 import type { MadeWhere } from '../../core/simple';
 import type { Topic, TopicId } from '../../core/topics';
 import type { Card, Choice, Profile } from '../../core/types';
+import { builtinPicto } from './pictos';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
@@ -26,6 +28,7 @@ export const SIGN = {
   maybe: sign('<path d="M28 72a16 16 0 01-2-32 22 22 0 0142-6 18 18 0 014 38z" stroke-dasharray="9 9"/>'),
   info: sign('<circle cx="48" cy="48" r="36"/><path d="M48 44v24"/><circle cx="48" cy="29" r="2" fill="currentColor"/>'),
   back: sign('<path d="M56 20L28 48l28 28"/>'),
+  photo: sign('<rect x="10" y="24" width="76" height="56" rx="10"/><circle cx="48" cy="52" r="15"/><path d="M34 24l6-10h16l6 10"/>'),
   home: sign('<path d="M14 46L48 16l34 30"/><path d="M24 40v40h48V40"/><path d="M40 80V58h16v22"/>'),
   grid: sign('<rect x="14" y="14" width="28" height="28" rx="6"/><rect x="54" y="14" width="28" height="28" rx="6"/><rect x="14" y="54" width="28" height="28" rx="6"/><rect x="54" y="54" width="28" height="28" rx="6"/>'),
   person: sign('<circle cx="48" cy="30" r="14"/><path d="M20 84c2-18 14-28 28-28s26 10 28 28"/>'),
@@ -39,16 +42,9 @@ export const SIGN = {
   point: sign('<rect x="12" y="8" width="44" height="60" rx="6"/><rect x="20" y="18" width="28" height="16" rx="4"/><rect x="20" y="40" width="28" height="16" rx="4"/><path d="M48 92V60a6 6 0 0112 0v12l14 2a8 8 0 016 8v10"/>'),
   check: sign('<path d="M16 16h52a8 8 0 018 8v24a8 8 0 01-8 8H40L24 70V56h-8a8 8 0 01-8-8V24a8 8 0 018-8z"/><path d="M26 36l10 10 20-20"/>'),
 };
-/** One sign per topic tile (decorative: the word is always next to it). */
-const TOPIC_SIGN: Record<TopicId, string> = {
-  food: sign('<path d="M18 36h48v15a24 24 0 01-48 0z"/><path d="M66 39h9a9 9 0 010 18h-9"/><path d="M33 12v12M48 12v12"/>'),
-  body: sign('<circle cx="48" cy="18" r="9"/><path d="M24 39h48M48 30v30l-15 27M48 60l15 27"/>'),
-  rest: sign('<path d="M12 66h72M12 78V36M84 78V60a12 12 0 00-12-12H36v18"/><circle cx="24" cy="51" r="6"/>'),
-  people: sign('<circle cx="33" cy="30" r="12"/><circle cx="66" cy="36" r="9"/><path d="M9 81c3-18 12-27 24-27s21 9 24 27M54 60c12-3 27 3 33 21"/>'),
-  feel: sign('<circle cx="48" cy="48" r="36"/><path d="M33 57c9 9 21 9 30 0"/><circle cx="36" cy="39" r="2" fill="currentColor"/><circle cx="60" cy="39" r="2" fill="currentColor"/>'),
-  plans: sign('<rect x="12" y="21" width="72" height="63" rx="9"/><path d="M12 39h72M30 12v18M66 12v18"/>'),
-  fun: sign('<rect x="12" y="24" width="72" height="48" rx="6"/><path d="M36 84h24M36 12l12 12 12-12"/>'),
-};
+/** One colour picture per topic tile, from the same set as the choices (decorative here: the word is always next to it). */
+const deco = (id: string) => builtinPicto(id).replace(/role="img" aria-label="[^"]*"/, 'class="tp" aria-hidden="true" focusable="false"');
+const TOPIC_SIGN: Record<TopicId, string> = { food: deco('food'), body: deco('body:whole'), rest: deco('bed'), people: deco('family'), feel: deco('good'), plans: deco('plans'), fun: deco('tv') };
 
 export interface HomeModel {
   /** The person's name, or '' when About them has none yet (then the words say "them", never "him" or "her"). */
@@ -471,7 +467,46 @@ export function learnedBlock(m: { name: string; lines: Learned[]; facts: string[
     ${lines ? `<button type="button" class="btn quiet" data-act="learned-forget">${L.forget}</button>` : ''}</section>`;
 }
 
-export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved: boolean; learned?: Learned[]; learnedShort?: string[] | null }): string {
+/** The family's own photos: each with its word and "Delete", "Add a photo", and "Delete all photos". On this device only. */
+export function photosBlock(m: { name: string; photos: Photo[]; error?: string }): string {
+  const P = COPY.simple.photos;
+  const tiles = m.photos.map((p) => `<li data-id="${esc(p.id)}"><img class="photo own" src="${p.data}" alt=""><b>${esc(p.word)}</b><button type="button" class="btn quiet small-btn" data-act="photo-del" data-id="${esc(p.id)}" aria-label="${P.del}: ${esc(p.word)}">${P.del}</button></li>`).join('');
+  const full = m.photos.length >= PHOTO_CAP;
+  return `<section class="photos" id="photos" aria-labelledby="photos-h"><h2 id="photos-h">${esc(P.heading(m.name))}</h2>
+    <p class="tip">${P.why}</p>
+    <p class="lock" id="photos-lock">${SIGN.lock}<span>${P.lock}</span></p>
+    ${tiles ? `<ul class="photo-list" id="photo-list">${tiles}</ul>` : `<p class="tip" id="photos-none">${P.none}</p>`}
+    ${m.error ? `<p class="warn" role="alert" id="photo-error">${esc(m.error)}</p>` : ''}
+    ${full ? `<p class="tip">${P.full}</p>` : `<button type="button" class="btn" data-act="photo-new">${SIGN.photo}<span>${P.add}</span></button><input type="file" id="photo-file" accept="image/*" hidden>`}
+    ${tiles ? `<button type="button" class="btn quiet" data-act="photo-del-all">${P.delAll}</button>` : ''}</section>`;
+}
+
+/** Where the picture sits in the square viewport for a frame, as CSS (percent of the viewport): the same arithmetic as the crop. */
+export function frameStyle(f: Frame, w: number, h: number): string {
+  const r = cropRect(f, w, h);
+  const width = (w / r.side) * 100;
+  const height = (h / r.side) * 100;
+  return `width:${width.toFixed(3)}%;height:${height.toFixed(3)}%;left:${(-(r.x / r.side) * 100).toFixed(3)}%;top:${(-(r.y / r.side) * 100).toFixed(3)}%`;
+}
+
+export interface PhotoDraftModel { src: string; w: number; h: number; frame: Frame; step: 'frame' | 'label'; framed: string; word: string; error: string }
+/** Adding a photo, in two steps over the screen: frame it by hand (move, zoom), then give it its word. */
+export function photoSheet(m: PhotoDraftModel): string {
+  const P = COPY.simple.photos;
+  const body = m.step === 'frame'
+    ? `<h2 id="photo-h" tabindex="-1">${P.frame.heading}</h2><p>${P.frame.how}</p>
+  <div class="crop" id="crop" tabindex="0" role="img" aria-label="${P.frame.view}"><img id="crop-img" src="${m.src}" alt="" draggable="false" style="${frameStyle(m.frame, m.w, m.h)}"></div>
+  <div class="zoom"><button type="button" class="btn" data-act="photo-zoom" data-by="-0.25" aria-label="${P.frame.zoomOut}">−</button><input type="range" id="crop-zoom" min="1" max="4" step="0.05" value="${m.frame.zoom}" aria-label="${P.frame.zoom}"><button type="button" class="btn" data-act="photo-zoom" data-by="0.25" aria-label="${P.frame.zoomIn}">+</button></div>
+  <div class="choice"><button type="button" class="btn primary" data-act="photo-use">${P.frame.use}</button><button type="button" class="btn" data-act="photo-cancel">${P.frame.cancel}</button></div>`
+    : `<h2 id="photo-h" tabindex="-1">${P.label.heading}</h2>
+  <form id="photo-form" class="photo-form"><img class="photo own big" id="photo-framed" src="${m.framed}" alt=""><p>${P.label.how}</p>
+  <label for="photo-word">${P.label.field}</label><input id="photo-word" class="field" autocomplete="off" autocapitalize="none" maxlength="${WORD_MAX}" value="${esc(m.word)}">
+  ${m.error ? `<p class="warn" role="alert" id="photo-error">${esc(m.error)}</p>` : ''}
+  <div class="choice"><button type="submit" class="btn primary">${P.label.save}</button><button type="button" class="btn" data-act="photo-reframe">${P.label.back}</button><button type="button" class="btn" data-act="photo-cancel">${P.frame.cancel}</button></div></form>`;
+  return `<div class="dim"></div><div class="sheet photo-sheet" id="photo-sheet" role="dialog" aria-modal="true" aria-labelledby="photo-h">${body}</div>`;
+}
+
+export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved: boolean; learned?: Learned[]; learnedShort?: string[] | null; photos?: Photo[]; photoError?: string }): string {
   const S = COPY.simple.about;
   const A = COPY.about;
   const p = m.profile;
@@ -493,7 +528,7 @@ export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved:
   const names = [p.personName, p.partnerName].filter(Boolean);
   return `<main class="simple wrap one about-simple" data-screen="about">
   ${navBar({ back: true })}
-  <div><h1>${esc(A.heading(p.personName))}</h1><p class="sub">${esc(S.sub(p.personName))}</p></div>
+  <div><h1>${esc(COPY.simple.aboutLink(p.personName))}</h1><p class="sub">${esc(S.sub(p.personName))}</p></div>
   <p class="lock banner">${SIGN.lock}<span>${S.lock}</span></p>
   <p class="tip">${esc(A.nudge(p.personName))}</p>
   <form id="about" class="rows">
@@ -507,7 +542,9 @@ export function aboutSimple(m: { profile: Profile; open: AboutRow | null; saved:
   </form>
   <p id="saved" class="saved" role="status">${m.saved ? A.saved : ''}</p>
   <a class="btn primary" href="#/">${A.done}</a>
+  ${photosBlock({ name: p.personName, photos: m.photos ?? [], error: m.photoError })}
   ${learnedBlock({ name: p.personName, lines: m.learned ?? [], facts: p.other ?? [], short: m.learnedShort ?? null })}
+  <button type="button" class="btn quiet danger" id="delete-everything" data-act="delete-all">${COPY.simple.photos.everything}</button>
   <p class="small muted more">${S.more} <button type="button" class="tlink" data-act="inside-about">${S.moreLink} →</button></p>
 </main>`;
 }

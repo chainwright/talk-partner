@@ -50,7 +50,7 @@ describe('what a narrowing step is built from', () => {
   });
   it('the text both steps get holds the question and what did not fit, and nothing the person chose', async () => {
     const i = await input();
-    expect(narrowAsk(i)).toBe('Would you like tea or coffee? They did not want: tea, coffee. What else could it be? Do not give more of the same kind as the ones they did not want. Give two or three broader, different kinds of answer: a kind such as "something cold" or "something to eat", not one more single thing.');
+    expect(narrowAsk(i)).toBe('Would you like tea or coffee? They did not want: tea, coffee. What else could it be? Do not give more of the same kind as the ones they did not want, and none of those again. Give two or three broader, different kinds of answer: a kind such as "something cold" or "something to eat", not one more single thing.');
     expect(narrowAsk(i)).not.toMatch(/pain|Jen|yes/);
     // only the on-device text adds the answers so far
     expect(narrowDeviceAsk(i)).toContain('Answered earlier today: "Are you in pain?" -> yes; "Would you like to call Jen?" -> no.');

@@ -78,7 +78,7 @@ export function narrowAsk(i: Pick<NarrowInput, 'asked' | 'rejected'>): string {
 /** The part that comes from the conversation (and is stripped of About-me words before the cloud step). */
 const narrowFacts = (i: Pick<NarrowInput, 'asked' | 'rejected'>) => `${i.asked}${i.rejected.length ? ` They did not want: ${i.rejected.join(', ')}.` : ''}`;
 /** The part that is the app's own fixed wording: the same for every question, so it is not put through the name guesser. */
-export const NARROW_TASK = 'What else could it be? Do not give more of the same kind as the ones they did not want. Give two or three broader, different kinds of answer: a kind such as "something cold" or "something to eat", not one more single thing.';
+export const NARROW_TASK = 'What else could it be? Do not give more of the same kind as the ones they did not want, and none of those again. Give two or three broader, different kinds of answer: a kind such as "something cold" or "something to eat", not one more single thing.';
 /** The on-device step also gets the answers confirmed so far today. This text never goes to the cloud step. */
 export function narrowDeviceAsk(i: NarrowInput): string {
   const so = i.sofar.slice(-6).map((a) => `"${a.q}" -> ${a.label}`).join('; ');

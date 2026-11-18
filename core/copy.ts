@@ -373,6 +373,22 @@ const COPY = {
     tipsLess: 'Fewer tips',
     /** The bar at the top of every carer screen. */
     nav: { back: 'Back', home: 'Home', homeLabel: 'Talk Partner: Home, the first screen' },
+    /** About them: the family's own photos (core/photos.ts). Framed by hand, labelled with one word, kept on this device. */
+    photos: {
+      heading: (name: string) => `${name ? `${name}'s` : 'Their'} own photos`,
+      why: 'A photo of a person, a food or drink, or a place they know. A card shows it in place of the drawing wherever its word is one of the choices.',
+      lock: 'Photos stay on this computer only. They are never sent anywhere, and no AI looks at them.',
+      add: 'Add a photo',
+      full: 'That is the most photos the app keeps (60). Delete one to add another.',
+      del: 'Delete',
+      delAll: 'Delete all photos',
+      delAllConfirm: 'Delete all the photos from this computer?',
+      none: 'No photos yet.',
+      badFile: 'This file could not be opened as a picture. Try another photo.',
+      frame: { heading: 'Frame the picture', how: 'Move the picture and zoom, so the one thing fills the square.', zoomOut: 'Zoom out', zoomIn: 'Zoom in', zoom: 'Zoom', use: 'Use this', cancel: 'Cancel', view: 'The picture: drag to move it' },
+      label: { heading: 'One word for it', how: 'The word as it stands on the cards: tea, Jen, garden. The card shows this photo when a choice is this word.', field: 'The word', save: 'Save photo', back: 'Frame it again', empty: 'Type the word first.' },
+      everything: 'Delete everything on this computer',
+    },
     /** About them: what the app counted from the answers on this device (core/prefs.ts). */
     learned: {
       heading: (name: string) => `What we've learned about ${name || 'them'}`,
@@ -497,7 +513,7 @@ const COPY = {
       none: 'Nothing added yet',
       change: 'Change',
       add: 'Add',
-      more: 'Photos, answers so far and "Delete everything" are inside:',
+      more: 'Nicknames, the answers so far and more are inside:',
       moreLink: 'Open the full page',
     },
     /** The way back from the full view, on every screen of it. */

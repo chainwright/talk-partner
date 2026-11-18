@@ -20,6 +20,10 @@ export const BUILTIN = new Set([
   'show me', 'draw', 'later', 'change topic',
   // the quick-needs board, 17 Nov 2026
   'toilet', 'drink', 'food', 'too hot', 'too cold', 'call someone',
+  // batch 2, 18 Nov 2026 (colour): what the topic questions and their trees offer
+  'water', 'juice', 'milk', 'hot drink', 'cold drink', 'snack', 'meal', 'something sweet', 'something savoury', 'hot meal', 'cold meal',
+  'bed', 'chair', 'tv', 'music', 'news', 'film', 'radio', 'paper', 'photos', 'now', 'morning', 'afternoon', 'stay in', 'go out',
+  'open', 'closed', 'glasses', 'hearing aid', 'company', 'time alone', 'walk', 'garden', 'drive', 'wash', 'exercises', 'quiet', 'just right', 'plans',
   'spouse', 'child', 'sibling', 'grandchild', 'friend', 'neighbour', 'carer', 'nurse', 'doctor', 'speech therapist', 'physio', 'priest', 'family', 'visitor',
 ]);
 
@@ -42,6 +46,11 @@ export const SYNONYM: Record<string, string> = {
   sad: 'bad', 'in pain': 'pain',
   // the three steps of the pain scale (17 Nov 2026) share the bar pictures
   'quite bad': 'some', 'very bad': 'a lot',
+  // batch 2 (18 Nov 2026): the words the topic cards and their trees use for a picture that is already drawn
+  'this morning': 'morning', 'this afternoon': 'afternoon', 'some time alone': 'time alone', hot: 'too hot', cold: 'too cold',
+  television: 'tv', telly: 'tv', newspaper: 'paper', movie: 'film', 'something to eat': 'food', 'something to drink': 'drink',
+  'something hot': 'hot drink', 'something cold': 'cold drink', people: 'family', 'a friend': 'friend', 'someone who helps': 'carer',
+  'stay at home': 'stay in', 'quiet time': 'quiet', 'some quiet': 'quiet', 'some company': 'company', 'a phone call': 'call someone',
   fine: 'okay', ok: 'okay', alright: 'okay', 'all right': 'okay', 'so-so': 'okay',
 };
 
@@ -56,8 +65,10 @@ export function pictureFor(label: string, profile: Profile): PictureRef {
   if (p) return { type: 'person', personId: p.id, initial: p.name.charAt(0).toUpperCase() };
   // a role word ("the carer", "a neighbour", "your daughter") shares its pictogram with its synonyms
   const bare = l.replace(/^(?:the|a|an|my|your|our|his|her|their)\s+/, '');
-  const syn = SYNONYM[bare];
+  const syn = SYNONYM[l] ?? SYNONYM[bare];
   if (syn && BUILTIN.has(syn)) return { type: 'builtin', id: syn };
+  // "your glasses", "the chair", "a hot meal": the picture of the thing itself
+  if (BUILTIN.has(bare)) return { type: 'builtin', id: bare };
   // A picture request carries one generic word (§2.20 gate): the label is lower-case as typed, has no digits and
   // holds no About-me term. An About-me item goes as its category ("food", "a place"); a capitalised word (a name
   // the profile doesn't know, a brand, a place) and anything else gets no cloud picture at all: the word alone shows.

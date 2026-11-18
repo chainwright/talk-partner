@@ -41,6 +41,12 @@ const TEXT = [
   ['ink', 'line', 'a button that is off (the main button while the choices are being found)'],
   ['how-ink', 'how-bg', '"How it works: 4 steps" (the steps, the folded line) and the "Wait. Count to ten." line'],
   ['how-bg', 'how-ink', 'the step numbers in that block'],
+  ['ink', 'panel', '18 Nov: "Back" and "Home" in the top bar, the line that says what to do now, a learned line, a photo\'s word'],
+  ['accent', 'panel', '18 Nov: the word "Home" in the top bar'],
+  ['muted', 'panel', '18 Nov: the small "Now:" over the line that says what to do'],
+  ['on-accent', 'accent', '18 Nov: "Next: ..." (the tree\'s next question), the bar "A newer version is ready. Tap to update."'],
+  ['ink', 'accent-soft', '18 Nov: "Usually: tea (5 of 7)"'],
+  ['no', 'panel', '18 Nov: "Delete everything on this phone"'],
   ];
 const UI = [
   ['field', 'bg', 'the edge of every button, field and row'],
@@ -64,6 +70,9 @@ const UI = [
   ['accent', 'accent-soft', 'the sign of an open topic'],
   ['muted', 'panel', 'the "?" sign after the way out'],
   ['field', 'panel', 'the edge of the "needs internet" tag'],
+  ['field', 'bg', '18 Nov: the edge of "Back" and "Home", of a photo in the list, of a learned line'],
+  ['accent', 'bg', '18 Nov: the edge of the line that says what to do now'],
+  ['no', 'bg', '18 Nov: the edge of "Delete everything on this phone"'],
 ];
 // the person's card: a white sheet in every theme (web/src/styles.css, .person)
 const CARD = [
@@ -71,6 +80,7 @@ const CARD = [
   ['#4a5361', '#ffffff', 'the person\'s screen: "Carer: hold here to go back", the edge of the way out'],
   ['#0b6e4f', '#ffffff', 'the person\'s screen: "Yes" and its tick, the finish tick, the edge of "Yes"'],
   ['#ffffff', '#0b6e4f', 'the person\'s screen: "Give the phone back"'],
+  ['#2b3440', '#ffffff', '18 Nov: the outline of every colour picture on the card and on a topic tile\'s white plate, the edge of a family photo'],
 ];
 
 let bad = 0;

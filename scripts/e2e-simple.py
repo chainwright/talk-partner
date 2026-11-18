@@ -20,6 +20,9 @@ What is checked (design/USER_FIRST.md, design/topics_2026-11-17):
   - what the app learns on this device by counting: nothing before three answers, then "Usually: coffee (3 of 3)" for
     the carer and the usual choice first (none removed, nothing chosen for the person); the list in About them with
     "Keep as a fact", "Remove" and "Forget everything learned"; the short question in a tree;
+  - the family's own photos: chosen in About them, framed by hand (zoom, drag, arrow keys), given one word, kept in
+    IndexedDB, shown on the card and on the person's screens before the drawing wherever a choice is that word;
+    "Delete", "Delete all photos", "Delete everything on this phone"; nothing asked of another host, nothing posted;
   - Back and Home on every carer screen, and the browser's own back button (one step back inside the app);
   - with a production build or the hosted copy (a service worker is there): the same flow with the connection off;
   - every control at least 24 px, every button at least 44 px, the main button at least 60 px, the person's choices
@@ -34,6 +37,7 @@ Usage: npm run build && npx vite preview (in another shell; or npm run dev with 
 Exit code 0 when every check passes, 1 otherwise.
 """
 import argparse
+import os
 import sys
 from urllib.parse import urlparse
 
@@ -42,6 +46,7 @@ from playwright.sync_api import sync_playwright
 PHONE_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36'
 TABLET_UA = 'Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36'
 OPEN_Q = 'What do you want to do this weekend?'
+FIXTURE_PHOTO = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tests', 'fixtures', 'photo-mug.jpg')
 
 results = []
 
@@ -412,7 +417,7 @@ def phone(browser, url, live):
     page.locator('#narrow').click()
     page.wait_for_selector('#sheet')
     line = page.locator('#sheet-line').inner_text().strip()
-    check('the narrowing step with online help off: the consent sheet, with the exact line (the question and what did not fit, nothing they chose)', line == 'Partner asks: Would you like water, juice or milk? They did not want: water, juice, milk. What else could it be? Do not give more of the same kind as the ones they did not want. Give two or three broader, different kinds of answer: a kind such as "something cold" or "something to eat", not one more single thing.', line)
+    check('the narrowing step with online help off: the consent sheet, with the exact line (the question and what did not fit, nothing they chose)', line == 'Partner asks: Would you like water, juice or milk? They did not want: water, juice, milk. What else could it be? Do not give more of the same kind as the ones they did not want, and none of those again. Give two or three broader, different kinds of answer: a kind such as "something cold" or "something to eat", not one more single thing.', line)
     check('asking for it sent nothing to any other host', len(outside) == n0, str(outside[n0:]))
     screen_checks(page, 'the consent sheet for a narrowing step')
     page.locator('[data-act=sheet-no]').click()
@@ -553,7 +558,7 @@ def phone(browser, url, live):
     check('About them has the top bar: "Back" and "Talk Partner / Home"', text(page, '#s-top') == 'Back Talk Partner Home')
     page.wait_for_selector('main.about-simple')
     about = text(page)
-    check('About them: four rows, "Everything here stays on this phone.", nothing required', page.locator('.rowhead').count() == 4 and 'Everything here stays on this phone.' in about and page.locator('input').count() == 0, about[:200])
+    check('About them: four rows, "Everything here stays on this phone.", nothing required', page.locator('.rowhead').count() == 4 and 'Everything here stays on this phone.' in about and page.locator('input:not([type=file])').count() == 0, about[:200])
     page.locator('.rowhead[data-row=names]').click()
     page.fill('input[data-field=personName]', 'Frank')
     page.fill('input[data-field=partnerName]', 'Carol')
@@ -665,6 +670,14 @@ def offline(browser, url):
     page.locator('.foot a[href="#/about"]').click()
     page.wait_for_selector('main.about-simple')
     check('offline: About them opens', page.locator('.rowhead').count() == 4)
+    add_photo(page, 'tea')
+    check('offline: a photo can be added with no connection (it never needed one)', page.locator('#photo-list li').count() == 1)
+    page.locator('[data-act=home]').click()
+    ask_topic(page, 'food', 'tea or coffee')
+    check('offline: the card shows the family\'s photo for "tea"', page.locator('#person .pt img.photo.own').count() == 1)
+    page.locator('[data-act=home]').click()
+    page.locator('.foot a[href="#/about"]').click()
+    page.wait_for_selector('main.about-simple')
     page.locator('a.btn.primary').click()
     page.wait_for_selector('main.simple.home')
     page.fill('#q', OPEN_Q)
@@ -768,6 +781,144 @@ def learning(browser, url):
     ctx.close()
 
 
+def add_photo(page, word, label='photos'):
+    """About them is open: choose the fixture photo, frame it by hand (zoom in, drag), give it its word, save."""
+    page.set_input_files('#photo-file', FIXTURE_PHOTO)
+    page.wait_for_selector('#photo-sheet #crop-img')
+    before = page.locator('#crop-img').get_attribute('style')
+    page.locator('[data-act=photo-zoom][data-by="0.25"]').click()
+    page.locator('[data-act=photo-zoom][data-by="0.25"]').click()
+    box = page.locator('#crop').bounding_box()
+    page.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2)
+    page.mouse.down()
+    page.mouse.move(box['x'] + box['width'] / 2 - 90, box['y'] + box['height'] / 2 - 20, steps=6)
+    page.mouse.up()
+    after = page.locator('#crop-img').get_attribute('style')
+    page.locator('[data-act=photo-use]').click()
+    page.wait_for_selector('#photo-word')
+    page.fill('#photo-word', word)
+    page.locator('#photo-form button[type=submit]').click()
+    page.wait_for_selector('#photo-sheet', state='detached')
+    return before, after
+
+
+def photos(browser, url):
+    """The family's own photos: added in About them, framed by hand, labelled with one word, shown on the card before the drawing; kept on this device; deleted one by one and all at once."""
+    host = urlparse(url).hostname
+    ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
+    outside = []
+    posted = []
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    page = ctx.new_page()
+    errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('dialog', lambda d: d.accept())
+    page.on('request', lambda r: posted.append(r.url) if r.method != 'GET' else None)
+    page.goto(url + '#/about')
+    page.wait_for_selector('main.about-simple #photos')
+    block = text(page, '#photos')
+    check('photos: About them has "Their own photos": what they are for, "No photos yet.", "Add a photo"', 'Their own photos' in block and 'A card shows it in place of the drawing wherever its word is one of the choices.' in block and 'No photos yet.' in block and page.locator('[data-act=photo-new]').is_visible(), block)
+    check('photos: the privacy line says exactly where they stay: "Photos stay on this phone only. They are never sent anywhere, and no AI looks at them."', text(page, '#photos-lock') == 'Photos stay on this phone only. They are never sent anywhere, and no AI looks at them.', text(page, '#photos-lock'))
+    screen_checks(page, 'photos: About them, no photos yet', primary=False)
+    # ---- choose a photo, frame it by hand
+    page.set_input_files('#photo-file', FIXTURE_PHOTO)
+    page.wait_for_selector('#photo-sheet #crop-img')
+    check('photos: a chosen photo opens "Frame the picture": a dialog over an inert screen, the picture in a square', page.locator('#photo-sheet[role=dialog][aria-modal=true]').count() == 1 and page.locator('main.about-simple[inert]').count() == 1 and abs(page.locator('#crop').bounding_box()['width'] - page.locator('#crop').bounding_box()['height']) < 1 and 'Move the picture and zoom, so the one thing fills the square.' in text(page, '#photo-sheet'))
+    screen_checks(page, 'photos: frame the picture')
+    style0 = page.locator('#crop-img').get_attribute('style')
+    page.locator('[data-act=photo-zoom][data-by="0.25"]').click()
+    page.locator('[data-act=photo-zoom][data-by="0.25"]').click()
+    style1 = page.locator('#crop-img').get_attribute('style')
+    box = page.locator('#crop').bounding_box()
+    page.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2)
+    page.mouse.down()
+    page.mouse.move(box['x'] + box['width'] / 2 - 90, box['y'] + box['height'] / 2 - 20, steps=6)
+    page.mouse.up()
+    style2 = page.locator('#crop-img').get_attribute('style')
+    check('photos: "+" zooms in (the slider follows), and a drag moves the picture inside its square', style0 != style1 and style1 != style2 and page.locator('#crop-zoom').input_value() == '1.5', f'{style0} | {style1} | {style2}')
+    page.locator('#crop').focus()
+    page.keyboard.press('ArrowLeft')
+    check('photos: with a keyboard the arrow keys move it', page.locator('#crop-img').get_attribute('style') != style2)
+    inside = page.evaluate("(() => { const c = document.querySelector('#crop').getBoundingClientRect(); const i = document.querySelector('#crop-img').getBoundingClientRect(); return i.left <= c.left + 3 && i.top <= c.top + 3 && i.right >= c.right - 3 && i.bottom >= c.bottom - 3; })()")
+    check('photos: the square is always filled by the picture (it cannot be dragged past an edge)', inside)
+    page.locator('[data-act=photo-use]').click()
+    page.wait_for_selector('#photo-word')
+    check('photos: then "One word for it": the framed square, a field for the word, "Save photo"', 'One word for it' in text(page, '#photo-sheet') and page.evaluate("document.querySelector('#photo-framed').naturalWidth") == 320 and page.evaluate("document.querySelector('#photo-framed').naturalHeight") == 320 and page.evaluate("document.activeElement.id") == 'photo-word')
+    screen_checks(page, 'photos: one word for it')
+    page.locator('#photo-form button[type=submit]').click()
+    check('photos: no word, no photo: "Type the word first."', text(page, '#photo-error') == 'Type the word first.' and page.locator('#photo-sheet').count() == 1)
+    page.fill('#photo-word', 'Tea')
+    page.locator('#photo-form button[type=submit]').click()
+    page.wait_for_selector('#photo-sheet', state='detached')
+    check('photos: saved: the photo stands in the list with its word and its own "Delete"', page.locator('#photo-list li').count() == 1 and page.locator('#photo-list li b').inner_text() == 'Tea' and page.locator('#photo-list [data-act=photo-del]').is_visible() and page.locator('[data-act=photo-del-all]').is_visible())
+    screen_checks(page, 'photos: About them, one photo', primary=False)
+    stored = page.evaluate("""() => new Promise((res) => { const r = indexedDB.open('talk-partner'); r.onsuccess = () => { const q = r.result.transaction('kv').objectStore('kv').get('photos'); q.onsuccess = () => res((q.result || []).map((p) => [p.word, p.data.slice(0, 23), p.data.length])); }; })""")
+    check('photos: it is kept in IndexedDB on this device (key "photos"): one small JPEG with its word', len(stored) == 1 and stored[0][0] == 'Tea' and stored[0][1] == 'data:image/jpeg;base64,' and 2000 < stored[0][2] < 120000, str(stored))
+    # ---- the card uses it
+    page.locator('[data-act=home]').click()
+    ask_topic(page, 'food', 'tea or coffee')
+    pics = page.evaluate("[...document.querySelectorAll('#person .pt')].map((t) => t.querySelector('img.photo.own') ? 'photo' : t.querySelector('svg') ? 'drawing' : 'word')")
+    check('photos: on the card the choice "tea" shows the family\'s photo, "coffee" and the way out keep their drawings', pics == ['photo', 'drawing', 'drawing'], str(pics))
+    screen_checks(page, 'photos: before handing over, with a photo')
+    page.locator('[data-act=show]').click()
+    page.wait_for_selector('main.pv .pt')
+    tile = page.evaluate("(() => { const t = document.querySelector('main.pv .pt'); const i = t.querySelector('img.photo.own').getBoundingClientRect(); const w = t.querySelector('span').getBoundingClientRect(); return { w: Math.round(i.width), h: Math.round(i.height), under: w.top >= i.bottom - 1, word: t.querySelector('span').innerText, loaded: t.querySelector('img').naturalWidth }; })()")
+    check("photos: the person's screen shows the photo, at least 60 px, with the word under it", tile['w'] >= 60 and tile['h'] >= 60 and tile['under'] and tile['word'] == 'tea' and tile['loaded'] == 320, str(tile))
+    screen_checks(page, "photos: the person's choices, with a photo", primary=False)
+    page.locator('main.pv .pt', has_text='tea').click()
+    page.wait_for_selector('[data-confirm=yes]')
+    check('photos: the check ("So: tea. Right?") and the finish show the same photo', page.locator('main.pv .p-pick img.photo.own').count() == 1)
+    page.locator('[data-confirm=yes]').click()
+    page.wait_for_selector('.p-give')
+    fin = page.locator('main.pv .p-pick img.photo.own').count() == 1
+    page.locator('.p-give').click()
+    page.wait_for_selector('main.simple.s-answered')
+    check('photos: and so does "Thank you. Tea."', fin)
+    page.wait_for_timeout(400)
+    page.reload()
+    page.wait_for_selector('main.simple.home')
+    ask_topic(page, 'food', 'tea or coffee')
+    check('photos: the photo is still there after a reload', page.locator('#person .pt img.photo.own').count() == 1)
+    # ---- another word: "your glasses" matches a photo called "glasses"
+    page.goto(url + '#/about')
+    page.wait_for_selector('#photos')
+    add_photo(page, 'glasses')
+    check('photos: a second photo, "glasses"', page.locator('#photo-list li').count() == 2)
+    page.locator('[data-act=home]').click()
+    ask_topic(page, 'body', 'glasses or your hearing aid')
+    pics = page.evaluate("[...document.querySelectorAll('#person .pt')].map((t) => t.querySelector('img.photo.own') ? 'photo' : t.querySelector('svg') ? 'drawing' : 'word')")
+    check('photos: the choice "your glasses" shows the photo called "glasses" (the word is compared without "your")', pics == ['photo', 'drawing', 'drawing'], str(pics))
+    # ---- delete one, delete all
+    page.goto(url + '#/about')
+    page.wait_for_selector('#photo-list')
+    page.locator('#photo-list li', has_text='Tea').locator('[data-act=photo-del]').click()
+    page.wait_for_timeout(300)
+    check('photos: "Delete" on one photo takes that one away', page.locator('#photo-list li').count() == 1 and page.locator('#photo-list li b').inner_text() == 'glasses')
+    page.locator('[data-act=home]').click()
+    ask_topic(page, 'food', 'tea or coffee')
+    check('photos: the choice "tea" is the drawing again', page.locator('#person .pt img').count() == 0 and page.locator('#person .pt svg').count() == 3)
+    page.goto(url + '#/about')
+    page.wait_for_selector('#photo-list')
+    add_photo(page, 'coffee')
+    page.locator('[data-act=photo-del-all]').click()
+    page.wait_for_selector('#photos-none')
+    left = page.evaluate("""() => new Promise((res) => { const r = indexedDB.open('talk-partner'); r.onsuccess = () => { const q = r.result.transaction('kv').objectStore('kv').get('photos'); q.onsuccess = () => res((q.result || []).length); }; })""")
+    check('photos: "Delete all photos" (after a yes) leaves none, on the screen and in IndexedDB', page.locator('#photo-list').count() == 0 and left == 0, str(left))
+    # ---- "Delete everything on this phone"
+    page.locator('.rowhead[data-row=names]').click()
+    page.fill('input[data-field=personName]', 'Frank')
+    add_photo(page, 'Frank')
+    page.wait_for_timeout(500)
+    check('photos: "Delete everything on this phone" is on About them', page.locator('#delete-everything').inner_text().strip() == 'Delete everything on this phone')
+    page.locator('#delete-everything').click()
+    page.wait_for_selector('main.simple.home')
+    keys = page.evaluate("""() => new Promise((res) => { const r = indexedDB.open('talk-partner'); r.onsuccess = () => { const q = r.result.transaction('kv').objectStore('kv').getAllKeys(); q.onsuccess = () => res(q.result); }; })""")
+    check('photos: "Delete everything" (after a yes) empties the app\'s storage: the name, the photos and the rest are gone', 'photos' not in keys and 'profile' not in keys and 'with Frank' not in text(page), str(keys))
+    check('photos: in the whole run nothing was asked of any other host, and nothing was posted anywhere (a photo never left the page)', not outside and not posted, f'{outside[:2]} {posted[:2]}')
+    check('photos: no page error', not errors, '; '.join(errors))
+    ctx.close()
+
+
 def words(browser, url, ua, word, label, width, height):
     host = urlparse(url).hostname
     ctx = browser.new_context(viewport={'width': width, 'height': height}, service_workers='block', **({'user_agent': ua} if ua else {}))
@@ -819,6 +970,7 @@ def main():
         print(f'browser: Chromium {browser.version} (headless)')
         phone(browser, url, a.live)
         learning(browser, url)
+        photos(browser, url)
         if a.dev:
             print('SKIP  offline: --dev (the dev server has no service worker; run against a production build)')
         else:

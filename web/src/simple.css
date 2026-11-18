@@ -60,6 +60,27 @@
 .simple .more-tips { justify-self: start; }
 .simple .more-body { display: grid; gap: 14px; }
 
+/* the family's own photos: a square with soft corners (a person's portrait stays round, styles.css) */
+.photo.own { border-radius: 14px; object-fit: cover; background: #fff; border: 2px solid #2b3440; }
+.simple .photos { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 10px; }
+.simple .photos h2 { font-size: 20px; line-height: 1.2; }
+.simple .photo-list { padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.simple .photo-list li { list-style: none; display: grid; justify-items: center; gap: 4px; border: 2px solid var(--field); background: var(--panel); border-radius: 14px; padding: 8px 6px; font-size: 17px; text-align: center; overflow-wrap: anywhere; min-width: 0; }
+.simple .photo-list .photo { width: 84px; height: 84px; }
+.simple .photo-list .btn { width: auto; min-height: 44px; padding: 4px 12px; }
+.simple .btn.danger { color: var(--no); border-color: var(--no); }
+.photo-sheet .crop { position: relative; width: min(300px, 100%); aspect-ratio: 1; margin: 0 auto; overflow: hidden; border-radius: 16px; border: 3px solid var(--ink); background: #fff; touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none; }
+.photo-sheet .crop img { position: absolute; max-width: none; pointer-events: none; }
+.photo-sheet .crop:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.photo-sheet .zoom { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; gap: 10px; align-items: center; }
+.photo-sheet .zoom .btn { min-height: 52px; font-size: 26px; padding: 0; }
+.photo-sheet .zoom input { width: 100%; min-height: 44px; accent-color: var(--accent); }
+.photo-sheet .photo-form { display: grid; gap: 10px; }
+.photo-sheet .photo.big { width: 160px; height: 160px; margin: 0 auto; display: block; }
+.photo-sheet .field { min-height: 56px; padding: 10px 14px; border-radius: 14px; border: 2px solid var(--field); background: var(--panel); color: var(--ink); font-size: 20px; width: 100%; }
+.photo-sheet label { font-weight: 600; }
+.photo-sheet .warn { color: var(--warn); }
+
 /* what was learned: a small line for the carer, and its list in About them */
 .simple .usual { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: var(--ink); background: var(--accent-soft); border-radius: 12px; padding: 6px 12px; justify-self: start; }
 .simple .usual .sg { width: 18px; height: 18px; color: var(--accent); }
@@ -124,7 +145,8 @@
 .simple .how :focus-visible, .simple .how-line:focus-visible { outline-color: var(--how-ink); }
 .simple .topics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .simple .topic { min-height: 64px; padding: 8px 10px; border-radius: 14px; border: 2px solid var(--field); background: var(--panel); color: var(--ink); font-weight: 700; font-size: 17px; line-height: 1.2; display: flex; align-items: center; gap: 8px; text-align: left; cursor: pointer; overflow-wrap: anywhere; min-width: 0; }
-.simple .topic .sg { width: 30px; height: 30px; color: var(--accent); }
+/* the topic's picture: on its own white plate, so it reads the same in the light and in the dark theme */
+.simple .topic .tp { width: 44px; height: 44px; flex: none; display: block; background: #fff; border-radius: 10px; padding: 3px; }
 .simple .topic span { min-width: 0; }
 .simple .topic.open { border-color: var(--accent); background: var(--accent-soft); }
 .simple .tqs { grid-column: 1 / -1; background: var(--panel); border: 2px solid var(--accent); border-radius: 14px; padding: 2px 0; display: grid; }
@@ -234,7 +256,7 @@
 .pv .p-ask.alone { font-size: 34px; padding: 40px 0; }
 .pv .p-tiles { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .pv .pt { width: 100%; min-height: 104px; padding: 10px 12px; border: 3px solid var(--ink); border-radius: 18px; background: #fff; color: var(--ink); font-family: inherit; font-size: 32px; font-weight: 700; line-height: 1.15; display: grid; justify-items: center; align-content: center; gap: 4px; cursor: pointer; overflow-wrap: anywhere; min-width: 0; }
-.pv .pt svg, .pv .pt .photo { width: 60px; height: 60px; }
+.pv .pt svg, .pv .pt .photo { width: 76px; height: 76px; }
 .pv .pt span { min-width: 0; max-width: 100%; }
 .pv .pt.wordonly { min-height: 96px; }
 .pv .pt.esc, .pv .pt.quiet { min-height: 84px; font-size: 26px; font-weight: 600; border-color: var(--muted); grid-auto-flow: column; justify-content: center; align-items: center; gap: 12px; }

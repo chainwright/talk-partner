@@ -24,6 +24,7 @@ Usage: npm run dev (in another shell), then
 Exit code 0 when every check passes, 1 otherwise.
 """
 import argparse
+import os
 import sys
 from urllib.parse import urlparse
 
@@ -60,6 +61,7 @@ def chip(page, text):
 
 
 PHONE_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36'
+FIXTURE_PHOTO = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tests', 'fixtures', 'photo-mug.jpg')
 LONG_Q = 'Do you want to go to the supermarket with Christopher or stay at home and watch television?'
 
 
@@ -280,6 +282,46 @@ def simple(url, width, browser):
     page.locator('.p-give').click()
     page.wait_for_selector('main.simple.s-answered')
     check(page, width, 'simple: after an answer with a long name')
+    # the family's own photos, and what was learned (18 Nov)
+    page.locator('[data-act=home]').click()
+    page.locator('.foot a[href="#/about"]').click()
+    page.wait_for_selector('main.about-simple #photos')
+    page.set_input_files('#photo-file', FIXTURE_PHOTO)
+    page.wait_for_selector('#photo-sheet #crop-img')
+    check(page, width, 'simple: adding a photo, "Frame the picture"')
+    page.locator('[data-act=photo-use]').click()
+    page.wait_for_selector('#photo-word')
+    check(page, width, 'simple: adding a photo, "One word for it"')
+    page.fill('#photo-word', 'chrysanthemums vase')
+    page.locator('#photo-form button[type=submit]').click()
+    page.wait_for_selector('#photo-sheet', state='detached')
+    page.set_input_files('#photo-file', FIXTURE_PHOTO)
+    page.wait_for_selector('#photo-sheet #crop-img')
+    page.locator('[data-act=photo-use]').click()
+    page.wait_for_selector('#photo-word')
+    page.fill('#photo-word', 'tea')
+    page.locator('#photo-form button[type=submit]').click()
+    page.wait_for_selector('#photo-sheet', state='detached')
+    check(page, width, 'simple: About them with two photos (a long word) and "What we have learned"')
+    page.locator('[data-act=home]').click()
+    for _ in range(3):
+        topic('food', 'tea or coffee')
+        show()
+        finish('coffee')
+        page.locator('.p-give').click()
+        page.wait_for_selector('main.simple.s-answered')
+        page.locator('[data-act=home]').click()
+    topic('food', 'tea or coffee')
+    page.wait_for_selector('#usual')
+    check(page, width, 'simple: before handing over, with "Usually: ..." and a family photo on a choice')
+    show()
+    check(page, width, "simple: the person's choices, one of them a family photo")
+    page.locator('#exit').dispatch_event('pointerdown')
+    page.wait_for_selector('main.simple.card', timeout=4000)
+    page.locator('[data-act=home]').click()
+    page.locator('.foot a[href="#/about"]').click()
+    page.wait_for_selector('#learned-list')
+    check(page, width, 'simple: About them, a learned line with "Keep as a fact" and "Remove"')
     ctx.close()
 
 

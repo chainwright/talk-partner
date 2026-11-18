@@ -25,13 +25,15 @@ import { asksWho, awayNames, callQuestion, followUps, nextInTopic, topics, type 
 import { after } from '../../core/tree';
 import { NOTHING_FORGOTTEN, checkedSummary, forgetAll, forgetOne, hints, keepOne, learned, learnedPrompt, shortcut, usual, usualFirst, usualHint, type Forgotten, type Need } from '../../core/prefs';
 import { spokenLine } from '../../core/rules';
+import { START_FRAME, addPhoto as addOwnPhoto, clampFrame, cleanWord, photoFor, removePhoto, type Frame, type Photo } from '../../core/photos';
+import { framed, loadPhoto, type Loaded } from './photo';
 import { stripQuestion } from '../../core/strip';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
 import { pickEngine } from './ai/pick';
 import { fetchSettings } from './ai/remoteConfig';
 import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile } from './pictos';
-import { aboutSimple, answeredScreen, cardScreen, consentSheet, homeScreen, personSimple, shortBlock, type AboutRow } from './simple';
+import { aboutSimple, answeredScreen, cardScreen, consentSheet, frameStyle, homeScreen, personSimple, photoSheet, shortBlock, type AboutRow } from './simple';
 import { kvClear, kvGet, kvSet } from './store';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
@@ -123,6 +125,11 @@ interface State {
   /** Simple view: "More tips" on the hand-over screen and "More" on the answered screen are open (closed for each new card). */
   tips: boolean;
   more: boolean;
+  /** The family's own photos (core/photos.ts), kept on this device only (IndexedDB key 'photos'). Never sent; no model looks at them. */
+  photos: Photo[];
+  /** A photo being added in About them: framed by hand, then given its word. */
+  photoDraft: { loaded: Loaded; frame: Frame; step: 'frame' | 'label'; framed: string; word: string; error: string } | null;
+  photoError: string;
   /** The needs pointed to on the quick-needs board, kept on this device (IndexedDB key 'needs'): for what is learned (core/prefs.ts). Never sent. */
   needsLog: Need[];
   /** What the carer removed, kept or reset of what was learned (IndexedDB key 'learned'). */
@@ -181,6 +188,9 @@ const state: State = {
   tips: false,
   more: false,
   chain: [],
+  photos: [],
+  photoDraft: null,
+  photoError: '',
   needsLog: [],
   forgotten: NOTHING_FORGOTTEN,
   learnedShort: null,
@@ -238,6 +248,7 @@ function go(r: Route | 'demo' | 'needs' | '') {
  */
 function backStep(from: string): string | null {
   if (state.sheet) { state.sheet = false; return from; }
+  if (state.photoDraft) { state.photoDraft = null; return from; }
   if (from === 'person' || from === 'needs') {
     const c = state.card;
     // the check ("So: tea. Right?") goes back to the choices; the choices go back to the carer's screen
@@ -272,7 +283,9 @@ const atHome = () => !hashNow() && !state.card && !state.busy && !state.sheet;
 const onGuard = () => !!(history.state as { tpGuard?: boolean } | null)?.tpGuard;
 /** Puts the guard over the entry the browser is on, and marks that entry as the one under it (a back press lands there). */
 function pushGuard(url: string) {
-  if (!(history.state as { tpBase?: boolean } | null)?.tpBase) history.replaceState({ tpBase: true }, '', location.href);
+  // the entry under the guard always carries the first screen's address, also when the page was opened on an inner
+  // one (a link straight to About them): a step back then lands on the first screen, never on the inner screen again
+  history.replaceState({ tpBase: true }, '', location.pathname + location.search);
   history.pushState({ tpGuard: true }, '', url);
 }
 let skipPop = false;
@@ -353,6 +366,8 @@ async function load() {
   if (Array.isArray(h)) state.history = h;
   const n = await kvGet<Need[]>('needs');
   if (Array.isArray(n)) state.needsLog = n;
+  const ph = await kvGet<Photo[]>('photos');
+  if (Array.isArray(ph)) state.photos = ph;
   const f = await kvGet<Forgotten>('learned');
   if (f) state.forgotten = { ...NOTHING_FORGOTTEN, ...f };
 }
@@ -871,6 +886,9 @@ const recapText = () => state.answers.map((a) => (a.topic ? `${a.topic}, ${a.lab
 // ---------------------------------------------------------------- person view (pane and full screen)
 function picture(ch: Choice): string {
   const p = ch.picture;
+  // the family's own photo comes before any generic picture, wherever its word is this choice (core/photos.ts: rules, no model)
+  const own = state.demo || ch.role !== 'answer' ? null : photoFor(ch.label, state.photos);
+  if (own) return `<img class="photo own" src="${own.data}" alt="">`;
   if (p.type === 'builtin') return builtinPicto(p.id);
   if (p.type === 'person') {
     const person = p.personId ? state.profile.people.find((x) => x.id === p.personId) : null;
@@ -1255,12 +1273,19 @@ function render(lifted = false) {
   // the card judge mode opens with is simply there: no entrance, so the very first frame is a finished card
   if (key !== lastKey && r === 'about' && simple) refreshLearnedShort();
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort }) : aboutScreen()) : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError }) : aboutScreen()) : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   keepGuard();
   if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);
   // the sheet is a dialog: the keyboard starts on its heading, and the screen under it is inert
   if (simple && state.sheet) document.querySelector<HTMLElement>('#sheet-h')?.focus();
+  // adding a photo (About them): a dialog over the screen, which is inert under it
+  if (simple && r === 'about' && state.photoDraft) {
+    const d = state.photoDraft;
+    app.querySelector('main')?.setAttribute('inert', '');
+    app.insertAdjacentHTML('beforeend', photoSheet({ src: d.loaded.src, w: d.loaded.w, h: d.loaded.h, frame: d.frame, step: d.step, framed: d.framed, word: d.word, error: d.error }));
+    document.querySelector<HTMLElement>(d.step === 'label' ? '#photo-word' : '#photo-h')?.focus();
+  }
   if (r === 'trial') {
     timer = setInterval(() => { const el = document.querySelector('#elapsed'); const c = trialClock(); if (el && c) el.textContent = c; }, 100);
   }
@@ -1490,6 +1515,39 @@ async function addPhoto(i: number, file: File) {
   saveProfile(); render();
 }
 
+// ---------------------------------------------------------------- the family's own photos (core/photos.ts, web/src/photo.ts)
+/** The file the carer took or chose becomes a picture to frame. Read in this page; nothing is uploaded. */
+async function openPhoto(file: File) {
+  try {
+    const loaded = await loadPhoto(file);
+    state.photoError = '';
+    state.photoDraft = { loaded, frame: clampFrame(START_FRAME, loaded.w, loaded.h), step: 'frame', framed: '', word: '', error: '' };
+  } catch {
+    state.photoDraft = null; state.photoError = C.simple.photos.badFile;
+  }
+  render();
+}
+/** A new frame (moved or zoomed), kept inside the picture: the picture is moved in place, without drawing the screen again. */
+function setFrame(f: Frame) {
+  const d = state.photoDraft;
+  if (!d) return;
+  d.frame = clampFrame(f, d.loaded.w, d.loaded.h);
+  const img = document.querySelector<HTMLElement>('#crop-img');
+  if (img) img.style.cssText = frameStyle(d.frame, d.loaded.w, d.loaded.h);
+  const z = document.querySelector<HTMLInputElement>('#crop-zoom');
+  if (z && Number(z.value) !== d.frame.zoom) z.value = String(d.frame.zoom);
+}
+function savePhoto() {
+  const d = state.photoDraft;
+  if (!d) return;
+  const word = cleanWord(document.querySelector<HTMLInputElement>('#photo-word')?.value ?? d.word);
+  const next = word ? addOwnPhoto(state.photos, { id: `ph${Date.now().toString(36)}`, word, data: d.framed, at: Date.now() }) : null;
+  if (!next) { d.word = word; d.error = C.simple.photos.label.empty; render(); return; }
+  state.photos = next; state.photoDraft = null;
+  void kvSet('photos', state.photos);
+  render();
+  document.querySelector<HTMLElement>('#photos')?.scrollIntoView({ block: 'nearest' });
+}
 function act(el: HTMLElement) {
   const a = el.dataset.act;
   const i = Number(el.dataset.person ?? -1);
@@ -1545,6 +1603,14 @@ function act(el: HTMLElement) {
     case 'learned-remove': state.forgotten = forgetOne(state.forgotten, el.dataset.key ?? '', Date.now()); saveForgotten(); refreshLearnedShort(); render(); break;
     case 'learned-forget': if (confirm(C.simple.learned.forgetConfirm)) { state.forgotten = forgetAll(Date.now()); state.needsLog = []; void kvSet('needs', []); saveForgotten(); refreshLearnedShort(); render(); } break;
     case 'fact-remove': state.profile.other = (state.profile.other ?? []).filter((_, k) => k !== Number(el.dataset.fact)); saveProfile(); render(); break;
+    // ---- the family's own photos (About them): chosen, framed by hand, given a word; kept on this device only
+    case 'photo-new': state.photoError = ''; document.querySelector<HTMLInputElement>('#photo-file')?.click(); break;
+    case 'photo-zoom': setFrame({ ...state.photoDraft!.frame, zoom: state.photoDraft!.frame.zoom + Number(el.dataset.by) }); break;
+    case 'photo-use': if (state.photoDraft) { const d = state.photoDraft; void framed(d.loaded, d.frame).then((data) => { if (state.photoDraft !== d) return; d.framed = data; d.step = 'label'; d.error = ''; render(); }); } break;
+    case 'photo-reframe': if (state.photoDraft) { state.photoDraft.step = 'frame'; state.photoDraft.error = ''; render(); } break;
+    case 'photo-cancel': state.photoDraft = null; render(); break;
+    case 'photo-del': state.photos = removePhoto(state.photos, el.dataset.id ?? ''); void kvSet('photos', state.photos); render(); break;
+    case 'photo-del-all': if (confirm(C.simple.photos.delAllConfirm)) { state.photos = []; void kvSet('photos', []); render(); } break;
     case 'row': { const row = el.dataset.row as AboutRow; state.aboutRow = state.aboutRow === row ? null : row; render(); break; }
     case 'less': state.less = !state.less; render(); break;
     case 'next':
@@ -1602,7 +1668,7 @@ function act(el: HTMLElement) {
       break;
     case 'delete-all':
       if (confirm(C.about.deleteConfirm)) {
-        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.needsLog = []; state.forgotten = NOTHING_FORGOTTEN; state.learnedShort = null; state.made = []; resetCard(); go('welcome'); });
+        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.needsLog = []; state.forgotten = NOTHING_FORGOTTEN; state.learnedShort = null; state.photos = []; state.photoDraft = null; state.made = []; resetCard(); go(simpleView() ? '' : 'welcome'); });
       }
       break;
     default:
@@ -1644,6 +1710,7 @@ app.addEventListener('click', (ev) => {
 app.addEventListener('submit', (ev) => {
   if ((ev.target as HTMLElement).id === 'ask') { ev.preventDefault(); void make(($('#q') as HTMLInputElement).value); }
   else if ((ev.target as HTMLElement).id === 'fb') { ev.preventDefault(); void submitFeedback(); }
+  else if ((ev.target as HTMLElement).id === 'photo-form') { ev.preventDefault(); savePhoto(); }
   // "Who? Type one name": one yes / no question about that one person, made by the rules
   else if ((ev.target as HTMLElement).id === 'who') { ev.preventDefault(); const n = ($('#who-name') as HTMLInputElement).value.trim(); if (n) { dictated = false; void make(callQuestion(n)); } }
   else ev.preventDefault();
@@ -1655,10 +1722,43 @@ app.addEventListener('change', (ev) => {
   if (t.id === 'support') { state.settings.support = (t as HTMLSelectElement).value as SupportLevel; saveSettings(); if (state.lastQuestion) void make(state.lastQuestion); return; }
   if (t.id === 'consent') { state.consentChecked = (t as HTMLInputElement).checked; render(); return; }
   if (t instanceof HTMLInputElement && t.dataset.photo !== undefined && t.files?.[0]) { void addPhoto(Number(t.dataset.photo), t.files[0]); return; }
+  if (t instanceof HTMLInputElement && t.id === 'photo-file' && t.files?.[0]) { void openPhoto(t.files[0]); return; }
   if (t instanceof HTMLInputElement && t.dataset.field === 'household') { state.profile.people[Number(t.dataset.person)].household = t.checked; saveProfile(); }
 });
+// framing by hand: drag the picture in its square (pointer), or move it with the arrow keys
+let dragAt: { x: number; y: number } | null = null;
+app.addEventListener('pointerdown', (ev) => {
+  const crop = (ev.target as HTMLElement).closest<HTMLElement>('#crop');
+  if (!crop || !state.photoDraft) return;
+  dragAt = { x: (ev as PointerEvent).clientX, y: (ev as PointerEvent).clientY };
+  crop.setPointerCapture?.((ev as PointerEvent).pointerId);
+});
+app.addEventListener('pointermove', (ev) => {
+  const d = state.photoDraft;
+  const crop = document.querySelector<HTMLElement>('#crop');
+  if (!dragAt || !d || !crop) return;
+  const e = ev as PointerEvent;
+  // the picture's size on the screen: the square shows `side` of its pixels across the viewport's width
+  const perPx = (Math.min(d.loaded.w, d.loaded.h) / d.frame.zoom) / crop.clientWidth;
+  setFrame({ ...d.frame, dx: d.frame.dx - ((e.clientX - dragAt.x) * perPx) / d.loaded.w, dy: d.frame.dy - ((e.clientY - dragAt.y) * perPx) / d.loaded.h });
+  dragAt = { x: e.clientX, y: e.clientY };
+});
+const endDrag = () => { dragAt = null; };
+app.addEventListener('pointerup', endDrag);
+app.addEventListener('pointercancel', endDrag);
+app.addEventListener('keydown', (ev) => {
+  const d = state.photoDraft;
+  const k = (ev as KeyboardEvent).key;
+  if (!d || (ev.target as HTMLElement).id !== 'crop' || !k.startsWith('Arrow')) return;
+  ev.preventDefault();
+  const step = 0.04 / d.frame.zoom;
+  setFrame({ ...d.frame, dx: d.frame.dx + (k === 'ArrowRight' ? step : k === 'ArrowLeft' ? -step : 0), dy: d.frame.dy + (k === 'ArrowDown' ? step : k === 'ArrowUp' ? -step : 0) });
+});
+
 app.addEventListener('input', (ev) => {
   const t = ev.target as HTMLInputElement | HTMLTextAreaElement;
+  if (t.id === 'crop-zoom' && state.photoDraft) { setFrame({ ...state.photoDraft.frame, zoom: Number(t.value) }); return; }
+  if (t.id === 'photo-word' && state.photoDraft) { state.photoDraft.word = t.value; return; }
   // typing takes over from the microphone; an emptied field holds no spoken question any more
   if (t.id === 'q') { if (voice.view().phase !== 'idle') voice.cancel(); if (!t.value.trim()) dictated = false; }
   if (t.id === 'q') { state.lastQuestion = t.value; if (step === 'waiting') step = 'cancelled'; return; }
@@ -1693,7 +1793,7 @@ app.addEventListener('keydown', (ev) => { if ((ev as KeyboardEvent).key === 'Ent
 // (a back press in the simple view is drawn by `popstate` above; the address change it brings is not drawn twice)
 window.addEventListener('hashchange', () => { if (simpleView() && hashNow() === drawnAt) return; draw(); });
 // the consent sheet: Escape is its "No"
-window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && state.sheet) { state.sheet = false; render(); } });
+window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && state.sheet) { state.sheet = false; render(); } else if (ev.key === 'Escape' && state.photoDraft) { state.photoDraft = null; render(); } });
 
 // The app shell is kept by a service worker (web/public/sw.js, its file list written at build time), so the page, the
 // rules, the topics, quick needs and About them open with no connection. Production builds only: the dev server has none.

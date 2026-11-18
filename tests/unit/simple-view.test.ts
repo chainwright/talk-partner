@@ -510,6 +510,6 @@ describe('simple view: About them', () => {
     const html = aboutSimple({ profile: { ...EMPTY_PROFILE, people: [] }, open: null, saved: false });
     expect(html.split(S.about.none).length - 1).toBe(4);
     expect(html.split(`>${S.about.add}<`).length - 1).toBe(4);
-    expect(html).toContain('About me');
+    expect(html).toContain('<h1>About them</h1>');
   });
 });
