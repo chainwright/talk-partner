@@ -1663,6 +1663,9 @@ def words(browser, url, ua, word, label, width, height):
     page.goto(url)
     page.wait_for_selector('main.simple.home')
     page.wait_for_timeout(7000)
+    # (phase 9: the 4 steps are folded on the first visit; "Show" opens them, where "Turn the … to them" stands)
+    page.locator('.how-line').click()
+    page.wait_for_selector('section.how li')
     home = text(page)
     others = [w for w in ('phone', 'tablet', 'computer') if w != word]
     check(f'{label}: the first screen says "this {word}" and "Turn the {word} to them"', f'Nothing you asked has left this {word} since the app was opened.' in home and f'Turn the {word} to them and say it out loud' in home and not any(f'this {o}' in home or f'the {o} ' in home for o in others), home[-300:])
@@ -2911,7 +2914,7 @@ def phase7(browser, url, live):
     check('passport: About Frank from About them (people, food and drink, places, TV, the family\'s own fact)', all(k in keys for k in ('about:people', 'about:foods', 'about:places', 'about:tv')) and 'People: Carol (wife, lives here), Beth (daughter), Tom (brother).' in lead and 'Bo is his dog' in lead, str(keys))
     check('passport, "Words that worked": the words found by their first letter with how often, and the usual choice with its count', 'Bo: found by its first letter, 2 times.' in lead and 'biscuits (ginger): found by its first letter, 1 time.' in lead and '"Would you like tea or coffee": usually tea (3 of 4).' in lead, lead[900:1500])
     check('passport, "Things Frank likes to talk about": Bo and Tom with their counts; not Beth (three times "no")', 'Bo: chosen, or yes to an offer about it, 4 times.' in lead and 'Tom: chosen, or yes to an offer about it, 3 times.' in lead and 'Beth: chosen' not in lead and 'It says what was chosen, not what is felt.' in lead)
-    check('passport, worst case: no habit about pain, the body or a need, and no usual "no", anywhere on it (the answers held "no" to pain and to a drink three times each, and "toilet" four times)', not re.search(r'in pain|says no|something to drink|needs board|toilet', lead.replace('Ask about pain, drinks and the toilet every time.', ''), re.I), lead)
+    check('passport, worst case: no habit about pain, the body or a need, and no usual "no", anywhere on it (the answers held "no" to pain and to a drink three times each, and "toilet" four times)', not re.search(r'in pain|says no|something to drink|needs board|toilet', lead.replace('Ask about pain, drinks and the toilet every time.', '').replace("But a yes to pain, the toilet or 'something's wrong' is always a yes: act on it.", ''), re.I), lead)
     wrong = text(page, '.pass-sec[data-sec=wrong]')
     check('passport, "If something is wrong": the emergency number and the fixed text of phase 5 (FAST), always on the page, with no box', 'Always on the page' in wrong and 'Emergency number: 911.' in wrong and 'If you see any one of these, and it is new or sudden, call 911 now. Do not wait to see if it passes.' in wrong and 'Face: One side of the face has dropped, or the smile is uneven.' in wrong and 'Time: Call now. Note the time it started: the ambulance crew will ask.' in wrong and 'Worried, and it is not sudden: call the doctor or nurse today.' in wrong and page.locator('.pass-sec[data-sec=wrong] input').count() == 0, wrong)
     check('passport, first screen: nothing can be printed or shared from here (only "Look at the page")', page.locator('[data-act=page-print], [data-act=share-page]').count() == 0 and text(page, '#pass-look') == 'Look at the page')

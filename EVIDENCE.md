@@ -249,3 +249,28 @@ card); against the dev server with the debug token (`cloud/e2e-cloud_devserver_d
 
 Not run for phase 8: any of it with a carer, a speech therapist, a nurse or a person with aphasia; a real phone; the
 hosted copy; `e2e-speak.py` (Read aloud against the real model); `update-check.py`; `e2e-noconfig.mjs`.
+
+## Phase 9 (18 Nov 2026): rows 125 to 136
+The fixes of judge round 8. All of it on a production build of HEAD on localhost (`npx vite preview`, port 5495),
+built in a separate git worktree so that `dist/` and the previews running on ports 5301 and 5181 were not touched.
+No run of phase 9 sent anything: every request to another host was refused, or, for the slow cloud wait, held and
+never let through. Nothing of phase 9 was deployed or pushed. Saved outputs are in `devlog/evidence_phase9/`
+(`local/` for the full runs, `shots_390/` for `phase9-shots.py`).
+
+| Row | File | Command | Saved output |
+|---|---|---|---|
+| 125, 133 | `core/later.ts`, `core/diary.ts`, `core/since.ts`, `web/src/simple.ts`, `web/src/main.ts` | `npx vitest run tests/unit/phase9.test.ts`; `python3 scripts/phase9-shots.py --url http://localhost:5495/` | `shots_390/02_*` to `06_*`; `local/phase9-shots_local.txt` |
+| 126 | `core/insights.ts`, `core/copy9.ts` | the same; `tests/unit/insights.test.ts`, `frank-week.test.ts` | `shots_390/07_*` |
+| 127 | `core/tree.ts`, `core/later.ts` (`noLastTime`), `core/copy8.ts` | `npx vitest run tests/unit/phase9.test.ts` | `local/check_local.txt` |
+| 128 | `core/redflag.ts`, `web/src/phase5.ts` | the same; `phase9-shots.py` (a context with locale en-GB) | `shots_390/09_*` |
+| 129 | `core/share.ts`, `core/since.ts`, `core/visit.ts` | the same; `e2e-simple.py` (the visit walk) | `shots_390/08_*`; `local/e2e-simple_local.txt` |
+| 130 | `core/engine.ts`, `core/pipeline.ts`, `web/src/main.ts` | `phase9-shots.py` (online help on, Google's hosts held) | `shots_390/12_*` to `14_*` |
+| 131 | `core/simple.ts`, `web/src/simple.ts`, `web/src/main.ts` | `phase9-shots.py` (stops at the sheet) | `shots_390/10_*`, `11_*` |
+| 132 | `core/prompt.ts`, `core/requests.ts`, `core/letter.ts`, `web/src/ai/firebaseEngine.ts` | `npx vitest run tests/unit/phase9.test.ts tests/unit/letter.test.ts` | `local/check_local.txt` |
+| 134 | `web/src/main.ts` | `phase9-shots.py` (360 x 740 and 390 x 844) | `shots_390/01_*` |
+| 135 | `core/copy.ts`, `tests/unit/docs-truth.test.ts` | `npx vitest run tests/unit/docs-truth.test.ts` | `local/check_local.txt` |
+| 136 | `web/src/main.ts`, `scripts/e2e-simple.py` | a 20- and a 30-reload repro on the dev server (port 5493), not kept as a script | `devlog/DAY19.md` |
+
+Not run for phase 9: any of it with a carer, a speech therapist, a nurse or a person with aphasia; a real phone; the
+hosted copy; any run with a real model (the cloud letter step, the cloud card after "See the AI at work", the live
+latency); `e2e-cloud.mjs`, `e2e-speak.py`, `update-check.py`, `e2e-noconfig.mjs`.

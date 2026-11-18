@@ -689,10 +689,53 @@ real model (`e2e-speak.py`); the blood-thinner fall line and the "check it anoth
 emergency number came in phase 9.
 
 ## Added on 18 Nov, phase 9: the fixes of judge round 8
-The fixes of judge round 8 (`../judge_app_r8_2026-11-18/SUMMARY.md` §2), item by item in the commits after
-`3bc6998`. The full list and the runs are written when the phase is done.
+The fixes of judge round 8 (`../judge_app_r8_2026-11-18/SUMMARY.md` §2), one commit each, from `3bc6998`
+(`CLAIMS.md` rows 125 to 136; `EVIDENCE.md` "Phase 9"; `devlog/DAY19.md`). All of it is rules except item 8, which
+gives the cloud letter step its own schema. Nothing of phase 9 is deployed; the "Live:" lines still name `32dd0dd`.
 
-**Counts** (so far): 2847 unit tests (`npm run check`).
+- **A care question left for later stays** (`a33ac41`, health P0). A question about pain, the body, the toilet, a drink
+  or feelings that is left for later is pinned first on Home and never expires; "Done" asks "Did you find out? Yes /
+  Not yet", and "Not yet" keeps it. It goes into the diary as "Left for later" and onto the visit page's "Since the
+  last visit". Under a pain question: "If the pain is new or strong, don't wait: call the nurse or doctor." Any other
+  question keeps the phase 8 rule (the newest two of a day). "Tea or coffee?" is not a care question; "Would you like
+  something to drink?" is.
+- **"Nothing stands out" never stands over a pain** (`92f86b4`, health P0). Pain on one or two days is its own line,
+  "Pain was chosen or logged on 2 days in the last 7 days.", with the fixed "Ask again today, and tell the doctor or
+  nurse if it is new or still there." (never handed to a model). One low day is a line; "something's wrong" is a line
+  with the call box. The unit test that asserted "Nothing stands out" for two pain days is turned round.
+- **Wording** (`0658200`). "A little pain. Ask again in an hour. If it is new, or still there later, tell the nurse or
+  doctor."; no "Last time they chose…" or "So far: no ×5" before a pain, toilet, drink or feelings question; the
+  passport adds "But a yes to pain, the toilet or 'something's wrong' is always a yes: act on it."
+- **The emergency number follows the locale** (`b6c8b5d`). With none in About them: en-GB 999, a European Union locale
+  112, else 911, and every call box asks "Is this your emergency number? Change it" (to About them). The sample family
+  stays on 911.
+- **Handover and visit** (`810f1f5`). The handover note always prints the swallowing difficulty and the fluid limit
+  ("ALWAYS ON THIS NOTE"), box ticked or not. The visit page gains Toilet and Tablets lines, two family questions, and
+  "Where it hurts: chest, middle".
+- **The cloud wait** (`db00cef`, P0). From 3 s: "Online help is still working (N s)" with "Stop waiting"; at 12 s (was
+  25 s) the plain line "Cloud help took longer than 12 seconds, so there is no card. Ask it as a choice…". Each cloud
+  step's latency is in the trace, answered or failed. Remote Config is never waited for (a source test holds it).
+- **The hybrid moment in one tap** (`3447b47`, P0). "See the AI at work" on Home: the sample open question "What do you
+  want to do this weekend?", tagged "uses Google's AI, after your yes" on a phone and "AI on this computer: nothing is
+  sent" with Chrome's own model, to the card and its routing chip. It is made with an empty profile, so the question is
+  all any step gets, and its answers are kept nowhere.
+- **The cloud letter step** (`7910b80`). Its own fixed instructions and schema (`core/prompt.ts`, `LETTER_SCHEMA`: the
+  kind as an enum, exactly 4 words), a ninth model instance (`web/src/ai/firebaseEngine.ts`, `runLetter`); code keeps
+  the words that start with the letter. Unit-tested here; not run against the real model.
+- **The person's own "Not now"** (`e3e3db3`, `f188eab`). A small tile on the top row of every question screen,
+  opposite the carer's press and hold: it ends the card and files the question as left for later (a pain question
+  pinned). On a doctor-visit question it stops the run.
+- **The first visit** (`6b10a4d`). "How it works" is folded on the first visit too, to its one line with "Write the key
+  word big."; the first row of topics ends at 615 px at 360 x 740 and at 390 x 844.
+- **Documents** (`850d2e4`). "Google's paid service" is gone (no dated billing record is in the repository): the sheets
+  say "Google's AI. On the paid tier Google does not use prompts to improve its products" with the link; JUDGES names
+  the current unit-test count; the stale lines the hound found are fixed; `tests/unit/docs-truth.test.ts` holds each.
+- **The reload race** (`74a5e94`). `e2e-simple.py` waits for the diary before it reloads; and the app keeps an inner
+  screen on a reload taken at once after the address changed (6 of 20 landed on Home on the dev server before, 0 of
+  30 after).
+
+**Counts** (the production build of HEAD on `npx vite preview`, port 5495, from a separate worktree so that `dist/`
+and the previews on 5301 and 5181 were not touched): At `f188eab` (the code; the scripts' expectations were updated after it, no app change): 2849 unit tests (`npm run check`); `e2e-simple.py` 1002/1002; `pwa-check.py` 30/30; `e2e-needs.mjs` 12/12; `overflow-check.py` 534/534; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py` 21/21; `phase9-shots.py` 37/37. The outputs are in `devlog/evidence_phase9/local/`, the screens in `devlog/evidence_phase9/shots_390/`. The first full run (at `74a5e94`) failed 8 of `e2e-simple.py`'s checks and stopped: the scripts expecting the wording before phase 9, and one real fault, fixed in `f188eab`: the person's "Not now" at the foot of the screen pushed three choices and the way out past 844 px.
 
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104

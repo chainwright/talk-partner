@@ -83,3 +83,46 @@ At `feb272d`: 2798 unit tests (`npm run check`, the type check and the build inc
   the next run passed 21/21.
 - `LIVE_BUILD` must be replaced at deploy in README "Deploy" and in JUDGES.
 - No clinician, carer or person with aphasia has read any new line.
+
+# Phase 9 (18 Nov 2026): the fixes of judge round 8
+
+The brief was `design/PHASE9_BRIEF.md`, from the round-8 summary (`../judge_app_r8_2026-11-18/SUMMARY.md`). Work began
+from `3bc6998` (code of the live `32dd0dd` plus documents), 18 Nov; the first commit is of 22:06 UTC. Every item was committed on its
+own, each only after `npm run check` exited 0. Nothing was pushed or deployed; the "Live:" lines still name `32dd0dd`.
+
+## The items, in the brief's order
+1. **A care question left for later** (`a33ac41`). Pinned first on Home, never expires, "Did you find out? Yes / Not
+   yet", into the diary as "Left for later", onto "Since the last visit"; under pain: "If the pain is new or strong,
+   don't wait: call the nurse or doctor." Choice: "tea or coffee?" is not a care question; a drink as a need is.
+2. **"Nothing stands out" under pain** (`92f86b4`). Pain on one or two days is its own line; the fixed "ask again,
+   tell" sentence is the line's `act`, so no model rewords it. One low day and "something's wrong" are lines too.
+   Frank's week now opens with Tuesday's pain.
+3. **Wording** (`0658200`): "A little pain. Ask again in an hour…"; no "Last time" or "So far" before a care question
+   (the `careAnswer` guard of `usualFor`, plus a drink as a need); the passport's tired-yes line ends "…is always a
+   yes: act on it."
+4. **The emergency number by locale** (`b6c8b5d`), with "Is this your emergency number? Change it" by every call box.
+5. **Handover and visit** (`810f1f5`): swallowing and fluid limit always on the handover note; Toilet, Tablets, two
+   family questions and "chest, middle" on the visit page.
+6. **The cloud wait** (`db00cef`): 3 s to "Stop waiting", 12 s to the plain line, the latency in the trace.
+7. **The hybrid moment** (`3447b47`): "See the AI at work" on Home, made with an empty profile, kept nowhere.
+8. **The cloud letter step** (`7910b80`): its own schema and a ninth model instance. Unit runs only.
+9. **The person's "Not now"** (`e3e3db3`; moved to the top row in `f188eab` after the first full run showed it
+   pushed three choices and the way out to 883 px on 390 x 844).
+10. **The first visit** (`6b10a4d`): the steps folded to one line from the first visit.
+11. **Documents** (`850d2e4`): "Google's paid service" out, JUDGES' count, README, CLAIMS rows 40 and 50, "18 Nov".
+12. **The reload race** (`74a5e94`): the script waits; the app also keeps the screen. Repro on the dev server
+    (port 5493): `goto('#/diary')` then `reload()` at once, 20 tries: 6 landed on Home, every one with the address
+    `/` and no history state. The guard rewrites the entry under it to `/` and then pushes the inner address; a reload
+    taken between the two loads `/`. After the fix (the drawn screen noted for the tab, restored on a reload within
+    3 s that lost it): 0 of 30.
+
+## Runs
+At `f188eab` (the code; the scripts' expectations were updated after it, no app change): 2849 unit tests (`npm run check`); `e2e-simple.py` 1002/1002; `pwa-check.py` 30/30; `e2e-needs.mjs` 12/12; `overflow-check.py` 534/534; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py` 21/21; `phase9-shots.py` 37/37. The outputs are in `devlog/evidence_phase9/local/`, the screens in `devlog/evidence_phase9/shots_390/`. The first full run (at `74a5e94`) failed 8 of `e2e-simple.py`'s checks and stopped: the scripts expecting the wording before phase 9, and one real fault, fixed in `f188eab`: the person's "Not now" at the foot of the screen pushed three choices and the way out past 844 px.
+
+## Open risks
+- The cloud legs of phase 9 (the card after "See the AI at work", the letter step's new schema, a 12 s limit against
+  the real first-call latency) are not run against the real model: for the live runs.
+- The person's "Not now" is a word, no picture, on the top row; nobody with aphasia has tried it.
+- The locale number is a guess from a language setting; the box asks, and About them wins.
+- The first-visit fold takes the open steps off the first screen, which the SLP seat valued.
+- No clinician, carer or person with aphasia has read any new line.
