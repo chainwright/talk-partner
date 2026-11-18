@@ -76,7 +76,7 @@ describe('3. The passport (P1 7, 8, 10) and the therapist page (P1 8, 9)', () =>
   it('"A tired yes may not mean yes" is always under how yes and no are shown, and cannot be taken off', () => {
     const p = passport(pass());
     const l = p.sections.find((s) => s.id === 'yesno')!.lines.find((x) => x.key === 'yesno:tired')!;
-    expect(l.text).toBe('A tired yes may not mean yes. Check it the other way. Ask about pain, drinks and the toilet every time.');
+    expect(l.text).toBe("A tired yes may not mean yes. Check it the other way. Ask about pain, drinks and the toilet every time. But a yes to pain, the toilet or 'something's wrong' is always a yes: act on it.");
     expect(l.removable).toBe(false);
     expect(passportText(pass({ prefs: { ...NO_PASSPORT, off: ['yesno:tired'] } }))).toContain(l.text);
   });

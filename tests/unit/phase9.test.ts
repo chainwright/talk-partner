@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
 import { LATER_LABEL, answerEntry, diaryText, laterEntry, logEntry, needEntry, tags, type DiaryEntry } from '../../core/diary';
 import { NO_HEALTH, cloudLines, insights } from '../../core/insights';
-import { LATER_MS, addLater, cleanLater, doneLater, laterCare, laterPain, shownLater } from '../../core/later';
+import { LATER_MS, addLater, cleanLater, doneLater, laterCare, laterPain, noLastTime, shownLater } from '../../core/later';
+import { P8 } from '../../core/copy8';
+import { after, treeEnds } from '../../core/tree';
+import { EMPTY_PROFILE } from '../../core/types';
 import { sinceLines } from '../../core/since';
 import { laterBlock } from '../../web/src/simple';
 import { NOW, when } from './week';
@@ -132,5 +135,22 @@ describe('2. P0 health: "Nothing stands out" never stands over a pain, a fall, a
   it('never "Nothing stands out" beside any of them, in a week or a month', () => {
     const one = [logEntry('pain', when(2, '10:00')), logEntry('fall', when(2, '10:00')), answerEntry({ q: 'How are you feeling?', label: 'sad', at: when(2, '10:00') }, 'feel'), needEntry("something's wrong", when(2, '10:00'))];
     for (const e of one) for (const span of ['week', 'month'] as const) expect(ids(insights([...calm, e], NO_HEALTH, span, NOW)), `${e.label} ${span}`).not.toContain('nothing');
+  });
+});
+
+describe('3. P1 health wording', () => {
+  it('"A little pain" no longer says "keep an eye on it": ask again in an hour, and tell if new or still there', () => {
+    expect(after({ asked: 'How bad is the pain?', kind: 'choice' }, 'a little', EMPTY_PROFILE).end).toBe('A little pain. Ask again in an hour. If it is new, or still there later, tell the nurse or doctor.');
+    expect(treeEnds('Frank').join(' ')).not.toMatch(/keep an eye on it/i);
+  });
+  it('no "Last time" and no "So far" before a question about pain, the toilet, a drink or feelings; still before tea or coffee', () => {
+    for (const q of ['Are you in pain?', 'Do you need the toilet?', 'Would you like something to drink?', 'How are you feeling?', 'Is something wrong?']) expect(noLastTime({ kind: 'yesno', asked: q }), q).toBe(true);
+    expect(noLastTime({ kind: 'choice', asked: 'Shall we go out?' }, 'body')).toBe(true);
+    for (const kind of ['body', 'pain', 'feeling']) expect(noLastTime({ kind, asked: 'Which one?' }), kind).toBe(true);
+    expect(noLastTime({ kind: 'choice', asked: 'Would you like tea or coffee?' })).toBe(false);
+    expect(noLastTime({ kind: 'choice', asked: 'Shall we watch the football?' })).toBe(false);
+  });
+  it('worst case: the passport\'s "tired yes" line can never be read as doubting a yes to pain', () => {
+    expect(P8.passport.tiredYes).toMatch(/But a yes to pain, the toilet or 'something's wrong' is always a yes: act on it\.$/);
   });
 });

@@ -139,7 +139,8 @@ const TREE: Record<string, Node> = {
     'something else': { next: [HOW_BAD], end: 'Ask {them} to put a hand where it hurts.' },
   },
   'how bad is the pain': {
-    'a little': { end: 'A little pain. Keep an eye on it, and ask again later.' },
+    // (phase 9, judge round 8: "keep an eye on it" could stand under a chest-pain call box)
+    'a little': { end: 'A little pain. Ask again in an hour. If it is new, or still there later, tell the nurse or doctor.' },
     'quite bad': { end: 'Quite bad. Follow {their} care plan for pain, and tell the nurse or doctor.' },
     'very bad': { end: 'Very bad. Call {their} nurse or doctor now. If it looks like an emergency, call the emergency number.' },
     'not sure': { end: 'Watch {their} face and how {they} move. If you are worried, call the nurse or doctor.' },

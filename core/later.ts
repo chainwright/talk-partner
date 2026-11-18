@@ -86,3 +86,12 @@ export function cleanLater(raw: unknown): Later[] {
     return y;
   }) : [];
 }
+
+/**
+ * Phase 9 (judge round 8, the nurse's seat): a card on which "Last time they chose…" and "So far: no ×5" are not
+ * shown: the body card, a pain or feelings card, and every care question (`laterCare`), so an old "no" cannot prime
+ * today's answer to pain, the toilet, a drink or feelings.
+ */
+export function noLastTime(c: { kind: string; asked: string }, topic: string | null = null): boolean {
+  return c.kind === 'body' || c.kind === 'pain' || c.kind === 'feeling' || laterCare(c.asked, topic);
+}

@@ -106,7 +106,8 @@ export const P8 = {
     /** Phase 8 (judge round 7): the two lines that state a fact about the person are off until the carer ticks them. */
     tickIfTrue: (name: string) => `Tick if true for ${name || 'them'}. Off until you tick it.`,
     /** Phase 8: always under how yes and no are shown, whatever the family filled in. */
-    tiredYes: 'A tired yes may not mean yes. Check it the other way. Ask about pain, drinks and the toilet every time.',
+    // (phase 9, judge round 8, the person's seat: the line must never read as doubting a yes to pain)
+    tiredYes: "A tired yes may not mean yes. Check it the other way. Ask about pain, drinks and the toilet every time. But a yes to pain, the toilet or 'something's wrong' is always a yes: act on it.",
     /** Phase 8: when the emergency number was not set in About them, the page names none. */
     noNumber: 'Emergency number: not filled in, ask the family.',
     /** Phase 8: after the food line when About them notes diabetes, swallowing difficulty or a fluid limit (the condition is not named). */

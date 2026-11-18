@@ -70,7 +70,7 @@ import { P8 } from '../../core/copy8';
 import { LOW_MOOD, LOW_MOOD_Q, guessTopic, timeText } from '../../core/diary';
 /** Phase 8: "sad", "bad", "low" or "down" to a question about how the person feels (not a photo): the helpline line follows on the carer's side. */
 const lowMoodAnswer = (q: string, label: string) => LOW_MOOD_Q.test(q.trim().toLowerCase()) && !/\bphoto\b/i.test(q) && LOW_MOOD.test(label.trim().toLowerCase());
-import { addLater, cleanLater, doneLater, laterOf, shownLater, type Later } from '../../core/later';
+import { addLater, cleanLater, doneLater, laterOf, noLastTime, shownLater, type Later } from '../../core/later';
 import { NO_PASSPORT, OFF_UNTIL_TICKED, cleanPassport, passport, passportText, toggleLine, OWN_MAX, type PassportInput, type PassportPrefs } from '../../core/passport';
 import { addEvent, cleanLog, lessSureCount, newLog, pickedPractice, practiceFlag, practiceReport, practiceText, practiceUrgent, togglePractice, type AskedBy, type PracticeEvent, type PracticeInput, type PracticeLog, type PracticeSpan, type Via } from '../../core/practice';
 import { passportLink, passportScreen, practiceScreen, type PassPicture } from './care7';
@@ -900,6 +900,12 @@ async function sendInsights() {
 /** Nothing is learned from, or shown for, the sample family of judge mode. */
 const learns = () => !state.demo;
 const saveForgotten = () => { if (!state.demo) void kvSet('learned', state.forgotten); };
+/**
+ * Phase 9 (judge round 8, the nurse's seat): no "Last time they chose…" and no "So far: no ×5" before a question about
+ * pain, the body, the toilet, a drink or feelings: last week's "no" must not prime the carer (or the person) today.
+ * The same guard as `usualFor` (core/reliability.ts, careAnswer), with a drink as a need (core/later.ts, laterCare).
+ */
+const noPriming = (c: Card) => noLastTime(c, careTopic(c));
 /** The person's usual answer to this card's question, for the carer's hint: null before three answers, and never for the body map, a scale, a narrowing card or a care question (core/reliability.ts, careAnswer). */
 function usualFor(c: Card) {
   if (!learns() || c.blocked || c.narrow || c.scale || !['choice', 'yesno', 'feeling'].includes(c.kind)) return null;
@@ -1352,7 +1358,7 @@ function cardPanel(c: Card): string {
   // the coaching line: only when a rule found something about the question itself (Card.coach), never otherwise
   const coach = c.coach ? `<p class="coach">${esc(c.coach)}</p>` : '';
   // what they chose the last time this question was asked: for the partner only, from the list kept on this computer
-  const prev = c.blocked || c.kind === 'repair' || c.kind === 'needs' ? null : lastAnswer(state.history, c.asked, state.cardAt);
+  const prev = c.blocked || c.kind === 'repair' || c.kind === 'needs' || noPriming(c) ? null : lastAnswer(state.history, c.asked, state.cardAt);
   const counts = prev ? answerCounts(state.history, c.asked, state.cardAt) : [];
   const last = prev ? `<p class="last">${esc(C.card.lastTime(whenText(prev.at, Date.now()), prev.label))}${counts.length > 1 || counts[0]?.n > 1 ? ` ${esc(C.card.lastTimeCounts(counts.map((x) => `${x.label} ×${x.n}`).join(', ')))}` : ''}</p>` : '';
   // The buttons under the card (core/actions.ts): "We're stuck" on every card the person can see, the way back on the
@@ -1794,7 +1800,7 @@ function simpleScreen(): string {
       ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),
     });
   } else if (c && !state.busy) {
-    const prev = c.blocked || c.kind === 'repair' || c.kind === 'needs' ? null : lastAnswer(state.history, c.asked, state.cardAt);
+    const prev = c.blocked || c.kind === 'repair' || c.kind === 'needs' || noPriming(c) ? null : lastAnswer(state.history, c.asked, state.cardAt);
     screen = cardScreen({
       name, card: c, less: state.less, recap: state.recap, recapDone: state.recapDone, recapText: recapText(),
       actions: partnerActions(c, { less: state.less, hasAnswers: state.answers.length > 0 }),
