@@ -1,0 +1,22 @@
+20 of 20 served files match dist (build of 43e9293, 2026-11-18T05:02Z; "/" equals dist/index.html)
+same  assets/feedback-BJMJlLE8.js  local 2e69bc168b3055db  served 2e69bc168b3055db
+same  assets/index-D0G5IsZZ.css  local ee3d8436f6d0b933  served ee3d8436f6d0b933
+same  assets/index-DEud05ix.js  local 2bb51088d75c586b  served 2bb51088d75c586b
+same  fonts/atkinson-hyperlegible-next/LICENSE.txt  local 474a034e99845062  served 474a034e99845062
+same  fonts/atkinson-hyperlegible-next/atkinson-hyperlegible-next-latin-400-normal.woff2  local 5cb240a4d99ab7e6  served 5cb240a4d99ab7e6
+same  fonts/atkinson-hyperlegible-next/atkinson-hyperlegible-next-latin-700-normal.woff2  local 0dbe07ed7679407d  served 0dbe07ed7679407d
+same  fonts/ibm-plex-mono/LICENSE.txt  local 23b0a9d0c6d3f140  served 23b0a9d0c6d3f140
+same  fonts/ibm-plex-mono/ibm-plex-mono-latin-400-normal.woff2  local 08949f728dc52d52  served 08949f728dc52d52
+same  fonts/ibm-plex-mono/ibm-plex-mono-latin-600-normal.woff2  local 0d1f0b8d0722224e  served 0d1f0b8d0722224e
+same  fonts/instrument-sans/LICENSE.txt  local c27a3c53c3beed7f  served c27a3c53c3beed7f
+same  fonts/instrument-sans/instrument-sans-latin-400-normal.woff2  local 9a91efaa3599a6ef  served 9a91efaa3599a6ef
+same  fonts/instrument-sans/instrument-sans-latin-600-normal.woff2  local efb770916eda95a0  served efb770916eda95a0
+same  fonts/instrument-sans/instrument-sans-latin-700-normal.woff2  local bcf650536cae5740  served bcf650536cae5740
+same  icons/apple-touch-icon.png  local 761574c3df584af1  served 761574c3df584af1
+same  icons/icon-192.png  local 09a18f6bd3784240  served 09a18f6bd3784240
+same  icons/icon-512.png  local 6fda71b16260ba4a  served 6fda71b16260ba4a
+same  icons/icon-maskable-512.png  local 2be95011f26f52ef  served 2be95011f26f52ef
+same  index.html  local 08cdcf11f30c34e3  served 08cdcf11f30c34e3
+same  manifest.webmanifest  local a7e2c230dd6bef08  served a7e2c230dd6bef08
+same  sw.js  local 13a49a0a32842a04  served 13a49a0a32842a04
+20 of 20 served files match dist (build of 43e9293, 2026-11-18T05:02Z; "/" equals dist/index.html)

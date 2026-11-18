@@ -724,7 +724,21 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-Last done on 18 Nov 2026, 04:13 UTC: <https://talk-partner.web.app> serves the build of commit `3a9cf34` (the answer
+Last done on 18 Nov 2026, 05:02 UTC: <https://talk-partner.web.app> serves the build of commit `43e9293` (phase 4:
+the first-letter helper, "[Name] wants to say something", "Before a doctor visit", "Talk about a photo"). Each of
+the 20 served files has the SHA-256 of the local build, and `/` equals `dist/index.html`
+(`devlog/evidence_live/served-files_live_2026-11-18_43e9293.txt`). Against it: `e2e-simple.py --live` 547/547 (as a
+phone at 390 px with the navigation, learning, photo, phase 3 and phase 4 runs, a desktop and a tablet, and the phone
+flow again with the connection off, the four phase 4 steps among them; no "Yes" is pressed on a sheet there, so
+nothing was sent: for the letter "X" the sheet came up with its one line, the whole request held no word of About
+them, and the phase 4 run asked nothing of any other host); `pwa-check.py` 30/30; `e2e-needs.mjs` 12/12
+(`devlog/evidence_live/`, the files with `43e9293` in the name). Not run against this build: `overflow-check.py` on
+the hosted copy (503/503 on localhost at the same code), `e2e-cloud.mjs` and `e2e-ondevice.mjs`, and the phase 4
+steps against real models on the hosted copy (they ran on the dev server at `9ff3e9d`, where the App Check debug
+token works: `devlog/evidence_phase4/AI_RUN_LOG.md`; on the hosted copy the on-device photo step and the cloud
+letter step have not been pressed by anyone).
+
+The deploy before it, 18 Nov 2026, 04:13 UTC: <https://talk-partner.web.app> serves the build of commit `3a9cf34` (the answer
 check never discounts pain, the toilet or a need and is quiet in a fast flow; every "Drank" tap counts; tied days are
 all named). Each of the 20 served files has the SHA-256 of the local build, and `/` equals `dist/index.html`. Against
 it: `e2e-simple.py --live` 459/459 (the same runs as below; it asks "Are you in pain?" while the answer check is on
