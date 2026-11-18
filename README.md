@@ -237,6 +237,15 @@ The diary and the answers are not in the file.
 390 px phone, with the word under it at 30 px, and three choices and "something else" stand on 390 x 844 without
 scrolling (measured by `scripts/e2e-simple.py` and `scripts/overflow-check.py`); the family's photos get the same size.
 
+**Checked** at commit `9117fdd` (production build on localhost; logs in `devlog/evidence_phase3/`): 2411 unit tests;
+`e2e-simple.py` 457/457, of which the phase 3 run (102 checks) drives the diary, the answer check, health notes, the
+Miller family's week (`tests/fixtures/frank-week.json`, fictional: `design/PERSONA_SCENARIO.md`) and its three lines,
+the sheet, the tip, save / clear / bring back, and the picture sizes; `overflow-check.py` 402/402 at 320 to 412 px;
+`contrast-check.mjs` 117 pairs; `pwa-check.py` 30/30; `update-check.py` 11/11; `e2e-needs.mjs` 12/12;
+`e2e-noconfig.mjs` 25/25. Screens at 390 px: `devlog/evidence_phase3/01_…` to `24_…` (`scripts/phase3-shots.py`).
+Not run: `e2e-cloud.mjs` and `e2e-ondevice.mjs` (nothing in a card's rules, prompt or model call changed; the two new
+wording steps have no run against a real model).
+
 ## Changed on 18 Nov after a role-play on the phone
 One of us played Carol and Frank (`design/PERSONA_SCENARIO.md`, fictional) on the hosted copy at 390 px. What it
 found, and what changed (`CLAIMS.md` rows 73 to 76):
