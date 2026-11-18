@@ -11,7 +11,7 @@
 import { P5 } from './copy5';
 import { P6 } from './copy6';
 import { P9 } from './copy9';
-import { byDay, dayStart, dayText, daysBefore, events, tags, type DiaryEntry } from './diary';
+import { byDay, dayStart, dayText, daysBefore, eventGroups, events, tags, type DiaryEntry } from './diary';
 
 export const SINCE_DAYS = 30;
 export const SINCE_MAX_DAYS = 120;
@@ -72,6 +72,8 @@ export function sinceLines(diary: DiaryEntry[], since: number | null | undefined
   const hard = uniqueDays([...hardEntries.map((e) => e.at), ...ownDays('hard')]);
   const falls = tagged('fall');
   const left = entries.filter((e) => e.kind === 'later' && (e.q ?? '').trim());
+  const toilets = eventGroups(entries, 'toilet');
+  const tablets = tagged('tablets');
   const days = byDay(entries);
   const dryDays = days.filter((d) => d.day !== dayStart(now) && events(d.entries, 'drink').length === 0);
   const dry = dryDays.length;
@@ -87,6 +89,9 @@ export function sinceLines(diary: DiaryEntry[], since: number | null | undefined
     ...(left.length ? [[P9.since.later(left.map((e) => ({ q: e.q ?? '', day: dayText(e.at) }))), { ids: ids(left), note: '' }] as [string, SinceSource]] : []),
     [S.falls(falls.length, named(uniqueDays(falls.map((e) => e.at)))), { ids: ids(falls), note: '' }],
     [S.drinks(dry, full.length, least ? { n: least.n, day: dayText(least.day) } : undefined), { ids: ids(dryDays.flatMap((d) => d.entries)), note: dry ? P6.source.noDrink : '' }],
+    // (phase 9, judge round 8, the nurse's seat: the toilet and the tablets, as entered)
+    [P9.since.toilet(toilets.length, named(uniqueDays(toilets.map((g) => g.at)))), { ids: ids(entries.filter((e) => toilets.some((g) => g.ids.includes(e.id)))), note: '' }],
+    [P9.since.tablets(tablets.length, named(uniqueDays(tablets.map((e) => e.at)))), { ids: ids(tablets), note: '' }],
     [S.mood(low.length, named(low), with_('low')), { ids: ids(tagged('low-mood')), note: '' }],
     [S.sleep(nights.length, named(nights), with_('night')), { ids: ids(tagged('bad-sleep')), note: '' }],
   ];

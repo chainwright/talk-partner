@@ -46,6 +46,7 @@ Usage: npm run build && npx vite preview (in another shell; or npm run dev with 
 Exit code 0 when every check passes, 1 otherwise.
 """
 import argparse
+import re
 import time
 import datetime
 import json
@@ -1243,10 +1244,13 @@ def phase4(browser, url, live):
     page.locator('#visit-again').click()
     tap_yes(page, 'yes')
     page.wait_for_selector('main.pv[data-kind=body] .pt')
+    region = page.locator('main.pv .pt:not(.esc)').first.inner_text().strip()
     page.locator('main.pv .pt:not(.esc)').first.click()
     page.wait_for_timeout(300)
     where = page.locator('main.pv .pt:not(.esc)').first.inner_text().strip()
     tap_yes(page, where)
+    # (phase 9: the page keeps the part of the body with the place: "Where it hurts: chest, middle")
+    where = f"{region}, {re.sub(r'^your ', '', where)}"
     page.wait_for_selector('main.pv .pt >> text=very bad')
     fits(page, 'visit: "How bad is the pain?"')
     for label in ['very bad', 'badly', 'poor', 'low', 'my body', 'my tablets']:

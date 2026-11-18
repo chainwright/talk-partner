@@ -200,7 +200,7 @@ describe('"Since the last visit": the same, line by line', () => {
   });
   it('a line that counted nothing has no entries and no button; an empty diary has one line and no button', () => {
     const calm = sinceLines(days(0, 1, 2), when(0, '00:00'), NOW);
-    expect(calm.sources.map((x) => x.ids.length)).toEqual([0, 0, 0, 0, 0]);
+    expect(calm.sources.map((x) => x.ids.length)).toEqual([0, 0, 0, 0, 0, 0, 0]);
     expect(sinceBlock({ name: 'Frank', since: calm, picked: [], number: '911', diary: days(0, 1, 2) })).not.toContain('src-toggle');
     const none = sinceLines([], null, NOW);
     expect(none.sources).toEqual([{ ids: [], note: '' }]);

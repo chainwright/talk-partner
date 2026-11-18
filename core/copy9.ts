@@ -23,6 +23,8 @@ export const P9 = {
     change: 'Change it',
   },
   since: {
+    toilet: (n: number, d: string) => (n ? `Toilet: ${n} entered (${d}).` : 'Toilet: none entered. That can be a gap: ask the family.'),
+    tablets: (n: number, d: string) => (n ? `Tablets taken: logged ${n} time${n === 1 ? '' : 's'} (${d}). The app does not know which tablets or how many.` : 'Tablets taken: none logged. That can mean nobody tapped it.'),
     /** On the visit page, "Since the last visit": the care questions left for later in this time. */
     later: (xs: { q: string; day: string }[]) => `Left for later: ${xs.slice(-5).map((x) => `"${x.q.replace(/"/g, "'")}" (${x.day})`).join(', ')}${xs.length > 5 ? `, and ${xs.length - 5} more` : ''}. Ask about it at the visit if it was not asked again.`,
   },

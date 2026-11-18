@@ -59,6 +59,10 @@ export const P6 = {
     hFallHead: (times: string) => `With a blow to the head: ${times}.`,
     hNoFalls: 'Falls: none logged.',
     hTablets: (times: string) => `Tablets taken: logged at ${times}. The app does not know which tablets or how many: check before giving any.`,
+    /** Phase 9: on every handover note, box ticked or not, when About them notes it. */
+    hAlways: 'ALWAYS ON THIS NOTE (it changes what is safe to give)',
+    hSwallow: 'Swallowing difficulty is noted: go by the plan from the speech therapist or nurse before giving food or drink.',
+    hFluidAlways: "A fluid limit from the doctor is noted: go by the doctor's plan for drinks.",
     hNoTablets: 'Tablets taken: none logged. That can mean nobody tapped it: check before giving any.',
     hNothing: 'Nothing was entered in the last 24 hours. That is a gap in the diary, not a report: ask the family how the day went.',
     usual: (name: string) => `USUAL CHOICES (counted from the answers ${name || 'they'} confirmed; a hint for you, and ${name || 'they'} still choose${name ? 's' : ''} every time)`,
@@ -78,6 +82,8 @@ export const P6 = {
       healthOff: 'The health notes are not in this text, and the lines are counted as if none were noted.',
       healthOn: 'The health notes are in this text, as you see them below.',
       /** Under the box, while it is off and a note that changes what is safe is noted. */
+      /** Phase 9: on the handover's sheet, when a swallowing difficulty or a fluid limit is noted. */
+      alwaysIn: (what: string) => `Always in this note, box or not: ${what}.`,
       healthWarn: (what: string) => `Noted in About them: ${what}. The person who reads this text will not know it unless you tick the box.`,
       photos: 'Photos never go in.',
       share: 'Share',

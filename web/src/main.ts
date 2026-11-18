@@ -48,7 +48,7 @@ import { P4 } from '../../core/copy4';
 import { letterCard, letterEnd, type LetterInput } from '../../core/letter';
 import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
 import { BODY_FIRST, FEEL_QUESTION, aboutCard, menuTopic, starterOf, topicMenu, turnCard, turnLead, type Starter } from '../../core/turn';
-import { nextVisit, visitCard, visitText, type VisitRecord } from '../../core/visit';
+import { nextVisit, visitCard, visitLabel, visitText, type VisitRecord } from '../../core/visit';
 import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
 import { P5 } from '../../core/copy5';
 import { FALL_HEAD } from '../../core/diary';
@@ -771,7 +771,7 @@ function shareTextNow(kind: 'family' | 'handover' | 'practice' | 'passport', hea
   if (kind === 'practice') return practiceText(practiceInput());
   if (kind === 'passport') return passportText(passportInput());
   const base = { diary: state.diary, health: health ? state.health : null, name: state.profile.personName.trim(), now: Date.now(), number: callNumber() };
-  return kind === 'family' ? familyText({ ...base, span: state.diaryTab }) : handoverText({ ...base, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [] });
+  return kind === 'family' ? familyText({ ...base, span: state.diaryTab }) : handoverText({ ...base, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], safety: { swallowing: state.health.swallowing, fluidLimit: state.health.fluidLimit } });
 }
 
 /** A card the rules made after "something else" goes onto the carer's screen like any other card: said out loud, then shown. */
@@ -1895,7 +1895,7 @@ function p4Confirm(c: Card, picked: Choice): boolean {
   // a doctor-visit question: the answer goes on the visit page, exactly as given, and the next question follows.
   // It is not in the history or the journal, and the answer check never reads or marks it.
   if (c.visit && state.p4.visitRun && state.p4.visit) {
-    state.p4.visit.answers = [...state.p4.visit.answers.filter((a) => a.id !== c.visit), { id: c.visit as VisitRecord['answers'][number]['id'], q: c.asked, label: picked.label, at: Date.now(), ...(picked.role === 'escape' ? { out: true } : {}) }];
+    state.p4.visit.answers = [...state.p4.visit.answers.filter((a) => a.id !== c.visit), { id: c.visit as VisitRecord['answers'][number]['id'], q: c.asked, label: visitLabel(c, picked.label), at: Date.now(), ...(picked.role === 'escape' ? { out: true } : {}) }];
     void kvSet('visit', state.p4.visit);
     state.picked = null; void visitNext(); return true;
   }
@@ -2046,7 +2046,7 @@ function render(lifted = false) {
   if (p6.share && sharing) {
     const sh = p6.share;
     app.querySelector('main')?.setAttribute('inert', '');
-    app.insertAdjacentHTML('beforeend', shareSheet({ kind: sh.kind, text: sh.text, health: sh.health, hasHealth: hasHealth(state.health), risky: riskyNotes(state.health), canShare: canShare(), device: copyDevice(), status: sh.status, ...(sh.kind === 'practice' ? { page: { heading: P8.practice.sheetHeading, note: sh.health ? P8.practice.sheetHealthOn : P8.practice.sheetHealthOff } } : sh.kind === 'passport' ? { page: { heading: P8.passport.sheetHeading, note: P8.passport.sheetNote } } : {}) }));
+    app.insertAdjacentHTML('beforeend', shareSheet({ kind: sh.kind, text: sh.text, health: sh.health, hasHealth: hasHealth(state.health), risky: sh.kind === 'handover' ? riskyNotes({ ...state.health, swallowing: false, fluidLimit: false }) : riskyNotes(state.health), ...(sh.kind === 'handover' ? { always: riskyNotes({ ...state.health, diabetes: false }) } : {}), canShare: canShare(), device: copyDevice(), status: sh.status, ...(sh.kind === 'practice' ? { page: { heading: P8.practice.sheetHeading, note: sh.health ? P8.practice.sheetHealthOn : P8.practice.sheetHealthOff } } : sh.kind === 'passport' ? { page: { heading: P8.passport.sheetHeading, note: P8.passport.sheetNote } } : {}) }));
   }
   if (simple && r === 'about' && state.importDraft) {
     app.querySelector('main')?.setAttribute('inert', '');

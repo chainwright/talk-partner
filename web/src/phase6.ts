@@ -70,6 +70,8 @@ export interface ShareSheetModel {
   hasHealth: boolean;
   /** While the box is off: the notes that change what is safe to give, by name (core/share.ts, riskyNotes). */
   risky: string[];
+  /** Phase 9: the notes the handover prints whatever the box says, by name (core/share.ts, ALWAYS_NOTES). */
+  always?: string[];
   /** This browser has the Web Share API. Without it there is only "Copy". */
   canShare: boolean;
   /** "phone", "tablet" or "computer". */
@@ -91,6 +93,7 @@ export function shareSheet(m: ShareSheetModel): string {
   <p id="share-leaves">${esc(m.canShare ? K.leaves(m.device) : K.leavesCopy(m.device))}</p>
   ${m.page ? '' : `<label class="check" id="share-health-row"><input type="checkbox" id="share-health" ${m.health ? 'checked' : ''} ${m.hasHealth ? '' : 'disabled'}><span>${K.healthBox}</span></label>`}
   <p class="small muted" id="share-health-state">${state} ${K.photos}</p>
+  ${m.always?.length ? `<p class="small" id="share-always">${esc(K.alwaysIn(m.always.join(', ')))}</p>` : ''}
   ${!m.health && m.risky.length ? `<p class="warn" id="share-health-warn" role="status">${esc(K.healthWarn(m.risky.join(', ')))}</p>` : ''}
   <div class="goes"><p class="small muted" id="share-exact">${K.exact} ${K.names}</p><pre class="q" id="share-text" tabindex="0">${esc(m.text)}</pre></div>
   <div class="choice">${m.canShare ? `<button type="button" class="btn primary" id="share-go" data-act="share-go">${K.share}</button>` : ''}

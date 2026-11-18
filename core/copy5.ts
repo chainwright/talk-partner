@@ -140,6 +140,9 @@ export const P5 = {
       'Is the mood something to look at?',
       'How much should be drunk in a day?',
       'Can the tablets be looked at again?',
+      // (phase 9, judge round 8, the nurse's seat: the two things the family is most often asked about)
+      'Have the tablets changed, and what should we watch for?',
+      'Is anything new to look at: weakness, swallowing, bowels or bladder?',
       'What would help against falls at home?',
       'Is there more speech therapy, or a group nearby?',
       'What help is there for the family?',

@@ -191,3 +191,41 @@ describe('4. P1 the emergency number follows the locale, and asks', () => {
     expect((main.match(/urgentBox\(callNumber\(\), 'urgent', numberGuess\(\)\)/g) ?? []).length).toBe(2);
   });
 });
+
+// ---------------------------------------------------------------- item 5
+import { handoverText } from '../../core/share';
+import { P5 } from '../../core/copy5';
+import { visitLabel } from '../../core/visit';
+
+describe('5. P1 the handover note and the visit page', () => {
+  const diary = [logEntry('drank', NOW - 2 * H), logEntry('toilet', NOW - 3 * H), logEntry('tablets', NOW - 4 * H)];
+  const base = { diary, learned: [], name: 'Frank', now: NOW };
+  it('worst case: the box is off, and the next carer still reads the swallowing difficulty and the fluid limit', () => {
+    const t = handoverText({ ...base, health: null, safety: { swallowing: true, fluidLimit: true } });
+    expect(t).toContain('ALWAYS ON THIS NOTE (it changes what is safe to give)\n- Swallowing difficulty is noted: go by the plan from the speech therapist or nurse before giving food or drink.\n- A fluid limit from the doctor is noted: go by the doctor\'s plan for drinks.');
+    // the drinks line knows the fluid limit too
+    expect(t).toContain("A fluid limit from the doctor is noted: go by the doctor's plan.");
+    // with none noted, no such block
+    expect(handoverText({ ...base, health: null, safety: { swallowing: false, fluidLimit: false } })).not.toContain('ALWAYS ON THIS NOTE');
+  });
+  it('box ticked: the two are said once, under ALWAYS, and the other notes under the health notes', () => {
+    const health = { ...NO_HEALTH, swallowing: true, diabetes: true };
+    const t = handoverText({ ...base, health, safety: { swallowing: true, fluidLimit: false } });
+    expect((t.match(/Swallowing difficulty/g) ?? []).length).toBe(1);
+    expect(t).toContain('- Diabetes');
+  });
+  it('the visit page: Toilet and Tablets lines, the two family questions, and where it hurts with the part of the body', () => {
+    const s = sinceLines(diary, when(0, '00:00'), NOW);
+    expect(s.lines).toContain('Toilet: 1 entered (Sun 22 Nov).');
+    expect(s.lines).toContain('Tablets taken: logged 1 time (Sun 22 Nov). The app does not know which tablets or how many.');
+    expect(P5.since.questions).toContain('Have the tablets changed, and what should we watch for?');
+    expect(P5.since.questions).toContain('Is anything new to look at: weakness, swallowing, bowels or bladder?');
+    expect(visitLabel({ visit: 'where', bodyStep: 2, region: 'chest' }, 'middle')).toBe('chest, middle');
+    expect(visitLabel({ visit: 'where', bodyStep: 2, region: 'arms' }, 'your left arm')).toBe('arms, left arm');
+    expect(visitLabel({ visit: 'where', bodyStep: 1 }, 'chest')).toBe('chest');
+    expect(visitLabel({ visit: 'sleep' }, 'badly')).toBe('badly');
+    // "chest, middle" on the page still raises the box, and counts as a pain in the chest
+    const own = sinceLines([], when(0, '00:00'), NOW, [{ id: 'pain', q: 'Are you in pain?', label: 'yes', at: NOW - 60_000 }, { id: 'where', q: 'Where in the chest?', label: 'chest, middle', at: NOW - 30_000 }], 'Frank');
+    expect(own.urgent).toBe(true);
+  });
+});

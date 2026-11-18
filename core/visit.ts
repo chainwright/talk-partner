@@ -94,6 +94,16 @@ export async function visitCard(v: VisitQuestion, profile: Profile, support: Sup
   return mark(next!);
 }
 
+/**
+ * Phase 9 (judge round 8, the carer's seat): the answer as it stands on the page. The second step of "Where does it
+ * hurt?" ("Where in the chest?", then "middle") keeps the part of the body with it: "chest, middle", so the doctor
+ * reads where it hurts and not only "middle". Any other answer stands exactly as given.
+ */
+export function visitLabel(c: Pick<Card, 'visit' | 'bodyStep' | 'region'>, label: string): string {
+  if (c.visit !== 'where' || c.bodyStep !== 2 || !c.region) return label;
+  return `${c.region}, ${label.replace(/^your\s+/i, '')}`;
+}
+
 const two = (n: number) => String(n).padStart(2, '0');
 export const visitDate = (at: number) => new Date(at).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 export const visitTime = (at: number) => { const d = new Date(at); return `${two(d.getHours())}:${two(d.getMinutes())}`; };

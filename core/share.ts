@@ -118,7 +118,16 @@ export interface HandoverShare {
   name: string;
   now: number;
   number?: string;
+  /**
+   * Phase 9 (judge round 8, the nurse's seat): the two notes that change what is safe to give, printed on every
+   * handover note whether the health box is ticked or not (a next carer who does not know of a swallowing
+   * difficulty or a fluid limit can do harm with a cup of tea). Only these two: the others stay behind the box.
+   */
+  safety?: { swallowing: boolean; fluidLimit: boolean };
 }
+
+/** The notes `handoverText` prints whatever the box says (`HandoverShare.safety`), by name, for the sheet's lines. */
+export const ALWAYS_NOTES = ['swallowing', 'fluidLimit'] as const;
 
 /** "Sat 17:00" for a moment of the last 24 hours (two calendar days can be in it). */
 const shortWhen = (at: number) => `${dayText(at).split(' ')[0]} ${timeText(at)}`;
@@ -145,8 +154,10 @@ export function handoverText(m: HandoverShare): string {
   const tablets = entries.filter((e) => has(e, 'tablets'));
   // (in a note for the hours after it, every fall carries the call sentence, a blow to the head noted or not)
   const urgent = hard.length > 0 || falls.length > 0;
-  const fluid = !!m.health?.fluidLimit;
-  const noted = m.health && hasHealth(m.health) ? healthLines(m.health) : [];
+  const fluid = !!m.health?.fluidLimit || !!m.safety?.fluidLimit;
+  const always = [...(m.safety?.swallowing || m.health?.swallowing ? [`- ${K.hSwallow}`] : []), ...(fluid ? [`- ${K.hFluidAlways}`] : [])];
+  // (the two notes printed under ALWAYS are not printed a second time among the ticked ones)
+  const noted = m.health && hasHealth(m.health) ? healthLines({ ...m.health, swallowing: false, fluidLimit: false }) : [];
   const painItem = (e: DiaryEntry) => `${shortWhen(e.at)} ${e.kind === 'log' ? COPY.simple.diary.log.pain : e.kind === 'need' ? `${COPY.simple.diary.need} ${e.label}` : `${e.q} ${e.label}`}`;
   const body = !entries.length ? [K.hNothing] : [
     drinks.length ? `${K.hCount(K.hDrinks, drinks.length, listed(drinks.map((g) => shortWhen(g.at))))}${fluid ? ` ${K.hFluid}` : drinks.length < 3 ? ` ${K.hFewDrinks}` : ''}` : `${K.hNoDrink}${fluid ? ` ${K.hFluid}` : ''}`,
@@ -164,6 +175,7 @@ export function handoverText(m: HandoverShare): string {
     K.hTitle(m.name, shortWhen(from), shortWhen(m.now)),
     '',
     ...body,
+    ...(always.length ? ['', K.hAlways, ...always] : []),
     ...(noted.length ? ['', K.health, ...noted] : []),
     '',
     K.usual(m.name),

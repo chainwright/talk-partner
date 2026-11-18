@@ -362,6 +362,9 @@ describe('7. "Since the last visit": the diary\'s counts and up to three fixed q
       'Pain: chosen or logged on 1 day (Mon 16 Nov).',
       'Falls: 1 logged (Tue 17 Nov).',
       'Drinks: on 1 of 4 days with entries, no drink was entered.',
+      // (phase 9: the toilet and the tablets, as entered)
+      'Toilet: none entered. That can be a gap: ask the family.',
+      'Tablets taken: none logged. That can mean nobody tapped it.',
       'Mood: "sad", "bad" or "low" on 1 day (Wed 18 Nov).',
       'Sleep: a bad night on 1 day (Thu 19 Nov).',
     ]);
