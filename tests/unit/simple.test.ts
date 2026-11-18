@@ -124,7 +124,7 @@ describe('the simple view\'s privacy lines say what is sent, never more', () => 
     expect(K.techBody).toMatch(/Google's Gemini API, through Firebase AI Logic/);
     expect(K.yes).toBe('Just this once');
     // (phase 8, judge round 7: no dated billing record is in the repository, so the sheet says only whose service it is, and where its terms are)
-    expect(K.data).toBe("Google's paid service, per Google's terms: aistudio.google.com/docs/terms");
+    expect(K.data).toBe("Google's AI. On the paid tier Google does not use prompts to improve its products: aistudio.google.com/docs/terms");
     expect(K.data).not.toMatch(/free tier|may use/);
     expect(COPY.simple.insights.sheet.data).toBe(K.data);
     expect(COPY.consent.terms).toMatch(/meant to use the paid tier.*the owner's word: no dated billing record.*does not use prompts or responses to improve its products.*limited time/);

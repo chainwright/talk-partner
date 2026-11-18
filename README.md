@@ -607,7 +607,7 @@ print was looked at as the browser renders it for print, and as a PDF.
 about 16:52 UTC; the organiser of judge round 7 ran against it (README "Deploy"). No `--live` script of ours was run
 against that build.
 
-## Added on 18 to 19 Nov, phase 8: the fixes of judge round 7
+## Added on 18 Nov, phase 8: the fixes of judge round 7
 What the thirteen seats of judge round 7 found at the build of `45e8095`, in the order of their summary's priorities
 (`CLAIMS.md` rows 114 to 124; `devlog/evidence_phase8/`; `devlog/DAY19.md`). Everything here is rules and fixed text
 on the device, except the routing chip, which shows where Firebase AI Logic ran a card that an AI made. **No carer,
@@ -643,8 +643,10 @@ no person with aphasia, no speech therapist and no nurse has seen any of it.**
   document says a live phase never went out. The same test walks every string of the app as a phone would show it:
   none may say an AI reads anything on that phone (one did, under "Answers so far"). The full view's privacy line
   names Read aloud; "Nothing you asked has left this phone" now says "since the app was opened". Alela is named
-  among the look-alikes (not opened by us). The data-use line says "Google's paid service, per Google's terms" with
-  the link: no dated record of the billing account is in this repository.
+  among the look-alikes (not opened by us). The data-use line said "Google's paid service, per Google's terms" with
+  the link: no dated record of the billing account is in this repository. (Phase 9 changed it to what the terms
+  back: "Google's Gemini API through Firebase AI Logic. On the paid tier Google does not use prompts to improve its
+  products", with the link.)
 - **Home.** "Needs something now?"; the red card says what it is for: "Signs of a new stroke, chest pain, a fall:
   call." The 4 steps hold "Write the key word big as you say it: TEA?" and fold to one line after the first card, with
   "Write the key word big." on it; the first row of topics then stands above the fold at 360 x 740 and 390 x 844.
@@ -681,9 +683,16 @@ everything made by rules went on. Against the dev server on port 5243, with the 
 the deploy.
 
 **Not built, not run.** Any of it with a carer, a speech therapist, a nurse or a person with aphasia; a real phone;
-the hosted copy (the deploy is a later step); Read aloud against the real model (`e2e-speak.py`); the person-owned "Not now"
-exit, a locale default for the emergency number, the blood-thinner fall line and the "check it another way" button
-of the answer check (all asked for by single seats, outside this brief).
+the hosted copy at the time of these counts (phase 8 was deployed afterwards: README "Deploy"); Read aloud against the
+real model (`e2e-speak.py`); the blood-thinner fall line and the "check it another way" button of the answer check
+(asked for by single seats, outside this brief). The person-owned "Not now" exit and a locale default for the
+emergency number came in phase 9.
+
+## Added on 18 Nov, phase 9: the fixes of judge round 8
+The fixes of judge round 8 (`../judge_app_r8_2026-11-18/SUMMARY.md` §2), item by item in the commits after
+`3bc6998`. The full list and the runs are written when the phase is done.
+
+**Counts** (so far): 2847 unit tests (`npm run check`).
 
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104

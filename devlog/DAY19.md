@@ -1,4 +1,4 @@
-# Day 19 (18 to 19 Nov 2026): phase 8, the fixes of judge round 7
+# Day 19 (18 Nov 2026): phase 8, the fixes of judge round 7
 
 The brief was `design/PHASE8_BRIEF.md`, from the round-7 summary (`../judge_app_r7_2026-11-18/SUMMARY.md`) and five of
 its reports (nurse, SLP, carer, person proxy, hound). Work began from `45e8095` (the live build), 18 Nov, 18:17 UTC.

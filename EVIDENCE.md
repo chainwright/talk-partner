@@ -225,7 +225,7 @@ ours was made against the hosted copy (README "Deploy").
 Not run for phase 7: any of it with a carer, a speech therapist, a nurse or a paid carer; Share on a real phone; a
 print on paper; any run of ours against the hosted copy.
 
-## Phase 8 (18 to 19 Nov 2026): rows 114 to 124
+## Phase 8 (18 Nov 2026): rows 114 to 124
 The fixes of judge round 7. All of it on a production build on localhost (`npx vite preview`, port 5241), except the
 two runs with a real model, which name their server. Nothing of phase 8 was deployed by us. Saved outputs are in
 `devlog/evidence_phase8/` (`local/` for the full runs, `cloud/` for the cloud step, `ai_phase4/` for the on-device

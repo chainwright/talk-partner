@@ -678,7 +678,8 @@ const COPY = {
         neverLabel: 'Never sent:',
         never: 'names, photos, the diary itself, the health notes, the answers they chose.',
         dataLabel: 'Data use:',
-        data: "Google's paid service, per Google's terms: aistudio.google.com/docs/terms",
+        // (phase 9, judge round 8: "Google's paid service" stated a billing tier no dated record in the repository backs)
+        data: "Google's AI. On the paid tier Google does not use prompts to improve its products: aistudio.google.com/docs/terms",
         yes: 'Just this once',
         no: 'No, keep the app\'s own words',
         once: 'This is for these lines, this once. It does not turn online help on for anything else.',
@@ -753,7 +754,7 @@ const COPY = {
     exampleHeading: 'Your last question would be sent like this:',
     exampleNone: 'Type a question first and this shows exactly what would be sent.',
     whoHeading: 'Who receives it',
-    who: "Google's Gemini API, through Firebase AI Logic: Google's paid service, per Google's terms.",
+    who: "Google's Gemini API, through Firebase AI Logic. On the paid tier Google does not use prompts to improve its products (Google's terms).",
     /** Remote Config is asked when cloud help is turned on (web/src/ai/remoteConfig.ts): said here, before the tick. */
     settings: 'When cloud help is on, the app also asks Firebase Remote Config once for its current settings (which cloud model to use). That request holds no question and nothing from About me.',
     neverHeading: 'Never sent',
@@ -782,14 +783,14 @@ const COPY = {
       neverLabel: 'Never sent:',
       never: (about: string) => `your ${about} lists, photos, who lives at home, the answers they chose.`,
       dataLabel: 'Data use:',
-      data: "Google's paid service, per Google's terms: aistudio.google.com/docs/terms",
+      data: "Google's AI. On the paid tier Google does not use prompts to improve its products: aistudio.google.com/docs/terms",
       // (18 Nov, judge round 6: the first yes is for this one question; keeping online help on is the second button)
       yes: 'Just this once',
       always: 'Yes, every time',
       no: 'No, not for this question',
       after: '"Just this once" sends this one question to online help. "Every time" keeps online help on until you turn it off (inside, under Cloud help); the app then also asks Firebase once for its settings: no question is in that.',
       tech: 'Who receives it, in technical words',
-      techBody: "Google's Gemini API, through Firebase AI Logic: Google's paid service, per Google's terms.",
+      techBody: "Google's Gemini API, through Firebase AI Logic. On the paid tier Google does not use prompts to improve its products (Google's terms).",
       exact: 'See the exact request',
       terms: "Google's data terms",
       /** The same sheet for a narrowing step (after "something else"): plain words first, the whole request one tap away. */

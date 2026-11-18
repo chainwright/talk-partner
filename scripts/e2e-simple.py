@@ -452,7 +452,7 @@ def phone(browser, url, live):
     line = page.locator('#sheet-line').inner_text().strip()
     face = text(page, '#sheet')
     check('the narrowing step with online help off: the sheet leads with plain words and the conversation\'s own line (the question and what did not fit, nothing they chose)', line == 'Would you like water, juice or milk? They did not want: water, juice, milk.' and "None of those fitted. Online help is Google's AI: it can suggest other kinds of answer. It sees only this:" in face and text(page, '#sheet .choice').startswith('Just this once') and "and the app's fixed instructions." in face and 'Do not give more of the same kind' not in face, f'{line} | {face[:300]}')
-    check('the narrowing sheet says the data use of the paid service, and what is never sent', "Google's paid service, per Google's terms" in face and 'the answers they chose' in face, face)
+    check('the narrowing sheet says the data use of the paid service, and what is never sent', "On the paid tier Google does not use prompts to improve its products" in face and 'the answers they chose' in face, face)
     page.locator('#sheet-whole summary').click()
     whole = page.locator('#sheet-whole pre').text_content()
     check('the narrowing sheet: the whole request is one tap away, word for word (that line, and the fixed instructions)', f'Partner asks: {line} What else could it be? Do not give more of the same kind as the ones they did not want' in whole and '"mode": "PREFER_IN_CLOUD"' in whole, whole[:300])
@@ -540,7 +540,7 @@ def phone(browser, url, live):
           page.locator('#sheet[role=dialog][aria-modal=true]').count() == 1 and page.locator('main.simple[inert]').count() == 1 and page.evaluate("document.activeElement && document.activeElement.id") == 'sheet-h')
     check('the sheet shows the exact line that would go', page.locator('#sheet-line').inner_text().strip() == f'Partner asks: {OPEN_Q}', page.locator('#sheet-line').inner_text())
     check('the sheet says what is sent (the line and the fixed instructions; names can be missed), what is never sent, and the data use; never "nothing else"',
-          all(s in sheet for s in ["fixed instructions", 'can be missed', 'leave out health details', 'Never sent:', 'who lives at home', 'the answers they chose', "Google's paid service, per Google's terms", "Online help is Google's AI", 'This phone has no AI of its own', 'Just this once', 'Yes, every time']) and 'nothing else' not in sheet.lower() and 'only the question' not in sheet.lower(), sheet)
+          all(s in sheet for s in ["fixed instructions", 'can be missed', 'leave out health details', 'Never sent:', 'who lives at home', 'the answers they chose', "On the paid tier Google does not use prompts to improve its products", "Online help is Google's AI", 'This phone has no AI of its own', 'Just this once', 'Yes, every time']) and 'nothing else' not in sheet.lower() and 'only the question' not in sheet.lower(), sheet)
     yes = page.locator('[data-act=sheet-yes]').bounding_box()
     no = page.locator('[data-act=sheet-no]').bounding_box()
     check('the sheet: "Yes" and "No" are the same size, at least 60 px tall, and both are on the screen without scrolling', abs(yes['height'] - no['height']) < 1 and yes['height'] >= 60 and abs(yes['width'] - no['width']) < 1 and no['y'] + no['height'] <= 844, f"{yes} {no}")
