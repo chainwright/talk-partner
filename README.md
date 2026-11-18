@@ -603,9 +603,9 @@ print was looked at as the browser renders it for print, and as a PDF.
 `phase7-practice` 36, `phase7-passport` 26). On the production build on localhost (`npx vite preview`, port 5197):
 `e2e-simple.py` 935/935 (its phase 7 run is 125 of them); `pwa-check.py` 30/30; `e2e-needs.mjs` 12/12;
 `overflow-check.py` 534/534 (24 of them are the two new pages and their sheet at 320, 360, 390 and 412 px);
-`contrast-check.mjs` 144 pairs. **Not deployed**: the Firebase login expired on 18 Nov, 12:11 UTC, and signing in
-is the owner's step, so the hosted copy still serves the build before phase 6. Not run for that reason: "live =
-dist", and every `--live` run.
+`contrast-check.mjs` 144 pairs. The build of `45e8095` (phases 6 and 7) went out to the hosted copy on 18 Nov at
+about 16:52 UTC; the organiser of judge round 7 ran against it (README "Deploy"). No `--live` script of ours was run
+against that build.
 
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104
@@ -828,8 +828,9 @@ Checked on the primary pages on 11 Nov 2026, Livox on 17 Nov (the same list is o
 | [Broca AI Speech](https://aphasia.org/resource/broca-ai-speech/) (a listing of the National Aphasia Association; date not confirmed) | As the listing is summarised in judge round 6: it listens to a conversation and suggests reply cards that are spoken aloud, for people who cannot speak, write or type. **We did not open the page ourselves** | It drafts the person's replies. Talk Partner never drafts or speaks a reply for the person: the partner's question becomes a card, and Read aloud speaks the question and the choices, not an answer |
 | [RealTalk Aid](https://www.producthunt.com/products/realtalk-aid) (Product Hunt, 1 Oct 2025) | As summarised in judge round 6 from a search result: real-time transcription and suggested responses for stroke survivors. **We did not open the page ourselves** | The same difference: suggested responses for the person, from a live transcript in the cloud. Here nothing listens to the person, and the choices come from the partner's own question |
 | [Nemo Speak AAC](https://ai.google.dev/competition/projects/nemo-speak-aac) (an entry on a Google AI competition page) | As a search snippet in judge round 6 has it: an AAC app built on Gemini in the cloud. **We did not open the page ourselves** | An AAC board for the person. Talk Partner is the partner's tool, rules first, with the family's own data read only on the device |
+| [Alela](https://apps.apple.com/ca/app/alela/id1560339762) (iOS App Store; date not confirmed) | As search snippets in judge round 7 have it: the partner's spoken question is turned into pictures, and a yes-no or either-or question is recognised and answers are suggested, for people who cannot speak. **Not opened by us** (the store page answered the judge's fetch with 429 and 404) | The closest in function that we know of. Talk Partner adds a way out on every card, the check ("So: tea. Right?"), coaching when the question itself does not fit (two in one, a memory question), the family's own entries and the diary; it is a web page, not an iOS app |
 
-The last three rows were added on 18 Nov from judge round 6's searches; unlike the rows above them, their pages were not read by us, and each row says so.
+The last four rows were added on 18 Nov from the searches of judge rounds 6 and 7; unlike the rows above them, their pages were not read by us, and each row says so.
 
 Not verified by us and therefore not quoted: a 14 Oct 2026 interview in which Tobii Dynavox is reported to say it keeps generative AI out of its language systems.
 
@@ -1049,15 +1050,20 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-**Not deployed yet: phase 6 and the two fixes after the owner's walk (commits `1de40ca` to `3e09079`).** On 18 Nov
-2026, 12:11 UTC, `firebase-tools deploy --only hosting` was refused before anything was built or uploaded: "Your
-credentials are no longer valid. Please run firebase login --reauth" (`devlog/evidence_live/deploy_2026-11-18_3e09079.txt`).
-Signing in again is the owner's step. Until then <https://talk-partner.web.app> serves the build before phase 6 (its
-page names `assets/index-DccEBIQK.js`; the local build of `3e09079` is `assets/index-DcdnCdT0.js`), so the hosted copy
-has none of: "See the entries", sharing, the one-step Back, the new screen after "something else". Nothing of phase 6
-was run against the hosted copy; the counts above are from the production build on localhost.
+**Live: the build of `LIVE_BUILD`.** (`LIVE_BUILD` is a placeholder: whoever deploys writes the commit, the time and
+what was run against it here, and `tests/unit/docs-truth.test.ts` fails while an older build is named as the live
+one.)
 
-Last done on 18 Nov 2026, 07:05 UTC: <https://talk-partner.web.app> serves the build of commit `9d141b0` (phase 5, the
+The deploy before it, 18 Nov 2026, about 16:52 UTC: <https://talk-partner.web.app> served the build of commit
+`45e8095` (phases 6 and 7). The organiser of judge round 7 found its `index.html`, script and stylesheet SHA-256
+identical to our `dist/` of `45e8095` and ran against it: `overflow-check.py` 534/534, `e2e-needs.mjs` 12/12,
+`pwa-check.py` 30/30, `e2e-simple.py --live` 926/926 on a second run (a first run, beside other scripts, stopped on a
+timeout after 604 checks, none failed). Those are the organiser's notes of the round, not files in this repository. No
+`--live` script of ours and no run of the cloud step or of Read aloud was made against that build. (Earlier the same
+day, 12:11 UTC, a deploy of `3e09079` had been refused before anything was uploaded: "Your credentials are no longer
+valid", `devlog/evidence_live/deploy_2026-11-18_3e09079.txt`; the owner signed in again.)
+
+The deploy before that, 18 Nov 2026, 07:05 UTC: <https://talk-partner.web.app> served the build of commit `9d141b0` (phase 5, the
 fixes of judge round 6: "they can start", "Something new or sudden?" and the call box, the answer check's exemptions,
 the new lines of "what stands out", a fall and tablets in the diary, Read aloud, "Just this once", the photo line,
 "Since the last visit"). Each of the 20 served files has the SHA-256 of the local build, and `/` equals

@@ -508,7 +508,7 @@ describe('simple view: the consent sheet', () => {
   });
   it('what is sent, what can be missed, what is never sent and the data use stand above the buttons', () => {
     const yes = html.indexOf('data-act="sheet-yes"');
-    for (const s of [K.sentLabel, 'fixed instructions', 'can be missed', K.neverLabel, K.dataLabel, 'does not use what is sent to improve its products']) {
+    for (const s of [K.sentLabel, 'fixed instructions', 'can be missed', K.neverLabel, K.dataLabel, 'paid service, per Google']) {
       expect(html.indexOf(s)).toBeGreaterThan(-1);
       expect(html.indexOf(s)).toBeLessThan(yes);
     }
@@ -524,7 +524,7 @@ describe('simple view: the consent sheet', () => {
     const face = n.slice(0, n.indexOf('<details'));
     expect(face).not.toContain('Do not give more of the same kind');
     expect(face).toContain('fixed instructions');
-    expect(face).toContain('does not use what is sent to improve its products');
+    expect(face).toContain('paid service, per Google');
     expect(face.indexOf('id="sheet-line"')).toBeLessThan(face.indexOf('data-act="sheet-yes"'));
     expect(n.slice(n.indexOf('<details'))).toContain('Do not give more of the same kind');
     expect(n).toContain(`<summary>${N.whole}</summary>`);

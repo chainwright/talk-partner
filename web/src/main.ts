@@ -1236,7 +1236,8 @@ function patchVoice() {
   const n = document.querySelector<HTMLElement>('#voice'); if (n) { const t = voiceNote(); n.innerHTML = t; n.hidden = !t; }
 }
 function privacyLine(): string {
-  return `${state.settings.cloudHelp ? C.consent.isOn : C.privacy.cloudOff}${voiceSent.clips ? ` ${C.voice.privacy}` : ''}`;
+  // (phase 8, judge round 7: Read aloud is named too: with it on, the words of each card shown go to Google)
+  return `${state.settings.cloudHelp ? C.consent.isOn : C.privacy.cloudOff}${voiceSent.clips ? ` ${C.voice.privacy}` : ''}${speakOn() ? ` ${P5.speak.on.replace(/^On\. /, 'Read aloud is on: ')}` : ''}${p5.speakSent ? ` ${P5.speak.sent(p5.speakSent)}` : ''}`;
 }
 function startVoice() {
   if (step === 'waiting') step = 'cancelled'; // speaking a question is asking one: judge mode's automatic step stands down

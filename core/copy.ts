@@ -512,8 +512,9 @@ const COPY = {
     },
     /** The line at the foot of the first screen and the answered screen: by what has happened this session. */
     privacy: {
-      none: 'Nothing you asked has left this computer.',
-      cloudOn: 'No question has left this computer.',
+      // (phase 8, judge round 7: the count is of this visit only, since the page was opened: the line says so)
+      none: 'Nothing you asked has left this computer since the app was opened.',
+      cloudOn: 'No question has left this computer since the app was opened.',
       settings: 'Online help is on, so the app asked for its settings online (no question in that).',
       sent: (n: number) => `${n} question${n === 1 ? '' : 's'} went to Google's online AI this session, with any names you listed swapped out.`,
       maybe: (n: number) => `${n} more may have left this computer: online help was asked and did not answer.`,
@@ -634,7 +635,7 @@ const COPY = {
         neverLabel: 'Never sent:',
         never: 'names, photos, the diary itself, the health notes, the answers they chose.',
         dataLabel: 'Data use:',
-        data: "Google's paid service: Google does not use what is sent to improve its products. It keeps it for a limited time to check for misuse.",
+        data: "Google's paid service, per Google's terms: aistudio.google.com/docs/terms",
         yes: 'Just this once',
         no: 'No, keep the app\'s own words',
         once: 'This is for these lines, this once. It does not turn online help on for anything else.',
@@ -693,7 +694,7 @@ const COPY = {
     /** Who this is for and why, in one line, before anything else. */
     who: 'For the family and carers of an adult with aphasia after a stroke: they understand you, but the words to answer will not come.',
     what: 'You ask what you would normally ask. The app turns it into a card with a keyword and two big choices the person can point to, with a way out every time, and gives you the line to say.',
-    local: 'Your About me lists and photos stay on this computer.',
+    local: 'Your About me lists and photos stay on this computer, except the words of cards read aloud, if you turn Read aloud on.',
     cloudOff: 'Cloud help is off. You can turn it on later.',
     setup: 'Set up About me',
     sample: 'Try it with a sample family',
@@ -709,12 +710,12 @@ const COPY = {
     exampleHeading: 'Your last question would be sent like this:',
     exampleNone: 'Type a question first and this shows exactly what would be sent.',
     whoHeading: 'Who receives it',
-    who: "Google's Gemini API, through Firebase AI Logic, on the paid tier.",
+    who: "Google's Gemini API, through Firebase AI Logic: Google's paid service, per Google's terms.",
     /** Remote Config is asked when cloud help is turned on (web/src/ai/remoteConfig.ts): said here, before the tick. */
     settings: 'When cloud help is on, the app also asks Firebase Remote Config once for its current settings (which cloud model to use). That request holds no question and nothing from About me.',
     neverHeading: 'Never sent',
     termsHeading: 'Data use',
-    terms: 'This app uses the paid tier of the Gemini API. On the paid tier Google does not use prompts or responses to improve its products; it logs them for a limited time, only to detect and prevent misuse (Gemini API Additional Terms, in force since 23 March 2026). On the free tier Google may use them, and people may read them.',
+    terms: 'This app is meant to use the paid tier of the Gemini API (the owner\'s word: no dated billing record is in the repository). On the paid tier Google does not use prompts or responses to improve its products; it logs them for a limited time, only to detect and prevent misuse (Gemini API Additional Terms, in force since 23 March 2026). On the free tier Google may use them, and people may read them.',
     termsLink: 'https://aistudio.google.com/docs/terms',
     termsLinkText: 'Read the terms',
     checkbox: 'I understand. Turn on cloud help.',
@@ -738,14 +739,14 @@ const COPY = {
       neverLabel: 'Never sent:',
       never: (about: string) => `your ${about} lists, photos, who lives at home, the answers they chose.`,
       dataLabel: 'Data use:',
-      data: "Google's paid service: Google does not use what is sent to improve its products. It keeps it for a limited time to check for misuse.",
+      data: "Google's paid service, per Google's terms: aistudio.google.com/docs/terms",
       // (18 Nov, judge round 6: the first yes is for this one question; keeping online help on is the second button)
       yes: 'Just this once',
       always: 'Yes, every time',
       no: 'No, not for this question',
       after: '"Just this once" sends this one question to online help. "Every time" keeps online help on until you turn it off (inside, under Cloud help); the app then also asks Firebase once for its settings: no question is in that.',
       tech: 'Who receives it, in technical words',
-      techBody: "Google's Gemini API, through Firebase AI Logic, on the paid tier.",
+      techBody: "Google's Gemini API, through Firebase AI Logic: Google's paid service, per Google's terms.",
       exact: 'See the exact request',
       terms: "Google's data terms",
       /** The same sheet for a narrowing step (after "something else"): plain words first, the whole request one tap away. */
@@ -1147,6 +1148,10 @@ export function deviceKindFrom(n: { userAgent?: string; mobile?: boolean; platfo
  */
 const NOT_THIS_DEVICE: [string, string][] = [
   ['Gemini Nano on this computer reads About me', 'Gemini Nano reads About me on the device itself, where the browser has it (desktop Chrome)'],
+  // (phase 8, judge round 7: on a phone this read "that AI reads today's answers on this phone", and no AI does there)
+  ["that AI reads today's answers on this computer, to write", "that AI reads today's answers on that computer itself (on a phone no AI reads them), to write"],
+  // (the photo line for a browser with the on-device model is shown on a desktop only; on any other device it must not say "this phone" either)
+  ['looks at that one photo on this computer itself', 'looks at that one photo on that computer itself'],
 ];
 
 /** "this computer" → "this phone" / "this tablet" (and "the computer" → "the phone") in one string. */

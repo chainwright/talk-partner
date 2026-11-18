@@ -2,6 +2,8 @@ Repository: <https://github.com/chainwright/talk-partner> (public, Apache-2.0)
 
 # For judges: the 60-second path
 
+**Live: the build of `LIVE_BUILD`** (README "Deploy" says what was run against it).
+
 Nothing here needs an account. Hosted copy: <https://talk-partner.web.app/#/demo> (our project settings are in it, so
 cloud help can be turned on there; the on-device step needs Gemini Nano in your own Chrome). **Cloud help there may
 give no card:** it needs App Check to accept your browser, and on the evening of 17 Nov it refused ours (the card
@@ -94,8 +96,7 @@ or, for the body and feelings, "Show me where" and the needs board. The AI's nar
 
 **Added on 18 Nov, phase 7: for the speech therapist, and "How to talk with Frank"** (`CLAIMS.md` rows 108 to 113;
 README "Added on 18 Nov, phase 7"; `devlog/evidence_phase7/`). **No AI is in this phase**: rules and fixed text on the
-device. **Not on the hosted copy yet** (the deploy is the owner's step: the Firebase login expired); it runs from a
-local build. Open the diary: **"For the speech therapist"** is one page of counts for the last 7 or 30 days (questions
+device. On the hosted copy since the build of `45e8095` (18 Nov, about 16:52 UTC; README "Deploy"). Open the diary: **"For the speech therapist"** is one page of counts for the last 7 or 30 days (questions
 asked and by topic, picked from the app's lists or typed, what the app flagged, "something else" and what led to an
 answer after it, who started, the check, Read aloud). No line grades anyone. The counts come from a log that holds
 no word of a question or an answer and starts with this build. The needs and pain answers are on the page only when

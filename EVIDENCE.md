@@ -3,9 +3,8 @@
 For each row of `CLAIMS.md`: the file that does it, the command that checks it, and the saved output. Commands run
 from the repository root after `npm install`.
 
-**The saved outputs are in `devlog/evidence_r8/final/`.** Every one was made at commit `deebc94`, the last commit that
-changes code or the text on screen; the commits after it change one label in two scripts, add these logs and change
-documents. Each log was written by
+**The saved outputs are in `devlog/evidence_r8/final/`.** Every one was made at commit `deebc94` (17 Nov). Much code
+has changed since: the rows of phases 2 to 8 name their own runs and their own commits. Each log was written by
 `scripts/save-log.mjs`, which records at the top the date, the commit and whether the working tree was clean when the
 command started (it was, for every file there: the scripts wrote into a folder outside the repository, which the
 logs name as `<scratch>` for their screenshots, and the files were copied here afterwards), and the exit code at the
@@ -214,7 +213,8 @@ phone's own share sheet was never opened by us); the print on paper.
 ## Phase 7 (18 Nov 2026): rows 108 to 113
 No model is part of phase 7, so there is no AI run to save: the proof is the unit tests and one browser run in which
 every request to another host is refused and counted (none was made). All of it on a production build on localhost
-(`npx vite preview`, port 5197): the phase was not deployed (the Firebase login expired; `devlog/DAY18.md`).
+(`npx vite preview`, port 5197). The phase went out with the build of `45e8095` (18 Nov, about 16:52 UTC); no run of
+ours was made against the hosted copy (README "Deploy").
 
 | Row | File | Command | Saved output |
 |---|---|---|---|
@@ -223,4 +223,4 @@ every request to another host is refused and counted (none was made). All of it 
 | 113 | `web/src/main.ts` (`share-page`, `page-print`, `screenKey`), `web/src/phase6.ts` (`shareSheet`, `page`) | the phase 7 browser run (`navigator.share` replaced by a stub that records what it is handed; the clipboard read back; `window.print` counted; Back by the button and by the browser's back) | `04_for_the_speech_therapist_sheet_with_the_exact_text.png`, `05_for_the_speech_therapist_as_it_prints.png`, `11_passport_sheet_with_the_exact_text.png`; `overflow-check_local.txt` (the two pages and their sheet at 320, 360, 390 and 412 px) |
 
 Not run for phase 7: any of it with a carer, a speech therapist, a nurse or a paid carer; Share on a real phone; a
-print on paper; the hosted copy (not deployed).
+print on paper; any run of ours against the hosted copy.

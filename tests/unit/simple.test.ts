@@ -80,7 +80,7 @@ describe('this phone / this tablet / this computer', () => {
       expect(strings(COPY).filter((s) => /this computer/i.test(s))).toEqual([]);
       expect(COPY.badge.tail.kept).toBe(`nothing left this ${kind}`);
       expect(COPY.ask.againTitle(2)).toContain(`on this ${kind}`);
-      expect(COPY.simple.privacy.none).toBe(`Nothing you asked has left this ${kind}.`);
+      expect(COPY.simple.privacy.none).toBe(`Nothing you asked has left this ${kind} since the app was opened.`);
       // a function that returns an object of strings
       const n = COPY.judge.receipt.number({ cards: 1, cardsLeft: 0, bodyBytes: 0, namesWithheld: 0, otherWithheld: 0, attempts: 0, attemptBytes: 0 });
       expect(n.label).toBe(`left this ${kind}`);
@@ -123,10 +123,11 @@ describe('the simple view\'s privacy lines say what is sent, never more', () => 
     expect(K.bodyNoDevice(ABOUT)).toMatch(/Online help is Google's AI/);
     expect(K.techBody).toMatch(/Google's Gemini API, through Firebase AI Logic/);
     expect(K.yes).toBe('Just this once');
-    expect(K.data).toMatch(/paid service.*does not use what is sent to improve its products.*limited time/);
+    // (phase 8, judge round 7: no dated billing record is in the repository, so the sheet says only whose service it is, and where its terms are)
+    expect(K.data).toBe("Google's paid service, per Google's terms: aistudio.google.com/docs/terms");
     expect(K.data).not.toMatch(/free tier|may use/);
     expect(COPY.simple.insights.sheet.data).toBe(K.data);
-    expect(COPY.consent.terms).toMatch(/paid tier.*does not use prompts or responses to improve its products.*limited time/);
+    expect(COPY.consent.terms).toMatch(/meant to use the paid tier.*the owner's word: no dated billing record.*does not use prompts or responses to improve its products.*limited time/);
     expect(COPY.consent.termsLink).toBe('https://aistudio.google.com/docs/terms');
     expect(K.after).toMatch(/asks Firebase once for its settings/);
     expect(K.no).not.toMatch(/all on this/); // the microphone still sends a recording, so "No" does not promise that

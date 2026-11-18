@@ -342,7 +342,7 @@ describe('6. consent sheets: one plain name, and the first yes is "Just this onc
       expect(text(html.split('<details')[0])).not.toMatch(/Firebase AI Logic|Gemini|PREFER_IN_CLOUD/);
     }
     expect(sheets[0]).toContain('data-act="sheet-always"');
-    expect(text(sheets[0])).toContain("Google's Gemini API, through Firebase AI Logic, on the paid tier.");
+    expect(text(sheets[0])).toContain("Google's Gemini API, through Firebase AI Logic: Google's paid service, per Google's terms.");
   });
 });
 
