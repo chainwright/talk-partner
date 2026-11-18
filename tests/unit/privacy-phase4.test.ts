@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
 import { P4 } from '../../core/copy4';
-import { topicMenu, turnCard } from '../../core/turn';
+import { MENU, aboutCard, topicMenu, turnCard } from '../../core/turn';
 import type { Card, Choice } from '../../core/types';
 import { answeredScreen, cardScreen, homeScreen, type AnsweredModel } from '../../web/src/simple';
 import { letterButton, letterBy, p4Links, turnButton } from '../../web/src/phase4';
@@ -25,7 +25,7 @@ describe('what the new modules can reach', () => {
   const PERSONAL = ['prefs', 'photos', 'diary', 'insights', 'reliability', 'tip', 'backup', 'history', 'visit', 'summary'];
   it('core/letter.ts builds a cloud text: it imports none of the personal stores (learned words come in as plain words, for the device only)', () => {
     for (const i of imports('core/letter.ts')) expect(PERSONAL.some((m) => i.endsWith(`/${m}`)), i).toBe(false);
-    expect(imports('core/letter.ts').sort()).toEqual(['./copy4', './engine', './pipeline', './prompt', './rules', './strip', './types']);
+    expect(imports('core/letter.ts').sort()).toEqual(['./copy4', './engine', './kinds', './pipeline', './prompt', './rules', './strip', './types']);
   });
   it('the cloud text of the letter step is made from the question and the letter alone: its function takes nothing else', () => {
     const src = read('core/letter.ts');
@@ -76,15 +76,22 @@ describe('the web client', () => {
 
 describe('the person\'s screens: three choices and a way out at most; no score', () => {
   const pages = (c: Card): Card[] => { const out: Card[] = []; for (let p: Card | null | undefined = c; p; p = p.nextPage) out.push(p); return out; };
-  it('the starters and both screens of the topic menu', () => {
+  it('the starters, both screens of the topic menu, and every "what is it about" card', () => {
     for (const c of [turnCard(), ...pages(topicMenu())]) {
       expect(c.choices.filter((x) => x.role === 'answer')).toHaveLength(3);
       expect(c.choices.filter((x) => x.role === 'escape')).toHaveLength(1);
       expect(c.choices).toHaveLength(4);
     }
+    const five = { personName: 'Frank', partnerName: 'Carol', people: ['Ann', 'Beth', 'Cy', 'Di', 'Ed'].map((n, i) => ({ id: `p${i}`, name: n, relation: '', household: false })), foods: [], places: [], tv: [], music: [], other: [] };
+    for (const t of MENU) {
+      const c = aboutCard(t, five);
+      if (!c) continue;
+      expect(c.choices.filter((x) => x.role === 'answer').length, t).toBeLessThanOrEqual(3);
+      expect(c.choices.filter((x) => x.role === 'escape'), t).toHaveLength(1);
+    }
   });
   it('no word of phase 4 that the person sees holds a number, a score or a mark', () => {
-    for (const s of [P4.letter.ask, P4.letter.point, P4.letter.no, P4.turn.ask, P4.turn.topicsAsk, ...Object.values(P4.turn.starters), P4.photo.q.feel, P4.photo.q.show, P4.photo.q.things]) expect(s).not.toMatch(/\d|score|point[s]? for|wrong|correct|less sure/i);
+    for (const s of [P4.letter.ask, P4.letter.point, P4.letter.no, P4.turn.ask, P4.turn.topicsAsk, ...Object.values(P4.turn.aboutAsk), ...Object.values(P4.turn.aboutChoices).flat(), ...Object.values(P4.turn.starters), P4.photo.q.feel, P4.photo.q.show, P4.photo.q.things]) expect(s).not.toMatch(/\d|score|point[s]? for|wrong|correct|less sure/i);
   });
 });
 

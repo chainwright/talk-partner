@@ -21,6 +21,7 @@
 
 import { P4 } from './copy4';
 import { within, type CloudError } from './engine';
+import { placeOf, subjectOf, type Subject } from './kinds';
 import { finish, parseModelOutput, type PipelineEnv } from './pipeline';
 import { devicePrompt } from './prompt';
 import { hasNegative, inventedNameFilter, isEscapeLabel, snapToProfile } from './rules';
@@ -77,13 +78,43 @@ export function ownWords(profile: Profile, learned: string[] = []): string[] {
   return all.map((w) => w.trim()).filter((w, i, xs) => w && xs.findIndex((x) => lc(x) === lc(w)) === i);
 }
 
-/** The rules' candidates for a letter: About them first, then everyday words (the question's topic first). No model. */
+/**
+ * What a tile says for a word: the word itself when it starts with the letter; when a later word of it does, that
+ * word first and the rest in brackets ("ginger biscuits" under B is "biscuits (ginger)"), so that every tile under
+ * "It starts with B" starts with B (the role-play of 18 Nov: "ginger biscuits" under B confused the reader).
+ */
+export function letterLabel(word: string, letter: string): string {
+  if (startsWith(word, letter)) return word;
+  const ws = word.trim().replace(/^(?:the|a|an|my|your|our|some)\s+/i, '').split(/\s+/);
+  const k = ws.findIndex((w, n) => n > 0 && w.length >= 3 && w.toLowerCase().startsWith(letter.toLowerCase()));
+  return k < 0 ? word : `${ws.slice(k).join(' ')} (${ws.slice(0, k).join(' ')})`;
+}
+
+/** The About-them lists that are of a kind of thing. */
+const LISTS: Partial<Record<Subject, (p: Profile) => string[]>> = { food: (p) => p.foods, place: (p) => p.places, activity: (p) => [...p.tv, ...p.music] };
+/** True when the word is of the kind the conversation is about: by the app's list of kinds (core/kinds.ts), any word of it ("strong tea with milk" is a drink), or by the About-them list it stands in. */
+function ofKind(word: string, kind: Subject, profile: Profile): boolean {
+  const b = bare(word);
+  if ([b, ...b.split(/\s+/)].some((w) => placeOf(w)?.subject === kind || placeOf(w, kind)?.subject === kind)) return true;
+  return (LISTS[kind]?.(profile) ?? []).some((x) => lc(x) === lc(word));
+}
+
+/**
+ * The rules' candidates for a letter. No model. Within each group About them comes first (a word that starts with the
+ * letter before one whose later word does), then everyday words (the question's topic first). The groups, in order:
+ * words of the kind the conversation is about, when that is known ("tea or coffee?" then "something else": drinks),
+ * then the people, then the rest.
+ */
 export function letterWords(i: LetterInput, profile: Profile): string[] {
   const gone = new Set(i.rejected.map(lc));
   const own = ownWords(profile, i.learned);
   const every = [...(i.topic && EVERYDAY[i.topic] ? EVERYDAY[i.topic] : []), ...Object.values(EVERYDAY).flat()];
-  const ordered = [...own.filter((w) => startsWith(w, i.letter)), ...own.filter((w) => !startsWith(w, i.letter) && holds(w, i.letter)), ...every.filter((w) => startsWith(w, i.letter))];
-  return ordered.filter((w, k, xs) => !gone.has(lc(w)) && xs.findIndex((x) => lc(x) === lc(w)) === k);
+  const ordered = [...own.filter((w) => startsWith(w, i.letter)), ...own.filter((w) => !startsWith(w, i.letter) && holds(w, i.letter)), ...every.filter((w) => startsWith(w, i.letter))]
+    .filter((w, k, xs) => !gone.has(lc(w)) && xs.findIndex((x) => lc(x) === lc(w)) === k);
+  const kind = subjectOf(i.asked, i.rejected);
+  const people = new Set(profile.people.flatMap((p) => [lc(p.name), lc(p.nickname ?? '')]).filter(Boolean));
+  const rank = (w: string) => (kind && kind !== 'people' && ofKind(w, kind, profile) ? 0 : people.has(lc(w)) ? 1 : 2);
+  return ordered.map((w, k) => ({ w, k, r: rank(w) })).sort((x, y) => x.r - y.r || x.k - y.k).map((x) => x.w);
 }
 
 /** What a model may not bring onto a card by itself. */
@@ -155,14 +186,16 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
   ];
   const make = (words: string[], by: 'rules' | 'device' | 'cloud', source: Source, ms: number, proposed: string[] | null, dropped: { label: string; rule: string }[], extra: Partial<Card> = {}): Card => {
     const card = finish({ ...base, source, ms, route: { to: by === 'cloud' ? 'cloud' : 'device', reasons: base.route.reasons }, letter: { letter, rejected: i.rejected, by }, ...extra }, words, ['something else'], profile, support, 3);
+    // every tile starts with the letter; the carer says the family's own word, which is also what a photo and "refused" go by
+    for (const c of card.choices) if (c.role === 'answer') c.label = letterLabel(c.spoken, letter);
     card.say = L.say(letter, card.choices.filter((c) => c.role === 'answer').map((c) => c.spoken));
     const own = new Set(ownWords(profile, i.learned).map(lc));
     card.why = {
       proposed: proposed ? { step: by === 'cloud' ? 'stripped' : 'private', topic: '', kind: 'choice', choices: proposed, options: [] } : null, decided: L.why,
-      kept: proposed ? card.choices.filter((c) => c.role === 'answer' && !rules.some((r) => lc(r) === lc(c.label))).map((c) => c.label) : [],
-      added: card.choices.filter((c) => c.role === 'answer' && rules.some((r) => lc(r) === lc(c.label))).map((c) => ({ label: c.label, from: own.has(lc(c.label)) ? 'About them' : 'everyday words' })),
+      kept: proposed ? card.choices.filter((c) => c.role === 'answer' && !rules.some((r) => lc(r) === lc(c.spoken))).map((c) => c.label) : [],
+      added: card.choices.filter((c) => c.role === 'answer' && rules.some((r) => lc(r) === lc(c.spoken))).map((c) => ({ label: c.label, from: own.has(lc(c.spoken)) ? 'About them' : 'everyday words' })),
       dropped, headline: 'the question',
-      personal: card.choices.filter((c) => c.role === 'answer' && own.has(lc(c.label))).map((c) => c.label),
+      personal: card.choices.filter((c) => c.role === 'answer' && own.has(lc(c.spoken))).map((c) => c.spoken),
     };
     card.trace = done(by === 'device' ? 'private' : by === 'cloud' ? 'stripped' : null);
     return card;

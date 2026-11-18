@@ -47,7 +47,7 @@ import { kvClear, kvGet, kvSet } from './store';
 import { P4 } from '../../core/copy4';
 import { letterCard, letterEnd, type LetterInput } from '../../core/letter';
 import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
-import { FEEL_QUESTION, menuTopic, starterOf, topicMenu, turnCard, turnLead, type Starter } from '../../core/turn';
+import { FEEL_QUESTION, aboutCard, menuTopic, starterOf, topicMenu, turnCard, turnLead, type Starter } from '../../core/turn';
 import { nextVisit, visitCard, visitText, type VisitRecord } from '../../core/visit';
 import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
@@ -203,7 +203,7 @@ interface P4State {
   /** The letter step being made, or waiting for a yes on the sheet. */
   letterPending: LetterInput | null;
   /** The person started this conversation: with which starter, and the topic they pointed to. */
-  turn: { starter: Starter | 'else'; topic: TopicId | null } | null;
+  turn: { starter: Starter | 'else'; topic: TopicId | null; what?: string } | null;
   /** The answers given before a doctor visit (IndexedDB key 'visit'): on this device only, apart from the history and the journal; never sent, read by no model. */
   visit: VisitRecord | null;
   /** The visit questions are on the person's screen; `visitEnd`: the last one was answered, the screen says thank you. */
@@ -1074,6 +1074,8 @@ function picture(ch: Choice): string {
   const p = ch.picture;
   // the family's own photo comes before any generic picture, wherever its word is this choice (core/photos.ts: rules, no model)
   const own = state.demo || ch.role !== 'answer' ? null : photoFor(ch.label, state.photos);
+  const ownSpoken = own || state.demo || ch.role !== 'answer' || !state.card?.letter ? null : photoFor(ch.spoken, state.photos);
+  if (ownSpoken) return `<img class="photo own" src="${ownSpoken.data}" alt="">`;
   if (own) return `<img class="photo own" src="${own.data}" alt="">`;
   if (p.type === 'builtin') return builtinPicto(p.id);
   if (p.type === 'person') {
@@ -1385,9 +1387,10 @@ async function runNarrow(i: NarrowInput) {
 function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: string } {
   if (c.kind === 'needs' || c.kind === 'repair') return { follow: [], end: '' };
   // a first-letter card: the word is the answer; the menu the person started from: up to three questions of that topic
-  if (c.letter) return out ? { follow: [], end: '' } : letterEnd(p.label);
+  if (c.letter) return out ? { follow: [], end: '' } : letterEnd(p.spoken);
   if (c.photoTalk && photoEnd(c.asked, p.label, state.profile.personName.trim())) return { follow: [], end: photoEnd(c.asked, p.label, state.profile.personName.trim()) };
-  if (c.turn) return { follow: out ? [] : turnLead('tell', '', menuTopic(p.label), state.profile).ask, end: '' };
+  // (the questions about the telling follow what it is about, also after "someone else" there; the way out of the topics has none)
+  if (c.turn) return { follow: out && c.turn !== 'about' ? [] : turnLead('tell', '', state.p4.turn?.topic ?? menuTopic(p.label)).ask, end: '' };
   // the short question about the usual choice: a yes ends as that choice would; anything else leads to the full question
   const sc = state.shortcut;
   if (sc && sc.q === c.asked) {
@@ -1517,14 +1520,20 @@ function p4Confirm(c: Card, picked: Choice): boolean {
     state.p4.turn = { starter: s ?? 'else', topic: null };
     if (s === 'need' || s === 'tell') { const card = s === 'need' ? needsCard() : topicMenu(); setCard(card); state.made.push(card); state.picked = null; state.waitStart = Date.now(); render(); return true; }
     if (s === 'feel') { turnKeep = true; void make(FEEL_QUESTION); return true; }
-  } else if (c.turn === 'topics' && state.p4.turn) state.p4.turn = { starter: 'tell', topic: picked.role === 'answer' ? menuTopic(picked.label) : null };
+  } else if (c.turn === 'topics' && state.p4.turn) {
+    const topic = picked.role === 'answer' ? menuTopic(picked.label) : null;
+    state.p4.turn = { starter: 'tell', topic };
+    // what in that topic it is about, still on this screen ("Who is it about?"); none for "Body & care" or with no names
+    const about = topic ? aboutCard(topic, state.profile) : null;
+    if (about) { setCard(about); state.made.push(about); state.picked = null; state.waitStart = Date.now(); render(); return true; }
+  } else if (c.turn === 'about' && state.p4.turn) state.p4.turn = { ...state.p4.turn, what: picked.role === 'answer' ? picked.label : '' };
   return false;
 }
 /** The line the carer reads when the person started this conversation: '' otherwise. */
 function turnHtml(): string {
   const t = state.p4.turn;
   if (!t) return '';
-  const lead = turnLead(t.starter, state.profile.personName.trim(), t.topic, state.profile);
+  const lead = turnLead(t.starter, state.profile.personName.trim(), t.topic, t.what);
   return turnLine({ line: lead.line, about: lead.about });
 }
 /** The next question of the fixed doctor-visit list onto the person's screen, or the end of the list. No model: core/visit.ts. */
@@ -1946,7 +1955,7 @@ function act(el: HTMLElement) {
     case 'letter': {
       const c = state.card;
       const of = c?.kind === 'repair' ? state.before : c;
-      const shown = (x: Card | null | undefined) => (x && x.kind !== 'repair' && x.kind !== 'needs' ? x.choices.filter((y) => y.role === 'answer').map((y) => y.label) : []);
+      const shown = (x: Card | null | undefined) => (x && x.kind !== 'repair' && x.kind !== 'needs' ? x.choices.filter((y) => y.role === 'answer').map((y) => (x.letter ? y.spoken : y.label)) : []);
       const asked = c?.letter ? state.p4.letterPending?.asked ?? '' : of && of.kind !== 'needs' && !of.turn ? of.asked : '';
       const rejected = c?.letter ? [...c.letter.rejected, ...shown(c)] : [...(of?.narrow?.rejected ?? []), ...shown(of)];
       state.p4.letter = { asked, rejected: rejected.filter((x, k, all) => all.indexOf(x) === k), topic: topicOf(state.chain[0] ?? asked, state.profile)?.id ?? null };
@@ -1955,7 +1964,7 @@ function act(el: HTMLElement) {
     }
     case 'letter-more': {
       const c = state.card; const i = state.p4.letterPending;
-      if (c?.letter && i) void runLetter({ ...i, rejected: [...i.rejected, ...c.choices.filter((y) => y.role === 'answer').map((y) => y.label)] });
+      if (c?.letter && i) void runLetter({ ...i, rejected: [...i.rejected, ...c.choices.filter((y) => y.role === 'answer').map((y) => y.spoken)] });
       break;
     }
     case 'turn': {

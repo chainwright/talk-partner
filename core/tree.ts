@@ -54,6 +54,14 @@ const NEWS_FILM = 'Would you like to watch the news or a film?';
 const MUSIC_KIND = 'Would you like quiet music or lively music?';
 const TIRED = 'Are you tired?';
 const SHOW = 'Ask {them} to show you, or to point to it.';
+// When the person has something to TELL (core/turn.ts: "[Name] wants to say something"), the carer's questions are
+// about the telling, not offers: is it good or a worry, did something happen, now or later.
+// (worded so that the rules read both sides whole: "good news" / "worry", "today" / "another day"; tests/unit/turn.test.ts)
+export const TELL_NEWS = 'Is it good news, or a worry?';
+export const TELL_HAPPENED = 'Did something happen?';
+export const TELL_WHEN = 'Do you want to tell me now or later?';
+export const TELL_DAY = 'Is it today or another day?';
+export const TELL = [TELL_NEWS, TELL_HAPPENED, TELL_WHEN];
 
 /**
  * The trees. Key: the question in lower case without its punctuation. Under it, one entry per answer the rules' card
@@ -249,6 +257,27 @@ const TREE: Record<string, Node> = {
     yes: { end: 'Stop here. {They} do not want to go on now, and that is fine.' },
     no: { end: '{They} want to go on. Ask your next question.' },
     'not sure': { end: 'Take a short break, then ask again.' },
+  },
+  // ---------------------------------------------------------------- the person has something to tell
+  'is it good news or a worry': {
+    'good news': { next: [TELL_HAPPENED], end: 'Good news. Ask what it is about, one small question at a time, and wait.' },
+    worry: { next: [TELL_HAPPENED, IN_PAIN], end: 'A worry. Stay near, and ask one small question at a time. It is {their} worry to tell: do not guess it away.' },
+    'something else': { next: [TELL_WHEN], end: SHOW },
+  },
+  'did something happen': {
+    yes: { next: [TELL_DAY], end: 'Something happened. Ask when, then who was there, one question at a time.' },
+    no: { end: 'Nothing happened. It may be a thought or a wish. Ask: "Is it something you want?"' },
+    'not sure': { end: 'Ask it again in other words, or ask {them} to show you.' },
+  },
+  'do you want to tell me now or later': {
+    now: { end: 'Sit down together. Ask one small question at a time, and wait.' },
+    later: { end: 'Later. Agree when, and come back to it. Make sure you do.' },
+    'something else': { end: SHOW },
+  },
+  'is it today or another day': {
+    today: { end: 'It is about today. Go through today, one thing at a time.' },
+    'another day': { end: 'Another day. Ask: "Has it happened, or is it still to come?"' },
+    'something else': { end: SHOW },
   },
   // ---------------------------------------------------------------- today and plans
   'would you like to stay in or go out': {

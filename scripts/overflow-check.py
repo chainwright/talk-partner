@@ -543,6 +543,11 @@ def phase4(url, width, browser):
     if tall >= 740:
         fits('phase 4: the topics as a picture menu')
     yes('People')
+    page.wait_for_selector('main.pv .pt >> text=Beth')
+    check(page, width, 'phase 4: "Who is it about?" (a long name)')
+    if tall >= 740:
+        fits('phase 4: "Who is it about?"')
+    yes('Bartholomew')
     page.locator('.p-give').click()
     page.wait_for_selector('#turn-lead')
     check(page, width, 'phase 4: the carer reads who started (long name), with three questions')

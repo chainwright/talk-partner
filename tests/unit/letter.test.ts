@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { P4 } from '../../core/copy4';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
-import { EVERYDAY, LETTERS, LETTER_COLUMNS, LETTER_TASK, letterCard, letterEnd, letterChoices, letterCloudText, letterDeviceAsk, letterWords, ownWords, startsWith } from '../../core/letter';
+import { EVERYDAY, LETTERS, LETTER_COLUMNS, LETTER_TASK, letterCard, letterEnd, letterLabel, letterChoices, letterCloudText, letterDeviceAsk, letterWords, ownWords, startsWith } from '../../core/letter';
 import { cloudTextRequest } from '../../core/requests';
 import { BUILTIN } from '../../core/pictures';
 import { SAMPLE_PROFILE } from '../../core/sample';
@@ -53,6 +53,37 @@ describe('the brief\'s case: "B" with Beth, Bo and biscuits in About them', () =
   it('the Miller family of the week fixture ("Bo is his dog", "ginger biscuits"): Beth, Bo, then ginger biscuits by its last word', () => {
     const week: Profile = { ...MILLER, foods: ['ginger biscuits', 'porridge'], other: ['Bo is his dog'] };
     expect(letterWords({ asked: '', letter: 'B', rejected: [] }, week).slice(0, 3)).toEqual(['Beth', 'Bo', 'ginger biscuits']);
+  });
+  it('every tile starts with the letter: a word matched by a later word shows that word first ("biscuits (ginger)"); the carer still says the family\'s own word', async () => {
+    expect(letterLabel('ginger biscuits', 'B')).toBe('biscuits (ginger)');
+    expect(letterLabel('strong tea with milk', 'T')).toBe('tea with milk (strong)');
+    expect(letterLabel('strong tea with milk', 'M')).toBe('milk (strong tea with)');
+    expect(letterLabel('the lake', 'L')).toBe('the lake');
+    expect(letterLabel('Beth', 'B')).toBe('Beth');
+    // the role-play's About them (18 Nov): foods "strong tea with milk, porridge, ginger biscuits", no dog
+    const carol: Profile = { ...MILLER, foods: ['strong tea with milk', 'porridge', 'ginger biscuits'], other: [] };
+    const card = await letterCard({ asked: 'Would you like tea or coffee?', letter: 'B', rejected: ['tea', 'coffee'] }, env(new Fake(false), carol));
+    expect(labels(card)).toEqual(['Beth', 'biscuits (ginger)', 'bed']);
+    for (const l of labels(card)) expect(l.toLowerCase().startsWith('b'), l).toBe(true);
+    expect(card.choices[1].spoken).toBe('ginger biscuits');
+    expect(card.say).toBe('It starts with B. Is it Beth, ginger biscuits, bed, or something else?');
+    expect(card.why?.personal).toEqual(['Beth', 'ginger biscuits']);
+    expect(letterEnd(card.choices[1].spoken).end).toBe('The word is: ginger biscuits. Ask a yes or no question about it next.');
+  });
+  it('the kind of the conversation first, then people, then the rest: after "tea or coffee?" a drink stands before a person', () => {
+    const p: Profile = { ...MILLER, people: [...MILLER.people, { id: 'p4', name: 'Mary', relation: 'sister', household: false }], foods: ['strong tea with milk', 'marmalade', 'porridge'] };
+    // drinks with M: the everyday "milk" and the family's "strong tea with milk"; then Mary; then the rest
+    expect(letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p).slice(0, 4)).toEqual(['strong tea with milk', 'milk', 'Mary', 'marmalade']);
+    // with no kind known: people first, then the rest in About-them order
+    expect(letterWords({ asked: '', letter: 'M', rejected: [] }, p).slice(0, 3)).toEqual(['Mary', 'marmalade', 'strong tea with milk']);
+    // a question about food ranks the family's foods before a person
+    expect(letterWords({ asked: 'Would you like a snack or a meal?', letter: 'M', rejected: ['snack', 'meal'] }, p)[0]).not.toBe('Mary');
+    // a question about people keeps people first
+    expect(letterWords({ asked: 'Do you want to call someone?', letter: 'M', rejected: [] }, p)[0]).toBe('Mary');
+  });
+  it('a refused word does not come back under its new label', () => {
+    const carol: Profile = { ...MILLER, foods: ['ginger biscuits'], other: [] };
+    expect(letterWords({ asked: '', letter: 'B', rejected: ['ginger biscuits'] }, carol)).not.toContain('ginger biscuits');
   });
   it('the sample family of judge mode has Bo', () => {
     expect(SAMPLE_PROFILE.other).toContain('Bo (dog)');

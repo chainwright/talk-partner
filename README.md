@@ -287,7 +287,10 @@ is the one screen of the person's with more than three choices beside the needs 
 "something else". The words are the family's own first (the people, the pets and other things, the foods, the places,
 TV, music, and the usual answers counted on this device), then the everyday words the app has a drawing for, the
 question's own topic first. With Beth, Bo and ginger biscuits in About them, "B" offers exactly those three, by rules,
-with the family's photos on them, and no model is asked on any device. A model adds words only when the rules find
+with the family's photos on them, and no model is asked on any device. Every tile starts with the letter: a word that
+is matched by a later word shows that word first ("biscuits (ginger)"), and the carer still says "ginger biscuits".
+When the kind of the conversation is known (after "tea or coffee?" it is drinks), words of that kind come first, then
+people, then the rest. A model adds words only when the rules find
 fewer than two; code keeps a word only if it starts with the letter, was not already refused, is no name the family
 did not give, and is not alcohol, tobacco or a medicine. If the word is "pain", the carer's next step is "Where does
 it hurt?" at once; "toilet" says go now. "No, I don't know" goes back to the carer with one calm line ("That is fine:
@@ -296,8 +299,12 @@ many people cannot tell the first letter"), and nothing is counted, on any scree
 **The person starts.** A button under the quick needs, "Frank wants to say something", opens the person's screen with
 three starters and the way out: "I need something" (leads to the needs board), "I want to tell you something" (the
 topics as a picture menu, three to a screen), "I feel…" (the feelings card). The phone goes back to the carer only at
-the end, and the carer reads "Frank started this: there is something to tell you. It is about: People & family." with
-up to three questions of that topic, the family's own first. The answer check never counts what the person started,
+the end. After a topic one more card asks what in it this is about ("Who is it about?" with up to three of the
+family's names and "someone else"; "Is it about today, or another day?"), and the carer reads "Frank started this:
+there is something to tell you. It is about: People & family, Beth." with three questions about the telling, not
+offers: "Is it good news, or a worry?", "Did something happen?", "Do you want to tell me now or later?" (each a card
+the rules make, each answer with its next step in `core/tree.ts`). For "Body & care" the first question is "Are you
+in pain?". The answer check never counts what the person started,
 and its line ("may be tired") never stands on a screen that follows from it. On a carer's phone this works only when
 the phone is within the person's reach; a spare phone or tablet beside the chair is the honest setup.
 
@@ -328,8 +335,9 @@ people, and code drops every word about a person's looks, age, health or mood wh
 no cloud model and throws on any answer that did not come from the device. On a phone there is no such button: the
 questions are the rules', and the screen says "No AI looked at the photo."
 
-2544 unit tests (128 new: `letter`, `turn`, `visit`, `phototalk`, `privacy-phase4`); `e2e-simple.py` 550/550, of
-which the phase 4 run (83 checks, with the Miller family and three photos) walks all four as Carol and Frank at
+2559 unit tests (143 new: `letter`, `turn`, `visit`, `phototalk`, `privacy-phase4`); `e2e-simple.py` 550/550 before
+the third role-play's fixes (554 with them, run against the hosted copy: see Deploy), of
+which the phase 4 run (83 checks then, 87 now, with the Miller family and three photos) walks all four as Carol and Frank at
 390 x 844, asks nothing of any other host and presses no "Yes" on a sheet, and the offline run has four phase 4
 steps; `overflow-check.py` 503/503 at 320 to 412 px (101 of them phase 4: every person's screen of it also "needs no
 scrolling" at the phone's own height); `contrast-check.mjs` 127 pairs. Against real models

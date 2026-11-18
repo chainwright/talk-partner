@@ -88,7 +88,7 @@ export function visitScreen(m: VisitModel): string {
   <p class="lock banner" id="visit-lock">${SIGN.lock}<span>${V.lock}</span></p>
   <p class="tip">${V.count(VISIT_MAX)}</p>
   <button type="button" class="btn primary" id="visit-start" data-act="visit-start">${esc(V.start(m.name))}</button>
-  <p class="waitline">${SIGN.info}<span>${V.wait}</span></p>
+  <p class="waitline" id="visit-wait">${SIGN.info}<span>${esc(COPY.simple.wait(m.name))}</span></p>
 </main>`;
   }
   const rows = visitRows(r).map((x) => `<li data-row="${esc(x.row)}"><span class="vr">${esc(x.row)}</span><b>${esc(x.label)}</b><small>${esc(x.q)} · ${x.time}</small></li>`).join('');

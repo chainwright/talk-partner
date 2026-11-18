@@ -107,6 +107,9 @@ describe('the page: the person\'s own answers, as given', () => {
     expect(h).toContain(P4.visit.fixed);
     expect(h).toContain(P4.visit.lock);
     expect(h).toContain('data-act="visit-start"');
+    // the wait line names the person, as everywhere else
+    expect(h).toContain('Wait. Count to ten. Don&#39;t answer for Frank.');
+    expect(visitScreen({ name: '', record: null, copied: false })).toContain('answer for them.');
   });
 });
 

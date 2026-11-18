@@ -2,8 +2,12 @@
 // carer's question. One big button on the first screen opens the person's screen with three starters and the way out:
 // "I need something", "I want to tell you something", "I feel…". Each leads on, still on the person's screen:
 //   - need: the quick-needs board (core/needs.ts);
-//   - tell: the topics as a picture menu, three to a screen ("more" leads to the next three; the last screen's way
-//     out is the real one);
+//   - tell: the topics as a picture menu, three to a screen (the way out of the first screen leads to the next three;
+//     the last screen's way out is the real one), then one card on what in that topic it is about ("Who is it
+//     about?" with up to three of the family's names; "Is it about today, or another day?"; …). The carer then gets
+//     questions about the TELLING (core/tree.ts, TELL: good news or a worry, did something happen, now or later), not
+//     offers: the role-play of 18 Nov got "Would you like to see Beth?" when Frank wanted to tell something about her.
+//     "Body & care" has no such card and leads the carer to "Are you in pain?" first;
 //   - feel: the feelings card the rules make for "How are you feeling today?".
 // The carer then reads "[Name] started this: …" over the answer, with up to three questions to ask next.
 //
@@ -13,7 +17,8 @@
 // ("may be tired") is never shown on a screen that follows from it: what the person chose to say is taken as said.
 
 import { P4 } from './copy4';
-import { TOPIC_BASE, topics, type TopicId } from './topics';
+import { TOPIC_BASE, awayNames, type TopicId } from './topics';
+import { TELL } from './tree';
 import type { Card, Choice, Profile, StepTrace } from './types';
 
 export type Starter = 'need' | 'tell' | 'feel';
@@ -32,7 +37,7 @@ const trace = (): StepTrace[] => [
   { step: 'stripped', ran: 'skipped', why: 'not needed: this card is made by rules alone', used: false },
   { step: 'code', ran: 'on-device', why: 'applied the card rules', used: true },
 ];
-const base = (asked: string, turn: 'start' | 'topics') => ({
+const base = (asked: string, turn: 'start' | 'topics' | 'about') => ({
   asked, pending: null, topic: '', kind: 'choice' as const, source: 'code' as const, route: { to: 'device' as const, reasons: [] }, cloudPayload: null, notes: [S.note], ms: 0, turn, trace: trace(),
   why: { proposed: null, decided: S.why, kept: [], added: [], dropped: [], headline: 'fixed' },
 });
@@ -59,14 +64,41 @@ export function topicMenu(): Card {
 /** The topic a label of the menu names, or null. */
 export const menuTopic = (label: string): TopicId | null => TOPIC_BASE.find((t) => t.label === label)?.id ?? null;
 
+const ABOUT_PICTURE: Record<string, string> = { today: 'now', 'another day': 'later', TV: 'tv', music: 'music', food: 'food', 'a drink': 'drink', 'last night': 'bed', now: 'now' };
+/**
+ * After a topic, still on the person's screen: what in it this is about. People: up to three of the family's names
+ * and "someone else". Null when there is nothing to ask (no names in About them; "Body & care", which goes to the
+ * carer at once).
+ */
+export function aboutCard(topic: TopicId, profile: Profile): Card | null {
+  if (topic === 'people') {
+    const names = awayNames(profile);
+    if (!names.length) return null;
+    const choices: Choice[] = names.map((n): Choice => {
+      const p = profile.people.find((x) => (x.nickname?.trim() || x.name.trim()) === n);
+      return { label: n, spoken: n, role: 'answer', picture: { type: 'person', personId: p?.id ?? null, initial: n.charAt(0).toUpperCase() } };
+    });
+    return { ...base(S.aboutAsk.people, 'about'), choices: [...choices, escape('someone else')], say: `${S.aboutAsk.people} ${names.join(', ')}, or someone else?` };
+  }
+  if (topic === 'body' || topic === 'feel') return null;
+  const labels = S.aboutChoices[topic];
+  return {
+    ...base(S.aboutAsk[topic], 'about'),
+    choices: [...labels.map((l): Choice => ({ label: l, spoken: l, role: 'answer', picture: { type: 'builtin', id: ABOUT_PICTURE[l] } })), escape('something else')],
+    say: `${S.aboutAsk[topic]} ${labels.join(', ')}, or something else?`,
+  };
+}
+
+/** For "Body & care" the carer asks about pain first: a body matter is never met with "good news or a worry?". */
+export const BODY_FIRST = ['Are you in pain?', 'Are you comfortable?', 'Do you need the toilet?'];
+
 /**
  * What the carer reads and can ask after a start: the line ("Frank started this: there is something to tell you."),
- * and for a topic up to three of its questions, the family's own first. Rules; the questions are the app's own.
+ * what it is about (the topic, and what in it), and for a topic three questions about the telling. Rules; every
+ * question is one the trees know.
  */
-export function turnLead(starter: Starter | 'else', name: string, topic: TopicId | null, profile: Profile): { line: string; about: string; ask: string[] } {
+export function turnLead(starter: Starter | 'else', name: string, topic: TopicId | null, what = ''): { line: string; about: string; ask: string[] } {
   const line = S.lines[starter](name);
   if (starter !== 'tell' || !topic) return { line, about: '', ask: [] };
-  const t = topics(profile).find((x) => x.id === topic)!;
-  const qs = [...t.questions.filter((q) => q.own), ...t.questions.filter((q) => !q.own && !q.ai)].map((q) => q.q);
-  return { line, about: S.about(t.label), ask: qs.slice(0, 3) };
+  return { line, about: S.about(TOPIC_BASE.find((t) => t.id === topic)!.label, what), ask: topic === 'body' ? BODY_FIRST : TELL };
 }

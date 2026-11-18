@@ -104,3 +104,21 @@ about a person is dropped by code, and the three rule-made questions never depen
   "H" after "tea or coffee?": words that start with the letter, not all of them likely answers. The words are the
   model's; the app only checks them, and nobody has measured how often they help.
 - **The printed page** was not printed on paper (the print rules hide the buttons; a screenshot of the page stands in).
+
+## After the third role-play on the hosted copy (Carol and Frank, 390 px, build `43e9293`)
+Three findings, all fixed the same day:
+1. **"ginger biscuits" under "It starts with B".** A word matched by a later word now shows that word first on the
+   tile, "biscuits (ginger)"; the carer's line, the photo and what counts as refused still go by the family's own
+   word. And the order follows the conversation: words of its kind first when that is known (after "tea or coffee?"
+   drinks, by `core/kinds.ts` and the About-them list the word stands in), then people, then the rest. With the
+   role-play's About them, "B" gives Beth, biscuits (ginger), bed.
+2. **Frank wanted to tell something about Beth and Carol got "Would you like to see Beth?".** After a topic the
+   person now gets one more card on their own screen ("Who is it about?" with up to three names and "someone else";
+   "Is it about today, or another day?"; TV or music; food or a drink; last night or now), and the carer gets
+   questions about the telling: "Is it good news, or a worry?", "Did something happen?", "Do you want to tell me now
+   or later?". They are in the trees (`core/tree.ts`), and `tests/unit/turn.test.ts` walks every answer of every one
+   of them: that walk caught two wordings the rules read wrongly ("good news or a worry" gave "news / worry"; "about
+   today or another day" gave "about / another day"), which is why the first has a comma and the second no "about".
+   "Body & care" has no such card: the carer's first question there is "Are you in pain?".
+3. **"Do not answer for them."** on the doctor-visit screen now names the person, with the same line as everywhere
+   else ("Wait. Count to ten. Don't answer for Frank.").

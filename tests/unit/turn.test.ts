@@ -6,8 +6,10 @@ import { describe, expect, it } from 'vitest';
 import { P4 } from '../../core/copy4';
 import { BUILTIN } from '../../core/pictures';
 import { TOPIC_BASE } from '../../core/topics';
-import { FEEL_QUESTION, MENU, menuTopic, starterOf, topicMenu, turnCard, turnLead } from '../../core/turn';
-import { after } from '../../core/tree';
+import { NullEngine } from '../../core/engine';
+import { makeCard } from '../../core/pipeline';
+import { BODY_FIRST, FEEL_QUESTION, MENU, aboutCard, menuTopic, starterOf, topicMenu, turnCard, turnLead } from '../../core/turn';
+import { TELL, TELL_DAY, TELL_NEWS, TREE_QUESTIONS, after } from '../../core/tree';
 import { EMPTY_PROFILE, type Profile } from '../../core/types';
 import { turnButton, turnLine } from '../../web/src/phase4';
 
@@ -49,18 +51,48 @@ describe('the topics as a picture menu', () => {
   });
 });
 
+describe('what in the topic it is about: one more card on the person\'s screen', () => {
+  it('People & family: "Who is it about?" with up to three of the family\'s names, each with the person\'s picture, and "someone else"', () => {
+    const c = aboutCard('people', MILLER)!;
+    expect(c.asked).toBe('Who is it about?');
+    expect(c.choices.map((x) => [x.label, x.role])).toEqual([['Beth', 'answer'], ['Tom', 'answer'], ['someone else', 'escape']]);
+    expect(c.choices[0].picture).toEqual({ type: 'person', personId: 'p2', initial: 'B' });
+    expect(c.turn).toBe('about');
+    expect(c.source).toBe('code');
+  });
+  it('never the person or the carer, never someone who lives there; with nobody named there is no such card', () => {
+    const home: Profile = { ...MILLER, people: [{ id: 'p1', name: 'Carol', relation: 'wife', household: true }] };
+    expect(aboutCard('people', home)).toBeNull();
+    expect(aboutCard('people', EMPTY_PROFILE)).toBeNull();
+  });
+  it('the other topics: two plain choices and the way out; "Body & care" has no such card', () => {
+    expect(aboutCard('plans', MILLER)!.choices.map((x) => x.label)).toEqual(['today', 'another day', 'something else']);
+    expect(aboutCard('plans', MILLER)!.asked).toBe('Is it about today, or another day?');
+    expect(aboutCard('fun', MILLER)!.choices.map((x) => x.label)).toEqual(['TV', 'music', 'something else']);
+    expect(aboutCard('food', MILLER)!.choices.map((x) => x.label)).toEqual(['food', 'a drink', 'something else']);
+    expect(aboutCard('rest', MILLER)!.choices.map((x) => x.label)).toEqual(['last night', 'now', 'something else']);
+    expect(aboutCard('body', MILLER)).toBeNull();
+    for (const t of MENU) for (const x of aboutCard(t, MILLER)?.choices ?? []) if (x.picture.type === 'builtin') expect(BUILTIN.has(x.picture.id), x.label).toBe(true);
+  });
+});
+
 describe('what the carer reads', () => {
   it('says who started, in words that fit a name or none, and never "he" or "she"', () => {
-    expect(turnLead('tell', 'Frank', null, MILLER).line).toBe('Frank started this: there is something to tell you.');
-    expect(turnLead('need', '', null, EMPTY_PROFILE).line).toBe('They started this: something is needed.');
+    expect(turnLead('tell', 'Frank', null).line).toBe('Frank started this: there is something to tell you.');
+    expect(turnLead('need', '', null).line).toBe('They started this: something is needed.');
     for (const f of Object.values(P4.turn.lines)) expect(f('Frank')).not.toMatch(/\b(?:he|she|him|her|his)\b/i);
   });
-  it('a topic gives up to three questions of it, the family\'s own first; all of them questions the trees know or the rules make', () => {
-    const lead = turnLead('tell', 'Frank', 'people', MILLER);
-    expect(lead.about).toBe('It is about: People & family.');
-    expect(lead.ask).toHaveLength(3);
-    expect(lead.ask[0]).toBe('Would you like to see Beth?');
-    expect(turnLead('tell', '', 'plans', EMPTY_PROFILE).ask.every((q) => TOPIC_BASE.some((t) => t.questions.includes(q)))).toBe(true);
+  it('the person wants to TELL something: the carer gets questions about the telling, never offers ("Would you like to see Beth?")', () => {
+    const lead = turnLead('tell', 'Frank', 'people', 'Beth');
+    expect(lead.about).toBe('It is about: People & family, Beth.');
+    expect(lead.ask).toEqual(['Is it good news, or a worry?', 'Did something happen?', 'Do you want to tell me now or later?']);
+    for (const t of MENU.filter((x) => x !== 'body')) for (const q of turnLead('tell', '', t).ask) expect(q).not.toMatch(/^Would you like|^Do you want to (?:call|see|go)/);
+    expect(turnLead('tell', '', 'plans', 'another day').about).toBe('It is about: Today & plans, another day.');
+    expect(turnLead('tell', '', 'plans').about).toBe('It is about: Today & plans.');
+  });
+  it('safety: for "Body & care" the first question is about pain, never "good news or a worry?"', () => {
+    expect(turnLead('tell', 'Frank', 'body').ask).toEqual(['Are you in pain?', 'Are you comfortable?', 'Do you need the toilet?']);
+    expect(BODY_FIRST[0]).toBe('Are you in pain?');
   });
   it('the button and the line', () => {
     expect(turnButton('Frank')).toContain('Frank wants to say something');
@@ -69,10 +101,36 @@ describe('what the carer reads', () => {
   });
 });
 
+describe('the questions about the telling: every one is a card the rules make, and every answer leads on (the tree\'s coverage)', () => {
+  const env = { profile: MILLER, support: 'more' as const, engine: new NullEngine(), allowCloud: false, deviceReady: false };
+  it.each([...TELL, TELL_DAY, ...BODY_FIRST])('%s', async (q) => {
+    expect(TREE_QUESTIONS).toContain(q.toLowerCase().replace(/[^a-z ]+/g, ' ').replace(/\s+/g, ' ').trim());
+    const card = await makeCard(q, env);
+    expect(card.source, q).toBe('code');
+    expect(card.blocked ?? null, q).toBeNull();
+    expect(card.choices.filter((x) => x.role === 'answer').length).toBeLessThanOrEqual(3);
+    for (let p: typeof card | null | undefined = card; p; p = p.nextPage) for (const ch of p.choices) {
+      if (ch.role === 'escape' && p.nextPage) continue;
+      const step = after(card, ch.label, MILLER, [q]);
+      expect(step.next.length > 0 || step.end !== '', `"${q}" -> ${ch.label}: a silent end`).toBe(true);
+      expect(step.end, `"${q}" -> ${ch.label}`).not.toMatch(/\{them\}|\{their\}|\{they\}/i);
+      // and every next question is itself one the trees know, three deep at most
+      for (const n of step.next) { const c2 = await makeCard(n, env); expect(c2.source, n).toBe('code'); expect(c2.blocked ?? null, n).toBeNull(); }
+    }
+  });
+  it('a worry is taken as said: the carer stays near and may ask about pain; nothing says later, tired or less sure', () => {
+    const w = after({ asked: TELL_NEWS, kind: 'choice' }, 'worry', MILLER, [TELL_NEWS]);
+    expect(w.next).toEqual(['Did something happen?', 'Are you in pain?']);
+    expect(w.end).toBe("A worry. Stay near, and ask one small question at a time. It is Frank's worry to tell: do not guess it away.");
+    expect(w.end).not.toMatch(/later|tired|less sure/i);
+  });
+});
+
 describe('boundaries', () => {
   it('core/turn.ts reaches no engine and no network', () => {
     const src = readFileSync(join(ROOT, 'core/turn.ts'), 'utf8');
-    expect([...src.matchAll(/^import .* from '([^']+)';$/gm)].map((x) => x[1]).sort()).toEqual(['./copy4', './topics', './types']);
+    expect([...src.matchAll(/^import .* from '([^']+)';$/gm)].map((x) => x[1]).sort()).toEqual(['./copy4', './topics', './tree', './types']);
+    expect([...readFileSync(join(ROOT, 'core/tree.ts'), 'utf8').matchAll(/^import .* from '([^']+)';$/gm)].map((x) => x[1]).sort()).toEqual(['./topics', './types']);
     expect(src).not.toMatch(/fetch\(|engine\.|firebase/);
   });
   it('safety: what the person started is never counted by the answer check, and its line never stands on those screens', () => {
