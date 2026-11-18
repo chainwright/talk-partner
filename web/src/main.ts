@@ -1827,7 +1827,9 @@ function simpleScreen(): string {
       name,
       aboutLink: !!state.settings.firstCard || !!(name || p.people.length || p.foods.length || p.places.length || p.tv.length || p.music.length),
       busy: state.busy, error: state.error, question: state.lastQuestion,
-      howOpen: !state.settings.howFolded, topics: topics(p), topicOpen: state.topicOpen, aiTag: aiTag(whereInput()), ai: aiLines(whereInput()),
+      // (phase 9, judge round 8: folded on the first visit too, to its one line with "Write the key word big.", so the
+      // topics' first row is above the fold; open only once the carer opened it)
+      howOpen: state.settings.howFolded === false, topics: topics(p), topicOpen: state.topicOpen, aiTag: aiTag(whereInput()), ai: aiLines(whereInput()),
       privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: `${diaryLink()}${!state.demo && state.diary.length ? handoverLink() : ''}${p4Links(name)}${passportLink(name)}`,
       bodyHtml: suddenLink('sudden-body'),
       tryHtml: tryAiBlock({ q: AI_QUESTION, tag: tryAiTag(whereInput()), busy: state.busy && p9sample.q !== null && state.lastQuestion === p9sample.q }),
@@ -2446,7 +2448,7 @@ function act(el: HTMLElement) {
     case 'tips': state.tips = !state.tips; render(); document.querySelector<HTMLElement>('#more-tips')?.focus({ preventScroll: true }); break;
     case 'more': state.more = !state.more; render(); document.querySelector<HTMLElement>('#more')?.focus({ preventScroll: true }); break;
     case 'update': location.reload(); break;
-    case 'how': state.settings.howFolded = !state.settings.howFolded; saveSettings(); render(); document.querySelector<HTMLElement>('#how[data-act], #how [data-act=how]')?.focus({ preventScroll: true }); break;
+    case 'how': state.settings.howFolded = !(state.settings.howFolded ?? true); saveSettings(); render(); document.querySelector<HTMLElement>('#how[data-act], #how [data-act=how]')?.focus({ preventScroll: true }); break;
     case 'topic': { const id = el.dataset.topic as TopicId; state.topicOpen = state.topicOpen === id ? null : id; render(); document.querySelector<HTMLElement>(`.topic[data-topic="${id}"]`)?.focus({ preventScroll: true }); break; }
     // the finish screen's button: the phone goes back to the carer, who sees the answer
     case 'give-back': lift = true; if (state.p4.visitEnd) { state.p4.visitEnd = false; state.p4.visitRun = false; resetCard(); go('visit'); } else if (state.card?.kind === 'needs' && state.confirmed && state.picked?.label === WRONG_TILE) go('sudden'); else go(''); break; // (the board's "something's wrong" leads the carer straight to "Something new or sudden?")

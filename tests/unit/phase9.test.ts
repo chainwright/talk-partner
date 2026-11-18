@@ -408,3 +408,18 @@ describe('9. P1 the person\'s own "Not now"', () => {
     expect(main).toContain("if (c.visit) { state.p4.visitRun = false; resetCard(); lift = true; go('visit'); return; }");
   });
 });
+
+// ---------------------------------------------------------------- item 10
+import { howBlock } from '../../web/src/simple';
+
+describe('10. P2 the first visit: the 4 steps folded to one line that keeps "Write the key word big."', () => {
+  it('folded unless the carer opened it; the folded line keeps the key-word tip; the toggle opens it from the first visit', () => {
+    const main = readFileSync(join(__dirname, '..', '..', 'web', 'src', 'main.ts'), 'utf8');
+    expect(main).toContain('howOpen: state.settings.howFolded === false, topics:');
+    expect(main).toContain("case 'how': state.settings.howFolded = !(state.settings.howFolded ?? true); saveSettings();");
+    const folded = howBlock('', false);
+    expect(folded).toContain('Write the key word big.');
+    expect(folded).toContain('class="how-line"');
+    expect(folded).not.toContain('<ol>');
+  });
+});
