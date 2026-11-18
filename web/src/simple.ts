@@ -285,6 +285,11 @@ export interface CardModel {
 }
 
 /** Where this card was made: on the screen itself, under the card, never only behind a link. */
+/** Phase 8: the routing chip over a card an AI made: where it ran, and why, in one line. */
+export function chipBlock(r: { where: 'device' | 'cloud'; text: string; why: string } | null): string {
+  if (!r) return '';
+  return `<p class="route-chip" id="route-chip" data-where="${r.where}">${r.where === 'cloud' ? SIGN.cloud : SIGN.lock}<span><b class="chip">${esc(r.text)}</b> ${esc(r.why)}</span></p>`;
+}
 export function madeBlock(w: MadeWhere): string {
   const icon = w.left === 'sent' || w.maker === 'cloud' ? SIGN.cloud : w.left === 'maybe' ? SIGN.maybe : SIGN.lock;
   return `<p class="made-where" id="made-where" data-maker="${w.maker}" data-left="${w.left}"${w.spoken ? ' data-spoken="1"' : ''}>${icon}<span>${w.lines.map(esc).join(' ')}</span></p>`;

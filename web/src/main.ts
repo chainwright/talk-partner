@@ -17,7 +17,7 @@ import { RECORDED_STEP } from '../../core/recorded';
 import { badgeKind, countSwaps, sentLine, sessionReceipt, sessionTally } from '../../core/receipt';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS, SAMPLE_STEP } from '../../core/sample';
-import { aiLines, aiTag, madeWhere, needsInternet, privacyLines, sheetWanted } from '../../core/simple';
+import { aiLines, aiTag, madeWhere, needsInternet, privacyLines, routeChip, sheetWanted } from '../../core/simple';
 import { NARROW_TASK, canNarrow, narrowCard, narrowInput, type NarrowInput } from '../../core/narrow';
 import { aiPlace } from '../../core/simple';
 import { daySummary, rulesSummary, todays, type DaySummary } from '../../core/summary';
@@ -42,7 +42,7 @@ import { webConfig } from './ai/config';
 import { pickEngine } from './ai/pick';
 import { fetchSettings } from './ai/remoteConfig';
 import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile } from './pictos';
-import { aboutSimple, answeredScreen, cardScreen, consentSheet, frameStyle, homeScreen, laterBlock, personSimple, photoSheet, shortBlock, type AboutRow } from './simple';
+import { aboutSimple, answeredScreen, cardScreen, chipBlock, consentSheet, frameStyle, homeScreen, laterBlock, personSimple, photoSheet, shortBlock, type AboutRow } from './simple';
 import { kvClear, kvGet, kvSet } from './store';
 import { P4 } from '../../core/copy4';
 import { letterCard, letterEnd, type LetterInput } from '../../core/letter';
@@ -1766,7 +1766,7 @@ function simpleScreen(): string {
       invite: state.inviteFor === c && !state.inviteOff,
       today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
       made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),
-      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}${turnHtml()}`,
+      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${turnHtml()}`,
       outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
       // after the way out: the ways to find out what it is, in the rules' order; a step the rules make comes first
       ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),
@@ -1782,7 +1782,7 @@ function simpleScreen(): string {
       lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(), tips: state.tips,
       usual: (() => { const u = usualFor(c); return u ? usualHint(u) : ''; })(),
       // (the call box stays over the next questions of a conversation in which an answer can be urgent)
-      topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}`,
+      topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,
       guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c),
       // the first-letter helper: its way in from "We're stuck", who found a letter card's words, and another letter when there was no word
       extraHtml: `${c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterButton(name, true) : letterBy(c.letter.by)) : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && (speakable(c) || speakOn()) ? speakSwitch({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}${p5.spoken.has(c) ? readAloudLine() : ''}`,
@@ -1985,7 +1985,7 @@ function render(lifted = false) {
   if (simple && r === 'partner' && p5.speakSheet && speakable(state.card)) {
     const text = speakText(state.card);
     app.querySelector('main')?.setAttribute('inert', '');
-    app.insertAdjacentHTML('beforeend', speakSheet({ text, request: JSON.stringify(state.engine.speakRequest?.(text) ?? {}, null, 2) }));
+    app.insertAdjacentHTML('beforeend', speakSheet({ text, request: JSON.stringify(state.engine.speakRequest?.(text) ?? {}, null, 2), name: state.profile.personName.trim() }));
     document.querySelector<HTMLElement>('#speak-sheet-h')?.focus();
   }
   // a new card on the person's screen is read aloud once, when Read aloud is on (the button there repeats it)

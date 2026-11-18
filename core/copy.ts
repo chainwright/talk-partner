@@ -503,6 +503,20 @@ const COPY = {
     /** A question that needs online help, asked with no connection: said plainly, and what still works. */
     offline: 'This question needs the internet, and you are offline. The topic questions and "Needs something now?" work without it.',
     /** Where this card was made: one sentence for who made it, one for what left. Read from the card, never assumed. */
+    /**
+     * Phase 8 (judge round 7, "hybrid visible"): the small chip over every card an AI made, from where the SDK says the
+     * call ran (`inferenceSource`, through the card's source and trace), and why, in one plain line. Cards made by the
+     * rules get no chip: they say so in the line under them.
+     */
+    route: {
+      device: 'Made on this computer',
+      cloud: 'Made online, after your yes',
+      whyDevice: 'Why here: the AI built into Chrome on this computer answered, so nothing was sent.',
+      whyPersonal: (about: string) => `Why here: it read ${about}, and that never leaves this computer.`,
+      whyOffline: 'Why here: the connection was down, so the same request ran on the AI of this computer.',
+      whyNoDevice: 'Why online: this computer has no AI of its own for a question like this.',
+      whyNoCard: 'Why online: the AI on this computer made no card for it.',
+    },
     made: {
       code: "Made by the app's rules on this computer. No AI used.",
       codeAsked: "Made by the app's rules on this computer. An AI was asked first, and its answer was not used.",

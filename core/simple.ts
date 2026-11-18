@@ -35,6 +35,21 @@ export function madeWhere(c: Card, o: { spoken?: boolean; about: string }): Made
   return { maker, left, spoken: !!o.spoken, lines };
 }
 
+/** Phase 8: the routing chip of a card an AI made (where the SDK ran it, and why); null for a card of the rules. */
+export interface RouteChip { where: 'device' | 'cloud'; text: string; why: string }
+export function routeChip(c: Card | null | undefined, about: string): RouteChip | null {
+  if (!c) return null;
+  const R = COPY.simple.route;
+  const k = badgeKind(c);
+  if (k === 'device') return { where: 'device', text: R.device, why: c.why?.personal?.length ? R.whyPersonal(about) : R.whyDevice };
+  if (k === 'offline') return { where: 'device', text: R.device, why: R.whyOffline };
+  if (k === 'cloud') {
+    const priv = c.trace?.find((t) => t.step === 'private');
+    return { where: 'cloud', text: R.cloud, why: priv && (priv.ran === 'on-device' || priv.ran === 'failed') ? R.whyNoCard : R.whyNoDevice };
+  }
+  return null;
+}
+
 /**
  * The privacy line at the foot of the first screen and the answered screen, by what has happened this session. It is
  * never a fixed sentence: once a question went to the cloud, may have gone, or was spoken, the line says so.

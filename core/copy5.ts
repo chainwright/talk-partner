@@ -48,6 +48,9 @@ export const P5 = {
     off: (name: string) => `Off. Turn it on, and the question and the choices are read out on ${their(name)} screen.`,
     on: 'On. The words on each card you show go to Google to be spoken.',
     turnOn: 'Turn on Read aloud',
+    /** Phase 8 (judge round 7): who it is for, on the switch's button and on the sheet. */
+    turnOnFor: (name: string) => `Read the cards aloud to ${name || 'them'}`,
+    forWho: (name: string) => `For ${name || 'the person'}: ${name ? `${name} hears` : 'they hear'} the question and the choices in a calm, slow voice, so you do not have to read them out.`,
     turnOff: 'Turn off',
     offline: 'Read aloud needs the internet. You are offline.',
     never: 'The questions of "Before a doctor visit" are never read aloud: nothing of them is sent.',

@@ -182,3 +182,39 @@ describe('5. Home and the person\'s screen (P1 12, 14, 15)', () => {
     expect(html.indexOf('id="later"')).toBeLessThan(html.indexOf('id="topics"'));
   });
 });
+
+// ---------------------------------------------------------------- item 6: hybrid visible
+import { deviceWords } from '../../core/copy';
+import { routeChip } from '../../core/simple';
+import type { Card } from '../../core/types';
+import { speakSheet, speakSwitch } from '../../web/src/phase5';
+import { chipBlock } from '../../web/src/simple';
+
+const card = (o: Partial<Card>) => ({ blocked: null, source: 'code', trace: [], ...o }) as unknown as Card;
+describe('6. Hybrid visible (P0 4): the routing chip, and Read aloud says who it is for', () => {
+  it('a card of the AI on this computer: "Made on this computer", with why (About them read here, or the connection down)', () => {
+    expect(routeChip(card({ source: 'on-device', why: { personal: ['lake'] } as Card['why'] }), 'About Frank')).toEqual({ where: 'device', text: 'Made on this computer', why: 'Why here: it read About Frank, and that never leaves this computer.' });
+    expect(routeChip(card({ source: 'on-device', ranOffline: true }), 'About Frank')?.why).toBe('Why here: the connection was down, so the same request ran on the AI of this computer.');
+  });
+  it('a card of online help: "Made online, after your yes", with why (no AI here, or the AI here made no card)', () => {
+    expect(routeChip(card({ source: 'in-cloud', trace: [{ step: 'private', ran: 'skipped', why: 'no model', used: false }] }), 'About Frank')).toEqual({ where: 'cloud', text: 'Made online, after your yes', why: 'Why online: this computer has no AI of its own for a question like this.' });
+    expect(routeChip(card({ source: 'in-cloud', trace: [{ step: 'private', ran: 'on-device', why: 'no card', used: false }] }), 'About Frank')?.why).toBe('Why online: the AI on this computer made no card for it.');
+    // on a phone the words follow the device
+    expect(deviceWords('Why online: this computer has no AI of its own for a question like this.', 'phone')).toBe('Why online: this phone has no AI of its own for a question like this.');
+  });
+  it('a card of the rules, or none: no chip', () => {
+    expect(routeChip(card({ source: 'code' }), 'About Frank')).toBeNull();
+    expect(routeChip(card({ source: 'in-cloud', blocked: 'no card' }), 'About Frank')).toBeNull();
+    expect(routeChip(null, 'x')).toBeNull();
+    expect(chipBlock(null)).toBe('');
+    expect(chipBlock({ where: 'cloud', text: 'Made online, after your yes', why: 'Why online: x.' })).toContain('data-where="cloud"');
+  });
+  it('Read aloud: the button and the sheet say it is for the person, and that the carer does not have to read it out', () => {
+    const sw = speakSwitch({ name: 'Frank', on: false, online: true, can: true });
+    expect(sw).toContain('Read the cards aloud to Frank');
+    const sh = speakSheet({ text: 'Would you like tea or coffee?', request: '{}', name: 'Frank' });
+    expect(sh).toContain('For Frank: Frank hears the question and the choices in a calm, slow voice, so you do not have to read them out.');
+    expect(speakSheet({ text: 'x', request: '{}' })).toContain('For the person: they hear the question');
+    expect(sh.indexOf('id="speak-sheet-for"')).toBeLessThan(sh.indexOf('data-act="speak-yes"'));
+  });
+});

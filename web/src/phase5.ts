@@ -63,14 +63,15 @@ export function speakSwitch(m: SpeakModel): string {
   if (!m.can) return `<p class="tip speak-never" id="speak-never">${SOUND}<span>${K.never}</span></p>`;
   if (!m.online && !m.on) return '';
   return `<div class="speak" id="speak" data-on="${m.on ? 1 : 0}">${SOUND}<div><b>${K.title}</b><small id="speak-state">${esc(m.on ? (m.online ? K.on : K.offline) : K.off(m.name))}</small></div>
-    <button type="button" class="btn quiet small-btn" id="speak-toggle" data-act="${m.on ? 'speak-off' : 'speak-ask'}" aria-pressed="${m.on}">${m.on ? K.turnOff : K.turnOn}</button></div>`;
+    <button type="button" class="btn quiet small-btn" id="speak-toggle" data-act="${m.on ? 'speak-off' : 'speak-ask'}" aria-pressed="${m.on}">${m.on ? K.turnOff : esc(K.turnOnFor(m.name))}</button></div>`;
 }
 /** The sheet before Read aloud is turned on: the brief's sentence, the words of this card, what never goes, the data use. */
-export function speakSheet(m: { text: string; request: string }): string {
+export function speakSheet(m: { text: string; request: string; name?: string }): string {
   const K = P5.speak.sheet;
   return `<div class="dim"></div>
 <div class="sheet speak-sheet" id="speak-sheet" role="dialog" aria-modal="true" aria-labelledby="speak-sheet-h">
   <h2 id="speak-sheet-h" tabindex="-1">${K.heading}</h2>
+  <p id="speak-sheet-for"><b>${esc(P5.speak.forWho(m.name ?? ''))}</b></p>
   <p id="speak-sheet-body">${K.body}</p>
   <div class="goes"><p class="small muted">${K.goes}</p><p class="q" id="speak-sheet-text">${esc(m.text)}</p><p class="small muted">${K.plus}</p></div>
   <ul class="facts">
