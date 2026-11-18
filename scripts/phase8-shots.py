@@ -147,6 +147,19 @@ def rules(browser, url):
     e2e.tap_yes(page, 'me')
     e2e.give_back(page, 'main.simple')
     check('the carer reads "Frank\'s own news"', "It is about: People & family, Frank's own news." in e2e.text(page), e2e.text(page)[:300])
+    # (18 Nov, Hana's walk of the sample family at 390 px) the first chip, an open question, with no model ready here and
+    # cloud help off: the card area says no card was made, not "Your card will appear here"
+    page.goto(url + '#/demo')
+    page.wait_for_selector('#result > .badge-line')
+    if 'Cloud help: off' in e2e.text(page, '.top'):
+        page.locator('.chipgroups button', has_text='this weekend?').first.click()
+        page.locator('button:has-text("Make card")').first.click()
+        page.wait_for_function("document.querySelector('#person .tile') || /no choices|isn't ready|No card/.test((document.querySelector('#result') || {}).textContent || '')", timeout=15000)
+        if page.locator('#person .tile').count() == 0:
+            check('judge mode, an open question that got no card: the card area says "No card for this question", not that a card will appear', e2e.text(page, '#card-empty').startswith('No card for this question') and 'will appear' not in e2e.text(page, '#card-empty'), e2e.text(page, '#card-empty'))
+            shot(page, '10_judge_mode_open_question_no_card', full=False)
+    else:
+        check('judge mode opens with cloud help off in this run', False, e2e.text(page, '.top')[:200])
     check('rules run: nothing was asked of any other host', not outside, str(outside[:3]))
     check('rules run: no page error', not errors, '; '.join(errors[:3]))
     ctx.close()

@@ -53,6 +53,7 @@ const COPY = {
   card: {
     /** The empty card area of the full view's partner screen: plain words, no picture to puzzle over. */
     emptyPane: 'Your card will appear here. Type or say a question above, or tap one you asked before.',
+    emptyNone: 'No card for this question. The line above says why, and what you can do instead.',
     emptyBusy: 'Making the card…',
     sayThis: 'Say this:',
     tip: 'Point to each choice as you read it. Then wait.',

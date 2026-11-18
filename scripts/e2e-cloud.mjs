@@ -26,7 +26,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const commit = (() => { try { return execSync('git rev-parse HEAD').toString().trim(); } catch { return 'unknown'; } })();
 
 const profile = mkdtempSync(join(tmpdir(), 'tp-e2e-'));
-const chrome = spawn(CHROME, [`--headless=new`, `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check', '--window-size=1280,900', 'about:blank'], { stdio: 'ignore' });
+// HEADED=1: a normal Chrome window (fresh profile), as a person would open it; App Check refuses the headless one
+const chrome = spawn(CHROME, [...(process.env.HEADED === '1' ? [] : ['--headless=new']), `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check', '--window-size=1280,900', 'about:blank'], { stdio: 'ignore' });
 const results = [];
 const check = (name, ok, detail = '') => { results.push({ name, ok, detail }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  (${detail})` : ''}`); };
 
