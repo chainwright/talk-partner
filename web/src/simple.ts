@@ -297,7 +297,7 @@ export function cardScreen(m: CardModel): string {
   const tip = c.kind === 'repair' ? COPY.repair.tip : c.kind === 'needs' ? COPY.needs.tip : S.tip;
   const canHide = m.actions.some((a) => a.act === 'less');
   // a narrowing card says in plain words that an AI made this follow-up, and where
-  const ai = c.narrow ? `<p class="ai-made" id="ai-made">${SIGN.spark}<span>${esc(S.narrow.label(c.narrow.level, NARROW_LEVELS, c.source === 'in-cloud' ? 'cloud' : 'device'))}</span></p>` : '';
+  const ai = c.narrow ? `<p class="ai-made" id="ai-made" data-by="${c.narrow.by ?? 'ai'}">${c.narrow.by === 'rules' ? SIGN.lock : SIGN.spark}<span>${esc(c.narrow.by === 'rules' ? S.narrow.labelRules(c.narrow.level, NARROW_LEVELS) : S.narrow.label(c.narrow.level, NARROW_LEVELS, c.source === 'in-cloud' ? 'cloud' : 'device'))}</span></p>` : '';
   return `<main class="simple wrap card" data-screen="card">${back}
   <div class="c-say">${ai}${coach}<div class="stack">${step(1, sayLabel)}<p class="say">${esc(say)}</p></div>${m.lastTime ? `<p class="last">${esc(m.lastTime)}</p>` : ''}</div>
   <div class="c-go">${step(2, S.step2(m.name))}

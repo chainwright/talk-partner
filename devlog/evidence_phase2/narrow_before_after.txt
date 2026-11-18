@@ -1,0 +1,16 @@
+Narrowing after 'something else': the same fixtures (tests/unit/narrow-broader.test.ts, model answers scripted; rows 1 and 2 are the real cloud model's recorded answers) through core/narrow.ts at e227afe (before) and after the change of 18 Nov 2026.
+BEFORE: 13 of 13 fixtures showed more of the same kind or no card
+Would you like tea or coffee? | before: water / juice / milk | after: something cold / something sweet
+Would you like tea or coffee? | before: hot chocolate / malt drink / herbal tea | after: something to eat / a rest / help with something
+Would you like water, juice or milk? | before: squash / lemonade / a hot drink | after: something hot / something sweet
+Would you like soup or a sandwich? | before: toast / pasta / eggs | after: something sweet / something to drink / a rest
+Are you hungry? | before: soup / toast / fruit | after: something to drink / a rest / help with something
+Would you like to sit in the garden or go to the park? | before: the lake / the beach / the woods | after: somewhere indoors / stay at home
+Where would you like to go? The shops or the cafe? | before: library / church / somewhere outside | after: somewhere outside / stay at home
+Would you like to call your son or your daughter? | before: sister / brother / grandson | after: a friend / someone who helps
+Do you want to see the nurse or the doctor? | before: the physio / the carer | after: family / a friend
+Would you like TV or music? | before: radio / a film / the news | after: something with the hands / go out / see someone
+How are you feeling today? | before: bored / lonely / scared | after: something about people / some company / some quiet
+Would you like to rest in the bed or the chair? | before: the sofa / a pillow | after: warmer or cooler / quiet or dark
+Would you like cake or fruit? | before: biscuits / ice cream / a drink | after: something savoury / a hot meal
+AFTER: 0 of 13 show more of the same kind; 13 of 13 are made by the rules and say so (tests/unit/narrow-broader.test.ts).

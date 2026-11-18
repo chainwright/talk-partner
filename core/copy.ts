@@ -407,6 +407,7 @@ const COPY = {
       offline: 'You are offline: narrowing needs the internet on this computer.',
       busy: 'Finding the next choices…',
       label: (level: number, max: number, where: 'device' | 'cloud') => `AI suggested these next choices${where === 'device' ? ' on this computer' : ' with online help'}, because none of the first ones fitted (step ${level} of ${max}).`,
+      labelRules: (level: number, max: number) => `The app's rules made these broader choices, because none of the first ones fitted and the AI only offered more of the same (step ${level} of ${max}).`,
       last: 'That was the last narrowing step.',
     },
     /** "Today in short": two to four plain sentences for the family or the therapist (core/summary.ts). */
@@ -607,6 +608,7 @@ const COPY = {
         oneOption: 'one real option was left, so it is asked as a yes / no question',
         narrow: 'the person chose the way out: a model suggested broader choices, and the same rules checked them',
         narrowBlocked: 'no narrowing card: fewer than two real choices came back',
+        narrowRules: "the model's choices were more of the same kind, or too few: the rules made the broader choices",
         repair: 'a fixed card for a stuck moment, never a model',
         needs: 'a fixed board of everyday needs, never a model',
         recognition: 'a recognition card from About me only, nothing made up',
@@ -626,6 +628,7 @@ const COPY = {
       rules: {
         sameAsTopic: 'the same as the headline',
         repeat: 'repeated',
+        sameKind: 'more of the kind that did not fit: a narrowing card must be broader',
         negative: 'negative wording',
         madeUpLabel: 'a label the cloud made up',
         both: '"both" is not a choice',
@@ -830,6 +833,7 @@ const COPY = {
     cloudWouldCheckUnconfigured: (kept: boolean) => `Cloud help could try this one, but it is not configured on this copy.${kept ? ' The card made on this computer is kept.' : ''}`,
     leak: 'Not sent: the question still held an About me word after stripping.',
     narrow: (level: number, max: number) => `A narrowing card (${level} of ${max}): they chose the way out, so an AI suggested broader choices from the question and what did not fit. The same rules checked them.`,
+    narrowRules: "The AI's choices were more of the same kind, or too few, so the app's rules made these broader ones.",
     narrowNone: 'No good next choices came out, so there is no narrowing card. Ask them to show you, or to write or draw it.',
     narrowNeedsAi: 'Narrowing needs an AI: the one built into Chrome on a computer, or online help.',
     narrowFailed: 'Online help did not answer, so there is no narrowing card. Try again, or ask them to show you.',

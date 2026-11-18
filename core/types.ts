@@ -157,7 +157,7 @@ export interface Card {
    * from the question and what did not fit. `level` is 1 or 2 (there is no third); `rejected` is every choice that
    * was offered and not taken so far, so the next level does not offer it again.
    */
-  narrow?: { level: number; rejected: string[] };
+  narrow?: { level: number; rejected: string[]; /** 'rules' when the model's choices were more of the same kind and the rules made the card (core/kinds.ts). */ by?: 'rules' };
   /** Set when no card could be made without a step the partner has to allow (e.g. cloud consent). */
   blocked?: string | null;
   /**

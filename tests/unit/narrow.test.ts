@@ -50,7 +50,7 @@ describe('what a narrowing step is built from', () => {
   });
   it('the text both steps get holds the question and what did not fit, and nothing the person chose', async () => {
     const i = await input();
-    expect(narrowAsk(i)).toBe('Would you like tea or coffee? They did not want: tea, coffee. What else could it be? Give two or three broader kinds of answer to narrow it down.');
+    expect(narrowAsk(i)).toBe('Would you like tea or coffee? They did not want: tea, coffee. What else could it be? Do not give more of the same kind as the ones they did not want. Give two or three broader, different kinds of answer: a kind such as "something cold" or "something to eat", not one more single thing.');
     expect(narrowAsk(i)).not.toMatch(/pain|Jen|yes/);
     // only the on-device text adds the answers so far
     expect(narrowDeviceAsk(i)).toContain('Answered earlier today: "Are you in pain?" -> yes; "Would you like to call Jen?" -> no.');
@@ -114,7 +114,10 @@ describe('where it runs: on this device first, online help only when it is on', 
     expect(labels(on)).toEqual(['a cold drink', 'something to eat', 'something else']);
     const e2 = new Fake({ device: 'not json', cloud: out(['a', 'b']) });
     const off = await narrowCard(await input(), env(e2, { deviceReady: true }));
-    expect(off.blocked).toBeTruthy();
+    // online help is off: it is not asked, and since 18 Nov the rules make the broader choices (a model was asked)
+    expect(off.blocked).toBeFalsy();
+    expect(off.source).toBe('code');
+    expect(off.narrow?.by).toBe('rules');
     expect(e2.cloud).toEqual([]);
   });
   it('online help fails: no card, and the card never says "nothing was sent"', async () => {
@@ -157,12 +160,21 @@ describe('the same card guards as every card', () => {
     expect(r.kept).toEqual(['a cold drink', 'something to eat', 'a rest']);
     expect(r.dropped.map((d) => d.label)).toEqual(['Tea', 'something else', 'A cold drink', 'not a drink', 'Marguerite', 'other', 'a walk']);
   });
-  it('fewer than two real choices: no narrowing card', async () => {
+  it('fewer than two real choices from the model: the rules make the broader choices, and the card says so (never a card with one choice)', async () => {
     for (const choices of [['something else'], ['tea', 'coffee'], ['a rest'], ['a rest', 'other'], []]) {
       const c = await narrowCard(await input(), env(new Fake({ cloud: out(choices) }), { allowCloud: true }));
-      expect(c.blocked, JSON.stringify(choices)).toBeTruthy();
-      expect(c.choices).toEqual([]);
+      expect(c.blocked, JSON.stringify(choices)).toBeFalsy();
+      expect(labels(c)).toEqual(['something cold', 'something sweet', 'something else']);
+      expect(c.source).toBe('code');
+      expect(c.narrow).toMatchObject({ level: 1, by: 'rules' });
+      expect(madeWhere(c, { about: 'About Frank' })).toMatchObject({ maker: 'codeAsked', left: 'sent' });
     }
+  });
+  it('the rules have nothing broader left either: no narrowing card', async () => {
+    const used: NarrowInput = { asked: 'Zzz?', rejected: ['food or drink', 'my body', 'something to do', 'a person', 'a place', 'a feeling'], level: 2, sofar: [] };
+    const c = await narrowCard(used, env(new Fake({ cloud: out(['a place']) }), { allowCloud: true }));
+    expect(c.blocked).toBeTruthy();
+    expect(c.choices).toEqual([]);
   });
   it.each(['question', 'which one', 'choices', 'something else', '', 'a rest', 'Frank'])('never a generic title, a choice or the person\'s name as the title (model topic "%s")', async (topic) => {
     const c = await narrowCard(await input(), env(new Fake({ cloud: out(['a cold drink', 'a rest'], topic) }), { allowCloud: true }));
