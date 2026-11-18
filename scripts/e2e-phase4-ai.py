@@ -162,7 +162,7 @@ def on_device(p, port, url):
         check('every word on the card starts with H, and the way out is there', len(words) >= 2 and words[-1] == 'something else' and all(re.sub(r'^(the|a|an|my|your) ', '', w.lower()).startswith('h') for w in words[:-1]), str(words))
         check('no host but the app\'s own was contacted for the letter step', not seen['hosts'], ', '.join(sorted(set(seen['hosts']))))
         page.screenshot(path=os.path.join(OUT, 'ai_03_letter_H_words_on_device.png'))
-        log('- screenshot: `devlog/evidence_phase4/ai_03_letter_H_words_on_device.png`')
+        log(f'- screenshot: `{os.path.relpath(os.path.join(OUT, "ai_03_letter_H_words_on_device.png"), os.path.join(HERE, ".."))}`')
     finally:
         restore(page, before)
         page.close()
