@@ -347,8 +347,9 @@ describe('the log: rows with no word in them, kept on this device, known to no p
     const main = read('web/src/main.ts');
     expect(main).toContain("function notePractice(e: PracticeEvent) {\n  if (state.demo) return;");
     expect(main.match(/notePractice\(\{ k: '(\w+)'/g)!.map((x) => x.slice(19, -1)).sort()).toEqual(['answer', 'anyway', 'ask', 'ask', 'board', 'no', 'stuck', 'turn']);
-    expect(main).toContain("if (t.dataset.confirm === 'yes' && state.picked && !c.visit) notePractice(");
-    expect(main).toContain("if (t.dataset.confirm === 'change' && state.picked && !c.visit) notePractice(");
+    // (phase 9: nor for Home's sample open question)
+    expect(main).toContain("if (t.dataset.confirm === 'yes' && state.picked && !c.visit && !c.sample) notePractice(");
+    expect(main).toContain("if (t.dataset.confirm === 'change' && state.picked && !c.visit && !c.sample) notePractice(");
     // the rows are built from marks of the card, never from its words
     for (const call of main.match(/notePractice\(\{[^;]*\}\);/g)!) expect(call, call.slice(0, 60)).not.toMatch(/label|asked|\.say|spoken:|lastQuestion/);
     // the diary is handed to the builder only with the box ticked, and the box is off again once the page was left

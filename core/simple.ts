@@ -104,6 +104,12 @@ export function aiTag(i: WhereInput): string {
   return place === 'device' ? T.device : place === 'offline' ? T.offline : place === 'none' ? T.none : place === 'checking' ? T.checking : T.net;
 }
 
+/** Phase 9: the tag on Home's sample open question, by where its AI would run here; null when this copy has no AI. */
+export function tryAiTag(i: WhereInput): string | null {
+  const place = aiPlace(i);
+  return place === 'none' ? null : COPY.simple.tryAi.tag[place];
+}
+
 /**
  * The consent sheet comes up for a card only when all of this holds: there is no card, cloud help is off, this copy
  * can reach the cloud, and the pipeline recorded what the cloud step would have been sent (`unsentPayload`), which it

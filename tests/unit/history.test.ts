@@ -99,7 +99,9 @@ describe('an answer never reaches a cloud model, and no card is made from an ear
     const calls = [...main.matchAll(/await makeCard\([\s\S]*?\}\);/g)].map((m) => m[0]);
     expect(calls).toHaveLength(2);
     expect(calls[0]).toContain('profile: SAMPLE_PROFILE');
-    expect(calls[1]).toContain('profile: state.profile');
+    // (phase 9: Home's sample open question is made with an empty profile: the question is all any step gets)
+    expect(calls[1]).toMatch(/^await makeCard\(q, \{\n\s+profile, /);
+    expect(main).toContain('const profile = sample ? EMPTY_PROFILE : state.profile;');
     for (const call of calls) expect(call).not.toMatch(/history/);
   });
 });

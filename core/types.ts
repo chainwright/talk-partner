@@ -176,6 +176,11 @@ export interface Card {
    * partner screen offers "Try again" for it.
    */
   retry?: string | null;
+  /**
+   * Phase 9: made from the one sample open question on Home ("See the AI at work"), with no About them in it: its
+   * answers are kept nowhere and counted nowhere.
+   */
+  sample?: boolean;
   /** A card of more choices of one kind, made by the rules after "something else" (core/more.ts): the kind, and what was shown before this page. */
   more?: { subject: 'drink' | 'food' | 'people' | 'place' | 'activity'; shown: string[] };
   /** The fixed card "What is it about?" (core/more.ts). */

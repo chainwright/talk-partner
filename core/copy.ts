@@ -350,6 +350,15 @@ const COPY = {
         `Check: "So: tea. Right?" ${name ? `${name} taps` : 'They tap'} Yes or No`,
       ],
     },
+    /**
+     * Phase 9 (judge round 8, IMPROVE F): the one sample open question on Home, one tap to the card and its routing
+     * chip. Its tag says where the AI would run here; the question is the only thing any step gets (no About them).
+     */
+    tryAi: {
+      label: 'See the AI at work',
+      sub: 'A sample harder question. Only this question is used, nothing from About them, and the answers are not kept.',
+      tag: { ask: "uses Google's AI, after your yes", cloudOn: "uses Google's AI (online help is on)", device: 'AI on this computer: nothing is sent', offline: 'needs internet: you are offline', checking: 'needs AI' } as Record<string, string>,
+    },
     /** Phase 8: on Home after "later", until it is asked again or done (core/later.ts). */
     later: {
       line: (q: string, time: string) => `Left for later: ${q}, ${time}`,

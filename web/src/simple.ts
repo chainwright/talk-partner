@@ -76,6 +76,8 @@ export interface HomeModel {
   turnHtml?: string;
   /** Phase 8: "Left for later" cards (core/later.ts), under how it works. */
   laterHtml?: string;
+  /** Phase 9: the sample open question (`tryAiBlock`). */
+  tryHtml?: string;
   /** The way to "Something new or sudden?" at the top of "Body & care" (web/src/phase5.ts), drawn by main.ts. */
   bodyHtml?: string;
 }
@@ -117,6 +119,17 @@ export function laterBlock(items: { q: string; time: string; i: number; care?: b
 }
 
 /**
+ * Phase 9 (judge round 8, IMPROVE F): one tap on Home to the hybrid moment: the sample open question, tagged with
+ * where its AI runs here ("uses Google's AI, after your yes" on a phone; "AI on this computer" with Chrome's own AI),
+ * leading to the card and its routing chip. Not drawn on a copy with no AI.
+ */
+export function tryAiBlock(m: { q: string; tag: string | null; busy: boolean }): string {
+  if (!m.tag) return '';
+  const T = COPY.simple.tryAi;
+  return `<div class="try-ai" id="try-ai"><button type="button" class="btn try-ai-btn" data-act="try-ai" data-q="${esc(m.q)}" ${m.busy ? 'disabled' : ''}>${SIGN.spark}<span><b>${T.label}</b><span class="tq-q">"${esc(m.q)}"</span><span class="tag net" id="try-ai-tag">${esc(m.tag)}</span></span></button><p class="tip" id="try-ai-sub">${esc(T.sub)}</p>${m.busy ? `<p class="making" role="status" id="try-ai-making"><span class="dot wait"></span>${COPY.simple.making}</p>` : ''}</div>`;
+}
+
+/**
  * The topic tiles, two to a row; the questions of the open topic come in a panel under the ROW the tile is in, so no
  * tile ever moves when a topic opens (a tired hand finds each topic where it was).
  */
@@ -152,7 +165,7 @@ export function homeScreen(m: HomeModel): string {
     ${m.laterHtml ?? ''}
   </div>
   <div class="col">
-    <div class="stack"><h2 class="sec">${S.topicsHeading}</h2>${topicGrid(m)}</div>
+    <div class="stack"><h2 class="sec">${S.topicsHeading}</h2>${topicGrid(m)}${m.tryHtml ?? ''}</div>
     <form id="ask" class="s-ask"><h2 class="sec">${S.ownHeading}</h2>
       <div class="row"><input id="q" class="field" autocomplete="off" placeholder="${S.field}" aria-label="${S.ownHeading}" value="${esc(m.question)}">${m.micHtml}</div>
       ${m.voiceHtml}

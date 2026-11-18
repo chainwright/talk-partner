@@ -700,3 +700,11 @@
 .simple .route-chip .sg { width: 22px; height: 22px; flex: none; margin-top: 1px; }
 .simple .route-chip .chip { display: inline-block; padding: 2px 8px; margin-right: 4px; border-radius: 999px; border: 1.5px solid var(--accent); background: var(--accent-soft); color: var(--ink); font-weight: 700; font-size: 14px; }
 .simple .route-chip[data-where=cloud] .chip { border-style: dashed; }
+/* phase 9: Home's sample open question (the hybrid moment, one tap) */
+.simple .try-ai { display: grid; gap: 6px; margin-top: 10px; }
+.simple .try-ai-btn { display: flex; gap: 10px; align-items: flex-start; text-align: left; width: 100%; border: 2px dashed var(--cloud); background: var(--cloud-soft); color: var(--ink); border-radius: 16px; padding: 12px 14px; }
+.simple .try-ai-btn .sg { width: 26px; height: 26px; flex: none; margin-top: 2px; }
+.simple .try-ai-btn > span { display: grid; gap: 4px; }
+.simple .try-ai-btn b { font-size: 18px; }
+.simple .try-ai-btn .tq-q { font-size: 17px; }
+.simple .try-ai .tip { margin: 0; }

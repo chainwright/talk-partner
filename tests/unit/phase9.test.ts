@@ -290,3 +290,51 @@ describe('6. P0 the cloud wait: 3 s to "Stop waiting", 12 s to the plain line; s
     expect(P9.wait.stopped).toMatch(/may already have gone to online help/);
   });
 });
+
+// ---------------------------------------------------------------- item 7
+import { routeChip, tryAiTag } from '../../core/simple';
+import { AI_QUESTION } from '../../core/topics';
+import { tryAiBlock } from '../../web/src/simple';
+
+class Device extends Slow {
+  async deviceStatus(): Promise<DeviceStatus> { return 'available'; }
+  async runDevice(): Promise<ModelResult> { return { text: '{"topic":"weekend","kind":"choice","choices":["the garden","a drive"]}', source: 'on-device', ms: 8 }; }
+}
+
+describe('7. P0 the hybrid moment in 10 s: one tap on Home, the sample open question, the card and its routing chip', () => {
+  const where = (o: Partial<{ configured: boolean; device: DeviceStatus | 'checking'; cloudOn: boolean; online: boolean }>) => ({ configured: true, device: 'unavailable' as const, cloudOn: false, online: true, ...o });
+  it('the tag says where its AI runs here: Google\'s after a yes (a phone), Chrome\'s own on a desktop with Nano; nothing on a copy with no AI', () => {
+    expect(tryAiTag(where({}))).toBe("uses Google's AI, after your yes");
+    expect(tryAiTag(where({ cloudOn: true }))).toBe("uses Google's AI (online help is on)");
+    expect(tryAiTag(where({ device: 'available' }))).toBe('AI on this computer: nothing is sent');
+    expect(tryAiTag(where({ online: false }))).toBe('needs internet: you are offline');
+    expect(tryAiTag(where({ configured: false }))).toBeNull();
+    expect(tryAiBlock({ q: AI_QUESTION, tag: null, busy: false })).toBe('');
+    const html = un(tryAiBlock({ q: AI_QUESTION, tag: "uses Google's AI, after your yes", busy: false }));
+    expect(html).toContain('data-act="try-ai"');
+    expect(html).toContain('"What do you want to do this weekend?"');
+    expect(html).toContain("uses Google's AI, after your yes");
+    expect(html).toContain('nothing from About them');
+  });
+  it('worst case: with a real family in About them, the cloud request holds the sample question and nothing else', async () => {
+    const asked: string[] = [];
+    const engine: Engine = Object.assign(new Slow(), { runCloud: (q: string): Promise<ModelResult> => { asked.push(q); return Promise.resolve({ text: '{"topic":"weekend","kind":"choice","choices":["the garden","a drive"]}', source: 'in-cloud', ms: 9 }); } });
+    // the client makes the sample with an empty profile (main.ts: `const profile = sample ? EMPTY_PROFILE : state.profile;`)
+    const c = await makeCard(AI_QUESTION, { ...cloudEnv(engine), profile: EMPTY_PROFILE });
+    expect(asked).toEqual([AI_QUESTION]);
+    expect(c.cloudPayload).toBe(JSON.stringify(cloudTextRequest(AI_QUESTION), null, 2));
+    expect(routeChip(c, 'About them')).toMatchObject({ where: 'cloud', text: 'Made online, after your yes' });
+  });
+  it('on a desktop with Chrome\'s own AI the same tap is made on this computer, and the chip says so', async () => {
+    const c = await makeCard(AI_QUESTION, { ...cloudEnv(new Device()), profile: EMPTY_PROFILE, deviceReady: true, allowCloud: false });
+    expect(c.source).toBe('on-device');
+    expect(routeChip(c, 'About them')).toMatchObject({ where: 'device', text: 'Made on this computer' });
+  });
+  it('the web client: the tap, the empty profile, and no history, diary or count for the sample', () => {
+    const main = readFileSync(join(__dirname, '..', '..', 'web', 'src', 'main.ts'), 'utf8');
+    expect(main).toContain("case 'try-ai': if (!state.busy) { p9sample.q = AI_QUESTION; askBy = 'none'; void make(AI_QUESTION); } break;");
+    expect(main).toContain('const profile = sample ? EMPTY_PROFILE : state.profile;');
+    expect(main).toContain('if (c.sample) {');
+    expect(main).toContain('if (!(card.blocked && card.unsentPayload) && !sample) {');
+  });
+});

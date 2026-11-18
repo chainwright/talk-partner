@@ -17,7 +17,7 @@ import { RECORDED_STEP } from '../../core/recorded';
 import { badgeKind, countSwaps, sentLine, sessionReceipt, sessionTally } from '../../core/receipt';
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS, SAMPLE_STEP } from '../../core/sample';
-import { aiLines, aiTag, madeWhere, needsInternet, privacyLines, routeChip, sheetWanted } from '../../core/simple';
+import { aiLines, aiTag, madeWhere, needsInternet, privacyLines, routeChip, sheetWanted, tryAiTag } from '../../core/simple';
 import { NARROW_TASK, canNarrow, narrowCard, narrowInput, type NarrowInput } from '../../core/narrow';
 import { aiPlace } from '../../core/simple';
 import { daySummary, rulesSummary, todays, type DaySummary } from '../../core/summary';
@@ -36,14 +36,14 @@ import { hasHealth, NO_HEALTH, cleanHealth, cloudLines, insightCloudText, insigh
 import { RELIABLE, careAnswer, guardExempt, markLessSure, reliability, reorder, tapsFrom } from '../../core/reliability';
 import { checkReworded, rewordOnDevice, type RewordSource } from '../../core/reword';
 import { addAsk, askOf, tipOfDay, type Ask } from '../../core/tip';
-import { WHERE_HURTS, topicOf } from '../../core/topics';
+import { AI_QUESTION, WHERE_HURTS, topicOf } from '../../core/topics';
 import { backupBlock, diaryLink, diaryScreen, guardBlock, importSheet, insightSheet, type InsightsModel } from './diary';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
 import { pickEngine } from './ai/pick';
 import { fetchSettings } from './ai/remoteConfig';
 import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile } from './pictos';
-import { aboutSimple, answeredScreen, cardScreen, chipBlock, consentSheet, frameStyle, homeScreen, laterBlock, personSimple, photoSheet, shortBlock, type AboutRow } from './simple';
+import { aboutSimple, answeredScreen, cardScreen, chipBlock, consentSheet, frameStyle, homeScreen, laterBlock, personSimple, photoSheet, shortBlock, tryAiBlock, type AboutRow } from './simple';
 import { kvClear, kvGet, kvSet } from './store';
 import { P4 } from '../../core/copy4';
 import { letterCard, letterEnd, type LetterInput } from '../../core/letter';
@@ -1830,6 +1830,7 @@ function simpleScreen(): string {
       howOpen: !state.settings.howFolded, topics: topics(p), topicOpen: state.topicOpen, aiTag: aiTag(whereInput()), ai: aiLines(whereInput()),
       privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: `${diaryLink()}${!state.demo && state.diary.length ? handoverLink() : ''}${p4Links(name)}${passportLink(name)}`,
       bodyHtml: suddenLink('sudden-body'),
+      tryHtml: tryAiBlock({ q: AI_QUESTION, tag: tryAiTag(whereInput()), busy: state.busy && p9sample.q !== null && state.lastQuestion === p9sample.q }),
       laterHtml: laterBlock(shownLater(p8later.list, Date.now()).map((x) => ({ q: x.q, time: laterTime(x.at), i: p8later.list.indexOf(x), care: !!x.care, pain: !!x.pain, asking: p8later.asking === x }))),
       turnHtml: `${turnButton(name)}${suddenLink()}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
     });
@@ -1843,6 +1844,7 @@ function simpleScreen(): string {
 function patchSimple() {
   const a = document.querySelector('#ai-line span'); if (a) a.textContent = aiLines(whereInput()).join(' ');
   const t = document.querySelector('#ai-tag'); if (t) t.textContent = aiTag(whereInput());
+  const tt = document.querySelector('#try-ai-tag'); const tag = tryAiTag(whereInput()); if (tt && tag) tt.textContent = tag;
 }
 // the connection came or went: the AI line and the "needs internet" tag follow; a no-card screen is drawn again
 for (const ev of ['online', 'offline']) window.addEventListener(ev, () => { if (!simpleView() || route() !== 'partner') return; if (state.card?.blocked && !state.sheet) render(); else patchSimple(); });
@@ -2200,6 +2202,8 @@ const routing = () => ({ moodWords: state.remote.values.routeMoodWords, minChoic
  * gives up at CLOUD_WAIT_MS (12 s). "Stop waiting" calls the making off (its card, when it comes, is not shown; the
  * privacy receipt still counts the request).
  */
+/** Phase 9: the sample open question of Home while it is being made or shown (null otherwise). */
+const p9sample = { q: null as string | null };
 const p9wait = { at: null as number | null, timer: null as ReturnType<typeof setInterval> | null };
 function cloudStarted(seq: number) {
   if (seq !== makeSeq) return;
@@ -2230,6 +2234,11 @@ async function make(q: string) {
   if (step === 'waiting') step = 'cancelled'; // the judge asked something first: the automatic step stands down
   const seq = ++makeSeq;
   useSettings();
+  // (phase 9) Home's sample open question: made with no About them at all, so the question is the only thing any step
+  // gets; asked again after the consent sheet it is still the sample
+  const sample = p9sample.q === q;
+  if (!sample) p9sample.q = null;
+  const profile = sample ? EMPTY_PROFILE : state.profile;
   // was this question spoken, and its recording sent to the cloud? (the card then says so, onVoice)
   const spoken = dictated; dictated = false; voiceHeard = false; voiceAsk = false; voice.cancel();
   // a question that was not tapped as a next step of the tree starts a new conversation
@@ -2248,15 +2257,16 @@ async function make(q: string) {
   if (state.device === 'checking') await refreshDevice().catch(() => { state.device = 'unavailable'; });
   try {
     const card = await makeCard(q, {
-      profile: state.profile, support: state.settings.support, engine: state.engine,
+      profile, support: state.settings.support, engine: state.engine,
       allowCloud: state.settings.cloudHelp || once, deviceReady: state.device === 'available', routing: routing(),
       onCloud: () => cloudStarted(seq),
     });
     state.made.push(card);
+    if (sample) for (let p: Card | null | undefined = card; p; p = p.nextPage) p.sample = true;
     if (spoken) voiceCards.add(card);
     if (seq !== makeSeq) return; // a later question was asked meanwhile: its card is the one to show
-    // (a question that waits for a yes on the consent sheet is noted when it is asked again, not twice)
-    if (!(card.blocked && card.unsentPayload)) {
+    // (a question that waits for a yes on the consent sheet is noted when it is asked again, not twice; the sample never)
+    if (!(card.blocked && card.unsentPayload) && !sample) {
       noteAsk(card);
       // (phase 7) one row for the page of the speech therapist: the topic and where the question came from, none of its words
       if (by !== 'none') notePractice({ k: 'ask', at: Date.now(), topic: topicOf(state.chain[0] ?? q, state.profile)?.id ?? guessTopic(q), by, ...(card.pending ? { two: true as const } : {}), ...(card.kind === 'no-quiz' ? { quiz: true as const } : {}), ...(state.chain.length <= 1 ? { start: true as const } : {}), ...(second ? { second: true as const } : {}) });
@@ -2283,8 +2293,8 @@ function onPersonTap(t: HTMLElement) {
   if (!c) return;
   // (phase 7) the check, for the page of the speech therapist: a yes with the kind of card it was on, a "No, something
   // else"; no word of the answer. Never a doctor-visit question: those answers are read by nothing.
-  if (t.dataset.confirm === 'yes' && state.picked && !c.visit) notePractice({ k: 'answer', at: Date.now(), via: viaOf(c, state.picked), ...(state.picked.role === 'escape' && c.kind !== 'needs' && c.kind !== 'repair' ? { esc: true as const } : {}) });
-  if (t.dataset.confirm === 'change' && state.picked && !c.visit) notePractice({ k: 'no', at: Date.now() });
+  if (t.dataset.confirm === 'yes' && state.picked && !c.visit && !c.sample) notePractice({ k: 'answer', at: Date.now(), via: viaOf(c, state.picked), ...(state.picked.role === 'escape' && c.kind !== 'needs' && c.kind !== 'repair' ? { esc: true as const } : {}) });
+  if (t.dataset.confirm === 'change' && state.picked && !c.visit && !c.sample) notePractice({ k: 'no', at: Date.now() });
   // a doctor-visit question, or a card the person started from: the confirmed answer leads on, on this screen (p4Confirm)
   if (t.dataset.confirm === 'yes' && state.picked && (c.visit || c.turn) && p4Confirm(c, state.picked)) return;
   if (t.dataset.confirm === 'yes') {
@@ -2305,7 +2315,9 @@ function onPersonTap(t: HTMLElement) {
       // kept on this computer for "last time"; with the sample family it stays in memory and goes when judge mode is left
       // (a need from the quick-needs board is of the moment: it is in the recap, and not in "Answers so far" or "Asked before")
       const at = Date.now();
-      if (c.kind !== 'needs') {
+      if (c.sample) {
+        // (phase 9) the sample question of Home: in the recap of this conversation, and kept nowhere
+      } else if (c.kind !== 'needs') {
         // where the choice stood among the answers, for the answer-reliability guard (an either-or, a yes / no or a feelings card only)
         const shown = c.choices.filter((x) => x.role === 'answer');
         const placed = ['choice', 'yesno', 'feeling'].includes(c.kind) && !c.scale && !c.letter && !c.turn && !state.p4.turn ? { pos: shown.indexOf(state.picked), of: shown.length, yn: c.kind === 'yesno' } : {};
@@ -2460,6 +2472,8 @@ function act(el: HTMLElement) {
     case 'pt-look': void lookAtPhoto(); break;
     case 'pt-ask': { const q = talkQuestions()[Number(el.dataset.k)]; if (q) void askAboutPhoto(q); break; }
     // after the way out: ask it a new way, in the carer's own words
+    // (phase 9) Home's sample open question: one tap to the card and its routing chip (after the consent sheet's yes on a phone)
+    case 'try-ai': if (!state.busy) { p9sample.q = AI_QUESTION; askBy = 'none'; void make(AI_QUESTION); } break;
     // (phase 9) "Stop waiting" while online help is slow: the making is called off; the screen says what to do instead
     case 'stop-wait': if (state.busy) { makeSeq++; cloudDone(); state.busy = false; state.error = P9.wait.stopped; render(); document.querySelector<HTMLInputElement>('#q')?.focus(); } break;
     case 'own': state.lastQuestion = ''; state.error = null; dictated = false; resetCard(); render(); document.querySelector<HTMLInputElement>('#q')?.focus(); break;
