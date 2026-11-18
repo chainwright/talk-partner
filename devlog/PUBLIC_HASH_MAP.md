@@ -192,5 +192,6 @@ the table.
 | 169 | `9d141b0` | `15657be` | 2026-11-18 01:04 | The documents follow phase 5, and the evidence (devlog/evidence_phase5). README: the fir… |
 | 170 | `08f3e6f` | `99279d1` | 2026-11-18 01:11 | The hosted copy is the build of 9d141b0 (18 Nov, 07:05 UTC), phase 5: 20 of 20 served fi… |
 | 171 | `2a83e97` | `cb47a59` | 2026-11-18 01:17 | No usual-answer hint and no shortcut on a care question |
+| 172 | `32a2f18` | `eb2ad9b` | 2026-11-18 01:55 | A blow to the head can be added to a fall later; the fall and needs lines without a stra… |
 
-Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165 and 166–171 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
+Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171 and 172 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
