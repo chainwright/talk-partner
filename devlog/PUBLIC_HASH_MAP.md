@@ -193,5 +193,16 @@ the table.
 | 170 | `08f3e6f` | `99279d1` | 2026-11-18 01:11 | The hosted copy is the build of 9d141b0 (18 Nov, 07:05 UTC), phase 5: 20 of 20 served fi… |
 | 171 | `2a83e97` | `cb47a59` | 2026-11-18 01:17 | No usual-answer hint and no shortcut on a care question |
 | 172 | `32a2f18` | `eb2ad9b` | 2026-11-18 01:55 | A blow to the head can be added to a fall later; the fall and needs lines without a stra… |
+| 173 | `1de40ca` | `b5fe233` | 2026-11-18 05:19 | Phase 6, part D: every line of "What stands out" and of "Since the last visit" can show … |
+| 174 | `1319e88` | `5838270` | 2026-11-18 05:35 | Phase 6, part A: share with the care circle (no server, no account, no AI), and the docu… |
+| 175 | `0924ae6` | `42de932` | 2026-11-18 05:48 | Back goes exactly one step, never to the first screen (found by the owner on his phone, … |
+| 176 | `e4b67eb` | `8e8ed92` | 2026-11-18 06:04 | After "something else" the carer always has a next step made by the rules; "show me" goe… |
+| 177 | `3e09079` | `60a3e79` | 2026-11-18 06:10 | The evidence of phase 6 and of the two fixes after the owner's walk, and the day's log |
+| 178 | `c47805b` | `e84ba08` | 2026-11-18 06:12 | The deploy of phase 6 was refused: the Firebase login has expired (18 Nov, 12:11 UTC) |
+| 179 | `7d86f5b` | `f174b76` | 2026-11-18 06:18 | A choice from "More choices like these" ends with what to do |
+| 180 | `206af23` | `f960c1d` | 2026-11-18 06:46 | Phase 7: "For the speech therapist" (how the conversations went, as counts, never a grad… |
+| 181 | `5f05b8d` | `31cc14c` | 2026-11-18 07:11 | Phase 7 after the first read and the browser run: the passport fits one A4 sheet, its li… |
+| 182 | `11fefec` | `7fb38e9` | 2026-11-18 07:34 | Phase 7: README, JUDGES, CLAIMS rows 108 to 113, EVIDENCE, the day's log and the evidenc… |
+| 183 | `ed0395d` | `d82037d` | 2026-11-18 07:41 | The note under the usual choices no longer says needs are left out: a usual yes to a dri… |
 
-Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171 and 172 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
+Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172 and 173–183 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
