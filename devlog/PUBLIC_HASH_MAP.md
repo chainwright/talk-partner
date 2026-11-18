@@ -166,5 +166,12 @@ the table.
 | 143 | `200f6cf` | `85e6540` | 2026-11-17 18:40 | The documents follow the rebuilt simple view: README ('Where the AI runs' has the narrow… |
 | 144 | `fb1b3ba` | `6402c7e` | 2026-11-17 18:47 | A narrowing card says what went for it (the question and the choices that did not fit, n… |
 | 145 | `e8ee3c2` | `54a7ea6` | 2026-11-17 18:53 | The hosted copy is the build of fb1b3ba (18 Nov, 00:48 UTC), the rebuilt simple view at … |
+| 146 | `fe96c60` | `9dce666` | 2026-11-17 19:03 | After 'something else' the next card is broader and different, never more of the kind al… |
+| 147 | `84f6435` | `a5fdd6c` | 2026-11-17 19:41 | Conversation trees (core/tree.ts), rules only: after every answer to every topic questio… |
+| 148 | `f569e3b` | `e5af0b6` | 2026-11-17 19:41 | The simple view leads and can be left: the answered screen shows the question with its a… |
+| 149 | `0e8dc6f` | `1c561ca` | 2026-11-17 19:49 | The app learns the person on this device, by counting (core/prefs.ts, rules, no model): … |
+| 150 | `f452ff7` | `471022d` | 2026-11-17 20:20 | Colour pictures and the family's own photos. Every picture is redrawn as a simple, reali… |
+| 151 | `b9c7602` | `dfc4178` | 2026-11-17 20:20 | The documents follow 18 Nov: README has 'Added on 18 Nov' (conversation trees, what the … |
+| 152 | `c20306f` | `640c721` | 2026-11-17 20:23 | The hosted copy is the build of b9c7602 (18 Nov, about 02:20 UTC): 20 of 20 served files… |
 
-Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136 and 137–145 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
+Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145 and 146–152 were added on 17 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
