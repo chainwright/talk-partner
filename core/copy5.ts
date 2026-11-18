@@ -104,7 +104,7 @@ export const P5 = {
     pain: (n: number, d: string) => (n ? `Pain: chosen or logged on ${days(n)} (${d}).` : 'Pain: none entered.'),
     strong: (d: string) => `Strong pain, or pain in the head or the chest: ${d}.`,
     falls: (n: number, d: string) => (n ? `Falls: ${n} logged (${d}).` : 'Falls: none logged.'),
-    drinks: (dry: number, withEntries: number) => (withEntries ? `Drinks: on ${dry} of ${days(withEntries)} with entries, no drink was entered.` : 'Drinks: nothing entered.'),
+    drinks: (dry: number, withEntries: number) => (withEntries ? `Drinks: on ${dry} of ${days(withEntries)} with entries, no drink was entered.` : 'Drinks: no full day with entries in this time yet.'),
     mood: (n: number, d: string) => (n ? `Mood: "sad" or "bad" on ${days(n)} (${d}).` : 'Mood: no "sad" or "bad" day entered.'),
     sleep: (n: number, d: string) => (n ? `Sleep: a bad night on ${days(n)} (${d}).` : 'Sleep: no bad night entered.'),
     none: 'The diary holds nothing for this time.',

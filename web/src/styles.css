@@ -368,7 +368,8 @@ main.welcome::after { transform-origin: left center; animation: ts-turn 1s .3s c
 .needs-open { min-height: 40px; padding: 6px 16px; border-radius: 999px; border: 2px solid var(--accent); background: var(--accent-soft); color: var(--accent); font-size: 15px; }
 .needs-open:hover { background: var(--accent); color: var(--on-accent); }
 @media (max-width: 520px) { .needs-open { min-height: 36px; padding: 4px 14px; font-size: 14px; } }
-.tiles.needs { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+/* (18 Nov, phase 5: nine needs. Five to a row on a wide screen, so the board is still two rows and the way out) */
+.tiles.needs { grid-template-columns: repeat(5, 1fr); gap: 12px; }
 .tiles.needs .tile { min-height: 132px; padding: 10px 4px; font-size: 22px; }
 .tiles.needs .tile svg { width: 72px; height: 72px; }
 .tiles.needs .tile.escape { min-height: 92px; font-size: 22px; } .tiles.needs .tile.escape svg { width: 52px; height: 52px; }
@@ -381,9 +382,10 @@ main.welcome::after { transform-origin: left center; animation: ts-turn 1s .3s c
 }
 @media (max-width: 520px) {
   .tiles.needs, .person.full .tiles.needs { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .tiles.needs .tile, .person.full .tiles.needs .tile { min-height: 124px; font-size: 24px; padding: 8px 4px; }
-  .tiles.needs .tile svg, .person.full .tiles.needs .tile svg { width: 68px; height: 68px; }
-  .tiles.needs .tile.escape, .person.full .tiles.needs .tile.escape { min-height: 84px; font-size: 24px; grid-auto-flow: column; justify-content: center; align-items: center; gap: 12px; }
+  /* (18 Nov, phase 5: nine needs and the way out, five rows and one: a tile is 104 px tall so the board still fits one phone screen) */
+  .tiles.needs .tile, .person.full .tiles.needs .tile { min-height: 104px; font-size: 22px; padding: 6px 4px; }
+  .tiles.needs .tile svg, .person.full .tiles.needs .tile svg { width: 56px; height: 56px; }
+  .tiles.needs .tile.escape, .person.full .tiles.needs .tile.escape { min-height: 76px; font-size: 24px; grid-auto-flow: column; justify-content: center; align-items: center; gap: 12px; }
   .tiles.needs .tile.escape svg, .person.full .tiles.needs .tile.escape svg { width: 48px; height: 48px; }
   .person.full:has(.tiles.needs) { gap: 12px; padding: 14px 12px; }
 }

@@ -116,8 +116,8 @@ try {
     return { hash: location.hash, headline: document.querySelector('#person .headline')?.innerText ?? '', words: t.map((x) => x.querySelector('span')?.innerText ?? ''), pictures: t.filter((x) => x.querySelector('svg[role="img"]')).length,
       smallest: Math.round(Math.min(...r.map((b) => Math.min(b.width, b.height)))), lowest: Math.round(Math.max(...r.map((b) => b.bottom))), screen: innerHeight, images: document.querySelectorAll('#person img').length,
       font: getComputedStyle(t[0]).fontFamily.split(',')[0], fontLoaded: document.fonts.check(getComputedStyle(t[0]).font) }; })()`);
-  check('offline: "Quick needs" opens the board full screen in one tap: nine tiles, each a picture and its word, every target at least 64 px, all on one screen',
-    board.hash === '#/needs' && board.headline === 'I need' && JSON.stringify(board.words) === JSON.stringify(['toilet', 'drink', 'food', 'pain', 'tired', 'too hot', 'too cold', 'call someone', 'something else']) && board.pictures === 9 && board.images === 0 && board.smallest >= 64 && board.lowest <= board.screen, JSON.stringify(board));
+  check('offline: "Quick needs" opens the board full screen in one tap: ten tiles (nine needs since phase 5, and the way out), each a picture and its word, every target at least 64 px, all on one screen',
+    board.hash === '#/needs' && board.headline === 'I need' && JSON.stringify(board.words) === JSON.stringify(['toilet', 'drink', 'food', 'pain', 'tired', 'too hot', 'too cold', 'call someone', "something's wrong", 'something else']) && board.pictures === 10 && board.images === 0 && board.smallest >= 64 && board.lowest <= board.screen, JSON.stringify(board));
   await shot('needs-01-board-offline');
   const tap = async (i) => { await js(`document.querySelector('#person .tile[data-i="${i}"]').click()`); await waitFor(`!!document.querySelector('#person [data-confirm="yes"]')`, 3000); await sleep(200); };
   await tap(0);
@@ -142,7 +142,7 @@ try {
   check('offline: after "pain" one tap asks "Where does it hurt?", and the body card is made with no network', body.kind === 'body' && body.badge === 'No AI needed' && body.tiles.length >= 3, JSON.stringify(body));
   // the way out
   await js(`document.querySelector('[data-act="needs"]').click()`); await waitFor(`!!document.querySelector('.person.full .tiles.needs')`, 4000); await sleep(300);
-  await tap(8);
+  await tap(9); // (the tenth tile since phase 5: the way out comes after "something's wrong")
   const v2 = await js(`document.querySelector('#person .headline')?.innerText ?? ''`);
   await js(`document.querySelector('[data-confirm="yes"]').click()`); await sleep(300);
   await js(`location.hash = '#/demo'`); await waitFor(`!!document.querySelector('#result .need-line')`, 3000); await sleep(200);

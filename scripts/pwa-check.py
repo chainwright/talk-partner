@@ -122,7 +122,7 @@ def main():
         check('offline: "Today in short" is written (by the rules, on this phone)', page.locator('#today-short[data-source=rules]').count() == 1)
         page.locator('.btn[data-act=needs]').first.click()
         page.wait_for_selector('main.pv .p-tiles.board')
-        check('offline: quick needs opens, nine tiles with their pictures', page.locator('main.pv .pt').count() == 9 and page.locator('main.pv .pt svg').count() == 9)
+        check('offline: quick needs opens, ten tiles with their pictures (nine needs since phase 5, and the way out)', page.locator('main.pv .pt').count() == 10 and page.locator('main.pv .pt svg').count() == 10)
         page.locator('#exit').dispatch_event('pointerdown')
         page.wait_for_selector('main.simple.card', timeout=4000)
         page.locator('[data-act=home]').click()
