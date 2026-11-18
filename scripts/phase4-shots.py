@@ -25,7 +25,12 @@ spec.loader.exec_module(e2e)
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--url', default='http://localhost:4173/')
-    url = ap.parse_args().url
+    ap.add_argument('--out', default=None, help='another folder for the pictures (phase 5 shot the screens again, with the family\'s three pictures told apart: devlog/evidence_phase5/reshoot_phase4)')
+    args = ap.parse_args()
+    url = args.url
+    global OUT
+    if args.out:
+        OUT = args.out
     host = urlparse(url).hostname
     os.makedirs(OUT, exist_ok=True)
     with sync_playwright() as p:

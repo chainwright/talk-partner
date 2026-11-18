@@ -37,7 +37,7 @@ export function suddenScreen(m: { number: string }): string {
   <p class="unsure" id="sudden-unsure">${S.unsure}</p>
   ${callButton(m.number, true).replace('class="btn call big"', 'class="btn call big second"')}
   <p class="tip" id="sudden-not">${S.notSudden}</p>
-  <p class="tip" id="sudden-number">${esc(S.number(m.number))} <a class="tlink" href="#/about" data-act="sudden-number">${S.change} →</a></p>
+  <p class="tip" id="sudden-number">${esc(S.number(m.number))} <button type="button" class="tlink" data-act="sudden-number">${S.change} →</button></p>
   <p class="lock" id="sudden-source">${SIGN.lock}<span>${S.source}</span></p>
 </main>`;
 }

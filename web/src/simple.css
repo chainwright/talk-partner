@@ -577,3 +577,9 @@
 .simple .since-pick .check { display: flex; gap: 10px; align-items: center; min-height: 48px; font-size: 17px; }
 .simple .since-pick input:disabled + * , .simple .since-pick .check:has(input:disabled) { color: var(--muted); }
 @media print { .simple .urgent .btn.call, .simple .urgent .tlink { display: none; } }
+/* The needs board has nine tiles since phase 5 ("something's wrong"): five rows and the way out must still fit a
+   390 x 844 phone without scrolling, so a tile is 100 px tall (it was 112) and the gap 8 px. */
+.person.full.pv .p-tiles.board { gap: 8px; }
+.person.full.pv .p-tiles.board .pt { min-height: 100px; }
+.person.full.pv .p-tiles.board .pt svg { width: 52px; height: 52px; }
+.person.full.pv .p-tiles.board .pt.esc { min-height: 72px; }

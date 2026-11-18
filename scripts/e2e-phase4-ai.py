@@ -106,7 +106,7 @@ def on_device(p, port, url):
         page.locator('#pt-look').click()
         page.wait_for_selector('#pt-by[data-by=device], #pt-look-none', timeout=180000)
         look = [c for c in seen['console'][n0:] if 'leg=look' in c]
-        log(f'- the photo: `tests/fixtures/photo-mug.jpg` (a red mug on a table), under the word "Bo", 320 px JPEG as About them keeps it')
+        log(f'- the photo: `tests/fixtures/photo-bo.jpg` (our drawing of a dog; until phase 5 this run used the red mug of photo-mug.jpg), under the word "Bo", as About them keeps it')
         log(f'- SDK report (console): `{look[0] if look else "none"}`')
         check('the SDK reported inferenceSource=on_device for the photo step (leg=look, ONLY_ON_DEVICE)', bool(look) and 'inferenceSource=on_device' in look[0] and 'mode=ONLY_ON_DEVICE' in look[0])
         ai = page.locator('[data-act=pt-ask][data-ai]')

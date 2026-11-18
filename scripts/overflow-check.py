@@ -469,9 +469,10 @@ def phase4(url, width, browser):
     ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else r.abort())
     page = ctx.new_page()
     page.on('dialog', lambda d: d.accept())
-    data = 'data:image/jpeg;base64,' + base64.b64encode(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tests', 'fixtures', 'photo-mug.jpg'), 'rb').read()).decode()
+    fx = lambda f: 'data:image/jpeg;base64,' + base64.b64encode(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tests', 'fixtures', f), 'rb').read()).decode()
+    own = {'Bartholomew-Christopher': fx('photo-beth.jpg'), 'the botanical gardens': fx('photo-lake.jpg'), 'Bo': fx('photo-bo.jpg')}
     profile = {'personName': 'Maximilian-Alexander', 'partnerName': 'Carol', 'people': [{'id': 'p2', 'name': 'Bartholomew-Christopher', 'relation': 'son', 'household': False}, {'id': 'p3', 'name': 'Beth', 'relation': 'daughter', 'household': False}], 'foods': ['blackcurrant and apple crumble', 'porridge'], 'places': ['the botanical gardens'], 'tv': [], 'music': [], 'other': ['Bo (dog)']}
-    photos = [{'id': f'ph{i}', 'word': w, 'data': data, 'at': 1000 + i} for i, w in enumerate(['Bartholomew-Christopher', 'the botanical gardens', 'Bo'])]
+    photos = [{'id': f'ph{i}', 'word': w, 'data': own[w], 'at': 1000 + i} for i, w in enumerate(['Bartholomew-Christopher', 'the botanical gardens', 'Bo'])]
     page.goto(url)
     page.wait_for_selector('main.simple.home')
     page.evaluate(KV_PUT, {'profile': profile, 'photos': photos, 'settings': {'cloudHelp': False, 'support': 'more', 'welcomed': False, 'firstCard': True, 'howFolded': True}})

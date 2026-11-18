@@ -2156,7 +2156,7 @@ function act(el: HTMLElement) {
     case 'speak-yes': p5.speakSheet = false; state.settings.speak = true; state.settings.speakOk = true; saveSettings(); render(); break;
     case 'speak-no': p5.speakSheet = false; render(); break;
     case 'speak-off': state.settings.speak = false; saveSettings(); stopSound(); render(); break;
-    case 'sudden-number': state.aboutRow = 'health'; break;
+    case 'sudden-number': state.aboutRow = 'health'; go('about'); window.scrollTo(0, 0); break;
     case 'log-undo': state.diary = removeEntry(state.diary, el.dataset.id ?? ''); saveDiary(); state.logged = null; render(); document.querySelector<HTMLElement>('#log-row button')?.focus({ preventScroll: true }); break;
     case 'diary-tab': state.diaryTab = el.dataset.tab as Span; state.logged = null; state.diaryCopied = false; render(); document.querySelector<HTMLElement>(`#tab-${state.diaryTab}`)?.focus({ preventScroll: true }); break;
     case 'diary-copy': {
@@ -2288,6 +2288,8 @@ app.addEventListener('click', (ev) => {
   if (t.dataset.q) dictated = false; // a tapped question was not spoken, whatever the field held
   if (t.dataset.q && t.dataset.short) state.shortcut = { q: t.dataset.q, of: t.dataset.of ?? '', label: t.dataset.label ?? '' };
   if (t.dataset.q && t.dataset.short) { if (t.dataset.of && !state.chain.includes(t.dataset.of)) state.chain = [...state.chain, t.dataset.of]; chained = true; state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
+  // (a question that is not a next step of the tree starts a new conversation: the call box of the last one goes)
+  if (t.dataset.q && !t.dataset.next && !t.dataset.short) p5.urgent = false;
   if (t.dataset.q) { state.chain = !t.dataset.next ? [t.dataset.q] : state.chain.includes(t.dataset.q) ? state.chain : [...state.chain, t.dataset.q]; chained = true; state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
   if (t.closest('#person')) onPersonTap(t);
 });
