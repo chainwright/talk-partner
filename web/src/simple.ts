@@ -236,6 +236,9 @@ export function personSimple(m: PersonModel): string {
       <div class="p-pick">${m.pic(m.picked)}<p class="p-big">${esc(m.picked.label)}</p></div>${yesNo('yes', 'change')}`;
   }
   const headLines = `<p class="p-do">${P.point}</p><p class="p-ask">${esc(c.asked)}</p>`;
+  // (phase 9) the person's own "Not now": the same small tile at the foot of every question screen; it ends the card
+  // and the question is kept for later (core/later.ts). Not a choice: it never enters the answers.
+  const notNow = m.full ? `<button type="button" class="p-notnow" id="p-notnow" data-not-now="1">${P.notNow}</button>` : '';
   if (c.scale) {
     // a number scale named in the question: one line of numbers, the two ends named under it, then the way out
     const nums = c.choices.map((ch, i) => (ch.role === 'answer' ? `<button type="button" class="pt wordonly num" data-i="${i}"><span>${esc(ch.label)}</span></button>` : '')).join('');
@@ -243,11 +246,11 @@ export function personSimple(m: PersonModel): string {
     const n = Math.min(6, c.choices.filter((x) => x.role === 'answer').length);
     return `${hold}${headLines}<div class="p-tiles scale" style="--n:${n}">${nums}</div>
       <p class="scale-ends"><span>${c.scale.lo} · ${c.scale.lo === 0 ? COPY.scale.low : COPY.scale.lowFromOne}</span><span>${c.scale.hi} · ${COPY.scale.high}</span></p>
-      <div class="p-tiles">${out}</div>`;
+      <div class="p-tiles">${out}</div>${notNow}`;
   }
   // the quick-needs board is the one screen with more than three choices: two to a row, the way out on its own row
   const cls = c.kind === 'needs' ? ' board' : c.kind === 'repair' ? ' ways' : '';
-  return `${hold}${headLines}<div class="p-tiles${cls}">${c.choices.map((ch, i) => tile(ch, i, ch.role === 'repair' && i >= 3 ? ' quiet' : '')).join('')}</div>`;
+  return `${hold}${headLines}<div class="p-tiles${cls}">${c.choices.map((ch, i) => tile(ch, i, ch.role === 'repair' && i >= 3 ? ' quiet' : '')).join('')}</div>${notNow}`;
 }
 
 // ---------------------------------------------------------------- "Today in short"

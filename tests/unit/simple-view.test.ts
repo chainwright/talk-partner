@@ -164,7 +164,9 @@ describe("simple view: the person's screens", () => {
   });
   it('nothing but the choices looks tappable: the only other control is the carer\'s labelled press-and-hold', async () => {
     const html = personSimple(person({ card: await make('Do you want coffee or tea?') }));
-    expect(count(html, '<button')).toBe(4);
+    // (phase 9: and the person's own small "Not now" at the foot, which is not a choice)
+    expect(count(html, '<button')).toBe(5);
+    expect(count(html, 'class="p-notnow"')).toBe(1);
     expect(html).toContain('id="exit" class="hold"');
     expect(text(html)).toContain('Carer: hold here to go back');
     expect(html).not.toMatch(/data-act=|href=/);

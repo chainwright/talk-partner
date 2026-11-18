@@ -16,6 +16,8 @@ export const P9 = {
   later: {
     /** In the diary's timeline: a care question was left for later (core/later.ts). */
     diary: 'Left for later:',
+    /** On the carer's screen after the person tapped "Not now". */
+    notNow: (name: string, kept: boolean) => `${name || 'They'} chose "Not now". ${kept ? 'The question is kept on Home, under "Left for later". ' : ''}Come back to it later, and say when.`,
   },
   /** Phase 9: beside a call box while the number is the locale's guess (About them holds none). */
   number: {

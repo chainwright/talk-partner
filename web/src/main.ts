@@ -1831,7 +1831,7 @@ function simpleScreen(): string {
       privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: `${diaryLink()}${!state.demo && state.diary.length ? handoverLink() : ''}${p4Links(name)}${passportLink(name)}`,
       bodyHtml: suddenLink('sudden-body'),
       tryHtml: tryAiBlock({ q: AI_QUESTION, tag: tryAiTag(whereInput()), busy: state.busy && p9sample.q !== null && state.lastQuestion === p9sample.q }),
-      laterHtml: laterBlock(shownLater(p8later.list, Date.now()).map((x) => ({ q: x.q, time: laterTime(x.at), i: p8later.list.indexOf(x), care: !!x.care, pain: !!x.pain, asking: p8later.asking === x }))),
+      laterHtml: (p9notNow ? `<p class="tip" id="not-now" role="status">${esc(P9.later.notNow(name, p9notNow.kept))}</p>` : '') + laterBlock(shownLater(p8later.list, Date.now()).map((x) => ({ q: x.q, time: laterTime(x.at), i: p8later.list.indexOf(x), care: !!x.care, pain: !!x.pain, asking: p8later.asking === x }))),
       turnHtml: `${turnButton(name)}${suddenLink()}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
     });
   }
@@ -2202,6 +2202,8 @@ const routing = () => ({ moodWords: state.remote.values.routeMoodWords, minChoic
  * gives up at CLOUD_WAIT_MS (12 s). "Stop waiting" calls the making off (its card, when it comes, is not shown; the
  * privacy receipt still counts the request).
  */
+/** Phase 9: the person tapped "Not now": the carer's next screen says so (and whether the question was kept). */
+let p9notNow: { kept: boolean } | null = null;
 /** Phase 9: the sample open question of Home while it is being made or shown (null otherwise). */
 const p9sample = { q: null as string | null };
 const p9wait = { at: null as number | null, timer: null as ReturnType<typeof setInterval> | null };
@@ -2236,6 +2238,7 @@ async function make(q: string) {
   useSettings();
   // (phase 9) Home's sample open question: made with no About them at all, so the question is the only thing any step
   // gets; asked again after the consent sheet it is still the sample
+  p9notNow = null;
   const sample = p9sample.q === q;
   if (!sample) p9sample.q = null;
   const profile = sample ? EMPTY_PROFILE : state.profile;
@@ -2284,6 +2287,18 @@ async function make(q: string) {
 
 function onPersonTap(t: HTMLElement) {
   if (t.dataset.hear) { void hear(); return; }
+  // (phase 9) the person's own "Not now": the card ends, the question is kept for later (a care question pinned and in
+  // the diary: core/later.ts), and the carer's screen says so. A doctor-visit question stops the visit run instead.
+  if (t.dataset.notNow && state.card) {
+    const c = state.card;
+    stopSound();
+    if (c.visit) { state.p4.visitRun = false; resetCard(); lift = true; go('visit'); return; }
+    const q = c.kind === 'repair' ? state.before?.asked ?? state.chain[0] ?? '' : c.asked;
+    if (q.trim() && !c.sample) leaveForLater(q, careTopic(c));
+    p9notNow = { kept: !!q.trim() && !state.demo && !c.sample };
+    makeSeq++; state.busy = false; resetCard(); lift = true; go(''); window.scrollTo(0, 0);
+    return;
+  }
   // the alphabet: a letter leads to its words; "No, I don't know" goes back to the carer, and nothing is counted
   if (t.dataset.letter && state.p4.letter) { const l = state.p4.letter; t.classList.add('pressed'); setTimeout(() => { void runLetter({ asked: l.asked, letter: t.dataset.letter!, rejected: l.rejected, topic: l.topic, learned: learnedWords() }); }, 180); return; }
   if (t.dataset.letterNo && state.p4.letter) { state.p4.letter = null; state.p4.letterNo = true; makeSeq++; state.busy = false; resetCard(); lift = true; go(''); return; }

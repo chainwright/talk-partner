@@ -378,3 +378,33 @@ describe('8. P1 the cloud letter step: its own schema (the kind as an enum, exac
     expect(c.letter?.by).toBe('cloud');
   });
 });
+
+// ---------------------------------------------------------------- item 9
+import { personSimple } from '../../web/src/simple';
+import { repairCard } from '../../core/pipeline';
+
+describe('9. P1 the person\'s own "Not now"', () => {
+  const person = (card: Awaited<ReturnType<typeof makeCard>>, full = true) => personSimple({ card, busy: false, less: false, picked: null, confirmed: false, recap: false, answers: [], pic: () => '', waitPic: '', full });
+  const rules = (q: string) => makeCard(q, { profile: EMPTY_PROFILE, support: 'more', engine: new Slow(), allowCloud: false, deviceReady: false });
+  it('the same small tile at the foot of every question screen the person holds; never on the carer\'s preview', async () => {
+    for (const q of ['Are you in pain?', 'Would you like tea or coffee?', 'How bad is the pain?', 'Where does it hurt?', 'How are you feeling today?']) {
+      const html = person(await rules(q));
+      expect((html.match(/data-not-now="1"/g) ?? []).length, q).toBe(1);
+      expect(html.trim().endsWith('</button>'), q).toBe(true);
+    }
+    expect(person(repairCard(EMPTY_PROFILE))).toContain('data-not-now="1"');
+    expect(person(await rules('Would you like tea or coffee?'), false)).not.toContain('data-not-now');
+  });
+  it('worst case: "Not now" on "Are you in pain?" files it as a care question: pinned, never expiring, with the "don\'t wait" line', () => {
+    const xs = addLater([], 'Are you in pain?', NOW - 40 * H, 'body');
+    expect(shownLater(xs, NOW)[0]).toMatchObject({ q: 'Are you in pain?', care: true, pain: true });
+    expect(P9.later.notNow('Frank', true)).toBe('Frank chose "Not now". The question is kept on Home, under "Left for later". Come back to it later, and say when.');
+    expect(P9.later.notNow('', false)).toBe('They chose "Not now". Come back to it later, and say when.');
+  });
+  it('the web client: the tile ends the card, files the question (the question before "We\'re stuck" on that card), and never for the sample', () => {
+    const main = readFileSync(join(__dirname, '..', '..', 'web', 'src', 'main.ts'), 'utf8');
+    expect(main).toContain("const q = c.kind === 'repair' ? state.before?.asked ?? state.chain[0] ?? '' : c.asked;");
+    expect(main).toContain('if (q.trim() && !c.sample) leaveForLater(q, careTopic(c));');
+    expect(main).toContain("if (c.visit) { state.p4.visitRun = false; resetCard(); lift = true; go('visit'); return; }");
+  });
+});

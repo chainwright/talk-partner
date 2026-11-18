@@ -449,6 +449,8 @@ const COPY = {
     /** The person's own screens: adult words, one thing to do. `label` is the choice they pointed to. */
     person: {
       point: 'Point to your answer',
+      /** Phase 9 (judge round 8, the person's seat, ADV-02b-1): the person's own way to put a question off. */
+      notNow: 'Not now',
       hold: 'Carer: hold here to go back',
       holdTitle: 'Back to the carer screen (press and hold; with a keyboard, press Enter)',
       so: (label: string) => `So: ${label}. Right?`,

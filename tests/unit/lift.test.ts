@@ -31,7 +31,8 @@ describe('lift the card', () => {
     // (five since 17 Nov: the way back is also the finish screen's "Give the phone back" and Enter on the carer's control)
     // (nine since 18 Nov, phase 4: the alphabet goes to the person and comes back, "[Name] wants to say something" opens on the person's screen, the visit questions do, and the carer's way back is one function, leavePerson)
     // (ten since 18 Nov: a word the carer typed after "show me" goes to the person's screen to be pointed to and confirmed)
-    expect(main.match(/lift = true;/g)).toHaveLength(10);
+    // (twelve since 18 Nov, phase 9: the person's own "Not now" goes back to the carer, or to the visit page)
+    expect(main.match(/lift = true;/g)).toHaveLength(12);
     expect(main).toContain("case 'give-back': lift = true; if (state.p4.visitEnd) {");
     expect(main).toContain("case 'show': lift = true; go('person'); break;");
     // (since 17 Nov: "Quick needs" puts its board on the person's screen in the same gesture)
