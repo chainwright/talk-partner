@@ -739,6 +739,48 @@ gives the cloud letter step its own schema. Nothing of phase 9 is deployed; the 
 **Counts** (the production build of HEAD on `npx vite preview`, port 5495, from a separate worktree so that `dist/`
 and the previews on 5301 and 5181 were not touched): At `f188eab` (the code; the scripts' expectations were updated after it, no app change): 2849 unit tests (`npm run check`); `e2e-simple.py` 1002/1002; `pwa-check.py` 30/30; `e2e-needs.mjs` 12/12; `overflow-check.py` 534/534; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py` 21/21; `phase9-shots.py` 37/37. The outputs are in `devlog/evidence_phase9/local/`, the screens in `devlog/evidence_phase9/shots_390/`. The first full run (at `74a5e94`) failed 8 of `e2e-simple.py`'s checks and stopped: the scripts expecting the wording before phase 9, and one real fault, fixed in `f188eab`: the person's "Not now" at the foot of the screen pushed three choices and the way out past 844 px.
 
+## Added on 19 Nov, phase 10: the person starts, and About them in a file
+The two features of the family's list that were still missing (`design/PLAN_TO_IDEAL_2026-11-17.md`), one commit
+each (`CLAIMS.md` rows 137 to 141; `EVIDENCE.md` "Phase 10"; `devlog/DAY20.md`). Both are rules on the device: no
+model and no request. Nothing of phase 10 is deployed; the "Live:" lines still name the build they name.
+
+- **"His turn": the person starts** (`47e786e`). Home's big button reads the person's own words first, "Frank: I want
+  to say something" ("I want to say something" with no name), and the installed app has a home-screen shortcut with
+  the same words (the manifest's `shortcuts`, to `/#/turn`). The person's screen keeps its three starters and the way
+  out; the second is now "I want to talk about…". It offers what About them holds, pictured, three to a screen: "me"
+  (their own news), up to 3 people (those who do not live there first, never the carer holding the phone), up to 2
+  places, and "the news / TV"; the last screen's "something else" leads to the topics of phase 4, so nothing of it is
+  lost, and no screen is left with one real choice. With About them empty there are no people or places: "me" and
+  "the news / TV" stay, and the screen works. After the person picks Beth and confirms, the carer reads first
+  "Frank wants to talk about Beth." and three easy questions, each a card the rules make: for a person "Is it good
+  news, or a worry?", "Is it about Beth's visit?", "Would you like to call Beth?" (someone who lives there: the
+  telling only); for a place "Did something happen at the lake?", "Is it good news, or a worry?", "Would you like to
+  go to the lake?"; for the news "Is it the news, or something on TV?", "Is it good news, or a worry?", "Shall we put
+  the TV on?"; for "me" the three questions about the telling of phase 4. The telling comes first and an offer last
+  (the role-play of 18 Nov). Every answer of every one has its step in `core/tree.ts`. The diary gets "Frank started:
+  Beth", which counts as nothing and is never "less sure". "I need something" leads to the very same needs board, and
+  its answer goes the board's way (the diary, the call box, the pinned care question of phase 9). Back from every new
+  screen is one screen back (`e2e-simple.py --only back`, `phase10-shots.py`).
+- **About them in a file** (`864315e`). "Save About them to a file" writes versioned JSON (`format:
+  "talk-partner-about"`, `version: 1`, the date, About them and its photos, the emergency number). The health notes
+  go in only when the carer ticks "Include health notes", which is off every time, with one line on why; the diary
+  and what the app learned are never in the file. "Load About them from a file" refuses a file over 8 MB by its size
+  before reading it (the biggest About them the app keeps, 60 photos and 60 people with a photo, is about 5.5 MB),
+  checks every field, drops what the app does not keep, and keeps every word as text: a name with `<script>` in it is
+  shown as those letters. Then "This file has: 3 people, 2 places, …" with "Replace what is here", "Add to what is
+  here" and "Cancel"; nothing changes before a pick. Add removes and changes nothing here: it adds the people, words
+  and photos that are not here yet, and a health toggle that is on in either stays on. A file from a newer version is
+  refused in plain words; a file of phases 3 to 9 still loads. One line says what it is for: "Use it to move to a new
+  phone, to set up a second carer's phone, or as a spare copy."
+
+What differs from the brief: no Gemini Nano suggestion for the three questions (the brief allowed one on a device
+that has it; the rules' three are what every phone gets, and a model step would be a fourth thing to check, with no
+run against a real model in this phase); the size limit is 8 MB, not 5 MB, so that a full family's own file loads
+back. `devlog/DAY20.md` has the reasons.
+
+**Counts** (the production build of `864315e` on `npx vite preview`, port 5610, from a separate worktree so that
+`dist/` was not touched): COUNTS_LINE
+
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104
 to 107; `devlog/evidence_phase6/r1_*.png`, `r2_*.png`; `devlog/DAY17.md`). Both fixes are rules: no AI was added.

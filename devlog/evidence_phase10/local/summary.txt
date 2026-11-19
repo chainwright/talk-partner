@@ -1,0 +1,13 @@
+check exit=0
+e2e-simple exit=0
+pwa-check exit=0
+e2e-needs exit=0
+overflow exit=0
+contrast exit=0
+phase8 exit=1
+phase9 exit=0
+phase10 exit=0
+DONE
+phase8 rerun exit=0
+phase9 rerun exit=0
+phase10 rerun exit=0

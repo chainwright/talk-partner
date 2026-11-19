@@ -70,10 +70,12 @@ describe('docs truth (phase 9): the lines judge round 8 found stale', () => {
     expect(judges).toBeTruthy();
     expect(['2762', '2798']).not.toContain(judges);
     const readme = read('README.md');
-    const phase9 = readme.slice(readme.indexOf('## Added on 18 Nov, phase 9'));
-    const counted = /(\d{4}) unit tests/.exec(phase9)?.[1];
-    expect(counted, 'README "Added on 18 Nov, phase 9" names a unit-test count').toBeTruthy();
+    // (phase 10: the newest "Counts" line is the phase 10 section's)
+    const newest = readme.slice(readme.indexOf('## Added on 19 Nov, phase 10'));
+    const counted = /(\d{4}) unit tests/.exec(newest)?.[1];
+    expect(counted, 'README "Added on 19 Nov, phase 10" names a unit-test count').toBeTruthy();
     expect(judges).toBe(counted);
+    expect(['2849']).not.toContain(judges);
   });
   it('README no longer says the deploy of phase 8 is a later step', () => {
     expect(read('README.md')).not.toMatch(/the deploy is a later step/);
@@ -88,5 +90,37 @@ describe('docs truth (phase 9): the lines judge round 8 found stale', () => {
   });
   it('phase 8 was 18 Nov, not "18 to 19 Nov"', () => {
     for (const f of [...DOCS, 'devlog/DAY19.md']) expect(read(f), f).not.toContain('18 to 19 Nov');
+  });
+});
+
+// Phase 10 (19 Nov 2026): the numbers the README's phase 10 section gives are the code's.
+import { BACKUP_MAX_BYTES } from '../../core/backup';
+import { TALK_PEOPLE, TALK_PLACES } from '../../core/turn';
+import { P10 } from '../../core/copy10';
+
+describe('docs truth (phase 10): the person starts, About them in a file', () => {
+  const flat = (t: string) => t.replace(/\s+/g, ' ');
+  const readme = read('README.md');
+  const at = readme.indexOf('## Added on 19 Nov, phase 10');
+  const sec = flat(readme.slice(at, readme.indexOf('\n## ', at + 5)));
+  it('the section exists, and holds no "Live:" line', () => {
+    expect(at).toBeGreaterThan(0);
+    expect(sec.length).toBeGreaterThan(500);
+    expect(sec).not.toMatch(/\*\*Live:/);
+  });
+  it(`the size limit (${BACKUP_MAX_BYTES / 1024 / 1024} MB), the people (${TALK_PEOPLE}) and the places (${TALK_PLACES}) are the code's`, () => {
+    const mb = `${BACKUP_MAX_BYTES / 1024 / 1024} MB`;
+    expect(sec).toContain(`over ${mb}`);
+    expect(sec).toContain(`up to ${TALK_PEOPLE} people`);
+    expect(sec).toContain(`up to ${TALK_PLACES} places`);
+    expect(flat(read('CLAIMS.md'))).toContain(`over ${mb}`);
+    expect(flat(read('devlog/DAY20.md'))).toContain(`The size limit is ${mb}`);
+  });
+  it('the shortcut, the button and the use line are the manifest\'s and the app\'s words', () => {
+    const m = JSON.parse(read('web/public/manifest.webmanifest')) as { shortcuts: { name: string; url: string }[] };
+    expect(sec).toContain(`\`${m.shortcuts[0].url}\``);
+    expect(sec).toContain(`"${P10.turn.button('Frank')}"`);
+    expect(sec).toContain(`"${P10.turn.button('')}"`);
+    expect(sec).toContain(P10.backup.use.replace(/'/g, "'"));
   });
 });

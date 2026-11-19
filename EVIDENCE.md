@@ -274,3 +274,23 @@ never let through. Nothing of phase 9 was deployed or pushed. Saved outputs are 
 Not run for phase 9: any of it with a carer, a speech therapist, a nurse or a person with aphasia; a real phone; the
 hosted copy; any run with a real model (the cloud letter step, the cloud card after "See the AI at work", the live
 latency); `e2e-cloud.mjs`, `e2e-speak.py`, `update-check.py`, `e2e-noconfig.mjs`.
+
+## Phase 10 (19 Nov 2026): rows 137 to 141
+"His turn" (the person starts) and About them in a file. All of it on a production build of `864315e` on localhost
+(`npx vite preview`, port 5610), built in a separate git worktree so that `dist/` was not touched. No run of phase 10
+sent anything: every request to another host was refused and counted, and the web fonts were refused in
+`phase10-shots.py` (any font). Nothing of phase 10 was deployed or pushed. Saved outputs are in
+`devlog/evidence_phase10/` (`local/` for the full runs, `shots/` for `phase10-shots.py`).
+
+| Row | File | Command | Saved output |
+|---|---|---|---|
+| 137 | `core/turn.ts`, `core/copy10.ts`, `web/public/manifest.webmanifest`, `web/src/main.ts` | `npx vitest run tests/unit/phase10.test.ts`; `python3 scripts/phase10-shots.py --url http://localhost:5610/`; `python3 scripts/pwa-check.py --url http://localhost:5610/` | `shots/01_*` to `05_*`, `12_*`, `13_*`; `local/phase10-shots_local.txt`; `local/pwa-check_local.txt` |
+| 138 | `core/turn.ts`, `core/tree.ts` | the same; `e2e-simple.py` (the phase 4 run, and `--only back`) | `shots/07_*` to `09_*`; `local/e2e-simple_local.txt` |
+| 139 | `core/diary.ts`, `web/src/main.ts`, `web/src/phase6.ts` | `phase10-shots.py` (pain through the needs board and through "I need something", compared word for word) | `shots/10_*`, `11_*` |
+| 140 | `core/backup.ts`, `web/src/diary.ts` | `npx vitest run tests/unit/phase10.test.ts tests/unit/backup.test.ts`; `e2e-simple.py` (the file with and without the box) | `shots/14_*`; `local/check_local.txt` |
+| 141 | `core/backup.ts`, `web/src/main.ts` | the same; `phase10-shots.py` (the preview, Back, Escape, Add) | `shots/15_*` |
+
+Not run for phase 10: any of it with a carer or a person with aphasia; a real phone or an installed app's launcher
+(the shortcut is checked as Chrome parses the manifest, and by its address); the hosted copy; any model, on the device
+or in the cloud (there is none in either feature); `e2e-cloud.mjs`, `e2e-speak.py`, `update-check.py`,
+`e2e-noconfig.mjs`.

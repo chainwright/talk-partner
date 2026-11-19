@@ -134,19 +134,19 @@ def rules(browser, url):
     page.wait_for_selector('main.simple.sudden')
     check('"Something new or sudden?": balance and sight (BE-FAST)', 'Sudden loss of balance, or sudden loss of sight in one or both eyes.' in e2e.text(page))
     shot(page, '07_something_new_or_sudden_be_fast')
-    # "Who is it about?": "me" first
+    # (phase 10) "I want to talk about…": "me" first, then the family's names, then the way on; "me" -> "Frank's own news"
+    # (until phase 10 this was "I want to tell you something" -> "People & family" -> "Who is it about?")
     page.goto(url)
     page.wait_for_selector('main.simple.home')
     page.locator('#turn-go').click()
-    e2e.tap_yes(page, 'tell you')
-    e2e.tap_yes(page, 'People')
-    page.wait_for_selector('main.pv .p-ask:has-text("Who is it about?")')
+    e2e.tap_yes(page, 'talk about')
+    page.wait_for_selector('main.pv .p-ask:has-text("I want to talk about")')
     who = [t.strip().split('\n')[-1] for t in page.locator('main.pv .pt').all_inner_texts()]
-    check('"Who is it about?": "me" first, then the names, and "someone else"', who[0] == 'me' and who[-1] == 'someone else' and len(who) <= 4, str(who))
-    shot(page, '08_person_who_is_it_about_me_first', full=False)
+    check('(phase 10) "I want to talk about…": "me" first, then the names, and "something else" last, at most 4 to a screen', who[0] == 'me' and who[-1] == 'something else' and len(who) <= 4 and len(who) >= 3, str(who))
+    shot(page, '08_person_i_want_to_talk_about_me_first', full=False)
     e2e.tap_yes(page, 'me')
     e2e.give_back(page, 'main.simple')
-    check('the carer reads "Frank\'s own news"', "It is about: People & family, Frank's own news." in e2e.text(page), e2e.text(page)[:300])
+    check('the carer reads "Frank wants to talk about Frank\'s own news."', "Frank wants to talk about Frank's own news." in e2e.text(page, '#turn-lead'), e2e.text(page)[:300])
     # (18 Nov, a walk of the sample family at 390 px) the first chip, an open question, with no model ready here and
     # cloud help off: the card area says no card was made, not "Your card will appear here"
     page.goto(url + '#/demo')
