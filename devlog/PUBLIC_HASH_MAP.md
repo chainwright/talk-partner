@@ -237,6 +237,11 @@ the table.
 | 214 | `8a8eaf7` | `6d70e24` † | 2026-11-18 17:53 | Cloud wait limit 20 s, not 12 s: 12 s turned working live answers into "No card" |
 | 215 | `da48b81` | `06e8b72` † | 2026-11-18 18:06 | Docs: live is 8a8eaf7 (README Deploy, JUDGES); live runs of 8a8eaf7 saved (e2e-simple --l… |
 | 216 | `f6f6bbe` | `c3fc251` | 2026-11-18 18:07 | devlog: saved logs and DAY19 without local folder paths or an internal name (the Python t… |
+| 217 | `cc53493` | `86c33bf` | 2026-11-18 18:12 | devlog/PUBLIC_HASH_MAP: rows 199 to 216 |
+| 218 | `b3c16b9` | `4353314` | 2026-11-18 18:15 | scripts/e2e-speak.py: HEADED=1 runs it in a normal window |
+| 219 | `55aeafb` | `8e254a2` | 2026-11-18 18:16 | Read aloud on the hosted copy 8a8eaf7: run 1 10/10, runs 2 and 3 refused by App Check |
+| 220 | `7070a09` | `d30bbbb` | 2026-11-18 22:59 | Evidence: live cloud step 3/3 on a steady connection (3.0 s), README Deploy |
+| 221 | `17968b3` | `4b397ab` | 2026-11-18 23:01 | Comments: an internal name out of two code comments (no change to the built app) |
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
 
@@ -244,3 +249,8 @@ Rows 212–215 (†): three saved logs under `devlog/evidence_live/` and two und
 local folder path (a Python traceback and the test runner's first line), and `devlog/DAY19.md` an internal name; the
 public copy reads `<python site-packages>`, `<repo>` and "the live runs". Working commit `f6f6bbe` (row 216) made the
 same change in the working history, so from there the two are identical again.
+
+Rows 217–221, a note on names: three earlier public commit messages (the commit behind row of `3becc3e` and two
+phase-walk commits) and two code comments carried an internal first name ("…'s walk of …"). The comments are fixed
+from working commit `17968b3` (row 221). The three public commit messages were left as they are: changing them would
+rewrite published history. From row 221 on, the replay also rewrites that name in commit messages.
