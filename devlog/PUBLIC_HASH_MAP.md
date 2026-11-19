@@ -242,6 +242,14 @@ the table.
 | 219 | `55aeafb` | `8e254a2` | 2026-11-18 18:16 | Read aloud on the hosted copy 8a8eaf7: run 1 10/10, runs 2 and 3 refused by App Check |
 | 220 | `7070a09` | `d30bbbb` | 2026-11-18 22:59 | Evidence: live cloud step 3/3 on a steady connection (3.0 s), README Deploy |
 | 221 | `17968b3` | `4b397ab` | 2026-11-18 23:01 | Comments: an internal name out of two code comments (no change to the built app) |
+| 222 | `299652c` | `3b3cdf0` | 2026-11-18 23:01 | Devlog/PUBLIC_HASH_MAP: rows 217 to 221 and a note on an internal name in three earlier p… |
+| 223 | `01bc49e` | `310a66d` | 2026-11-18 23:10 | Evidence: console screenshots, Gemini API Tier 1 and App Check for AI Logic in monitoring… |
+| 224 | `47e786e` | `f8117a8` | 2026-11-18 23:40 | His turn: "I want to talk about…" with the family's people and places, a home-screen shor… |
+| 225 | `864315e` | `bbc99a3` | 2026-11-18 23:48 | About them in a file: health notes only when ticked, Replace / Add / Cancel, an 8 MB limit |
+| 226 | `9200649` | `de22c65` † | 2026-11-19 00:16 | Phase 10 docs and checks: README, CLAIMS rows 137 to 141, EVIDENCE, DAY20, phase10-shots … |
+| 227 | `ce47da2` | `edcc806` † | 2026-11-19 00:16 | Phase 10 counts: README and DAY20 name the nine runs, JUDGES names 2902 unit tests |
+| 228 | `e56fbce` | `935664f` † | 2026-11-19 00:25 | Live: ce47da2 (phase 10). Hosted runs: e2e-simple --live 1022/1022, pwa-check 32/32, e2e-… |
+| 229 | `94ed945` | `4888a40` | 2026-11-19 00:26 | Devlog: saved logs of phase 10 without local folder paths (the Python traceback and the t… |
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
 
@@ -254,3 +262,9 @@ Rows 217–221, a note on names: three earlier public commit messages (the commi
 phase-walk commits) and two code comments carried an internal first name ("…'s walk of …"). The comments are fixed
 from working commit `17968b3` (row 221). The three public commit messages were left as they are: changing them would
 rewrite published history. From row 221 on, the replay also rewrites that name in commit messages.
+
+Rows 222–229, added on 19 Nov: rows 222 and 223 reached the public history on 18 Nov without a row. Row 226: at that
+commit `npm run check` fails one docs test (the README's phase 10 counts were still a placeholder); row 227 fills
+them in and is green. Rows 226–228 (†): saved logs of phase 10 carried a local folder path; the public copy reads
+`<python site-packages>` and `<repo>` from the start, and working commit `94ed945` (row 229) made the same change,
+so from there the two are identical again.
