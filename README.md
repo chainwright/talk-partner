@@ -1186,7 +1186,20 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-**Live: the build of `32dd0dd`** (phase 8 and the "No card for this question" line), deployed 18 Nov 2026 about
+**Live: the build of `8a8eaf7`** (phase 9, the person's screen in any font, the cloud wait at 20 s), deployed 19 Nov
+2026 about 00:00 UTC. The hosted script (`index-Cb1gCXUU.js`) has the same SHA-256 as our `dist/`. Run against the
+hosted copy: `e2e-simple.py --live` 992/992, `pwa-check.py` 30/30, `e2e-needs.mjs` 12/12, `phase8-shots.py` 21/21,
+`phase9-shots.py` 39/39. `HEADED=1 e2e-cloud.mjs`, five fresh profiles over a slow phone hotspot (about 300 KB/s at
+the time): 28/28 twice (first cloud card in 14.9 s and 9.7 s, `inferenceSource=in_cloud`), and three times the
+first cloud card did not come within 20 s, so the card said "Cloud help took longer than 20 seconds" (16, 19 and 18
+of 27). Logs: `devlog/evidence_live/*8a8eaf7*`.
+
+Two deploys earlier the same evening: `e23b493` (phase 9 as built) failed one check live, the person's three
+pictures on 390 x 844 before the web font arrived (991/992), fixed in `ffb2521`; `ffb2521` ran 992/992, 30/30, 12/12,
+21/21, 39/39, and its cloud runs (headed) cut the first card at 12 s in 3 of 5, so the limit went to 20 s.
+Logs: `devlog/evidence_live/*e23b493*`, `*ffb2521*`.
+
+The build before them, `32dd0dd` (phase 8 and the "No card for this question" line), deployed 18 Nov 2026 about
 20:19 UTC. The hosted script (`index-aXtqJJit.js`) has the same SHA-256 as our `dist/`. Run against the hosted copy:
 `e2e-simple.py --live` 991/991, `pwa-check.py` 30/30, `e2e-needs.mjs` 12/12, `phase8-shots.py` 21/21, and
 `HEADED=1 e2e-cloud.mjs` (a normal Chrome window, fresh profile) 28/28. Logs: `devlog/evidence_live/*32dd0dd*`.
