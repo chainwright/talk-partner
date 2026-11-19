@@ -219,5 +219,28 @@ the table.
 | 196 | `3a9c0ce` | `b47c4de` | 2026-11-18 13:52 | Deploy of 1a5e79f (phase 8): README Deploy and JUDGES name the live build; hosted copy =… |
 | 197 | `32dd0dd` | `3becc3e` | 2026-11-18 14:20 | Judge mode, an open question that got no card (no model ready, cloud help off): the card… |
 | 198 | `fd0cc37` | `003a7db` | 2026-11-18 14:27 | Deploy of 32dd0dd: README Deploy and JUDGES name it; live e2e-simple 991/991, pwa 30/30,… |
+| 199 | `a33ac41` | `f9b32f6` | 2026-11-18 16:06 | Phase 9 item 1 (P0 health, judge round 8 §2.1): a question about pain, the body, the toil… |
+| 200 | `92f86b4` | `1749054` | 2026-11-18 16:10 | Phase 9 item 2 (P0 health, judge round 8 §2.2): "What stands out" never says "Nothing sta… |
+| 201 | `0658200` | `14b3ecf` | 2026-11-18 16:11 | Phase 9 item 3 (P1 health wording, judge round 8 §2.7-9): "A little pain" says "Ask again… |
+| 202 | `b6c8b5d` | `9121ea2` | 2026-11-18 16:13 | Phase 9 item 4 (P1, judge round 8 §2.10): the emergency number follows the browser's lang… |
+| 203 | `810f1f5` | `d1bd83f` | 2026-11-18 16:22 | Phase 9 item 5 (P1, judge round 8 §2.12-13): the handover note always prints the swallowi… |
+| 204 | `db00cef` | `fcd7a38` | 2026-11-18 16:30 | Phase 9 item 6 (P0, judge round 8 §2.5, ADV-01-5): the cloud wait is cut from 25 s to 12 … |
+| 205 | `3447b47` | `fc72edd` | 2026-11-18 16:38 | Phase 9 item 7 (P0, judge round 8 §2.6, IMPROVE F): the hybrid moment in one tap on Home:… |
+| 206 | `7910b80` | `fa45041` | 2026-11-18 16:42 | Phase 9 item 8 (P1, judge round 8 §2.17): the cloud first-letter step gets its own fixed … |
+| 207 | `e3e3db3` | `3aabba2` | 2026-11-18 16:43 | Phase 9 item 9 (P1, judge round 8 §2.18, ADV-02b-1): the person's own "Not now", a small … |
+| 208 | `6b10a4d` | `21f3eac` | 2026-11-18 16:45 | Phase 9 item 10 (P2, judge round 8 §2.19): "How it works: 4 steps" is folded on the first… |
+| 209 | `850d2e4` | `856919c` | 2026-11-18 16:47 | Phase 9 item 11 (docs truth, judge round 8 §2.14-15, §7.4): "Google's paid service" is go… |
+| 210 | `74a5e94` | `b65d5aa` | 2026-11-18 16:50 | Phase 9 item 12 (judge round 8 §7.5): e2e-simple's "no Web Share" part waits for the diar… |
+| 211 | `f188eab` | `66303fa` | 2026-11-18 16:55 | Phase 9, from the first full run on the production build: the person's "Not now" moves to… |
+| 212 | `e23b493` | `6a8b406` † | 2026-11-18 17:08 | Phase 9, documents and runs: README "Added on 18 Nov, phase 9", CLAIMS rows 125 to 136, E… |
+| 213 | `ffb2521` | `25a8d00` † | 2026-11-18 17:38 | Person's screen stands without scrolling in any font: caught on live e23b493 |
+| 214 | `8a8eaf7` | `6d70e24` † | 2026-11-18 17:53 | Cloud wait limit 20 s, not 12 s: 12 s turned working live answers into "No card" |
+| 215 | `da48b81` | `06e8b72` † | 2026-11-18 18:06 | Docs: live is 8a8eaf7 (README Deploy, JUDGES); live runs of 8a8eaf7 saved (e2e-simple --l… |
+| 216 | `f6f6bbe` | `c3fc251` | 2026-11-18 18:07 | devlog: saved logs and DAY19 without local folder paths or an internal name (the Python t… |
 
-Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196 and 197–198 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
+Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
+
+Rows 212–215 (†): three saved logs under `devlog/evidence_live/` and two under `devlog/evidence_phase9/local/` carried a
+local folder path (a Python traceback and the test runner's first line), and `devlog/DAY19.md` an internal name; the
+public copy reads `<python site-packages>`, `<repo>` and "the live runs". Working commit `f6f6bbe` (row 216) made the
+same change in the working history, so from there the two are identical again.
