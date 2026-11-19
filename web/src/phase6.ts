@@ -6,7 +6,7 @@
 import { COPY } from '../../core/copy';
 import { P5 } from '../../core/copy5';
 import { P6 } from '../../core/copy6';
-import { FALL_HEAD, byDay, dayText, dayWord, timeText, type DiaryEntry } from '../../core/diary';
+import { FALL_HEAD, byDay, dayText, dayWord, startedText, timeText, type DiaryEntry } from '../../core/diary';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
@@ -23,10 +23,13 @@ export interface SourceModel {
   now: number;
 }
 
+/** Phase 10: "Frank started: Beth", what the person picked in bold. */
+export const startedHtml = (e: DiaryEntry) => `<span class="q">${esc(startedText({ q: e.q, label: '' }).trimEnd())}</span> <b>${esc(e.label)}</b>`;
+
 /** One entry as the diary's timeline shows it: the time, the question and the answer, or the log. No button in it. */
 function sourceLine(e: DiaryEntry, once: boolean): string {
   const D = COPY.simple.diary;
-  const what = e.kind === 'log' ? `<b>${D.log[e.log!]}</b>${e.label === FALL_HEAD ? ` <span class="q">${P5.fall.headNoted}</span>` : ''}` : e.kind === 'need' ? `<span class="q">${D.need}</span> <b>${esc(e.label)}</b>` : `<span class="q">${esc(e.q ?? '')}</span> <b>${esc(e.label)}</b>`;
+  const what = e.kind === 'log' ? `<b>${D.log[e.log!]}</b>${e.label === FALL_HEAD ? ` <span class="q">${P5.fall.headNoted}</span>` : ''}` : e.kind === 'need' ? `<span class="q">${D.need}</span> <b>${esc(e.label)}</b>` : e.kind === 'started' ? startedHtml(e) : `<span class="q">${esc(e.q ?? '')}</span> <b>${esc(e.label)}</b>`;
   return `<li class="de ${e.kind}" data-entry="${esc(e.id)}"${once ? ' data-once="1"' : ''}><time>${timeText(e.at)}</time><span class="what">${what}${e.lessSure ? ` <span class="tag unsure">${COPY.simple.guard.lessSure}</span>` : ''}${once ? ` <span class="once">${P6.source.once}</span>` : ''}</span></li>`;
 }
 

@@ -54,7 +54,7 @@ export const P4 = {
     note: 'A first-letter card: the person pointed to a letter, and the app offers words that start with it.',
   },
   turn: {
-    button: (name: string) => (name ? `${name} wants to say something` : 'They want to say something'),
+    // (phase 10: the button's words are P10.turn.button, core/copy10.ts: "Frank: I want to say something")
     // (18 Nov, judge round 6: with no name this read "them can start"; the subject form is "they")
     sub: (name: string) => `Hand over the phone: ${name || 'they'} can start.`,
     ask: 'What would you like to do?',

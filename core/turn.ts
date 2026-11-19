@@ -11,14 +11,23 @@
 //   - feel: the feelings card the rules make for "How are you feeling today?".
 // The carer then reads "[Name] started this: …" over the answer, with up to three questions to ask next.
 //
+// Phase 10 (19 Nov 2026, design/PHASE10_BRIEF.md): the second starter is now "I want to talk about…", and it leads
+// first to what the family put in About them, pictured: "me" (the person's own news), up to three people, up to two
+// places, and "the news / TV", three to a screen. The last screen's way out leads to the topics above, so nothing of
+// phase 4 is lost. The carer reads "Frank wants to talk about Beth." and three questions by the kind of thing picked
+// (talkAsk): a person, a place, the news, or the person's own news. Each is a card the rules make, and each answer
+// has its step in core/tree.ts. With About them empty there are no people or places: "me" and "the news / TV" stay,
+// so the screen still has two real choices. Still rules only, on every device: no model and no request.
+//
 // Rules only: fixed cards, no model, no request, nothing sent. This module imports the copy, the topics and the types,
 // so it cannot reach an engine or the network.
 // Safety: a card the person started is never counted by the answer check (core/reliability.ts), and the check's line
 // ("may be tired") is never shown on a screen that follows from it: what the person chose to say is taken as said.
 
+import { P10 } from './copy10';
 import { P4 } from './copy4';
 import { TOPIC_BASE, awayNames, type TopicId } from './topics';
-import { TELL } from './tree';
+import { TELL, TELL_NEWS, TELL_WHEN } from './tree';
 import type { Card, Choice, Profile, StepTrace } from './types';
 
 export type Starter = 'need' | 'tell' | 'feel';
@@ -37,19 +46,91 @@ const trace = (): StepTrace[] => [
   { step: 'stripped', ran: 'skipped', why: 'not needed: this card is made by rules alone', used: false },
   { step: 'code', ran: 'on-device', why: 'applied the card rules', used: true },
 ];
-const base = (asked: string, turn: 'start' | 'topics' | 'about') => ({
+const base = (asked: string, turn: NonNullable<Card['turn']>) => ({
   asked, pending: null, topic: '', kind: 'choice' as const, source: 'code' as const, route: { to: 'device' as const, reasons: [] }, cloudPayload: null, notes: [S.note], ms: 0, turn, trace: trace(),
   why: { proposed: null, decided: S.why, kept: [], added: [], dropped: [], headline: 'fixed' },
 });
 const escape = (label: string): Choice => ({ label, spoken: label, role: 'escape', picture: { type: 'builtin', id: 'something else' } });
 
 /** The card the person starts from: three starters and the way out. */
+/** The starters' words on the person's screen (phase 10: "I want to talk about…" in place of "I want to tell you something"). */
+export const STARTER_LABEL: Record<Starter, string> = { need: S.starters.need, tell: P10.turn.talk, feel: S.starters.feel };
 export function turnCard(): Card {
-  const choices: Choice[] = [...STARTERS.map((k): Choice => ({ label: S.starters[k], spoken: S.starters[k], role: 'answer', picture: { type: 'builtin', id: PICTURE[k] } })), escape('something else')];
-  return { ...base(S.ask, 'start'), choices, say: S.say };
+  const choices: Choice[] = [...STARTERS.map((k): Choice => ({ label: STARTER_LABEL[k], spoken: STARTER_LABEL[k], role: 'answer', picture: { type: 'builtin', id: PICTURE[k] } })), escape('something else')];
+  return { ...base(S.ask, 'start'), choices, say: 'What would you like to do: ask for something, talk about something, or say how you feel?' };
 }
 /** Which starter a label of that card is, or null for the way out. */
-export const starterOf = (label: string): Starter | null => STARTERS.find((k) => S.starters[k] === label) ?? null;
+export const starterOf = (label: string): Starter | null => STARTERS.find((k) => STARTER_LABEL[k] === label) ?? null;
+
+// ---------------------------------------------------------------- phase 10: "I want to talk about…"
+export type TalkKind = 'me' | 'person' | 'place' | 'news';
+export interface TalkPick { kind: TalkKind; word: string; household?: boolean }
+/** How many of each About them gives this screen: three people and two places at most, so it stays three screens or fewer. */
+export const TALK_PEOPLE = 3;
+export const TALK_PLACES = 2;
+const nameOf = (p: Profile['people'][number]) => p.nickname?.trim() || p.name.trim();
+
+/**
+ * What the person can pick on "I want to talk about…", in order: their own news, the family's people (those who do
+ * not live there first; never the carer using the app), the family's places, the news / TV. Rules: About them only.
+ */
+export function talkItems(profile: Profile): TalkPick[] {
+  const partner = profile.partnerName.trim().toLowerCase();
+  const people = profile.people.filter((p) => nameOf(p) && nameOf(p).toLowerCase() !== partner && p.name.trim().toLowerCase() !== partner);
+  const ordered = [...people.filter((p) => !p.household), ...people.filter((p) => p.household)];
+  const seen = new Set<string>();
+  const once = (w: string) => { const k = w.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; };
+  const who = ordered.map((p) => ({ kind: 'person' as const, word: nameOf(p), household: p.household })).filter((x) => once(x.word)).slice(0, TALK_PEOPLE);
+  const where = profile.places.map((x) => x.trim()).filter(Boolean).filter(once).slice(0, TALK_PLACES).map((word) => ({ kind: 'place' as const, word }));
+  return [{ kind: 'me', word: S.me }, ...who, ...where, { kind: 'news', word: P10.turn.news }];
+}
+
+/** Three to a screen; a last screen of one gets one from the screen before, so every screen has two real choices or more. */
+export function pages<T>(xs: T[], size = 3): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < xs.length; i += size) out.push(xs.slice(i, i + size));
+  if (out.length > 1 && out[out.length - 1].length === 1) out[out.length - 1].unshift(out[out.length - 2].pop()!);
+  return out;
+}
+
+/**
+ * "I want to talk about…" on the person's screen: the pictured people and places of About them, "me" and "the news /
+ * TV", three to a screen. "something else" turns to the next screen; on the last it leads to the topics (topicMenu).
+ */
+export function talkMenu(profile: Profile): Card {
+  const own = profile.personName.trim();
+  const pic = (x: TalkPick): Choice['picture'] => {
+    if (x.kind === 'me') return { type: 'person', personId: null, initial: (own || 'M').charAt(0).toUpperCase() };
+    if (x.kind === 'person') { const p = profile.people.find((y) => nameOf(y) === x.word); return { type: 'person', personId: p?.id ?? null, initial: x.word.charAt(0).toUpperCase() }; }
+    return { type: 'builtin', id: x.kind === 'news' ? 'news' : 'go out' };
+  };
+  const ps = pages(talkItems(profile));
+  let next: Card | null = topicMenu();
+  for (let i = ps.length - 1; i >= 0; i--) {
+    const xs = ps[i];
+    next = { ...base(P10.turn.talkAsk, 'talk'), choices: [...xs.map((x): Choice => ({ label: x.word, spoken: x.word, role: 'answer', picture: pic(x) })), escape('something else')], say: P10.turn.talkSay(xs.map((x) => x.word)), nextPage: next };
+  }
+  return next!;
+}
+/** What a label of the talk screen is, by About them; null for a word that is not on it. */
+export function talkPick(label: string, profile: Profile): TalkPick | null {
+  return talkItems(profile).find((x) => x.word === label) ?? null;
+}
+
+/**
+ * The carer's line and three questions for what the person picked. Rules templates per kind; the telling comes first
+ * (the role-play of 18 Nov: an offer to call is not what someone with news wants first), an offer last.
+ */
+export function talkLead(pick: TalkPick, name: string): { line: string; ask: string[] } {
+  const A = P10.turn.ask;
+  const L = P10.turn.line;
+  switch (pick.kind) {
+    case 'me': return { line: L.me(name), ask: TELL };
+    case 'person': return { line: L.person(name, pick.word), ask: pick.household ? [TELL_NEWS, A.happenedWith(pick.word), TELL_WHEN] : [TELL_NEWS, A.visit(pick.word), A.call(pick.word)] };
+    case 'place': return { line: L.place(name, pick.word), ask: [A.happenedAt(pick.word), TELL_NEWS, A.go(pick.word)] };
+    case 'news': return { line: L.news(name), ask: [A.news, TELL_NEWS, A.tvOn] };
+  }
+}
 
 /** The topics as a picture menu: three to a screen, "something else" leading to the next three, then the real way out. */
 export function topicMenu(): Card {

@@ -276,6 +276,17 @@ const TREE: Record<string, Node> = {
     later: { end: 'Later. Agree when, and come back to it. Make sure you do.' },
     'something else': { end: SHOW },
   },
+  // (phase 10: "I want to talk about… the news / TV")
+  'is it the news or something on tv': {
+    news: { next: [TELL_NEWS], end: 'The news. Put it on, or find the story, and ask one small question at a time.' },
+    'something on tv': { next: [TELL_NEWS], end: 'Something on TV. Show the list on the screen, and let {them} point.' },
+    'something else': { end: SHOW },
+  },
+  'shall we put the tv on': {
+    yes: { end: 'Put the TV on together. Show the choices on the screen, and let {them} point.' },
+    no: { end: 'No TV now. Ask one small question at a time about what {they} saw, and wait.' },
+    'not sure': { end: 'Put it on quietly, and see.' },
+  },
   'is it today or another day': {
     today: { end: 'It is about today. Go through today, one thing at a time.' },
     'another day': { end: 'Another day. Ask: "Has it happened, or is it still to come?"' },
@@ -378,6 +389,11 @@ function own(marker: string, profile: Profile): string[] {
   }
 }
 
+// (phase 10) the questions after "I want to talk about…" a person or a place (core/turn.ts, talkLead)
+const TALK_VISIT = /^Is it about (.+)'s visit\?$/;
+const TALK_HAPPENED = /^Did something happen (?:with|at) .+\?$/;
+const TALK_GO = /^Would you like to go to ((?:(?! or ).)+)\?$/;
+
 /** The family's own questions, and the body map, are not in the table: their steps are made from the question's shape. */
 function shaped(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string): Raw | null {
   const l = key(label);
@@ -391,6 +407,10 @@ function shaped(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string):
   if (card.kind === 'feeling' && l === 'in pain') return { next: [WHERE_HURTS], end: 'In pain. Ask where it hurts, and tell the nurse or doctor.' };
   const yn = (yes: string, thing: string): Raw | null => (l === 'yes' ? { end: yes } : l === 'no' ? { end: `Not ${thing} now. That is fine.` } : l === 'not sure' ? { end: 'Not sure. Ask again later.' } : null);
   let m: RegExpMatchArray | null;
+  // (phase 10) the questions after "I want to talk about…" a person or a place (core/turn.ts, talkLead)
+  if ((m = a.match(TALK_VISIT))) return l === 'yes' ? { next: [TELL_HAPPENED], end: `It is about ${m[1]}'s visit. Ask when, then what about it, one question at a time.` } : l === 'no' ? { next: [TELL_HAPPENED], end: 'Not the visit. Ask one small question at a time, and wait.' } : l === 'not sure' ? { end: 'Ask it again in other words, or ask {them} to show you.' } : null;
+  if (TALK_HAPPENED.test(a)) return TREE['did something happen'][l] ?? null;
+  if ((m = a.match(TALK_GO))) return yn(`Plan to go to ${m[1]}. Tell {them} when.`, 'a trip');
   if ((m = a.match(/^Would you like to call (.+)\?$/))) return yn(`Call ${m[1]} now, together.`, 'a call');
   if ((m = a.match(/^Would you like to see (.+)\?$/))) return yn(`Ask ${m[1]} to come, and tell {them} when.`, 'a visit');
   if ((m = a.match(/^Would you like to watch (.+)\?$/))) return yn(`Put ${m[1]} on.`, m[1]);
@@ -409,7 +429,7 @@ function shaped(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string):
 function rawStep(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string, profile: Profile): Raw | null {
   const hit = TREE[norm(card.asked)]?.[key(label)];
   if (hit) return hit;
-  const known = card.kind === 'body' || card.kind === 'feeling' || ownQuestions(profile).some((o) => o.q === card.asked || `${o.q.split('?')[0]}?` === card.asked.trim()) || /^Would you like to (?:call|see) .+\?$/.test(card.asked.trim()) || /^Who would you like to (?:call|see)\?/.test(card.asked.trim());
+  const known = [TALK_VISIT, TALK_HAPPENED, TALK_GO].some((r) => r.test(card.asked.trim())) || card.kind === 'body' || card.kind === 'feeling' || ownQuestions(profile).some((o) => o.q === card.asked || `${o.q.split('?')[0]}?` === card.asked.trim()) || /^Would you like to (?:call|see) .+\?$/.test(card.asked.trim()) || /^Who would you like to (?:call|see)\?/.test(card.asked.trim());
   return known ? shaped(card, label) : null;
 }
 

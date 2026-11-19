@@ -19,7 +19,8 @@ const MILLER: Profile = { ...EMPTY_PROFILE, personName: 'Frank', partnerName: 'C
 describe('the card the person starts from', () => {
   const c = turnCard();
   it('three starters and "something else": never more than three choices', () => {
-    expect(c.choices.map((x) => x.label)).toEqual(['I need something', 'I want to tell you something', 'I feel…', 'something else']);
+    // (phase 10: "I want to talk about…" in place of "I want to tell you something"; tests/unit/phase10.test.ts)
+    expect(c.choices.map((x) => x.label)).toEqual(['I need something', 'I want to talk about…', 'I feel…', 'something else']);
     expect(c.choices.filter((x) => x.role === 'answer')).toHaveLength(3);
     expect(c.choices.at(-1)?.role).toBe('escape');
   });
@@ -99,8 +100,9 @@ describe('what the carer reads', () => {
     expect(BODY_FIRST[0]).toBe('Are you in pain?');
   });
   it('the button and the line', () => {
-    expect(turnButton('Frank')).toContain('Frank wants to say something');
-    expect(turnButton('')).toContain('They want to say something');
+    // (phase 10: the person's own words first)
+    expect(turnButton('Frank')).toContain('Frank: I want to say something');
+    expect(turnButton('')).toContain('<b>I want to say something</b>');
     expect(turnLine({ line: 'Frank started this: something is needed.', about: '' })).toContain('role="status"');
   });
 });
@@ -133,7 +135,7 @@ describe('the questions about the telling: every one is a card the rules make, a
 describe('boundaries', () => {
   it('core/turn.ts reaches no engine and no network', () => {
     const src = readFileSync(join(ROOT, 'core/turn.ts'), 'utf8');
-    expect([...src.matchAll(/^import .* from '([^']+)';$/gm)].map((x) => x[1]).sort()).toEqual(['./copy4', './topics', './tree', './types']);
+    expect([...src.matchAll(/^import .* from '([^']+)';$/gm)].map((x) => x[1]).sort()).toEqual(['./copy10', './copy4', './topics', './tree', './types']);
     expect([...readFileSync(join(ROOT, 'core/tree.ts'), 'utf8').matchAll(/^import .* from '([^']+)';$/gm)].map((x) => x[1]).sort()).toEqual(['./topics', './types']);
     expect(src).not.toMatch(/fetch\(|engine\.|firebase/);
   });

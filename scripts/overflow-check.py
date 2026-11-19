@@ -539,7 +539,21 @@ def phase4(url, width, browser):
     check(page, width, "phase 4: the person's starters")
     if tall >= 740:
         fits("phase 4: the person's starters")
-    yes('tell you something')
+    # (phase 10) "I want to talk about…": the family's people and places first (a long name among them), then the topics
+    yes('talk about')
+    page.wait_for_selector('main.pv .pt')
+    check(page, width, 'phase 10: "I want to talk about…", the first screen (a long name)')
+    if tall >= 740:
+        fits('phase 10: "I want to talk about…", the first screen')
+    for _ in range(4):
+        if page.locator('main.pv .pt', has_text='People').count():
+            break
+        page.locator('main.pv .pt.esc').click()
+        page.wait_for_timeout(150)
+        if not page.locator('main.pv .pt', has_text='People').count():
+            check(page, width, 'phase 10: "I want to talk about…", a next screen')
+            if tall >= 740:
+                fits('phase 10: "I want to talk about…", a next screen')
     page.wait_for_selector('main.pv .pt >> text=People')
     check(page, width, "phase 4: the topics as a picture menu")
     if tall >= 740:

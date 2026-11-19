@@ -57,7 +57,7 @@ export const P8 = {
     helpedLine: (what: string, n: number) => `- ${what}: ${n}`,
     helpedNone: (n: number) => `After it, no answer was confirmed: ${times(n)}. Counted: a new conversation started, or 30 minutes passed.`,
     stuck: (n: number, after: number) => `"We're stuck" (show, write or draw) was opened: ${times(n)}${n ? `, ${after} of them after "something else"` : ''}.`,
-    turn: (name: string, n: number) => `${name || 'The person'} started the conversation (the button "wants to say something"): ${times(n)}.`,
+    turn: (name: string, n: number) => `${name || 'The person'} started the conversation (the button "I want to say something"): ${times(n)}.`,
     check: (yes: number, no: number) => `The check ("So: tea. Right?"): "Yes" ${times(yes)}, "No, something else" ${times(no)}.`,
     /** Phase 8 (judge round 7): beside the yes count, so that it is not read as "the yes can be relied on". */
     lessSure: (n: number) => `Answers marked "less sure" by the answer check in this time (a run of yes, or the same place on the screen): ${n}. A yes on the check is not proof: when tired, a yes can mean no.`,

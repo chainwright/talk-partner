@@ -4,7 +4,8 @@
 What is checked, in Chromium, against a production build (npm run build && npx vite preview) or the hosted copy:
   1. the manifest, as Chrome parses it (DevTools protocol, Page.getAppManifest): no errors; name "Talk Partner",
      display standalone, a theme colour, a start URL in scope, and icons of 192 and 512 px (one maskable) that load
-     as PNG files of the stated size;
+     as PNG files of the stated size; (phase 10) the shortcut "I want to say something" to /#/turn, and that address
+     opens the person's own start;
   2. Chrome's own installability check (Page.getInstallabilityErrors) reports nothing;
   3. the service worker is registered, active and controls the page, and its cache holds the page and every script,
      style, font and icon the page loaded;
@@ -70,6 +71,9 @@ def main():
         man = json.loads(m.get('data') or '{}')
         check('manifest: name "Talk Partner", display standalone, a theme colour, a background colour', man.get('name') == 'Talk Partner' and man.get('display') == 'standalone' and str(man.get('theme_color', '')).startswith('#') and str(man.get('background_color', '')).startswith('#'), str({k: man.get(k) for k in ('name', 'display', 'theme_color', 'background_color')}))
         check('manifest: the start URL is the simple view, inside the scope', man.get('start_url') == '/' and man.get('scope') == '/', f"{man.get('start_url')} {man.get('scope')}")
+        # (phase 10) the home-screen shortcut "I want to say something": the person's own start, by its own address
+        sc = man.get('shortcuts') or []
+        check('manifest (phase 10): one shortcut, "I want to say something", to /#/turn inside the scope', len(sc) == 1 and sc[0].get('name') == 'I want to say something' and sc[0].get('url') == '/#/turn', str(sc))
         check('the page names the same theme colour for the browser bar', page.locator('meta[name=theme-color]').get_attribute('content') == man.get('theme_color'))
         sizes = {}
         for ic in man.get('icons', []):
@@ -138,6 +142,15 @@ def main():
         page.goto(url)
         page.wait_for_selector('main.simple.home')
         check('offline: the first screen names the person from About them', "let Rosa point." in text(page))
+        # (phase 10) the home-screen shortcut's address, with no connection: the person's own start, three starters and the way out
+        page.goto(url + '#/turn')
+        page.wait_for_selector('main.pv .pt')
+        st = [w.strip() for w in page.locator('main.pv .pt').all_inner_texts()]
+        check('offline (phase 10): the shortcut\'s address /#/turn opens the person\'s own start', st == ['I need something', 'I want to talk about…', 'I feel…', 'something else'] and page.evaluate('location.hash') == '#/person', str(st))
+        page.locator('#exit').dispatch_event('pointerdown')
+        page.wait_for_selector('main.simple', timeout=4000)
+        page.goto(url)
+        page.wait_for_selector('main.simple.home')
         page.locator('.topic[data-topic=plans]').click()
         check('offline: the one open topic question is tagged "needs internet: you are offline"', text(page, '#ai-tag') == 'needs internet: you are offline', text(page, '#ai-tag'))
         page.locator('.tq', has_text='this weekend').click()

@@ -29,14 +29,15 @@ import { START_FRAME, addPhoto as addOwnPhoto, clampFrame, cleanWord, photoFor, 
 import { framed, loadPhoto, type Loaded } from './photo';
 import { stripQuestion } from '../../core/strip';
 import { backupText, makeBackup, readBackup, type Backup, type BackupPreview } from '../../core/backup';
-import { addEntry, answerEntry, dayStart, dayText, diaryText, inSpan, laterEntry, logEntry, markDiary, needEntry, removeEntry, type DiaryEntry, type DiaryTopic, type LogKind, type Span } from '../../core/diary';
+import { addEntry, answerEntry, startedEntry, dayStart, dayText, diaryText, inSpan, laterEntry, logEntry, markDiary, needEntry, removeEntry, type DiaryEntry, type DiaryTopic, type LogKind, type Span } from '../../core/diary';
 import { CLOUD_SLOW_MS, within, type CloudError } from '../../core/engine';
 import { P9 } from '../../core/copy9';
+import { P10 } from '../../core/copy10';
 import { hasHealth, NO_HEALTH, cleanHealth, cloudLines, insightCloudText, insightDevicePrompt, insights, type HealthNotes, type Insight, type InsightSpan } from '../../core/insights';
 import { RELIABLE, careAnswer, guardExempt, markLessSure, reliability, reorder, tapsFrom } from '../../core/reliability';
 import { checkReworded, rewordOnDevice, type RewordSource } from '../../core/reword';
 import { addAsk, askOf, tipOfDay, type Ask } from '../../core/tip';
-import { AI_QUESTION, WHERE_HURTS, topicOf } from '../../core/topics';
+import { AI_QUESTION, TOPIC_BASE, WHERE_HURTS, topicOf } from '../../core/topics';
 import { backupBlock, diaryLink, diaryScreen, guardBlock, importSheet, insightSheet, type InsightsModel } from './diary';
 import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, type Profile, type StepTrace, type SupportLevel } from '../../core/types';
 import { webConfig } from './ai/config';
@@ -48,7 +49,7 @@ import { kvClear, kvGet, kvSet } from './store';
 import { P4 } from '../../core/copy4';
 import { LETTER_CLOUD_TASK, letterCard, letterEnd, type LetterInput } from '../../core/letter';
 import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
-import { BODY_FIRST, FEEL_QUESTION, aboutCard, menuTopic, starterOf, topicMenu, turnCard, turnLead, type Starter } from '../../core/turn';
+import { BODY_FIRST, FEEL_QUESTION, aboutCard, menuTopic, starterOf, talkLead, talkMenu, talkPick, turnCard, turnLead, type Starter, type TalkPick } from '../../core/turn';
 import { nextVisit, visitCard, visitLabel, visitText, type VisitRecord } from '../../core/visit';
 import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
 import { P5 } from '../../core/copy5';
@@ -229,7 +230,7 @@ interface P4State {
   /** The letter step being made, or waiting for a yes on the sheet. */
   letterPending: LetterInput | null;
   /** The person started this conversation: with which starter, and the topic they pointed to. */
-  turn: { starter: Starter | 'else'; topic: TopicId | null; what?: string } | null;
+  turn: { starter: Starter | 'else'; topic: TopicId | null; what?: string; /** Phase 10: what was picked on "I want to talk about…". */ talk?: TalkPick } | null;
   /** The answers given before a doctor visit (IndexedDB key 'visit'): on this device only, apart from the history and the journal; never sent, read by no model. */
   visit: VisitRecord | null;
   /** The visit questions are on the person's screen; `visitEnd`: the last one was answered, the screen says thank you. */
@@ -320,6 +321,9 @@ function route(): Route {
   if (h === 'person') return 'person';
   // the quick-needs board, full screen: also reachable by its own address, with no question asked and no model
   if (h === 'needs') { if (state.card?.kind !== 'needs') openNeeds(); return 'person'; }
+  // (phase 10) "I want to say something" from the home-screen shortcut (web/public/manifest.webmanifest): the person's
+  // own start, by its own address. The address becomes the person's screen at once, so a later draw does not start it again.
+  if (h === 'turn') { openTurn(); history.replaceState(history.state, '', '#/person'); return 'person'; }
   if (h === 'how') return 'how';
   if (h === 'diary') return 'diary';
   if (h === 'visit') return 'visit';
@@ -1782,6 +1786,8 @@ function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: st
   if (c.letter) return out ? { follow: [], end: '' } : letterEnd(p.spoken);
   if (c.photoTalk && photoEnd(c.asked, p.label, state.profile.personName.trim())) return { follow: [], end: photoEnd(c.asked, p.label, state.profile.personName.trim()) };
   // (the questions about the telling follow what it is about, also after "someone else" there; the way out of the topics has none)
+  // (phase 10) after "I want to talk about…": three questions by what was picked (core/turn.ts, talkLead)
+  if (c.turn === 'talk') return { follow: !out && state.p4.turn?.talk ? talkLead(state.p4.turn.talk, '').ask : [], end: '' };
   if (c.turn) return { follow: out && c.turn !== 'about' ? [] : turnLead('tell', '', state.p4.turn?.topic ?? menuTopic(p.label)).ask, end: '' };
   // the short question about the usual choice: a yes ends as that choice would; anything else leads to the full question
   const sc = state.shortcut;
@@ -1877,6 +1883,13 @@ for (const ev of ['online', 'offline']) window.addEventListener(ev, () => { if (
 let turnKeep = false;
 /** What does not outlive a conversation: the alphabet, the start by the person, the visit questions on the person's screen. The visit answers themselves stay. */
 function clearP4() { state.p4.letter = null; state.p4.letterNo = false; state.p4.letterPending = null; state.p4.turn = null; state.p4.visitRun = false; state.p4.visitEnd = false; }
+/** The person's own start ("I want to say something"): from the Home button, or from the shortcut's address `#/turn`. */
+function openTurn() {
+  if (step === 'waiting') step = 'cancelled';
+  makeSeq++; clearP4(); state.busy = false; state.error = null; state.lastQuestion = ''; resetCard(); p5.urgent = false;
+  const card = turnCard(); setCard(card); state.made.push(card); state.waitStart = Date.now();
+  notePractice({ k: 'turn', at: Date.now() });
+}
 /** The carer takes the phone back from the person's screen (the press and hold): to the visit page while its questions run, else to the carer's screen. */
 function leavePerson() {
   lift = true;
@@ -1929,7 +1942,8 @@ function p4Confirm(c: Card, picked: Choice): boolean {
   if (c.turn === 'start') {
     const s = starterOf(picked.label);
     state.p4.turn = { starter: s ?? 'else', topic: null };
-    if (s === 'need' || s === 'tell') { const card = s === 'need' ? needsCard() : topicMenu(); setCard(card); state.made.push(card); state.picked = null; state.waitStart = Date.now(); render(); return true; }
+    // (phase 10) "I want to talk about…" first offers the family's people and places (core/turn.ts, talkMenu)
+    if (s === 'need' || s === 'tell') { const card = s === 'need' ? needsCard() : talkMenu(state.profile); setCard(card); state.made.push(card); state.picked = null; state.waitStart = Date.now(); render(); return true; }
     if (s === 'feel') { turnKeep = true; askBy = 'none'; void make(FEEL_QUESTION); return true; }
   } else if (c.turn === 'topics' && state.p4.turn) {
     const topic = picked.role === 'answer' ? menuTopic(picked.label) : null;
@@ -1938,12 +1952,25 @@ function p4Confirm(c: Card, picked: Choice): boolean {
     const about = topic ? aboutCard(topic, state.profile) : null;
     if (about) { setCard(about); state.made.push(about); state.picked = null; state.waitStart = Date.now(); render(); return true; }
   } else if (c.turn === 'about' && state.p4.turn) state.p4.turn = { ...state.p4.turn, what: picked.role === 'answer' ? picked.label : '' };
+  else if (c.turn === 'talk' && state.p4.turn) {
+    const talk = picked.role === 'answer' ? talkPick(picked.label, state.profile) : null;
+    state.p4.turn = { starter: 'tell', topic: null, what: picked.label, ...(talk ? { talk } : {}) };
+  }
   return false;
+}
+/** Phase 10: the diary's words for what the person started with ("Beth", "the lake", "People & family: me"), and its topic. */
+function startedLabel(c: Card, label: string): { label: string; topic: DiaryTopic } {
+  const t = state.p4.turn;
+  if (c.turn === 'talk' && t?.talk) return { label: t.talk.kind === 'me' ? P10.turn.diaryMe : t.talk.word, topic: t.talk.kind === 'person' ? 'people' : t.talk.kind === 'place' ? 'plans' : t.talk.kind === 'news' ? 'fun' : 'other' };
+  const topic = t?.topic ?? menuTopic(label);
+  const name = topic ? TOPIC_BASE.find((x) => x.id === topic)?.label ?? '' : '';
+  return { label: c.turn === 'about' && name ? `${name}: ${label}` : label, topic: topic ?? 'other' };
 }
 /** The line the carer reads when the person started this conversation: '' otherwise. */
 function turnHtml(): string {
   const t = state.p4.turn;
   if (!t) return '';
+  if (t.talk) return turnLine({ line: talkLead(t.talk, state.profile.personName.trim()).line, about: '' });
   const lead = turnLead(t.starter, state.profile.personName.trim(), t.topic, t.what);
   return turnLine({ line: lead.line, about: lead.about });
 }
@@ -2368,7 +2395,9 @@ function onPersonTap(t: HTMLElement) {
           const r = reliability(tapsFrom(state.history), at);
           state.history = markLessSure(state.history, r, at);
           const topic = topicOf(state.chain[0] ?? c.asked, state.profile)?.id ?? topicOf(c.asked, state.profile)?.id ?? null;
-          state.diary = markDiary(addEntry(state.diary, answerEntry({ q: c.asked, label: state.picked.label, at }, topic)), r.since, at);
+          // (phase 10) what the person picked when they started the conversation: "Frank started: Beth", never "less sure"
+          const started = c.turn === 'talk' || c.turn === 'topics' || c.turn === 'about' ? startedLabel(c, state.picked.label) : null;
+          state.diary = started ? addEntry(state.diary, startedEntry(state.profile.personName, started.label, at, started.topic)) : markDiary(addEntry(state.diary, answerEntry({ q: c.asked, label: state.picked.label, at }, topic)), r.since, at);
           saveDiary();
         }
         if (!state.demo) void kvSet('history', state.history);
@@ -2489,13 +2518,7 @@ function act(el: HTMLElement) {
       if (c?.letter && i) void runLetter({ ...i, rejected: [...i.rejected, ...c.choices.filter((y) => y.role === 'answer').map((y) => y.spoken)] });
       break;
     }
-    case 'turn': {
-      if (step === 'waiting') step = 'cancelled';
-      makeSeq++; clearP4(); state.busy = false; state.error = null; state.lastQuestion = ''; resetCard();
-      const card = turnCard(); setCard(card); state.made.push(card); state.waitStart = Date.now(); lift = true; go('person');
-      notePractice({ k: 'turn', at: Date.now() });
-      break;
-    }
+    case 'turn': openTurn(); lift = true; go('person'); break;
     case 'visit-start': state.p4.visit = { startedAt: Date.now(), answers: [], done: false, ...(state.p4.visit?.since ? { since: state.p4.visit.since } : {}), ...(state.p4.visit?.carerAsk ? { carerAsk: state.p4.visit.carerAsk } : {}) }; state.p4.visitCopied = false; void kvSet('visit', state.p4.visit); void visitNext(); break;
     case 'visit-resume': void visitNext(); break;
     case 'visit-print': window.print(); break;

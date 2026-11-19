@@ -5,6 +5,7 @@
 
 import { COPY } from '../../core/copy';
 import { P4 } from '../../core/copy4';
+import { P10 } from '../../core/copy10';
 import { LETTERS } from '../../core/letter';
 import type { Photo } from '../../core/photos';
 import type { PhotoQuestion } from '../../core/phototalk';
@@ -61,7 +62,8 @@ export function letterSheet(m: { line: string; request: string }): string {
 
 // ---------------------------------------------------------------- "[Name] wants to say something"
 /** The big button on the first screen: the person starts. */
-export const turnButton = (name: string) => `<button type="button" class="btn turn-go" id="turn-go" data-act="turn">${SPEAK}<span><b>${esc(P4.turn.button(name))}</b><small>${esc(P4.turn.sub(name))}</small></span></button>`;
+// (phase 10) the person's own words first: "Frank: I want to say something"
+export const turnButton = (name: string) => `<button type="button" class="btn turn-go" id="turn-go" data-act="turn">${SPEAK}<span><b>${esc(P10.turn.button(name))}</b><small>${esc(P4.turn.sub(name))}</small></span></button>`;
 /** What the carer reads over the answer after the person started: who started, and what it is about. */
 export const turnLine = (m: { line: string; about: string }) => `<p class="turn-lead" id="turn-lead" role="status">${SPEAK}<span><b>${esc(m.line)}</b>${m.about ? ` ${esc(m.about)}` : ''}</span></p>`;
 

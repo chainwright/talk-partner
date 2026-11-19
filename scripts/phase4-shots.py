@@ -90,8 +90,15 @@ def main():
         pg.locator('#turn-go').click()
         pg.wait_for_selector('main.pv .pt')
         shot('08_person_starts_three_starters')
-        pg.locator('main.pv .pt', has_text='tell you something').click()
+        # (phase 10: the starter is "I want to talk about…", and the topics follow the family's people and places)
+        pg.locator('main.pv .pt', has_text='talk about').click()
         pg.locator('[data-confirm=yes]').click()
+        for _ in range(4):
+            pg.wait_for_selector('main.pv .pt')
+            if pg.locator('main.pv .pt', has_text='People').count():
+                break
+            pg.locator('main.pv .pt.esc').click()
+            pg.wait_for_timeout(150)
         pg.wait_for_selector('main.pv .pt >> text=People')
         shot('09_person_topics_picture_menu')
         pg.locator('main.pv .pt', has_text='People').click()

@@ -10,6 +10,7 @@
 // What a diary is not: a record of what happened. It holds only what was entered in this app. A day with no drink in
 // it may be a day when nobody logged one, and every count the app shows says so.
 
+import { P10 } from './copy10';
 import { guardExempt } from './reliability';
 import type { TopicId } from './topics';
 
@@ -30,8 +31,10 @@ export interface DiaryEntry {
   /**
    * 'log': the carer tapped it. 'answer': the person confirmed it on a card. 'need': the person pointed to it on the needs board.
    * 'later' (phase 9): a care question was left for later (core/later.ts); `q` is the question, and it is no answer.
+   * 'started' (phase 10): the person started the conversation ("Frank started: Beth"); `q` is the person's name as it
+   * was then ('' for none), `label` what they picked. It counts as nothing (`tags` gives none) and is never "less sure".
    */
-  kind: 'log' | 'answer' | 'need' | 'later';
+  kind: 'log' | 'answer' | 'need' | 'later' | 'started';
   /** For a log: which one. */
   log?: LogKind;
   /** For an answer: the question as the card showed it. */
@@ -81,6 +84,13 @@ export const LATER_LABEL = 'left for later';
 export function laterEntry(q: string, at: number, topic?: DiaryTopic | null): DiaryEntry {
   return { id: newId(at), at, kind: 'later', q, label: LATER_LABEL, topic: topic ?? guessTopic(q) };
 }
+
+/** Phase 10: the person started the conversation and picked what it is about ("Frank started: Beth"). */
+export function startedEntry(name: string, label: string, at: number, topic: DiaryTopic): DiaryEntry {
+  return { id: newId(at), at, kind: 'started', q: name.trim(), label, topic };
+}
+/** "Frank started: Beth", the same words on the screen and in the text. */
+export const startedText = (e: Pick<DiaryEntry, 'q' | 'label'>) => `${P10.turn.diary(e.q ?? '')} ${e.label}`;
 
 /** A new list with the entry added, oldest first; the oldest fall off past the cap. */
 export function addEntry(diary: DiaryEntry[], e: DiaryEntry, cap = DIARY_CAP): DiaryEntry[] {
@@ -161,7 +171,7 @@ export function tags(e: DiaryEntry): Tag[] {
   const l = lc(e.label);
   const q = lc(e.q ?? '');
   if (e.kind === 'log') return e.log === 'drank' ? ['drink'] : e.log === 'ate' ? ['food'] : e.log === 'toilet' ? ['toilet'] : e.log === 'slept' ? ['sleep'] : e.log === 'fall' ? (l === FALL_HEAD ? ['fall', 'fall-head'] : ['fall']) : e.log === 'tablets' ? ['tablets'] : ['pain'];
-  if (e.kind === 'later') return [];
+  if (e.kind === 'later' || e.kind === 'started') return [];
   if (e.kind === 'need') return l === 'drink' ? ['drink'] : l === 'food' ? ['food'] : l === 'toilet' ? ['toilet'] : l === 'pain' ? ['pain'] : l === 'tired' ? ['tired'] : [];
   const out: Tag[] = [];
   if (DRINK.test(l) || (/\bsomething to drink\b/.test(q) && l === 'yes')) out.push('drink');
@@ -226,5 +236,5 @@ export function markDiary(diary: DiaryEntry[], since: number | null, now: number
 
 /** The span as plain text, for "Copy for a visit": day by day, a time and what was entered. No count, no advice. */
 export function diaryText(entries: DiaryEntry[], words: { log: Record<LogKind, string>; lessSure: string; need: string }): string {
-  return byDay(entries).reverse().map((d) => `${dayText(d.day)}\n${d.entries.map((e) => `  ${timeText(e.at)}  ${e.kind === 'log' ? words.log[e.log!] : e.kind === 'need' ? `${words.need} ${e.label}` : e.kind === 'later' ? `Left for later: ${e.q}` : `${e.q} ${e.label}`}${e.lessSure ? ` (${words.lessSure})` : ''}`).join('\n')}`).join('\n');
+  return byDay(entries).reverse().map((d) => `${dayText(d.day)}\n${d.entries.map((e) => `  ${timeText(e.at)}  ${e.kind === 'log' ? words.log[e.log!] : e.kind === 'need' ? `${words.need} ${e.label}` : e.kind === 'later' ? `Left for later: ${e.q}` : e.kind === 'started' ? startedText(e) : `${e.q} ${e.label}`}${e.lessSure ? ` (${words.lessSure})` : ''}`).join('\n')}`).join('\n');
 }

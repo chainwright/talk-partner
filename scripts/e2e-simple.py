@@ -1047,6 +1047,17 @@ def tap_yes(page, label):
     page.locator('[data-confirm=yes]').click()
 
 
+def to_topics(page):
+    """(phase 10) On "I want to talk about…": "something else" screen by screen, to the topics as pictures."""
+    for _ in range(4):
+        page.wait_for_selector('main.pv .pt')
+        if page.locator('main.pv .pt', has_text='People & family').count():
+            return
+        page.locator('main.pv .pt.esc').click()
+        page.wait_for_timeout(150)
+    page.wait_for_selector('main.pv .pt >> text=People & family')
+
+
 def give_back(page, sel='main.simple.s-answered'):
     page.wait_for_selector('.p-give')
     page.locator('.p-give').click()
@@ -1072,7 +1083,7 @@ def phase4(browser, url, live):
     page.reload()
     page.wait_for_selector('main.simple.home')
     home = text(page)
-    check('phase 4, first screen: "Frank wants to say something" stands right under the quick needs, and the two new ways in under the diary', 'Frank wants to say something' in text(page, '#turn-go') and ys(page, '#turn-go')[0][1] > ys(page, '.btn.needs')[0][1] and ys(page, '#turn-go')[0][1] < ys(page, '#topics')[0][1] and 'Before a doctor visit' in home and 'Talk about a photo' in home, home[:200])
+    check('phase 4, first screen: (phase 10) "Frank: I want to say something" stands right under the quick needs, and the two new ways in under the diary', 'Frank: I want to say something' in text(page, '#turn-go') and ys(page, '#turn-go')[0][1] > ys(page, '.btn.needs')[0][1] and ys(page, '#turn-go')[0][1] < ys(page, '#topics')[0][1] and 'Before a doctor visit' in home and 'Talk about a photo' in home, home[:200])
     screen_checks(page, 'phase 4, first screen')
 
     # ---------------------------------------------------------------- 1. the first-letter helper
@@ -1154,7 +1165,7 @@ def phase4(browser, url, live):
     page.locator('#turn-go').click()
     page.wait_for_selector('main.pv .pt')
     st = [w.strip() for w in page.locator('main.pv .pt').all_inner_texts()]
-    check('his turn: the person\'s screen opens with three starters and "something else"', st == ['I need something', 'I want to tell you something', 'I feel…', 'something else'], str(st))
+    check('his turn: the person\'s screen opens with three starters and "something else" (phase 10: "I want to talk about…")', st == ['I need something', 'I want to talk about…', 'I feel…', 'something else'], str(st))
     fits(page, 'his turn: the starters')
     tap_yes(page, 'I need something')
     page.wait_for_selector('main.pv[data-kind=needs] .pt')
@@ -1164,21 +1175,33 @@ def phase4(browser, url, live):
     lead = text(page, '#turn-lead')
     check('his turn: the carer reads "Frank started this: something is needed." over the need; pain keeps its own next step, and no "may be tired" line', lead == 'Frank started this: something is needed.' and 'Where does it hurt?' in text(page) and page.locator('#guard').count() == 0, text(page)[:300])
     screen_checks(page, 'his turn: after a need', primary=False)
+    # (phase 10) "I want to talk about…": the family's people and places first, three to a screen, then the topics
     page.locator('[data-act=home]').click()
     page.locator('#turn-go').click()
-    tap_yes(page, 'tell you something')
+    tap_yes(page, 'talk about')
+    page.wait_for_selector('main.pv .pt >> text=Beth')
+    t1 = [w.strip().split('\n')[-1] for w in page.locator('main.pv .pt').all_inner_texts()]
+    fits(page, 'his turn: "I want to talk about…", first screen')
+    page.locator('main.pv .pt.esc').click()
+    page.wait_for_selector('main.pv .pt >> text=church')
+    t2 = [w.strip().split('\n')[-1] for w in page.locator('main.pv .pt').all_inner_texts()]
+    lake_photo = page.locator('main.pv .pt', has_text='the lake').locator('img.photo').count()
+    fits(page, 'his turn: "I want to talk about…", second screen')
+    check('phase 10, his turn: "I want to talk about…" offers "me", Beth and Tom, then the lake (with its photo), church and the news / TV, never Carol', t1 == ['me', 'Beth', 'Tom', 'something else'] and t2 == ['the lake', 'church', 'the news / TV', 'something else'] and lake_photo == 1 and 'Carol' not in t1 + t2, f'{t1} {t2} {lake_photo}')
+    page.locator('main.pv .pt.esc').click()
     page.wait_for_selector('main.pv .pt >> text=People')
     m1 = [w.strip() for w in page.locator('main.pv .pt').all_inner_texts()]
     fits(page, 'his turn: the topics, first screen')
     page.locator('main.pv .pt.esc').click()
     page.wait_for_selector('main.pv .pt >> text=Body')
     m2 = [w.strip() for w in page.locator('main.pv .pt').all_inner_texts()]
-    check('his turn: "I want to tell you something" leads to the topics as pictures, three to a screen, "something else" leading to the next three', m1 == ['People & family', 'Today & plans', 'TV, music & hobbies', 'something else'] and m2 == ['Food & drink', 'Body & care', 'Rest & sleep', 'something else'] and page.locator('main.pv .pt:not(.esc) svg').count() == 3, f'{m1} {m2}')
+    check('his turn: the last "something else" of "I want to talk about…" leads to the topics as pictures, three to a screen, "something else" leading to the next three', m1 == ['People & family', 'Today & plans', 'TV, music & hobbies', 'something else'] and m2 == ['Food & drink', 'Body & care', 'Rest & sleep', 'something else'] and page.locator('main.pv .pt:not(.esc) svg').count() == 3, f'{m1} {m2}')
     hold_exit(page)
     page.wait_for_timeout(900)
     page.locator('[data-act=home]').click()
     page.locator('#turn-go').click()
-    tap_yes(page, 'tell you something')
+    tap_yes(page, 'talk about')
+    to_topics(page)
     tap_yes(page, 'People')
     page.wait_for_selector('main.pv .pt >> text=Beth')
     who = [w.strip().split('\n')[-1] for w in page.locator('main.pv .pt').all_inner_texts()]  # (a person with no photo has their initial over the name)
@@ -1190,6 +1213,26 @@ def phase4(browser, url, live):
     asks = nexts(page)
     check('his turn: the carer reads who started and what it is about, with three questions about the TELLING, never an offer to call or see', lead == 'Frank started this: there is something to tell you. It is about: People & family, Beth.' and asks == ['Is it good news, or a worry?', 'Did something happen?', 'Do you want to tell me now or later?'] and 'Would you like' not in text(page), f'{lead} {asks}')
     screen_checks(page, 'his turn: after a topic')
+    # (phase 10) Beth picked on "I want to talk about…": "Frank wants to talk about Beth." and three questions by kind
+    page.locator('[data-act=home]').click()
+    page.locator('#turn-go').click()
+    tap_yes(page, 'talk about')
+    tap_yes(page, 'Beth')
+    give_back(page)
+    lead10 = text(page, '#turn-lead')
+    asks10 = nexts(page)
+    check('phase 10, his turn: Beth -> the carer reads "Frank wants to talk about Beth." first, with three questions: the telling first, a call last', lead10 == 'Frank wants to talk about Beth.' and asks10 == ['Is it good news, or a worry?', "Is it about Beth's visit?", 'Would you like to call Beth?'] and ys(page, '#turn-lead')[0][1] < ys(page, '#chose')[0][1] and 'patient' not in text(page).lower(), f'{lead10} {asks10}')
+    screen_checks(page, 'phase 10, his turn: after Beth')
+    page.locator('#next-q').click()
+    page.wait_for_selector('main.simple.card #made-where')
+    check('phase 10, his turn: "Is it good news, or a worry?" after Beth is a card the rules make', page.locator('#made-where').get_attribute('data-maker') == 'code')
+    page.locator('[data-act=home]').click()
+    page.locator('#turn-go').click()
+    tap_yes(page, 'talk about')
+    to_topics(page)
+    tap_yes(page, 'People')
+    tap_yes(page, 'Beth')
+    give_back(page)
     page.locator('#next-q').click()
     page.wait_for_selector('main.simple.card #made-where')
     made = page.locator('#made-where').get_attribute('data-maker')
@@ -1197,7 +1240,8 @@ def phase4(browser, url, live):
     check('his turn: "Is it good news, or a worry?" is a card the rules make; "worry" is taken as said, and the tree leads on', made == 'code' and nexts(page) == ['Did something happen?', 'Are you in pain?'] and page.locator('#guard').count() == 0, f'{made} {nexts(page)} {text(page)[:200]}')
     page.locator('[data-act=home]').click()
     page.locator('#turn-go').click()
-    tap_yes(page, 'tell you something')
+    tap_yes(page, 'talk about')
+    to_topics(page)
     tap_yes(page, 'Today')
     page.wait_for_selector('main.pv .pt >> text=another day')
     day = [w.strip() for w in page.locator('main.pv .pt').all_inner_texts()]
@@ -2080,12 +2124,26 @@ def backstack(browser, url):
         seen.append(sig(page))
         check('back, "wants to say something": the way was the first screen, the three starters, the feelings card (both on the person\'s screen), the answer', [x.split(' | ')[0] for x in seen] == ['home', 'person', 'person', 'answered'], str(seen))
         walk_back(page, seen, '"wants to say something"', browser_back=bb)
-        # "I want to tell you something": the topics, then the carer's screen; Back walks the person's chain one screen at a time
+        # (phase 10) "I want to talk about…": its screen (no About them here: "me" and "the news / TV"), then the carer's screen
         seen = [sig(page)]
         page.locator('#turn-go').click()
-        page.wait_for_selector('main.pv .pt:has-text("tell you")')
+        page.wait_for_selector('main.pv .pt:has-text("talk about")')
         seen.append(sig(page))
-        tap_yes(page, 'tell you')
+        tap_yes(page, 'talk about')
+        page.wait_for_selector('main.pv .pt:has-text("the news")')
+        seen.append(sig(page))
+        tap_yes(page, 'the news')
+        give_back(page)
+        seen.append(sig(page))
+        check('back, phase 10, "I want to talk about…": the way was the first screen, the starters, the talk screen, the carer\'s screen', [x.split(' | ')[0] for x in seen] == ['home', 'person', 'person', 'answered'] and 'wants to talk about the news' in text(page, '#turn-lead'), str(seen))
+        walk_back(page, seen, 'phase 10, "I want to talk about…"', browser_back=bb)
+        # "I want to talk about…" -> "something else" -> the topics, then the carer's screen; Back walks the person's chain one screen at a time
+        seen = [sig(page)]
+        page.locator('#turn-go').click()
+        page.wait_for_selector('main.pv .pt:has-text("talk about")')
+        seen.append(sig(page))
+        tap_yes(page, 'talk about')
+        to_topics(page)
         page.wait_for_selector('main.pv .pt:has-text("Today & plans")')
         seen.append(sig(page))
         tap_yes(page, 'Today & plans')
@@ -2096,8 +2154,8 @@ def backstack(browser, url):
             tap_yes(page, page.locator('main.pv .pt').first.inner_text().strip())
         give_back(page, 'main.simple')
         seen.append(sig(page))
-        check('back, "I want to tell you something": the way was the first screen, the starters, the topics, the carer\'s screen', [x.split(' | ')[0] for x in seen][:3] == ['home', 'person', 'person'] and not seen[-1].startswith('person') and not seen[-1].startswith('home'), str(seen))
-        walk_back(page, seen, '"I want to tell you something"', browser_back=bb)
+        check('back, the topics of "I want to talk about…": the way was the first screen, the starters, the topics, the carer\'s screen', [x.split(' | ')[0] for x in seen][:3] == ['home', 'person', 'person'] and not seen[-1].startswith('person') and not seen[-1].startswith('home'), str(seen))
+        walk_back(page, seen, 'the topics of "I want to talk about…"', browser_back=bb)
         # the needs board opened inside a conversation: Back from it is the answer it was opened from, not the first screen
         seen = [sig(page)]
         ask_topic(page, 'food', TEA)
@@ -2721,7 +2779,7 @@ def phase7(browser, url, live):
     page.wait_for_selector('main.simple.home')
     page.locator('#turn-go').click()
     page.wait_for_selector('main.pv .pt')
-    tap_yes(page, 'I want to tell you something')
+    tap_yes(page, 'I want to talk about')
     page.wait_for_selector('main.pv .pt')
     hold_exit(page)
     page.wait_for_timeout(800)
@@ -2757,7 +2815,7 @@ def phase7(browser, url, live):
                  'A question that asked to remember something: 1 time. The app made no card and offered a line to say instead.',
                  '"Something else" was chosen: 1 time, in 1 conversation.', 'After it, an answer was confirmed by:', 'the first letter: 1', 'After it, no answer was confirmed: 0 times.',
                  '"We\'re stuck" (show, write or draw) was opened: 1 time, 0 of them after "something else".',
-                 'Frank started the conversation (the button "wants to say something"): 1 time.', 'The check ("So: tea. Right?"): "Yes" 6 times, "No, something else" 1 time.',
+                 'Frank started the conversation (the button "I want to say something"): 1 time.', 'The check ("So: tea. Right?"): "Yes" 6 times, "No, something else" 1 time.',
                  'Answers marked "less sure" by the answer check in this time (a run of yes, or the same place on the screen):', 'A yes on the check is not proof: when tired, a yes can mean no.',
                  'Read aloud is off on this phone today.', 'Nothing about needs, pain or health is on this page. Those are in the diary.',
                  'Counted by fixed rules on this phone. No AI. Not an assessment and not a medical record.'):

@@ -163,8 +163,11 @@ export interface Card {
    * words that start with it. `by` says who found the words: the rules alone, or a model that added some.
    */
   letter?: { letter: string; rejected: string[]; by: 'rules' | 'device' | 'cloud' };
-  /** A card the person started the conversation from (core/turn.ts): the starters, the topics as a picture menu, or what in that topic it is about. */
-  turn?: 'start' | 'topics' | 'about';
+  /**
+   * A card the person started the conversation from (core/turn.ts): the starters, the topics as a picture menu, what
+   * in that topic it is about, or (phase 10) "I want to talk about…" with the family's people and places.
+   */
+  turn?: 'start' | 'topics' | 'about' | 'talk';
   /** A question of the fixed list asked before a visit to the doctor (core/visit.ts): its id. Never a model. */
   visit?: string;
   /** A question about one of the family's own photos (core/phototalk.ts). 'device': the on-device model named things in it. */
