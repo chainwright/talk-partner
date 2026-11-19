@@ -1,0 +1,7 @@
+e2e-simple exit=0
+pwa exit=0
+needs exit=0
+phase8 exit=0
+phase9 exit=0
+phase10 exit=0
+DONE

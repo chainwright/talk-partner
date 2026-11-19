@@ -742,7 +742,7 @@ and the previews on 5301 and 5181 were not touched): At `f188eab` (the code; the
 ## Added on 19 Nov, phase 10: the person starts, and About them in a file
 The two features of the family's list that were still missing (`design/PLAN_TO_IDEAL_2026-11-17.md`), one commit
 each (`CLAIMS.md` rows 137 to 141; `EVIDENCE.md` "Phase 10"; `devlog/DAY20.md`). Both are rules on the device: no
-model and no request. Nothing of phase 10 is deployed; the "Live:" lines still name the build they name.
+model and no request. Deployed as `ce47da2` (README "Deploy" says what was run against it).
 
 - **"His turn": the person starts** (`47e786e`). Home's big button reads the person's own words first, "Frank: I want
   to say something" ("I want to say something" with no name), and the installed app has a home-screen shortcut with
@@ -1228,7 +1228,14 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-**Live: the build of `8a8eaf7`** (phase 9, the person's screen in any font, the cloud wait at 20 s), deployed 19 Nov
+**Live: the build of `ce47da2`** (phase 10: "His turn", the person starts, and About them in a file), deployed 19 Nov
+2026 about 06:15 UTC. The hosted script (`index-CkiUcXgi.js`) has the same SHA-256 as our `dist/`, and the hosted
+manifest has the `#/turn` shortcut. Run against the hosted copy: `e2e-simple.py --live` 1022/1022, `pwa-check.py`
+32/32, `e2e-needs.mjs` 12/12, `phase8-shots.py` 21/21, `phase9-shots.py` 39/39, `phase10-shots.py` 132/132;
+`HEADED=1 e2e-cloud.mjs` on a steady connection, one fresh profile: 28/28, first cloud card in 3.09 s
+(`inferenceSource=in_cloud`). Logs: `devlog/evidence_live/*ce47da2*`.
+
+Before it: **the build of `8a8eaf7`** (phase 9, the person's screen in any font, the cloud wait at 20 s), deployed 19 Nov
 2026 about 00:00 UTC. The hosted script (`index-Cb1gCXUU.js`) has the same SHA-256 as our `dist/`. Run against the
 hosted copy: `e2e-simple.py --live` 992/992, `pwa-check.py` 30/30, `e2e-needs.mjs` 12/12, `phase8-shots.py` 21/21,
 `phase9-shots.py` 39/39. `HEADED=1 e2e-cloud.mjs`, five fresh profiles over a slow phone hotspot (about 300 KB/s at
