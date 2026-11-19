@@ -1192,7 +1192,11 @@ hosted copy: `e2e-simple.py --live` 992/992, `pwa-check.py` 30/30, `e2e-needs.mj
 `phase9-shots.py` 39/39. `HEADED=1 e2e-cloud.mjs`, five fresh profiles over a slow phone hotspot (about 300 KB/s at
 the time): 28/28 twice (first cloud card in 14.9 s and 9.7 s, `inferenceSource=in_cloud`), and three times the
 first cloud card did not come within 20 s, so the card said "Cloud help took longer than 20 seconds" (16, 19 and 18
-of 27). Logs: `devlog/evidence_live/*8a8eaf7*`.
+of 27). Logs: `devlog/evidence_live/*8a8eaf7*`. The same check again that evening on a steady connection (ping
+about 14–22 ms, no loss), one fresh profile at a time with 15 minutes between runs: 28/28 three times out of three,
+first cloud card in 3.05 s, 3.05 s and 3.04 s (`*_headed_run6_steady.txt` to `run8`; the `commit` line in these logs
+is the local checkout, which differs from `8a8eaf7` only in docs and scripts). So the three slow runs above were the
+connection, not the cloud step.
 
 Two deploys earlier the same evening: `e23b493` (phase 9 as built) failed one check live, the person's three
 pictures on 390 x 844 before the web font arrived (991/992), fixed in `ffb2521`; `ffb2521` ran 992/992, 30/30, 12/12,
