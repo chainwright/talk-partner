@@ -701,36 +701,7 @@ const COPY = {
       rules: "Worded by the app's rules. No AI, nothing sent.",
     },
     /** A copy of About them in a file (core/backup.ts): so a new phone, or a cleared browser, does not lose it. */
-    backup: {
-      heading: 'Keep a copy',
-      why: 'About them lives in this browser only. A file keeps it safe if the browser is cleared, and moves it to another phone or computer.',
-      lock: 'The file is made on this computer and saved where you choose. The app sends it nowhere. It holds names, photos and health notes: keep it somewhere private.',
-      save: 'Save About them to a file',
-      load: 'Bring About them back from a file',
-      fileName: 'talk-partner-about-them.json',
-      preview: 'This file holds:',
-      replaces: 'Bringing it back replaces About them, the photos and the health notes on this computer. The diary and the answers stay as they are.',
-      yes: 'Replace with this file',
-      no: 'Cancel',
-      done: 'About them was brought back from the file.',
-      bad: {
-        json: 'This file could not be read. Choose a file saved by "Save About them to a file".',
-        kind: 'This is not an About them file from Talk Partner.',
-        version: 'This file is from a newer version of the app. Update the app, then try again.',
-        shape: 'This file is damaged: something in it is not as the app saved it.',
-        big: 'This file is too big to be an About them file.',
-      } as Record<string, string>,
-      has: {
-        name: (n: string) => `The name: ${n}`,
-        noName: 'No name',
-        people: (n: number) => `${n} ${n === 1 ? 'person' : 'people'}`,
-        lists: (n: number) => `${n} food${n === 1 ? '' : 's'}, place${n === 1 ? '' : 's'}, show${n === 1 ? '' : 's'} and music`,
-        photos: (n: number) => `${n} photo${n === 1 ? '' : 's'}`,
-        facts: (n: number) => `${n} fact${n === 1 ? '' : 's'} you kept`,
-        health: (list: string) => (list ? `Health notes: ${list}` : 'No health notes'),
-        saved: (when: string) => `Saved on ${when}`,
-      },
-    },
+    // ("Keep a copy", About them in a file: since phase 10 its words are P10.backup in core/copy10.ts)
   },
 
   welcome: {

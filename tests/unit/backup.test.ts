@@ -17,37 +17,41 @@ const ok = (text: string) => { const r = readBackup(text); if (!r.ok) throw new 
 
 describe('save, clear, bring back', () => {
   it('what comes back is identical to what was saved', () => {
-    const text = backupText(makeBackup(profile, photos, WEEK.health, NOW));
+    const text = backupText(makeBackup(profile, photos, WEEK.health, NOW, true));
     // (cleared: nothing of the state below comes from anywhere but the file's text)
     const back = ok(text).backup;
     expect(back.profile).toEqual(profile);
     expect(back.photos).toEqual(photos);
     // (phase 5: the emergency number is kept with the health notes; phase 8: the week's fixture has 911, the one number of the sample family)
     expect(back.health).toEqual({ ...WEEK.health, emergency: '911' });
-    expect(ok(backupText(makeBackup(profile, photos, { ...WEEK.health, emergency: '999' }, NOW))).backup.health.emergency).toBe('999');
+    expect(ok(backupText(makeBackup(profile, photos, { ...WEEK.health, emergency: '999' }, NOW, true))).backup.health!.emergency).toBe('999');
+    // (phase 10) without health notes the emergency number is still in the file
+    expect(ok(backupText(makeBackup(profile, photos, { ...WEEK.health, emergency: '999' }, NOW))).backup.emergency).toBe('999');
     expect(back.profile.people[2].photo).toBe(JPEG);
-    expect(backupText(makeBackup(back.profile, back.photos, back.health, NOW))).toBe(text);
+    expect(backupText(makeBackup(back.profile, back.photos, back.health!, NOW, true))).toBe(text);
   });
   it('an empty About them goes and comes back too', () => {
-    const back = ok(backupText(makeBackup({ ...EMPTY_PROFILE }, [], NO_HEALTH, NOW))).backup;
+    const back = ok(backupText(makeBackup({ ...EMPTY_PROFILE }, [], NO_HEALTH, NOW, true))).backup;
     expect(back.profile).toEqual(EMPTY_PROFILE);
     expect(back.photos).toEqual([]);
     expect(back.health).toEqual(NO_HEALTH);
   });
   it('the file says what it is, and photos are in it as data URLs', () => {
-    const b = JSON.parse(backupText(makeBackup(profile, photos, WEEK.health, NOW))) as Backup;
-    expect(b).toMatchObject({ app: 'talk-partner', kind: 'about-them', version: BACKUP_VERSION, savedAt: new Date(NOW).toISOString() });
+    const b = JSON.parse(backupText(makeBackup(profile, photos, WEEK.health, NOW, true))) as Backup;
+    // (phase 10: `format` names it; `app` and `kind` stay, so an older copy of the app still reads a new file)
+    expect(b).toMatchObject({ format: 'talk-partner-about', app: 'talk-partner', kind: 'about-them', version: BACKUP_VERSION, savedAt: new Date(NOW).toISOString() });
     expect(b.photos.every((p) => p.data.startsWith('data:image/'))).toBe(true);
-    expect(Object.keys(b).sort()).toEqual(['app', 'health', 'kind', 'photos', 'profile', 'savedAt', 'version']);
+    expect(Object.keys(b).sort()).toEqual(['app', 'emergency', 'format', 'health', 'kind', 'photos', 'profile', 'savedAt', 'version']);
   });
   it('the preview says what the file holds, before anything is replaced', () => {
-    expect(ok(backupText(makeBackup(profile, photos, WEEK.health, NOW))).preview).toEqual({ name: 'Frank', people: 3, lists: 5, photos: 3, facts: 1, health: ['diabetes', 'text'], savedAt: new Date(NOW).toISOString() });
-    expect(ok(backupText(makeBackup({ ...EMPTY_PROFILE }, [], NO_HEALTH, NOW))).preview).toMatchObject({ name: '', people: 0, photos: 0, health: [] });
+    expect(ok(backupText(makeBackup(profile, photos, WEEK.health, NOW, true))).preview).toEqual({ name: 'Frank', people: 3, places: 2, foods: 2, shows: 1, photos: 3, facts: 1, health: ['diabetes', 'text'], savedAt: new Date(NOW).toISOString() });
+    expect(ok(backupText(makeBackup({ ...EMPTY_PROFILE }, [], NO_HEALTH, NOW, true))).preview).toMatchObject({ name: '', people: 0, photos: 0, health: [] });
+    expect(ok(backupText(makeBackup(profile, photos, WEEK.health, NOW))).preview.health).toBeNull();
   });
 });
 
 describe('a file is never taken on trust', () => {
-  const good = () => JSON.parse(backupText(makeBackup(profile, photos, WEEK.health, NOW))) as Record<string, any>;
+  const good = () => JSON.parse(backupText(makeBackup(profile, photos, WEEK.health, NOW, true))) as Record<string, any>;
   const err = (o: unknown) => { const r = readBackup(typeof o === 'string' ? o : JSON.stringify(o)); return r.ok ? 'ok' : r.error; };
   it('not JSON, not ours, from a newer version, too big', () => {
     expect(err('hello')).toBe('json');
@@ -78,7 +82,7 @@ describe('a file is never taken on trust', () => {
     const back = ok(JSON.stringify(g)).backup;
     expect(Object.keys(back.profile).sort()).toEqual(Object.keys(EMPTY_PROFILE).sort());
     expect('admin' in back.profile.people[0]).toBe(false);
-    expect(Object.keys(back.health).sort()).toEqual(Object.keys(NO_HEALTH).sort());
+    expect(Object.keys(back.health!).sort()).toEqual(Object.keys(NO_HEALTH).sort());
     expect(back.profile.personName).toBe('<img src=x onerror=alert(1)>');
   });
 });

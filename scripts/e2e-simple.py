@@ -1610,13 +1610,21 @@ def diary(browser, url, live):
     page.wait_for_selector('main.about-simple')
     add_photo(page, 'Bo', label='backup')
     saved = {k: page.evaluate(KV_GET, k) for k in ('profile', 'photos', 'health')}
-    check('backup: "Keep a copy" says the file is made on this phone, sent nowhere, and holds names, photos and health notes', 'The app sends it nowhere. It holds names, photos and health notes: keep it somewhere private.' in text(page, '#backup'), text(page, '#backup'))
+    check('backup: "Keep a copy" says what it is for, that the file is made here and sent nowhere, and holds names and photos', 'The app sends it nowhere. It holds names and photos: keep it somewhere private.' in text(page, '#backup') and "Use it to move to a new phone, to set up a second carer's phone, or as a spare copy." in text(page, '#backup-use'), text(page, '#backup'))
+    check('phase 10, backup: "Include health notes" is there, unticked, with one line on why', page.locator('#backup-health').count() == 1 and not page.locator('#backup-health').is_checked() and 'health notes are private' in text(page, '#backup-health-why'), text(page, '#backup-health-why'))
     before = len(outside)
+    with page.expect_download() as dl0:
+        page.locator('#backup-save').click()
+    lean_path = dl0.value.path()
+    lean = json.load(open(lean_path))
+    check('phase 10, backup: by default the file has no health notes (no "health", no diabetes), and has the format, version 1 and the emergency number', 'health' not in lean and 'diabetes' not in json.dumps(lean).lower() and lean.get('format') == 'talk-partner-about' and lean.get('version') == 1 and 'emergency' in lean and lean['profile'] == saved['profile'], str({k: str(v)[:60] for k, v in lean.items()}))
+    page.locator('#backup-health').check()
     with page.expect_download() as dl:
         page.locator('#backup-save').click()
     path = dl.value.path()
     data = json.load(open(path))
-    check('backup: the file is JSON with the profile, the photos as data URLs and the health notes', dl.value.suggested_filename == 'talk-partner-about-them.json' and data['app'] == 'talk-partner' and data['kind'] == 'about-them' and data['profile'] == saved['profile'] and data['photos'] == saved['photos'] and data['photos'][0]['data'].startswith('data:image/jpeg;base64,') and data['health'] == {**saved['health'], 'emergency': saved['health'].get('emergency', '')}, str({k: str(v)[:60] for k, v in data.items()}))
+    check('backup: with the box ticked the file is JSON with the profile, the photos as data URLs and the health notes', dl.value.suggested_filename == 'talk-partner-about-them.json' and data['format'] == 'talk-partner-about' and data['profile'] == saved['profile'] and data['photos'] == saved['photos'] and data['photos'][0]['data'].startswith('data:image/jpeg;base64,') and data['health'] == {**saved['health'], 'emergency': saved['health'].get('emergency', '')}, str({k: str(v)[:60] for k, v in data.items()}))
+    check('phase 10, backup: after the save the box is unticked again', not page.locator('#backup-health').is_checked())
     check('backup: saving the file asked nothing of any other host', len(outside) == before)
     kept_diary = len(page.evaluate(KV_GET, 'diary'))
     page.locator('#delete-everything').click()
@@ -1630,10 +1638,16 @@ def diary(browser, url, live):
     page.locator('#backup-file').set_input_files(path)
     page.wait_for_selector('#import-sheet')
     prev = text(page, '#import-sheet')
-    check('backup: before anything is replaced, the file\'s contents are shown (the name, 3 people, 1 photo, health notes: diabetes …)', 'The name: Frank' in prev and '3 people' in prev and '1 photo' in prev and 'Health notes: diabetes' in prev and 'Bringing it back replaces About them' in prev and not page.evaluate(KV_GET, 'profile'), prev)
+    check('backup: before anything changes, the file\'s contents are shown (the name, 3 people, 2 places, 1 photo, health notes: diabetes …), with Replace, Add and Cancel', 'This file has:' in prev and 'The name: Frank' in prev and '3 people' in prev and '2 places' in prev and '1 photo' in prev and 'Health notes: diabetes' in prev and [b.strip() for b in page.locator('#import-sheet .choice .btn').all_inner_texts()] == ['Replace what is here', 'Add to what is here', 'Cancel'] and not page.evaluate(KV_GET, 'profile'), prev)
     screen_checks(page, 'backup: the preview sheet', primary=True)
-    page.locator('[data-act=import-yes]').click()
+    page.locator('[data-act=import-no]').click()
+    page.wait_for_function("!document.querySelector('#import-sheet')")
+    check('phase 10, backup: Cancel closes it and nothing was saved', not page.evaluate(KV_GET, 'profile') and page.locator('#backup-done').count() == 0)
+    page.locator('#backup-file').set_input_files(path)
+    page.wait_for_selector('#import-sheet')
+    page.locator('[data-act=import-replace]').click()
     page.wait_for_selector('#backup-done')
+    check('phase 10, backup: after "Replace what is here" the screen says so', 'About them was replaced with the file.' in text(page, '#backup-done'), text(page, '#backup-done'))
     back = {k: page.evaluate(KV_GET, k) for k in ('profile', 'photos', 'health')}
     saved['health'] = {**saved['health'], 'emergency': saved['health'].get('emergency', '')}  # (phase 5: the emergency number travels with the health notes; none here)
     check('backup: save -> clear -> bring back = identical (profile, photos, health notes)', back == saved, str({k: back[k] == saved[k] for k in back}))
@@ -1641,6 +1655,24 @@ def diary(browser, url, live):
     page.reload()
     page.wait_for_selector('main.about-simple')
     check('backup: after a reload About them is Frank\'s again, with the photo and the health notes', 'About Frank' in text(page, 'h1') and page.locator('#photo-list li').count() == 1 and 'Diabetes' in text(page, '.rowcard[data-row=health]'))
+    # (phase 10) the file without health notes, added to what is here: nothing doubles, nothing goes, the health notes stay
+    page.locator('#backup-file').set_input_files(lean_path)
+    page.wait_for_selector('#import-sheet')
+    check('phase 10, backup: a file without health notes says the ones here stay', 'No health notes: the ones here stay as they are' in text(page, '#import-sheet'), text(page, '#import-sheet'))
+    page.locator('[data-act=import-add]').click()
+    page.wait_for_selector('#backup-done')
+    again = {k: page.evaluate(KV_GET, k) for k in ('profile', 'photos', 'health')}
+    check('phase 10, backup: "Add to what is here" with the same family: nothing doubles, nothing is removed, the health notes stay', again == back and 'was added to About them' in text(page, '#backup-done'), str({k: again[k] == back[k] for k in again}))
+    # (phase 10) a file with markup in a name: shown as the words it is
+    bad = dict(lean); bad['profile'] = {**lean['profile'], 'personName': '<script>window.__x=1</script>'}
+    page.locator('#backup-file').set_input_files({'name': 'x.json', 'mimeType': 'application/json', 'buffer': json.dumps(bad).encode()})
+    page.wait_for_selector('#import-sheet')
+    check('phase 10, backup: <script> in a name is shown as text in the preview, and runs nowhere', '<script>window.__x=1</script>' in text(page, '#import-sheet') and page.locator('#import-sheet script').count() == 0 and not page.evaluate('window.__x'))
+    page.locator('[data-act=import-no]').click()
+    v2 = dict(lean); v2['version'] = 2
+    page.locator('#backup-file').set_input_files({'name': 'v2.json', 'mimeType': 'application/json', 'buffer': json.dumps(v2).encode()})
+    page.wait_for_selector('#backup-error')
+    check('phase 10, backup: a version-2 file is refused: "from a newer version of the app"', 'newer version of the app' in text(page, '#backup-error') and page.locator('#import-sheet').count() == 0)
     screen_checks(page, 'About them: with "Keep a copy"', primary=True)
 
     # ---- delete the diary
@@ -2135,7 +2167,7 @@ def backstack(browser, url):
         tap_yes(page, 'the news')
         give_back(page)
         seen.append(sig(page))
-        check('back, phase 10, "I want to talk about…": the way was the first screen, the starters, the talk screen, the carer\'s screen', [x.split(' | ')[0] for x in seen] == ['home', 'person', 'person', 'answered'] and 'wants to talk about the news' in text(page, '#turn-lead'), str(seen))
+        check('back, phase 10, "I want to talk about…": the way was the first screen, the starters, the talk screen, the carer\'s screen', [x.split(' | ')[0] for x in seen] == ['home', 'person', 'person', 'answered'] and 'want to talk about the news' in text(page, '#turn-lead'), str(seen))
         walk_back(page, seen, 'phase 10, "I want to talk about…"', browser_back=bb)
         # "I want to talk about…" -> "something else" -> the topics, then the carer's screen; Back walks the person's chain one screen at a time
         seen = [sig(page)]

@@ -28,7 +28,7 @@ import { spokenLine } from '../../core/rules';
 import { START_FRAME, addPhoto as addOwnPhoto, clampFrame, cleanWord, photoFor, removePhoto, type Frame, type Photo } from '../../core/photos';
 import { framed, loadPhoto, type Loaded } from './photo';
 import { stripQuestion } from '../../core/strip';
-import { backupText, makeBackup, readBackup, type Backup, type BackupPreview } from '../../core/backup';
+import { BACKUP_MAX_BYTES, addTo, backupText, makeBackup, readBackup, replaceWith, type Backup, type BackupPreview } from '../../core/backup';
 import { addEntry, answerEntry, startedEntry, dayStart, dayText, diaryText, inSpan, laterEntry, logEntry, markDiary, needEntry, removeEntry, type DiaryEntry, type DiaryTopic, type LogKind, type Span } from '../../core/diary';
 import { CLOUD_SLOW_MS, within, type CloudError } from '../../core/engine';
 import { P9 } from '../../core/copy9';
@@ -218,7 +218,10 @@ interface State {
   /** About them, "Keep a copy": the file chosen to bring back (shown before anything is replaced), an error, "done". */
   importDraft: { backup: Backup; preview: BackupPreview } | null;
   backupError: string;
-  backupDone: boolean;
+  /** The line after a file was loaded ("replaced" or "added"); '' otherwise. */
+  backupDone: string;
+  /** Phase 10: "Include health notes" in the next file. Off until ticked, off again after each file, never kept on the device. */
+  backupHealth: boolean;
   /** Phase 4 (core/letter.ts, core/turn.ts, core/visit.ts, core/phototalk.ts): see P4State. */
   p4: P4State;
 }
@@ -304,7 +307,8 @@ const state: State = {
   tipWords: null,
   importDraft: null,
   backupError: '',
-  backupDone: false,
+  backupDone: '',
+  backupHealth: false,
   p4: { letter: null, letterNo: false, letterPending: null, turn: null, visit: null, visitRun: false, visitEnd: false, visitCopied: false, talk: null },
 };
 /** When this page was opened: the simple view's "Today" list holds the answers confirmed since then. */
@@ -2065,7 +2069,7 @@ function render(lifted = false) {
   const fresh = key !== lastKey;
   if (r !== 'person') stopSound();
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone })}`, numberHtml: numberField(state.health.emergency, state.health.helpline ?? ''), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber(), guess: numberGuess() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone, health: state.backupHealth })}`, numberHtml: numberField(state.health.emergency, state.health.helpline ?? ''), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber(), guess: numberGuess() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   keepGuard();
   if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);
@@ -2675,13 +2679,19 @@ function act(el: HTMLElement) {
     case 'ins-no': state.insSheet = null; render(); document.querySelector<HTMLElement>('#ins-plainer')?.focus({ preventScroll: true }); break;
     case 'ins-yes': void sendInsights(); break;
     // ---- a copy of About them in a file (core/backup.ts): made here, saved where the carer chooses, sent nowhere
-    case 'backup-save': state.backupError = ''; state.backupDone = false; downloadFile(C.simple.backup.fileName, backupText(makeBackup(state.profile, state.photos, state.health, Date.now())), 'application/json'); break;
-    case 'backup-load': state.backupError = ''; state.backupDone = false; document.querySelector<HTMLInputElement>('#backup-file')?.click(); break;
+    // (phase 10: health notes only with the box ticked; the box is off again after each file)
+    case 'backup-save': state.backupError = ''; state.backupDone = ''; downloadFile(P10.backup.fileName, backupText(makeBackup(state.profile, state.photos, state.health, Date.now(), state.backupHealth)), 'application/json'); state.backupHealth = false; render(); break;
+    case 'backup-load': state.backupError = ''; state.backupDone = ''; document.querySelector<HTMLInputElement>('#backup-file')?.click(); break;
     case 'import-no': state.importDraft = null; render(); break;
-    case 'import-yes':
+    // nothing changes before one of these two: "Replace what is here" or "Add to what is here" (core/backup.ts)
+    case 'import-replace':
+    case 'import-add':
       if (state.importDraft) {
         const b = state.importDraft.backup;
-        state.profile = b.profile; state.photos = b.photos; state.health = b.health; state.importDraft = null; state.backupDone = true;
+        const here = { profile: state.profile, photos: state.photos, health: state.health };
+        const next = a === 'import-add' ? addTo(here, b) : { ...replaceWith(here, b), skipped: 0 };
+        state.profile = next.profile; state.photos = next.photos; state.health = next.health; state.importDraft = null;
+        state.backupDone = a === 'import-add' ? `${P10.backup.added}${next.skipped ? P10.backup.full(next.skipped) : ''}` : P10.backup.replaced;
         void kvSet('profile', state.profile); void kvSet('photos', state.photos); void kvSet('health', state.health);
         render(); document.querySelector<HTMLElement>('#backup')?.scrollIntoView({ block: 'nearest' });
       }
@@ -2766,7 +2776,7 @@ function act(el: HTMLElement) {
       break;
     case 'delete-all':
       if (confirm(C.about.deleteConfirm)) {
-        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.needsLog = []; state.forgotten = NOTHING_FORGOTTEN; state.learnedShort = null; state.photos = []; state.photoDraft = null; state.made = []; state.diary = []; state.health = NO_HEALTH; state.asks = []; state.logged = null; state.importDraft = null; state.backupError = ''; state.backupDone = false; state.ins = { key: '', words: null, source: 'rules', busy: false, note: '' }; state.p4.visit = null; p8later.list = []; p8.log = newLog(Date.now()); void kvSet('practice', p8.log); p8.picked = []; p8.pass = NO_PASSPORT; p8.page = false; p8.health = false; clearP4(); resetCard(); go(simpleView() ? '' : 'welcome'); });
+        void kvClear().then(() => { state.profile = { ...EMPTY_PROFILE, people: [] }; state.settings = { cloudHelp: false, support: 'more', welcomed: false }; state.answers = []; state.history = []; state.needsLog = []; state.forgotten = NOTHING_FORGOTTEN; state.learnedShort = null; state.photos = []; state.photoDraft = null; state.made = []; state.diary = []; state.health = NO_HEALTH; state.asks = []; state.logged = null; state.importDraft = null; state.backupError = ''; state.backupDone = ''; state.backupHealth = false; state.ins = { key: '', words: null, source: 'rules', busy: false, note: '' }; state.p4.visit = null; p8later.list = []; p8.log = newLog(Date.now()); void kvSet('practice', p8.log); p8.picked = []; p8.pass = NO_PASSPORT; p8.page = false; p8.health = false; clearP4(); resetCard(); go(simpleView() ? '' : 'welcome'); });
       }
       break;
     default:
@@ -2838,13 +2848,17 @@ app.addEventListener('change', (ev) => {
   if (t instanceof HTMLInputElement && t.dataset.sinceQ !== undefined && state.p4.visit) { state.p4.visit.carerAsk = toggleQuestion(pickedQuestions(state.p4.visit.carerAsk), P5.since.questions[Number(t.dataset.sinceQ)]); void kvSet('visit', state.p4.visit); render(); return; }
   // health notes (About them): kept on this device at once; never part of the profile the prompts read
   if (t instanceof HTMLInputElement && t.type === 'checkbox' && t.dataset.health) { state.health = cleanHealth({ ...state.health, [t.dataset.health]: t.checked }); if (!state.demo) void kvSet('health', state.health); return; }
+  if (t instanceof HTMLInputElement && t.id === 'backup-health') { state.backupHealth = t.checked; return; }
   if (t instanceof HTMLInputElement && t.id === 'backup-file' && t.files?.[0]) {
     const file = t.files[0];
-    void file.text().then((text) => {
-      const r = readBackup(text);
-      if (r.ok) { state.importDraft = { backup: r.backup, preview: r.preview }; state.backupError = ''; } else { state.importDraft = null; state.backupError = C.simple.backup.bad[r.error]; }
+    t.value = '';
+    const shown = (r: ReturnType<typeof readBackup>) => {
+      if (r.ok) { state.importDraft = { backup: r.backup, preview: r.preview }; state.backupError = ''; } else { state.importDraft = null; state.backupError = P10.backup.bad[r.error]; }
       render(); if (!r.ok) document.querySelector<HTMLElement>('#backup')?.scrollIntoView({ block: 'nearest' });
-    }, () => { state.backupError = C.simple.backup.bad.json; render(); });
+    };
+    // (phase 10) a file over the limit is refused by its size, before a byte of it is read
+    if (file.size > BACKUP_MAX_BYTES) { shown({ ok: false, error: 'big' }); return; }
+    void file.text().then((text) => shown(readBackup(text, file.size)), () => { state.backupError = P10.backup.bad.json; render(); });
     return;
   }
   if (t instanceof HTMLInputElement && t.dataset.field === 'household') { state.profile.people[Number(t.dataset.person)].household = t.checked; saveProfile(); }

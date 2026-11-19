@@ -1,19 +1,25 @@
 // Phase 10 (19 Nov 2026, design/PHASE10_BRIEF.md). 1: "His turn", the person starts: "I want to talk about…" with
 // the family's people and places, the carer's line and three questions, the diary's "Frank started: Beth", and the
 // worst cases (a need through it is never weaker than through the needs board; About them empty; nothing sent).
+// 2: About them saved to a file and loaded from one: health notes off by default, Replace / Add / Cancel, and a file
+// is never taken on trust (malformed, huge, <script> in a name, version 2).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { BACKUP_MAX_BYTES, PEOPLE_CAP, addTo, backupText, makeBackup, previewOf, readBackup, replaceWith } from '../../core/backup';
 import { P10 } from '../../core/copy10';
 import { addEntry, answerEntry, diaryText, markDiary, needEntry, startedEntry, startedText, tags } from '../../core/diary';
 import type { DeviceStatus, Engine, ModelResult } from '../../core/engine';
+import { NO_HEALTH } from '../../core/insights';
 import { needsCard } from '../../core/needs';
+import { PHOTO_CAP, type Photo } from '../../core/photos';
 import { BUILTIN } from '../../core/pictures';
 import { makeCard } from '../../core/pipeline';
 import { urgentAnswer } from '../../core/redflag';
 import { after } from '../../core/tree';
 import { STARTERS, TALK_PEOPLE, TALK_PLACES, pages, starterOf, talkItems, talkLead, talkMenu, talkPick, topicMenu, turnCard, type TalkPick } from '../../core/turn';
 import { EMPTY_PROFILE, type Card, type Profile } from '../../core/types';
+import { backupBlock, importSheet } from '../../web/src/diary';
 import { startedHtml } from '../../web/src/phase6';
 import { turnButton } from '../../web/src/phase4';
 import { WEEK } from './week';
@@ -218,5 +224,159 @@ describe('1. nothing leaves the device: no request in "His turn"', () => {
     expect(turnPart).not.toMatch(/engine|fetch\(|runCloud|runDevice/);
     // "I feel…" asks the rules' own question through make(): a question the rules make a card for, never a model
     expect(turnPart).toContain('void make(FEEL_QUESTION)');
+  });
+});
+
+// ---------------------------------------------------------------- 2. About them: save to a file and load from a file
+describe('2. About them in a file: health notes off by default, a round trip, never taken on trust', () => {
+  const JPEG = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/';
+  const NOW = new Date(2026, 10, 19, 10, 0).getTime();
+  const photos: Photo[] = [{ id: 'ph1', word: 'Bo', data: JPEG, at: 1 }, { id: 'ph2', word: 'the lake', data: `${JPEG}A`, at: 2 }];
+  const health = { ...WEEK.health, emergency: '999', swallowing: true };
+  const ok = (text: string) => { const r = readBackup(text); if (!r.ok) throw new Error(r.error); return r; };
+  const err = (o: unknown) => { const r = readBackup(typeof o === 'string' ? o : JSON.stringify(o)); return r.ok ? 'ok' : r.error; };
+
+  it('the file names itself "talk-partner-about", version 1, with the date; never the diary or what was learned', () => {
+    const j = JSON.parse(backupText(makeBackup(MILLER, photos, health, NOW))) as Record<string, unknown>;
+    expect(j).toMatchObject({ format: 'talk-partner-about', version: 1, savedAt: new Date(NOW).toISOString() });
+    expect(Object.keys(j).sort()).toEqual(['app', 'emergency', 'format', 'kind', 'photos', 'profile', 'savedAt', 'version']);
+    expect(JSON.stringify(j)).not.toMatch(/diary|history|needsLog|learned|forgotten|lessSure/);
+  });
+  it('health notes are off by default: not in the file, and the emergency number is', () => {
+    const text = backupText(makeBackup(MILLER, photos, health, NOW));
+    expect(text).not.toMatch(/diabetes|swallowing|"health"|Dr Patel/i);
+    expect(ok(text).backup).toMatchObject({ health: null, emergency: '999' });
+    expect(ok(text).preview.health).toBeNull();
+    // ticked: in the file, and back exactly
+    expect(ok(backupText(makeBackup(MILLER, photos, health, NOW, true))).backup.health).toEqual(health);
+    // the screen: the box starts unticked, and the save reads it, then unticks it
+    const main = read('web/src/main.ts');
+    expect(main).toContain('backupHealth: false,');
+    expect(main).toContain("makeBackup(state.profile, state.photos, state.health, Date.now(), state.backupHealth)), 'application/json'); state.backupHealth = false;");
+  });
+  it('round trip: save -> load -> Replace = the same About them, photos and (ticked) health notes', () => {
+    const b = ok(backupText(makeBackup(MILLER, photos, health, NOW, true))).backup;
+    const back = replaceWith({ profile: EMPTY_PROFILE, photos: [], health: NO_HEALTH }, b);
+    expect(back).toEqual({ profile: MILLER, photos, health });
+    expect(backupText(makeBackup(back.profile, back.photos, back.health, NOW, true))).toBe(backupText(makeBackup(MILLER, photos, health, NOW, true)));
+    // without health notes in the file, Replace keeps the health notes here
+    const lean = ok(backupText(makeBackup(MILLER, photos, health, NOW))).backup;
+    const here = { profile: EMPTY_PROFILE, photos: [], health: { ...NO_HEALTH, diabetes: true, emergency: '112' } };
+    expect(replaceWith(here, lean).health).toEqual({ ...NO_HEALTH, diabetes: true, emergency: '999' });
+  });
+  it('a malformed file: refused in plain words, nothing changes', () => {
+    expect(err('{"format": "talk-partner-about", "version": 1, ')).toBe('json');
+    expect(err('')).toBe('json');
+    expect(err(null)).toBe('kind');
+    expect(err([])).toBe('kind');
+    expect(err({ format: 'something-else', version: 1 })).toBe('kind');
+    expect(err({ format: 'talk-partner-about', kind: 'diary', version: 1 })).toBe('kind');
+    const g = JSON.parse(backupText(makeBackup(MILLER, photos, health, NOW, true))) as Record<string, any>;
+    expect(err({ ...g, version: '1' })).toBe('shape');
+    expect(err({ ...g, version: 1.5 })).toBe('shape');
+    expect(err({ ...g, profile: { ...g.profile, people: 'Beth' } })).toBe('shape');
+    expect(err({ ...g, health: 'diabetes' })).toBe('shape');
+    expect(err({ ...g, photos: [{ ...g.photos[0], data: 'javascript:alert(1)' }] })).toBe('shape');
+  });
+  it('a version-2 file: "from a newer version of the app", not read', () => {
+    const g = JSON.parse(backupText(makeBackup(MILLER, photos, health, NOW))) as Record<string, unknown>;
+    expect(err({ ...g, version: 2 })).toBe('version');
+    expect(P10.backup.bad.version).toBe('This file is from a newer version of the app. Update the app, then try again.');
+  });
+  it(`a huge file: over ${BACKUP_MAX_BYTES / 1024 / 1024} MB it is refused by its size, before it is read; a full family fits under it`, () => {
+    expect(BACKUP_MAX_BYTES).toBe(8 * 1024 * 1024);
+    expect(err('x'.repeat(BACKUP_MAX_BYTES + 1))).toBe('big');
+    expect(readBackup('{}', BACKUP_MAX_BYTES + 1)).toEqual({ ok: false, error: 'big' });
+    const main = read('web/src/main.ts');
+    expect(main).toContain("if (file.size > BACKUP_MAX_BYTES) { shown({ ok: false, error: 'big' }); return; }");
+    // the biggest About them the app keeps: 60 photos and 60 people with a photo, each a 320 px JPEG of 45 kB as a data URL
+    const pic = `data:image/jpeg;base64,${'A'.repeat(45 * 1024)}`;
+    const full: Profile = { ...MILLER, people: Array.from({ length: PEOPLE_CAP }, (_, i) => ({ id: `p${i}`, name: `Person ${i}`, relation: 'friend', household: false, photo: pic })) };
+    const text = backupText(makeBackup(full, Array.from({ length: PHOTO_CAP }, (_, i) => ({ id: `f${i}`, word: `photo ${i}`, data: pic, at: i })), health, NOW, true));
+    expect(text.length).toBeLessThan(BACKUP_MAX_BYTES);
+    expect(ok(text).preview).toMatchObject({ people: PEOPLE_CAP, photos: PHOTO_CAP + PEOPLE_CAP });
+  });
+  it('a file with <script> in a name: kept as the words it is, and never drawn as HTML', () => {
+    const g = JSON.parse(backupText(makeBackup(MILLER, photos, health, NOW))) as Record<string, any>;
+    g.profile.personName = '<script>alert(1)</script>';
+    g.profile.people[1].name = '<img src=x onerror=alert(2)>';
+    g.profile.places = ['<b>lake</b>'];
+    const r = ok(JSON.stringify(g));
+    expect(r.backup.profile.personName).toBe('<script>alert(1)</script>');
+    const sheet = importSheet(r.preview);
+    expect(sheet).not.toMatch(/<script|<img|<b>lake/);
+    expect(sheet).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    // and the talk screen, the carer's line and the diary line of "His turn" are text too
+    const talk = pagesOf(talkMenu(r.backup.profile)).flatMap(answers);
+    expect(talk).toContain('<img src=x onerror=alert(2)>');
+    expect(startedHtml(startedEntry(r.backup.profile.personName, '<img src=x onerror=alert(2)>', 1, 'people'))).not.toMatch(/<script|<img/);
+    expect(read('web/src/phase4.ts')).toContain('esc(m.line)');
+  });
+  it('unknown fields are dropped, field by field', () => {
+    const g = JSON.parse(backupText(makeBackup(MILLER, photos, health, NOW, true))) as Record<string, any>;
+    g.diary = [{ label: 'pain' }]; g.profile.admin = true; g.profile.people[0].token = 'x'; g.photos[0].src = 'https://example.com'; g.health.extra = 1;
+    const b = ok(JSON.stringify(g)).backup;
+    expect('diary' in b).toBe(false);
+    expect(Object.keys(b.profile).sort()).toEqual(Object.keys(EMPTY_PROFILE).sort());
+    expect('token' in b.profile.people[0]).toBe(false);
+    expect(Object.keys(b.photos[0]).sort()).toEqual(['at', 'data', 'id', 'word']);
+    expect('extra' in b.health!).toBe(false);
+  });
+  it('a file of phases 3 to 9 (app + kind, health notes always in it) still loads', () => {
+    const old = { app: 'talk-partner', kind: 'about-them', version: 1, savedAt: new Date(NOW).toISOString(), profile: MILLER, photos, health };
+    expect(ok(JSON.stringify(old)).backup).toMatchObject({ profile: MILLER, photos, health, emergency: '999' });
+  });
+});
+
+describe('2. Replace, Add or Cancel: nothing changes until the carer picks', () => {
+  const JPEG = 'data:image/jpeg;base64,/9j/4AAQ';
+  const here = { profile: { ...EMPTY_PROFILE, personName: 'Frank', people: [{ id: 'p2', name: 'Beth', relation: 'daughter', household: false }], foods: ['tea'], places: ['the lake'] }, photos: [{ id: 'ph1', word: 'Bo', data: JPEG, at: 1 }], health: { ...NO_HEALTH, swallowing: true, text: 'Soft food.', emergency: '112' } };
+  const file = makeBackup({ ...EMPTY_PROFILE, personName: 'Francis', partnerName: 'Carol', people: [{ id: 'p2', name: 'beth', relation: 'daughter', household: false }, { id: 'p2b', name: 'Tom', relation: 'brother', household: false }], foods: ['Tea', 'ginger biscuits'], places: ['church'] }, [{ id: 'ph1', word: 'lake', data: `${JPEG}B`, at: 2 }, { id: 'ph9', word: 'Bo', data: JPEG, at: 3 }], { ...NO_HEALTH, diabetes: true, text: 'Type 2.', emergency: '999' }, 5, true);
+  it('Add: nothing here is removed or changed; new people, words and photos are added, the same ones once', () => {
+    const r = addTo(here, file);
+    expect(r.profile.personName).toBe('Frank');
+    expect(r.profile.partnerName).toBe('Carol');
+    expect(r.profile.people.map((x) => x.name)).toEqual(['Beth', 'Tom']);
+    expect(r.profile.foods).toEqual(['tea', 'ginger biscuits']);
+    expect(r.profile.places).toEqual(['the lake', 'church']);
+    // the same picture once; a photo id that is taken here gets a new one
+    expect(r.photos.map((x) => [x.id, x.word])).toEqual([['ph1', 'Bo'], ['ph1-2', 'lake']]);
+    expect(new Set(r.photos.map((x) => x.id)).size).toBe(r.photos.length);
+    expect(r.skipped).toBe(0);
+  });
+  it('Add: a health toggle on in either stays on (a swallowing difficulty is never lost); the file\'s words go under the words here', () => {
+    const h = addTo(here, file).health;
+    expect(h).toMatchObject({ swallowing: true, diabetes: true, text: 'Soft food.\nType 2.', emergency: '112' });
+    // a file without health notes changes none
+    expect(addTo(here, { ...file, health: null }).health).toEqual(here.health);
+  });
+  it('Add: past the cap of 60 photos, what does not fit is left out and counted', () => {
+    const many = { ...here, photos: Array.from({ length: PHOTO_CAP - 1 }, (_, i) => ({ id: `h${i}`, word: `w${i}`, data: `${JPEG}${i}`, at: i })) };
+    const r = addTo(many, { ...file, photos: [0, 1, 2].map((i) => ({ id: `n${i}`, word: `n${i}`, data: `${JPEG}n${i}`, at: i })) });
+    expect(r.photos).toHaveLength(PHOTO_CAP);
+    expect(r.skipped).toBe(2);
+    expect(`${P10.backup.added}${P10.backup.full(2)}`).toBe('What was in the file was added to About them. 2 photos did not fit: the app keeps 60.');
+  });
+  it('Replace: About them and the photos become the file\'s', () => {
+    const r = replaceWith(here, file);
+    expect(r.profile).toEqual(file.profile);
+    expect(r.photos).toEqual(file.photos);
+    expect(r.health).toEqual(file.health);
+  });
+  it('the screen: Replace, Add and Cancel; the file is only read into a draft; Back and Escape close it with nothing changed', () => {
+    const main = read('web/src/main.ts');
+    expect(main).toContain("case 'import-replace':");
+    expect(main).toContain("case 'import-add':");
+    expect(main).toContain("case 'import-no': state.importDraft = null; render(); break;");
+    expect(main).toContain('if (state.importDraft) { state.importDraft = null; return from; }');
+    // reading a file sets the draft and nothing else: the profile, the photos and the health notes are written only under the two buttons
+    const load = main.slice(main.indexOf("t.id === 'backup-file'"), main.indexOf('return;\n  }', main.indexOf("t.id === 'backup-file'")));
+    expect(load).not.toMatch(/state\.profile =|state\.photos =|state\.health =|kvSet/);
+    const sheet = importSheet(previewOf(file));
+    for (const t of [P10.backup.replace, P10.backup.add, P10.backup.cancel]) expect(sheet).toContain(t);
+  });
+  it('the one plain line on what it is for is on the screen', () => {
+    expect(P10.backup.use).toBe("Use it to move to a new phone, to set up a second carer's phone, or as a spare copy.");
+    expect(backupBlock({ error: '', done: '', health: false })).toContain(P10.backup.use);
   });
 });

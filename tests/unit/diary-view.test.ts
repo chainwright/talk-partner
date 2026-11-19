@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeBackup, previewOf } from '../../core/backup';
 import { COPY } from '../../core/copy';
+import { P10 } from '../../core/copy10';
 import { inSpan } from '../../core/diary';
 import { NO_HEALTH, insights } from '../../core/insights';
 import { needsCard } from '../../core/needs';
@@ -132,20 +133,26 @@ describe('About them: health notes and "Keep a copy"', () => {
     expect(closed).toContain('Diabetes, Type 2 diabetes, diet only. Dr Patel on');
     expect(aboutSimple({ profile: WEEK.profile, open: null, saved: false, health: NO_HEALTH })).toContain(S.health.none);
   });
-  it('"Keep a copy": save, bring back, and where the file goes', () => {
-    const html = backupBlock({ error: '', done: false });
+  it('"Keep a copy": save, load, where the file goes, and "Include health notes" off', () => {
+    const html = backupBlock({ error: '', done: '', health: false });
     expect(html).toContain('data-act="backup-save"');
     expect(html).toContain('data-act="backup-load"');
     expect(html).toContain('type="file" id="backup-file" accept="application/json,.json" hidden');
-    expect(html).toContain(S.backup.lock);
-    expect(backupBlock({ error: S.backup.bad.kind, done: false })).toContain('role="alert"');
+    expect(html).toContain(P10.backup.lock);
+    expect(html).toContain(P10.backup.use);
+    expect(html).toContain('<input type="checkbox" id="backup-health" >');
+    expect(backupBlock({ error: '', done: '', health: true })).toContain('id="backup-health" checked');
+    expect(backupBlock({ error: P10.backup.bad.kind, done: '', health: false })).toContain('role="alert"');
     expect(aboutSimple({ profile: EMPTY_PROFILE, open: null, saved: false, backupHtml: html })).toContain('id="backup"');
   });
-  it('the preview says what the file holds and that it replaces, above the two buttons', () => {
-    const html = importSheet(previewOf(makeBackup(WEEK.profile, [], WEEK.health, NOW)));
-    for (const t of ['The name: Frank', '3 people', '0 photos', '1 fact you kept', 'Health notes: diabetes, anything else to keep in mind', 'Saved on 22 Nov 2026']) expect(html).toContain(t);
-    expect(html).toContain(S.backup.replaces);
-    expect(html.indexOf('id="import-has"')).toBeLessThan(html.indexOf('data-act="import-yes"'));
+  it('the preview says what the file has, above Replace, Add and Cancel', () => {
+    const html = importSheet(previewOf(makeBackup(WEEK.profile, [], WEEK.health, NOW, true)));
+    for (const t of ['The name: Frank', '3 people', '2 places', '2 foods', '1 show and music', '0 photos', '1 fact you kept', 'Health notes: diabetes, anything else to keep in mind', 'Saved on 22 Nov 2026']) expect(html).toContain(t);
+    expect(html).toContain(P10.backup.replaceWhat);
+    expect(html.indexOf('id="import-has"')).toBeLessThan(html.indexOf('data-act="import-replace"'));
+    expect(html.indexOf('data-act="import-replace"')).toBeLessThan(html.indexOf('data-act="import-add"'));
+    expect(html.indexOf('data-act="import-add"')).toBeLessThan(html.indexOf('data-act="import-no"'));
+    expect(importSheet(previewOf(makeBackup(WEEK.profile, [], WEEK.health, NOW)))).toContain(P10.backup.has.noHealth);
   });
 });
 

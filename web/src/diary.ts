@@ -16,6 +16,7 @@ import { TOPIC_BASE } from '../../core/topics';
 import { builtinPicto } from './pictos';
 import { FALL_HEAD } from '../../core/diary';
 import { P9 } from '../../core/copy9';
+import { P10 } from '../../core/copy10';
 import { P5 } from '../../core/copy5';
 import { DEFAULT_NUMBER } from '../../core/redflag';
 import { urgentBox } from './phase5';
@@ -168,29 +169,32 @@ export function insightSheet(m: { text: string; request: string }): string {
 </div>`;
 }
 
-/** "Keep a copy": About them to a file, and back from one. */
-export function backupBlock(m: { error: string; done: boolean }): string {
-  const B = COPY.simple.backup;
+/** "Keep a copy" (phase 10): About them to a file, health notes only when ticked, and loading one back. */
+export function backupBlock(m: { error: string; done: string; health: boolean }): string {
+  const B = P10.backup;
   return `<section class="backup" id="backup" aria-labelledby="backup-h"><h2 id="backup-h">${B.heading}</h2>
-    <p class="tip">${B.why}</p>
+    <p class="tip" id="backup-use">${B.use}</p>
     <p class="lock" id="backup-lock">${SIGN.lock}<span>${B.lock}</span></p>
+    <label class="check" id="backup-health-row"><input type="checkbox" id="backup-health" ${m.health ? 'checked' : ''}>${B.health}</label>
+    <p class="tip small" id="backup-health-why">${B.healthWhy}</p>
     <button type="button" class="btn" id="backup-save" data-act="backup-save">${B.save}</button>
     <button type="button" class="btn" id="backup-load" data-act="backup-load">${B.load}</button><input type="file" id="backup-file" accept="application/json,.json" hidden>
-    ${m.error ? `<p class="warn" role="alert" id="backup-error">${esc(m.error)}</p>` : ''}${m.done ? `<p class="saved" role="status" id="backup-done">${B.done}</p>` : ''}</section>`;
+    ${m.error ? `<p class="warn" role="alert" id="backup-error">${esc(m.error)}</p>` : ''}${m.done ? `<p class="saved" role="status" id="backup-done">${esc(m.done)}</p>` : ''}</section>`;
 }
 
-/** What the chosen file holds, before anything on this device is replaced. */
+/** What the chosen file has, before anything on this device changes: Replace, Add, or Cancel. Every word from the file is escaped. */
 export function importSheet(p: BackupPreview): string {
-  const B = COPY.simple.backup;
+  const B = P10.backup;
   const H = COPY.simple.health;
-  const health = p.health.map((k) => (k === 'text' ? H.text.toLowerCase() : H.toggles[k].toLowerCase()));
+  const health = p.health === null ? B.has.noHealth : B.has.health(p.health.map((k) => (k === 'text' ? H.text.toLowerCase() : H.toggles[k].toLowerCase())).join(', '));
   const when = new Date(p.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-  const rows = [p.name ? B.has.name(p.name) : B.has.noName, B.has.people(p.people), B.has.lists(p.lists), B.has.photos(p.photos), B.has.facts(p.facts), B.has.health(health.join(', ')), B.has.saved(when)];
+  const rows = [p.name ? B.has.name(p.name) : B.has.noName, B.has.people(p.people), B.has.places(p.places), B.has.foods(p.foods), B.has.shows(p.shows), B.has.photos(p.photos), B.has.facts(p.facts), health, B.has.saved(when)];
   return `<div class="dim"></div>
 <div class="sheet import-sheet" id="import-sheet" role="dialog" aria-modal="true" aria-labelledby="import-h">
   <h2 id="import-h" tabindex="-1">${B.preview}</h2>
   <ul class="has" id="import-has">${rows.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>
-  <p>${B.replaces}</p>
-  <div class="choice"><button type="button" class="btn primary" data-act="import-yes">${B.yes}</button><button type="button" class="btn" data-act="import-no">${B.no}</button></div>
+  <p id="import-what">${B.replaceWhat} ${B.addWhat}</p>
+  <p class="tip">${B.stays}</p>
+  <div class="choice import-choice"><button type="button" class="btn primary" data-act="import-replace">${B.replace}</button><button type="button" class="btn" data-act="import-add">${B.add}</button><button type="button" class="btn quiet" data-act="import-no">${B.cancel}</button></div>
 </div>`;
 }
