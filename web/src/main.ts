@@ -1474,7 +1474,7 @@ function personView(full: boolean): string {
   }
   // the empty card area of the partner screen says in words what will be here (the owner's phone test, 18 Nov 2026: an
   // ear alone told nobody anything); the person's own full screen keeps its quiet picture. A question that got no card
-  // says so here too, not "will appear" (Hana's walk of the sample family at 390 px, 18 Nov: the first chip, an open
+  // says so here too, not "will appear" (a walk of the sample family at 390 px, 18 Nov: the first chip, an open
   // question, with no on-device model and cloud help off)
   if (!c || c.blocked || !c.choices.length) return full ? `${exit}<div class="listening${state.busy ? ' thinking' : ''}">${builtinPicto('listen')}</div>` : `<div class="listening words${state.busy ? ' thinking' : ''}"><p id="card-empty" role="status">${state.busy ? C.card.emptyBusy : c ? C.card.emptyNone : C.card.emptyPane}</p></div>`;
   if (state.less) return `${exit}${headline(c.topic)}`;

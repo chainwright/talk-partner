@@ -147,7 +147,7 @@ def rules(browser, url):
     e2e.tap_yes(page, 'me')
     e2e.give_back(page, 'main.simple')
     check('the carer reads "Frank\'s own news"', "It is about: People & family, Frank's own news." in e2e.text(page), e2e.text(page)[:300])
-    # (18 Nov, Hana's walk of the sample family at 390 px) the first chip, an open question, with no model ready here and
+    # (18 Nov, a walk of the sample family at 390 px) the first chip, an open question, with no model ready here and
     # cloud help off: the card area says no card was made, not "Your card will appear here"
     page.goto(url + '#/demo')
     page.wait_for_selector('#result > .badge-line')
