@@ -58,10 +58,11 @@ def main():
     dirty = bool(subprocess.run(['git', 'status', '--porcelain', '--untracked-files=no'], capture_output=True, text=True, cwd=HERE).stdout.strip())
     log('# Read aloud against the real model (Firebase AI Logic)')
     log()
-    log(f'- when: {datetime.datetime.utcnow().strftime("%d %b %Y, %H:%M UTC")}; commit `{head}`{" with uncommitted changes" if dirty else ", working tree clean"}; `{url}` (the dev server, App Check debug token)')
+    log(f'- when: {datetime.datetime.utcnow().strftime("%d %b %Y, %H:%M UTC")}; commit `{head}`{" with uncommitted changes" if dirty else ", working tree clean"}; `{url}` ({"the dev server, App Check debug token" if urlparse(url).hostname in ("localhost", "127.0.0.1") else "the hosted copy, App Check with reCAPTCHA Enterprise"})')
     with sync_playwright() as p:
-        b = p.chromium.launch()
-        log(f'- browser: Chromium {b.version} (headless), 390 x 844, Android user agent: no on-device model')
+        headed = os.environ.get('HEADED') == '1'  # a hosted copy: App Check (reCAPTCHA Enterprise) refuses a headless browser
+        b = p.chromium.launch(headless=not headed)
+        log(f'- browser: Chromium {b.version} ({"a normal window" if headed else "headless"}), 390 x 844, Android user agent: no on-device model')
         ctx = b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=e2e.PHONE_UA)
         hosts, console = [], []
         ctx.on('request', lambda r: hosts.append(urlparse(r.url).hostname) if urlparse(r.url).hostname not in (host, None) else None)
