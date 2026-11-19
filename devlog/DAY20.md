@@ -54,7 +54,7 @@ replaced everything, health notes always in the file). Phase 10 builds on them r
 - A name with `<script>` in it: shown as text on the preview, on the talk screen and in the diary; nothing runs.
 
 ## Runs
-COUNTS_LINE
+2902 unit tests (`npm run check`); `e2e-simple.py` 1032/1032; `pwa-check.py` 32/32; `e2e-needs.mjs` 12/12; `overflow-check.py` 548/548; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py` 21/21 (the first run failed on its own old step, "tell you" then "People", which phase 10 replaced with "I want to talk about…"; the script now follows the new path, no app change); `phase9-shots.py` 39/39; `phase10-shots.py` 132/132. The outputs are in `devlog/evidence_phase10/local/`.
 
 ## Found, not fixed (before phase 10 too)
 - After a reload on an inner screen (`#/about`), the phone's back with the import sheet open sometimes goes to Home

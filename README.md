@@ -779,7 +779,7 @@ run against a real model in this phase); the size limit is 8 MB, not 5 MB, so th
 back. `devlog/DAY20.md` has the reasons.
 
 **Counts** (the production build of `864315e` on `npx vite preview`, port 5610, from a separate worktree so that
-`dist/` was not touched): COUNTS_LINE
+`dist/` was not touched): 2902 unit tests (`npm run check`); `e2e-simple.py` 1032/1032; `pwa-check.py` 32/32; `e2e-needs.mjs` 12/12; `overflow-check.py` 548/548; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py` 21/21 (the first run failed on its own old step, "tell you" then "People", which phase 10 replaced with "I want to talk about…"; the script now follows the new path, no app change); `phase9-shots.py` 39/39; `phase10-shots.py` 132/132. The outputs are in `devlog/evidence_phase10/local/`.
 
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104
