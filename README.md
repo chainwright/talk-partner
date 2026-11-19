@@ -1247,7 +1247,14 @@ Against it, all in `devlog/evidence_live/` with `9d141b0` in the name:
   (`devlog/evidence_phase5/AI_RUN_LOG.md`).
 Not run against this build: `overflow-check.py` (510/510 on localhost at `d198eb0`), `update-check.py`,
 `e2e-noconfig.mjs` (25/25 on localhost at `de631b1`), `e2e-ondevice.mjs`, `e2e-phase4-ai.py`; nothing on a real phone;
-the App Check enforcement state and the billing tier in the console were not read by us.
+the App Check enforcement state and the billing tier in the console were not read by us at the time. We read them on
+19 Nov 2026, 05:09–05:10 UTC (screenshots with the time on them, account name hidden:
+`devlog/evidence_live/gemini_rate_limit_tier1_2026-11-19.png`, `devlog/evidence_live/appcheck_console_2026-11-19.png`):
+the Gemini API project "Talk Partner" is on **Tier 1** (paid; Gemini 3.5 Flash Lite 4K requests a minute, peak use 20 in
+28 days), on a Blaze billing plan; App Check for Firebase AI Logic is **not enforced**: "Basic - Monitoring", 88% of
+requests verified and 12% unverified, replay protection off, and the console says it will enforce AI Logic requests from
+21 Jan 2027. That matches what the probe above measured: the service answers only a request that carries a valid App
+Check token, whatever the console's enforcement setting.
 
 The deploy before it, 18 Nov 2026, 05:14 UTC: <https://talk-partner.web.app> serves the build of commit `421dae0` (the three
 fixes of the third role-play: every first-letter tile starts with the letter and the conversation's kind comes
