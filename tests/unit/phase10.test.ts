@@ -17,7 +17,7 @@ import { BUILTIN } from '../../core/pictures';
 import { makeCard } from '../../core/pipeline';
 import { urgentAnswer } from '../../core/redflag';
 import { after } from '../../core/tree';
-import { STARTERS, TALK_PEOPLE, TALK_PLACES, pages, starterOf, talkItems, talkLead, talkMenu, talkPick, topicMenu, turnCard, type TalkPick } from '../../core/turn';
+import { STARTERS, TALK_PEOPLE, TALK_PLACES, laterQuestion, pages, starterOf, talkItems, talkLead, talkMenu, talkPick, topicMenu, turnCard, type TalkPick } from '../../core/turn';
 import { EMPTY_PROFILE, type Card, type Profile } from '../../core/types';
 import { backupBlock, importSheet } from '../../web/src/diary';
 import { startedHtml } from '../../web/src/phase6';
@@ -378,5 +378,20 @@ describe('2. Replace, Add or Cancel: nothing changes until the carer picks', () 
   it('the one plain line on what it is for is on the screen', () => {
     expect(P10.backup.use).toBe("Use it to move to a new phone, to set up a second carer's phone, or as a spare copy.");
     expect(backupBlock({ error: '', done: '', health: false })).toContain(P10.backup.use);
+  });
+});
+
+describe('phase 10, role-play round 5: "Not now" on the person\'s own start', () => {
+  it('on the starters and on "I want to talk about…" the carer keeps a question they can ask, not the helper line or the person\'s words', () => {
+    expect(laterQuestion(turnCard().asked)).toBe(P10.turn.laterAsk);
+    expect(laterQuestion(P10.turn.talkAsk)).toBe(P10.turn.laterAsk);
+    expect(P10.turn.laterAsk.endsWith('?')).toBe(true);
+  });
+  it('a need, a feeling and pain are kept as they were asked (they stay pinned as care questions)', () => {
+    for (const q of ['What do you need?', 'How are you feeling today?', 'Are you in pain?', 'Where does it hurt?']) expect(laterQuestion(q)).toBe(q);
+  });
+  it('the person\'s "Not now" goes through laterQuestion before it is kept', () => {
+    const main = readFileSync(join(__dirname, '../../web/src/main.ts'), 'utf8');
+    expect(main).toContain("const q = laterQuestion(c.kind === 'repair'");
   });
 });

@@ -19,6 +19,8 @@ export const P10 = {
     talkAsk: 'I want to talk about…',
     talkSay: (xs: string[]) => `What do you want to talk about: ${[...xs, 'something else'].join(', ').replace(/, ([^,]*)$/, ', or $1')}?`,
     news: 'the news / TV',
+    /** (19 Nov, role-play round 5) kept for later after the person's own "Not now" on the starters or on "I want to talk about…": a question the carer can ask, not the person's words. */
+    laterAsk: 'Do you want to tell me something now?',
     /** What the carer reads first, over the answer: the person's words, then the questions. */
     line: {
       me: (name: string) => `${wants(name)} to talk about ${their(name)} own news.`,

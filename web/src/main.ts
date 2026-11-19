@@ -49,7 +49,7 @@ import { kvClear, kvGet, kvSet } from './store';
 import { P4 } from '../../core/copy4';
 import { LETTER_CLOUD_TASK, letterCard, letterEnd, type LetterInput } from '../../core/letter';
 import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
-import { BODY_FIRST, FEEL_QUESTION, aboutCard, menuTopic, starterOf, talkLead, talkMenu, talkPick, turnCard, turnLead, type Starter, type TalkPick } from '../../core/turn';
+import { BODY_FIRST, FEEL_QUESTION, aboutCard, laterQuestion, menuTopic, starterOf, talkLead, talkMenu, talkPick, turnCard, turnLead, type Starter, type TalkPick } from '../../core/turn';
 import { nextVisit, visitCard, visitLabel, visitText, type VisitRecord } from '../../core/visit';
 import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
 import { P5 } from '../../core/copy5';
@@ -2347,7 +2347,7 @@ function onPersonTap(t: HTMLElement) {
     const c = state.card;
     stopSound();
     if (c.visit) { state.p4.visitRun = false; resetCard(); lift = true; go('visit'); return; }
-    const q = c.kind === 'repair' ? state.before?.asked ?? state.chain[0] ?? '' : c.asked;
+    const q = laterQuestion(c.kind === 'repair' ? state.before?.asked ?? state.chain[0] ?? '' : c.asked);
     if (q.trim() && !c.sample) leaveForLater(q, careTopic(c));
     p9notNow = { kept: !!q.trim() && !state.demo && !c.sample };
     makeSeq++; state.busy = false; resetCard(); lift = true; go(''); window.scrollTo(0, 0);
@@ -2951,7 +2951,7 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   const hadWorker = !!navigator.serviceWorker.controller;
   window.addEventListener('load', () => {
     void navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then((reg) => {
-      const look = () => { if (document.visibilityState === 'visible' && navigator.onLine) void reg.update().catch(() => { /* offline: the kept copy stands */ }); };
+      const look = () => { if (document.visibilityState === 'visible' && navigator.onLine) void reg?.update().catch(() => { /* offline: the kept copy stands */ }); };
       document.addEventListener('visibilitychange', look);
       window.addEventListener('online', look);
     }).catch(() => { /* no offline copy: the page works as before */ });

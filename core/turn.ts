@@ -60,6 +60,12 @@ export function turnCard(): Card {
   return { ...base(S.ask, 'start'), choices, say: 'What would you like to do: ask for something, talk about something, or say how you feel?' };
 }
 /** Which starter a label of that card is, or null for the way out. */
+/**
+ * The question kept for later when the person taps "Not now" on their own start. On the starters and on "I want to
+ * talk about…" the asked line is the app's helper line or the person's own words, which read wrongly as a question
+ * on Home; the carer gets one they can ask. Every other question (a need, a feeling, pain) is kept as it was asked.
+ */
+export const laterQuestion = (asked: string): string => (asked === S.ask || asked === P10.turn.talkAsk ? P10.turn.laterAsk : asked);
 export const starterOf = (label: string): Starter | null => STARTERS.find((k) => STARTER_LABEL[k] === label) ?? null;
 
 // ---------------------------------------------------------------- phase 10: "I want to talk about…"
