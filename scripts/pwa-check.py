@@ -8,9 +8,9 @@ What is checked, in Chromium, against a production build (npm run build && npx v
      opens the person's own start;
   2. Chrome's own installability check (Page.getInstallabilityErrors) reports nothing;
   3. the service worker is registered, active and controls the page, and its cache holds the page and every script,
-     style, font and icon the page loaded;
+     style, font and icon the page loaded, and (phase 11) all 85 picture files in /pictures/;
   4. with the connection off: the page loads again; a topic question makes its choices by the rules; the person's
-     screens work to the finish and back; quick needs opens; About them opens and keeps what is typed; a question that
+     screens work to the finish and back, the card's pictures (tea, coffee) load from the kept copy; quick needs opens; About them opens and keeps what is typed; a question that
      needs online help gets a clear "needs the internet" state and no consent sheet; the AI line and the tag say so;
   5. with the connection back, the same question brings the consent sheet again.
 Nothing is sent to any other host: "Yes" on the sheet is never pressed.
@@ -93,6 +93,10 @@ def main():
         missing = [u for u in loaded if u not in kept['urls']]
         check('one cache for this build, holding the page and every file the page loaded (script, style, fonts, icons, manifest)', kept['caches'] == 1 and '/' in kept['urls'] and not missing and any(u.endswith('.js') for u in kept['urls']) and any(u.endswith('.css') for u in kept['urls']) and any('/fonts/' in u for u in kept['urls']), f"missing {missing}; kept {len(kept['urls'])}")
 
+        # (phase 11) the 85 pictures made with Gemini are kept too, though the first screen loads only a few of them
+        pics = [u for u in kept['urls'] if u.startswith('/pictures/') and u.endswith('.webp')]
+        check('phase 11: the cache holds every picture file (85 WebP in /pictures/), not only the ones the page has shown', len(pics) == 85, str(len(pics)))
+
         # 2. Chrome's installability check
         inst = cdp.send('Page.getInstallabilityErrors')
         errs = [e.get('errorId') for e in inst.get('installabilityErrors', [])]
@@ -116,6 +120,10 @@ def main():
         check('offline: a topic question makes its choices by the rules', page.locator('#made-where').get_attribute('data-maker') == 'code' and page.locator('#person .pt').count() == 3)
         page.locator('[data-act=show]').click()
         page.wait_for_selector('main.pv .pt')
+        # (phase 11) the pictures of the card are the Gemini files, drawn from the kept copy: loaded, not broken, not swapped
+        page.wait_for_function("[...document.querySelectorAll('main.pv .pt img.pic')].every((i) => i.complete)", timeout=5000)
+        shown = page.evaluate("[...document.querySelectorAll('main.pv .pt')].map((t) => { const i = t.querySelector('img.pic'); return i ? [i.alt, i.naturalWidth, Math.round(i.getBoundingClientRect().width)] : null; })")
+        check('offline (phase 11): the card shows its pictures from the kept copy: tea, coffee and "something else", each a loaded 256 px WebP (the two choices 128 px, the way out smaller)', [x[0] for x in shown if x] == ['tea', 'coffee', 'something else'] and all(x[1] == 256 for x in shown if x) and all(x[2] >= 100 for x in shown[:2] if x), str(shown))
         page.locator('main.pv .pt', has_text='tea').click()
         page.locator('[data-confirm=yes]').click()
         page.wait_for_selector('.p-give')
