@@ -1642,6 +1642,7 @@ function howScreen(): string {
     <h1>${H.heading}</h1>
     <p class="routing"><b>${H.routing}</b></p>
     <p>${H.intro}</p>
+    <p class="muted" id="pictures-line">${H.pictures}</p>
     ${diagram()}
     <h2>${H.legs}</h2>${legsTable()}
     ${settingsPanel()}

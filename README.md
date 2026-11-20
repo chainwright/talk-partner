@@ -15,7 +15,7 @@ materials describe (our reading; no speech therapist has reviewed it): it says w
 problem (two things in one, a memory test), and it turns the partner's own question into a
 written-choice card (a keyword, two choices, pictured where we have drawn a picture, an escape every time, a
 tick/cross check) and gives the partner the exact line to say. It never picks or confirms the person's answer: only
-their tap does. Pictures (since 18 Nov our own colour drawings, 123 of them: `PICTOGRAMS.md`): yes / no, feelings, the body
+their tap does. Pictures (124 and the monogram since 20 Nov: 85 colour pictures made with Gemini and our own colour drawings for the rest; the source of each in `PICTOGRAMS.md`): yes / no, feelings, the body
 map, people, drinks and food, rest, TV and music, going out, the ways out, the needs of the quick-needs board. The
 family's own places and foods ("lake", "pot roast") show the family's own photo where one was added, and the word
 alone otherwise.
@@ -93,7 +93,7 @@ the code and the live site (`CLAIMS.md` rows 40, 41 and 42).
 
 **Quick needs.** One button in the top bar of every partner screen (or the address `#/needs`) puts a fixed board on
 the person's screen: *toilet, drink, food, pain, tired, too hot, too cold, call someone*, and *something else*. Each
-tile is one of our own pictures (colour drawings since 18 Nov) with its word. A tap is checked like every choice ("So: toilet. Right?" with a
+tile is one of the bundled colour pictures (made with Gemini since 20 Nov, `PICTOGRAMS.md`) with its word. A tap is checked like every choice ("So: toilet. Right?" with a
 tick and a cross); after the tick the person's screen shows the need and nothing else, and the partner's side gets one
 short line for it ("Go now. The rest can wait."; after *pain*, one tap asks "Where does it hurt?", the body card).
 *Something else* is checked the same way and hands back to the question box and "We're stuck". The board is made in
@@ -172,11 +172,12 @@ It leans on the two examples in the request ("something cold", "something to eat
 One run; the model's answers vary.
 
 **Colour pictures (`web/src/pictos.ts`, `PICTOGRAMS.md`).** The black line drawings were replaced by simple,
-realistic colour drawings, all our own (no third-party set, no AI-generated image): real-object colours, one object,
+realistic colour drawings, all our own at the time (no third-party set; since 20 Nov, phase 11, 85 of them are pictures made with Gemini, see below and `PICTOGRAMS.md`): real-object colours, one object,
 a plain background, light shading, the word under each. 123 pictures and the monogram (three were added in phase 5); 39 of them are new, for the
 words the topic questions and their trees offer (all 128 choices of the 40 rule-made topic questions now have a
 picture; a word with none still shows alone). Why colour: `design/IMAGES_RESEARCH_2026-11-17.md`. The sheet at
 390 px: `devlog/evidence_pictures/pictures_390.png`.
+Since 20 Nov (phase 11), 85 of these are colour pictures generated with Gemini (Gemini 3.1 Flash Image), reviewed by a person and bundled as WebP files that work offline; the rest stay our own SVG drawings, and the app's "How this works" screen says "Pictures: drawn by us and made with Gemini." (`PICTOGRAMS.md`, `DISCLOSURE.md`).
 
 **Personal photos (`core/photos.ts`, `web/src/photo.ts`).** In About them the carer adds a photo of a person, a food
 or drink, or a place: take or choose it, frame it by hand (move and zoom a square), give it one word. A card shows it
@@ -1179,7 +1180,7 @@ under `@firebase/firestore`, which this app does not import.
   person reads**). Pure TypeScript, no DOM, no Firebase, so every client reuses it unchanged.
 - `web/`: the web client. `web/src/ai/` is the only place that imports `firebase/ai` (`firebaseEngine.ts`) and
   `firebase/remote-config` (`remoteConfig.ts`). `pictos.ts` holds the colour
-  pictures, all drawn by us (provenance and licence per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper;
+  pictures: 85 made with Gemini (WebP files in `web/public/pictures/`) and our own SVG drawings (source, date and licence or terms per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper;
   `voice.ts` is the microphone's state machine (record, stop, send the clip once through the engine; no DOM, so it
   is tested with a scripted microphone, recorder and engine); `mic.ts` is the browser's side; `feedback.ts` the form. `core/needs.ts` is the quick-needs board.
   `web/src/simple.ts` draws the simple view (the carer's screens and the person's); `web/sw.template.js` is the service worker, `web/public/manifest.webmanifest` the manifest.

@@ -6,7 +6,7 @@ import { BODY_DETAIL, BODY_REGIONS, findPerson, isPartnerName } from './rules';
 import { pictureWord } from './strip';
 import type { PictureRef, Profile } from './types';
 
-/** Ids of the bundled pictograms (drawn by us; register with dates and licence in PICTOGRAMS.md). */
+/** Ids of the bundled pictures (our SVG drawings and, since 20 Nov 2026, pictures made with Gemini; source, date and licence or terms of each in PICTOGRAMS.md). */
 export const BUILTIN = new Set([
   'yes', 'no', 'not sure', 'something else', 'someone else', 'somewhere else',
   'good', 'okay', 'bad', 'tasty', 'plain', 'too salty', 'good idea', 'leave it', 'like them', 'unhappy',

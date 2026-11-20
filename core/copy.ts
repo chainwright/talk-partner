@@ -782,6 +782,8 @@ const COPY = {
   // Technical words are allowed here: this panel is collapsed on the partner screen and open in judge mode.
   how: {
     heading: 'How this works',
+    /** (phase 11) where the pictures come from, in one line (PICTOGRAMS.md has every picture's source). */
+    pictures: 'Pictures: drawn by us and made with Gemini.',
     /** The routing in one line, first on the screen: which data goes to which Firebase AI Logic mode, and what the badges are read from. */
     routing: 'Where the AI runs: family data → ONLY_ON_DEVICE (Gemini Nano on this computer reads About me; it never falls back to the cloud). The stripped question → PREFER_IN_CLOUD, which falls back to Gemini Nano when offline. The SDK\'s inferenceSource for each call drives every AI badge.',
     intro: 'The model only proposes; code decides. All AI inference in this app goes through Firebase AI Logic: the two steps that make cards, and the microphone, which sends a recording of your question to Gemini in Google\'s cloud to be turned into text and only types it into the field. The two AI badges ("On this computer", "Cloud help") come from what the SDK reports for that call; "No AI needed", "Made in code (AI answer not used)" and "No card" come from the card rules.',

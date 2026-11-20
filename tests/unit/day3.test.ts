@@ -186,12 +186,29 @@ describe('pictogram provenance: PICTOGRAMS.md lists exactly what the code bundle
   const md = readFileSync(join(__dirname, '..', '..', 'PICTOGRAMS.md'), 'utf8');
   const rows = md.split('\n').filter((l) => /^\|\s*(?:[a-z]|body:)/.test(l)).map((l) => l.split('|').map((x) => x.trim())).filter((r) => r[1] !== 'id');
   const ids = rows.map((r) => r[1]);
-  it('the same ids, each with a 2026 date and the licence', () => {
+  // (20 Nov 2026, phase 11) the columns are id | shows | source | date | licence/terms: the set is mixed, our SVG
+  // drawings (Apache-2.0) and the pictures made with Gemini (the Gemini API terms); it was id | shows | drawn | licence
+  it('the same ids, each with its source, a 2026 date and its licence or terms', () => {
+    expect(md).toContain('| id | shows | source | date | licence/terms |');
     expect([...ids].sort()).toEqual([...PICTO_IDS].sort());
     for (const r of rows) {
-      expect(r[3], r[1]).toMatch(/2026/);
-      expect(r[4], r[1]).toBe('Apache-2.0');
+      expect(r[4], r[1]).toMatch(/2026/);
+      if (IMAGE_IDS.includes(r[1])) {
+        expect(r[3], r[1]).toBe('Generated with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`), reviewed by a person');
+        expect(r[4], r[1]).toBe('20 Nov 2026');
+        expect(r[5], r[1]).toBe('output used under the Gemini API terms; no copyright claimed by us beyond what applies');
+      } else {
+        expect(r[3], r[1]).toBe('drawn by us (SVG)');
+        expect(r[5], r[1]).toBe('Apache-2.0');
+      }
     }
+  });
+  it('the rows made with Gemini are exactly the ids of the manifest, and the header says the set is mixed', () => {
+    const manifest = JSON.parse(readFileSync(join(__dirname, '..', '..', 'devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json'), 'utf8')) as Record<string, unknown>;
+    expect(rows.filter((r) => r[3].startsWith('Generated with Gemini')).map((r) => r[1]).sort()).toEqual(Object.keys(manifest).sort());
+    expect(md).toContain(`**${IMAGE_IDS.length} pictures made with Google's Gemini**`);
+    expect(md).toContain(`**${PICTO_IDS.length - IMAGE_IDS.length} SVG drawings of our own**`);
+    expect(md).not.toContain('no AI-generated image');
   });
   it('every built-in id the core may ask for is drawn', () => {
     for (const id of BUILTIN) expect(PICTO_IDS, id).toContain(id);

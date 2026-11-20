@@ -178,3 +178,15 @@ describe('the pictures made with Gemini (20 Nov 2026)', () => {
     }
   });
 });
+
+describe('the pictures\' source, said plainly (phase 11)', () => {
+  it('"How this works" carries one short line, and the docs name Gemini without saying we drew those pictures', async () => {
+    const { COPY } = await import('../../core/copy');
+    expect(COPY.how.pictures).toBe('Pictures: drawn by us and made with Gemini.');
+    expect(readFileSync(join(ROOT, 'web/src/main.ts'), 'utf8')).toContain('<p class="muted" id="pictures-line">${H.pictures}</p>');
+    for (const f of ['PICTOGRAMS.md', 'DISCLOSURE.md', 'README.md']) expect(readFileSync(join(ROOT, f), 'utf8'), f).toMatch(/Gemini 3\.1 Flash\s+Image/);
+    const pictos = readFileSync(join(ROOT, 'web/src/pictos.ts'), 'utf8');
+    expect(pictos).not.toMatch(/no\s+(?:\/\/\s*)?AI-generated image/);
+    expect(readFileSync(join(ROOT, 'PICTOGRAMS.md'), 'utf8')).toContain('We did not\ndraw these.');
+  });
+});
