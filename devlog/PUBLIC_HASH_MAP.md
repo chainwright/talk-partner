@@ -250,6 +250,14 @@ the table.
 | 227 | `ce47da2` | `edcc806` † | 2026-11-19 00:16 | Phase 10 counts: README and DAY20 name the nine runs, JUDGES names 2902 unit tests |
 | 228 | `e56fbce` | `935664f` † | 2026-11-19 00:25 | Live: ce47da2 (phase 10). Hosted runs: e2e-simple --live 1022/1022, pwa-check 32/32, e2e-… |
 | 229 | `94ed945` | `4888a40` | 2026-11-19 00:26 | Devlog: saved logs of phase 10 without local folder paths (the Python traceback and the t… |
+| 230 | `de5267a` | `85a8e85` | 2026-11-19 00:44 | "Not now" on the person's own start keeps a question the carer can ask: "Do you want to t… |
+| 231 | `603f8a5` | `8262310` | 2026-11-20 15:01 | Phase 11, item 1: the cards show the 85 colour pictures made with Gemini, our SVG for the… |
+| 232 | `12e6f27` | `d280798` | 2026-11-20 15:02 | Phase 11, item 2: the picture files work offline, and pwa-check proves it |
+| 233 | `5abf1f6` | `8bca526` | 2026-11-20 15:04 | Phase 11, item 3: honest provenance for a mixed picture set |
+| 234 | `e85d22e` | `a19337b` | 2026-11-20 15:23 | Phase 11, item 4: evidence for the pictures made with Gemini |
+| 235 | `88c0747` | `e5d7370` | 2026-11-20 15:25 | Phase 11: chair, listen and go out without the faint frame around the object |
+| 236 | `cb15e70` | `888fea9` | 2026-11-20 15:43 | Phase 11 follow-up: "something else" is our dashed drawing again on every card (84 pictur… |
+| 237 | `7ea99ff` | `3332766` | 2026-11-20 16:14 | Live: the build of cb15e70 (phase 11 pictures); e2e-needs checks no broken picture instea… |
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
 
