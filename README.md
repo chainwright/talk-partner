@@ -15,7 +15,7 @@ materials describe (our reading; no speech therapist has reviewed it): it says w
 problem (two things in one, a memory test), and it turns the partner's own question into a
 written-choice card (a keyword, two choices, pictured where we have drawn a picture, an escape every time, a
 tick/cross check) and gives the partner the exact line to say. It never picks or confirms the person's answer: only
-their tap does. Pictures (124 and the monogram since 20 Nov: 85 colour pictures made with Gemini and our own colour drawings for the rest; the source of each in `PICTOGRAMS.md`): yes / no, feelings, the body
+their tap does. Pictures (124 and the monogram since 20 Nov: 84 colour pictures made with Gemini and our own colour drawings for the rest; the source of each in `PICTOGRAMS.md`): yes / no, feelings, the body
 map, people, drinks and food, rest, TV and music, going out, the ways out, the needs of the quick-needs board. The
 family's own places and foods ("lake", "pot roast") show the family's own photo where one was added, and the word
 alone otherwise.
@@ -172,12 +172,12 @@ It leans on the two examples in the request ("something cold", "something to eat
 One run; the model's answers vary.
 
 **Colour pictures (`web/src/pictos.ts`, `PICTOGRAMS.md`).** The black line drawings were replaced by simple,
-realistic colour drawings, all our own at the time (no third-party set; since 20 Nov, phase 11, 85 of them are pictures made with Gemini, see below and `PICTOGRAMS.md`): real-object colours, one object,
+realistic colour drawings, all our own at the time (no third-party set; since 20 Nov, phase 11, 84 of them are pictures made with Gemini, see below and `PICTOGRAMS.md`): real-object colours, one object,
 a plain background, light shading, the word under each. 123 pictures and the monogram (three were added in phase 5); 39 of them are new, for the
 words the topic questions and their trees offer (all 128 choices of the 40 rule-made topic questions now have a
 picture; a word with none still shows alone). Why colour: `design/IMAGES_RESEARCH_2026-11-17.md`. The sheet at
 390 px: `devlog/evidence_pictures/pictures_390.png`.
-Since 20 Nov (phase 11), 85 of these are colour pictures generated with Gemini (Gemini 3.1 Flash Image), reviewed by a person and bundled as WebP files that work offline; the rest stay our own SVG drawings, and the app's "How this works" screen says "Pictures: drawn by us and made with Gemini." (`PICTOGRAMS.md`, `DISCLOSURE.md`).
+Since 20 Nov (phase 11), 84 of these are colour pictures generated with Gemini (Gemini 3.1 Flash Image), reviewed by a person and bundled as WebP files that work offline; the rest stay our own SVG drawings, and the app's "How this works" screen says "Pictures: drawn by us and made with Gemini." (`PICTOGRAMS.md`, `DISCLOSURE.md`).
 
 **Personal photos (`core/photos.ts`, `web/src/photo.ts`).** In About them the carer adds a photo of a person, a food
 or drink, or a place: take or choose it, frame it by hand (move and zoom a square), give it one word. A card shows it
@@ -787,16 +787,16 @@ The family chose a new picture set (`design/PHASE11_BRIEF.md`; `CLAIMS.md` rows 
 is no longer true; `EVIDENCE.md` "Phase 11"; `devlog/DAY21.md`). Nothing was deployed or pushed; the "Live:" lines
 still name the build they name.
 
-- **The pictures** (`603f8a5`). 85 of the card pictures are now colour pictures generated with Gemini 3.1 Flash
+- **The pictures** (`603f8a5`). 84 of the card pictures are now colour pictures generated with Gemini 3.1 Flash
   Image on 20 Nov, inside the submission period, from short text prompts, reviewed by a person against our drawing of
-  the same word: drinks and food, people, rest, TV and music, going out, feelings, the needs board. They are 256 x 256
+  the same word: drinks and food, people, rest, TV and music, going out, feelings, the needs board (85 were made; "something else" went back to our dashed drawing the same day, so the way out stays apart from every choice). They are 256 x 256
   WebP files in `web/public/pictures/` (about 6 KB each, about 0.5 MB in all). The rest stay our SVG drawings: yes,
-  no, the amount scale, this one / that one, show me, change topic, okay, someone else, morning, just right, the body
-  map and the monogram. A picture is an `<img>` with the word as its text and the same box as the drawing (112 to 128
+  no, the amount scale, this one / that one, show me, change topic, okay, someone else, morning, just right, the way
+  out "something else" (dashed, on every card), the body map and the monogram. A picture is an `<img>` with the word as its text and the same box as the drawing (112 to 128
   px on the person's card); a family's own photo still comes first; if a file cannot be loaded, our drawing of the
   same word takes its place, so a tile is never broken.
-- **Offline** (`12e6f27`). The service worker keeps every file of the build, the 85 pictures with them, at install;
-  `pwa-check.py` checks the cache holds all 85 and that the tea or coffee card shows its pictures with the
+- **Offline** (`12e6f27`). The service worker keeps every file of the build, the 84 pictures with them, at install;
+  `pwa-check.py` checks the cache holds all 84 and that the tea or coffee card shows its pictures with the
   connection off.
 - **Where they come from** (`5abf1f6`). `PICTOGRAMS.md` gives every picture's source, date and licence or terms: the
   Gemini ones under the Gemini API terms (we did not draw them and claim no copyright beyond what applies), ours
@@ -818,6 +818,13 @@ marks.
 request check, see above); `overflow-check.py` 548/548; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py`
 21/21; `phase9-shots.py` 39/39; `phase10-shots.py` 132/132; `phase11-walk.py` 40/40. The outputs are in
 `devlog/evidence_phase11/local/`.
+
+Follow-up the same day (`88c0747` and the next commit): chair, listen and go out lost their faint frame (edited by
+hand, not regenerated), and "something else" is our dashed drawing again on every card (84 made with Gemini, 40
+drawn by us). On the production build of that state: `npm run check` 2913 unit tests; `e2e-simple.py` 1032/1032;
+`pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` 548/548; `phase11-walk.py` 48/48 (the first run
+47/48: the walk read the check screen's coffee picture before it had loaded; it now waits, as on the other screens);
+`picture-sheet.py` done. Outputs: `devlog/evidence_phase11/local_followup/`.
 
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104
@@ -1217,7 +1224,7 @@ under `@firebase/firestore`, which this app does not import.
   person reads**). Pure TypeScript, no DOM, no Firebase, so every client reuses it unchanged.
 - `web/`: the web client. `web/src/ai/` is the only place that imports `firebase/ai` (`firebaseEngine.ts`) and
   `firebase/remote-config` (`remoteConfig.ts`). `pictos.ts` holds the colour
-  pictures: 85 made with Gemini (WebP files in `web/public/pictures/`) and our own SVG drawings (source, date and licence or terms per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper;
+  pictures: 84 made with Gemini (WebP files in `web/public/pictures/`) and our own SVG drawings (source, date and licence or terms per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper;
   `voice.ts` is the microphone's state machine (record, stop, send the clip once through the engine; no DOM, so it
   is tested with a scripted microphone, recorder and engine); `mic.ts` is the browser's side; `feedback.ts` the form. `core/needs.ts` is the quick-needs board.
   `web/src/simple.ts` draws the simple view (the carer's screens and the person's); `web/sw.template.js` is the service worker, `web/public/manifest.webmanifest` the manifest.

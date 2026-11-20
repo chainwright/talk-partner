@@ -223,6 +223,8 @@ describe('pictogram provenance: PICTOGRAMS.md lists exactly what the code bundle
       expect(s.includes('stroke-dasharray'), id).toBe(id === 'something else');
       // what the card shows has a name for a screen reader either way: the word as the picture's text, or the label
       expect(builtinPicto(id)).toMatch(IMAGE_IDS.includes(id) ? /^<img [^>]*alt="[^"]+"/ : /role="img" aria-label="[^"]+"/);
+      // and on the card itself the way out is the only dashed picture (20 Nov 2026: it is our drawing again)
+      expect(builtinPicto(id).includes('stroke-dasharray'), `${id} on the card`).toBe(id === 'something else');
     }
     expect(monogram('J')).toContain('<text');
   });

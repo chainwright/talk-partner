@@ -1,0 +1,1 @@
+124 pictures (84 made with Gemini, 40 our SVG) -> devlog/evidence_pictures/pictures_390.png, pictures_390_large.png; 84 before/after pairs -> pictures_390_before_after.png

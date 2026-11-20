@@ -1,5 +1,5 @@
 // The colour pictures (web/src/pictos.ts; design/IMAGES_RESEARCH_2026-11-17.md). Since 20 Nov 2026 the set is mixed:
-// 85 pictures made with Gemini (WebP files in web/public/pictures/, listed in IMAGE_IDS and in
+// 84 pictures made with Gemini (WebP files in web/public/pictures/, listed in IMAGE_IDS and in
 // devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json) and our own SVG drawings (redrawn in colour on 18 Nov 2026).
 // Our SVGs: one style, real colours written into the drawing, visible on the card in the light and in the dark theme;
 // the drawing of an id that now has a picture is kept as its fallback and follows the same rules. The picture files:
@@ -48,8 +48,14 @@ describe('our SVG drawings: one style, our own work', () => {
   it('nothing from outside and nothing but shapes: no image, no link, no text, no script, no gradient or filter (flat colours), no animation', () => {
     for (const id of drawn) expect(svgPicto(id), id).not.toMatch(/<image|href=|<text|<script|<foreignObject|url\(|<filter|Gradient|<animate|<set /);
   });
-  it('the dashed frame of "something else" is the only dashed shape in the set', () => {
+  it('the dashed frame of "something else" is the only dashed shape in the set, and it is what the card shows', () => {
     expect(drawn.filter((id) => svgPicto(id).includes('stroke-dasharray'))).toEqual(['something else']);
+    // (20 Nov 2026) what a card shows, not only our drawings: the way out is our dashed frame, never a picture file,
+    // and no other picture on a card is dashed
+    expect(drawn.filter((id) => builtinPicto(id).includes('stroke-dasharray'))).toEqual(['something else']);
+    expect(builtinPicto('something else')).toBe(svgPicto('something else'));
+    expect(IMAGE_IDS).not.toContain('something else');
+    expect(existsSync(join(ROOT, 'web/public/pictures/something_else.webp'))).toBe(false);
   });
   it('no two pictures share a drawing, and an unknown id falls back to the way out (never an empty frame)', () => {
     const bodies = drawn.map((id) => svgPicto(id).replace(/aria-label="[^"]+"/, ''));
@@ -150,8 +156,8 @@ describe('the pictures made with Gemini (20 Nov 2026)', () => {
     }
     expect(readdirSync(dir).sort()).toEqual(IMAGE_IDS.map((id) => imageFile(id).slice('pictures/'.length)).sort());
   });
-  it('kept as our SVG: the abstract ones, the scale, the hand sign that could offend, the body map, the monogram', () => {
-    expect(svgShown.filter((id) => !id.startsWith('body:')).sort()).toEqual(['a little', 'a lot', 'change topic', 'just right', 'morning', 'no', 'okay', 'show me', 'some', 'someone else', 'that one', 'this one', 'yes']);
+  it('kept as our SVG: the abstract ones, the scale, the hand sign that could offend, the way out, the body map, the monogram', () => {
+    expect(svgShown.filter((id) => !id.startsWith('body:')).sort()).toEqual(['a little', 'a lot', 'change topic', 'just right', 'morning', 'no', 'okay', 'show me', 'some', 'someone else', 'something else', 'that one', 'this one', 'yes']);
   });
   it('the markup: an <img> from this site with the word as its text, its size written in, decoded off the main thread', () => {
     expect(builtinPicto('tea')).toBe('<img class="pic" src="/pictures/tea.webp" alt="tea" data-id="tea" width="96" height="96" decoding="async" draggable="false">');

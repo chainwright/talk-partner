@@ -297,7 +297,7 @@ or in the cloud (there is none in either feature); `e2e-cloud.mjs`, `e2e-speak.p
 
 ## Phase 11 (20 Nov 2026): rows 142 to 144
 Every run below was against the production build of `5abf1f6` (`npm run build && npx vite preview`, port 5179). No run
-sent anything to another host, and no model was called: the 85 pictures were made before this phase and are bundled
+sent anything to another host, and no model was called: the 84 pictures were made before this phase and are bundled
 files. Nothing of phase 11 was deployed or pushed. Saved outputs are in `devlog/evidence_phase11/` (`local/` for the
 full runs, `walk/` for `scripts/phase11-walk.py`, `phase9/` and `phase10/` for those screens at 360 x 740 and
 390 x 844) and `devlog/evidence_pictures/` (the sheets).
@@ -307,6 +307,13 @@ full runs, `walk/` for `scripts/phase11-walk.py`, `phase9/` and `phase10/` for t
 | 142 | `PICTOGRAMS.md`, `DISCLOSURE.md`, `web/src/pictos.ts`, `core/copy.ts`, `devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json` | `npx vitest run tests/unit/day3.test.ts tests/unit/pictures.test.ts`; `python3 scripts/picture-sheet.py` | `local/check_local.txt`; `devlog/evidence_pictures/pictures_390.png`, `pictures_390_before_after.png` |
 | 143 | `web/src/pictos.ts`, `web/src/main.ts`, `web/src/styles.css`, `web/src/simple.css` | the same; `python3 scripts/phase11-walk.py`; `e2e-simple.py`; `overflow-check.py`; `e2e-needs.mjs` (no service worker, offline: every tile shows our drawing) | `walk/*.png`; `local/phase11-walk_local.txt`, `local/e2e-simple_local.txt`, `local/e2e-needs_local.txt` |
 | 144 | `web/sw.template.js`, `vite.config.ts` | `python3 scripts/pwa-check.py --url http://localhost:5179/` | `local/pwa-check_local.txt` |
+
+Follow-up the same day (`88c0747` and the next commit): chair, listen and go out lost their faint frame (edited by
+hand, not regenerated), and "something else" is our dashed drawing again on every card (84 made with Gemini, 40
+drawn by us). On the production build of that state: `npm run check` 2913 unit tests; `e2e-simple.py` 1032/1032;
+`pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` 548/548; `phase11-walk.py` 48/48 (the first run
+47/48: the walk read the check screen's coffee picture before it had loaded; it now waits, as on the other screens);
+`picture-sheet.py` done. Outputs: `devlog/evidence_phase11/local_followup/`.
 
 Not run for phase 11: any of it with a carer or a person with aphasia; a real phone; the hosted copy;
 `e2e-cloud.mjs`, `e2e-ondevice.mjs`, `e2e-speak.py`, `update-check.py`, `e2e-noconfig.mjs` (its picture lookups

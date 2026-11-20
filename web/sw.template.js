@@ -1,5 +1,5 @@
 // The service worker of Talk Partner: it keeps the app shell (the page, its script and style, the fonts, the icons,
-// and since phase 11 the 85 picture files in /pictures/, about 0.5 MB, every one at install, not only those shown)
+// and since phase 11 the 84 picture files in /pictures/, about 0.5 MB, every one at install, not only those shown)
 // in the browser, so the app opens with no connection and everything the rules make still works there: the topic
 // questions, quick needs, the person's screens, About them. It holds no question, no answer and nothing from About
 // them (those live in the page and in IndexedDB), and it never touches a request to another host: online help and the

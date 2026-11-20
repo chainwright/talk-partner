@@ -1,0 +1,550 @@
+PASS  320px  phase 4: first screen, "[long name] wants to say something" and the two new ways in
+PASS  320px  phase 4: after "something else", with "Try the first letter"
+PASS  320px  phase 4: the person's alphabet
+PASS  320px  phase 4: the person's alphabet (26 letters and the way out): needs no scrolling at 320 x 568
+PASS  320px  phase 4: every letter is at least 40 x 44 px
+PASS  320px  phase 4: the person's words after a letter (long words, photos)
+PASS  320px  phase 4: the carer reads the word
+PASS  320px  phase 4: the sheet before the letter and the question go to online help
+PASS  320px  phase 4: that sheet, the whole request open
+PASS  320px  phase 4: no word for the letter
+PASS  320px  phase 4: the person's starters
+PASS  320px  phase 10: "I want to talk about…", the first screen (a long name)
+PASS  320px  phase 10: "I want to talk about…", a next screen
+PASS  320px  phase 4: the topics as a picture menu
+PASS  320px  phase 4: "Who is it about?" (a long name)
+PASS  320px  phase 4: the carer reads who started (long name), with three questions
+PASS  320px  phase 4: before a doctor visit, the first screen
+PASS  320px  phase 4: a doctor-visit question on the person's screen (three choices and not sure)
+PASS  320px  phase 4: "What worries you most?"
+PASS  320px  phase 4: "What do you want to ask the doctor?"
+PASS  320px  phase 4: the end of the doctor-visit questions
+PASS  320px  phase 4: the page of answers (long name), with the pain line and the buttons
+PASS  320px  phase 4: talk about a photo, the photos (long words)
+PASS  320px  phase 4: talk about a photo, the questions
+PASS  320px  phase 4: the photo over the question on the person's screen
+PASS  320px  phase 7: "For the speech therapist", the box off, the warning for the carer (long name, every line)
+PASS  320px  phase 7: "For the speech therapist", the needs and pain answers ticked, three questions
+PASS  320px  phase 7: "For the speech therapist", the sheet with the exact text
+PASS  320px  phase 7: the passport, every line with its box (long name, long words)
+PASS  320px  phase 7: the passport, the page with its pictures
+PASS  320px  phase 7: the passport, the sheet with the exact text
+PASS  320px  simple: first visit (how it works open)
+PASS  320px  simple: first visit, the microphone notice open
+PASS  320px  simple: first visit, topic "food" open
+PASS  320px  simple: first visit, topic "body" open
+PASS  320px  simple: first visit, topic "rest" open
+PASS  320px  simple: first visit, topic "people" open
+PASS  320px  simple: first visit, topic "feel" open
+PASS  320px  simple: first visit, topic "plans" open
+PASS  320px  simple: first visit, topic "fun" open
+PASS  320px  simple: before handing over
+PASS  320px  simple: before handing over, "More tips" open
+PASS  320px  simple: before handing over, choices hidden
+PASS  320px  simple: We're stuck (the other ways, carer's side)
+PASS  320px  simple: the person's screen, the other ways
+PASS  320px  simple: the person's choices (two and the way out)
+PASS  320px  simple: the person's check (So: tea. Right?)
+PASS  320px  simple: the person's finish (Thank you. Tea. Give the phone back)
+PASS  320px  simple: after an answer (the next question leads, About them offered), "More" closed
+PASS  320px  simple: after an answer, "More" open (today, Today in short, how it was made)
+PASS  320px  simple: going over the answers, Today in short
+PASS  320px  simple: the person's screen, going over the answers
+PASS  320px  simple: returning visit (how it works folded, a topic open)
+PASS  320px  simple: the person's choices (three and the way out)
+PASS  320px  simple: the person's finish after the way out
+PASS  320px  simple: after "something else" (what now, the narrowing step)
+PASS  320px  simple: the consent sheet for a narrowing step
+PASS  320px  simple: no narrowing card
+PASS  320px  simple: before handing over, a yes / no question
+PASS  320px  simple: the person's choices (yes / no / not sure)
+PASS  320px  simple: after a yes, the next question offered
+PASS  320px  simple: before handing over, the body map
+PASS  320px  simple: the person's screen, the body map
+PASS  320px  simple: the person's screen, the body map, second step (left and right)
+PASS  320px  simple: the person's screen, the pain scale (three steps and not sure)
+PASS  320px  simple: before handing over, a number scale
+PASS  320px  simple: the person's screen, a number scale
+PASS  320px  simple: after "call someone", a field for one name
+PASS  320px  simple: before handing over, a long either-or question
+PASS  320px  simple: the person's choices, a long either-or question
+PASS  320px  simple: the person's check, a long answer
+PASS  320px  simple: the person's finish, a long answer
+PASS  320px  simple: after an answer, a long answer
+PASS  320px  simple: the end of a path (the line that says what to do now)
+PASS  320px  simple: a memory question (a line to say, no card)
+PASS  320px  simple: the consent sheet
+PASS  320px  simple: no card for an open question
+PASS  320px  simple: no card, "needs the internet" (connection off)
+PASS  320px  simple: first screen with the connection off (the AI line says so)
+PASS  320px  simple: the needs board, full screen
+PASS  320px  simple: the person's finish after a need
+PASS  320px  simple: after a need
+PASS  320px  simple: About them, rows closed
+PASS  320px  simple: About them, a person being added
+PASS  320px  simple: About them, places open, long names in the rows
+PASS  320px  simple: first screen with a long name
+PASS  320px  simple: how it works open, with a long name
+PASS  320px  simple: topic "food" open with the family's own long questions
+PASS  320px  simple: topic "people" open with the family's own long questions
+PASS  320px  simple: topic "plans" open with the family's own long questions
+PASS  320px  simple: before handing over with a long name
+PASS  320px  simple: the person's finish (a yes)
+PASS  320px  simple: after an answer with a long name
+PASS  320px  simple: adding a photo, "Frame the picture"
+PASS  320px  simple: adding a photo, "One word for it"
+PASS  320px  simple: About them with two photos (a long word) and "What we have learned"
+PASS  320px  simple: before handing over, with "Usually: ..." and a family photo on a choice
+PASS  320px  simple: the person's choices, one of them a family photo
+PASS  320px  simple: About them, a learned line with "Keep as a fact" and "Remove"
+PASS  320px  phase 3: the first screen with "Diary" under the questions
+PASS  320px  phase 3: the diary, today (a long question, "less sure", the tip of the day)
+PASS  320px  phase 3: the diary after a tap on the log ("Logged: Toilet, …" and Undo)
+PASS  320px  phase 3: the diary, the week, with what stands out (every health note on)
+PASS  320px  phase 3: the diary, the month
+PASS  320px  phase 3: the sheet before the lines go to online help, the whole request open
+PASS  320px  phase 3: the sheet before the lines go to online help (three lines)
+PASS  320px  phase 3: About them, the health row closed with a long note, and "Keep a copy"
+PASS  320px  phase 3: About them, health notes open
+PASS  320px  phase 3: the preview of a file before it replaces About them
+PASS  320px  phase 3: "Keep a copy" with a file that is not ours
+PASS  320px  phase 3: before handing over, with the guard's line
+PASS  320px  phase 3: the person's choices, three bigger pictures and the way out
+PASS  320px  phase 3: on a narrower phone the three pictures are 96 px or more
+PASS  320px  phase 3: the person's check, with the bigger picture
+PASS  320px  phase 3: after the answer, with the guard's line
+PASS  360px  phase 4: first screen, "[long name] wants to say something" and the two new ways in
+PASS  360px  phase 4: after "something else", with "Try the first letter"
+PASS  360px  phase 4: the person's alphabet
+PASS  360px  phase 4: the person's alphabet (26 letters and the way out): needs no scrolling at 360 x 740
+PASS  360px  phase 4: every letter is at least 40 x 44 px
+PASS  360px  phase 4: the person's words after a letter (long words, photos)
+PASS  360px  phase 4: the carer reads the word
+PASS  360px  phase 4: the sheet before the letter and the question go to online help
+PASS  360px  phase 4: that sheet, the whole request open
+PASS  360px  phase 4: no word for the letter
+PASS  360px  phase 4: the person's starters
+PASS  360px  phase 4: the person's starters: needs no scrolling at 360 x 740
+PASS  360px  phase 10: "I want to talk about…", the first screen (a long name)
+PASS  360px  phase 10: "I want to talk about…", the first screen: needs no scrolling at 360 x 740
+PASS  360px  phase 10: "I want to talk about…", a next screen
+PASS  360px  phase 10: "I want to talk about…", a next screen: needs no scrolling at 360 x 740
+PASS  360px  phase 4: the topics as a picture menu
+PASS  360px  phase 4: the topics as a picture menu: needs no scrolling at 360 x 740
+PASS  360px  phase 4: "Who is it about?" (a long name)
+PASS  360px  phase 4: "Who is it about?": needs no scrolling at 360 x 740
+PASS  360px  phase 4: the carer reads who started (long name), with three questions
+PASS  360px  phase 4: before a doctor visit, the first screen
+PASS  360px  phase 4: a doctor-visit question on the person's screen (three choices and not sure)
+PASS  360px  phase 4: "What worries you most?"
+PASS  360px  phase 4: "What worries you most?": needs no scrolling at 360 x 740
+PASS  360px  phase 4: "What do you want to ask the doctor?"
+PASS  360px  phase 4: the end of the doctor-visit questions
+PASS  360px  phase 4: the page of answers (long name), with the pain line and the buttons
+PASS  360px  phase 4: talk about a photo, the photos (long words)
+PASS  360px  phase 4: talk about a photo, the questions
+PASS  360px  phase 4: the photo over the question on the person's screen
+PASS  360px  phase 7: "For the speech therapist", the box off, the warning for the carer (long name, every line)
+PASS  360px  phase 7: "For the speech therapist", the needs and pain answers ticked, three questions
+PASS  360px  phase 7: "For the speech therapist", the sheet with the exact text
+PASS  360px  phase 7: the passport, every line with its box (long name, long words)
+PASS  360px  phase 7: the passport, the page with its pictures
+PASS  360px  phase 7: the passport, the sheet with the exact text
+PASS  360px  simple: first visit (how it works open)
+PASS  360px  simple: first visit, the microphone notice open
+PASS  360px  simple: first visit, topic "food" open
+PASS  360px  simple: first visit, topic "body" open
+PASS  360px  simple: first visit, topic "rest" open
+PASS  360px  simple: first visit, topic "people" open
+PASS  360px  simple: first visit, topic "feel" open
+PASS  360px  simple: first visit, topic "plans" open
+PASS  360px  simple: first visit, topic "fun" open
+PASS  360px  simple: before handing over
+PASS  360px  simple: before handing over, "More tips" open
+PASS  360px  simple: before handing over, choices hidden
+PASS  360px  simple: We're stuck (the other ways, carer's side)
+PASS  360px  simple: the person's screen, the other ways
+PASS  360px  simple: the person's choices (two and the way out)
+PASS  360px  simple: the person's check (So: tea. Right?)
+PASS  360px  simple: the person's finish (Thank you. Tea. Give the phone back)
+PASS  360px  simple: after an answer (the next question leads, About them offered), "More" closed
+PASS  360px  simple: after an answer, "More" open (today, Today in short, how it was made)
+PASS  360px  simple: going over the answers, Today in short
+PASS  360px  simple: the person's screen, going over the answers
+PASS  360px  simple: returning visit (how it works folded, a topic open)
+PASS  360px  simple: the person's choices (three and the way out)
+PASS  360px  simple: the person's finish after the way out
+PASS  360px  simple: after "something else" (what now, the narrowing step)
+PASS  360px  simple: the consent sheet for a narrowing step
+PASS  360px  simple: no narrowing card
+PASS  360px  simple: before handing over, a yes / no question
+PASS  360px  simple: the person's choices (yes / no / not sure)
+PASS  360px  simple: after a yes, the next question offered
+PASS  360px  simple: before handing over, the body map
+PASS  360px  simple: the person's screen, the body map
+PASS  360px  simple: the person's screen, the body map, second step (left and right)
+PASS  360px  simple: the person's screen, the pain scale (three steps and not sure)
+PASS  360px  simple: before handing over, a number scale
+PASS  360px  simple: the person's screen, a number scale
+PASS  360px  simple: after "call someone", a field for one name
+PASS  360px  simple: before handing over, a long either-or question
+PASS  360px  simple: the person's choices, a long either-or question
+PASS  360px  simple: the person's check, a long answer
+PASS  360px  simple: the person's finish, a long answer
+PASS  360px  simple: after an answer, a long answer
+PASS  360px  simple: the end of a path (the line that says what to do now)
+PASS  360px  simple: a memory question (a line to say, no card)
+PASS  360px  simple: the consent sheet
+PASS  360px  simple: no card for an open question
+PASS  360px  simple: no card, "needs the internet" (connection off)
+PASS  360px  simple: first screen with the connection off (the AI line says so)
+PASS  360px  simple: the needs board, full screen
+PASS  360px  simple: the person's finish after a need
+PASS  360px  simple: after a need
+PASS  360px  simple: About them, rows closed
+PASS  360px  simple: About them, a person being added
+PASS  360px  simple: About them, places open, long names in the rows
+PASS  360px  simple: first screen with a long name
+PASS  360px  simple: how it works open, with a long name
+PASS  360px  simple: topic "food" open with the family's own long questions
+PASS  360px  simple: topic "people" open with the family's own long questions
+PASS  360px  simple: topic "plans" open with the family's own long questions
+PASS  360px  simple: before handing over with a long name
+PASS  360px  simple: the person's finish (a yes)
+PASS  360px  simple: after an answer with a long name
+PASS  360px  simple: adding a photo, "Frame the picture"
+PASS  360px  simple: adding a photo, "One word for it"
+PASS  360px  simple: About them with two photos (a long word) and "What we have learned"
+PASS  360px  simple: before handing over, with "Usually: ..." and a family photo on a choice
+PASS  360px  simple: the person's choices, one of them a family photo
+PASS  360px  simple: About them, a learned line with "Keep as a fact" and "Remove"
+PASS  360px  phase 3: the first screen with "Diary" under the questions
+PASS  360px  phase 3: the diary, today (a long question, "less sure", the tip of the day)
+PASS  360px  phase 3: the diary after a tap on the log ("Logged: Toilet, …" and Undo)
+PASS  360px  phase 3: the diary, the week, with what stands out (every health note on)
+PASS  360px  phase 3: the diary, the month
+PASS  360px  phase 3: the sheet before the lines go to online help, the whole request open
+PASS  360px  phase 3: the sheet before the lines go to online help (three lines)
+PASS  360px  phase 3: About them, the health row closed with a long note, and "Keep a copy"
+PASS  360px  phase 3: About them, health notes open
+PASS  360px  phase 3: the preview of a file before it replaces About them
+PASS  360px  phase 3: "Keep a copy" with a file that is not ours
+PASS  360px  phase 3: before handing over, with the guard's line
+PASS  360px  phase 3: the person's choices, three bigger pictures and the way out
+PASS  360px  phase 3: on a narrower phone the three pictures are 96 px or more
+PASS  360px  phase 3: the person's check, with the bigger picture
+PASS  360px  phase 3: after the answer, with the guard's line
+PASS  360px  full view: the partner screen with no card yet
+PASS  360px  full view: the empty card area is plain words, with no ear
+PASS  360px  full view: the placeholder "Your question" fits in the field
+PASS  360px  first run (welcome)
+PASS  360px  judge mode, the card it opens with
+PASS  360px  judge mode, the recording of the on-device step open
+PASS  360px  judge mode, a yes / no card
+PASS  360px  judge mode, every fold under the card open
+PASS  360px  judge mode, two questions in one (coaching line, Next)
+PASS  360px  judge mode, a memory test (no card)
+PASS  360px  judge mode, an open question with no model here
+PASS  360px  judge mode, We're stuck
+PASS  360px  the person's screen, the repair card
+PASS  360px  the person's screen, quick needs
+PASS  360px  #/about (sample family)
+PASS  360px  #/cloud (sample family)
+PASS  360px  #/how (sample family)
+PASS  360px  #/feedback (sample family)
+PASS  360px  About me, empty
+PASS  360px  partner screen, no card yet
+PASS  360px  partner screen, a long either-or question
+PASS  360px  partner screen, every fold open
+PASS  390px  phase 4: first screen, "[long name] wants to say something" and the two new ways in
+PASS  390px  phase 4: after "something else", with "Try the first letter"
+PASS  390px  phase 4: the person's alphabet
+PASS  390px  phase 4: the person's alphabet (26 letters and the way out): needs no scrolling at 390 x 844
+PASS  390px  phase 4: every letter is at least 40 x 44 px
+PASS  390px  phase 4: the person's words after a letter (long words, photos)
+PASS  390px  phase 4: the words after a letter: needs no scrolling at 390 x 844
+PASS  390px  phase 4: the carer reads the word
+PASS  390px  phase 4: the sheet before the letter and the question go to online help
+PASS  390px  phase 4: that sheet, the whole request open
+PASS  390px  phase 4: no word for the letter
+PASS  390px  phase 4: the person's starters
+PASS  390px  phase 4: the person's starters: needs no scrolling at 390 x 844
+PASS  390px  phase 10: "I want to talk about…", the first screen (a long name)
+PASS  390px  phase 10: "I want to talk about…", the first screen: needs no scrolling at 390 x 844
+PASS  390px  phase 10: "I want to talk about…", a next screen
+PASS  390px  phase 10: "I want to talk about…", a next screen: needs no scrolling at 390 x 844
+PASS  390px  phase 4: the topics as a picture menu
+PASS  390px  phase 4: the topics as a picture menu: needs no scrolling at 390 x 844
+PASS  390px  phase 4: "Who is it about?" (a long name)
+PASS  390px  phase 4: "Who is it about?": needs no scrolling at 390 x 844
+PASS  390px  phase 4: the carer reads who started (long name), with three questions
+PASS  390px  phase 4: before a doctor visit, the first screen
+PASS  390px  phase 4: a doctor-visit question on the person's screen (three choices and not sure)
+PASS  390px  phase 4: "What worries you most?"
+PASS  390px  phase 4: "What worries you most?": needs no scrolling at 390 x 844
+PASS  390px  phase 4: "What do you want to ask the doctor?"
+PASS  390px  phase 4: the end of the doctor-visit questions
+PASS  390px  phase 4: the page of answers (long name), with the pain line and the buttons
+PASS  390px  phase 4: talk about a photo, the photos (long words)
+PASS  390px  phase 4: talk about a photo, the questions
+PASS  390px  phase 4: the photo over the question on the person's screen
+PASS  390px  phase 4: the photo, three choices and the way out: needs no scrolling at 390 x 844
+PASS  390px  phase 7: "For the speech therapist", the box off, the warning for the carer (long name, every line)
+PASS  390px  phase 7: "For the speech therapist", the needs and pain answers ticked, three questions
+PASS  390px  phase 7: "For the speech therapist", the sheet with the exact text
+PASS  390px  phase 7: the passport, every line with its box (long name, long words)
+PASS  390px  phase 7: the passport, the page with its pictures
+PASS  390px  phase 7: the passport, the sheet with the exact text
+PASS  390px  simple: first visit (how it works open)
+PASS  390px  simple: first visit, the microphone notice open
+PASS  390px  simple: first visit, topic "food" open
+PASS  390px  simple: first visit, topic "body" open
+PASS  390px  simple: first visit, topic "rest" open
+PASS  390px  simple: first visit, topic "people" open
+PASS  390px  simple: first visit, topic "feel" open
+PASS  390px  simple: first visit, topic "plans" open
+PASS  390px  simple: first visit, topic "fun" open
+PASS  390px  simple: before handing over
+PASS  390px  simple: before handing over, "More tips" open
+PASS  390px  simple: before handing over, choices hidden
+PASS  390px  simple: We're stuck (the other ways, carer's side)
+PASS  390px  simple: the person's screen, the other ways
+PASS  390px  simple: the person's choices (two and the way out)
+PASS  390px  simple: the person's check (So: tea. Right?)
+PASS  390px  simple: the person's finish (Thank you. Tea. Give the phone back)
+PASS  390px  simple: after an answer (the next question leads, About them offered), "More" closed
+PASS  390px  simple: after an answer, "More" open (today, Today in short, how it was made)
+PASS  390px  simple: going over the answers, Today in short
+PASS  390px  simple: the person's screen, going over the answers
+PASS  390px  simple: returning visit (how it works folded, a topic open)
+PASS  390px  simple: the person's choices (three and the way out)
+PASS  390px  simple: the person's finish after the way out
+PASS  390px  simple: after "something else" (what now, the narrowing step)
+PASS  390px  simple: the consent sheet for a narrowing step
+PASS  390px  simple: no narrowing card
+PASS  390px  simple: before handing over, a yes / no question
+PASS  390px  simple: the person's choices (yes / no / not sure)
+PASS  390px  simple: after a yes, the next question offered
+PASS  390px  simple: before handing over, the body map
+PASS  390px  simple: the person's screen, the body map
+PASS  390px  simple: the person's screen, the body map, second step (left and right)
+PASS  390px  simple: the person's screen, the pain scale (three steps and not sure)
+PASS  390px  simple: before handing over, a number scale
+PASS  390px  simple: the person's screen, a number scale
+PASS  390px  simple: after "call someone", a field for one name
+PASS  390px  simple: before handing over, a long either-or question
+PASS  390px  simple: the person's choices, a long either-or question
+PASS  390px  simple: the person's check, a long answer
+PASS  390px  simple: the person's finish, a long answer
+PASS  390px  simple: after an answer, a long answer
+PASS  390px  simple: the end of a path (the line that says what to do now)
+PASS  390px  simple: a memory question (a line to say, no card)
+PASS  390px  simple: the consent sheet
+PASS  390px  simple: no card for an open question
+PASS  390px  simple: no card, "needs the internet" (connection off)
+PASS  390px  simple: first screen with the connection off (the AI line says so)
+PASS  390px  simple: the needs board, full screen
+PASS  390px  simple: the person's finish after a need
+PASS  390px  simple: after a need
+PASS  390px  simple: About them, rows closed
+PASS  390px  simple: About them, a person being added
+PASS  390px  simple: About them, places open, long names in the rows
+PASS  390px  simple: first screen with a long name
+PASS  390px  simple: how it works open, with a long name
+PASS  390px  simple: topic "food" open with the family's own long questions
+PASS  390px  simple: topic "people" open with the family's own long questions
+PASS  390px  simple: topic "plans" open with the family's own long questions
+PASS  390px  simple: before handing over with a long name
+PASS  390px  simple: the person's finish (a yes)
+PASS  390px  simple: after an answer with a long name
+PASS  390px  simple: adding a photo, "Frame the picture"
+PASS  390px  simple: adding a photo, "One word for it"
+PASS  390px  simple: About them with two photos (a long word) and "What we have learned"
+PASS  390px  simple: before handing over, with "Usually: ..." and a family photo on a choice
+PASS  390px  simple: the person's choices, one of them a family photo
+PASS  390px  simple: About them, a learned line with "Keep as a fact" and "Remove"
+PASS  390px  phase 3: the first screen with "Diary" under the questions
+PASS  390px  phase 3: the diary, today (a long question, "less sure", the tip of the day)
+PASS  390px  phase 3: the diary after a tap on the log ("Logged: Toilet, …" and Undo)
+PASS  390px  phase 3: the diary, the week, with what stands out (every health note on)
+PASS  390px  phase 3: the diary, the month
+PASS  390px  phase 3: the sheet before the lines go to online help, the whole request open
+PASS  390px  phase 3: the sheet before the lines go to online help (three lines)
+PASS  390px  phase 3: About them, the health row closed with a long note, and "Keep a copy"
+PASS  390px  phase 3: About them, health notes open
+PASS  390px  phase 3: the preview of a file before it replaces About them
+PASS  390px  phase 3: "Keep a copy" with a file that is not ours
+PASS  390px  phase 3: before handing over, with the guard's line
+PASS  390px  phase 3: the person's choices, three bigger pictures and the way out
+PASS  390px  phase 3: at 844 px tall the three pictures are 110 to 130 px and nothing scrolls
+PASS  390px  phase 3: the person's check, with the bigger picture
+PASS  390px  phase 3: after the answer, with the guard's line
+PASS  390px  full view: the partner screen with no card yet
+PASS  390px  full view: the empty card area is plain words, with no ear
+PASS  390px  full view: the placeholder "Your question" fits in the field
+PASS  390px  first run (welcome)
+PASS  390px  judge mode, the card it opens with
+PASS  390px  judge mode, the recording of the on-device step open
+PASS  390px  judge mode, a yes / no card
+PASS  390px  judge mode, every fold under the card open
+PASS  390px  judge mode, two questions in one (coaching line, Next)
+PASS  390px  judge mode, a memory test (no card)
+PASS  390px  judge mode, an open question with no model here
+PASS  390px  judge mode, We're stuck
+PASS  390px  the person's screen, the repair card
+PASS  390px  the person's screen, quick needs
+PASS  390px  #/about (sample family)
+PASS  390px  #/cloud (sample family)
+PASS  390px  #/how (sample family)
+PASS  390px  #/feedback (sample family)
+PASS  390px  About me, empty
+PASS  390px  partner screen, no card yet
+PASS  390px  partner screen, a long either-or question
+PASS  390px  partner screen, every fold open
+PASS  412px  phase 4: first screen, "[long name] wants to say something" and the two new ways in
+PASS  412px  phase 4: after "something else", with "Try the first letter"
+PASS  412px  phase 4: the person's alphabet
+PASS  412px  phase 4: the person's alphabet (26 letters and the way out): needs no scrolling at 412 x 915
+PASS  412px  phase 4: every letter is at least 40 x 44 px
+PASS  412px  phase 4: the person's words after a letter (long words, photos)
+PASS  412px  phase 4: the words after a letter: needs no scrolling at 412 x 915
+PASS  412px  phase 4: the carer reads the word
+PASS  412px  phase 4: the sheet before the letter and the question go to online help
+PASS  412px  phase 4: that sheet, the whole request open
+PASS  412px  phase 4: no word for the letter
+PASS  412px  phase 4: the person's starters
+PASS  412px  phase 4: the person's starters: needs no scrolling at 412 x 915
+PASS  412px  phase 10: "I want to talk about…", the first screen (a long name)
+PASS  412px  phase 10: "I want to talk about…", the first screen: needs no scrolling at 412 x 915
+PASS  412px  phase 10: "I want to talk about…", a next screen
+PASS  412px  phase 10: "I want to talk about…", a next screen: needs no scrolling at 412 x 915
+PASS  412px  phase 4: the topics as a picture menu
+PASS  412px  phase 4: the topics as a picture menu: needs no scrolling at 412 x 915
+PASS  412px  phase 4: "Who is it about?" (a long name)
+PASS  412px  phase 4: "Who is it about?": needs no scrolling at 412 x 915
+PASS  412px  phase 4: the carer reads who started (long name), with three questions
+PASS  412px  phase 4: before a doctor visit, the first screen
+PASS  412px  phase 4: a doctor-visit question on the person's screen (three choices and not sure)
+PASS  412px  phase 4: "What worries you most?"
+PASS  412px  phase 4: "What worries you most?": needs no scrolling at 412 x 915
+PASS  412px  phase 4: "What do you want to ask the doctor?"
+PASS  412px  phase 4: the end of the doctor-visit questions
+PASS  412px  phase 4: the page of answers (long name), with the pain line and the buttons
+PASS  412px  phase 4: talk about a photo, the photos (long words)
+PASS  412px  phase 4: talk about a photo, the questions
+PASS  412px  phase 4: the photo over the question on the person's screen
+PASS  412px  phase 4: the photo, three choices and the way out: needs no scrolling at 412 x 915
+PASS  412px  phase 7: "For the speech therapist", the box off, the warning for the carer (long name, every line)
+PASS  412px  phase 7: "For the speech therapist", the needs and pain answers ticked, three questions
+PASS  412px  phase 7: "For the speech therapist", the sheet with the exact text
+PASS  412px  phase 7: the passport, every line with its box (long name, long words)
+PASS  412px  phase 7: the passport, the page with its pictures
+PASS  412px  phase 7: the passport, the sheet with the exact text
+PASS  412px  simple: first visit (how it works open)
+PASS  412px  simple: first visit, the microphone notice open
+PASS  412px  simple: first visit, topic "food" open
+PASS  412px  simple: first visit, topic "body" open
+PASS  412px  simple: first visit, topic "rest" open
+PASS  412px  simple: first visit, topic "people" open
+PASS  412px  simple: first visit, topic "feel" open
+PASS  412px  simple: first visit, topic "plans" open
+PASS  412px  simple: first visit, topic "fun" open
+PASS  412px  simple: before handing over
+PASS  412px  simple: before handing over, "More tips" open
+PASS  412px  simple: before handing over, choices hidden
+PASS  412px  simple: We're stuck (the other ways, carer's side)
+PASS  412px  simple: the person's screen, the other ways
+PASS  412px  simple: the person's choices (two and the way out)
+PASS  412px  simple: the person's check (So: tea. Right?)
+PASS  412px  simple: the person's finish (Thank you. Tea. Give the phone back)
+PASS  412px  simple: after an answer (the next question leads, About them offered), "More" closed
+PASS  412px  simple: after an answer, "More" open (today, Today in short, how it was made)
+PASS  412px  simple: going over the answers, Today in short
+PASS  412px  simple: the person's screen, going over the answers
+PASS  412px  simple: returning visit (how it works folded, a topic open)
+PASS  412px  simple: the person's choices (three and the way out)
+PASS  412px  simple: the person's finish after the way out
+PASS  412px  simple: after "something else" (what now, the narrowing step)
+PASS  412px  simple: the consent sheet for a narrowing step
+PASS  412px  simple: no narrowing card
+PASS  412px  simple: before handing over, a yes / no question
+PASS  412px  simple: the person's choices (yes / no / not sure)
+PASS  412px  simple: after a yes, the next question offered
+PASS  412px  simple: before handing over, the body map
+PASS  412px  simple: the person's screen, the body map
+PASS  412px  simple: the person's screen, the body map, second step (left and right)
+PASS  412px  simple: the person's screen, the pain scale (three steps and not sure)
+PASS  412px  simple: before handing over, a number scale
+PASS  412px  simple: the person's screen, a number scale
+PASS  412px  simple: after "call someone", a field for one name
+PASS  412px  simple: before handing over, a long either-or question
+PASS  412px  simple: the person's choices, a long either-or question
+PASS  412px  simple: the person's check, a long answer
+PASS  412px  simple: the person's finish, a long answer
+PASS  412px  simple: after an answer, a long answer
+PASS  412px  simple: the end of a path (the line that says what to do now)
+PASS  412px  simple: a memory question (a line to say, no card)
+PASS  412px  simple: the consent sheet
+PASS  412px  simple: no card for an open question
+PASS  412px  simple: no card, "needs the internet" (connection off)
+PASS  412px  simple: first screen with the connection off (the AI line says so)
+PASS  412px  simple: the needs board, full screen
+PASS  412px  simple: the person's finish after a need
+PASS  412px  simple: after a need
+PASS  412px  simple: About them, rows closed
+PASS  412px  simple: About them, a person being added
+PASS  412px  simple: About them, places open, long names in the rows
+PASS  412px  simple: first screen with a long name
+PASS  412px  simple: how it works open, with a long name
+PASS  412px  simple: topic "food" open with the family's own long questions
+PASS  412px  simple: topic "people" open with the family's own long questions
+PASS  412px  simple: topic "plans" open with the family's own long questions
+PASS  412px  simple: before handing over with a long name
+PASS  412px  simple: the person's finish (a yes)
+PASS  412px  simple: after an answer with a long name
+PASS  412px  simple: adding a photo, "Frame the picture"
+PASS  412px  simple: adding a photo, "One word for it"
+PASS  412px  simple: About them with two photos (a long word) and "What we have learned"
+PASS  412px  simple: before handing over, with "Usually: ..." and a family photo on a choice
+PASS  412px  simple: the person's choices, one of them a family photo
+PASS  412px  simple: About them, a learned line with "Keep as a fact" and "Remove"
+PASS  412px  phase 3: the first screen with "Diary" under the questions
+PASS  412px  phase 3: the diary, today (a long question, "less sure", the tip of the day)
+PASS  412px  phase 3: the diary after a tap on the log ("Logged: Toilet, …" and Undo)
+PASS  412px  phase 3: the diary, the week, with what stands out (every health note on)
+PASS  412px  phase 3: the diary, the month
+PASS  412px  phase 3: the sheet before the lines go to online help, the whole request open
+PASS  412px  phase 3: the sheet before the lines go to online help (three lines)
+PASS  412px  phase 3: About them, the health row closed with a long note, and "Keep a copy"
+PASS  412px  phase 3: About them, health notes open
+PASS  412px  phase 3: the preview of a file before it replaces About them
+PASS  412px  phase 3: "Keep a copy" with a file that is not ours
+PASS  412px  phase 3: before handing over, with the guard's line
+PASS  412px  phase 3: the person's choices, three bigger pictures and the way out
+PASS  412px  phase 3: at 844 px tall the three pictures are 110 to 130 px and nothing scrolls
+PASS  412px  phase 3: the person's check, with the bigger picture
+PASS  412px  phase 3: after the answer, with the guard's line
+PASS  412px  full view: the partner screen with no card yet
+PASS  412px  full view: the empty card area is plain words, with no ear
+PASS  412px  full view: the placeholder "Your question" fits in the field
+PASS  412px  first run (welcome)
+PASS  412px  judge mode, the card it opens with
+PASS  412px  judge mode, the recording of the on-device step open
+PASS  412px  judge mode, a yes / no card
+PASS  412px  judge mode, every fold under the card open
+PASS  412px  judge mode, two questions in one (coaching line, Next)
+PASS  412px  judge mode, a memory test (no card)
+PASS  412px  judge mode, an open question with no model here
+PASS  412px  judge mode, We're stuck
+PASS  412px  the person's screen, the repair card
+PASS  412px  the person's screen, quick needs
+PASS  412px  #/about (sample family)
+PASS  412px  #/cloud (sample family)
+PASS  412px  #/how (sample family)
+PASS  412px  #/feedback (sample family)
+PASS  412px  About me, empty
+PASS  412px  partner screen, no card yet
+PASS  412px  partner screen, a long either-or question
+PASS  412px  partner screen, every fold open
+
+548 of 548 checks passed

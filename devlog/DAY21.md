@@ -10,18 +10,18 @@ pushed or deployed; the "Live:" lines still name `ce47da2`.
 ## The items, in the brief's order
 1. **Use the image where it exists** (`603f8a5`). `builtinPicto(id)` in `web/src/pictos.ts` returns
    `<img class="pic" src="/pictures/<id>.webp" alt="<word>" data-id="<id>" width="96" height="96" decoding="async">`
-   for the 85 ids of the manifest (`IMAGE_IDS`), our SVG otherwise, and our dashed "something else" for an unknown
+   for the ids of the manifest (`IMAGE_IDS`; 85 then, 84 after the follow-up below), our SVG otherwise, and our dashed "something else" for an unknown
    id. The topic tiles and the diary's log buttons use `decoPicto` (the same picture, `alt=""` and hidden, since the
    word is next to it). The family's own photo is still chosen first, in `main.ts`. Every CSS rule that sized a
    picture's `svg` now sizes `img.pic` the same (52 selectors in `styles.css` and `simple.css`, added by a script;
    a unit test checks that none is missing), so the person's card shows them at 112 to 128 px as before. The browser
    runs looked for `svg` inside a tile; they now look for `svg` or `img.pic`.
 2. **Offline** (`12e6f27`). Nothing had to change in the worker: it already keeps every file of the build, and the
-   pictures are part of it. `pwa-check.py` now proves it: all 85 are in the cache, and with the connection off the
+   pictures are part of it. `pwa-check.py` now proves it: all of them are in the cache (84 after the follow-up), and with the connection off the
    tea or coffee card shows the tea and coffee pictures loaded from the kept copy. `check-dist.mjs` and
    `check-deploy.mjs` pass; there is no size budget in the build, so none was raised.
-3. **Honest provenance** (`5abf1f6`). `PICTOGRAMS.md` has a new header (the set is mixed: 85 made with Gemini, 39
-   drawn by us) and the columns `source | date | licence/terms`. The Gemini rows say "Generated with Gemini 3.1 Flash
+3. **Honest provenance** (`5abf1f6`). `PICTOGRAMS.md` has a new header (the set is mixed: 84 made with Gemini, 40
+   drawn by us, after the follow-up) and the columns `source | date | licence/terms`. The Gemini rows say "Generated with Gemini 3.1 Flash
    Image, reviewed by a person", "20 Nov 2026", and "output used under the Gemini API terms; no copyright claimed by
    us beyond what applies". Google does not claim ownership of Gemini API output; the rules ask for original work,
    for pre-existing work to be disclosed and for no third-party logos: these pictures were made in the period with
@@ -52,12 +52,30 @@ pushed or deployed; the "Live:" lines still name `ce47da2`.
 ## Seen in the pictures, not changed
 - Words: the film clapperboard has printed SCENE, TAKE, ROLL, DATE, DIRECTOR; the radio has tiny OFF / ON marks.
   No brand and no logo anywhere (the TV, the newspaper, the milk carton, the pill bottle and the phone are blank).
-- "something else" is now a question mark in a blue circle, close to what "not sure" used to be; the dashed frame that
-  marked the way out is now only in our drawing. Worth a look by the speech therapist.
-- `chair`, `listen` and `go out` have a faint frame or wall around the object rather than pure white.
+- "something else" had become a question mark in a blue circle, close to what "not sure" used to be, and the dashed
+  frame that marked the way out was gone from the cards. Fixed in the follow-up below.
+- `chair`, `listen` and `go out` had a faint frame or wall around the object rather than pure white. Fixed by hand
+  in the follow-up below.
 - On the needs board (52 to 56 px) the detailed pictures read small; the board's tile size was not changed.
 
 ## Runs (the production build of `5abf1f6`, port 5179)
 `npm run check` 2913 tests, exit 0; `e2e-simple.py` 1032/1032; `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13 (first
 run 11/12, see above); `overflow-check.py` 548/548; `contrast-check.mjs` 144/144 pairs; `phase8-shots.py` 21/21;
 `phase9-shots.py` 39/39; `phase10-shots.py` 132/132; `phase11-walk.py` 40/40. Outputs: `devlog/evidence_phase11/local/`.
+
+## Follow-up, the same day
+- `chair.webp`, `listen.webp` and `go_out.webp` were edited by hand to a plain white background (not regenerated)
+  and committed as they are (`88c0747`).
+- "something else" is our dashed drawing again, on every card: the way out must look unlike any choice, and the
+  Gemini question mark was too close to "not sure". It left `IMAGE_IDS` and the manifest, its file was deleted (a
+  copy kept outside the repository), and its `PICTOGRAMS.md` row is our SVG again. The set is now 84 made with Gemini
+  and 40 drawn by us. The dashed checks in `day3.test.ts` and `pictures.test.ts` now look at what the card shows
+  (`builtinPicto`), not only at our drawings; `pwa-check.py` and `phase11-walk.py` check the dashed way out on the
+  card, the board and the person card.
+
+Follow-up the same day (`88c0747` and the next commit): chair, listen and go out lost their faint frame (edited by
+hand, not regenerated), and "something else" is our dashed drawing again on every card (84 made with Gemini, 40
+drawn by us). On the production build of that state: `npm run check` 2913 unit tests; `e2e-simple.py` 1032/1032;
+`pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` 548/548; `phase11-walk.py` 48/48 (the first run
+47/48: the walk read the check screen's coffee picture before it had loaded; it now waits, as on the other screens);
+`picture-sheet.py` done. Outputs: `devlog/evidence_phase11/local_followup/`.

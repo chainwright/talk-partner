@@ -1,19 +1,20 @@
 // Built-in pictures: simple, realistic colour pictures (design/IMAGES_RESEARCH_2026-11-17.md: real-object colours,
 // one object per picture, plain background, light shading, no scenes; no emoji, no clip art, no 3D, no animation).
 // Since 20 Nov 2026 the set is mixed (PICTOGRAMS.md has the source of every picture):
-// - 85 pictures were made with Google's Gemini (gemini-3.1-flash-image) and reviewed by a person: small WebP files in
+// - 84 pictures were made with Google's Gemini (gemini-3.1-flash-image) and reviewed by a person: small WebP files in
 //   web/public/pictures/ (256 x 256, white background), listed in `IMAGE_IDS`. The prompt of each is in
 //   devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json. They are shown as an <img> with the word as its text.
 // - The rest are drawn by us as SVG on a 96 x 96 grid, in one style: a dark outline of 3 (so every picture stands out
 //   on the white card whatever its fill), flat real-object colours, one lighter or darker patch for shading, round
 //   joins: yes, no, the amount scale, this one / that one, show me, change topic, okay, someone else, morning,
-//   just right, the body map, the monogram, and the controls. Those stayed drawn because the drawing is clearer
-//   (an abstract idea, a scale) or a hand sign could offend.
+//   just right, something else, the body map, the monogram, and the controls. Those stayed drawn because the drawing
+//   is clearer (an abstract idea, a scale) or a hand sign could offend; "something else", the way out, keeps our
+//   dashed frame on every card so it never looks like a choice (the Gemini "?" was too close to "not sure").
 // Our SVG drawing of an id that now has a picture is kept below: it is what shows if the picture file cannot be
 // loaded (`pictoFallback`), so a tile never has an empty frame.
 // The colours are written into the drawing (they are the object's own colours, not the theme's). The person's card
 // is a white sheet in the light and in the dark theme, so a picture always stands on white.
-// "something else" keeps the only dashed shape of the SVG set; unknown ids fall back to that drawing.
+// "something else" keeps the only dashed shape of the set, on the card too; unknown ids fall back to that drawing.
 // Letters are allowed in the monogram only.
 
 /** The outline of every picture: 12.6:1 on the white card. */
@@ -212,7 +213,7 @@ export const PICTO_IDS = [...Object.keys(P), ...BODY_PARTS.map((b) => `body:${b}
  * The ids shown as a picture made with Gemini (20 Nov 2026), the same list as
  * devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json (tests/unit/pictures.test.ts checks both, and the files).
  */
-export const IMAGE_IDS: readonly string[] = ['not sure', 'something else', 'somewhere else', 'good', 'bad', 'tasty', 'plain', 'too salty', 'good idea', 'leave it', 'like them', 'unhappy', 'listen', 'tea', 'coffee', 'change', 'wait', 'stop', 'write it', 'more', 'draw', 'later', 'tired', 'worried', "something's wrong", 'fall', 'tablets', 'pain',
+export const IMAGE_IDS: readonly string[] = ['not sure', 'somewhere else', 'good', 'bad', 'tasty', 'plain', 'too salty', 'good idea', 'leave it', 'like them', 'unhappy', 'listen', 'tea', 'coffee', 'change', 'wait', 'stop', 'write it', 'more', 'draw', 'later', 'tired', 'worried', "something's wrong", 'fall', 'tablets', 'pain',
   'spouse', 'child', 'sibling', 'grandchild', 'friend', 'neighbour', 'carer', 'nurse', 'doctor', 'speech therapist', 'physio', 'priest', 'family', 'visitor', 'toilet', 'drink', 'food', 'too hot', 'too cold', 'call someone', 'water', 'juice', 'milk', 'hot drink', 'cold drink', 'snack', 'meal', 'something sweet', 'something savoury',
   'hot meal', 'cold meal', 'bed', 'chair', 'tv', 'music', 'news', 'film', 'radio', 'paper', 'photos', 'now', 'afternoon', 'stay in', 'go out', 'open', 'closed', 'glasses', 'hearing aid', 'company', 'time alone', 'walk', 'garden', 'drive', 'wash', 'exercises', 'plans', 'quiet'];
 const IMAGES = new Set(IMAGE_IDS);

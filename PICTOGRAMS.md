@@ -1,9 +1,9 @@
 # Pictures: provenance and licence
 
-The set is mixed since 20 Nov 2026: **85 pictures made with Google's Gemini** and **39 SVG drawings of our own**. The
+The set is mixed since 20 Nov 2026: **84 pictures made with Google's Gemini** and **40 SVG drawings of our own**. The
 table below gives the source, the date and the licence or terms of every picture the app bundles.
 
-**Made with Gemini (85).** Generated on 20 Nov 2026, inside the hackathon's submission period, with Google's Gemini
+**Made with Gemini (84).** Generated on 20 Nov 2026, inside the hackathon's submission period, with Google's Gemini
 3.1 Flash Image (`gemini-3.1-flash-image`, in Google AI Studio), the sponsor's own model, from short text prompts
 (each one is in `devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json`). A person reviewed every picture next to our
 drawing of the same word and chose which to use; some were made again with a better prompt. Then each was put on a
@@ -13,10 +13,10 @@ API terms and claim no copyright in them beyond what applies. They are not cover
 licence. We looked at each file for brands, logos and words: none shows a brand or a logo; the only readable words
 are the printed SCENE, TAKE, ROLL, DATE, DIRECTOR on the film clapperboard and tiny OFF / ON marks on the radio.
 
-**Drawn by us (39).** Our own SVG drawings in `web/src/pictos.ts`, on a 96 x 96 grid in one style (a dark outline of 3,
+**Drawn by us (40).** Our own SVG drawings in `web/src/pictos.ts`, on a 96 x 96 grid in one style (a dark outline of 3,
 flat real-object colours, one lighter or darker patch for shading, one object per picture, a plain background, no
 scene), licensed under the repository licence, **Apache-2.0** (see `LICENSE`), by the Talk Partner team. Kept as
-drawings because the drawing is clearer (an abstract idea, a scale, a pointer) or a hand sign could offend: yes, no, someone else, okay, this one, that one, a little, some, a lot, show me, change topic, morning, just right; the 25 parts of the body map; the monogram. Our drawing of every word
+drawings because the drawing is clearer (an abstract idea, a scale, a pointer) or a hand sign could offend: yes, no, someone else, okay, this one, that one, a little, some, a lot, show me, change topic, morning, just right, and the way out, something else (its dashed frame keeps it apart from every choice on the card; the Gemini question mark was too close to "not sure", so it is not used); the 25 parts of the body map; the monogram. Our drawing of every word
 that now has a picture is still in `web/src/pictos.ts`: it shows if the picture file cannot be loaded, so a tile is
 never an empty frame. No ARASAAC, no Mulberry, no ParticiPics, no icon font, no clip art.
 
@@ -32,7 +32,7 @@ What is checked: `tests/unit/day3.test.ts` checks that this table lists exactly 
 carries a 2026 date and its source, Apache-2.0 for our drawings and the Gemini terms for the rest, and that the rows
 marked as made with Gemini are exactly the manifest's ids; `tests/unit/pictures.test.ts` checks our drawings' style
 (the same outline on every drawing, real colours written into the drawing, no outside image, no text, only the way out
-dashed), the contrast of the outline on the white card (12.6:1; the person's card is white in the light and in the
+dashed, in our drawings and on the card), the contrast of the outline on the white card (12.6:1; the person's card is white in the light and in the
 dark theme, and the topic tiles show their picture on a white plate), and every picture file (WebP, 256 x 256, at
 most 20 KB, the same ids in the code, in the manifest and in the folder). Sheets of all of them as the card shows
 them, at 390 px: `devlog/evidence_pictures/` (`python3 scripts/picture-sheet.py`).
@@ -46,7 +46,7 @@ head colour and differ by one attribute each; the figures made with Gemini show 
 | yes | white tick on a green disc | drawn by us (SVG) | 18 Nov 2026 (colour; first drawn 9–10 Nov 2026 as a line drawing) | Apache-2.0 |
 | no | white cross on a red disc | drawn by us (SVG) | 18 Nov 2026 (colour; first drawn 9–10 Nov 2026 as a line drawing) | Apache-2.0 |
 | not sure | an adult shrugging, palms up | Generated with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`), reviewed by a person | 20 Nov 2026 | output used under the Gemini API terms; no copyright claimed by us beyond what applies |
-| something else | a question mark in a pale blue circle | Generated with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`), reviewed by a person | 20 Nov 2026 | output used under the Gemini API terms; no copyright claimed by us beyond what applies |
+| something else | dashed pale frame with three grey dots (the only dashed shape, on every card) | drawn by us (SVG) | 18 Nov 2026 (colour; first drawn 9–10 Nov 2026 as a line drawing) | Apache-2.0 |
 | someone else | grey figure with a question mark on an amber disc | drawn by us (SVG) | 18 Nov 2026 (colour; first drawn 9–10 Nov 2026 as a line drawing) | Apache-2.0 |
 | somewhere else | a wooden signpost, arrows pointing different ways | Generated with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`), reviewed by a person | 20 Nov 2026 | output used under the Gemini API terms; no copyright claimed by us beyond what applies |
 | good | a thumb up | Generated with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`), reviewed by a person | 20 Nov 2026 | output used under the Gemini API terms; no copyright claimed by us beyond what applies |
