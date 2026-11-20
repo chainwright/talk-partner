@@ -44,6 +44,7 @@ try {
   const pending = new Map();
   const hosts = new Map(); // every host the page asked, for the whole run
   const offlineAsked = []; // requests the page started after the network was switched off
+  const offlinePictures = []; // (phase 11) the bundled picture files asked for then, on the app's own host
   const errors = [];
   let isOffline = false;
   ws.addEventListener('message', (ev) => {
@@ -52,7 +53,10 @@ try {
     if (m.method === 'Network.requestWillBeSent' && /^https?:/.test(m.params.request.url)) {
       const u = new URL(m.params.request.url);
       hosts.set(u.host, (hosts.get(u.host) ?? 0) + 1);
-      if (isOffline && !u.pathname.includes('offline-probe')) offlineAsked.push(`${u.host}${u.pathname}`);
+      // (phase 11) a bundled picture file on the app's own host: this run bypasses the service worker, so with the
+      // network off it fails and the tile shows our drawing instead (web/src/pictos.ts, pictoFallback); counted apart
+      if (isOffline && u.host === new URL(URL_).host && /^\/pictures\/[a-z_]+\.webp$/.test(u.pathname)) offlinePictures.push(u.pathname);
+      else if (isOffline && !u.pathname.includes('offline-probe')) offlineAsked.push(`${u.host}${u.pathname}`);
     }
     if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails?.exception?.description ?? m.params.exceptionDetails?.text ?? 'exception');
   });
@@ -112,6 +116,12 @@ try {
 
   await js(`document.querySelector('[data-act="needs"]').click()`);
   await waitFor(`!!document.querySelector('.person.full .tiles.needs')`, 4000); await sleep(400);
+  // (phase 11) with no service worker the picture files cannot load: every tile of the board must still show a
+  // picture (our drawing, the fallback in web/src/pictos.ts), never a broken image. With the worker they come from
+  // its cache (pwa-check.py).
+  await waitFor(`[...document.querySelectorAll('#person img.pic')].length === 0`, 4000);
+  const fallback = await js(`(() => { const t = [...document.querySelectorAll('#person .tile')]; return { n: t.length, drawn: t.filter((x) => x.querySelector('svg[role="img"]') || x.querySelector('img.pic')?.naturalWidth > 0).length, broken: [...document.querySelectorAll('#person img.pic')].filter((i) => i.complete && !i.naturalWidth).length }; })()`);
+  check('offline, no service worker (phase 11): the picture files cannot load, and every tile of the board shows our drawing instead, none broken', fallback && fallback.n >= 9 && fallback.drawn === fallback.n && fallback.broken === 0, `${JSON.stringify(fallback)}; files asked: ${offlinePictures.length}`);
   const board = await js(`(() => { const t = [...document.querySelectorAll('#person .tile')]; const r = t.map((x) => x.getBoundingClientRect());
     return { hash: location.hash, headline: document.querySelector('#person .headline')?.innerText ?? '', words: t.map((x) => x.querySelector('span')?.innerText ?? ''), pictures: t.filter((x) => x.querySelector('svg[role="img"], img.pic[alt]')).length,
       smallest: Math.round(Math.min(...r.map((b) => Math.min(b.width, b.height)))), lowest: Math.round(Math.max(...r.map((b) => b.bottom))), screen: innerHeight, images: document.querySelectorAll('#person img').length,
@@ -149,7 +159,7 @@ try {
   const out = await js(`({ done: document.querySelector('#result .done')?.innerText ?? '', line: document.querySelector('#result .need-line')?.innerText ?? '', field: !!document.querySelector('#q') && !document.querySelector('#q').disabled, stuck: !!document.querySelector('#result [data-act="stuck"]') })`);
   check('offline: "something else" gets the same check, then hands back to the question box and "We\'re stuck"', v2 === 'So: something else. Right?' && out.done === 'They chose "something else".' && /question box/.test(out.line) && out.field && out.stuck, JSON.stringify({ v2, ...out }));
 
-  check('offline: the page started no request for any of it', offlineAsked.length === 0, offlineAsked.length ? offlineAsked.join(', ') : 'none');
+  check('offline: the page started no request for any of it, other than the bundled picture files on its own host', offlineAsked.length === 0, offlineAsked.length ? offlineAsked.join(', ') : 'none');
   check('no script error on the page', errors.length === 0, errors.join(' | ').slice(0, 300));
   console.log(`hosts the page contacted while the network was on (page load): ${before}`);
   check('before the network went off, the page had contacted no host but its own', [...hosts.keys()].every((h) => h === HOST), before);

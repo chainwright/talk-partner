@@ -1,0 +1,12 @@
+check exit=0
+e2e-simple exit=0
+pwa-check exit=0
+e2e-needs exit=1
+overflow-check exit=0
+contrast-check exit=0
+phase8-shots exit=0
+phase9-shots exit=0
+phase10-shots exit=0
+ALLDONE
+e2e-needs (rerun) exit=0
+phase11-walk exit=0

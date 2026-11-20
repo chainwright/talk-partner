@@ -782,6 +782,43 @@ back. `devlog/DAY20.md` has the reasons.
 **Counts** (the production build of `864315e` on `npx vite preview`, port 5610, from a separate worktree so that
 `dist/` was not touched): 2902 unit tests (`npm run check`); `e2e-simple.py` 1032/1032; `pwa-check.py` 32/32; `e2e-needs.mjs` 12/12; `overflow-check.py` 548/548; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py` 21/21 (the first run failed on its own old step, "tell you" then "People", which phase 10 replaced with "I want to talk about…"; the script now follows the new path, no app change); `phase9-shots.py` 39/39; `phase10-shots.py` 132/132. The outputs are in `devlog/evidence_phase10/local/`.
 
+## Added on 20 Nov, phase 11: colour pictures made with Gemini
+The family chose a new picture set (`design/PHASE11_BRIEF.md`; `CLAIMS.md` rows 142 to 144, and row 59 now says it
+is no longer true; `EVIDENCE.md` "Phase 11"; `devlog/DAY21.md`). Nothing was deployed or pushed; the "Live:" lines
+still name the build they name.
+
+- **The pictures** (`603f8a5`). 85 of the card pictures are now colour pictures generated with Gemini 3.1 Flash
+  Image on 20 Nov, inside the submission period, from short text prompts, reviewed by a person against our drawing of
+  the same word: drinks and food, people, rest, TV and music, going out, feelings, the needs board. They are 256 x 256
+  WebP files in `web/public/pictures/` (about 6 KB each, about 0.5 MB in all). The rest stay our SVG drawings: yes,
+  no, the amount scale, this one / that one, show me, change topic, okay, someone else, morning, just right, the body
+  map and the monogram. A picture is an `<img>` with the word as its text and the same box as the drawing (112 to 128
+  px on the person's card); a family's own photo still comes first; if a file cannot be loaded, our drawing of the
+  same word takes its place, so a tile is never broken.
+- **Offline** (`12e6f27`). The service worker keeps every file of the build, the 85 pictures with them, at install;
+  `pwa-check.py` checks the cache holds all 85 and that the tea or coffee card shows its pictures with the
+  connection off.
+- **Where they come from** (`5abf1f6`). `PICTOGRAMS.md` gives every picture's source, date and licence or terms: the
+  Gemini ones under the Gemini API terms (we did not draw them and claim no copyright beyond what applies), ours
+  under Apache-2.0. `DISCLOSURE.md` names them, and "How this works" says "Pictures: drawn by us and made with Gemini."
+- **Evidence** (this commit): `devlog/evidence_pictures/` (the sheets, now with a "Gemini" or "our SVG" line under
+  each word, and a before/after sheet), `devlog/evidence_phase11/` (phase 9 and 10 screens at 360 x 740 and 390 x
+  844, and `scripts/phase11-walk.py`: tea or coffee, pain, toilet, a person and Back, light and dark).
+
+What differs from the brief: our drawing of each word that now has a picture is kept in the code as the fallback
+for a file that fails to load (the brief did not ask for it; it matters where no service worker is there yet, as in
+`e2e-needs.mjs`, which bypasses the worker and turns the network off); "the About screen" is the "How this
+works" screen (the app has no other screen about itself); `e2e-needs.mjs` now allows the picture files on the app's
+own host while offline and checks that every tile then shows our drawing. Words in the pictures: none shows a brand
+or a logo; the film clapperboard has printed words (SCENE, TAKE, ROLL, DATE, DIRECTOR) and the radio tiny OFF / ON
+marks.
+
+**Counts** (the production build of `5abf1f6` on `npx vite preview`, port 5179): 2913 unit tests (`npm run check`);
+`e2e-simple.py` 1032/1032; `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13 (the first run failed 11/12 on the offline
+request check, see above); `overflow-check.py` 548/548; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py`
+21/21; `phase9-shots.py` 39/39; `phase10-shots.py` 132/132; `phase11-walk.py` 40/40. The outputs are in
+`devlog/evidence_phase11/local/`.
+
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104
 to 107; `devlog/evidence_phase6/r1_*.png`, `r2_*.png`; `devlog/DAY17.md`). Both fixes are rules: no AI was added.

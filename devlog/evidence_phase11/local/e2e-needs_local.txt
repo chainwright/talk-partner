@@ -1,0 +1,19 @@
+url: http://localhost:5179/
+browser: Chrome/157.0.8103.79
+status line: No Gemini Nano in this browser, so the on-device step can't run here. The card shown is made in code. Open questions need cloud help. Turn on cloud help
+PASS  the microphone button is there, between the question field and "Make card", at least 44 px  ({"between":true,"label":"Speak your question","size":54})
+PASS  its first press only says where the recording goes (to Google's cloud, with any names said; for the partner's question only), and nothing is recorded  (Voice input records your question (up to 15 seconds) and sends the recording to Google's cloud, where an AI model turns it into text. It is your voice as it is, with any names you say: the name swap cannot be applied to sound. It needs a connection. For your question only: their speech is never recorded. Use the microphone Not now)
+PASS  the notice never says the recording stays on this computer, and showing it contacted no host  (hosts: localhost:5179)
+PASS  the network is off for the rest of this run (a request to the app's own host fails)  (fetch failed: true)
+PASS  offline, no service worker (phase 11): the picture files cannot load, and every tile of the board shows our drawing instead, none broken  ({"n":10,"drawn":10,"broken":0}; files asked: 10)
+PASS  offline: "Quick needs" opens the board full screen in one tap: ten tiles (nine needs since phase 5, and the way out), each a picture and its word, every target at least 64 px, all on one screen  ({"hash":"#/needs","headline":"I need","words":["toilet","drink","food","pain","tired","too hot","too cold","call someone","something's wrong","something else"],"pictures":10,"smallest":130,"lowest":733,"screen":813,"images":0,"font":"\"Atkinson Hyperlegible Next\"","fontLoaded":true})
+PASS  offline: a tap on "toilet" asks "So: toilet. Right?" with the picture, the word, a tick and a cross  ({"headline":"So: toilet. Right?","word":"toilet","picture":true,"tick":true,"cross":true})
+PASS  offline: after the tick the person's screen shows the need and nothing else; press-and-hold on the cross leads to the partner's side, which has the line for it, "No AI needed", nothing left  ({"done":{"person":"I need toilet","picture":true},"side":{"hash":"","done":"Chose \"toilet\" and confirmed it.","line":"Go now. The rest can wait.","badge":"No AI needed","tail":"· nothing left this computer","pane":"I need toilet"}})
+PASS  offline: after "pain" one tap asks "Where does it hurt?", and the body card is made with no network  ({"kind":"body","badge":"No AI needed","tiles":["head","chest","somewhere else"]})
+PASS  offline: "something else" gets the same check, then hands back to the question box and "We're stuck"  ({"v2":"So: something else. Right?","done":"They chose \"something else\".","line":"Ask in the question box, one thing at a time. Or press \"We're stuck\" for other ways to get it across.","field":true,"stuck":true})
+PASS  offline: the page started no request for any of it, other than the bundled picture files on its own host  (none)
+PASS  no script error on the page
+hosts the page contacted while the network was on (page load): localhost:5179×16
+PASS  before the network went off, the page had contacted no host but its own  (localhost:5179×16)
+
+commit 5abf1f68ab7e3fcbd277f0a410a2f04583defe10  13/13 checks passed  2026-11-20T21:20:53.358Z
