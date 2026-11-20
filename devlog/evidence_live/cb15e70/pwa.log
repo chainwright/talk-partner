@@ -1,0 +1,38 @@
+url: https://talk-partner.web.app/
+browser: Chromium 148.0.7778.96 (headless, persistent profile)
+PASS  the page links a web app manifest, and Chrome parses it with no error
+PASS  manifest: name "Talk Partner", display standalone, a theme colour, a background colour
+PASS  manifest: the start URL is the simple view, inside the scope
+PASS  manifest (phase 10): one shortcut, "I want to say something", to /#/turn inside the scope
+PASS  the page names the same theme colour for the browser bar
+PASS  icon /icons/icon-192.png (192x192, any) loads as a PNG of that size
+PASS  icon /icons/icon-512.png (512x512, any) loads as a PNG of that size
+PASS  icon /icons/icon-maskable-512.png (512x512, maskable) loads as a PNG of that size
+PASS  icons: 192 px and 512 px for any purpose, and a maskable 512 px
+PASS  a service worker is registered for the whole site and active
+PASS  it controls the page on the first visit (no reload needed before going offline)
+PASS  one cache for this build, holding the page and every file the page loaded (script, style, fonts, icons, manifest)
+PASS  phase 11: the cache holds every picture file (84 WebP in /pictures/), not only the ones the page has shown
+PASS  Chrome's installability check reports no error
+PASS  the connection is really off: a request for a file that is not kept fails
+PASS  offline: the page loads again from the kept copy, with the first screen whole
+PASS  offline: the fonts are the app's own, loaded from the kept copy
+PASS  offline: the AI line says the AI needs the internet, and what works without it
+PASS  offline: a topic question makes its choices by the rules
+PASS  offline (phase 11): the card shows its pictures from the kept copy: tea and coffee, each a loaded 256 px WebP of 128 px, and the way out our dashed drawing
+PASS  offline: the person's screens work to "Give the phone back", and the carer sees the answer
+PASS  offline: "Today in short" is written (by the rules, on this phone)
+PASS  offline: quick needs opens, ten tiles with their pictures (nine needs since phase 5, and the way out)
+PASS  offline: About them opens, and what is typed is kept on this phone across a reload
+PASS  offline: the first screen names the person from About them
+PASS  offline (phase 10): the shortcut's address /#/turn opens the person's own start
+PASS  offline: the one open topic question is tagged "needs internet: you are offline"
+PASS  offline: a question that needs online help gets a clear "needs the internet" state
+PASS  offline: no consent sheet and no "Use online help" button that could not work
+PASS  offline: the app asked nothing of any other host
+PASS  online again: the same screen offers online help again, without a reload
+PASS  online again: the consent sheet comes up with the line that would go
+PASS  no page error in the whole run
+PASS  the run asked nothing of any other host ("Yes" was never pressed)
+
+34 of 34 checks passed

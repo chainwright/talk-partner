@@ -7,13 +7,16 @@ pictures loaded, 104 to 128 px, the way out smaller), the check, the finish, Bac
 screen, the quick-needs board with pain and with toilet, and a person (company or time alone). Every picture must be
 a loaded 256 px WebP, nothing may scroll sideways, no page error, and nothing is asked of another host.
 
-Usage: python3 scripts/phase11-walk.py [OUT_DIR]   (default devlog/evidence_phase11/walk)
+Usage: python3 scripts/phase11-walk.py [--url URL] [OUT_DIR]   (default http://localhost:5179/, devlog/evidence_phase11/walk)
 Exit code 0 when every check passes, 1 otherwise.
 """
 import json, os, sys
 from playwright.sync_api import sync_playwright
+ARGS = sys.argv[1:]
 URL = 'http://localhost:5179/'
-OUT = sys.argv[1] if len(sys.argv) > 1 else 'devlog/evidence_phase11/walk'
+if '--url' in ARGS:
+    i = ARGS.index('--url'); URL = ARGS[i + 1]; del ARGS[i:i + 2]
+OUT = ARGS[0] if ARGS else 'devlog/evidence_phase11/walk'
 os.makedirs(OUT, exist_ok=True)
 res = []
 def check(name, ok, detail=''):
