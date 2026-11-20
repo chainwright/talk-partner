@@ -298,7 +298,7 @@ try {
     await waitFor('!!document.querySelector(".person.full .tiles.needs")');
     await sleep(400);
     const board = await js(`(() => { const t = [...document.querySelectorAll('#person .tile')]; const r = t.map((x) => x.getBoundingClientRect());
-      return { n: t.length, words: t.filter((x) => x.querySelector('span')?.innerText.trim()).length, pictures: t.filter((x) => x.querySelector('svg[role="img"]')).length, smallest: Math.round(Math.min(...r.map((b) => Math.min(b.width, b.height)))),
+      return { n: t.length, words: t.filter((x) => x.querySelector('span')?.innerText.trim()).length, pictures: t.filter((x) => x.querySelector('svg[role="img"], img.pic[alt]')).length, smallest: Math.round(Math.min(...r.map((b) => Math.min(b.width, b.height)))),
         gap: Math.round(Math.min(...r.slice(1).map((b, i) => (Math.abs(b.top - r[i].top) < 2 ? b.left - r[i].right : b.top - r[i].bottom)))), lowest: Math.round(Math.max(...r.map((b) => b.bottom))), page: document.documentElement.scrollHeight,
         font: Math.min(...t.map((x) => parseFloat(getComputedStyle(x).fontSize))), clipped: t.filter((x) => x.scrollWidth > x.clientWidth + 1).map((x) => x.innerText), bg: getComputedStyle(document.querySelector('#person')).backgroundColor, ink: getComputedStyle(t[0]).color }; })()`);
     check(`${s} quick-needs board: nine tiles, each a picture and its word, all on one screen with no scrolling (${SIZES[s].height}px)`, board.n === 9 && board.words === 9 && board.pictures === 9 && board.lowest <= SIZES[s].height && board.page <= SIZES[s].height, JSON.stringify(board));

@@ -126,7 +126,7 @@ def main():
         check('offline: "Today in short" is written (by the rules, on this phone)', page.locator('#today-short[data-source=rules]').count() == 1)
         page.locator('.btn[data-act=needs]').first.click()
         page.wait_for_selector('main.pv .p-tiles.board')
-        check('offline: quick needs opens, ten tiles with their pictures (nine needs since phase 5, and the way out)', page.locator('main.pv .pt').count() == 10 and page.locator('main.pv .pt svg').count() == 10)
+        check('offline: quick needs opens, ten tiles with their pictures (nine needs since phase 5, and the way out)', page.locator('main.pv .pt').count() == 10 and page.locator('main.pv .pt :is(svg, img.pic)').count() == 10)
         page.locator('#exit').dispatch_event('pointerdown')
         # (phase 8: the press and hold gives the phone back to the carer's screen the board was opened from: the answer)
         page.wait_for_selector('main.simple.s-answered, main.simple.card', timeout=4000)

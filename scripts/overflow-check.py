@@ -428,11 +428,11 @@ def phase3(url, width, browser):
     page.locator('[data-act=show]').click()
     page.wait_for_selector('main.pv .pt')
     check(page, width, "phase 3: the person's choices, three bigger pictures and the way out")
-    fits = page.evaluate("(() => { const de = document.documentElement; const p = [...document.querySelectorAll('main.pv .pt:not(.esc) svg')].map((x) => Math.round(x.getBoundingClientRect().height)); return { p, sh: de.scrollHeight, ch: de.clientHeight }; })()")
+    fits = page.evaluate("(() => { const de = document.documentElement; const p = [...document.querySelectorAll('main.pv .pt:not(.esc) :is(svg, img.pic)')].map((x) => Math.round(x.getBoundingClientRect().height)); return { p, sh: de.scrollHeight, ch: de.clientHeight }; })()")
     if width >= 390:
         page.set_viewport_size({'width': width, 'height': 844})
         page.wait_for_timeout(150)
-        fits = page.evaluate("(() => { const de = document.documentElement; const p = [...document.querySelectorAll('main.pv .pt:not(.esc) svg')].map((x) => Math.round(x.getBoundingClientRect().height)); return { p, sh: de.scrollHeight, ch: de.clientHeight }; })()")
+        fits = page.evaluate("(() => { const de = document.documentElement; const p = [...document.querySelectorAll('main.pv .pt:not(.esc) :is(svg, img.pic)')].map((x) => Math.round(x.getBoundingClientRect().height)); return { p, sh: de.scrollHeight, ch: de.clientHeight }; })()")
         named(all(110 <= x <= 130 for x in fits['p']) and fits['sh'] <= fits['ch'], width, 'phase 3: at 844 px tall the three pictures are 110 to 130 px and nothing scrolls', str(fits))
         page.set_viewport_size({'width': width, 'height': 800})
     else:
@@ -453,7 +453,7 @@ def phase3(url, width, browser):
         page.wait_for_selector('#card-empty')
         check(page, width, 'full view: the partner screen with no card yet')
         empty = ' '.join(page.locator('#person').inner_text().split())
-        named(empty == 'Your card will appear here. Type or say a question above, or tap one you asked before.' and page.locator('#person svg').count() == 0, width, 'full view: the empty card area is plain words, with no ear', empty)
+        named(empty == 'Your card will appear here. Type or say a question above, or tap one you asked before.' and page.locator('#person :is(svg, img.pic)').count() == 0, width, 'full view: the empty card area is plain words, with no ear', empty)
         ph = page.evaluate(PLACEHOLDER)
         named(ph['text'] == 'Your question' and ph['need'] <= ph['room'], width, 'full view: the placeholder "Your question" fits in the field', str(ph))
     ctx.close()

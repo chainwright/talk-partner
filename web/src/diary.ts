@@ -13,7 +13,7 @@ import type { Flag } from '../../core/reliability';
 import type { RewordSource } from '../../core/reword';
 import type { Tip } from '../../core/tip';
 import { TOPIC_BASE } from '../../core/topics';
-import { builtinPicto } from './pictos';
+import { decoPicto } from './pictos';
 import { FALL_HEAD } from '../../core/diary';
 import { P9 } from '../../core/copy9';
 import { P10 } from '../../core/copy10';
@@ -25,7 +25,7 @@ import { practiceLink } from './care7';
 import { SIGN, navBar } from './simple';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-const deco = (id: string) => builtinPicto(id).replace(/role="img" aria-label="[^"]*"/, 'class="tp" aria-hidden="true" focusable="false"');
+const deco = decoPicto;
 const BOOK = '<svg class="sg" viewBox="0 0 96 96" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 14h52a8 8 0 018 8v60H26a8 8 0 01-8-8z"/><path d="M34 34h28M34 50h28M34 66h16"/></svg>';
 const LOG_PIC: Record<LogKind, string> = { drank: 'drink', ate: 'food', toilet: 'toilet', slept: 'bed', pain: 'pain', fall: 'fall', tablets: 'tablets' };
 

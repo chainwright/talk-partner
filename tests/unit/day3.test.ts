@@ -13,7 +13,7 @@ import { findPerson, inventedNameFilter, recognitionPool } from '../../core/rule
 import { SAMPLE_PROFILE } from '../../core/sample';
 import { findLeaks, stripQuestion } from '../../core/strip';
 import type { Card, ModelOutput, Profile } from '../../core/types';
-import { PICTO_IDS, builtinPicto, monogram } from '../../web/src/pictos';
+import { IMAGE_IDS, PICTO_IDS, builtinPicto, monogram, svgPicto } from '../../web/src/pictos';
 import { PROFILE } from './fixtures';
 
 type ModelState = 'ready' | 'throws' | 'absent';
@@ -199,15 +199,20 @@ describe('pictogram provenance: PICTOGRAMS.md lists exactly what the code bundle
   it('style rules: role="img" with a name, no text inside (except the monogram), dashes only on the escape', () => {
     for (const id of PICTO_IDS) {
       if (id === 'monogram') continue;
-      const s = builtinPicto(id);
+      // our SVG drawing (shown, or the fallback of a picture made with Gemini, 20 Nov 2026)
+      const s = svgPicto(id);
       expect(s).toMatch(/role="img" aria-label="[^"]+"/);
       expect(s).not.toContain('<text');
       expect(s.includes('stroke-dasharray'), id).toBe(id === 'something else');
+      // what the card shows has a name for a screen reader either way: the word as the picture's text, or the label
+      expect(builtinPicto(id)).toMatch(IMAGE_IDS.includes(id) ? /^<img [^>]*alt="[^"]+"/ : /role="img" aria-label="[^"]+"/);
     }
     expect(monogram('J')).toContain('<text');
   });
   it('no two pictograms share a drawing', () => {
     const bodies = PICTO_IDS.filter((id) => id !== 'monogram').map((id) => builtinPicto(id));
+    const drawings = PICTO_IDS.filter((id) => id !== 'monogram').map((id) => svgPicto(id).replace(/aria-label="[^"]+"/, ''));
+    expect(new Set(drawings).size).toBe(drawings.length);
     expect(new Set(bodies).size).toBe(bodies.length);
   });
 });

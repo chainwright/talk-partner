@@ -164,14 +164,14 @@ try {
   await js(`document.querySelector('[data-act="needs"]').click()`);
   await waitFor(`!!document.querySelector('.person.full .tiles.needs')`, 4000); await sleep(400);
   const board = await js(`(() => { const t = [...document.querySelectorAll('#person .tile')]; const r = t.map((x) => x.getBoundingClientRect());
-    return { hash: location.hash, headline: document.querySelector('#person .headline')?.innerText ?? '', words: t.map((x) => x.querySelector('span')?.innerText ?? ''), pictures: t.filter((x) => x.querySelector('svg[role="img"]')).length,
+    return { hash: location.hash, headline: document.querySelector('#person .headline')?.innerText ?? '', words: t.map((x) => x.querySelector('span')?.innerText ?? ''), pictures: t.filter((x) => x.querySelector('svg[role="img"], img.pic[alt]')).length,
       smallest: Math.round(Math.min(...r.map((b) => Math.min(b.width, b.height)))), lowest: Math.round(Math.max(...r.map((b) => b.bottom))), screen: innerHeight, wide: document.documentElement.scrollWidth <= innerWidth, images: document.querySelectorAll('#person img').length,
       other: [...document.querySelectorAll('#person *')].filter((e) => !e.closest('.tile') && !e.closest('#exit') && e.children.length === 0 && e.innerText?.trim()).map((e) => e.innerText) }; })()`);
   check('offline: "Quick needs" opens the board full screen in one tap: ten tiles (nine needs since phase 5, and the way out), each a picture and its word, every target at least 64 px, all on one screen, nothing else on it but the keyword',
     board.hash === '#/needs' && board.headline === 'I need' && JSON.stringify(board.words) === JSON.stringify(['toilet', 'drink', 'food', 'pain', 'tired', 'too hot', 'too cold', 'call someone', "something's wrong", 'something else']) && board.pictures === 10 && board.images === 0 && board.smallest >= 64 && board.lowest <= board.screen && board.wide && JSON.stringify(board.other) === JSON.stringify(['I need']), JSON.stringify(board));
   await shot('noconfig-04-needs-board-offline');
   const tap = async (i) => { await js(`document.querySelector('#person .tile[data-i="${i}"]').click()`); await waitFor(`!!document.querySelector('#person [data-confirm="yes"]')`, 3000); await sleep(200); };
-  const verify = () => js(`({ headline: document.querySelector('#person .headline')?.innerText ?? '', word: document.querySelector('#person .confirm-pic p')?.innerText ?? '', picture: !!document.querySelector('#person .confirm-pic svg'), yes: document.querySelector('[data-confirm="yes"]')?.innerText ?? '', tick: !!document.querySelector('[data-confirm="yes"] svg'), change: document.querySelector('[data-confirm="change"]')?.innerText ?? '', cross: !!document.querySelector('[data-confirm="change"] svg') })`);
+  const verify = () => js(`({ headline: document.querySelector('#person .headline')?.innerText ?? '', word: document.querySelector('#person .confirm-pic p')?.innerText ?? '', picture: !!document.querySelector('#person .confirm-pic :is(svg, img.pic)'), yes: document.querySelector('[data-confirm="yes"]')?.innerText ?? '', tick: !!document.querySelector('[data-confirm="yes"] svg'), change: document.querySelector('[data-confirm="change"]')?.innerText ?? '', cross: !!document.querySelector('[data-confirm="change"] svg') })`);
   await tap(0);
   const v1 = await verify();
   check('offline: a tap on "toilet" asks "So: toilet. Right?" with the picture, the word, a tick and a cross', v1.headline === 'So: toilet. Right?' && v1.word === 'toilet' && v1.picture && v1.yes === 'yes' && v1.tick && v1.change === 'change' && v1.cross, JSON.stringify(v1));
@@ -181,7 +181,7 @@ try {
   const backToBoard = await js(`document.querySelectorAll('#person .tiles.needs .tile').length`);
   await tap(1);
   await js(`document.querySelector('[data-confirm="yes"]').click()`); await sleep(300);
-  const done = await js(`({ person: document.querySelector('#person').innerText.replace(/\\s+/g, ' ').trim(), picture: !!document.querySelector('#person .answered svg') })`);
+  const done = await js(`({ person: document.querySelector('#person').innerText.replace(/\\s+/g, ' ').trim(), picture: !!document.querySelector('#person .answered :is(svg, img.pic)') })`);
   check('offline: the cross returns to the board; after the tick the person\'s screen shows the need (picture and word) and no coaching, praise or score',
     backToBoard === 10 && done.picture && done.person === 'I need drink', JSON.stringify({ backToBoard, ...done }));
   // the partner's side (the press-and-hold exit leads here): the line for the partner, the badge, and nothing of it on the card pane

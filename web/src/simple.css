@@ -116,7 +116,7 @@
 .s-ask .field, #ask.s-ask input { flex: 1; width: 100%; min-width: 0; min-height: 64px; padding: 14px 16px; border-radius: 16px; border: 2px solid var(--field); background: var(--panel); color: var(--ink); font-size: 19px; }
 .s-ask .field::placeholder { color: var(--muted); opacity: 1; }
 .s-ask .mic { flex: none; width: 64px; min-height: 64px; border-radius: 16px; border: 2px solid var(--field); background: var(--panel); color: var(--ink); }
-.s-ask .mic svg { width: 30px; height: 30px; }
+.s-ask .mic svg, .s-ask .mic img.pic { width: 30px; height: 30px; }
 .s-ask .mic.on { background: var(--warn); border-color: var(--warn); color: var(--panel); }
 .simple .voice { font-size: 15px; color: var(--ink); }
 .simple .voice-acts button { border: 2px solid var(--field); }
@@ -192,17 +192,17 @@
 .simple .person.mini .headline { font-size: 28px; }
 .simple .person.mini .tiles { gap: 10px; }
 .simple .person.mini .tile { min-height: 96px; font-size: 21px; padding: 10px 6px; }
-.simple .person.mini .tile svg, .simple .person.mini .tile .photo { width: 56px; height: 56px; }
+.simple .person.mini .tile svg, .simple .person.mini .tile .photo, .simple .person.mini .tile img.pic { width: 56px; height: 56px; }
 .simple .person.mini .tile.escape, .simple .person.mini .tile.out { min-height: 64px; font-size: 20px; grid-auto-flow: column; justify-content: center; align-items: center; gap: 12px; }
-.simple .person.mini .tile.escape svg, .simple .person.mini .tile.out svg { width: 40px; height: 40px; }
+.simple .person.mini .tile.escape svg, .simple .person.mini .tile.out svg, .simple .person.mini .tile.escape img.pic, .simple .person.mini .tile.out img.pic { width: 40px; height: 40px; }
 .simple .person.mini .tiles.scale .tile { min-height: 64px; font-size: 24px; padding: 6px 2px; }
 .simple .person.mini .tiles.needs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .simple .person.mini .tiles.needs .tile { min-height: 84px; font-size: 19px; }
-.simple .person.mini .tiles.needs .tile svg { width: 44px; height: 44px; }
+.simple .person.mini .tiles.needs .tile svg, .simple .person.mini .tiles.needs .tile img.pic { width: 44px; height: 44px; }
 .simple .person.mini .tiles.repair { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .simple .person.mini .tiles.repair .tile { font-size: 18px; }
 .simple .person.mini .listening { min-height: 160px; }
-.simple .person.mini .listening svg, .simple .person.mini .confirm-pic svg, .simple .person.mini .answered svg, .simple .person.mini .confirm-pic .photo, .simple .person.mini .answered .photo { width: 96px; height: 96px; }
+.simple .person.mini .listening svg, .simple .person.mini .confirm-pic svg, .simple .person.mini .answered svg, .simple .person.mini .confirm-pic .photo, .simple .person.mini .answered .photo, .simple .person.mini .listening img.pic, .simple .person.mini .confirm-pic img.pic, .simple .person.mini .answered img.pic { width: 96px; height: 96px; }
 .simple .person.mini .confirm-pic p, .simple .person.mini .answered p { font-size: 26px; }
 .simple .person.mini .so li { font-size: 21px; }
 .simple .person.mini .scale-ends { font-size: 15px; }
@@ -256,11 +256,11 @@
 .pv .p-ask.alone { font-size: 34px; padding: 40px 0; }
 .pv .p-tiles { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .pv .pt { width: 100%; min-height: 104px; padding: 10px 12px; border: 3px solid var(--ink); border-radius: 18px; background: #fff; color: var(--ink); font-family: inherit; font-size: 32px; font-weight: 700; line-height: 1.15; display: grid; justify-items: center; align-content: center; gap: 4px; cursor: pointer; overflow-wrap: anywhere; min-width: 0; }
-.pv .pt svg, .pv .pt .photo { width: 76px; height: 76px; }
+.pv .pt svg, .pv .pt .photo, .pv .pt img.pic { width: 76px; height: 76px; }
 .pv .pt span { min-width: 0; max-width: 100%; }
 .pv .pt.wordonly { min-height: 96px; }
 .pv .pt.esc, .pv .pt.quiet { min-height: 84px; font-size: 26px; font-weight: 600; border-color: var(--muted); grid-auto-flow: column; justify-content: center; align-items: center; gap: 12px; }
-.pv .pt.esc svg, .pv .pt.quiet svg { width: 40px; height: 40px; }
+.pv .pt.esc svg, .pv .pt.quiet svg, .pv .pt.esc img.pic, .pv .pt.quiet img.pic { width: 40px; height: 40px; }
 .pv .pt.pressed { background: var(--accent-soft); }
 .pv .pt.yes { border-color: var(--yes); color: var(--yes); grid-auto-flow: column; justify-content: center; align-items: center; gap: 14px; font-size: 36px; }
 .pv .pt.yes .p-sign { width: 52px; height: 52px; }
@@ -268,15 +268,15 @@
 .pv .pt:focus-visible, .pv .hold:focus-visible, .pv .p-give:focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
 .pv .p-tiles.board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .pv .p-tiles.board .pt { min-height: 112px; font-size: 23px; padding: 8px 4px; }
-.pv .p-tiles.board .pt svg { width: 56px; height: 56px; }
+.pv .p-tiles.board .pt svg, .pv .p-tiles.board .pt img.pic { width: 56px; height: 56px; }
 .pv .p-tiles.board .pt.esc { grid-column: 1 / -1; min-height: 76px; }
 .pv .p-tiles.ways .pt { min-height: 84px; font-size: 27px; grid-auto-flow: column; justify-content: center; align-items: center; gap: 14px; }
-.pv .p-tiles.ways .pt svg { width: 48px; height: 48px; }
+.pv .p-tiles.ways .pt svg, .pv .p-tiles.ways .pt img.pic { width: 48px; height: 48px; }
 .pv .p-tiles.scale { grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); gap: 6px; }
 .pv .p-tiles.scale .pt { min-height: 72px; padding: 4px 2px; border-radius: 12px; font-size: 28px; }
 .pv .scale-ends { display: flex; justify-content: space-between; gap: 12px; margin: 0; font-size: 18px; color: var(--muted); }
 .pv .p-pick { display: grid; justify-items: center; gap: 4px; }
-.pv .p-pick svg, .pv .p-pick .photo { width: 104px; height: 104px; }
+.pv .p-pick svg, .pv .p-pick .photo, .pv .p-pick img.pic { width: 104px; height: 104px; }
 .pv .p-big { margin: 0; font-size: 42px; font-weight: 800; line-height: 1.1; overflow-wrap: anywhere; }
 .pv .p-done { display: grid; justify-items: center; gap: 10px; padding: 24px 0 8px; }
 .pv .p-tick { width: 84px; height: 84px; color: var(--yes); }
@@ -289,14 +289,14 @@
 .simple .person.mini.pv .p-do { font-size: 21px; }
 .simple .person.mini.pv .p-ask { font-size: 20px; }
 .simple .person.mini.pv .pt { min-height: 72px; font-size: 22px; border-width: 2px; border-radius: 14px; grid-auto-flow: column; justify-content: center; align-items: center; gap: 12px; }
-.simple .person.mini.pv .pt svg, .simple .person.mini.pv .pt .photo { width: 40px; height: 40px; }
+.simple .person.mini.pv .pt svg, .simple .person.mini.pv .pt .photo, .simple .person.mini.pv .pt img.pic { width: 40px; height: 40px; }
 .simple .person.mini.pv .pt.esc, .simple .person.mini.pv .pt.quiet, .simple .person.mini.pv .pt.no { min-height: 56px; font-size: 19px; }
-.simple .person.mini.pv .pt.esc svg { width: 30px; height: 30px; }
+.simple .person.mini.pv .pt.esc svg, .simple .person.mini.pv .pt.esc img.pic { width: 30px; height: 30px; }
 .simple .person.mini.pv .p-tiles { gap: 8px; }
 .simple .person.mini.pv .p-tiles.board .pt { min-height: 64px; font-size: 17px; gap: 8px; }
-.simple .person.mini.pv .p-tiles.board .pt svg { width: 32px; height: 32px; }
+.simple .person.mini.pv .p-tiles.board .pt svg, .simple .person.mini.pv .p-tiles.board .pt img.pic { width: 32px; height: 32px; }
 .simple .person.mini.pv .p-tiles.scale .pt { min-height: 52px; font-size: 20px; }
-.simple .person.mini.pv .p-pick svg, .simple .person.mini.pv .p-pick .photo, .simple .person.mini.pv .p-tick { width: 64px; height: 64px; }
+.simple .person.mini.pv .p-pick svg, .simple .person.mini.pv .p-pick .photo, .simple .person.mini.pv .p-tick, .simple .person.mini.pv .p-pick img.pic { width: 64px; height: 64px; }
 .simple .person.mini.pv .p-big { font-size: 28px; }
 .simple .person.mini.pv .p-done { padding: 8px 0; }
 .simple .person.mini.pv .listening { min-height: 120px; }
@@ -350,7 +350,7 @@
 
 /* the way back from the full view: a pill at the head of its links, on every screen of it */
 .top nav .pill { min-height: 32px; padding: 2px 12px 2px 6px; border-radius: 999px; border: 0; background: var(--accent); color: var(--on-accent); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 2px; cursor: pointer; }
-.top nav .pill svg { width: 16px; height: 16px; }
+.top nav .pill svg, .top nav .pill img.pic { width: 16px; height: 16px; }
 
 /* a wide screen: two columns, the card held up on the right; the sheet becomes a dialog in the middle */
 @media (min-width: 900px) {
@@ -366,7 +366,7 @@
   .simple .person.mini { padding: 26px; gap: 18px; }
   .simple .person.mini .headline { font-size: 40px; }
   .simple .person.mini .tile { min-height: 150px; font-size: 28px; }
-  .simple .person.mini .tile svg, .simple .person.mini .tile .photo { width: 96px; height: 96px; }
+  .simple .person.mini .tile svg, .simple .person.mini .tile .photo, .simple .person.mini .tile img.pic { width: 96px; height: 96px; }
   .simple .person.mini .tile.escape, .simple .person.mini .tile.out { min-height: 96px; font-size: 24px; }
   .simple .person.mini .tiles.needs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .sheet { bottom: auto; top: 50%; transform: translateY(-50%); border-radius: 26px; border: 1px solid var(--line); padding: 28px; max-height: 92dvh; }
@@ -396,7 +396,7 @@
 .simple .logrow { display: grid; gap: 8px; }
 .simple .logbtns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .simple .logbtns .logbtn { min-height: 84px; padding: 6px 4px; display: grid; justify-items: center; align-content: center; gap: 2px; font-size: 17px; font-weight: 700; }
-.simple .logbtns .logbtn svg { width: 44px; height: 44px; }
+.simple .logbtns .logbtn svg, .simple .logbtns .logbtn img.pic { width: 44px; height: 44px; }
 .simple .logged { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 16px; color: var(--ink); min-height: 44px; margin: 0; }
 .simple .logged .sg { width: 22px; height: 22px; color: var(--accent); flex: none; }
 .simple .logged span { flex: 1 1 auto; min-width: 0; }
@@ -452,23 +452,23 @@
 .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) { gap: 10px; }
 .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no):not(.wordonly) { min-height: 0; padding: 6px 12px 8px; gap: 2px; font-size: 30px; }
 .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) svg,
-.person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo { width: 112px; height: 112px; }
+.person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo, .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) img.pic { width: 112px; height: 112px; }
 .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale):not(:has(.pt:not(.esc):nth-child(3))) .pt:not(.esc):not(.quiet):not(.yes):not(.no) svg,
-.person.full.pv .p-tiles:not(.board):not(.ways):not(.scale):not(:has(.pt:not(.esc):nth-child(3))) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo { width: 128px; height: 128px; }
+.person.full.pv .p-tiles:not(.board):not(.ways):not(.scale):not(:has(.pt:not(.esc):nth-child(3))) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo, .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale):not(:has(.pt:not(.esc):nth-child(3))) .pt:not(.esc):not(.quiet):not(.yes):not(.no) img.pic { width: 128px; height: 128px; }
 .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt.esc { min-height: 80px; }
-.person.full.pv .p-pick svg, .person.full.pv .p-pick .photo { width: 128px; height: 128px; }
+.person.full.pv .p-pick svg, .person.full.pv .p-pick .photo, .person.full.pv .p-pick img.pic { width: 128px; height: 128px; }
 .person.full.pv .hold { min-height: 44px; }
 /* Shorter phones (360 x 740 and below; live e23b493 had "something else" at 842 px on a 740 px screen): smaller
    pictures so three choices and "something else" still stand without scrolling. */
 @media (max-height: 800px) {
   .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) svg,
-  .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo { width: 88px; height: 88px; }
+  .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo, .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) img.pic { width: 88px; height: 88px; }
 }
 /* "Point to your answer" on one line at 360 px even in the fallback font (Verdana is wider than Instrument Sans). */
 @media (max-width: 380px) { .person.full.pv .p-do { font-size: 24px; } }
 @media (max-height: 700px) {
   .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) svg,
-  .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo { width: 76px; height: 76px; }
+  .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo, .person.full.pv .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) img.pic { width: 76px; height: 76px; }
 }
 
 /* ---------------------------------------------------------------- phase 4 (18 Nov 2026) */
@@ -488,12 +488,12 @@
    stands beside the word, so three choices and the way out fit under the question (and under the photo). */
 .person.full.pv.rowtiles .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no):not(.wordonly) { grid-auto-flow: column; grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: center; text-align: left; gap: 14px; min-height: 108px; padding: 8px 14px; font-size: 28px; }
 .person.full.pv.rowtiles .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) svg,
-.person.full.pv.rowtiles .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo { width: 84px; height: 84px; }
+.person.full.pv.rowtiles .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo, .person.full.pv.rowtiles .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) img.pic { width: 84px; height: 84px; }
 .person.full.pv.with-photo .p-photo { width: 128px; height: 128px; justify-self: center; }
 .person.full.pv.with-photo .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no):not(.wordonly) { min-height: 84px; padding: 6px 14px; }
 .person.full.pv.with-photo .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no).wordonly { min-height: 80px; }
 .person.full.pv.with-photo .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) svg,
-.person.full.pv.with-photo .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo { width: 64px; height: 64px; }
+.person.full.pv.with-photo .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) .photo, .person.full.pv.with-photo .p-tiles:not(.board):not(.ways):not(.scale) .pt:not(.esc):not(.quiet):not(.yes):not(.no) img.pic { width: 64px; height: 64px; }
 
 /* The carer's side */
 .simple .btn.turn-go, .simple .btn.letter-go { justify-content: flex-start; min-height: 64px; text-align: left; }
@@ -589,7 +589,7 @@
    390 x 844 phone without scrolling, so a tile is 100 px tall (it was 112) and the gap 8 px. */
 .person.full.pv .p-tiles.board { gap: 8px; }
 .person.full.pv .p-tiles.board .pt { min-height: 100px; }
-.person.full.pv .p-tiles.board .pt svg { width: 52px; height: 52px; }
+.person.full.pv .p-tiles.board .pt svg, .person.full.pv .p-tiles.board .pt img.pic { width: 52px; height: 52px; }
 .person.full.pv .p-tiles.board .pt.esc { min-height: 72px; }
 
 /* ---------------------------------------------------------------- phase 6 (18 Nov 2026) */

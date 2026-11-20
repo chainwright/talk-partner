@@ -43,7 +43,7 @@ import { EMPTY_PROFILE, type BodyRegion, type Card, type CardWhy, type Choice, t
 import { webConfig } from './ai/config';
 import { pickEngine } from './ai/pick';
 import { fetchSettings } from './ai/remoteConfig';
-import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile } from './pictos';
+import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile, pictoFallback } from './pictos';
 import { aboutSimple, answeredScreen, cardScreen, chipBlock, consentSheet, frameStyle, homeScreen, laterBlock, personSimple, photoSheet, shortBlock, tryAiBlock, type AboutRow } from './simple';
 import { kvClear, kvGet, kvSet } from './store';
 import { P4 } from '../../core/copy4';
@@ -2802,6 +2802,13 @@ async function download() {
 
 // ---------------------------------------------------------------- events (delegated)
 const app = document.querySelector('#app')!;
+// A picture file that could not be loaded (web/src/pictos.ts): our drawing of the same id takes its place, never a
+// broken image. `error` does not bubble, so it is caught on the way down.
+app.addEventListener('error', (ev) => {
+  const t = ev.target;
+  if (!(t instanceof HTMLImageElement) || !t.classList.contains('pic') || !t.dataset.id) return;
+  t.outerHTML = pictoFallback(t.dataset.id, t.classList.contains('tp'));
+}, true);
 app.addEventListener('click', (ev) => {
   // a link to a screen of the app, in the simple view: the address changes in place (see `go`), no new history entry
   const link = (ev.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#/"]');

@@ -19,7 +19,7 @@ import type { Learned } from '../../core/prefs';
 import type { MadeWhere } from '../../core/simple';
 import type { Topic, TopicId } from '../../core/topics';
 import type { Card, Choice, Profile } from '../../core/types';
-import { builtinPicto } from './pictos';
+import { decoPicto } from './pictos';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
@@ -46,7 +46,7 @@ export const SIGN = {
   check: sign('<path d="M16 16h52a8 8 0 018 8v24a8 8 0 01-8 8H40L24 70V56h-8a8 8 0 01-8-8V24a8 8 0 018-8z"/><path d="M26 36l10 10 20-20"/>'),
 };
 /** One colour picture per topic tile, from the same set as the choices (decorative here: the word is always next to it). */
-const deco = (id: string) => builtinPicto(id).replace(/role="img" aria-label="[^"]*"/, 'class="tp" aria-hidden="true" focusable="false"');
+const deco = decoPicto;
 const TOPIC_SIGN: Record<TopicId, string> = { food: deco('food'), body: deco('body:whole'), rest: deco('bed'), people: deco('family'), feel: deco('good'), plans: deco('plans'), fun: deco('tv') };
 
 export interface HomeModel {

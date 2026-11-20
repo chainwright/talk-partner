@@ -1,12 +1,20 @@
-// Built-in pictures: simple, realistic colour drawings (design/IMAGES_RESEARCH_2026-11-17.md: real-object colours,
+// Built-in pictures: simple, realistic colour pictures (design/IMAGES_RESEARCH_2026-11-17.md: real-object colours,
 // one object per picture, plain background, light shading, no scenes; no emoji, no clip art, no 3D, no animation).
-// All drawn by us as SVG on a 96 × 96 grid, in one style: a dark outline of 3 (so every picture stands out on the
-// white card whatever its fill), flat real-object colours, one lighter or darker patch for shading, round joins.
+// Since 20 Nov 2026 the set is mixed (PICTOGRAMS.md has the source of every picture):
+// - 85 pictures were made with Google's Gemini (gemini-3.1-flash-image) and reviewed by a person: small WebP files in
+//   web/public/pictures/ (256 x 256, white background), listed in `IMAGE_IDS`. The prompt of each is in
+//   devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json. They are shown as an <img> with the word as its text.
+// - The rest are drawn by us as SVG on a 96 x 96 grid, in one style: a dark outline of 3 (so every picture stands out
+//   on the white card whatever its fill), flat real-object colours, one lighter or darker patch for shading, round
+//   joins: yes, no, the amount scale, this one / that one, show me, change topic, okay, someone else, morning,
+//   just right, the body map, the monogram, and the controls. Those stayed drawn because the drawing is clearer
+//   (an abstract idea, a scale) or a hand sign could offend.
+// Our SVG drawing of an id that now has a picture is kept below: it is what shows if the picture file cannot be
+// loaded (`pictoFallback`), so a tile never has an empty frame.
 // The colours are written into the drawing (they are the object's own colours, not the theme's). The person's card
 // is a white sheet in the light and in the dark theme, so a picture always stands on white.
-// "something else" keeps the only dashed shape of the set. Letters are allowed in the monogram only.
-// Provenance and licence per picture: PICTOGRAMS.md (all our own work, Apache-2.0, dated; no third-party set, no
-// AI-generated image). Redrawn in colour on 18 Nov 2026; the ids did not change, so every card keeps its picture.
+// "something else" keeps the only dashed shape of the SVG set; unknown ids fall back to that drawing.
+// Letters are allowed in the monogram only.
 
 /** The outline of every picture: 12.6:1 on the white card. */
 export const OUTLINE = '#2b3440';
@@ -200,12 +208,53 @@ export const MIC_STOP = control('<rect x="28" y="28" width="40" height="40" rx="
 /** Every bundled picture id (for the provenance check in tests and PICTOGRAMS.md). */
 export const PICTO_IDS = [...Object.keys(P), ...BODY_PARTS.map((b) => `body:${b}`), 'monogram'];
 
-export function builtinPicto(id: string): string {
+/**
+ * The ids shown as a picture made with Gemini (20 Nov 2026), the same list as
+ * devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json (tests/unit/pictures.test.ts checks both, and the files).
+ */
+export const IMAGE_IDS: readonly string[] = ['not sure', 'something else', 'somewhere else', 'good', 'bad', 'tasty', 'plain', 'too salty', 'good idea', 'leave it', 'like them', 'unhappy', 'listen', 'tea', 'coffee', 'change', 'wait', 'stop', 'write it', 'more', 'draw', 'later', 'tired', 'worried', "something's wrong", 'fall', 'tablets', 'pain',
+  'spouse', 'child', 'sibling', 'grandchild', 'friend', 'neighbour', 'carer', 'nurse', 'doctor', 'speech therapist', 'physio', 'priest', 'family', 'visitor', 'toilet', 'drink', 'food', 'too hot', 'too cold', 'call someone', 'water', 'juice', 'milk', 'hot drink', 'cold drink', 'snack', 'meal', 'something sweet', 'something savoury',
+  'hot meal', 'cold meal', 'bed', 'chair', 'tv', 'music', 'news', 'film', 'radio', 'paper', 'photos', 'now', 'afternoon', 'stay in', 'go out', 'open', 'closed', 'glasses', 'hearing aid', 'company', 'time alone', 'walk', 'garden', 'drive', 'wash', 'exercises', 'plans', 'quiet'];
+const IMAGES = new Set(IMAGE_IDS);
+/** The file of a picture, as the manifest names it: the id with every run of other characters made "_". */
+export const imageFile = (id: string) => `pictures/${id.replace(/[^a-z0-9]+/g, '_')}.webp`;
+
+/** Our SVG drawing of an id (body parts too); an unknown id gets the way out, "something else". */
+export function svgPicto(id: string): string {
   if (id.startsWith('body:')) {
     const part = id.slice(5);
     return svg(BODY_OUTLINE + (BODY_HIGHLIGHT[part] ?? ''), part);
   }
   return svg(P[id] ?? P['something else'], id);
+}
+
+const attr = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+/**
+ * The picture of a choice: the picture made with Gemini where there is one, our SVG otherwise. The <img> has the
+ * word as its text, its size written in (so nothing moves while it loads; CSS sets the same box as for the SVG), and
+ * is decoded off the main thread. A family's own photo is chosen before this (web/src/main.ts, `picture`).
+ */
+export function builtinPicto(id: string): string {
+  if (!IMAGES.has(id)) return svgPicto(id);
+  return `<img class="pic" src="/${imageFile(id)}" alt="${attr(id)}" data-id="${attr(id)}" width="96" height="96" decoding="async" draggable="false">`;
+}
+
+/** The same picture as decoration (next to its word, so hidden from a screen reader): the topic tiles, the diary. */
+export function decoPicto(id: string): string {
+  const p = builtinPicto(id);
+  return p.startsWith('<img')
+    ? p.replace('class="pic"', 'class="pic tp"').replace(/alt="[^"]*"/, 'alt="" aria-hidden="true"')
+    : p.replace(/role="img" aria-label="[^"]*"/, 'class="tp" aria-hidden="true" focusable="false"');
+}
+
+/**
+ * A picture file that could not be loaded is swapped for our SVG drawing of the same id (web/src/main.ts listens for
+ * the error), so a tile never shows a broken image. Returns the markup to put in its place.
+ */
+export function pictoFallback(id: string, decorative: boolean): string {
+  const s = svgPicto(id);
+  return decorative ? s.replace(/role="img" aria-label="[^"]*"/, 'class="tp" aria-hidden="true" focusable="false"') : s;
 }
 
 /** A named person without a photo: their initial in a soft circle (the one place letters are allowed, rule 5). */

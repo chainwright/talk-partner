@@ -11,7 +11,7 @@ import { needLine, needsCard } from '../../core/needs';
 import { BUILTIN } from '../../core/pictures';
 import { badgeKind, sessionReceipt } from '../../core/receipt';
 import { SAMPLE_PROFILE } from '../../core/sample';
-import { PICTO_IDS, builtinPicto } from '../../web/src/pictos';
+import { IMAGE_IDS, PICTO_IDS, builtinPicto, imageFile } from '../../web/src/pictos';
 
 const ROOT = join(__dirname, '..', '..');
 const read = (p: string) => readFileSync(join(ROOT, p), 'utf8');
@@ -25,15 +25,17 @@ describe('the quick-needs board: what is on it', () => {
     expect(card.choices.filter((c) => c.role === 'escape').map((c) => c.label)).toEqual(['something else']);
     expect(card.choices[card.choices.length - 1].role).toBe('escape');
   });
-  it('every tile has a picture we drew and a word: never a picture alone, never a word alone', () => {
+  it('every tile has a bundled picture and a word: never a picture alone, never a word alone', () => {
     for (const c of card.choices) {
       expect(c.label.trim(), 'a word').not.toBe('');
       expect(c.picture, c.label).toEqual({ type: 'builtin', id: c.label });
       expect(BUILTIN.has(c.label), c.label).toBe(true);
       expect(PICTO_IDS, c.label).toContain(c.label);
-      const svg = builtinPicto(c.label);
-      expect(svg).toMatch(/^<svg /);
-      expect(svg, 'no image from outside, no text inside').not.toMatch(/<image|href=|<text/);
+      const pic = builtinPicto(c.label);
+      // since 20 Nov 2026 a picture made with Gemini, bundled with the app (pictures.test.ts checks the files), or our SVG
+      if (IMAGE_IDS.includes(c.label)) expect(pic).toBe(`<img class="pic" src="/${imageFile(c.label)}" alt="${c.label}" data-id="${c.label}" width="96" height="96" decoding="async" draggable="false">`);
+      else expect(pic).toMatch(/^<svg /);
+      expect(pic, 'no image from outside, no text inside').not.toMatch(/<image|href=|<text|https?:/);
     }
     // each need has its own drawing (an unknown id would fall back to the way-out picture)
     expect(new Set(card.choices.map((c) => builtinPicto(c.label).replace(/aria-label="[^"]+"/, ''))).size).toBe(card.choices.length);

@@ -113,7 +113,7 @@ try {
   await js(`document.querySelector('[data-act="needs"]').click()`);
   await waitFor(`!!document.querySelector('.person.full .tiles.needs')`, 4000); await sleep(400);
   const board = await js(`(() => { const t = [...document.querySelectorAll('#person .tile')]; const r = t.map((x) => x.getBoundingClientRect());
-    return { hash: location.hash, headline: document.querySelector('#person .headline')?.innerText ?? '', words: t.map((x) => x.querySelector('span')?.innerText ?? ''), pictures: t.filter((x) => x.querySelector('svg[role="img"]')).length,
+    return { hash: location.hash, headline: document.querySelector('#person .headline')?.innerText ?? '', words: t.map((x) => x.querySelector('span')?.innerText ?? ''), pictures: t.filter((x) => x.querySelector('svg[role="img"], img.pic[alt]')).length,
       smallest: Math.round(Math.min(...r.map((b) => Math.min(b.width, b.height)))), lowest: Math.round(Math.max(...r.map((b) => b.bottom))), screen: innerHeight, images: document.querySelectorAll('#person img').length,
       font: getComputedStyle(t[0]).fontFamily.split(',')[0], fontLoaded: document.fonts.check(getComputedStyle(t[0]).font) }; })()`);
   check('offline: "Quick needs" opens the board full screen in one tap: ten tiles (nine needs since phase 5, and the way out), each a picture and its word, every target at least 64 px, all on one screen',
@@ -121,11 +121,11 @@ try {
   await shot('needs-01-board-offline');
   const tap = async (i) => { await js(`document.querySelector('#person .tile[data-i="${i}"]').click()`); await waitFor(`!!document.querySelector('#person [data-confirm="yes"]')`, 3000); await sleep(200); };
   await tap(0);
-  const v1 = await js(`({ headline: document.querySelector('#person .headline')?.innerText ?? '', word: document.querySelector('#person .confirm-pic p')?.innerText ?? '', picture: !!document.querySelector('#person .confirm-pic svg'), tick: !!document.querySelector('[data-confirm="yes"] svg'), cross: !!document.querySelector('[data-confirm="change"] svg') })`);
+  const v1 = await js(`({ headline: document.querySelector('#person .headline')?.innerText ?? '', word: document.querySelector('#person .confirm-pic p')?.innerText ?? '', picture: !!document.querySelector('#person .confirm-pic :is(svg, img.pic)'), tick: !!document.querySelector('[data-confirm="yes"] svg'), cross: !!document.querySelector('[data-confirm="change"] svg') })`);
   check('offline: a tap on "toilet" asks "So: toilet. Right?" with the picture, the word, a tick and a cross', v1.headline === 'So: toilet. Right?' && v1.word === 'toilet' && v1.picture && v1.tick && v1.cross, JSON.stringify(v1));
   await shot('needs-02-check-offline');
   await js(`document.querySelector('[data-confirm="yes"]').click()`); await sleep(300);
-  const done = await js(`({ person: document.querySelector('#person').innerText.replace(/\\s+/g, ' ').trim(), picture: !!document.querySelector('#person .answered svg') })`);
+  const done = await js(`({ person: document.querySelector('#person').innerText.replace(/\\s+/g, ' ').trim(), picture: !!document.querySelector('#person .answered :is(svg, img.pic)') })`);
   // the press-and-hold exit, as a partner would use it (600 ms on the cross, top right)
   await js(`(() => { const e = document.querySelector('#exit'); e.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); return true; })()`);
   await waitFor(`!!document.querySelector('#result .need-line')`, 4000); await sleep(300);
