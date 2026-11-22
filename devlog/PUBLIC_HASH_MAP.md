@@ -258,6 +258,29 @@ the table.
 | 235 | `88c0747` | `e5d7370` | 2026-11-20 15:25 | Phase 11: chair, listen and go out without the faint frame around the object |
 | 236 | `cb15e70` | `888fea9` | 2026-11-20 15:43 | Phase 11 follow-up: "something else" is our dashed drawing again on every card (84 pictur… |
 | 237 | `7ea99ff` | `3332766` | 2026-11-20 16:14 | Live: the build of cb15e70 (phase 11 pictures); e2e-needs checks no broken picture instea… |
+| 238 | `3adf877` | `1e77313` | 2026-11-22 08:11 | Phase 12, item 1: worried, scared, lonely and "something is bothering me" count as a low-… |
+| 239 | `d5baac8` | `35cac67` | 2026-11-22 08:12 | Phase 12, item 2: About them never shows "Usually says no to 'Are you in pain?'" or offer… |
+| 240 | `8aceee7` | `ef6683b` | 2026-11-22 08:15 | Phase 12, item 3: pain in an arm, a hand, a leg, the feet or the face first asks "Is it s… |
+| 241 | `bbb393b` | `55fd866` | 2026-11-22 08:17 | Phase 12, item 4: pain on the needs board gets the call box with the number, and "Where d… |
+| 242 | `3dea697` | `95dd4ac` | 2026-11-22 08:18 | Phase 12, item 5: a pain question left for later shows the signs that do not wait, a call… |
+| 243 | `9fa1bb4` | `a26ae1d` | 2026-11-22 08:20 | Phase 12, item 6: the emergency number map covers the common regions; an unknown region g… |
+| 244 | `824f247` | `a800562` | 2026-11-22 08:24 | Phase 12, item 7: eight pictures made again after judge round 9, and the curtains and the… |
+| 245 | `642f521` | `4080290` | 2026-11-22 08:27 | Phase 12, item 8: the pain scale is three faces, "I need something" the four squares, "I … |
+| 246 | `65364a6` | `3945754` | 2026-11-22 08:30 | Phase 12, item 9: the first screen asks for its six topic pictures before the script, wit… |
+| 247 | `8ad5711` | `aa0ff0d` | 2026-11-22 08:34 | Phase 12, item 10: "See the AI at work" above the fold at 390 x 844, with a two-line stri… |
+| 248 | `1f2ad00` | `47ae0d0` | 2026-11-22 08:36 | Phase 12, item 11: the handover note has a "STILL OPEN" block for the care questions not … |
+| 249 | `19d34d0` | `c95f4f3` | 2026-11-22 08:36 | Phase 12, item 12: the visit page's "Pain: none entered." adds "That does not mean there … |
+| 250 | `ff410f4` | `399128d` | 2026-11-22 08:38 | Phase 12, item 13: after "Stop waiting" the footer says the question may have left, as th… |
+| 251 | `0140b69` | `6194125` | 2026-11-22 08:42 | Phase 12, item 14: a crisis choice for the person, "I can't go on", and a calm safety scr… |
+| 252 | `cb7ea5d` | `ea336b2` | 2026-11-22 08:42 | Phase 12, item 16: "Try it with the Millers, a sample family" on the first screen |
+| 253 | `426abce` | `0c0784f` | 2026-11-22 08:44 | Phase 12, item 15: the stale doc lines of round 9 fixed, a 12-line phone path first in JU… |
+| 254 | `46f0b76` | `00be36c` | 2026-11-22 08:54 | Phase 12, item 10 follow-up: put back the stylesheet rules that item 10's edit dropped |
+| 255 | `a66310b` | `83199c2` | 2026-11-22 08:54 | Back from the carer's answer passes over every person's screen, not only the one handed o… |
+| 256 | `945dd37` | `fc81fbc` | 2026-11-22 09:02 | Revert the Back change of a66310b: a person's screen is a step on the way back, by design |
+| 257 | `c901148` | `630f68f` | 2026-11-22 09:11 | Phase 12 walk: the crisis screen keeps the carer's answer under it; the walk script |
+| 258 | `9dc8060` | `7f5ad24` | 2026-11-22 09:32 | Phase 12, item 10: at 360 px the AI strip folds, so the first row of topics stays above t… |
+| 259 | `bfaf253` | `ef957eb` | 2026-11-22 09:54 | Phase 12: evidence, CLAIMS rows 145 to 156, README section and devlog/DAY22.md |
+| 260 | `e26b899` | `c22e29e` | 2026-11-22 10:12 | Live: the build of 9dc8060 (phase 12); phase12-walk waits for the curtain pictures; Read … |
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
 
