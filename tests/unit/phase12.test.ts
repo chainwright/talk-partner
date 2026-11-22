@@ -130,3 +130,18 @@ describe('A3. A limb or the face hurts: first "Is it suddenly weak or numb?" (P0
     expect(little.end).toMatch(/Sudden weakness or numbness: call now/);
   });
 });
+
+describe('A4. Pain on the needs board: "Where does it hurt?" is the main button, and the call box has the number', () => {
+  it('after "pain" on the board: the main button asks where, and the urgent box with the region\'s number stands under it', async () => {
+    const { readFileSync } = await import('node:fs');
+    const main = readFileSync(new URL('../../web/src/main.ts', import.meta.url), 'utf8');
+    const fn = main.slice(main.indexOf('function afterAnswer('), main.indexOf('const recapText'));
+    expect(fn).toContain('C.needs.painQuestion');
+    expect(fn).toMatch(/class="\$\{button\} primary"[^`]*data-q="\$\{esc\(C\.needs\.painQuestion\)\}"/);
+    expect(fn).toContain("urgentBox(callNumber(), 'need-urgent', numberGuess())");
+    // the old line had no number and no button
+    expect(fn).not.toContain('C.safety');
+    const { COPY } = await import('../../core/copy');
+    expect(COPY.needs.lines.pain).not.toMatch(/AI/);
+  });
+});

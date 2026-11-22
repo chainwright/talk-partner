@@ -1447,7 +1447,8 @@ function afterAnswer(c: Card, p: Choice, button: string): string {
   // (after "show me", "write it" or "draw" the screen goes on: the carer types what they understood, or goes back to the ways)
   if (p.role === 'repair') return `<p class="say">${esc(C.repair.lines[p.label] ?? '')}</p>${([C.repair.tiles.showMe, C.repair.tiles.writeIt, C.repair.tiles.draw] as string[]).includes(p.label) ? understoodBlock(state.profile.personName.trim()) : ''}`;
   if (c.kind !== 'needs') return '';
-  const where = p.label === 'pain' ? `<p><button class="${button}" data-q="${esc(C.needs.painQuestion)}">${esc(C.needs.painQuestion)}</button></p><p class="safety">${C.safety}</p>` : '';
+  // (phase 12, judge round 9: "Where does it hurt?" is the main button, and the call box carries the number and a real button)
+  const where = p.label === 'pain' ? `<p><button class="${button} primary" id="need-where" data-q="${esc(C.needs.painQuestion)}">${esc(C.needs.painQuestion)}</button></p>${urgentBox(callNumber(), 'need-urgent', numberGuess())}` : '';
   return `<p class="say need-line">${esc(needLine(p.label))}</p>${where}`;
 }
 

@@ -133,7 +133,7 @@ const COPY = {
       toilet: 'Go now. The rest can wait.',
       drink: 'Hold up two real drinks and let them point.',
       food: 'Hold up two real things to eat and let them point.',
-      pain: 'Ask where it hurts. The body card needs no AI:',
+      pain: 'Ask where it hurts first, with the body card. If the pain is new or sudden, call as well:',
       tired: 'Offer a rest. Say when you will come back to the conversation, and come back.',
       'too hot': 'Change one thing: a layer off, a window, a fan. Then ask "Better?" and wait for a yes or a no.',
       'too cold': 'Change one thing: a blanket, a layer, the heating. Then ask "Better?" and wait for a yes or a no.',

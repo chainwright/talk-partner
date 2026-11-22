@@ -194,11 +194,11 @@ try {
   await js(`document.querySelector('[data-act="needs"]').click()`); await waitFor(`!!document.querySelector('.person.full .tiles.needs')`, 4000); await sleep(300);
   await tap(3); await js(`document.querySelector('[data-confirm="yes"]').click()`); await sleep(300);
   await js(`location.hash = '#/demo'`); await waitFor(`!!document.querySelector('#result .need-line')`, 3000); await sleep(200);
-  const pain = { line: await js(`document.querySelector('#result .need-line')?.innerText ?? ''`), safety: await js(`document.querySelector('#result .safety')?.innerText ?? ''`) };
+  const pain = { line: await js(`document.querySelector('#result .need-line')?.innerText ?? ''`), safety: await js(`document.querySelector('#result #need-urgent')?.innerText ?? ''`), call: await js(`document.querySelector('#result #need-urgent a[href^="tel:"], #result #need-urgent .call')?.outerHTML ?? ''`) };
   await js(`document.querySelector('#result .chip[data-q="Where does it hurt?"]').click()`); await sleep(150); await settled();
   const body = { tiles: await tiles(), badge: await badge(), kind: await js(`document.querySelector('#person').dataset.kind`) };
-  check('offline: after "pain" the partner is one tap from "Where does it hurt?", and the body card is made with no network',
-    /where it hurts/i.test(pain.line) && /Not for emergencies/.test(pain.safety) && body.kind === 'body' && body.badge === 'No AI needed' && (body.tiles?.length ?? 0) >= 3, JSON.stringify({ pain, body }));
+  check('offline: after "pain" the partner is one tap from "Where does it hurt?" (phase 12: under it, the call box with the number and a real button), and the body card is made with no network',
+    /where it hurts/i.test(pain.line) && /Call \d+ now if this is new or sudden/.test(pain.safety) && /tel:/.test(pain.call) && body.kind === 'body' && body.badge === 'No AI needed' && (body.tiles?.length ?? 0) >= 3, JSON.stringify({ pain, body }));
   // the way out: "something else" is checked like any choice and sends the partner back to the question box
   await js(`document.querySelector('[data-act="needs"]').click()`); await waitFor(`!!document.querySelector('.person.full .tiles.needs')`, 4000); await sleep(300);
   await tap(9); // (the tenth tile since phase 5: the way out comes after "something's wrong")
