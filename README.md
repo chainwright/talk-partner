@@ -1300,7 +1300,16 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-**Live: the build of `cb15e70`** (phase 11: colour pictures made with Gemini on the cards, our drawings for the rest;
+**Live: the build of `9dc8060`** (phase 12: the fixes of judge round 9: low mood, pain and the weak-or-numb question,
+the needs-board call box, the crisis choice, eight pictures made again and three added, the first screen's pictures
+preloaded, "See the AI at work" above the fold), deployed 22 Nov 2026 about 16:00 UTC. The hosted script
+(`index-BYKP941p.js`) has the same SHA-256 as our `dist/`. Run against the hosted copy: `e2e-simple.py --live`
+1022/1022, `pwa-check.py` 34/34, `e2e-needs.mjs` 13/13, `phase11-walk.py --url` 48/48, `phase12-walk.py --url` 142/142
+(after a wait for picture loading was added to its curtain check). Read aloud against the real model
+(`e2e-speak.py`, dev server with the debug token, same app code): 10/10 three times out of three,
+`inferenceSource=in_cloud`. Logs: `devlog/evidence_live/9dc8060/`.
+
+Before it: **the build of `cb15e70`** (phase 11: colour pictures made with Gemini on the cards, our drawings for the rest;
 also "Not now" on the person's own start), deployed 20 Nov 2026 about 22:05 UTC. The hosted script (`index-DlgnWDMw.js`)
 has the same SHA-256 as our `dist/`; `/pictures/tea.webp` is served as `image/webp`. Run against the hosted copy:
 `e2e-simple.py --live` 1022/1022, `pwa-check.py` 34/34, `e2e-needs.mjs` 13/13, `phase11-walk.py --url` 48/48; by hand: after

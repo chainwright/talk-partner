@@ -217,6 +217,10 @@ def walk(b, w, h, scheme):
     home(page)
     topic_q(page, 'rest', 'curtains')
     cu = ids(page)
+    try:
+        page.wait_for_function("[...document.querySelectorAll('main.pv img.pic')].slice(0, 2).every((i) => i.complete && i.naturalWidth > 0)", timeout=8000)
+    except Exception:
+        pass
     check(f'{tag}: the curtain question shows the curtains open and closed (pictures loaded), not doors', cu[:2] == ['curtains open', 'curtains closed'] and page.evaluate("[...document.querySelectorAll('main.pv img.pic')].slice(0, 2).every((i) => i.complete && i.naturalWidth === 256)"), str(cu))
     shot(page, tag, '13_curtains')
     page.goto(URL); page.wait_for_selector('main.simple.home')
