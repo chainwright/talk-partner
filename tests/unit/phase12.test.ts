@@ -330,3 +330,10 @@ describe('D11. The handover note: a "STILL OPEN" block for the care questions no
     expect(t).not.toContain('STILL OPEN');
   });
 });
+
+describe('D12. The visit page: "Pain: none entered." says that this does not mean there was none', () => {
+  it('the line asks the doctor or nurse to ask', () => {
+    const s = sinceLines(calm, when(0, '00:00'), NOW, [], 'Frank');
+    expect(s.lines[0]).toBe('Pain: none entered. That does not mean there was none: ask.');
+  });
+});

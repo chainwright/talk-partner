@@ -122,7 +122,7 @@ export const P5 = {
     fromLabel: 'The last visit was on',
     span: (from: string, to: string) => `From the diary, ${from} to ${to}. Only what was entered in this app; a gap can mean nobody entered it.`,
     /** `own`: an own answer above was counted in (phase 8): the name, or a space for "their". Empty: none was. */
-    pain: (n: number, d: string, own = '') => (n ? `Pain: chosen or logged on ${days(n)} (${d})${counted(own)}.` : 'Pain: none entered.'),
+    pain: (n: number, d: string, own = '') => (n ? `Pain: chosen or logged on ${days(n)} (${d})${counted(own)}.` : 'Pain: none entered. That does not mean there was none: ask.'),
     strong: (d: string) => `Strong pain, or pain in the head or the chest: ${d}.`,
     falls: (n: number, d: string) => (n ? `Falls: ${n} logged (${d}).` : 'Falls: none logged.'),
     /** Phase 8 (judge round 7, the nurse's seat): with no dry day, the fewest drinks entered in one day, so a low day is not hidden. */
