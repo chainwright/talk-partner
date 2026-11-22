@@ -268,3 +268,23 @@ describe('B7/B8. The counts the docs give are the counts of the code', () => {
     expect(md).toContain(`**Drawn by us (${PICTO_IDS.length - IMAGE_IDS.length}).**`);
   });
 });
+
+describe('B9. The first screen: the six topic pictures are asked for before the script runs, and a tile is never blank', () => {
+  it('index.html preloads exactly the picture files of the topic tiles, at high priority', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { TOPIC_PICTURES } = await import('../../web/src/simple');
+    const { IMAGE_IDS, imageFile } = await import('../../web/src/pictos');
+    const html = readFileSync(new URL('../../web/index.html', import.meta.url), 'utf8');
+    const files = Object.values(TOPIC_PICTURES).filter((id) => IMAGE_IDS.includes(id)).map((id) => `/${imageFile(id)}`);
+    expect(files).toHaveLength(6);
+    const pre = [...html.matchAll(/<link rel="preload" as="image" href="([^"]+)" fetchpriority="high" \/>/g)].map((m) => m[1]);
+    expect(pre.sort()).toEqual([...files].sort());
+    // before the module script, so the browser asks for them while the script loads
+    expect(html.indexOf('rel="preload"')).toBeLessThan(html.indexOf('<script type="module"'));
+  });
+  it('a topic tile\'s picture has a neutral placeholder on its plate until the file is there', async () => {
+    const { readFileSync } = await import('node:fs');
+    const css = readFileSync(new URL('../../web/src/simple.css', import.meta.url), 'utf8');
+    expect(css).toMatch(/\.simple \.topic img\.tp \{[^}]*background:[^}]*#e6eaf0/);
+  });
+});

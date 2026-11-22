@@ -47,7 +47,9 @@ export const SIGN = {
 };
 /** One colour picture per topic tile, from the same set as the choices (decorative here: the word is always next to it). */
 const deco = decoPicto;
-const TOPIC_SIGN: Record<TopicId, string> = { food: deco('food'), body: deco('body:whole'), rest: deco('bed'), people: deco('family'), feel: deco('good'), plans: deco('plans'), fun: deco('tv') };
+/** The picture id of each topic tile. Phase 12: web/index.html preloads the picture files among them (tests/unit/phase12.test.ts keeps the two lists the same). */
+export const TOPIC_PICTURES: Record<TopicId, string> = { food: 'food', body: 'body:whole', rest: 'bed', people: 'family', feel: 'good', plans: 'plans', fun: 'tv' };
+const TOPIC_SIGN = Object.fromEntries(Object.entries(TOPIC_PICTURES).map(([k, id]) => [k, deco(id)])) as Record<TopicId, string>;
 
 export interface HomeModel {
   /** The person's name, or '' when About them has none yet (then the words say "them", never "him" or "her"). */

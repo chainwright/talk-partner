@@ -147,6 +147,8 @@
 .simple .topic { min-height: 64px; padding: 8px 10px; border-radius: 14px; border: 2px solid var(--field); background: var(--panel); color: var(--ink); font-weight: 700; font-size: 17px; line-height: 1.2; display: flex; align-items: center; gap: 8px; text-align: left; cursor: pointer; overflow-wrap: anywhere; min-width: 0; }
 /* the topic's picture: on its own white plate, so it reads the same in the light and in the dark theme */
 .simple .topic .tp { width: 44px; height: 44px; flex: none; display: block; background: #fff; border-radius: 10px; padding: 3px; }
+/* phase 12: until the picture file is there, its plate shows a neutral grey square, so a tile is never blank (the file is opaque and covers it) */
+.simple .topic img.tp { background: #fff linear-gradient(#e6eaf0, #e6eaf0) center / 70% 70% no-repeat; }
 .simple .topic span { min-width: 0; }
 .simple .topic.open { border-color: var(--accent); background: var(--accent-soft); }
 .simple .tqs { grid-column: 1 / -1; background: var(--panel); border: 2px solid var(--accent); border-radius: 14px; padding: 2px 0; display: grid; }

@@ -76,6 +76,37 @@ def fold(browser, url):
         shot(page, f'01_first_visit_{w}x{h}', full=False)
         check(f'{w} x {h}: nothing asked of another host', not outside, str(outside))
         ctx.close()
+    cold_pictures(browser, url)
+
+
+# (phase 12, judge round 9: at 5 s the topic pictures were still blank at 360 and 412 px on the live site)
+TOPIC_PICS = """(() => [...document.querySelectorAll('.topic img.tp')].map((i) => ({ src: i.getAttribute('src'), ok: i.complete && i.naturalWidth > 0 })))()"""
+
+
+def cold_pictures(browser, url):
+    """Phase 12, item 9: a cold first visit on a slow phone network (Chrome's "Fast 3G" profile), at 360, 390 and 412 px:
+    5 s after the page was asked for, all six topic pictures are drawn, and a tile waiting for its file shows a grey
+    placeholder on its plate, never nothing."""
+    for w, h in ((360, 740), (390, 844), (412, 915)):
+        outside = []
+        ctx, _ = phone(browser, url, outside, w, h)
+        page = ctx.new_page()
+        cdp = ctx.new_cdp_session(page)
+        cdp.send('Network.enable')
+        cdp.send('Network.emulateNetworkConditions', {'offline': False, 'latency': 563, 'downloadThroughput': 180 * 1024, 'uploadThroughput': 84 * 1024})
+        t0 = time.time()
+        page.goto(url, wait_until='commit')
+        page.wait_for_selector('main.simple.home .topic', timeout=15000)
+        bg = page.evaluate("getComputedStyle(document.querySelector('.topic img.tp')).backgroundImage")
+        check(f'{w} x {h}, slow network: a topic tile waiting for its picture shows the grey placeholder on its plate', 'linear-gradient' in bg, bg)
+        page.wait_for_timeout(max(0, int((5 - (time.time() - t0)) * 1000)))
+        pics = page.evaluate(TOPIC_PICS)
+        check(f'{w} x {h}, slow network, 5 s after the page was asked for: the six topic pictures are drawn', len(pics) == 6 and all(p['ok'] for p in pics), str(pics))
+        preload = page.evaluate("[...document.querySelectorAll('link[rel=preload][as=image]')].map((l) => l.getAttribute('href')).sort()")
+        check(f'{w} x {h}: the page asks for exactly those six before its script (link rel=preload)', preload == sorted(p['src'] for p in pics), str(preload))
+        shot(page, f'01b_cold_slow_5s_{w}x{h}', full=False)
+        check(f'{w} x {h}: nothing asked of another host', not outside, str(outside))
+        ctx.close()
 
 
 def later_and_notnow(browser, url):
