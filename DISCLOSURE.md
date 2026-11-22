@@ -17,7 +17,7 @@ history shows exactly what was carried over: `git diff pre-contest..HEAD` is the
 | `core/prompt.ts` | The model prompts and the JSON schema |
 | `core/pipeline.ts` | Card assembly from the question and the model's proposal |
 | `core/pictures.ts`, `core/types.ts`, `core/engine.ts`, `core/requests.ts` | Picture choice, shared types, the engine interface, the cloud request bodies |
-| `web/src/pictos.ts` | Hand-drawn line pictograms (SVG), our own work. (In the submission period, on 18 Nov 2026, every one was redrawn as a colour picture and 39 were added; on 20 Nov 2026, 84 of them were replaced on the cards by pictures made with Gemini; none of the pre-period line drawings is in the app now: `PICTOGRAMS.md`) |
+| `web/src/pictos.ts` | Hand-drawn line pictograms (SVG), our own work. (In the submission period, on 18 Nov 2026, every one was redrawn as a colour picture and 39 were added; on 20 Nov 2026, 84 of them were replaced on the cards by pictures made with Gemini, and on 22 Nov 2026 eight of those were made again and three added (87); none of the pre-period line drawings is in the app now: `PICTOGRAMS.md`) |
 | `tests/unit/*.test.ts` (rules, pipeline, fixround 1–4, strip property test), `tests/unit/fixtures.ts` | Unit tests for the above |
 | **Not in the `pre-contest` commit, but pre-existing:** the design of `web/src/ai/firebaseEngine.ts` | The prototype had `src/ai/firebaseEngine.ts` (108 lines, last changed 10 Nov 2026) and model names in `src/config.ts`: a `FirebaseEngine` class with the same three `getGenerativeModel` calls (`ONLY_ON_DEVICE` with the About-me prompt, `PREFER_IN_CLOUD` with the stripped question, `ONLY_IN_CLOUD` for pictures), the `initializeAppCheck` hook, and the `inferenceSource` check on the private step. It was never executed: the prototype's Firebase config was a `null` placeholder and no project existed, so the app always took the direct Chrome engine |
 
@@ -101,6 +101,10 @@ See `git log` for dates. Day by day: `devlog/`.
   `web/public/pictures/`. We did not draw them; Google does not claim ownership of Gemini API output, and we use them
   under the Gemini API terms. The other pictures are our own SVG drawings. The source of every picture: `PICTOGRAMS.md`.
   The app asks no model for a picture at run time.
+
+- 22 Nov 2026 (phase 12, after a judge round): eight of those pictures were made again (pain, good, bad, more,
+  spouse, child, sibling, friend) and three were added (curtains open, curtains closed, church), the same way: Gemini 3.1
+  Flash Image in Google AI Studio, reviewed by a person, bundled. 87 pictures on the cards are now made with Gemini.
 
 Fonts in `web/public/fonts/` are third-party, each under the SIL Open Font License 1.1 (licence text in each folder): Instrument
 Sans, IBM Plex Mono, Atkinson Hyperlegible Next (fontsource 5.3.0 packages, latin subset). Overpass, Lexend and Public Sans were
