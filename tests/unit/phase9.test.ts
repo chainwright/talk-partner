@@ -140,7 +140,7 @@ describe('2. P0 health: "Nothing stands out" never stands over a pain, a fall, a
 
 describe('3. P1 health wording', () => {
   it('"A little pain" no longer says "keep an eye on it": ask again in an hour, and tell if new or still there', () => {
-    expect(after({ asked: 'How bad is the pain?', kind: 'choice' }, 'a little', EMPTY_PROFILE).end).toBe('A little pain. Ask again in an hour. If it is new, or still there later, tell the nurse or doctor.');
+    expect(after({ asked: 'How bad is the pain?', kind: 'choice' }, 'a little', EMPTY_PROFILE).end).toBe('A little pain. Ask again in an hour; tell the nurse or doctor if it stays. Sudden weakness or numbness: call now.');
     expect(treeEnds('Frank').join(' ')).not.toMatch(/keep an eye on it/i);
   });
   it('no "Last time" and no "So far" before a question about pain, the toilet, a drink or feelings; still before tea or coffee', () => {

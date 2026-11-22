@@ -107,6 +107,14 @@ export function nextInTopic(q: string, profile: Profile, refused: string[] = [])
 export const WHERE_HURTS = 'Where does it hurt?';
 export const WHICH_SIDE = 'Which side? Left or right?';
 export const HOW_BAD = 'How bad is the pain?';
+/**
+ * Phase 12 (judge round 9, a health P0): pain in an arm, a hand, a leg, the feet or the face is first asked about the
+ * FAST arm and face sign, before how bad it is. A yes (or not sure) raises the call box (core/redflag.ts).
+ */
+// (worded with "yes or no": without it the rules read "weak or numb" as an either-or of two words)
+export const WEAK_NUMB = 'Is it suddenly weak or numb, yes or no?';
+/** The places of the body card that the weakness question is asked for. */
+export const LIMB = /\b(?:arm|arms|hand|hands|leg|legs|foot|feet|face)\b/i;
 /** After a "yes" to a feelings opener: one idea (what it is about), three domains and the way out. Made by the rules. */
 export const WHAT_BOTHERS = 'What is bothering you? Your body, people, or plans?';
 
@@ -128,7 +136,8 @@ export function followUps(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label
   if (card.kind === 'body') {
     // the first step of the body map leads to its second by itself; after the second: which side, then how bad
     if (card.bodyStep !== 2) return [];
-    return HAS_SIDE.test(label) || NO_SIDE.test(label) ? [HOW_BAD] : [WHICH_SIDE, HOW_BAD];
+    const then = HAS_SIDE.test(label) || NO_SIDE.test(label) ? [HOW_BAD] : [WHICH_SIDE, HOW_BAD];
+    return LIMB.test(label) ? [WEAK_NUMB, ...then] : then;
   }
   if (a === 'which side') return [HOW_BAD];
   if (/\bin pain\b|\bdoes (?:it|anything) hurt\b|\bare you (?:hurting|sore)\b/.test(a) && yes) return [WHERE_HURTS];

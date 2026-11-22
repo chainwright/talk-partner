@@ -147,7 +147,9 @@ describe('the paths the owner asked for', () => {
     expect((await step('Are you in pain?', 'yes', [])).next).toEqual([WHERE_HURTS]);
     const body = bodyDetailCard('arms', EMPTY_PROFILE);
     const part = body.choices[0].label;
-    expect(after(body, part, EMPTY_PROFILE, ['Are you in pain?', WHERE_HURTS]).next[0]).toBe(HOW_BAD);
+    // (phase 12: an arm first asks "Is it suddenly weak or numb?", then how bad; the back goes straight to how bad)
+    expect(after(body, part, EMPTY_PROFILE, ['Are you in pain?', WHERE_HURTS]).next.slice(0, 2)).toEqual(['Is it suddenly weak or numb, yes or no?', HOW_BAD]);
+    expect(after(bodyDetailCard('back', EMPTY_PROFILE), 'lower back', EMPTY_PROFILE, ['Are you in pain?', WHERE_HURTS]).next[0]).toBe(HOW_BAD);
     expect((await step(HOW_BAD, 'very bad', ['Are you in pain?', WHERE_HURTS])).end).toContain('Call their nurse or doctor now.');
   });
   it('a question the carer typed is not in the trees: nothing is made up for it', async () => {

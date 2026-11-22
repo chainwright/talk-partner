@@ -93,3 +93,40 @@ describe('A2. About them never teaches the carer to ignore pain (P0 5)', () => {
     expect(main).not.toMatch(/\bhints\(state\.history/);
   });
 });
+
+describe('A3. A limb or the face hurts: first "Is it suddenly weak or numb?" (P0 6, the FAST arm sign)', () => {
+  const chain = ['Are you in pain?', 'Where does it hurt?'];
+  it.each(['your left arm', 'your right arm', 'hands', 'your left leg', 'your right leg', 'feet', 'face'])('after "%s" the first question offered is "Is it suddenly weak or numb?"', async (label) => {
+    const { after, WEAK_NUMB } = await import('../../core/tree');
+    const { EMPTY_PROFILE } = await import('../../core/types');
+    const region = /arm|hand/.test(label) ? 'arms' : /leg|feet/.test(label) ? 'legs' : 'head';
+    const s = after({ asked: `Where in the ${region}?`, kind: 'body', bodyStep: 2 }, label, EMPTY_PROFILE, chain);
+    expect(WEAK_NUMB).toBe('Is it suddenly weak or numb, yes or no?');
+    expect(s.next[0]).toBe(WEAK_NUMB);
+    expect(s.next).toContain('How bad is the pain?');
+  });
+  it.each(['upper stomach', 'lower back', 'ears'])('"%s" is not asked about weakness', async (label) => {
+    const { after, WEAK_NUMB } = await import('../../core/tree');
+    const { EMPTY_PROFILE } = await import('../../core/types');
+    expect(after({ asked: 'Where in the back?', kind: 'body', bodyStep: 2 }, label, EMPTY_PROFILE, chain).next).not.toContain(WEAK_NUMB);
+  });
+  it('yes (and not sure) raises the call box; no goes on to how bad, and "a little" still asks again in an hour', async () => {
+    const { after, WEAK_NUMB } = await import('../../core/tree');
+    const { urgentAnswer } = await import('../../core/redflag');
+    const { EMPTY_PROFILE } = await import('../../core/types');
+    const card = { asked: WEAK_NUMB, kind: 'yesno' as const };
+    expect(urgentAnswer(WEAK_NUMB, 'yes')).toBe(true);
+    expect(urgentAnswer(WEAK_NUMB, 'not sure')).toBe(true);
+    expect(urgentAnswer(WEAK_NUMB, 'no')).toBe(false);
+    const yes = after(card, 'yes', { ...EMPTY_PROFILE, personName: 'Frank' }, chain);
+    expect(yes.next).toEqual([]);
+    expect(yes.end).toMatch(/call the emergency number now/i);
+    expect(yes.end).toMatch(/time it started/);
+    const no = after(card, 'no', EMPTY_PROFILE, ['Where does it hurt?']);
+    expect(no.next).toEqual(['How bad is the pain?']);
+    const little = after({ asked: 'How bad is the pain?', kind: 'scale' as never }, 'a little', EMPTY_PROFILE, chain);
+    expect(little.end).toMatch(/Ask again in an hour/);
+    // worst case: the depth limit can cut the weakness question; the end line of "a little" still names the sign
+    expect(little.end).toMatch(/Sudden weakness or numbness: call now/);
+  });
+});

@@ -112,7 +112,8 @@ describe('2b. the boxed line: head, chest, breathing, a sudden weakness, pain ra
   it('worst case the other way: no everyday answer puts the box up, so it is not learned to be ignored', () => {
     const everyday = TOPIC_BASE.filter((t) => !['body', 'feel'].includes(t.id)).flatMap((t) => t.questions);
     for (const q of everyday) for (const l of ['yes', 'no', 'not sure', 'something else', 'tea', 'TV']) expect(urgentAnswer(q, l), `${q} ${l}`).toBe(false);
-    for (const q of TREE_QUESTIONS) expect(urgentAnswer(q, 'yes'), q).toBe(false);
+    // (phase 12: the one tree question that asks about a sign, "Is it suddenly weak or numb, yes or no?", is urgent on a yes by design)
+    for (const q of TREE_QUESTIONS.filter((x) => x !== 'is it suddenly weak or numb yes or no')) expect(urgentAnswer(q, 'yes'), q).toBe(false);
   });
   it('one urgent answer keeps the box for the conversation and for the visit page; the existing pain flow stays under it', () => {
     expect(urgentAny([{ q: 'Are you in pain?', label: 'yes' }, { q: 'Where in the head?', label: 'top of head' }, { q: 'How bad is the pain?', label: 'a little' }])).toBe(true);

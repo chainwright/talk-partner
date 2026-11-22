@@ -150,9 +150,10 @@ describe('after an answer there is a next step where a "yes" would lead nowhere'
     expect(followUps(card('Are you in pain?'), 'yes', EMPTY_PROFILE)).toEqual([WHERE_HURTS]);
     expect(followUps(card('Are you in pain?'), 'no', EMPTY_PROFILE)).toEqual([]);
     const hands = bodyDetailCard('arms', EMPTY_PROFILE, 'more');
-    expect(followUps(hands, 'hands', EMPTY_PROFILE)).toEqual([WHICH_SIDE, HOW_BAD]);
-    expect(followUps(hands, 'your left arm', EMPTY_PROFILE)).toEqual([HOW_BAD]);
-    expect(followUps(bodyDetailCard('legs', EMPTY_PROFILE), 'feet', EMPTY_PROFILE)).toEqual([WHICH_SIDE, HOW_BAD]);
+    // (phase 12: an arm, a hand, a leg, the feet or the face is first asked "Is it suddenly weak or numb?")
+    expect(followUps(hands, 'hands', EMPTY_PROFILE)).toEqual(['Is it suddenly weak or numb, yes or no?', WHICH_SIDE, HOW_BAD]);
+    expect(followUps(hands, 'your left arm', EMPTY_PROFILE)).toEqual(['Is it suddenly weak or numb, yes or no?', HOW_BAD]);
+    expect(followUps(bodyDetailCard('legs', EMPTY_PROFILE), 'feet', EMPTY_PROFILE)).toEqual(['Is it suddenly weak or numb, yes or no?', WHICH_SIDE, HOW_BAD]);
     expect(followUps(bodyDetailCard('head', EMPTY_PROFILE), 'neck', EMPTY_PROFILE)).toEqual([HOW_BAD]);
     expect(followUps(card('Which side?', 'choice'), 'left', EMPTY_PROFILE)).toEqual([HOW_BAD]);
   });

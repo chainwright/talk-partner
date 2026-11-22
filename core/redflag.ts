@@ -58,6 +58,8 @@ export function urgentAnswer(asked: string, label: string): boolean {
   if (/^how bad is the pain\b/.test(q) && STRONG.test(l)) return true;
   // a yes to a question about one of the signs, or a sign as the answer itself ("chest", "dizzy")
   if (SIGNS.test(q) && l === 'yes') return true;
+  // (phase 12) the weakness question after a limb or the face: "not sure" is not a no
+  if (/^is it suddenly weak or numb\b/.test(q) && l === 'not sure') return true;
   if (SIGNS.test(l) && !/^(?:no|not sure)$/.test(l) && !/\bfall asleep\b/.test(l)) return true;
   return false;
 }

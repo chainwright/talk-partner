@@ -14,7 +14,8 @@
 // neither a next question nor an end line, on a question the rules cannot make a card for, and on a path deeper than
 // three questions.
 
-import { HOW_BAD, WHAT_BOTHERS, WHERE_HURTS, WHICH_SIDE, awayNames, ownQuestions } from './topics';
+import { HOW_BAD, LIMB, WEAK_NUMB, WHAT_BOTHERS, WHERE_HURTS, WHICH_SIDE, awayNames, ownQuestions } from './topics';
+export { WEAK_NUMB } from './topics';
 import { EMPTY_PROFILE, type Card, type Profile } from './types';
 
 /** A conversation is at most this many questions deep: the topic question and two that narrow it down. */
@@ -132,6 +133,12 @@ const TREE: Record<string, Node> = {
     no: { end: 'No pain, {name} says. Watch the face, ask again later.' },
     'not sure': { next: [COMFORTABLE], end: 'Watch {their} face and how {they} move, and ask again soon.' },
   },
+  // (phase 12, judge round 9: pain in an arm, a hand, a leg, the feet or the face: the FAST sign first)
+  'is it suddenly weak or numb yes or no': {
+    yes: { end: 'Suddenly weak or numb: this can be a stroke. Call the emergency number now, and note the time it started.' },
+    no: { next: [HOW_BAD], end: 'Not weak or numb. Ask how bad the pain is, and ask again in an hour.' },
+    'not sure': { next: [HOW_BAD], end: 'Not sure: ask {them} to lift both arms and smile. If one side drops, call the emergency number now.' },
+  },
   // (the card keeps the question's first part as what was asked: "Which side?")
   'which side': {
     left: { next: [HOW_BAD], end: 'The left side. Tell the nurse or doctor which side it is.' },
@@ -140,7 +147,8 @@ const TREE: Record<string, Node> = {
   },
   'how bad is the pain': {
     // (phase 9, judge round 8: "keep an eye on it" could stand under a chest-pain call box)
-    'a little': { end: 'A little pain. Ask again in an hour. If it is new, or still there later, tell the nurse or doctor.' },
+    // (phase 12, judge round 9: the depth limit can cut the weakness question, so the end line names the sign too)
+    'a little': { end: 'A little pain. Ask again in an hour; tell the nurse or doctor if it stays. Sudden weakness or numbness: call now.' },
     'quite bad': { end: 'Quite bad. Follow {their} care plan for pain, and tell the nurse or doctor.' },
     'very bad': { end: 'Very bad. Call {their} nurse or doctor now. If it looks like an emergency, call the emergency number.' },
     'not sure': { end: 'Watch {their} face and how {they} move. If you are worried, call the nurse or doctor.' },
@@ -402,7 +410,10 @@ function shaped(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string):
     // the first step of the body map leads to its second by itself; after the second: how bad, and which side
     if (card.bodyStep !== 2) return null;
     const sided = !/\b(?:left|right|middle|both)\b/i.test(label) && !/\b(?:head|face|eyes|mouth|neck|top of head|stomach|upper stomach|lower stomach|upper back|lower back|back|chest)\b/i.test(label);
-    return { next: sided ? [HOW_BAD, WHICH_SIDE] : [HOW_BAD], end: `It hurts here: ${label.replace(/^your\s+/i, '')}. Tell the nurse or doctor where, and ask how bad it is.` };
+    const where = label.replace(/^your\s+/i, '');
+    // (phase 12) an arm, a hand, a leg, the feet or the face: whether it is suddenly weak or numb is asked first
+    if (LIMB.test(label)) return { next: [WEAK_NUMB, HOW_BAD, ...(sided ? [WHICH_SIDE] : [])], end: `It hurts here: ${where}. Suddenly weak or numb? Call the emergency number now. Tell the nurse or doctor where.` };
+    return { next: sided ? [HOW_BAD, WHICH_SIDE] : [HOW_BAD], end: `It hurts here: ${where}. Tell the nurse or doctor where, and ask how bad it is.` };
   }
   if (card.kind === 'feeling' && l === 'in pain') return { next: [WHERE_HURTS], end: 'In pain. Ask where it hurts, and tell the nurse or doctor.' };
   const yn = (yes: string, thing: string): Raw | null => (l === 'yes' ? { end: yes } : l === 'no' ? { end: `Not ${thing} now. That is fine.` } : l === 'not sure' ? { end: 'Not sure. Ask again later.' } : null);
