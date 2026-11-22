@@ -54,11 +54,12 @@ export function routeChip(c: Card | null | undefined, about: string): RouteChip 
  * The privacy line at the foot of the first screen and the answered screen, by what has happened this session. It is
  * never a fixed sentence: once a question went to the cloud, may have gone, or was spoken, the line says so.
  */
-export function privacyLines(i: { cloudOn: boolean; settingsAsked: boolean; sent: number; maybe: number; clips: number }): string[] {
+export function privacyLines(i: { cloudOn: boolean; settingsAsked: boolean; sent: number; maybe: number; clips: number; /** Phase 12: waits for online help the carer stopped (the question may have gone). */ stopped?: number }): string[] {
   const P = COPY.simple.privacy;
   const out: string[] = [];
   if (i.sent) out.push(P.sent(i.sent));
   if (i.maybe) out.push(P.maybe(i.maybe));
+  if (i.stopped) out.push(P.stopped(i.stopped));
   if (i.clips) out.push(P.voice(i.clips));
   if (!out.length) out.push(i.cloudOn ? P.cloudOn : P.none);
   if (i.settingsAsked) out.push(P.settings);

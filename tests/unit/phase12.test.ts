@@ -337,3 +337,21 @@ describe('D12. The visit page: "Pain: none entered." says that this does not mea
     expect(s.lines[0]).toBe('Pain: none entered. That does not mean there was none: ask.');
   });
 });
+
+describe('D13. "Stop waiting": the footer agrees with the line above it', () => {
+  it('after a stopped wait the footer says the question may have left, never "Nothing you asked has left"', async () => {
+    const { privacyLines } = await import('../../core/simple');
+    const { COPY } = await import('../../core/copy');
+    const lines = privacyLines({ cloudOn: false, settingsAsked: false, sent: 0, maybe: 0, clips: 0, stopped: 1 });
+    expect(lines).toEqual([COPY.simple.privacy.stopped(1)]);
+    expect(lines.join(' ')).toMatch(/may have left this computer: you stopped waiting/);
+    expect(lines).not.toContain(COPY.simple.privacy.none);
+    expect(COPY.simple.privacy.stopped(2)).toMatch(/^2 questions may have left/);
+  });
+  it('the web client counts a stopped wait while online help was asked', async () => {
+    const { readFileSync } = await import('node:fs');
+    const main = readFileSync(new URL('../../web/src/main.ts', import.meta.url), 'utf8');
+    expect(main).toMatch(/case 'stop-wait': if \(state\.busy\) \{ if \(p9wait\.at !== null\) p9stopped\+\+;/);
+    expect(main).toContain('stopped: p9stopped');
+  });
+});

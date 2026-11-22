@@ -278,6 +278,9 @@ def try_ai(browser, url):
     page.wait_for_timeout(300)
     home = e2e.text(page)
     check('"Stop waiting": the making stops, the carer reads what to do instead, and that the question may already have gone', 'You stopped waiting, so there is no card.' in home and 'may already have gone to online help' in home and page.locator('.making').count() == 0, home[:400])
+    # (phase 12, judge round 9: the footer said nothing had left the phone)
+    foot = e2e.text(page, '#s-privacy')
+    check('phase 12: the footer agrees: "may have left this phone: you stopped waiting", never "Nothing you asked has left"', 'you stopped waiting for online help' in foot and 'Nothing you asked has left' not in foot, foot)
     shot(page, '13_after_stop_waiting')
     # and without "Stop waiting": the plain line at 20 s
     page.locator('#try-ai [data-act=try-ai]').click()

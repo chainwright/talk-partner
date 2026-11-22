@@ -567,6 +567,8 @@ const COPY = {
       settings: 'Online help is on, so the app asked for its settings online (no question in that).',
       sent: (n: number) => `${n} question${n === 1 ? '' : 's'} went to Google's online AI this session, with any names you listed swapped out.`,
       maybe: (n: number) => `${n} more may have left this computer: online help was asked and did not answer.`,
+      /** Phase 12 (judge round 9): after "Stop waiting", as the line above the box says: the question may already have gone. */
+      stopped: (n: number) => `${n} question${n === 1 ? '' : 's'} may have left this computer: you stopped waiting for online help, and it may still answer.`,
       voice: (n: number) => `${n} spoken question${n === 1 ? '' : 's'} went to Google as a recording, to be typed out.`,
       answers: 'Answers are kept on this computer only.',
     },

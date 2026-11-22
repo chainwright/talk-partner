@@ -285,7 +285,8 @@ describe('6. P0 the cloud wait: 3 s to "Stop waiting", 20 s to the plain line; s
   it('the web client: "Stop waiting" after 3 s, the making called off, and the settings fetched beside the app, never awaited', () => {
     const main = readFileSync(join(__dirname, '..', '..', 'web', 'src', 'main.ts'), 'utf8');
     expect(main).toContain('onCloud: () => cloudStarted(seq),');
-    expect(main).toContain("case 'stop-wait': if (state.busy) { makeSeq++; cloudDone(); state.busy = false; state.error = P9.wait.stopped;");
+    // (phase 12: the stopped wait is counted first, for the footer)
+    expect(main).toContain("case 'stop-wait': if (state.busy) { if (p9wait.at !== null) p9stopped++; makeSeq++; cloudDone(); state.busy = false; state.error = P9.wait.stopped;");
     expect(main).toContain('if (ms < CLOUD_SLOW_MS) return;');
     expect(main).toMatch(/void fetchSettings\(cfg\.firebase\)\.then/);
     expect(main).not.toMatch(/await fetchSettings|await askSettings/);

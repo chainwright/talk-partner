@@ -1714,7 +1714,7 @@ function simplePrivacy(): string[] {
   const r = sessionReceipt(state.made, state.profile);
   return privacyLines({
     cloudOn: state.settings.cloudHelp, settingsAsked,
-    sent: r.cardsLeft, maybe: r.perCard.filter((x) => x.attempted && !x.left).length, clips: voiceSent.clips,
+    sent: r.cardsLeft, maybe: r.perCard.filter((x) => x.attempted && !x.left).length, clips: voiceSent.clips, stopped: p9stopped,
   }).concat(state.insSent ? [C.simple.insights.sentLine(state.insSent)] : []).concat(p5.speakSent ? [P5.speak.sent(p5.speakSent)] : []).concat(p6.shared ? [P6.share.sessionLine(p6.shared)] : []).filter((x, i, all) => !((state.insSent || p5.speakSent) && i === 0 && all.length > 1 && (x === C.simple.privacy.none || x === C.simple.privacy.cloudOn)));
 }
 const aboutName = () => C.about.heading(state.profile.personName);
@@ -2263,6 +2263,8 @@ let p9notNow: { kept: boolean } | null = null;
 /** Phase 9: the sample open question of Home while it is being made or shown (null otherwise). */
 const p9sample = { q: null as string | null };
 const p9wait = { at: null as number | null, timer: null as ReturnType<typeof setInterval> | null };
+/** Phase 12: how many waits for online help the carer stopped this session (web/src simplePrivacy). */
+let p9stopped = 0;
 function cloudStarted(seq: number) {
   if (seq !== makeSeq) return;
   p9wait.at = Date.now();
@@ -2542,7 +2544,8 @@ function act(el: HTMLElement) {
     // (phase 9) Home's sample open question: one tap to the card and its routing chip (after the consent sheet's yes on a phone)
     case 'try-ai': if (!state.busy) { p9sample.q = AI_QUESTION; askBy = 'none'; void make(AI_QUESTION); } break;
     // (phase 9) "Stop waiting" while online help is slow: the making is called off; the screen says what to do instead
-    case 'stop-wait': if (state.busy) { makeSeq++; cloudDone(); state.busy = false; state.error = P9.wait.stopped; render(); document.querySelector<HTMLInputElement>('#q')?.focus(); } break;
+    // (phase 12: a wait stopped while online help was asked is counted, so the footer says the question may have gone, as the line above it does)
+    case 'stop-wait': if (state.busy) { if (p9wait.at !== null) p9stopped++; makeSeq++; cloudDone(); state.busy = false; state.error = P9.wait.stopped; render(); document.querySelector<HTMLInputElement>('#q')?.focus(); } break;
     case 'own': state.lastQuestion = ''; state.error = null; dictated = false; resetCard(); render(); document.querySelector<HTMLInputElement>('#q')?.focus(); break;
     case 'invite-later': state.inviteOff = true; render(); break;
     // (phase 8) "Left for later": ask it again (a new conversation of that question), or done; either way it goes off Home
