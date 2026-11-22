@@ -318,3 +318,22 @@ drawn by us). On the production build of that state: `npm run check` 2913 unit t
 Not run for phase 11: any of it with a carer or a person with aphasia; a real phone; the hosted copy;
 `e2e-cloud.mjs`, `e2e-ondevice.mjs`, `e2e-speak.py`, `update-check.py`, `e2e-noconfig.mjs` (its picture lookups
 were changed to find an `<img>` too, but it was not run).
+
+## Phase 12 (22 Nov 2026): rows 145 to 156
+Every run below was against the production build of `9dc8060` (`npm run build && npx vite preview`, port 5612). No run
+sent anything to another host (every request to another host was refused and counted), and no model was called.
+These runs came before any deploy of phase 12. Saved outputs are in `devlog/evidence_phase12/` (`local/` for the logs, `walk/` for
+`scripts/phase12-walk.py`, `phase8/` to `phase11/` for those scripts' shots). Results: `npm run check` 3001 unit tests; `e2e-simple.py` 1032/1032; `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` 548/548; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py` 21/21; `phase9-shots.py` 52/52 (the new cold check included); `phase10-shots.py` 132/132; `phase11-walk.py` 48/48; `phase12-walk.py` 142/142.
+
+| Row | File | Command | Saved output |
+|---|---|---|---|
+| 145 to 152, 155, 156 | see `CLAIMS.md` | `npx vitest run tests/unit/phase12.test.ts`; `npm run check` | `local/check_local.txt` |
+| 146 to 149, 151, 154, 156 | the same | `python3 scripts/phase12-walk.py --url http://localhost:5612/ devlog/evidence_phase12/walk` | `local/phase12-walk_local.txt`, `walk/*.png` |
+| 153 | `web/index.html`, `web/src/simple.css` | `python3 scripts/phase9-shots.py --url http://localhost:5612/ --out devlog/evidence_phase12/phase9` | `local/phase9-shots_local.txt`, `phase9/01b_cold_slow_5s_*.png` |
+
+Found on the way and fixed: an edit of item 10 had dropped the stylesheet rules after it (`46f0b76`, found by
+`e2e-simple.py`); the safety screen had the person's card under it instead of the carer's answer (`c901148`); at
+360 px with a name the first row of topics ended below the fold (`9dc8060`, found by `phase8-shots.py`). A change to
+Back (`a66310b`) was reverted (`945dd37`): a person's screen is a step on the way back by design.
+Not run for phase 12: anything with a carer or a person with aphasia; a real phone; the hosted copy; `e2e-cloud.mjs`,
+`e2e-ondevice.mjs`, `e2e-speak.py`, `e2e-noconfig.mjs` (its pain check was updated, not run); `picture-sheet.py`.

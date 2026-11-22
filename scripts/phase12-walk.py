@@ -114,7 +114,7 @@ def walk(b, w, h, scheme):
         check(f'{tag}: the strip says where the AI runs on a phone and on a laptop', "Phone: Google's AI, online, after your yes" in strip and "Laptop with Chrome's own AI: nothing is sent" in strip, strip)
     else:
         # (at 360 px the strip folds, so the first row of topics stays above the fold; the button's tag says where its AI runs)
-        check(f'{tag}: at 360 px the strip folds; the button\'s tag says where its AI runs, and the lines stay its description', strip == '' and "uses Google's AI, after your yes" in e2e.text(page, '#try-ai-tag') and page.locator('#try-ai [aria-describedby=ai-strip]').count() == 1, strip)
+        check(f'{tag}: at 360 px the strip folds; the button\'s tag says where its AI runs, and the lines stay its description', page.evaluate("getComputedStyle(document.querySelector('#ai-strip')).display") == 'none' and "uses Google's AI, after your yes" in e2e.text(page, '#try-ai-tag') and page.locator('#try-ai [aria-describedby=ai-strip]').count() == 1, strip)
     check(f'{tag}: "See the AI at work" comes before "How it works" and the topics', page.evaluate("(() => { const a = document.querySelector('#try-ai'), h = document.querySelector('#how'), t = document.querySelector('#topics'); return !!a && !!(a.compareDocumentPosition(h) & 4) && !!(a.compareDocumentPosition(t) & 4); })()"))
     check(f'{tag}: "Try it with the Millers, a sample family" at the foot of Home, to judge mode', page.locator('#try-sample[href="#/demo"]').count() == 1 and 'Try it with the Millers, a sample family' in e2e.text(page, '#try-sample'))
     check(f'{tag}: first screen: no sideways scroll', noscroll(page))

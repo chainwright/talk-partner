@@ -1,0 +1,166 @@
+# Contrast of the simple view
+
+Read from `web/src/simple.css` by `scripts/contrast-check.mjs`. Text needs 4.5:1, a control edge or sign 3:1 (WCAG 2.2, 1.4.3 and 1.4.11).
+
+## light
+
+| kind | foreground | background | ratio | needs | result | used for |
+|---|---|---|---|---|---|---|
+| text | --ink #0f141a | --bg #eef2f6 | 16.44:1 | 4.5:1 | pass | body text, headings, the line to say |
+| text | --ink #0f141a | --panel #ffffff | 18.50:1 | 4.5:1 | pass | buttons, the field, rows, the sheet |
+| text | --muted #4a5361 | --bg #eef2f6 | 6.91:1 | 4.5:1 | pass | sub line, tips, where the AI runs, "New question" |
+| text | --muted #4a5361 | --panel #ffffff | 7.77:1 | 4.5:1 | pass | small line in a ready question, placeholder, sheet notes |
+| text | --accent #0b6e4f | --bg #eef2f6 | 5.56:1 | 4.5:1 | pass | links ("See how it works inside"), today's answers |
+| text | --accent #0b6e4f | --panel #ffffff | 6.25:1 | 4.5:1 | pass | links on a panel ("Add details", "Change", sheet links) |
+| text | --on-accent #ffffff | --accent #0b6e4f | 6.25:1 | 4.5:1 | pass | the main button, the step numbers, the "Simple view" pill |
+| text | --ink #0f141a | --accent-soft #d5f5ea | 15.92:1 | 4.5:1 | pass | where the card was made (on this device), "they chose", quick needs, banner |
+| text | --accent #0b6e4f | --accent-soft #d5f5ea | 5.38:1 | 4.5:1 | pass | the "Quick needs" title |
+| text | --ink #0f141a | --cloud-soft #e1eefb | 15.70:1 | 4.5:1 | pass | where the card was made (with online help) |
+| text | --ink #0f141a | --warn-soft #fdf0d9 | 16.42:1 | 4.5:1 | pass | where the card was made (may have left) |
+| text | --warn #8a5300 | --bg #eef2f6 | 5.63:1 | 4.5:1 | pass | the safety line, an error |
+| text | --warn #8a5300 | --panel #ffffff | 6.33:1 | 4.5:1 | pass | the safety line on a panel |
+| text | --ink #0f141a | --line #c9d1db | 12.00:1 | 4.5:1 | pass | a button that is off (the main button while the choices are being found) |
+| text | --how-ink #1d1600 | --how-bg #fff6d6 | 16.63:1 | 4.5:1 | pass | "How it works: 4 steps" (the steps, the folded line) and the "Wait. Count to ten." line |
+| text | --how-bg #fff6d6 | --how-ink #1d1600 | 16.63:1 | 4.5:1 | pass | the step numbers in that block |
+| text | --ink #0f141a | --panel #ffffff | 18.50:1 | 4.5:1 | pass | 18 Nov: "Back" and "Home" in the top bar, the line that says what to do now, a learned line, a photo's word |
+| text | --accent #0b6e4f | --panel #ffffff | 6.25:1 | 4.5:1 | pass | 18 Nov: the word "Home" in the top bar |
+| text | --muted #4a5361 | --panel #ffffff | 7.77:1 | 4.5:1 | pass | 18 Nov: the small "Now:" over the line that says what to do |
+| text | --on-accent #ffffff | --accent #0b6e4f | 6.25:1 | 4.5:1 | pass | 18 Nov: "Next: ..." (the tree's next question), the bar "A newer version is ready. Tap to update." |
+| text | --ink #0f141a | --accent-soft #d5f5ea | 15.92:1 | 4.5:1 | pass | 18 Nov: "Usually: tea (5 of 7)" |
+| text | --no #b3261e | --panel #ffffff | 6.54:1 | 4.5:1 | pass | 18 Nov: "Delete everything on this phone" |
+| text | --ink #0f141a | --panel #ffffff | 18.50:1 | 4.5:1 | pass | phase 3: the guard's line, a diary entry, an insight line, the tip of the day, a log button |
+| text | --muted #4a5361 | --panel #ffffff | 7.77:1 | 4.5:1 | pass | phase 3: the time of a diary entry, its question, the base of an insight line, who worded it |
+| text | --ink #0f141a | --accent-soft #d5f5ea | 15.92:1 | 4.5:1 | pass | phase 3: the selected tab of the diary (Today / Week / Month) |
+| text | --ink #0f141a | --bg #eef2f6 | 16.44:1 | 4.5:1 | pass | phase 3: the day headings of the diary, the topic filter's label |
+| text | --muted #4a5361 | --bg #eef2f6 | 6.91:1 | 4.5:1 | pass | phase 3: "Nothing entered today yet.", the line on what the diary holds |
+| text | --no #b3261e | --bg #eef2f6 | 5.81:1 | 4.5:1 | pass | phase 3: "Delete the diary" |
+| text | --ink #0f141a | --panel #ffffff | 18.50:1 | 4.5:1 | pass | phase 4: "[Name] wants to say something", "Try the first letter", the line "[Name] started this", an answer on the doctor-visit page, a photo's word |
+| text | --muted #4a5361 | --panel #ffffff | 7.77:1 | 4.5:1 | pass | phase 4: the row name, the question and the time on the doctor-visit page, the choices under a photo question |
+| text | --accent #0b6e4f | --panel #ffffff | 6.25:1 | 4.5:1 | pass | phase 4: the signs of those buttons and of the line "[Name] started this" |
+| text | --warn #8a5300 | --bg #eef2f6 | 5.63:1 | 4.5:1 | pass | phase 4: "If the pain is new or strong, do not wait for the visit" under the doctor-visit page |
+| text | --no #b3261e | --bg #eef2f6 | 5.81:1 | 4.5:1 | pass | phase 4: "Delete these answers" |
+| text | --on-accent #ffffff | --accent #0b6e4f | 6.25:1 | 4.5:1 | pass | phase 5: the small "Next:" label on the main button (.btn.primary.ask-next small) |
+| text | --panel #ffffff | --no #b3261e | 6.54:1 | 4.5:1 | pass | phase 5: the call button ("Call emergency services: 911", "Call 911") |
+| text | --ink #0f141a | --panel #ffffff | 18.50:1 | 4.5:1 | pass | phase 5: the boxed line "Call 911 now if this is new or sudden", the FAST list, "Since the last visit", the Read aloud switch |
+| text | --ink #0f141a | --cloud-soft #e1eefb | 15.70:1 | 4.5:1 | pass | phase 5: the Read aloud switch when it is on |
+| text | --muted #4a5361 | --panel #ffffff | 7.77:1 | 4.5:1 | pass | phase 5: the small line of "Something new or sudden?" |
+| control | --field #6b7686 | --bg #eef2f6 | 4.09:1 | 3:1 | pass | the edge of every button, field and row |
+| control | --field #6b7686 | --panel #ffffff | 4.60:1 | 3:1 | pass | the edge of a field inside a row or the sheet |
+| control | --accent #0b6e4f | --bg #eef2f6 | 5.56:1 | 3:1 | pass | the edge of quick needs and of the made-where strip, the focus ring |
+| control | --accent #0b6e4f | --accent-soft #d5f5ea | 5.38:1 | 3:1 | pass | the lock and tick signs |
+| control | --accent #0b6e4f | --panel #ffffff | 6.25:1 | 3:1 | pass | the lock sign on the sheet |
+| control | --cloud #0b57a4 | --bg #eef2f6 | 6.41:1 | 3:1 | pass | the edge of the made-where strip (online help) |
+| control | --cloud #0b57a4 | --cloud-soft #e1eefb | 6.12:1 | 3:1 | pass | the cloud sign in that strip |
+| control | --cloud #0b57a4 | --panel #ffffff | 7.21:1 | 3:1 | pass | the cloud sign on the sheet |
+| control | --warn #8a5300 | --bg #eef2f6 | 5.63:1 | 3:1 | pass | the edge of the made-where strip (may have left) |
+| control | --warn #8a5300 | --warn-soft #fdf0d9 | 5.62:1 | 3:1 | pass | the sign in that strip |
+| control | --warn #8a5300 | --panel #ffffff | 6.33:1 | 3:1 | pass | the data-use sign on the sheet |
+| control | --panel #ffffff | --warn #8a5300 | 6.33:1 | 3:1 | pass | the microphone sign while recording |
+| control | --muted #4a5361 | --panel #ffffff | 7.77:1 | 3:1 | pass | the arrow in a ready question |
+| control | --ink #0f141a | --bg #eef2f6 | 16.44:1 | 3:1 | pass | the focus ring of the main button |
+| control | --ink #0f141a | --panel #ffffff | 18.50:1 | 3:1 | pass | the focus ring on the sheet |
+| control | --how-edge #8a5f00 | --bg #eef2f6 | 5.02:1 | 3:1 | pass | the edge of the how-to block, its folded line and the "wait" line |
+| control | --how-ink #1d1600 | --how-bg #fff6d6 | 16.63:1 | 3:1 | pass | the step pictures, the sign in the "wait" line, the focus ring inside the block |
+| control | --accent #0b6e4f | --panel #ffffff | 6.25:1 | 3:1 | pass | the topic signs, the spark of the AI line and of the narrowing button |
+| control | --accent #0b6e4f | --accent-soft #d5f5ea | 5.38:1 | 3:1 | pass | the sign of an open topic |
+| control | --muted #4a5361 | --panel #ffffff | 7.77:1 | 3:1 | pass | the "?" sign after the way out |
+| control | --field #6b7686 | --panel #ffffff | 4.60:1 | 3:1 | pass | the edge of the "needs internet" tag |
+| control | --field #6b7686 | --bg #eef2f6 | 4.09:1 | 3:1 | pass | 18 Nov: the edge of "Back" and "Home", of a photo in the list, of a learned line |
+| control | --accent #0b6e4f | --bg #eef2f6 | 5.56:1 | 3:1 | pass | 18 Nov: the edge of the line that says what to do now |
+| control | --no #b3261e | --bg #eef2f6 | 5.81:1 | 3:1 | pass | 18 Nov: the edge of "Delete everything on this phone" |
+| control | --warn #8a5300 | --panel #ffffff | 6.33:1 | 3:1 | pass | phase 3: the edge and the sign of the guard's line, the edge of a "Tell the doctor or nurse" line, of the "less sure" tag |
+| control | --accent #0b6e4f | --panel #ffffff | 6.25:1 | 3:1 | pass | phase 3: the edge of a "Worth mentioning" line, the tick of "Logged", the signs in "what stands out" |
+| control | --field #6b7686 | --panel #ffffff | 4.60:1 | 3:1 | pass | phase 3: the edge of the tabs, of the timeline, of a "To keep in mind" line |
+| control | --accent #0b6e4f | --accent-soft #d5f5ea | 5.38:1 | 3:1 | pass | phase 3: the bar under the selected tab |
+| control | --no #b3261e | --panel #ffffff | 6.54:1 | 3:1 | pass | phase 5: the edge and the sign of the boxed call line, the edge of the way to "Something new or sudden?" |
+| control | --no #b3261e | --bg #eef2f6 | 5.81:1 | 3:1 | pass | phase 5: the call button against the page |
+| control | --cloud #0b57a4 | --panel #ffffff | 7.21:1 | 3:1 | pass | phase 5: the sign of the Read aloud switch |
+
+## dark
+
+| kind | foreground | background | ratio | needs | result | used for |
+|---|---|---|---|---|---|---|
+| text | --ink #e8eef5 | --bg #111823 | 15.25:1 | 4.5:1 | pass | body text, headings, the line to say |
+| text | --ink #e8eef5 | --panel #1a2431 | 13.41:1 | 4.5:1 | pass | buttons, the field, rows, the sheet |
+| text | --muted #a9b6c6 | --bg #111823 | 8.65:1 | 4.5:1 | pass | sub line, tips, where the AI runs, "New question" |
+| text | --muted #a9b6c6 | --panel #1a2431 | 7.60:1 | 4.5:1 | pass | small line in a ready question, placeholder, sheet notes |
+| text | --accent #5fe0b5 | --bg #111823 | 10.87:1 | 4.5:1 | pass | links ("See how it works inside"), today's answers |
+| text | --accent #5fe0b5 | --panel #1a2431 | 9.56:1 | 4.5:1 | pass | links on a panel ("Add details", "Change", sheet links) |
+| text | --on-accent #06231a | --accent #5fe0b5 | 10.15:1 | 4.5:1 | pass | the main button, the step numbers, the "Simple view" pill |
+| text | --ink #e8eef5 | --accent-soft #163a30 | 10.69:1 | 4.5:1 | pass | where the card was made (on this device), "they chose", quick needs, banner |
+| text | --accent #5fe0b5 | --accent-soft #163a30 | 7.62:1 | 4.5:1 | pass | the "Quick needs" title |
+| text | --ink #e8eef5 | --cloud-soft #13283d | 12.86:1 | 4.5:1 | pass | where the card was made (with online help) |
+| text | --ink #e8eef5 | --warn-soft #3a2c12 | 11.61:1 | 4.5:1 | pass | where the card was made (may have left) |
+| text | --warn #ffc266 | --bg #111823 | 11.16:1 | 4.5:1 | pass | the safety line, an error |
+| text | --warn #ffc266 | --panel #1a2431 | 9.82:1 | 4.5:1 | pass | the safety line on a panel |
+| text | --ink #e8eef5 | --line #2c3a4b | 9.91:1 | 4.5:1 | pass | a button that is off (the main button while the choices are being found) |
+| text | --how-ink #fff3cf | --how-bg #33290c | 12.97:1 | 4.5:1 | pass | "How it works: 4 steps" (the steps, the folded line) and the "Wait. Count to ten." line |
+| text | --how-bg #33290c | --how-ink #fff3cf | 12.97:1 | 4.5:1 | pass | the step numbers in that block |
+| text | --ink #e8eef5 | --panel #1a2431 | 13.41:1 | 4.5:1 | pass | 18 Nov: "Back" and "Home" in the top bar, the line that says what to do now, a learned line, a photo's word |
+| text | --accent #5fe0b5 | --panel #1a2431 | 9.56:1 | 4.5:1 | pass | 18 Nov: the word "Home" in the top bar |
+| text | --muted #a9b6c6 | --panel #1a2431 | 7.60:1 | 4.5:1 | pass | 18 Nov: the small "Now:" over the line that says what to do |
+| text | --on-accent #06231a | --accent #5fe0b5 | 10.15:1 | 4.5:1 | pass | 18 Nov: "Next: ..." (the tree's next question), the bar "A newer version is ready. Tap to update." |
+| text | --ink #e8eef5 | --accent-soft #163a30 | 10.69:1 | 4.5:1 | pass | 18 Nov: "Usually: tea (5 of 7)" |
+| text | --no #ff8a80 | --panel #1a2431 | 6.86:1 | 4.5:1 | pass | 18 Nov: "Delete everything on this phone" |
+| text | --ink #e8eef5 | --panel #1a2431 | 13.41:1 | 4.5:1 | pass | phase 3: the guard's line, a diary entry, an insight line, the tip of the day, a log button |
+| text | --muted #a9b6c6 | --panel #1a2431 | 7.60:1 | 4.5:1 | pass | phase 3: the time of a diary entry, its question, the base of an insight line, who worded it |
+| text | --ink #e8eef5 | --accent-soft #163a30 | 10.69:1 | 4.5:1 | pass | phase 3: the selected tab of the diary (Today / Week / Month) |
+| text | --ink #e8eef5 | --bg #111823 | 15.25:1 | 4.5:1 | pass | phase 3: the day headings of the diary, the topic filter's label |
+| text | --muted #a9b6c6 | --bg #111823 | 8.65:1 | 4.5:1 | pass | phase 3: "Nothing entered today yet.", the line on what the diary holds |
+| text | --no #ff8a80 | --bg #111823 | 7.80:1 | 4.5:1 | pass | phase 3: "Delete the diary" |
+| text | --ink #e8eef5 | --panel #1a2431 | 13.41:1 | 4.5:1 | pass | phase 4: "[Name] wants to say something", "Try the first letter", the line "[Name] started this", an answer on the doctor-visit page, a photo's word |
+| text | --muted #a9b6c6 | --panel #1a2431 | 7.60:1 | 4.5:1 | pass | phase 4: the row name, the question and the time on the doctor-visit page, the choices under a photo question |
+| text | --accent #5fe0b5 | --panel #1a2431 | 9.56:1 | 4.5:1 | pass | phase 4: the signs of those buttons and of the line "[Name] started this" |
+| text | --warn #ffc266 | --bg #111823 | 11.16:1 | 4.5:1 | pass | phase 4: "If the pain is new or strong, do not wait for the visit" under the doctor-visit page |
+| text | --no #ff8a80 | --bg #111823 | 7.80:1 | 4.5:1 | pass | phase 4: "Delete these answers" |
+| text | --on-accent #06231a | --accent #5fe0b5 | 10.15:1 | 4.5:1 | pass | phase 5: the small "Next:" label on the main button (.btn.primary.ask-next small) |
+| text | --panel #1a2431 | --no #ff8a80 | 6.86:1 | 4.5:1 | pass | phase 5: the call button ("Call emergency services: 911", "Call 911") |
+| text | --ink #e8eef5 | --panel #1a2431 | 13.41:1 | 4.5:1 | pass | phase 5: the boxed line "Call 911 now if this is new or sudden", the FAST list, "Since the last visit", the Read aloud switch |
+| text | --ink #e8eef5 | --cloud-soft #13283d | 12.86:1 | 4.5:1 | pass | phase 5: the Read aloud switch when it is on |
+| text | --muted #a9b6c6 | --panel #1a2431 | 7.60:1 | 4.5:1 | pass | phase 5: the small line of "Something new or sudden?" |
+| control | --field #7a8a9e | --bg #111823 | 5.05:1 | 3:1 | pass | the edge of every button, field and row |
+| control | --field #7a8a9e | --panel #1a2431 | 4.44:1 | 3:1 | pass | the edge of a field inside a row or the sheet |
+| control | --accent #5fe0b5 | --bg #111823 | 10.87:1 | 3:1 | pass | the edge of quick needs and of the made-where strip, the focus ring |
+| control | --accent #5fe0b5 | --accent-soft #163a30 | 7.62:1 | 3:1 | pass | the lock and tick signs |
+| control | --accent #5fe0b5 | --panel #1a2431 | 9.56:1 | 3:1 | pass | the lock sign on the sheet |
+| control | --cloud #8cc8ff | --bg #111823 | 10.03:1 | 3:1 | pass | the edge of the made-where strip (online help) |
+| control | --cloud #8cc8ff | --cloud-soft #13283d | 8.45:1 | 3:1 | pass | the cloud sign in that strip |
+| control | --cloud #8cc8ff | --panel #1a2431 | 8.82:1 | 3:1 | pass | the cloud sign on the sheet |
+| control | --warn #ffc266 | --bg #111823 | 11.16:1 | 3:1 | pass | the edge of the made-where strip (may have left) |
+| control | --warn #ffc266 | --warn-soft #3a2c12 | 8.50:1 | 3:1 | pass | the sign in that strip |
+| control | --warn #ffc266 | --panel #1a2431 | 9.82:1 | 3:1 | pass | the data-use sign on the sheet |
+| control | --panel #1a2431 | --warn #ffc266 | 9.82:1 | 3:1 | pass | the microphone sign while recording |
+| control | --muted #a9b6c6 | --panel #1a2431 | 7.60:1 | 3:1 | pass | the arrow in a ready question |
+| control | --ink #e8eef5 | --bg #111823 | 15.25:1 | 3:1 | pass | the focus ring of the main button |
+| control | --ink #e8eef5 | --panel #1a2431 | 13.41:1 | 3:1 | pass | the focus ring on the sheet |
+| control | --how-edge #e0b040 | --bg #111823 | 8.87:1 | 3:1 | pass | the edge of the how-to block, its folded line and the "wait" line |
+| control | --how-ink #fff3cf | --how-bg #33290c | 12.97:1 | 3:1 | pass | the step pictures, the sign in the "wait" line, the focus ring inside the block |
+| control | --accent #5fe0b5 | --panel #1a2431 | 9.56:1 | 3:1 | pass | the topic signs, the spark of the AI line and of the narrowing button |
+| control | --accent #5fe0b5 | --accent-soft #163a30 | 7.62:1 | 3:1 | pass | the sign of an open topic |
+| control | --muted #a9b6c6 | --panel #1a2431 | 7.60:1 | 3:1 | pass | the "?" sign after the way out |
+| control | --field #7a8a9e | --panel #1a2431 | 4.44:1 | 3:1 | pass | the edge of the "needs internet" tag |
+| control | --field #7a8a9e | --bg #111823 | 5.05:1 | 3:1 | pass | 18 Nov: the edge of "Back" and "Home", of a photo in the list, of a learned line |
+| control | --accent #5fe0b5 | --bg #111823 | 10.87:1 | 3:1 | pass | 18 Nov: the edge of the line that says what to do now |
+| control | --no #ff8a80 | --bg #111823 | 7.80:1 | 3:1 | pass | 18 Nov: the edge of "Delete everything on this phone" |
+| control | --warn #ffc266 | --panel #1a2431 | 9.82:1 | 3:1 | pass | phase 3: the edge and the sign of the guard's line, the edge of a "Tell the doctor or nurse" line, of the "less sure" tag |
+| control | --accent #5fe0b5 | --panel #1a2431 | 9.56:1 | 3:1 | pass | phase 3: the edge of a "Worth mentioning" line, the tick of "Logged", the signs in "what stands out" |
+| control | --field #7a8a9e | --panel #1a2431 | 4.44:1 | 3:1 | pass | phase 3: the edge of the tabs, of the timeline, of a "To keep in mind" line |
+| control | --accent #5fe0b5 | --accent-soft #163a30 | 7.62:1 | 3:1 | pass | phase 3: the bar under the selected tab |
+| control | --no #ff8a80 | --panel #1a2431 | 6.86:1 | 3:1 | pass | phase 5: the edge and the sign of the boxed call line, the edge of the way to "Something new or sudden?" |
+| control | --no #ff8a80 | --bg #111823 | 7.80:1 | 3:1 | pass | phase 5: the call button against the page |
+| control | --cloud #8cc8ff | --panel #1a2431 | 8.82:1 | 3:1 | pass | phase 5: the sign of the Read aloud switch |
+
+## the person's card (the same in both themes)
+
+| kind | foreground | background | ratio | needs | result | used for |
+|---|---|---|---|---|---|---|
+| text | #0f141a | #ffffff | 18.50:1 | 4.5:1 | pass | the person's screen: the instruction, the question, the choices, "No, something else" |
+| text | #4a5361 | #ffffff | 7.77:1 | 4.5:1 | pass | the person's screen: "Carer: hold here to go back", the edge of the way out |
+| text | #0b6e4f | #ffffff | 6.25:1 | 4.5:1 | pass | the person's screen: "Yes" and its tick, the finish tick, the edge of "Yes" |
+| text | #ffffff | #0b6e4f | 6.25:1 | 4.5:1 | pass | the person's screen: "Give the phone back" |
+| text | #1f262e | #ffffff | 15.27:1 | 4.5:1 | pass | phase 5: the "Hear it again" button on the person's screen (Read aloud) |
+| text | #2b3440 | #ffffff | 12.59:1 | 4.5:1 | pass | 18 Nov: the outline of every colour picture on the card and on a topic tile's white plate, the edge of a family photo |
+
+144 of 144 pairs pass.
+
+Not measured here: the full view (judge mode and the inner pages), which keeps the dark desk of `web/src/styles.css` and its own table (devlog/DESIGN_DIRECTIONS.md).

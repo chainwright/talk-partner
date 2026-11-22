@@ -1,0 +1,118 @@
+date: 2026-11-22T15:45:31.666Z
+commit: 9dc80607fce28d567ee6dbb0f02b9feda97264c9 (uncommitted changes in 74 file(s))
+command: python3 scripts/phase9-shots.py --url http://localhost:5612/ --out devlog/evidence_phase12/phase9
+
+PASS  360 x 740, first visit: the 4 steps are one line, with "Write the key word big."
+PASS  360 x 740, first visit: the first row of topics ends above the fold (693 px of 740)
+PASS  360 x 740: nothing asked of another host
+PASS  390 x 844, first visit: the 4 steps are one line, with "Write the key word big."
+PASS  390 x 844, first visit: the first row of topics ends above the fold (739 px of 844)
+PASS  390 x 844: nothing asked of another host
+PASS  360 x 740, slow network: a topic tile waiting for its picture shows the grey placeholder on its plate
+PASS  360 x 740, slow network, 5 s after the page was asked for: the six topic pictures are drawn
+PASS  360 x 740: the page asks for exactly those six before its script (link rel=preload)
+PASS  360 x 740: nothing asked of another host
+PASS  390 x 844, slow network: a topic tile waiting for its picture shows the grey placeholder on its plate
+PASS  390 x 844, slow network, 5 s after the page was asked for: the six topic pictures are drawn
+PASS  390 x 844: the page asks for exactly those six before its script (link rel=preload)
+PASS  390 x 844: nothing asked of another host
+PASS  412 x 915, slow network: a topic tile waiting for its picture shows the grey placeholder on its plate
+PASS  412 x 915, slow network, 5 s after the page was asked for: the six topic pictures are drawn
+PASS  412 x 915: the page asks for exactly those six before its script (link rel=preload)
+PASS  412 x 915: nothing asked of another host
+PASS  Home: the pain question left 30 h ago is still there, pinned; the ordinary one of the same age is gone
+PASS  Home: under it, "If the pain is new or strong, don't wait: call the nurse or doctor."
+PASS  "Done" asks "Did you find out?" with Yes and Not yet
+PASS  "Not yet" keeps it, with "Ask it again" and "Done"
+PASS  and after a reload it is still there
+PASS  "Ask it again" opens the question for the carer
+PASS  the person's screen has the small "Not now" at its foot
+PASS  the person's screen with "Not now": fits the screen without scrolling (844 px tall)
+PASS  "Not now" ends the card: the carer is on Home and reads that it is kept
+PASS  the pain question is pinned again, with the "don't wait" line
+PASS  the diary's timeline holds "Left for later: Are you in pain?"
+PASS  Back from the diary: one step, to Home
+PASS  "Done" then "Yes" takes it off Home
+PASS  items 1 and 9: nothing asked of another host
+PASS  items 1 and 9: no page error
+PASS  item 2: "What stands out" with a yes to pain on 2 days: its own line, never "Nothing stands out"
+PASS  item 5: the handover note, box off: "ALWAYS ON THIS NOTE" with the swallowing difficulty and the fluid limit
+PASS  item 5: the sheet says those two are always in it
+PASS  item 4: en-GB with no number in About them: the call button is 999, and it asks "Is this your emergency number?"
+PASS  "Change it" opens About them at the number
+PASS  with a number set, no question, and the button calls it
+PASS  items 2, 4, 5: nothing asked of another host
+PASS  items 2, 4, 5: no page error
+PASS  item 7: Home has "See the AI at work" for the sample question, tagged "uses Google's AI, after your yes", with the phone / laptop lines
+PASS  one tap: the consent sheet, with the sample question as the line that would go, and no family word in the line or the request
+PASS  Back from the sheet: one step, nothing sent
+PASS  item 7: nothing asked of another host
+PASS  item 6: with no answer, "Online help is still working" and "Stop waiting" appear at about 3 s (3.3 s)
+PASS  "Stop waiting": the making stops, the carer reads what to do instead, and that the question may already have gone
+PASS  phase 12: the footer agrees: "may have left this phone: you stopped waiting", never "Nothing you asked has left"
+PASS  item 6: left alone, it stops by itself at about 20 s with the plain line (20.4 s)
+PASS  item 6: the requests to Google were held, never let through
+PASS  items 6 and 7: no page error
+PASS  360 x 740, no web font: the person's top row stays one row and three choices with "something else" stand without scrolling
+PASS  390 x 844, no web font: the person's top row stays one row and three choices with "something else" stand without scrolling
+
+52 of 52 checks passed  (2026-11-22T15:46:28Z, http://localhost:5612/)
+Exception in callback Connection.dispatch.<locals>._done_callback(<Task cancell...ntext.py:243>>) at <home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_connection.py:466
+handle: <Handle Connection.dispatch.<locals>._done_callback(<Task cancell...ntext.py:243>>) at <home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_connection.py:466>
+Traceback (most recent call last):
+  File "<home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_browser_context.py", line 258, in _on_route
+    handled = await route_handler.handle(route)
+  File "<home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_helper.py", line 428, in handle
+    return await self._handle_internal(route)
+  File "<home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_helper.py", line 470, in _handle_internal
+    return await handled_future
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "<home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_connection.py", line 467, in _done_callback
+    exc = future.exception()
+asyncio.exceptions.CancelledError
+Exception in callback Connection.dispatch.<locals>._done_callback(<Task cancell...ntext.py:243>>) at <home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_connection.py:466
+handle: <Handle Connection.dispatch.<locals>._done_callback(<Task cancell...ntext.py:243>>) at <home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_connection.py:466>
+Traceback (most recent call last):
+  File "<home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_browser_context.py", line 258, in _on_route
+    handled = await route_handler.handle(route)
+  File "<home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_helper.py", line 428, in handle
+    return await self._handle_internal(route)
+  File "<home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_helper.py", line 470, in _handle_internal
+    return await handled_future
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "<home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_connection.py", line 467, in _done_callback
+    exc = future.exception()
+asyncio.exceptions.CancelledError
+Exception in callback Connection.dispatch.<locals>._done_callback(<Task cancell...ntext.py:243>>) at <home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_connection.py:466
+handle: <Handle Connection.dispatch.<locals>._done_callback(<Task cancell...ntext.py:243>>) at <home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_connection.py:466>
+Traceback (most recent call last):
+  File "<home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_browser_context.py", line 258, in _on_route
+    handled = await route_handler.handle(route)
+  File "<home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_helper.py", line 428, in handle
+    return await self._handle_internal(route)
+  File "<home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_helper.py", line 470, in _handle_internal
+    return await handled_future
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "<home>/Library/Python/3.9/lib/python/site-packages/playwright/_impl/_connection.py", line 467, in _done_callback
+    exc = future.exception()
+asyncio.exceptions.CancelledError
+
+exit code: 0

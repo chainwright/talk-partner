@@ -1,0 +1,140 @@
+date: 2026-11-22T15:46:28.948Z
+commit: 9dc80607fce28d567ee6dbb0f02b9feda97264c9 (uncommitted changes in 74 file(s))
+command: python3 scripts/phase10-shots.py --url http://localhost:5612/ --out devlog/evidence_phase12/phase10
+
+PASS  360 x 740, Home: the big button reads "Frank: I want to say something"
+PASS  360 x 740, Home: the button is big (at least 60 px tall)
+PASS  360 x 740, Home: no sideways scroll
+PASS  360 x 740, Home: the top row is on the screen, one row high
+PASS  360 x 740, the starters: "I need something", "I want to talk about…", "I feel…" and "something else"
+PASS  360 x 740, the starters: no sideways scroll
+PASS  360 x 740, the starters: the top row is on the screen, one row high
+PASS  360 x 740, the starters: the person's screen needs no scrolling (606 px of 740)
+PASS  360 x 740, the starters: the fixed "Not now" tile is on the screen
+PASS  360 x 740, "I want to talk about…": "me", Beth (her photo) and Tom, and "something else"
+PASS  360 x 740, "I want to talk about…", first screen: no sideways scroll
+PASS  360 x 740, "I want to talk about…", first screen: the top row is on the screen, one row high
+PASS  360 x 740, "I want to talk about…", first screen: the person's screen needs no scrolling (575 px of 740)
+PASS  360 x 740, "I want to talk about…", next screen: the lake (its photo), church, the news / TV, "something else"
+PASS  360 x 740, "I want to talk about…", second screen: no sideways scroll
+PASS  360 x 740, "I want to talk about…", second screen: the top row is on the screen, one row high
+PASS  360 x 740, "I want to talk about…", second screen: the person's screen needs no scrolling (575 px of 740)
+PASS  360 x 740, the topics after "something else": no sideways scroll
+PASS  360 x 740, the topics after "something else": the top row is on the screen, one row high
+PASS  360 x 740, the topics after "something else": the person's screen needs no scrolling (575 px of 740)
+PASS  360 x 740, back from the topics: one step, to the starters (the talk screens and the topics are one card)
+PASS  360 x 740, the check "So: Beth. Right?": no sideways scroll
+PASS  360 x 740, the check "So: Beth. Right?": the person's screen needs no scrolling (490 px of 740)
+PASS  360 x 740, the carer reads "Frank wants to talk about Beth." first, over the answer
+PASS  360 x 740, three easy questions to ask next: the telling first, a call last
+PASS  360 x 740, the carer's screen never says "patient"
+PASS  360 x 740, nothing was sent ("Nothing was sent." stays on the screen)
+PASS  360 x 740, the carer after Beth: no sideways scroll
+PASS  360 x 740, the carer after Beth: the top row is on the screen, one row high
+PASS  360 x 740, back, "I want to talk about…" Beth: 3 steps, each exactly one screen back, ending on Home
+PASS  360 x 740, "Would you like to call Beth?" is a card the rules make
+PASS  360 x 740, ... "yes" ends on an action: "Call Beth now, together."
+PASS  360 x 740, "Is it about Beth's visit?" -> yes -> next: "Did something happen?"
+PASS  360 x 740, the lake: "Frank wants to talk about the lake.", first question "Did something happen at the lake?"
+PASS  360 x 740, the news / TV: "Frank wants to talk about the news, or something on TV.", first question "Is it the news, or something on TV?"
+PASS  360 x 740, "Is it the news, or something on TV?" -> news ends on an action: "The news. Put it on, or find the story …"
+PASS  360 x 740, worst case: pain through "I need something" gives the carer the same screen as pain on the needs board (and the line who started)
+PASS  360 x 740, the carer after a need through "His turn": no sideways scroll
+PASS  360 x 740, the carer after a need through "His turn": the top row is on the screen, one row high
+PASS  360 x 740, the diary: "Frank started: Beth", "Frank started: the lake", "Frank started: the news / TV"
+PASS  360 x 740, the diary: both pains are there as needs, each its own entry
+PASS  360 x 740, the diary: no sideways scroll
+PASS  360 x 740, the diary: the top row is on the screen, one row high
+PASS  360 x 740, the shortcut's address #/turn opens the starters, and the address becomes the person's screen
+PASS  360 x 740, Back from the shortcut's screen leaves it (to the carer's side)
+PASS  360 x 740, his turn: nothing asked of another host
+PASS  360 x 740, his turn: no page error
+PASS  360 x 740, no name: the button reads "I want to say something"
+PASS  360 x 740, About them empty: "me" and "the news / TV" and "something else", no people or places
+PASS  360 x 740, "I want to talk about…" with About them empty: no sideways scroll
+PASS  360 x 740, "I want to talk about…" with About them empty: the top row is on the screen, one row high
+PASS  360 x 740, "I want to talk about…" with About them empty: the person's screen needs no scrolling (541 px of 740)
+PASS  360 x 740, "me": "They want to talk about their own news." with the telling questions
+PASS  360 x 740, About them empty: nothing asked of another host
+PASS  360 x 740, About them is the Miller family's (the seed is read)
+PASS  360 x 740, About them, at the top: no sideways scroll
+PASS  360 x 740, About them, at the top: the top row is on the screen, one row high
+PASS  360 x 740, "Keep a copy": the use line, "Include health notes" unticked, Save and Load
+PASS  360 x 740, "Keep a copy": no sideways scroll
+PASS  360 x 740, the file by default: the family, and no health notes
+PASS  360 x 740, the preview: "This file has:" and Replace, Add, Cancel
+PASS  360 x 740, the preview: no sideways scroll, and its three buttons on the screen
+PASS  360 x 740, the phone's Back closes the preview, one step, still on About them, and nothing changed
+PASS  360 x 740, Escape closes it too, and nothing changed
+PASS  360 x 740, "Add to what is here" with the same file: the screen says so, and nothing doubles
+PASS  360 x 740, "Keep a copy": nothing asked of another host
+PASS  390 x 844, Home: the big button reads "Frank: I want to say something"
+PASS  390 x 844, Home: the button is big (at least 60 px tall)
+PASS  390 x 844, Home: no sideways scroll
+PASS  390 x 844, Home: the top row is on the screen, one row high
+PASS  390 x 844, the starters: "I need something", "I want to talk about…", "I feel…" and "something else"
+PASS  390 x 844, the starters: no sideways scroll
+PASS  390 x 844, the starters: the top row is on the screen, one row high
+PASS  390 x 844, the starters: the person's screen needs no scrolling (611 px of 844)
+PASS  390 x 844, the starters: the fixed "Not now" tile is on the screen
+PASS  390 x 844, "I want to talk about…": "me", Beth (her photo) and Tom, and "something else"
+PASS  390 x 844, "I want to talk about…", first screen: no sideways scroll
+PASS  390 x 844, "I want to talk about…", first screen: the top row is on the screen, one row high
+PASS  390 x 844, "I want to talk about…", first screen: the person's screen needs no scrolling (579 px of 844)
+PASS  390 x 844, "I want to talk about…", next screen: the lake (its photo), church, the news / TV, "something else"
+PASS  390 x 844, "I want to talk about…", second screen: no sideways scroll
+PASS  390 x 844, "I want to talk about…", second screen: the top row is on the screen, one row high
+PASS  390 x 844, "I want to talk about…", second screen: the person's screen needs no scrolling (579 px of 844)
+PASS  390 x 844, the topics after "something else": no sideways scroll
+PASS  390 x 844, the topics after "something else": the top row is on the screen, one row high
+PASS  390 x 844, the topics after "something else": the person's screen needs no scrolling (579 px of 844)
+PASS  390 x 844, back from the topics: one step, to the starters (the talk screens and the topics are one card)
+PASS  390 x 844, the check "So: Beth. Right?": no sideways scroll
+PASS  390 x 844, the check "So: Beth. Right?": the person's screen needs no scrolling (494 px of 844)
+PASS  390 x 844, the carer reads "Frank wants to talk about Beth." first, over the answer
+PASS  390 x 844, three easy questions to ask next: the telling first, a call last
+PASS  390 x 844, the carer's screen never says "patient"
+PASS  390 x 844, nothing was sent ("Nothing was sent." stays on the screen)
+PASS  390 x 844, the carer after Beth: no sideways scroll
+PASS  390 x 844, the carer after Beth: the top row is on the screen, one row high
+PASS  390 x 844, back, "I want to talk about…" Beth: 3 steps, each exactly one screen back, ending on Home
+PASS  390 x 844, "Would you like to call Beth?" is a card the rules make
+PASS  390 x 844, ... "yes" ends on an action: "Call Beth now, together."
+PASS  390 x 844, "Is it about Beth's visit?" -> yes -> next: "Did something happen?"
+PASS  390 x 844, the lake: "Frank wants to talk about the lake.", first question "Did something happen at the lake?"
+PASS  390 x 844, the news / TV: "Frank wants to talk about the news, or something on TV.", first question "Is it the news, or something on TV?"
+PASS  390 x 844, "Is it the news, or something on TV?" -> news ends on an action: "The news. Put it on, or find the story …"
+PASS  390 x 844, worst case: pain through "I need something" gives the carer the same screen as pain on the needs board (and the line who started)
+PASS  390 x 844, the carer after a need through "His turn": no sideways scroll
+PASS  390 x 844, the carer after a need through "His turn": the top row is on the screen, one row high
+PASS  390 x 844, the diary: "Frank started: Beth", "Frank started: the lake", "Frank started: the news / TV"
+PASS  390 x 844, the diary: both pains are there as needs, each its own entry
+PASS  390 x 844, the diary: no sideways scroll
+PASS  390 x 844, the diary: the top row is on the screen, one row high
+PASS  390 x 844, the shortcut's address #/turn opens the starters, and the address becomes the person's screen
+PASS  390 x 844, Back from the shortcut's screen leaves it (to the carer's side)
+PASS  390 x 844, his turn: nothing asked of another host
+PASS  390 x 844, his turn: no page error
+PASS  390 x 844, no name: the button reads "I want to say something"
+PASS  390 x 844, About them empty: "me" and "the news / TV" and "something else", no people or places
+PASS  390 x 844, "I want to talk about…" with About them empty: no sideways scroll
+PASS  390 x 844, "I want to talk about…" with About them empty: the top row is on the screen, one row high
+PASS  390 x 844, "I want to talk about…" with About them empty: the person's screen needs no scrolling (545 px of 844)
+PASS  390 x 844, "me": "They want to talk about their own news." with the telling questions
+PASS  390 x 844, About them empty: nothing asked of another host
+PASS  390 x 844, About them is the Miller family's (the seed is read)
+PASS  390 x 844, About them, at the top: no sideways scroll
+PASS  390 x 844, About them, at the top: the top row is on the screen, one row high
+PASS  390 x 844, "Keep a copy": the use line, "Include health notes" unticked, Save and Load
+PASS  390 x 844, "Keep a copy": no sideways scroll
+PASS  390 x 844, the file by default: the family, and no health notes
+PASS  390 x 844, the preview: "This file has:" and Replace, Add, Cancel
+PASS  390 x 844, the preview: no sideways scroll, and its three buttons on the screen
+PASS  390 x 844, the phone's Back closes the preview, one step, still on About them, and nothing changed
+PASS  390 x 844, Escape closes it too, and nothing changed
+PASS  390 x 844, "Add to what is here" with the same file: the screen says so, and nothing doubles
+PASS  390 x 844, "Keep a copy": nothing asked of another host
+
+132 of 132 checks passed  (2026-11-22T15:47:18Z, http://localhost:5612/)
+
+exit code: 0

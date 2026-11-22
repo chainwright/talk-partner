@@ -827,6 +827,32 @@ drawn by us). On the production build of that state: `npm run check` 2913 unit t
 47/48: the walk read the check screen's coffee picture before it had loaded; it now waits, as on the other screens);
 `picture-sheet.py` done. Outputs: `devlog/evidence_phase11/local_followup/`.
 
+## Added on 22 Nov, phase 12: the fixes of judge round 9
+
+The fixes of judge round 9 (`design/PHASE12_BRIEF.md`), one commit each (`CLAIMS.md` rows 145 to 156; `EVIDENCE.md`
+"Phase 12"; `devlog/DAY22.md`). All of it is rules on the device; no model was called (the 11 pictures were made
+before this phase). The "Live:" lines still name `cb15e70`: phase 12 waits for its deploy.
+
+- **Health.** Worried, scared, lonely and a yes to "Is something bothering you?" count as a low day (`core/diary.ts`
+  `lowMood`). About them never shows a learned line about pain or another care question, nor "Keep as a fact" for
+  one (`core/share.ts` `aboutLearned`). Pain in an arm, a hand, a leg, the feet or the face first asks "Is it suddenly
+  weak or numb, yes or no?" (a yes raises the call box). Pain on the needs board: "Where does it hurt?" first, and
+  the call box with the number. A pain question left for later shows the signs that do not wait, a call button and
+  how long ago. The emergency number covers the common regions, and an unknown region gets 112, not 911.
+- **Pictures.** Eight made again (pain from the front, good and bad as faces, a second helping, four distinct pairs
+  of people) and three added (the curtains open and closed, the church); the pain scale is three faces, "I need
+  something" the four squares of the needs button, "I feel…" three faces. The six topic pictures are preloaded.
+- **See the AI at work** is under "Something new or sudden?", above the fold at 390 x 844, with "Phone: Google's AI,
+  online, after your yes" and "Laptop with Chrome's own AI: nothing is sent" under it (at 360 px the two lines fold).
+- **The rest.** A "STILL OPEN" block in the handover note; "Pain: none entered. That does not mean there was none:
+  ask."; the footer after "Stop waiting" says the question may have left; "I can't go on" on the third page of the
+  feelings card, which opens a safety screen for the carer (stay, the emergency number, the crisis line where we know
+  one, never "later"; no clinician has checked it); "Try it with the Millers" at the foot of Home; JUDGES opens with a
+  12-step phone path.
+
+**Counts** (the production build of `9dc8060` on `npx vite preview`, port 5612): `npm run check` 3001 unit tests; `e2e-simple.py` 1032/1032; `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` 548/548; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py` 21/21; `phase9-shots.py` 52/52 (the new cold check included); `phase10-shots.py` 132/132; `phase11-walk.py` 48/48; `phase12-walk.py` 142/142. Outputs:
+`devlog/evidence_phase12/`.
+
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104
 to 107; `devlog/evidence_phase6/r1_*.png`, `r2_*.png`; `devlog/DAY17.md`). Both fixes are rules: no AI was added.
