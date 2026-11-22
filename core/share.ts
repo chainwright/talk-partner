@@ -27,6 +27,7 @@ import { HEALTH_TOGGLES, NO_HEALTH, hasHealth, insights, type HealthNotes, type 
 import type { Learned } from './prefs';
 import { DEFAULT_NUMBER } from './redflag';
 import { careAnswer } from './reliability';
+import { agoWords, laterPain } from './later';
 
 const K = P6.share;
 const I = COPY.simple.insights;
@@ -136,6 +137,11 @@ export interface HandoverShare {
    * difficulty or a fluid limit can do harm with a cup of tea). Only these two: the others stay behind the box.
    */
   safety?: { swallowing: boolean; fluidLimit: boolean };
+  /**
+   * Phase 12 (judge round 9, P1): the care questions left for later on Home and not yet found out (core/later.ts:
+   * the pinned ones), printed in a "STILL OPEN" block near the top, so the next carer asks them first.
+   */
+  open?: { q: string; at: number; pain?: boolean }[];
 }
 
 /** The notes `handoverText` prints whatever the box says (`HandoverShare.safety`), by name, for the sheet's lines. */
@@ -180,9 +186,11 @@ export function handoverText(m: HandoverShare): string {
     tablets.length ? K.hTablets(listed(tablets.map((e) => shortWhen(e.at)))) : K.hNoTablets,
   ];
   const usual = handoverUsual(m.learned);
+  const open = [...(m.open ?? [])].sort((a, b) => a.at - b.at).map((x) => K.hOpenItem(x.q.trim(), shortWhen(x.at), agoWords(x.at, m.now), !!x.pain || laterPain(x.q), number));
   return [
     K.stamp(stampWhen(m.now)),
     ...(urgent ? [K.call(number, K.whereHandover)] : []),
+    ...(open.length ? ['', K.hOpen, ...open] : []),
     '',
     K.hTitle(m.name, shortWhen(from), shortWhen(m.now)),
     '',

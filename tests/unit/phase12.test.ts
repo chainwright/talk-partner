@@ -312,3 +312,21 @@ describe('C10. "See the AI at work" above the fold, with where its AI runs on a 
     expect(eng).toContain('mode: InferenceMode.ONLY_ON_DEVICE');
   });
 });
+
+describe('D11. The handover note: a "STILL OPEN" block for the care questions not yet found out', () => {
+  it('a pain question left for later is printed near the top, with when, and that new or strong pain does not wait', async () => {
+    const { handoverText } = await import('../../core/share');
+    const t = handoverText({ diary: [], health: null, learned: [], name: 'Frank', now: NOW, number: '999', open: [{ q: 'Are you in pain?', at: NOW - 3 * 3600_000, pain: true }, { q: 'Do you need the toilet?', at: NOW - 3600_000 }] });
+    const lines = t.split('\n');
+    const i = lines.findIndex((l) => l.startsWith('STILL OPEN'));
+    expect(i).toBeGreaterThan(0);
+    expect(i).toBeLessThan(lines.findIndex((l) => l.startsWith('For the next carer')));
+    expect(lines[i + 1]).toMatch(/^- Are you in pain\? \(left at Sun 09:00, 3 hours ago\)\. Ask it again first\. If the pain is new or strong, call the nurse or doctor; if it is sudden or severe, call 999 now\.$/);
+    expect(lines[i + 2]).toMatch(/^- Do you need the toilet\? \(left at Sun 11:00, 1 hour ago\)\. Ask it again first\.$/);
+  });
+  it('with nothing open there is no block, and nothing says "nothing open"', async () => {
+    const { handoverText } = await import('../../core/share');
+    const t = handoverText({ diary: [], health: null, learned: [], name: 'Frank', now: NOW });
+    expect(t).not.toContain('STILL OPEN');
+  });
+});

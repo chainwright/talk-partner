@@ -801,7 +801,7 @@ function shareTextNow(kind: 'family' | 'handover' | 'practice' | 'passport', hea
   if (kind === 'practice') return practiceText(practiceInput());
   if (kind === 'passport') return passportText(passportInput());
   const base = { diary: state.diary, health: health ? state.health : null, name: state.profile.personName.trim(), now: Date.now(), number: callNumber() };
-  return kind === 'family' ? familyText({ ...base, span: state.diaryTab }) : handoverText({ ...base, learned: learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)) : [], safety: { swallowing: state.health.swallowing, fluidLimit: state.health.fluidLimit } });
+  return kind === 'family' ? familyText({ ...base, span: state.diaryTab }) : handoverText({ ...base, learned: learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)) : [], safety: { swallowing: state.health.swallowing, fluidLimit: state.health.fluidLimit }, open: shownLater(p8later.list, Date.now()).filter((x) => x.care).map((x) => ({ q: x.q, at: x.at, pain: !!x.pain })) });
 }
 
 /** A card the rules made after "something else" goes onto the carer's screen like any other card: said out loud, then shown. */

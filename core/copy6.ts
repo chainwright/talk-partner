@@ -64,6 +64,9 @@ export const P6 = {
     hSwallow: 'Swallowing difficulty is noted: go by the plan from the speech therapist or nurse before giving food or drink.',
     hFluidAlways: "A fluid limit from the doctor is noted: go by the doctor's plan for drinks.",
     hNoTablets: 'Tablets taken: none logged. That can mean nobody tapped it: check before giving any.',
+    /** Phase 12 (judge round 9): the care questions left for later and not yet found out, at the top of the note. */
+    hOpen: 'STILL OPEN (care questions left for later, not yet found out)',
+    hOpenItem: (q: string, when: string, ago: string, pain: boolean, number: string) => `- ${q} (left at ${when}, ${ago}). Ask it again first.${pain ? ` If the pain is new or strong, call the nurse or doctor; if it is sudden or severe, call ${number} now.` : ''}`,
     hNothing: 'Nothing was entered in the last 24 hours. That is a gap in the diary, not a report: ask the family how the day went.',
     usual: (name: string) => `USUAL CHOICES (counted from the answers ${name || 'they'} confirmed; a hint for you, and ${name || 'they'} still choose${name ? 's' : ''} every time)`,
     usualNone: 'Nothing learned yet.',
