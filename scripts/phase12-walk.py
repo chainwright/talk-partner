@@ -181,7 +181,8 @@ def walk(b, w, h, scheme):
     for _ in range(2):
         page.locator('main.pv .pt.esc').first.click(); page.wait_for_timeout(400)
     labels = [x.strip() for x in page.locator('main.pv .pt').all_inner_texts()]
-    check(f'{tag}: the feelings card, its third page: worried / lonely / I can\'t go on, and the way out', labels == ['worried', 'lonely', "I can't go on", 'something else'], str(labels))
+    # (phase 12b: "stop for now", a calm way to end the card, beside "I can't go on")
+    check(f'{tag}: the feelings card, its third page: worried / lonely / I can\'t go on / stop for now, and the way out', labels == ['worried', 'lonely', "I can't go on", 'stop for now', 'something else'], str(labels))
     check(f'{tag}: "I can\'t go on" is a word tile, no picture', page.evaluate("(() => { const t = [...document.querySelectorAll('main.pv .pt')].find((x) => x.innerText.trim() === \"I can't go on\"); return !!t && !t.querySelector('img, svg'); })()"))
     shot(page, tag, '08_feelings_p3')
     person_pick(page, "I can't go on")

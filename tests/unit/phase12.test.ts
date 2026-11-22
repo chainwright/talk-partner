@@ -366,7 +366,7 @@ describe('D14. A crisis choice for the person: "I can\'t go on" leads the carer 
     const { CRISIS } = await import('../../core/redflag');
     const c = await makeCard('How are you feeling today?', await env());
     const p3 = c.nextPage?.nextPage;
-    expect(p3?.choices.map((x) => x.label)).toEqual(['worried', 'lonely', CRISIS, 'something else']);
+    expect(p3?.choices.map((x) => x.label)).toEqual(['worried', 'lonely', CRISIS, 'stop for now', 'something else']);
     expect(p3?.choices.find((x) => x.label === CRISIS)?.picture).toEqual({ type: 'word' });
     expect(CRISIS).toBe("I can't go on");
   });

@@ -70,6 +70,8 @@ export function pictureFor(label: string, profile: Profile, asked = ''): Picture
   if (/^(?:open|closed)$/.test(l) && /\bcurtains?\b/i.test(asked)) return { type: 'builtin', id: `curtains ${l}` };
   // the crisis choice is the words alone, never a cartoon
   if (crisisAnswer(label)) return { type: 'word' };
+  // (phase 12b) and the calm tile beside it, "stop for now", is words too: no stop sign next to it
+  if (l === 'stop for now') return { type: 'word' };
   // and "a little" on the pain scale is the mild face, not the bar of an amount
   if (l === 'a little' && /\b(?:pain|hurt|hurts|sore)\b/i.test(asked)) return { type: 'builtin', id: 'pain mild' };
   if (BUILTIN.has(l)) return { type: 'builtin', id: l };

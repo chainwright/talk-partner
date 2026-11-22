@@ -154,3 +154,21 @@ describe('7. A confirmed yes to sudden weakness or numbness: "Call … now. Note
     expect(main).toContain('p5.signNow = x.signNow;');
   });
 });
+
+describe('8. Beside "I can\'t go on": a calm "Stop for now" that simply ends the card', () => {
+  const env = async () => { const { NullEngine } = await import('../../core/engine'); return { profile: EMPTY_PROFILE, support: 'more' as const, engine: new NullEngine(), allowCloud: false, deviceReady: false }; };
+  it('the third page of the feelings card: worried, lonely, "I can\'t go on", "stop for now" (words, no stop sign)', async () => {
+    const { makeCard } = await import('../../core/pipeline');
+    const p3 = (await makeCard('How are you feeling today?', await env())).nextPage?.nextPage;
+    expect(p3?.choices.map((x) => x.label)).toEqual(['worried', 'lonely', "I can't go on", 'stop for now', 'something else']);
+    expect(p3?.choices.find((x) => x.label === 'stop for now')?.picture).toEqual({ type: 'word' });
+  });
+  it('it ends the card calmly, no next question, and the carer still asks again; it is not the crisis route', async () => {
+    const { crisisAnswer, urgentAnswer } = await import('../../core/redflag');
+    const step = after(card('How are you feeling today?'), 'stop for now', { ...EMPTY_PROFILE, personName: 'Frank' }, []);
+    expect(step).toEqual({ next: [], end: 'Frank wants to stop for now. Stay near, and ask again later today, one small question at a time.' });
+    expect(crisisAnswer('stop for now')).toBe(false);
+    expect(urgentAnswer('How are you feeling today?', 'stop for now')).toBe(false);
+    expect(end('How are you feeling today?', 'stop for now')).not.toMatch(/\b(?:fine|nothing|just)\b/i);
+  });
+});

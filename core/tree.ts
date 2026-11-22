@@ -249,6 +249,8 @@ const TREE: Record<string, Node> = {
     worried: { next: [BOTHERING], end: 'Worried. Stay near, and ask what it is about, one small question at a time.' },
     lonely: { next: [COMPANY], end: 'Lonely. Stay a while, and ask who {they} would like to see or call.' },
     "i can't go on": { end: P12.crisis.end },
+    // (phase 12b, judge round 9b: the calm way out beside it; it ends the card, and the carer still asks again)
+    'stop for now': { end: '{They} want to stop for now. Stay near, and ask again later today, one small question at a time.' },
   },
   'is something bothering you': {
     yes: { next: [WHAT_BOTHERS], end: 'Something is bothering {them}. Ask what it is about: the body, people, or plans.' },
