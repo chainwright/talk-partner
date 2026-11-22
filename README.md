@@ -692,7 +692,7 @@ emergency number came in phase 9.
 ## Added on 18 Nov, phase 9: the fixes of judge round 8
 The fixes of judge round 8 (`../judge_app_r8_2026-11-18/SUMMARY.md` §2), one commit each, from `3bc6998`
 (`CLAIMS.md` rows 125 to 136; `EVIDENCE.md` "Phase 9"; `devlog/DAY19.md`). All of it is rules except item 8, which
-gives the cloud letter step its own schema. Nothing of phase 9 is deployed; the "Live:" lines still name `32dd0dd`.
+gives the cloud letter step its own schema. Phase 9 went live with `8a8eaf7` (README "Deploy"); the live build is now `cb15e70`.
 
 - **A care question left for later stays** (`a33ac41`, health P0). A question about pain, the body, the toilet, a drink
   or feelings that is left for later is pinned first on Home and never expires; "Done" asks "Did you find out? Yes /
@@ -744,7 +744,7 @@ and the previews on 5301 and 5181 were not touched): At `f188eab` (the code; the
 ## Added on 19 Nov, phase 10: the person starts, and About them in a file
 The two features of the family's list that were still missing (`design/PLAN_TO_IDEAL_2026-11-17.md`), one commit
 each (`CLAIMS.md` rows 137 to 141; `EVIDENCE.md` "Phase 10"; `devlog/DAY20.md`). Both are rules on the device: no
-model and no request. Deployed as `ce47da2` (README "Deploy" says what was run against it).
+model and no request. Went live with `ce47da2`; the live build is now `cb15e70` (README "Deploy" says what was run against it).
 
 - **"His turn": the person starts** (`47e786e`). Home's big button reads the person's own words first, "Frank: I want
   to say something" ("I want to say something" with no name), and the installed app has a home-screen shortcut with
@@ -785,8 +785,8 @@ back. `devlog/DAY20.md` has the reasons.
 
 ## Added on 20 Nov, phase 11: colour pictures made with Gemini
 The family chose a new picture set (`design/PHASE11_BRIEF.md`; `CLAIMS.md` rows 142 to 144, and row 59 now says it
-is no longer true; `EVIDENCE.md` "Phase 11"; `devlog/DAY21.md`). Nothing was deployed or pushed; the "Live:" lines
-still name the build they name.
+is no longer true; `EVIDENCE.md` "Phase 11"; `devlog/DAY21.md`). Phase 11 went live as `cb15e70`, the build the "Live:" lines
+name (README "Deploy").
 
 - **The pictures** (`603f8a5`). 84 of the card pictures are now colour pictures generated with Gemini 3.1 Flash
   Image on 20 Nov, inside the submission period, from short text prompts, reviewed by a person against our drawing of

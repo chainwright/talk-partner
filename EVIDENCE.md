@@ -227,7 +227,7 @@ print on paper; any run of ours against the hosted copy.
 
 ## Phase 8 (18 Nov 2026): rows 114 to 124
 The fixes of judge round 7. All of it on a production build on localhost (`npx vite preview`, port 5241), except the
-two runs with a real model, which name their server. Nothing of phase 8 was deployed by us. Saved outputs are in
+two runs with a real model, which name their server. These runs came before phase 8 went live (README "Deploy"). Saved outputs are in
 `devlog/evidence_phase8/` (`local/` for the full runs, `cloud/` for the cloud step, `ai_phase4/` for the on-device
 photo and letter run).
 
@@ -254,7 +254,7 @@ hosted copy; `e2e-speak.py` (Read aloud against the real model); `update-check.p
 The fixes of judge round 8. All of it on a production build of HEAD on localhost (`npx vite preview`, port 5495),
 built in a separate git worktree so that `dist/` and the previews running on ports 5301 and 5181 were not touched.
 No run of phase 9 sent anything: every request to another host was refused, or, for the slow cloud wait, held and
-never let through. Nothing of phase 9 was deployed or pushed. Saved outputs are in `devlog/evidence_phase9/`
+never let through. These runs came before phase 9 went live with `8a8eaf7`; the live build is now `cb15e70`. Saved outputs are in `devlog/evidence_phase9/`
 (`local/` for the full runs, `shots_390/` for `phase9-shots.py`).
 
 | Row | File | Command | Saved output |
@@ -279,7 +279,7 @@ latency); `e2e-cloud.mjs`, `e2e-speak.py`, `update-check.py`, `e2e-noconfig.mjs`
 "His turn" (the person starts) and About them in a file. All of it on a production build of `864315e` on localhost
 (`npx vite preview`, port 5610), built in a separate git worktree so that `dist/` was not touched. No run of phase 10
 sent anything: every request to another host was refused and counted, and the web fonts were refused in
-`phase10-shots.py` (any font). Nothing of phase 10 was deployed or pushed. Saved outputs are in
+`phase10-shots.py` (any font). These runs came before phase 10 went live as `ce47da2`; the live build is now `cb15e70`. Saved outputs are in
 `devlog/evidence_phase10/` (`local/` for the full runs, `shots/` for `phase10-shots.py`).
 
 | Row | File | Command | Saved output |
@@ -298,7 +298,7 @@ or in the cloud (there is none in either feature); `e2e-cloud.mjs`, `e2e-speak.p
 ## Phase 11 (20 Nov 2026): rows 142 to 144
 Every run below was against the production build of `5abf1f6` (`npm run build && npx vite preview`, port 5179). No run
 sent anything to another host, and no model was called: the 84 pictures were made before this phase and are bundled
-files. Nothing of phase 11 was deployed or pushed. Saved outputs are in `devlog/evidence_phase11/` (`local/` for the
+files. These runs came before phase 11 went live as `cb15e70`. Saved outputs are in `devlog/evidence_phase11/` (`local/` for the
 full runs, `walk/` for `scripts/phase11-walk.py`, `phase9/` and `phase10/` for those screens at 360 x 740 and
 390 x 844) and `devlog/evidence_pictures/` (the sheets).
 

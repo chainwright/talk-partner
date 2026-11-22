@@ -2,13 +2,28 @@ Repository: <https://github.com/chainwright/talk-partner> (public, Apache-2.0)
 
 # For judges: the 60-second path
 
+**On a phone first, in 12 steps** (Chrome on Android; the bare address opens the simple view, made for a carer):
+1. Open <https://talk-partner.web.app/>. The first screen: "Needs something now?", "I want to say something", "Something new or sudden?".
+2. Under them, **See the AI at work**, and two lines: "Phone: Google's AI, online, after your yes" / "Laptop with Chrome's own AI: nothing is sent".
+3. **Food & drink → "Would you like tea or coffee?"**: "1 Say it out loud", "2 Turn the phone to them", and "Wait. Count to ten."
+4. **Show them the choices**: the person's screen, "Point to your answer", tea and coffee with their pictures.
+5. Tap **tea** → "So: tea. Right?" → **Yes** → "Thank you. Tea." → **Give the phone back**.
+6. The carer's screen: what was chosen, "Next: Would you like milk in it?", and "Made by the app's rules on this phone. No AI used."
+7. **Home → See the AI at work**: a sheet shows the exact line that would go to Google; **Just this once** makes the card online.
+8. Its chip says "Made online, after your yes"; on a laptop with Chrome's Gemini Nano the same tap says "Made on this computer".
+9. **Needs something now? → pain → Yes**: the carer gets "Where does it hurt?" first and the call box with your region's number.
+10. **Body & care → "Are you in pain?" → yes → arms → your left arm**: the next question is "Is it suddenly weak or numb, yes or no?".
+11. **I want to say something → I feel…**, the way out twice: "worried / lonely / I can't go on"; the last opens the carer's safety screen.
+12. At the foot of Home: **Try it with the Millers, a sample family** (judge mode below), and **How it works inside →**.
+
 **Live: the build of `cb15e70`** (README "Deploy" says what was run against it).
 
 Nothing here needs an account. Hosted copy: <https://talk-partner.web.app/#/demo> (our project settings are in it, so
-cloud help can be turned on there; the on-device step needs Gemini Nano in your own Chrome). **Cloud help there may
-give no card:** it needs App Check to accept your browser, and on the evening of 17 Nov it refused ours (the card
-then reads "Cloud help could not confirm this browser"; `README.md`, "Where the AI runs, in detail"). Everything
-else on this page works without it. Or from a clone:
+cloud help can be turned on there; the on-device step needs Gemini Nano in your own Chrome). **Cloud help there needs
+App Check to accept your browser** (reCAPTCHA). In the check of the live build on 22 Nov, desktop Chrome with a fresh
+profile and no debug token got every cloud card, 28 of 28, in three runs of three; a browser App Check refuses gets
+no cloud card, and the card then reads "Cloud help could not confirm this browser" (`README.md`, "Where the AI runs,
+in detail"). Everything else on this page works without it. Or from a clone:
 
 **Two views of one app (since 17 Nov).** `/#/demo`, the address above, opens the full view in judge mode, and this
 page is about it. The bare address `/` opens the **simple view**, made for a carer on a phone. Its first screen: the
@@ -25,14 +40,16 @@ browser), and **Simple view**, first among the links at the top, goes back. In t
 that needs cloud help brings up a sheet with the exact line that would go; **Yes, send open questions to Google** on
 it is the same switch as the tick box below.
 
-**Where the AI is in the simple view, and where it is not.** The 40 topic questions the rules can make, quick needs
-and the person's screens use no AI. AI is used in three places, all through Firebase AI Logic
-(`web/src/ai/firebaseEngine.ts`): a question the carer types that the rules cannot turn into choices; **Narrow it
-down** after the person points to "something else" (`core/narrow.ts`: on the device first, else online help when it
-is on; two levels at most; the screen says an AI made the follow-up); and **Today in short** on the answers screen
+**Where the AI is in the simple view, and where it is not.** The 40 topic questions the rules can make, quick needs,
+the person's screens and every line about health use no AI. AI is used in these places, all through Firebase AI
+Logic (`web/src/ai/firebaseEngine.ts`; README, "Where the sponsor runs on a phone"): a question the carer types that
+the rules cannot turn into choices (and **See the AI at work**, its sample); **Narrow it down** after the person points
+to "something else" (`core/narrow.ts`: on the device first, else online help when it is on; two levels at most; the
+screen says an AI made the follow-up), and words for a first letter; **Today in short** on the answers screen
 (`core/summary.ts`: `ONLY_ON_DEVICE`, and written by the app's rules where the browser has no model, because the
-answers are never sent). **Gemini Nano is in desktop Chrome only**: on a phone the first two use online help, with
-consent, and the third is written by the rules.
+answers are never sent); plainer words for the week's lines; the carer's spoken question as text; and **Read aloud**.
+**Gemini Nano is in desktop Chrome only**: on a phone each of these is a cloud call behind a sheet or a notice that
+shows what goes, and "Today in short" is written by the rules.
 
 ```
 npm install && npm run dev        # then open http://localhost:5179/#/demo

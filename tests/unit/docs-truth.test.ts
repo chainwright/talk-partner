@@ -124,3 +124,30 @@ describe('docs truth (phase 10): the person starts, About them in a file', () =>
     expect(sec).toContain(P10.backup.use.replace(/'/g, "'"));
   });
 });
+
+// Phase 12 (judge round 9, P1): the lines round 9 found stale, each with a check, so they cannot go stale again.
+describe('docs truth (phase 12): the lines judge round 9 found stale', () => {
+  it('no document says a phase that is live was "not deployed" or "nothing … was deployed"', () => {
+    for (const f of DOCS) {
+      const t = read(f).replace(/\s+/g, ' ');
+      expect(t, f).not.toMatch(/Nothing of phase \d+ (?:is|was) deployed|Nothing was deployed or pushed; the "Live:" lines still name/);
+    }
+  });
+  it('JUDGES: no old App Check refusal as the state of the hosted copy, and no "three places" for the AI', () => {
+    const j = read('JUDGES.md').replace(/\s+/g, ' ');
+    expect(j).not.toMatch(/on the evening of 17 Nov it refused ours/);
+    expect(j).not.toMatch(/AI is used in three places/);
+    expect(j).toMatch(/AI is used in these places/);
+    for (const step of ['Read aloud', 'Narrow it down', 'Today in short', 'spoken question']) expect(j).toContain(step);
+  });
+  it('JUDGES: a 12-line phone path comes first, before the "Live:" line, and names what the app shows', async () => {
+    const j = read('JUDGES.md');
+    const top = j.slice(0, j.indexOf('**Live: the build of'));
+    expect(top).toContain('**On a phone first, in 12 steps**');
+    const steps = top.split('\n').filter((l) => /^\d+\. /.test(l));
+    expect(steps.map((l) => Number(l.split('.')[0]))).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    const { COPY } = await import('../../core/copy');
+    const { WEAK_NUMB } = await import('../../core/topics');
+    for (const s of [...COPY.simple.tryAi.strip, COPY.simple.tryAi.label, COPY.simple.sample, WEAK_NUMB, "I can't go on"]) expect(top, s).toContain(s);
+  });
+});
