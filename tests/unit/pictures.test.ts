@@ -1,5 +1,5 @@
 // The colour pictures (web/src/pictos.ts; design/IMAGES_RESEARCH_2026-11-17.md). Since 20 Nov 2026 the set is mixed:
-// 87 pictures made with Gemini (84 on 20 Nov, 11 made again or added on 22 Nov; WebP files in web/public/pictures/, listed in IMAGE_IDS and in
+// 90 pictures made with Gemini (84 on 20 Nov, 14 made again or added on 22 Nov; WebP files in web/public/pictures/, listed in IMAGE_IDS and in
 // devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json) and our own SVG drawings (redrawn in colour on 18 Nov 2026).
 // Our SVGs: one style, real colours written into the drawing, visible on the card in the light and in the dark theme;
 // the drawing of an id that now has a picture is kept as its fallback and follows the same rules. The picture files:
@@ -158,7 +158,7 @@ describe('the pictures made with Gemini (20 Nov 2026)', () => {
   });
   it('kept as our SVG: the abstract ones, the scale, the hand sign that could offend, the way out, the body map, the monogram', () => {
     // (phase 12: and the pain scale's three faces, the person's "I need something" four squares and "I feel…" three faces)
-    expect(svgShown.filter((id) => !id.startsWith('body:')).sort()).toEqual(['a little', 'a lot', 'change topic', 'feelings', 'just right', 'morning', 'needs', 'no', 'okay', 'pain medium', 'pain mild', 'pain strong', 'show me', 'some', 'someone else', 'something else', 'that one', 'this one', 'yes']);
+    expect(svgShown.filter((id) => !id.startsWith('body:')).sort()).toEqual(['a little', 'a lot', 'change topic', 'feelings', 'just right', 'morning', 'needs', 'no', 'okay', 'show me', 'some', 'someone else', 'something else', 'that one', 'this one', 'yes']);
   });
   it('the markup: an <img> from this site with the word as its text, its size written in, decoded off the main thread', () => {
     expect(builtinPicto('tea')).toBe('<img class="pic" src="/pictures/tea.webp" alt="tea" data-id="tea" width="96" height="96" decoding="async" draggable="false">');

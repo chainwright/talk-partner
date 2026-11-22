@@ -233,6 +233,7 @@ describe('B8. Our drawings: the pain scale as three faces, "I need something" as
     const { svgPicto } = await import('../../web/src/pictos');
     const c = await makeCard('How bad is the pain?', await env());
     expect(c.choices.filter((x) => x.role === 'answer').map((x) => [x.label, (x.picture as { id: string }).id])).toEqual([['a little', 'pain mild'], ['quite bad', 'pain medium'], ['very bad', 'pain strong']]);
+    // (phase 12b: the faces are pictures made with Gemini now; the drawing stays as the fallback, still a face)
     for (const id of ['pain mild', 'pain medium', 'pain strong']) {
       const s = svgPicto(id);
       expect(s, id).toContain('<circle cx="48" cy="48" r="36"');

@@ -1,10 +1,10 @@
 # Pictures: provenance and licence
 
-The set is mixed since 20 Nov 2026: **87 pictures made with Google's Gemini** and **45 SVG drawings of our own**. The
+The set is mixed since 20 Nov 2026: **90 pictures made with Google's Gemini** and **42 SVG drawings of our own**. The
 table below gives the source, the date and the licence or terms of every picture the app bundles.
 
-**Made with Gemini (87).** Generated on 20 Nov 2026 (and 11 of them on 22 Nov 2026, after judge round 9: pain, good,
-bad, more, spouse, child, sibling and friend made again, the curtains open and closed and the church added), inside the
+**Made with Gemini (90).** Generated on 20 Nov 2026 (and 14 of them on 22 Nov 2026, after judge rounds 9 and 9b: pain, good,
+bad, more, spouse, child, sibling and friend made again, the curtains open and closed, the church and the pain scale's three faces added), inside the
 hackathon's submission period, with Google's Gemini 3.1 Flash Image (`gemini-3.1-flash-image`, in Google AI Studio),
 the sponsor's own model, from short text prompts (each one, with its model, date and tool, is in
 `devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json`). They were generated offline, once, and are bundled with the
@@ -16,10 +16,10 @@ API terms and claim no copyright in them beyond what applies. They are not cover
 licence. We looked at each file for brands, logos and words: none shows a brand or a logo; the only readable words
 are the printed SCENE, TAKE, ROLL, DATE, DIRECTOR on the film clapperboard and tiny OFF / ON marks on the radio.
 
-**Drawn by us (45).** Our own SVG drawings in `web/src/pictos.ts`, on a 96 x 96 grid in one style (a dark outline of 3,
+**Drawn by us (42).** Our own SVG drawings in `web/src/pictos.ts`, on a 96 x 96 grid in one style (a dark outline of 3,
 flat real-object colours, one lighter or darker patch for shading, one object per picture, a plain background, no
 scene), licensed under the repository licence, **Apache-2.0** (see `LICENSE`), by the Talk Partner team. Kept as
-drawings because the drawing is clearer (an abstract idea, a scale, a pointer) or a hand sign could offend: yes, no, someone else, okay, this one, that one, a little, some, a lot, show me, change topic, morning, just right, the pain scale's three faces (pain mild, pain medium, pain strong: since 22 Nov, in place of the bars, which read as phone signal), needs (the four squares of the needs button, the person's "I need something" since 22 Nov, in place of a raised finger), feelings (three small faces, the person's "I feel…" since 22 Nov, in place of a thumbs-up), and the way out, something else (its dashed frame keeps it apart from every choice on the card; the Gemini question mark was too close to "not sure", so it is not used); the 25 parts of the body map; the monogram. Our drawing of every word
+drawings because the drawing is clearer (an abstract idea, a scale, a pointer) or a hand sign could offend: yes, no, someone else, okay, this one, that one, a little, some, a lot, show me, change topic, morning, just right, needs (the four squares of the needs button, the person's "I need something" since 22 Nov, in place of a raised finger), feelings (three small faces, the person's "I feel…" since 22 Nov, in place of a thumbs-up), and the way out, something else (its dashed frame keeps it apart from every choice on the card; the Gemini question mark was too close to "not sure", so it is not used); the 25 parts of the body map; the monogram. Our drawing of every word
 that now has a picture is still in `web/src/pictos.ts`: it shows if the picture file cannot be loaded, so a tile is
 never an empty frame. No ARASAAC, no Mulberry, no ParticiPics, no icon font, no clip art.
 
@@ -67,9 +67,9 @@ head colour and differ by one attribute each; the figures made with Gemini show 
 | a little | one blue bar of four | drawn by us (SVG) | 18 Nov 2026 (colour; first drawn 9–10 Nov 2026 as a line drawing) | Apache-2.0 |
 | some | two blue bars of four | drawn by us (SVG) | 18 Nov 2026 (colour; first drawn 9–10 Nov 2026 as a line drawing) | Apache-2.0 |
 | a lot | four blue bars of four | drawn by us (SVG) | 18 Nov 2026 (colour; first drawn 9–10 Nov 2026 as a line drawing) | Apache-2.0 |
-| pain mild | a pale green face, a slight frown (the pain scale's "a little") | drawn by us (SVG) | 22 Nov 2026 | Apache-2.0 |
-| pain medium | an amber face, brows down, a frown (the pain scale's "quite bad") | drawn by us (SVG) | 22 Nov 2026 | Apache-2.0 |
-| pain strong | a red face, eyes squeezed shut, teeth clenched (the pain scale's "very bad") | drawn by us (SVG) | 22 Nov 2026 | Apache-2.0 |
+| pain mild | a round face, brows raised at the inner ends, a flat mouth (the pain scale's "a little"; Faces Pain Scale style) | Generated with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`) in Google AI Studio, generated offline, bundled; no model call at run time; reviewed by a person | 22 Nov 2026 (in place of our drawing, which read as angry, after judge round 9b) | output used under the Gemini API terms; no copyright claimed by us beyond what applies |
+| pain medium | a face, inner brows raised and drawn together, eyes half closed, the mouth turned down (the pain scale's "quite bad") | Generated with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`) in Google AI Studio, generated offline, bundled; no model call at run time; reviewed by a person | 22 Nov 2026 (in place of our drawing, which read as angry, after judge round 9b) | output used under the Gemini API terms; no copyright claimed by us beyond what applies |
+| pain strong | a round face, eyes squeezed shut, inner brows raised, an open down-turned grimace, a tear (the pain scale's "very bad") | Generated with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`) in Google AI Studio, generated offline, bundled; no model call at run time; reviewed by a person | 22 Nov 2026 (in place of our drawing, which read as laughing, after judge round 9b) | output used under the Gemini API terms; no copyright claimed by us beyond what applies |
 | needs | four coloured squares, as on the needs button (the person's "I need something") | drawn by us (SVG) | 22 Nov 2026 | Apache-2.0 |
 | feelings | three small faces: glad, so-so, low (the person's "I feel…") | drawn by us (SVG) | 22 Nov 2026 | Apache-2.0 |
 | listen | an ear with blue sound waves | Generated with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`) in Google AI Studio, generated offline, bundled; no model call at run time; reviewed by a person | 20 Nov 2026 | output used under the Gemini API terms; no copyright claimed by us beyond what applies |

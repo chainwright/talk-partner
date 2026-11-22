@@ -15,7 +15,7 @@ materials describe (our reading; no speech therapist has reviewed it): it says w
 problem (two things in one, a memory test), and it turns the partner's own question into a
 written-choice card (a keyword, two choices, pictured where we have drawn a picture, an escape every time, a
 tick/cross check) and gives the partner the exact line to say. It never picks or confirms the person's answer: only
-their tap does. Pictures (131 and the monogram since 22 Nov: 87 colour pictures made with Gemini and our own colour drawings for the rest; the source of each in `PICTOGRAMS.md`): yes / no, feelings, the body
+their tap does. Pictures (131 and the monogram since 22 Nov: 90 colour pictures made with Gemini and our own colour drawings for the rest; the source of each in `PICTOGRAMS.md`): yes / no, feelings, the body
 map, people, drinks and food, rest, TV and music, going out, the ways out, the needs of the quick-needs board. The
 family's own places and foods ("lake", "pot roast") show the family's own photo where one was added, and the word
 alone otherwise.
@@ -177,7 +177,7 @@ a plain background, light shading, the word under each. 123 pictures and the mon
 words the topic questions and their trees offer (all 128 choices of the 40 rule-made topic questions now have a
 picture; a word with none still shows alone). Why colour: `design/IMAGES_RESEARCH_2026-11-17.md`. The sheet at
 390 px: `devlog/evidence_pictures/pictures_390.png`.
-Since 20 Nov (phase 11), 84 of these are colour pictures generated with Gemini (Gemini 3.1 Flash Image), and since 22 Nov (phase 12) 87: eight made again after judge round 9 (pain, good, bad, more, spouse, child, sibling, friend) and three added (the curtains open and closed, the church); all reviewed by a person, generated offline once and bundled as WebP files that work offline; the rest stay our own SVG drawings, and the app's "How this works" screen says "Pictures: drawn by us and made with Gemini." (`PICTOGRAMS.md`, `DISCLOSURE.md`).
+Since 20 Nov (phase 11), 84 of these are colour pictures generated with Gemini (Gemini 3.1 Flash Image), and since 22 Nov (phases 12 and 12b) 90: eight made again after judge round 9 (pain, good, bad, more, spouse, child, sibling, friend), three added (the curtains open and closed, the church), and after judge round 9b the pain scale's three faces (in the Faces Pain Scale style, in place of our drawings, which read as angry and laughing); all reviewed by a person, generated offline once and bundled as WebP files that work offline; the rest stay our own SVG drawings, and the app's "How this works" screen says "Pictures: drawn by us and made with Gemini." (`PICTOGRAMS.md`, `DISCLOSURE.md`).
 
 **Personal photos (`core/photos.ts`, `web/src/photo.ts`).** In About them the carer adds a photo of a person, a food
 or drink, or a place: take or choose it, frame it by hand (move and zoom a square), give it one word. A card shows it
@@ -1251,7 +1251,7 @@ under `@firebase/firestore`, which this app does not import.
   person reads**). Pure TypeScript, no DOM, no Firebase, so every client reuses it unchanged.
 - `web/`: the web client. `web/src/ai/` is the only place that imports `firebase/ai` (`firebaseEngine.ts`) and
   `firebase/remote-config` (`remoteConfig.ts`). `pictos.ts` holds the colour
-  pictures: 87 made with Gemini (WebP files in `web/public/pictures/`) and our own SVG drawings (source, date and licence or terms per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper;
+  pictures: 90 made with Gemini (WebP files in `web/public/pictures/`) and our own SVG drawings (source, date and licence or terms per picture in `PICTOGRAMS.md`); `store.ts` is the IndexedDB wrapper;
   `voice.ts` is the microphone's state machine (record, stop, send the clip once through the engine; no DOM, so it
   is tested with a scripted microphone, recorder and engine); `mic.ts` is the browser's side; `feedback.ts` the form. `core/needs.ts` is the quick-needs board.
   `web/src/simple.ts` draws the simple view (the carer's screens and the person's); `web/sw.template.js` is the service worker, `web/public/manifest.webmanifest` the manifest.

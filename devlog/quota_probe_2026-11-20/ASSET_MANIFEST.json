@@ -607,5 +607,26 @@
   "model": "gemini-3.1-flash-image",
   "date": "2026-11-22",
   "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
+ },
+ "pain mild": {
+  "file": "pictures/pain_mild.webp",
+  "prompt": "a simple round face showing mild pain, Faces Pain Scale style: eyebrows slightly raised at the inner ends, mouth a flat straight line, eyes open, no teeth, not angry, soft skin tone",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
+ },
+ "pain medium": {
+  "file": "pictures/pain_medium.webp",
+  "prompt": "a simple round bald face with no hair, same flat style as a smiley, showing quite bad pain, Faces Pain Scale style: inner eyebrows raised and drawn together, eyes half closed, mouth turned down, no teeth, not angry, soft peach skin tone, thick dark outline",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
+ },
+ "pain strong": {
+  "file": "pictures/pain_strong.webp",
+  "prompt": "a simple round face showing very bad pain, Faces Pain Scale style: eyes squeezed shut, inner eyebrows raised, open down-turned grimacing mouth, a tear, not laughing, not angry, soft skin tone",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  }
 }

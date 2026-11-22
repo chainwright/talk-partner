@@ -151,7 +151,8 @@ const TREE: Record<string, Node> = {
     // (phase 9, judge round 8: "keep an eye on it" could stand under a chest-pain call box)
     // (phase 12, judge round 9: the depth limit can cut the weakness question, so the end line names the sign too)
     'a little': { end: 'A little pain. Ask again in an hour; tell the nurse or doctor if it stays. Sudden weakness or numbness: call now.' },
-    'quite bad': { end: 'Quite bad. Follow {their} care plan for pain, and tell the nurse or doctor.' },
+    // (phase 12b, judge round 9b: "follow the care plan" let a quite bad pain wait; it now takes the same route as very bad)
+    'quite bad': { end: 'Quite bad. Call {their} nurse or doctor now. If it looks like an emergency, call the emergency number.' },
     'very bad': { end: 'Very bad. Call {their} nurse or doctor now. If it looks like an emergency, call the emergency number.' },
     'not sure': { end: 'Watch {their} face and how {they} move. If you are worried, call the nurse or doctor.' },
   },

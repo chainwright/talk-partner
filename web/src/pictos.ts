@@ -1,7 +1,7 @@
 // Built-in pictures: simple, realistic colour pictures (design/IMAGES_RESEARCH_2026-11-17.md: real-object colours,
 // one object per picture, plain background, light shading, no scenes; no emoji, no clip art, no 3D, no animation).
 // Since 20 Nov 2026 the set is mixed (PICTOGRAMS.md has the source of every picture):
-// - 87 pictures were made with Google's Gemini (gemini-3.1-flash-image, in Google AI Studio, on 20 and 22 Nov 2026,
+// - 90 pictures were made with Google's Gemini (gemini-3.1-flash-image, in Google AI Studio, on 20 and 22 Nov 2026,
 //   generated once and bundled: no model is asked for a picture at run time) and reviewed by a person: small WebP files in
 //   web/public/pictures/ (256 x 256, white background), listed in `IMAGE_IDS`. The prompt of each is in
 //   devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json. They are shown as an <img> with the word as its text.
@@ -114,10 +114,12 @@ const P: Record<string, string> = {
   tea: `<ellipse cx="46" cy="80" rx="34" ry="7" fill="${C.greyLight}"/><path d="M68 46h5a8 8 0 010 16h-7"/><path d="M18 38h52v18c0 14-11 24-26 24S18 70 18 56z" fill="${C.white}"/><ellipse cx="44" cy="38" rx="26" ry="6" fill="${C.tea}"/><path d="M50 38c0-10 10-12 14-20" stroke-width="2"/><rect x="60" y="8" width="11" height="12" rx="2" fill="${C.leaf}"/><path d="M24 48v10" stroke="${C.greyLight}" stroke-width="3"/>`,
   coffee: `${steam([36, 50], 24)}${mug(C.red, C.coffee)}`,
   // (phase 12, judge round 9: the bars read as phone signal on the pain scale) the pain scale is three faces, green
-  // to red, the word under each; the bars stay for amounts of food or drink
-  'pain mild': face('#cfe8a0', '<path d="M36 64c8-4 16-4 24 0" stroke-width="4"/>', `<circle cx="36" cy="42" r="3.5" fill="${OUTLINE}" stroke="none"/><circle cx="60" cy="42" r="3.5" fill="${OUTLINE}" stroke="none"/><path d="M29 32l10 3M67 32l-10 3" stroke-width="3"/>`),
-  'pain medium': face('#f6b04a', '<path d="M34 68c8-8 20-8 28 0" stroke-width="4"/>', `<circle cx="36" cy="44" r="3.5" fill="${OUTLINE}" stroke="none"/><circle cx="60" cy="44" r="3.5" fill="${OUTLINE}" stroke="none"/><path d="M28 31l12 6M68 31l-12 6" stroke-width="4"/>`),
-  'pain strong': face('#e8574a', `<path d="M34 62h28v6a9 9 0 01-9 9H43a9 9 0 01-9-9z" fill="${C.white}"/><path d="M34 69h28" stroke-width="2"/>`, '<path d="M28 38l10 5-10 5M68 38l-10 5 10 5" stroke-width="4"/><path d="M26 30c4-4 10-5 14-3M70 30c-4-4-10-5-14-3" stroke-width="3"/>'),
+  // to red, the word under each; the bars stay for amounts of food or drink. (phase 12b, judge round 9b: the faces read
+  // as angry and laughing; since then the scale shows pictures made with Gemini in the Faces Pain Scale style, and
+  // these drawings, the fallback, have brows raised at the inner ends, no teeth and no grin)
+  'pain mild': face('#cfe8a0', '<path d="M38 64h20" stroke-width="4"/>', `<circle cx="36" cy="42" r="3.5" fill="${OUTLINE}" stroke="none"/><circle cx="60" cy="42" r="3.5" fill="${OUTLINE}" stroke="none"/><path d="M29 34l10-3M67 34l-10-3" stroke-width="3"/>`),
+  'pain medium': face('#f6b04a', '<path d="M34 68c8-8 20-8 28 0" stroke-width="4"/>', `<circle cx="36" cy="44" r="3.5" fill="${OUTLINE}" stroke="none"/><circle cx="60" cy="44" r="3.5" fill="${OUTLINE}" stroke="none"/><path d="M28 36l12-6M68 36l-12-6" stroke-width="4"/>`),
+  'pain strong': face('#e8574a', `<path d="M34 74c4-12 24-12 28 0z" fill="${OUTLINE}"/>`, '<path d="M28 38l10 5-10 5M68 38l-10 5 10 5" stroke-width="4"/><path d="M26 32c4-1 10-3 14-7M70 32c-4-1-10-3-14-7" stroke-width="3"/>'),
   // (phase 12) the person's "I need something": the four squares of the needs button on Home, in colour
   needs: `<rect x="12" y="12" width="32" height="32" rx="7" fill="${C.blue}"/><rect x="52" y="12" width="32" height="32" rx="7" fill="${C.green}"/><rect x="12" y="52" width="32" height="32" rx="7" fill="${C.amber}"/><rect x="52" y="52" width="32" height="32" rx="7" fill="${C.red}"/>`,
   // (phase 12) the person's "I feel…": three small faces, glad, so-so and low, so it never opens on one answer
@@ -224,14 +226,16 @@ export const MIC_STOP = control('<rect x="28" y="28" width="40" height="40" rx="
 export const PICTO_IDS = [...Object.keys(P), ...BODY_PARTS.map((b) => `body:${b}`), 'monogram'];
 
 /**
- * The ids shown as a picture made with Gemini (20 Nov 2026; 11 made again or added on 22 Nov), the same list as
+ * The ids shown as a picture made with Gemini (20 Nov 2026; 14 made again or added on 22 Nov), the same list as
  * devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json (tests/unit/pictures.test.ts checks both, and the files).
  */
 export const IMAGE_IDS: readonly string[] = ['not sure', 'somewhere else', 'good', 'bad', 'tasty', 'plain', 'too salty', 'good idea', 'leave it', 'like them', 'unhappy', 'listen', 'tea', 'coffee', 'change', 'wait', 'stop', 'write it', 'more', 'draw', 'later', 'tired', 'worried', "something's wrong", 'fall', 'tablets', 'pain',
   'spouse', 'child', 'sibling', 'grandchild', 'friend', 'neighbour', 'carer', 'nurse', 'doctor', 'speech therapist', 'physio', 'priest', 'family', 'visitor', 'toilet', 'drink', 'food', 'too hot', 'too cold', 'call someone', 'water', 'juice', 'milk', 'hot drink', 'cold drink', 'snack', 'meal', 'something sweet', 'something savoury',
   'hot meal', 'cold meal', 'bed', 'chair', 'tv', 'music', 'news', 'film', 'radio', 'paper', 'photos', 'now', 'afternoon', 'stay in', 'go out', 'open', 'closed', 'glasses', 'hearing aid', 'company', 'time alone', 'walk', 'garden', 'drive', 'wash', 'exercises', 'plans', 'quiet',
   // (phase 12, 22 Nov 2026)
-  'curtains open', 'curtains closed', 'church'];
+  'curtains open', 'curtains closed', 'church',
+  // (phase 12b, 22 Nov 2026: the pain scale's three faces)
+  'pain mild', 'pain medium', 'pain strong'];
 const IMAGES = new Set(IMAGE_IDS);
 /** The file of a picture, as the manifest names it: the id with every run of other characters made "_". */
 export const imageFile = (id: string) => `pictures/${id.replace(/[^a-z0-9]+/g, '_')}.webp`;

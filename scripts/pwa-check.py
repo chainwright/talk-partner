@@ -8,7 +8,7 @@ What is checked, in Chromium, against a production build (npm run build && npx v
      opens the person's own start;
   2. Chrome's own installability check (Page.getInstallabilityErrors) reports nothing;
   3. the service worker is registered, active and controls the page, and its cache holds the page and every script,
-     style, font and icon the page loaded, and (phase 11) every picture file in /pictures/ (87 since phase 12);
+     style, font and icon the page loaded, and (phase 11) every picture file in /pictures/ (90 since phase 12b);
   4. with the connection off: the page loads again; a topic question makes its choices by the rules; the person's
      screens work to the finish and back, the card's pictures (tea, coffee) load from the kept copy; quick needs opens; About them opens and keeps what is typed; a question that
      needs online help gets a clear "needs the internet" state and no consent sheet; the AI line and the tag say so;
@@ -95,7 +95,7 @@ def main():
         missing = [u for u in loaded if u not in kept['urls']]
         check('one cache for this build, holding the page and every file the page loaded (script, style, fonts, icons, manifest)', kept['caches'] == 1 and '/' in kept['urls'] and not missing and any(u.endswith('.js') for u in kept['urls']) and any(u.endswith('.css') for u in kept['urls']) and any('/fonts/' in u for u in kept['urls']), f"missing {missing}; kept {len(kept['urls'])}")
 
-        # (phase 11) the pictures made with Gemini are kept too, though the first screen loads only a few of them (87 since phase 12: the manifest's count)
+        # (phase 11) the pictures made with Gemini are kept too, though the first screen loads only a few of them (90 since phase 12b: the manifest's count)
         pics = [u for u in kept['urls'] if u.startswith('/pictures/') and u.endswith('.webp')]
         want = len(json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'devlog', 'quota_probe_2026-11-20', 'ASSET_MANIFEST.json'))))
         check(f'phase 11: the cache holds every picture file ({want} WebP in /pictures/), not only the ones the page has shown', len(pics) == want, str(len(pics)))
