@@ -100,6 +100,8 @@ export interface Learned {
   text: string;
   /** The question it is about ('' for a need). */
   q: string;
+  /** Phase 12: about pain, the body, a feeling or a need (set by core/share.ts, aboutLearned): never offered as a fact to keep. */
+  care?: boolean;
 }
 
 /** Everything learned so far, in plain words: usual choices, usual "no", patterns by time of day, needs. */

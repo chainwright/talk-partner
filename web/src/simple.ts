@@ -567,7 +567,7 @@ export type AboutRow = 'names' | 'people' | 'foods' | 'places' | 'health';
  */
 export function learnedBlock(m: { name: string; lines: Learned[]; facts: string[]; short: string[] | null }): string {
   const L = COPY.simple.learned;
-  const lines = m.lines.map((l) => `<li data-key="${esc(l.key)}"><span>${esc(l.text)}</span><span class="acts"><button type="button" class="btn quiet small-btn" data-act="learned-keep" data-key="${esc(l.key)}">${L.keep}</button><button type="button" class="btn quiet small-btn" data-act="learned-remove" data-key="${esc(l.key)}">${L.remove}</button></span></li>`).join('');
+  const lines = m.lines.map((l) => `<li data-key="${esc(l.key)}"><span>${esc(l.text)}</span><span class="acts">${l.care ? '' : `<button type="button" class="btn quiet small-btn" data-act="learned-keep" data-key="${esc(l.key)}">${L.keep}</button>`}<button type="button" class="btn quiet small-btn" data-act="learned-remove" data-key="${esc(l.key)}">${L.remove}</button></span></li>`).join('');
   const facts = m.facts.map((f, i) => `<li><span>${esc(f)}</span><span class="acts"><button type="button" class="btn quiet small-btn" data-act="fact-remove" data-fact="${i}">${L.remove}</button></span></li>`).join('');
   return `<section class="learned" id="learned" aria-labelledby="learned-h"><h2 id="learned-h">${esc(L.heading(m.name))}</h2>
     <p class="lock">${SIGN.lock}<span>${esc(L.how(m.name))}</span></p>

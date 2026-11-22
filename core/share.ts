@@ -109,6 +109,18 @@ export function usualForOthers(l: Learned): boolean {
   return (l.kind === 'usual' || l.kind === 'time') && !!l.q && !careAnswer(l.q, '', guessTopic(l.q)) && !/\busually says (?:no|yes)\b|(?:: |, )(?:no|yes) in the /i.test(l.text);
 }
 
+/**
+ * Phase 12 (judge round 9, a health P0): what About them shows of the learned lines, and what any other screen or
+ * on-device step may read. A line about a care question (pain, the body, a feeling, the toilet, help: `careAnswer`,
+ * as the handover note and the passport already filter) is left out: after three "no" to "Are you in pain?" the page
+ * would otherwise say `Usually says no to "Are you in pain?"` and offer "Keep as a fact", which teaches a carer to stop
+ * asking. A need of the board about pain, the toilet or "something's wrong" is still shown as counted, but marked
+ * `care`, so it is never offered as a fact to keep. The counting in core/prefs.ts is unchanged.
+ */
+export function aboutLearned(lines: Learned[]): Learned[] {
+  return lines.filter((l) => !(l.q && careAnswer(l.q, '', guessTopic(l.q)))).map((l) => (l.kind === 'need' && careAnswer('', l.key.replace(/^n:/, '')) ? { ...l, care: true } : l));
+}
+
 export interface HandoverShare {
   diary: DiaryEntry[];
   /** As in `FamilyShare`: only when the box is ticked. */

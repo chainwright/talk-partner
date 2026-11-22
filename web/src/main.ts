@@ -23,7 +23,7 @@ import { aiPlace } from '../../core/simple';
 import { daySummary, rulesSummary, todays, type DaySummary } from '../../core/summary';
 import { asksWho, awayNames, callQuestion, followUps, nextInTopic, topics, type TopicId } from '../../core/topics';
 import { after } from '../../core/tree';
-import { NOTHING_FORGOTTEN, checkedSummary, forgetAll, forgetOne, hints, keepOne, learned, learnedPrompt, shortcut, usual, usualFirst, usualHint, type Forgotten, type Need } from '../../core/prefs';
+import { NOTHING_FORGOTTEN, checkedSummary, forgetAll, forgetOne, keepOne, learned, learnedPrompt, shortcut, usual, usualFirst, usualHint, type Forgotten, type Need } from '../../core/prefs';
 import { spokenLine } from '../../core/rules';
 import { START_FRAME, addPhoto as addOwnPhoto, clampFrame, cleanWord, photoFor, removePhoto, type Frame, type Photo } from '../../core/photos';
 import { framed, loadPhoto, type Loaded } from './photo';
@@ -62,7 +62,7 @@ import { P6 } from '../../core/copy6';
 import { P7 } from '../../core/copy7';
 import { ABOUT_LEADS, aboutWhatCard, moreCard, moreChoices, moreSubject, outWays, shownOn, typedCard, type MoreSubject } from '../../core/more';
 import { understoodBlock } from './phase7';
-import { familyText, handoverText, riskyNotes } from '../../core/share';
+import { aboutLearned, familyText, handoverText, riskyNotes } from '../../core/share';
 import { handoverLink, shareSheet } from './phase6';
 import { fallBlock, hearButton, lowHelpLine, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenLink, suddenScreen, urgentBox } from './phase5';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
@@ -766,7 +766,7 @@ const viaOf = (c: Card, p: Choice): Via => (p.role === 'repair' || c.kind === 'r
 /** The page for the speech therapist is built from this: the diary is handed over only when the box is ticked. */
 const practiceInput = (): PracticeInput => ({ log: state.demo ? newLog(Date.now()) : p8.log, span: p8.span, now: Date.now(), name: state.profile.personName.trim(), device: copyDevice(), speak: speakOn(), questions: p8.picked, diary: p8.health && !state.demo ? state.diary : null, number: callNumber(), lessSure: state.demo ? 0 : lessSureCount(state.history, p8.span, Date.now()), flag: !p8.health && !state.demo && practiceFlag(state.diary, p8.span, Date.now()) });
 /** The passport is built from this: About them, the answers that still count, what was learned, the photos' words (never a picture). */
-const passportInput = (): PassportInput => ({ profile: state.profile, history: learns() ? state.history.filter((h) => h.at > state.forgotten.all) : [], learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], photoWords: state.photos.map((x) => x.word), prefs: p8.pass, now: Date.now(), device: copyDevice(), number: callNumber(), numberSet: numberSet(state.health.emergency) ? callNumber() : '', foodCare: state.health.diabetes || state.health.swallowing || state.health.fluidLimit });
+const passportInput = (): PassportInput => ({ profile: state.profile, history: learns() ? state.history.filter((h) => h.at > state.forgotten.all) : [], learned: learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)) : [], photoWords: state.photos.map((x) => x.word), prefs: p8.pass, now: Date.now(), device: copyDevice(), number: callNumber(), numberSet: numberSet(state.health.emergency) ? callNumber() : '', foodCare: state.health.diabetes || state.health.swallowing || state.health.fluidLimit });
 const savePassport = () => { if (!state.demo) void kvSet('passport', p8.pass); };
 /** The pictures of the printed passport: each person of About them with their own photo or an initial, then the family's other photos. Eight at most. */
 function passPictures(): PassPicture[] {
@@ -801,7 +801,7 @@ function shareTextNow(kind: 'family' | 'handover' | 'practice' | 'passport', hea
   if (kind === 'practice') return practiceText(practiceInput());
   if (kind === 'passport') return passportText(passportInput());
   const base = { diary: state.diary, health: health ? state.health : null, name: state.profile.personName.trim(), now: Date.now(), number: callNumber() };
-  return kind === 'family' ? familyText({ ...base, span: state.diaryTab }) : handoverText({ ...base, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], safety: { swallowing: state.health.swallowing, fluidLimit: state.health.fluidLimit } });
+  return kind === 'family' ? familyText({ ...base, span: state.diaryTab }) : handoverText({ ...base, learned: learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)) : [], safety: { swallowing: state.health.swallowing, fluidLimit: state.health.fluidLimit } });
 }
 
 /** A card the rules made after "something else" goes onto the carer's screen like any other card: said out loud, then shown. */
@@ -966,7 +966,7 @@ function usualOrder(c: Card): Card {
 /** The on-device model's short summary of the learned lines, where this browser has the model. ONLY_ON_DEVICE; there is no cloud step. */
 let learnedSeq = 0;
 function refreshLearnedShort() {
-  const lines = learned(state.history, state.needsLog, state.forgotten);
+  const lines = aboutLearned(learned(state.history, state.needsLog, state.forgotten));
   const seq = ++learnedSeq;
   state.learnedShort = null;
   if (!learns() || lines.length < 2 || state.device !== 'available' || !state.engine.summarizeDevice) return;
@@ -1910,7 +1910,7 @@ function leavePerson() {
   go('');
 }
 /** The usual answers learned on this device (core/prefs.ts), as plain words: for the rules of the first-letter helper and its ON-DEVICE prompt only. */
-const learnedWords = () => (learns() ? learned(state.history, state.needsLog, state.forgotten).flatMap((l) => (l.kind === 'usual' ? [usual(state.history, l.q, state.forgotten)?.label ?? ''] : [])).filter(Boolean) : []);
+const learnedWords = () => (learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)).flatMap((l) => (l.kind === 'usual' ? [usual(state.history, l.q, state.forgotten)?.label ?? ''] : [])).filter(Boolean) : []);
 /**
  * One step of the first-letter helper (core/letter.ts): the rules' words when there are two or more; else the model on
  * this device; else online help, only when it is on, and otherwise the sheet with the exact text first.
@@ -2070,7 +2070,7 @@ function render(lifted = false) {
   const fresh = key !== lastKey;
   if (r !== 'person') stopSound();
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? learned(state.history, state.needsLog, state.forgotten) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone, health: state.backupHealth })}`, numberHtml: numberField(state.health.emergency, state.health.helpline ?? ''), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber(), guess: numberGuess() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone, health: state.backupHealth })}`, numberHtml: numberField(state.health.emergency, state.health.helpline ?? ''), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber(), guess: numberGuess() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   keepGuard();
   if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);
@@ -2557,7 +2557,7 @@ function act(el: HTMLElement) {
       break;
     }
     // after the way out: an AI suggests the next, broader choices (two steps at most)
-    case 'narrow': if (state.card && state.picked) void runNarrow({ ...narrowInput(state.card, todayAnswers()), learned: learns() ? hints(state.history, state.needsLog, state.forgotten) : [] }); break;
+    case 'narrow': if (state.card && state.picked) void runNarrow({ ...narrowInput(state.card, todayAnswers()), learned: learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)).slice(0, 6).map((l) => l.text) : [] }); break;
     case 'copy-short': {
       const text = state.short?.sentences.join(' ') ?? '';
       const done = () => { state.shortCopied = true; patchShort(); document.querySelector<HTMLElement>('[data-act=copy-short]')?.focus(); };
@@ -2572,8 +2572,9 @@ function act(el: HTMLElement) {
     case 'sheet-always': state.sheet = false; state.settings.cloudHelp = true; saveSettings(); askSettings(); askAgain(); break;
     // ---- what was learned (About them): keep a line as a fact, remove it, or forget everything learned
     case 'learned-keep': {
-      const line = learned(state.history, state.needsLog, state.forgotten).find((l) => l.key === el.dataset.key);
-      if (line) { state.profile.other = [...(state.profile.other ?? []), line.text]; state.forgotten = keepOne(state.forgotten, line.key); saveProfile(); saveForgotten(); refreshLearnedShort(); render(); }
+      const line = aboutLearned(learned(state.history, state.needsLog, state.forgotten)).find((l) => l.key === el.dataset.key);
+      // (phase 12) a line about a care need is never kept as a fact (the button is not drawn; this is the second lock)
+      if (line && !line.care) { state.profile.other = [...(state.profile.other ?? []), line.text]; state.forgotten = keepOne(state.forgotten, line.key); saveProfile(); saveForgotten(); refreshLearnedShort(); render(); }
       break;
     }
     case 'learned-remove': state.forgotten = forgetOne(state.forgotten, el.dataset.key ?? '', Date.now()); saveForgotten(); refreshLearnedShort(); render(); break;
