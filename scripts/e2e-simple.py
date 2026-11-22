@@ -1817,7 +1817,7 @@ def phase5(browser, url, live):
     sud = text(page)
     check('sudden: FAST (face, arm, speech, time), four more reasons to call, and "Call emergency services: 911" twice', all(k in sud for k in ['Face', 'Arm', 'Speech', 'Time', 'A sudden, very bad headache.', 'Chest pain, or trouble breathing.', 'A fall with a blow to the head', 'Suddenly very drowsy or confused']) and page.locator('a.call.big[href="tel:911"]').count() == 2, sud[:300])
     check('sudden: the call button is a plain tel: link, at least 60 px tall, on the first screenful', ys(page, 'a.call.big')[0][3] >= 60 and ys(page, 'a.call.big')[0][1] + ys(page, 'a.call.big')[0][3] <= 844, str(ys(page, 'a.call.big')))
-    check('sudden: it says to call when unsure, names 911 / 999 / 112, and says what it is: a fixed list, no AI, nothing sent, not checked by a clinician', 'Not on this list, and you are still worried? Call.' in sud and '911 in the US and Canada, 999 in the UK and 112 in the EU' in sud and 'No AI wrote it, and nothing is sent.' in sud and 'No doctor or nurse has checked this wording.' in sud, sud[-400:])
+    check('sudden: it says to call when unsure, names 911 / 999 / 112, and says what it is: a fixed list, no AI, nothing sent, not checked by a clinician', 'Not on this list, and you are still worried? Call.' in sud and '911 in the US and Canada, 999 in the UK, 112 in the EU and India, 000 in Australia and 111 in New Zealand' in sud and 'No AI wrote it, and nothing is sent.' in sud and 'No doctor or nurse has checked this wording.' in sud, sud[-400:])
     screen_checks(page, 'sudden', primary=False)
     shot(page, '02_something_new_or_sudden_fast_and_call', full=True)
     page.locator('#sudden-number [data-act=sudden-number]').click()

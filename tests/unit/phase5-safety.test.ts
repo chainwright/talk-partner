@@ -47,7 +47,7 @@ describe('2a. "Something new or sudden?": a fixed card with a call button', () =
     expect(t).toContain('Chest pain, or trouble breathing.');
     expect(html.match(/href="tel:911"/g)).toHaveLength(2);
     expect(t).toContain('Call emergency services: 911');
-    expect(t).toContain('911 in the US and Canada, 999 in the UK and 112 in the EU');
+    expect(t).toContain('911 in the US and Canada, 999 in the UK, 112 in the EU and India, 000 in Australia and 111 in New Zealand');
     // worst case: the carer sees none of the listed signs and waits. The card says to call anyway.
     expect(t).toContain('Not on this list, and you are still worried? Call.');
     // honest about itself: no AI, nothing sent, cannot tell what is wrong, not checked by a clinician

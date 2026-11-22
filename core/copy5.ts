@@ -33,7 +33,7 @@ export const P5 = {
     call: (number: string) => `Call emergency services: ${number}`,
     unsure: 'Not on this list, and you are still worried? Call. You know them best.',
     notSudden: 'Worried, and it is not sudden: call the doctor or nurse today.',
-    number: (number: string) => `The button calls ${number}. The number is 911 in the US and Canada, 999 in the UK and 112 in the EU.`,
+    number: (number: string) => `The button calls ${number}. The number is 911 in the US and Canada, 999 in the UK, 112 in the EU and India, 000 in Australia and 111 in New Zealand.`,
     change: 'Change the number (About them, Health notes)',
     source: 'A fixed list: FAST (face, arm, speech, time), the public check for the signs of a stroke, with balance and sight (BE-FAST), and more reasons to call. No AI wrote it, and nothing is sent. The app cannot tell what is wrong. No doctor or nurse has checked this wording.',
     /** The ninth tile of the needs board, and what the carer reads when it was pointed to. */
@@ -48,7 +48,7 @@ export const P5 = {
     helplineField: 'Helpline for low mood',
     helplineHint: 'A number from the doctor or nurse, or your country\'s mental health line. The app has none of its own. It is used only in the line under a "sad" or "low" answer.',
     field: 'Emergency number',
-    fieldHint: '911 in the US and Canada, 999 in the UK, 112 in the EU. The "Call" buttons of this app use it. Empty: the app goes by the language setting of this device, and asks you to check it.',
+    fieldHint: '911 in the US and Canada, 999 in the UK, 112 in the EU and India, 000 in Australia, 111 in New Zealand. The "Call" buttons of this app use it. Empty: the app goes by the language setting of this device (112 when it cannot tell), and asks you to check it.',
   },
   speak: {
     title: 'Read aloud',

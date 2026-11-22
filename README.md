@@ -707,9 +707,10 @@ gives the cloud letter step its own schema. Nothing of phase 9 is deployed; the 
 - **Wording** (`0658200`). "A little pain. Ask again in an hour. If it is new, or still there later, tell the nurse or
   doctor."; no "Last time they chose…" or "So far: no ×5" before a pain, toilet, drink or feelings question; the
   passport adds "But a yes to pain, the toilet or 'something's wrong' is always a yes: act on it."
-- **The emergency number follows the locale** (`b6c8b5d`). With none in About them: en-GB 999, a European Union locale
-  112, else 911, and every call box asks "Is this your emergency number? Change it" (to About them). The sample family
-  stays on 911.
+- **The emergency number follows the locale** (`b6c8b5d`; more regions in phase 12). With none in About them: en-GB 999,
+  a European Union locale 112, and since phase 12 also Australia 000, New Zealand 111, India 112, Japan and Korea 119,
+  the US, Canada and Mexico 911 and a few more (`core/redflag.ts`); a region the app does not know gets 112, never a
+  silent 911. Every call box asks "Is this your emergency number? Change it" (to About them). The sample family stays on 911.
 - **Handover and visit** (`810f1f5`). The handover note always prints the swallowing difficulty and the fluid limit
   ("ALWAYS ON THIS NOTE"), box ticked or not. The visit page gains Toilet and Tablets lines, two family questions, and
   "Where it hurts: chest, middle".

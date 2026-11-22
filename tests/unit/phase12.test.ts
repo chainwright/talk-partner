@@ -173,3 +173,25 @@ describe('A5. Pain left for later: the signs to watch for, the emergency route, 
     expect(plain).toContain('Left 3 hours ago.');
   });
 });
+
+describe('A6. The emergency number follows the region; an unknown region gets 112 and the "change" line, never a silent 911', () => {
+  it.each([
+    ['en-AU', '000'], ['en-NZ', '111'], ['en-IN', '112'], ['hi-IN', '112'], ['ja-JP', '119'], ['ja', '119'], ['ko-KR', '119'],
+    ['en-US', '911'], ['en-CA', '911'], ['fr-CA', '911'], ['es-MX', '911'], ['en-GB', '999'], ['de-DE', '112'], ['en-SG', '995'], ['en-HK', '999'],
+    ['pt-BR', '192'], ['de-CH', '144'], ['nb-NO', '113'], ['zh-CN', '120'],
+  ])('%s → %s', async (locale, number) => {
+    const { localeNumber } = await import('../../core/redflag');
+    expect(localeNumber(locale)).toBe(number);
+  });
+  it.each(['en', 'xx', '', 'sw-KE', 'ar-EG'])('unknown "%s" → 112, and the call boxes ask "Is this your emergency number?"', async (locale) => {
+    const { localeNumber } = await import('../../core/redflag');
+    const { urgentBox } = await import('../../web/src/phase5');
+    expect(localeNumber(locale)).toBe('112');
+    expect(urgentBox(localeNumber(locale), 'urgent', true)).toMatch(/number-guess/);
+  });
+  it('the number the family types still wins, and the sample family stays on 911', async () => {
+    const { emergencyNumber, localeNumber, DEFAULT_NUMBER } = await import('../../core/redflag');
+    expect(emergencyNumber('000', localeNumber('xx'))).toBe('000');
+    expect(DEFAULT_NUMBER).toBe('911');
+  });
+});
