@@ -164,7 +164,8 @@ describe('split, body map, pain', () => {
     expect(labels(c)).toEqual(['a little', 'quite bad', 'very bad', 'not sure']);
     const m = await makeCard('How much does your knee hurt now?', env(e, { support: 'mild' }));
     expect(labels(m)).toEqual(['a little', 'quite bad', 'very bad', 'not sure']);
-    expect(c.choices.slice(0, 3).map((x) => x.picture)).toEqual([{ type: 'builtin', id: 'a little' }, { type: 'builtin', id: 'some' }, { type: 'builtin', id: 'a lot' }]);
+    // (phase 12, judge round 9: the bars read as phone signal; the pain scale is three faces)
+    expect(c.choices.slice(0, 3).map((x) => x.picture)).toEqual([{ type: 'builtin', id: 'pain mild' }, { type: 'builtin', id: 'pain medium' }, { type: 'builtin', id: 'pain strong' }]);
   });
 });
 

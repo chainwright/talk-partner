@@ -157,7 +157,8 @@ describe('the pictures made with Gemini (20 Nov 2026)', () => {
     expect(readdirSync(dir).sort()).toEqual(IMAGE_IDS.map((id) => imageFile(id).slice('pictures/'.length)).sort());
   });
   it('kept as our SVG: the abstract ones, the scale, the hand sign that could offend, the way out, the body map, the monogram', () => {
-    expect(svgShown.filter((id) => !id.startsWith('body:')).sort()).toEqual(['a little', 'a lot', 'change topic', 'just right', 'morning', 'no', 'okay', 'show me', 'some', 'someone else', 'something else', 'that one', 'this one', 'yes']);
+    // (phase 12: and the pain scale's three faces, the person's "I need something" four squares and "I feel…" three faces)
+    expect(svgShown.filter((id) => !id.startsWith('body:')).sort()).toEqual(['a little', 'a lot', 'change topic', 'feelings', 'just right', 'morning', 'needs', 'no', 'okay', 'pain medium', 'pain mild', 'pain strong', 'show me', 'some', 'someone else', 'something else', 'that one', 'this one', 'yes']);
   });
   it('the markup: an <img> from this site with the word as its text, its size written in, decoded off the main thread', () => {
     expect(builtinPicto('tea')).toBe('<img class="pic" src="/pictures/tea.webp" alt="tea" data-id="tea" width="96" height="96" decoding="async" draggable="false">');

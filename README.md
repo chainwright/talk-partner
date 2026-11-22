@@ -15,7 +15,7 @@ materials describe (our reading; no speech therapist has reviewed it): it says w
 problem (two things in one, a memory test), and it turns the partner's own question into a
 written-choice card (a keyword, two choices, pictured where we have drawn a picture, an escape every time, a
 tick/cross check) and gives the partner the exact line to say. It never picks or confirms the person's answer: only
-their tap does. Pictures (127 and the monogram since 22 Nov: 87 colour pictures made with Gemini and our own colour drawings for the rest; the source of each in `PICTOGRAMS.md`): yes / no, feelings, the body
+their tap does. Pictures (131 and the monogram since 22 Nov: 87 colour pictures made with Gemini and our own colour drawings for the rest; the source of each in `PICTOGRAMS.md`): yes / no, feelings, the body
 map, people, drinks and food, rest, TV and music, going out, the ways out, the needs of the quick-needs board. The
 family's own places and foods ("lake", "pot roast") show the family's own photo where one was added, and the word
 alone otherwise.

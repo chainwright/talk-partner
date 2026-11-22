@@ -36,7 +36,9 @@ export const STARTERS: Starter[] = ['need', 'tell', 'feel'];
 export const FEEL_QUESTION = 'How are you feeling today?';
 
 const S = P4.turn;
-const PICTURE: Record<Starter, string> = { need: 'show me', tell: 'family', feel: 'good' };
+// (phase 12, judge round 9: the raised finger could read as rude, and "I feel…" opened on a thumbs-up) the needs
+// button's four squares, and three faces
+const PICTURE: Record<Starter, string> = { need: 'needs', tell: 'family', feel: 'feelings' };
 const TOPIC_PICTURE: Record<TopicId, string> = { food: 'food', body: 'body:whole', rest: 'bed', people: 'family', feel: 'good', plans: 'plans', fun: 'tv' };
 /** The topics of the picture menu, in the order they are offered (feelings have their own starter). */
 export const MENU: TopicId[] = ['people', 'plans', 'fun', 'food', 'body', 'rest'];

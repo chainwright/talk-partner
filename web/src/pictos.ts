@@ -113,6 +113,15 @@ const P: Record<string, string> = {
   listen: `<path d="M26 40a22 22 0 0144 0c0 13-9 17-13 24-3 5-3 13-11 15-7 2-13-3-13-9" fill="${C.skin}"/><path d="M38 42a10 10 0 0120 0c0 6-6 8-7 14" stroke="${C.skinShade}"/><path d="M78 26a22 22 0 010 26M86 18a34 34 0 010 42" stroke="${C.blue}" stroke-width="4"/>`,
   tea: `<ellipse cx="46" cy="80" rx="34" ry="7" fill="${C.greyLight}"/><path d="M68 46h5a8 8 0 010 16h-7"/><path d="M18 38h52v18c0 14-11 24-26 24S18 70 18 56z" fill="${C.white}"/><ellipse cx="44" cy="38" rx="26" ry="6" fill="${C.tea}"/><path d="M50 38c0-10 10-12 14-20" stroke-width="2"/><rect x="60" y="8" width="11" height="12" rx="2" fill="${C.leaf}"/><path d="M24 48v10" stroke="${C.greyLight}" stroke-width="3"/>`,
   coffee: `${steam([36, 50], 24)}${mug(C.red, C.coffee)}`,
+  // (phase 12, judge round 9: the bars read as phone signal on the pain scale) the pain scale is three faces, green
+  // to red, the word under each; the bars stay for amounts of food or drink
+  'pain mild': face('#cfe8a0', '<path d="M36 64c8-4 16-4 24 0" stroke-width="4"/>', `<circle cx="36" cy="42" r="3.5" fill="${OUTLINE}" stroke="none"/><circle cx="60" cy="42" r="3.5" fill="${OUTLINE}" stroke="none"/><path d="M29 32l10 3M67 32l-10 3" stroke-width="3"/>`),
+  'pain medium': face('#f6b04a', '<path d="M34 68c8-8 20-8 28 0" stroke-width="4"/>', `<circle cx="36" cy="44" r="3.5" fill="${OUTLINE}" stroke="none"/><circle cx="60" cy="44" r="3.5" fill="${OUTLINE}" stroke="none"/><path d="M28 31l12 6M68 31l-12 6" stroke-width="4"/>`),
+  'pain strong': face('#e8574a', `<path d="M34 62h28v6a9 9 0 01-9 9H43a9 9 0 01-9-9z" fill="${C.white}"/><path d="M34 69h28" stroke-width="2"/>`, '<path d="M28 38l10 5-10 5M68 38l-10 5 10 5" stroke-width="4"/><path d="M26 28l14 6M70 28l-14 6" stroke-width="4"/>'),
+  // (phase 12) the person's "I need something": the four squares of the needs button on Home, in colour
+  needs: `<rect x="12" y="12" width="32" height="32" rx="7" fill="${C.blue}"/><rect x="52" y="12" width="32" height="32" rx="7" fill="${C.green}"/><rect x="12" y="52" width="32" height="32" rx="7" fill="${C.amber}"/><rect x="52" y="52" width="32" height="32" rx="7" fill="${C.red}"/>`,
+  // (phase 12) the person's "I feel…": three small faces, glad, so-so and low, so it never opens on one answer
+  feelings: `<circle cx="18" cy="48" r="14" fill="#8fd694"/><path d="M11 52c4 5 10 5 14 0" stroke-width="3"/><circle cx="48" cy="48" r="14" fill="${C.yellow}"/><path d="M41 54h14" stroke-width="3"/><circle cx="78" cy="48" r="14" fill="#f29488"/><path d="M71 56c4-5 10-5 14 0" stroke-width="3"/><path d="M13 44h1M23 44h1M43 44h1M53 44h1M73 44h1M83 44h1" stroke-width="4"/>`,
   'a little': bars(1),
   some: bars(2),
   'a lot': bars(4),

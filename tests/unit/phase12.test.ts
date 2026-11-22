@@ -225,3 +225,46 @@ describe('B7. The pictures made again after round 9, and the three new ones', ()
     expect(Object.values(manifest).every((m) => m.model && m.date && m.tool)).toBe(true);
   });
 });
+
+describe('B8. Our drawings: the pain scale as three faces, "I need something" as the four squares, "I feel…" not on a thumbs-up', () => {
+  const env = async () => { const { NullEngine } = await import('../../core/engine'); const { EMPTY_PROFILE } = await import('../../core/types'); return { profile: EMPTY_PROFILE, support: 'more' as const, engine: new NullEngine(), allowCloud: false, deviceReady: false }; };
+  it('"How bad is the pain?": mild, medium and strong faces (not the bars that read as phone signal), the word under each', async () => {
+    const { makeCard } = await import('../../core/pipeline');
+    const { svgPicto } = await import('../../web/src/pictos');
+    const c = await makeCard('How bad is the pain?', await env());
+    expect(c.choices.filter((x) => x.role === 'answer').map((x) => [x.label, (x.picture as { id: string }).id])).toEqual([['a little', 'pain mild'], ['quite bad', 'pain medium'], ['very bad', 'pain strong']]);
+    for (const id of ['pain mild', 'pain medium', 'pain strong']) {
+      const s = svgPicto(id);
+      expect(s, id).toContain('<circle cx="48" cy="48" r="36"');
+      expect(s, id).not.toContain('<rect');
+    }
+    // the amounts ("a little", "some", "a lot" food or drink) keep their own scale
+    const { pictureFor } = await import('../../core/pictures');
+    const { EMPTY_PROFILE } = await import('../../core/types');
+    expect(pictureFor('a little', EMPTY_PROFILE, 'How much would you like?')).toEqual({ type: 'builtin', id: 'a little' });
+  });
+  it('the person\'s starters: "I need something" is the four squares of Home\'s needs button, "I feel…" three faces', async () => {
+    const { turnCard } = await import('../../core/turn');
+    const { svgPicto, builtinPicto } = await import('../../web/src/pictos');
+    const ids = turnCard().choices.map((x) => (x.picture as { id: string }).id);
+    expect(ids[0]).toBe('needs');
+    expect(ids[2]).toBe('feelings');
+    expect(ids).not.toContain('show me');
+    expect(ids).not.toContain('good');
+    expect((svgPicto('needs').match(/<rect /g) ?? []).length).toBe(4);
+    expect((svgPicto('feelings').match(/<circle cx="\d+" cy="48" r="1[0-9]"/g) ?? []).length).toBe(3);
+    expect(builtinPicto('needs')).toMatch(/^<svg/);
+  });
+});
+
+describe('B7/B8. The counts the docs give are the counts of the code', () => {
+  it('README: the number of pictures and the monogram; PICTOGRAMS: made with Gemini and drawn by us', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { PICTO_IDS, IMAGE_IDS } = await import('../../web/src/pictos');
+    const readme = readFileSync(new URL('../../README.md', import.meta.url), 'utf8');
+    expect(readme).toContain(`Pictures (${PICTO_IDS.length - 1} and the monogram since 22 Nov: ${IMAGE_IDS.length} colour pictures made with Gemini`);
+    const md = readFileSync(new URL('../../PICTOGRAMS.md', import.meta.url), 'utf8');
+    expect(md).toContain(`**Made with Gemini (${IMAGE_IDS.length}).**`);
+    expect(md).toContain(`**Drawn by us (${PICTO_IDS.length - IMAGE_IDS.length}).**`);
+  });
+});

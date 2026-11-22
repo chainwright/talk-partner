@@ -11,6 +11,8 @@ export const BUILTIN = new Set([
   'yes', 'no', 'not sure', 'something else', 'someone else', 'somewhere else',
   'good', 'okay', 'bad', 'tasty', 'plain', 'too salty', 'good idea', 'leave it', 'like them', 'unhappy',
   'a little', 'some', 'a lot', 'this one', 'that one',
+  // phase 12, 22 Nov 2026: the pain scale's faces, and the person's "I need something" and "I feel…"
+  'pain mild', 'pain medium', 'pain strong', 'needs', 'feelings',
   // added 11 Nov 2026
   'listen', 'tea', 'coffee',
   // batch 1, 11 Nov 2026: fixed / meta, feelings, people roles (build spec §3.1)
@@ -46,8 +48,8 @@ export const SYNONYM: Record<string, string> = {
   sleepy: 'tired', exhausted: 'tired', 'worn out': 'tired', worried: 'worried', anxious: 'worried', hurts: 'pain', hurting: 'pain', sore: 'pain',
   // the second page of "How are you feeling?" (17 Nov 2026): the frowning face, and the pain picture
   sad: 'bad', 'in pain': 'pain',
-  // the three steps of the pain scale (17 Nov 2026) share the bar pictures
-  'quite bad': 'some', 'very bad': 'a lot',
+  // the three steps of the pain scale (17 Nov 2026; phase 12: three faces, not the bars of an amount)
+  'quite bad': 'pain medium', 'very bad': 'pain strong',
   // batch 2 (18 Nov 2026): the words the topic cards and their trees use for a picture that is already drawn
   'this morning': 'morning', 'this afternoon': 'afternoon', 'some time alone': 'time alone', hot: 'too hot', cold: 'too cold',
   television: 'tv', telly: 'tv', newspaper: 'paper', movie: 'film', 'something to eat': 'food', 'something to drink': 'drink',
@@ -65,6 +67,8 @@ export const SYNONYM: Record<string, string> = {
 export function pictureFor(label: string, profile: Profile, asked = ''): PictureRef {
   const l = label.toLowerCase().trim();
   if (/^(?:open|closed)$/.test(l) && /\bcurtains?\b/i.test(asked)) return { type: 'builtin', id: `curtains ${l}` };
+  // and "a little" on the pain scale is the mild face, not the bar of an amount
+  if (l === 'a little' && /\b(?:pain|hurt|hurts|sore)\b/i.test(asked)) return { type: 'builtin', id: 'pain mild' };
   if (BUILTIN.has(l)) return { type: 'builtin', id: l };
   // "your left arm" on the person's card (§2.11) is the "left arm" body picture
   const part = l.replace(/^your\s+/, '');
