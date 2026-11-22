@@ -731,3 +731,6 @@
   .simple .ai-strip { font-size: 13px; }
   .simple .try-ai-btn { padding: 6px 10px; }
 }
+/* phase 12: the sample family, under the footer links */
+.simple .foot .sample-link { flex-direction: column; gap: 2px; }
+.simple .foot .sample-link small { font-size: 14px; }

@@ -427,3 +427,13 @@ describe('D14. A crisis choice for the person: "I can\'t go on" leads the carer 
     expect(main).toMatch(/if \(p\.role === 'answer' && crisisAnswer\(p\.label\)\) return crisisBox\(/);
   });
 });
+
+describe('D16. "Try it with the Millers" from the first screen', () => {
+  it('Home links to the sample family, and says nothing of the family\'s own is used', async () => {
+    const { homeScreen } = await import('../../web/src/simple');
+    const home = homeScreen({ name: '', topics: [], topicOpen: null, aiTag: '', question: '', busy: false, error: null, micHtml: '', voiceHtml: '', ai: [], privacy: [], aboutLink: false, howOpen: false } as never);
+    expect(home).toMatch(/<a class="tlink" id="try-sample" href="#\/demo">Try it with the Millers, a sample family →<\/a>/);
+    const { COPY } = await import('../../core/copy');
+    expect(COPY.simple.sampleSub).toBe('Made-up names: nothing of yours is used or changed.');
+  });
+});

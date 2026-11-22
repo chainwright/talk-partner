@@ -401,6 +401,9 @@ const COPY = {
     },
     aboutLink: (name: string) => (name ? `About ${name}` : 'About them'),
     inside: 'How it works inside',
+    /** Phase 12 (judge round 9): the sample family, one tap from the first screen (judge mode, #/demo). */
+    sample: 'Try it with the Millers, a sample family',
+    sampleSub: 'Made-up names: nothing of yours is used or changed.',
     madeLink: 'How was this made?',
     back: 'New question',
     /** The carer's screen before handing over. */

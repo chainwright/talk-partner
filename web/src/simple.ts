@@ -183,6 +183,7 @@ export function homeScreen(m: HomeModel): string {
   <footer class="foot">
     ${privacyBlock(m.privacy)}
     <p class="links">${insideLink('inside', S.inside)}${m.aboutLink ? `<a class="tlink" href="#/about">${esc(S.aboutLink(m.name))} →</a>` : ''}</p>
+    <p class="links sample-link"><a class="tlink" id="try-sample" href="#/demo">${esc(S.sample)} →</a><small class="muted">${esc(S.sampleSub)}</small></p>
   </footer>
 </main>`;
 }
