@@ -281,6 +281,20 @@ the table.
 | 258 | `9dc8060` | `7f5ad24` | 2026-11-22 09:32 | Phase 12, item 10: at 360 px the AI strip folds, so the first row of topics stays above t… |
 | 259 | `bfaf253` | `ef957eb` | 2026-11-22 09:54 | Phase 12: evidence, CLAIMS rows 145 to 156, README section and devlog/DAY22.md |
 | 260 | `e26b899` | `c22e29e` | 2026-11-22 10:12 | Live: the build of 9dc8060 (phase 12); phase12-walk waits for the curtain pictures; Read … |
+| 261 | `4360c94` | `7f33ff2` | 2026-11-22 10:55 | Read aloud on the hosted copy: 3 of 3 (normal window, no token); the earlier dev-server r… |
+| 262 | `6c20aa9` | `ed40301` | 2026-11-22 11:02 | Phase 12b, item 1: the pain scale shows pictures of pain in the Faces Pain Scale style, n… |
+| 263 | `08aaa3b` | `81a3e3e` | 2026-11-22 11:03 | Phase 12b, item 2: after one "no" to the weakness question the carer checks the arms and … |
+| 264 | `122566e` | `09144a6` | 2026-11-22 11:04 | Phase 12b, item 3: About them never shows a usual "no" to a drink or food question, and n… |
+| 265 | `96808ec` | `76c41c6` | 2026-11-22 11:06 | Phase 12b, item 4: a past day with fewer than 6 drinks entered is a line, with "tell the … |
+| 266 | `8b3363b` | `60483ed` | 2026-11-22 11:08 | Phase 12b, item 5: after "something else", where the AI step goes online, "Find more choi… |
+| 267 | `a3bccd4` | `bc46bcc` | 2026-11-22 11:10 | Phase 12b, item 6: pain as a whole-body grimace, wait as an hourglass, show me as an angl… |
+| 268 | `89e82ed` | `61be127` | 2026-11-22 11:12 | Phase 12b, item 7: a confirmed yes to sudden weakness or numbness gets "Call [number] now… |
+| 269 | `1833ad3` | `c656645` | 2026-11-22 11:14 | Phase 12b, item 8: a calm "stop for now" beside "I can't go on" on the feelings card, whi… |
+| 270 | `03d7a00` | `de2f293` | 2026-11-22 11:16 | Phase 12b, item 9: on a phone "Try it with the Millers" opens the simple view with the sa… |
+| 271 | `619adf4` | `68c479e` | 2026-11-22 11:18 | Phase 12b, item 10: the first screen's red box names the emergency number, with "Change i… |
+| 272 | `6b340ba` | `7591eae` | 2026-11-22 11:18 | Phase 12b, item 11: a pain question left for later stands directly under "Needs something… |
+| 273 | `51470a8` | `0ea9498` | 2026-11-22 11:43 | Phase 12b: the walk covers the changed screens (pictures loaded first); e2e-simple follow… |
+| 274 | `b8f5655` | `070bd61` | 2026-11-22 12:15 | Live: the build of 51470a8 (phase 12b); Read aloud on it refused by App Check after a day… |
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
 
