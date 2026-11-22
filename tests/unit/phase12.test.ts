@@ -288,3 +288,27 @@ describe('B9. The first screen: the six topic pictures are asked for before the 
     expect(css).toMatch(/\.simple \.topic img\.tp \{[^}]*background:[^}]*#e6eaf0/);
   });
 });
+
+describe('C10. "See the AI at work" above the fold, with where its AI runs on a phone and on a laptop', () => {
+  it('Home: the block stands before "How it works" and the topics, with its two lines', async () => {
+    const { homeScreen, tryAiBlock } = await import('../../web/src/simple');
+    const { COPY } = await import('../../core/copy');
+    const tryHtml = tryAiBlock({ q: 'What do you want to do this weekend?', tag: "uses Google's AI, after your yes", busy: false });
+    expect(tryHtml).toContain('id="ai-strip"');
+    expect(COPY.simple.tryAi.strip).toEqual(["Phone: Google's AI, online, after your yes", "Laptop with Chrome's own AI: nothing is sent"]);
+    const home = homeScreen({ name: 'Frank', topics: [], topicOpen: null, aiTag: '', question: '', busy: false, error: null, micHtml: '', voiceHtml: '', ai: [], privacy: [], aboutLink: false, howOpen: false, tryHtml } as never);
+    expect(home.indexOf('id="try-ai"')).toBeGreaterThan(0);
+    expect(home.indexOf('id="try-ai"')).toBeLessThan(home.indexOf('id="how"'));
+    expect(home.indexOf('id="try-ai"')).toBeLessThan(home.indexOf('id="topics"'));
+  });
+  it('each line is what the code does: the cloud leg only after a yes, Gemini Nano on a laptop only with Chrome\'s built-in AI', async () => {
+    const { tryAiTag } = await import('../../core/simple');
+    const base = { configured: true, device: 'unavailable' as const, cloudOn: false, online: true };
+    expect(tryAiTag(base)).toBe("uses Google's AI, after your yes");
+    expect(tryAiTag({ ...base, device: 'available' as never })).toBe('AI on this computer: nothing is sent');
+    const { readFileSync } = await import('node:fs');
+    const eng = readFileSync(new URL('../../web/src/ai/firebaseEngine.ts', import.meta.url), 'utf8');
+    expect(eng).toContain('mode: InferenceMode.PREFER_IN_CLOUD');
+    expect(eng).toContain('mode: InferenceMode.ONLY_ON_DEVICE');
+  });
+});

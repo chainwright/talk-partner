@@ -128,7 +128,8 @@ export function laterBlock(items: { q: string; time: string; ago?: string; i: nu
 export function tryAiBlock(m: { q: string; tag: string | null; busy: boolean }): string {
   if (!m.tag) return '';
   const T = COPY.simple.tryAi;
-  return `<div class="try-ai" id="try-ai"><button type="button" class="btn try-ai-btn" data-act="try-ai" data-q="${esc(m.q)}" ${m.busy ? 'disabled' : ''}>${SIGN.spark}<span><b>${T.label}</b><span class="tq-q">"${esc(m.q)}"</span><span class="tag net" id="try-ai-tag">${esc(m.tag)}</span></span></button><p class="tip" id="try-ai-sub">${esc(T.sub)}</p>${m.busy ? `<p class="making" role="status" id="try-ai-making"><span class="dot wait"></span>${COPY.simple.making}</p>` : ''}</div>`;
+  // (phase 12, judge round 9: above the fold at 390 x 844) the button, then two short lines: where the AI runs on a phone, and on a laptop
+  return `<div class="try-ai" id="try-ai"><button type="button" class="btn try-ai-btn" data-act="try-ai" data-q="${esc(m.q)}" ${m.busy ? 'disabled' : ''} aria-describedby="ai-strip">${SIGN.spark}<span><b>${T.label}</b><span class="tag net" id="try-ai-tag">${esc(m.tag)}</span></span></button><ul class="ai-strip" id="ai-strip" title="${esc(T.stripLong)}"><li>${SIGN.cloud}<span>${esc(T.strip[0])}</span></li><li>${SIGN.lock}<span>${esc(T.strip[1])}</span></li></ul>${m.busy ? `<p class="making" role="status" id="try-ai-making"><span class="dot wait"></span>${COPY.simple.making}</p>` : ''}</div>`;
 }
 
 /**
@@ -163,11 +164,12 @@ export function homeScreen(m: HomeModel): string {
     <h1 id="hope">${esc(S.hope(m.name))}</h1>
     <button type="button" class="btn needs" data-act="needs">${SIGN.grid}<span><b>${S.needs}</b><small>${esc(S.needsSub(m.name))}</small></span></button>
     ${m.turnHtml ?? ''}
+    ${m.tryHtml ?? ''}
     ${howBlock(m.name, m.howOpen)}
     ${m.laterHtml ?? ''}
   </div>
   <div class="col">
-    <div class="stack"><h2 class="sec">${S.topicsHeading}</h2>${topicGrid(m)}${m.tryHtml ?? ''}</div>
+    <div class="stack"><h2 class="sec">${S.topicsHeading}</h2>${topicGrid(m)}</div>
     <form id="ask" class="s-ask"><h2 class="sec">${S.ownHeading}</h2>
       <div class="row"><input id="q" class="field" autocomplete="off" placeholder="${S.field}" aria-label="${S.ownHeading}" value="${esc(m.question)}">${m.micHtml}</div>
       ${m.voiceHtml}

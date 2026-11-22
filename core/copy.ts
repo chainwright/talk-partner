@@ -357,6 +357,11 @@ const COPY = {
     tryAi: {
       label: 'See the AI at work',
       sub: 'A sample harder question. Only this question is used, nothing from About them, and the answers are not kept.',
+      /** Phase 12 (judge round 9): the two-line strip under the button, above the fold. Each line is what the code does (core/simple.ts aiPlace; web/src/ai/firebaseEngine.ts). */
+      // (no product names on the carer's screens, tests/unit/copy.test.ts: "Google's AI" is Gemini in the cloud, "Chrome's own AI" is Gemini Nano)
+      strip: ["Phone: Google's AI, online, after your yes", "Laptop with Chrome's own AI: nothing is sent"] as [string, string],
+      /** The strip's lines in full, as the strip's title (the same facts). */
+      stripLong: "On a phone the choices come from Google's AI online, only after your yes, and only this question is sent, nothing from About them. On a laptop with Chrome's own AI they are made on the laptop, and nothing is sent.",
       tag: { ask: "uses Google's AI, after your yes", cloudOn: "uses Google's AI (online help is on)", device: 'AI on this computer: nothing is sent', offline: 'needs internet: you are offline', checking: 'needs AI' } as Record<string, string>,
     },
     /** Phase 8: on Home after "later", until it is asked again or done (core/later.ts). */
