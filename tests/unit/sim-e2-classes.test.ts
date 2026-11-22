@@ -268,7 +268,9 @@ describe('E2-4. "How are you feeling?": the way out of good / so-so / bad leads 
         const page = card.nextPage!;
         expect(answers(page)).toEqual(['sad', 'tired', 'in pain']);
         expect(page.choices.filter((c) => c.role === 'escape').map((c) => c.label)).toEqual(['something else']);
-        expect(page.nextPage ?? null).toBeNull();
+        // (phase 12: a third page, worried / lonely / "I can't go on", whose own way out is the real one)
+        expect(answers(page.nextPage!)).toEqual(['worried', 'lonely', "I can't go on"]);
+        expect(page.nextPage!.nextPage ?? null).toBeNull();
         expect(page.say).toContain('Sad, tired, in pain, or something else?');
         expect(card.notes).toContain(COPY.notes.feelingMore('sad, tired, in pain', 'something else'));
         expect(badgeKind(card)).toBe('code');

@@ -464,6 +464,8 @@ const COPY = {
       yes: 'Yes',
       no: 'No, something else',
       thanks: 'Thank you.',
+      /** Phase 12: after the crisis choice, the person is thanked for saying it (core/copy12.ts). */
+      thanksTold: 'Thank you for telling me.',
       done: (label: string) => `${label.charAt(0).toUpperCase()}${label.slice(1)}.`,
       give: 'Give the computer back',
       recap: 'So far:',

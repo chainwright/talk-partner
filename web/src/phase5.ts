@@ -8,6 +8,7 @@ import { COPY } from '../../core/copy';
 import { P5 } from '../../core/copy5';
 import { dayText } from '../../core/diary';
 import { telHref } from '../../core/redflag';
+import { P12 } from '../../core/copy12';
 import { P9 } from '../../core/copy9';
 import { SINCE_QUESTIONS, isoDay, type Since } from '../../core/since';
 import type { DiaryEntry } from '../../core/diary';
@@ -42,6 +43,29 @@ export function suddenScreen(m: { number: string; guess?: boolean }): string {
   <p class="tip" id="sudden-not">${S.notSudden}</p>
   <p class="tip" id="sudden-number">${esc(S.number(m.number))} <button type="button" class="tlink" data-act="sudden-number">${S.change} →</button></p>
   <p class="lock" id="sudden-source">${SIGN.lock}<span>${S.source}</span></p>
+</main>`;
+}
+
+/**
+ * Phase 12 (judge round 9): the person chose "I can't go on". On the carer's answer screen, a box (an alert): take it
+ * seriously and stay, the emergency number, the crisis line where there is one, and "What to do now" (the screen).
+ */
+export function crisisBox(m: { name: string; number: string; line: string; guess?: boolean }): string {
+  const K = P12.crisis;
+  return `<div class="urgent crisis" id="crisis-box" role="alert">${ALERT}<div><b>${esc(K.box(m.name))}</b><div class="urgent-acts">${callButton(m.number)}${m.line ? `<a class="btn call" data-call="1" href="${telHref(m.line)}">${PHONE}<span>${esc(K.callLine(m.line))}</span></a>` : ''}<a class="tlink" href="#/crisis">${K.open} →</a></div>${guessLine(!!m.guess, 'crisis-guess')}</div></div>`;
+}
+/** The calm safety screen after "I can't go on": fixed steps, two call buttons, what the list is and is not. No AI anywhere in it. */
+export function crisisScreen(m: { name: string; number: string; line: string; lineGuess: boolean; numberGuess: boolean }): string {
+  const K = P12.crisis;
+  const lineBtn = m.line ? `<a class="btn call big second" data-call="1" href="${telHref(m.line)}">${PHONE}<span>${esc(K.callLine(m.line))}</span></a>` : '';
+  const steps = [K.stay(m.name), K.danger(m.name, m.number), m.line ? K.line(m.name, m.line) : K.noLine(m.name), K.ask(m.name), K.no, K.means, K.tell(m.name)];
+  return `<main class="simple wrap one sudden crisis-screen" data-screen="crisis">${navBar({ back: true })}
+  <div><h1 id="crisis-h">${esc(K.heading(m.name))}</h1><p class="sub" id="crisis-lead">${esc(K.lead(m.name))}</p></div>
+  ${callButton(m.number, true)}${guessLine(m.numberGuess, 'crisis-number-guess')}
+  ${lineBtn}${m.line && m.lineGuess ? `<p class="tip number-guess" id="crisis-line-guess">${K.lineGuess} <button type="button" class="tlink" data-act="sudden-number">${P9.number.change} →</button></p>` : ''}
+  <section class="fast" id="crisis-steps" aria-labelledby="crisis-steps-h"><h2 class="sec" id="crisis-steps-h">${K.open}</h2>
+    <ol class="fast-list">${steps.map((x, i) => `<li><b>${i + 1}</b><span>${esc(x)}</span></li>`).join('')}</ol></section>
+  <p class="lock" id="crisis-source">${SIGN.lock}<span>${K.source}</span></p>
 </main>`;
 }
 

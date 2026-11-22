@@ -26,6 +26,7 @@ import { dayText, diaryText, eventGroups, guessTopic, inSpan, spanRange, tags, t
 import { HEALTH_TOGGLES, NO_HEALTH, hasHealth, insights, type HealthNotes, type Insight } from './insights';
 import type { Learned } from './prefs';
 import { DEFAULT_NUMBER } from './redflag';
+import { P12 } from './copy12';
 import { careAnswer } from './reliability';
 import { agoWords, laterPain } from './later';
 
@@ -186,10 +187,13 @@ export function handoverText(m: HandoverShare): string {
     tablets.length ? K.hTablets(listed(tablets.map((e) => shortWhen(e.at)))) : K.hNoTablets,
   ];
   const usual = handoverUsual(m.learned);
+  // (phase 12) "I can't go on" in the last 24 hours: at the very top, with whom to call
+  const crisis = entries.filter((e) => has(e, 'crisis'));
   const open = [...(m.open ?? [])].sort((a, b) => a.at - b.at).map((x) => K.hOpenItem(x.q.trim(), shortWhen(x.at), agoWords(x.at, m.now), !!x.pain || laterPain(x.q), number));
   return [
     K.stamp(stampWhen(m.now)),
     ...(urgent ? [K.call(number, K.whereHandover)] : []),
+    ...(crisis.length ? [P12.crisis.handover(listed(crisis.map((e) => shortWhen(e.at))), number)] : []),
     ...(open.length ? ['', K.hOpen, ...open] : []),
     '',
     K.hTitle(m.name, shortWhen(from), shortWhen(m.now)),

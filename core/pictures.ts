@@ -5,6 +5,7 @@
 import { BODY_DETAIL, BODY_REGIONS, findPerson, isPartnerName } from './rules';
 import { pictureWord } from './strip';
 import type { PictureRef, Profile } from './types';
+import { crisisAnswer } from './redflag';
 
 /** Ids of the bundled pictures (our SVG drawings and, since 20 Nov 2026, pictures made with Gemini; source, date and licence or terms of each in PICTOGRAMS.md). */
 export const BUILTIN = new Set([
@@ -67,6 +68,8 @@ export const SYNONYM: Record<string, string> = {
 export function pictureFor(label: string, profile: Profile, asked = ''): PictureRef {
   const l = label.toLowerCase().trim();
   if (/^(?:open|closed)$/.test(l) && /\bcurtains?\b/i.test(asked)) return { type: 'builtin', id: `curtains ${l}` };
+  // the crisis choice is the words alone, never a cartoon
+  if (crisisAnswer(label)) return { type: 'word' };
   // and "a little" on the pain scale is the mild face, not the bar of an amount
   if (l === 'a little' && /\b(?:pain|hurt|hurts|sore)\b/i.test(asked)) return { type: 'builtin', id: 'pain mild' };
   if (BUILTIN.has(l)) return { type: 'builtin', id: l };

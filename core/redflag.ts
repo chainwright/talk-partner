@@ -59,6 +59,23 @@ const SIGNS = /\b(?:breath|breathe|breathing|chest|headache|weak|weakness|numb|n
 const STRONG = /^(?:quite bad|very bad)$/;
 export const WRONG_TILE = "something's wrong";
 
+// Phase 12 (judge round 9, still open from round 8): the person's own way to say it. "I can't go on" is the third
+// page of the feelings card; the carer gets the crisis box and, on giving the phone back, the safety screen
+// (web/src/phase5.ts crisisScreen). The word is here so that this file still imports nothing.
+export const CRISIS = "I can't go on";
+export const crisisAnswer = (label: string) => label.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim() === "i can't go on";
+/**
+ * The crisis line a locale most likely means, for the safety screen while About them holds no helpline of the
+ * family's own: only lines we are sure of (988 in the US and Canada, Samaritans 116 123 in the UK and Ireland,
+ * Lifeline 13 11 14 in Australia, 1737 in New Zealand). Elsewhere none: the screen says to call the doctor or nurse
+ * now and where to put a line; no number is made up.
+ */
+const CRISIS_LINES: Record<string, string> = { US: '988', CA: '988', GB: '116 123', UK: '116 123', IE: '116 123', AU: '13 11 14', NZ: '1737' };
+export function crisisLine(locale: unknown): string {
+  const region = String(locale ?? '').trim().replace(/_/g, '-').split('-')[1] ?? '';
+  return CRISIS_LINES[region.toUpperCase()] ?? '';
+}
+
 /** True when the box belongs over this answer. `asked` is the question as the card showed it; `label` the answer. */
 export function urgentAnswer(asked: string, label: string): boolean {
   const q = lc(asked);

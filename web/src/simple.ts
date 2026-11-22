@@ -20,6 +20,7 @@ import type { MadeWhere } from '../../core/simple';
 import type { Topic, TopicId } from '../../core/topics';
 import type { Card, Choice, Profile } from '../../core/types';
 import { decoPicto } from './pictos';
+import { crisisAnswer } from '../../core/redflag';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
@@ -232,7 +233,7 @@ export function personSimple(m: PersonModel): string {
   if (m.less) return `${hold}<p class="p-ask alone">${esc(c.asked)}</p>`;
   if (m.picked && m.confirmed) {
     // the finish: "Thank you. Tea." and the way to hand the phone back; never a dead end, never only a press and hold
-    return `<div class="p-done" role="status">${DONE}<p class="p-do">${P.thanks}</p><div class="p-pick">${m.pic(m.picked)}<p class="p-big">${esc(P.done(m.picked.label))}</p></div></div>
+    return `<div class="p-done" role="status">${DONE}<p class="p-do">${crisisAnswer(m.picked.label) ? P.thanksTold : P.thanks}</p><div class="p-pick">${m.pic(m.picked)}<p class="p-big">${esc(P.done(m.picked.label))}</p></div></div>
       ${m.full ? `<button type="button" class="p-give" data-act="give-back">${P.give}</button>` : ''}`;
   }
   if (m.picked) {

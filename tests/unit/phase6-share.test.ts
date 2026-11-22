@@ -189,7 +189,7 @@ describe('no photo and no data URL', () => {
   it('the builder cannot reach a photo: core/share.ts imports no photo module, no store, no profile and no engine, and takes no photo', () => {
     const src = read('core/share.ts');
     // (phase 12: './later', for the "STILL OPEN" block's time and pain words; it imports only './reliability')
-    for (const i of imports('core/share.ts')) expect(['./copy', './copy5', './copy6', './diary', './insights', './later', './prefs', './redflag', './reliability'], i).toContain(i);
+    for (const i of imports('core/share.ts')) expect(['./copy', './copy12', './copy5', './copy6', './diary', './insights', './later', './prefs', './redflag', './reliability'], i).toContain(i);
     expect(imports('core/later.ts')).toEqual(['./reliability']);
     expect(src).not.toMatch(/import[^;]*photo/i);
     expect(src).not.toMatch(/fetch\(|XMLHttpRequest|sendBeacon|WebSocket|navigator\.|indexedDB|localStorage/);

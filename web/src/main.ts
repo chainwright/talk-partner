@@ -55,7 +55,7 @@ import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Li
 import { P5 } from '../../core/copy5';
 import { FALL_HEAD } from '../../core/diary';
 import { CARE_TOPICS } from '../../core/reliability';
-import { DEFAULT_NUMBER, WRONG_TILE, emergencyNumber, localeNumber, numberSet, urgentAnswer, urgentAny } from '../../core/redflag';
+import { DEFAULT_NUMBER, WRONG_TILE, crisisAnswer, crisisLine, emergencyNumber, localeNumber, numberSet, urgentAnswer, urgentAny } from '../../core/redflag';
 import { fromIsoDay, pickedQuestions, sinceLines, sinceText, toggleQuestion } from '../../core/since';
 import { SpeakCache, isPcm, pcmRate, pcmToWav, speakText, speakable } from '../../core/speak';
 import { P6 } from '../../core/copy6';
@@ -64,7 +64,7 @@ import { ABOUT_LEADS, aboutWhatCard, moreCard, moreChoices, moreSubject, outWays
 import { understoodBlock } from './phase7';
 import { aboutLearned, familyText, handoverText, riskyNotes } from '../../core/share';
 import { handoverLink, shareSheet } from './phase6';
-import { fallBlock, hearButton, laterPainHtml, lowHelpLine, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenLink, suddenScreen, urgentBox } from './phase5';
+import { crisisBox, crisisScreen, fallBlock, hearButton, laterPainHtml, lowHelpLine, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenLink, suddenScreen, urgentBox } from './phase5';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
@@ -90,7 +90,7 @@ const C = COPY;
 const dw = (text: string) => deviceWords(text, copyDevice());
 
 /** 'trial' is the hidden stopwatch for devlog/TRIAL_PROTOCOL.md: reachable only by typing #/trial, never linked. */
-type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'feedback' | 'trial' | 'diary' | 'visit' | 'phototalk' | 'sudden' | 'practice' | 'passport';
+type Route = 'partner' | 'welcome' | 'about' | 'cloud' | 'person' | 'how' | 'feedback' | 'trial' | 'diary' | 'visit' | 'phototalk' | 'sudden' | 'crisis' | 'practice' | 'passport';
 
 interface Settings {
   cloudHelp: boolean;
@@ -333,6 +333,8 @@ function route(): Route {
   if (h === 'visit') return 'visit';
   if (h === 'phototalk') return 'phototalk';
   if (h === 'sudden') return 'sudden';
+  // (phase 12) the safety screen after the person's "I can't go on"
+  if (h === 'crisis') return 'crisis';
   if (h === 'practice') return 'practice';
   if (h === 'passport') return 'passport';
   if (h === 'feedback') return 'feedback';
@@ -473,7 +475,7 @@ function backStep(from: string): string | null {
     if (to) { putSnap(to); return to.route; }
   }
   // nothing under this screen (it was opened by its own address, or after a reload): the screen it belongs to
-  if (from === 'sudden') return '';
+  if (from === 'sudden' || from === 'crisis') return '';
   if (from === 'passport' && p8.page) { p8.page = false; return from; }
   if (from === 'visit' || from === 'phototalk') { if (from === 'phototalk' && state.p4.talk) { state.p4.talk = null; return from; } return ''; }
   // the alphabet goes back to the carer's screen it was opened from; the visit questions go back to their page
@@ -697,6 +699,8 @@ const voiceFailedHtml = () => (p5.voiceFailed ? `<p class="warn" id="voice-faile
  */
 const callNumber = () => emergencyNumber(state.health.emergency, state.demo ? DEFAULT_NUMBER : localeNumber(navigator.language));
 const numberGuess = () => !state.demo && !numberSet(state.health.emergency);
+/** Phase 12: the crisis line of the safety screen: the family's own helpline (About them), else the region's where we know one (the sample family is American: 988). */
+const crisisLineNow = () => (state.health.helpline ?? '').trim() || (state.demo ? '988' : crisisLine(navigator.language));
 /** Read aloud can run here at all: a copy with project settings, and never the sample family. */
 const canSpeak = () => !!state.engine.speak && state.engine.cloudConfigured && !state.demo;
 const speakOn = () => canSpeak() && !!state.settings.speak;
@@ -1446,6 +1450,8 @@ function choseLine(c: Card, p: Choice): string {
 function afterAnswer(c: Card, p: Choice, button: string): string {
   // (after "show me", "write it" or "draw" the screen goes on: the carer types what they understood, or goes back to the ways)
   if (p.role === 'repair') return `<p class="say">${esc(C.repair.lines[p.label] ?? '')}</p>${([C.repair.tiles.showMe, C.repair.tiles.writeIt, C.repair.tiles.draw] as string[]).includes(p.label) ? understoodBlock(state.profile.personName.trim()) : ''}`;
+  // (phase 12) the person chose "I can't go on": the crisis box comes first, in both views
+  if (p.role === 'answer' && crisisAnswer(p.label)) return crisisBox({ name: state.profile.personName.trim(), number: callNumber(), line: crisisLineNow(), guess: numberGuess() });
   if (c.kind !== 'needs') return '';
   // (phase 12, judge round 9: "Where does it hurt?" is the main button, and the call box carries the number and a real button)
   const where = p.label === 'pain' ? `<p><button class="${button} primary" id="need-where" data-q="${esc(C.needs.painQuestion)}">${esc(C.needs.painQuestion)}</button></p>${urgentBox(callNumber(), 'need-urgent', numberGuess())}` : '';
@@ -2055,7 +2061,7 @@ function render(lifted = false) {
   // the route goes on #app with a prefix: a bare "person" or "welcome" class made #app pick up the card pane's frame
   // and the welcome padding (the thin frame around the full-screen card, DESIGN_DIRECTIONS "must fix")
   // the diary is a carer's screen of the simple view, whichever view the rest is in
-  const simple = (simpleView() && (r === 'partner' || r === 'about')) || r === 'diary' || r === 'visit' || r === 'phototalk' || r === 'sudden' || r === 'practice' || r === 'passport';
+  const simple = (simpleView() && (r === 'partner' || r === 'about')) || r === 'diary' || r === 'visit' || r === 'phototalk' || r === 'sudden' || r === 'crisis' || r === 'practice' || r === 'passport';
   // (phase 7) the box for the needs and pain answers is off again once the page was left; the passport opens on its lines
   if (r !== 'practice') p8.health = false;
   if (r !== 'passport') p8.page = false;
@@ -2071,7 +2077,7 @@ function render(lifted = false) {
   const fresh = key !== lastKey;
   if (r !== 'person') stopSound();
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone, health: state.backupHealth })}`, numberHtml: numberField(state.health.emergency, state.health.helpline ?? ''), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber(), guess: numberGuess() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone, health: state.backupHealth })}`, numberHtml: numberField(state.health.emergency, state.health.helpline ?? ''), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber(), guess: numberGuess() }) : r === 'crisis' ? crisisScreen({ name: state.profile.personName.trim(), number: callNumber(), line: crisisLineNow(), lineGuess: !state.demo && !(state.health.helpline ?? '').trim(), numberGuess: numberGuess() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   keepGuard();
   if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);
@@ -2509,7 +2515,7 @@ function act(el: HTMLElement) {
     case 'how': state.settings.howFolded = !(state.settings.howFolded ?? true); saveSettings(); render(); document.querySelector<HTMLElement>('#how[data-act], #how [data-act=how]')?.focus({ preventScroll: true }); break;
     case 'topic': { const id = el.dataset.topic as TopicId; state.topicOpen = state.topicOpen === id ? null : id; render(); document.querySelector<HTMLElement>(`.topic[data-topic="${id}"]`)?.focus({ preventScroll: true }); break; }
     // the finish screen's button: the phone goes back to the carer, who sees the answer
-    case 'give-back': lift = true; if (state.p4.visitEnd) { state.p4.visitEnd = false; state.p4.visitRun = false; resetCard(); go('visit'); } else if (state.card?.kind === 'needs' && state.confirmed && state.picked?.label === WRONG_TILE) go('sudden'); else go(''); break; // (the board's "something's wrong" leads the carer straight to "Something new or sudden?")
+    case 'give-back': lift = true; if (state.p4.visitEnd) { state.p4.visitEnd = false; state.p4.visitRun = false; resetCard(); go('visit'); } else if (state.card?.kind === 'needs' && state.confirmed && state.picked?.label === WRONG_TILE) go('sudden'); else if (state.confirmed && crisisAnswer(state.picked?.label ?? '')) go('crisis'); else go(''); break; // (the board's "something's wrong" leads the carer straight to "Something new or sudden?")
     // ---- phase 4: the first letter, the person starts, before a doctor visit, talk about a photo
     case 'letter': {
       const c = state.card;

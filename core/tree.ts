@@ -17,6 +17,8 @@
 import { HOW_BAD, LIMB, WEAK_NUMB, WHAT_BOTHERS, WHERE_HURTS, WHICH_SIDE, awayNames, ownQuestions } from './topics';
 export { WEAK_NUMB } from './topics';
 import { EMPTY_PROFILE, type Card, type Profile } from './types';
+import { P12 } from './copy12';
+import { crisisAnswer } from './redflag';
 
 /** A conversation is at most this many questions deep: the topic question and two that narrow it down. */
 export const TREE_DEPTH = 3;
@@ -241,6 +243,10 @@ const TREE: Record<string, Node> = {
     tired: { next: [LIE_DOWN], end: 'Tired. Help {them} to rest.' },
     'in pain': { next: [WHERE_HURTS], end: 'In pain. Ask where it hurts, and tell the nurse or doctor.' },
     'something else': { next: [BOTHERING], end: SHOW },
+    // (phase 12: the third page of the feelings card)
+    worried: { next: [BOTHERING], end: 'Worried. Stay near, and ask what it is about, one small question at a time.' },
+    lonely: { next: [COMPANY], end: 'Lonely. Stay a while, and ask who {they} would like to see or call.' },
+    "i can't go on": { end: P12.crisis.end },
   },
   'is something bothering you': {
     yes: { next: [WHAT_BOTHERS], end: 'Something is bothering {them}. Ask what it is about: the body, people, or plans.' },
@@ -416,6 +422,8 @@ function shaped(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string):
     return { next: sided ? [HOW_BAD, WHICH_SIDE] : [HOW_BAD], end: `It hurts here: ${where}. Tell the nurse or doctor where, and ask how bad it is.` };
   }
   if (card.kind === 'feeling' && l === 'in pain') return { next: [WHERE_HURTS], end: 'In pain. Ask where it hurts, and tell the nurse or doctor.' };
+  // (phase 12) the crisis choice: no next question; the red box and the safety screen carry what to do
+  if (crisisAnswer(label)) return { end: P12.crisis.end };
   const yn = (yes: string, thing: string): Raw | null => (l === 'yes' ? { end: yes } : l === 'no' ? { end: `Not ${thing} now. That is fine.` } : l === 'not sure' ? { end: 'Not sure. Ask again later.' } : null);
   let m: RegExpMatchArray | null;
   // (phase 10) the questions after "I want to talk about…" a person or a place (core/turn.ts, talkLead)

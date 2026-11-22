@@ -355,3 +355,75 @@ describe('D13. "Stop waiting": the footer agrees with the line above it', () => 
     expect(main).toContain('stopped: p9stopped');
   });
 });
+
+describe('D14. A crisis choice for the person: "I can\'t go on" leads the carer at once to a calm safety screen', () => {
+  const env = async () => { const { NullEngine } = await import('../../core/engine'); const { EMPTY_PROFILE } = await import('../../core/types'); return { profile: EMPTY_PROFILE, support: 'more' as const, engine: new NullEngine(), allowCloud: false, deviceReady: false }; };
+  it('the feelings card: a third page "worried / lonely / I can\'t go on", the crisis choice as a word tile, no cartoon', async () => {
+    const { makeCard } = await import('../../core/pipeline');
+    const { CRISIS } = await import('../../core/redflag');
+    const c = await makeCard('How are you feeling today?', await env());
+    const p3 = c.nextPage?.nextPage;
+    expect(p3?.choices.map((x) => x.label)).toEqual(['worried', 'lonely', CRISIS, 'something else']);
+    expect(p3?.choices.find((x) => x.label === CRISIS)?.picture).toEqual({ type: 'word' });
+    expect(CRISIS).toBe("I can't go on");
+  });
+  it('the local crisis line by region; the family\'s own helpline wins; none made up for a region we do not know', async () => {
+    const { crisisLine } = await import('../../core/redflag');
+    expect(crisisLine('en-US')).toBe('988');
+    expect(crisisLine('en-CA')).toBe('988');
+    expect(crisisLine('en-GB')).toBe('116 123');
+    expect(crisisLine('en-IE')).toBe('116 123');
+    expect(crisisLine('en-AU')).toBe('13 11 14');
+    expect(crisisLine('en-NZ')).toBe('1737');
+    expect(crisisLine('de-DE')).toBe('');
+    expect(crisisLine('xx')).toBe('');
+  });
+  it('the carer\'s box and the safety screen: stay, the emergency number, the crisis line, what to ask, never "try later"', async () => {
+    const { crisisBox, crisisScreen } = await import('../../web/src/phase5');
+    const box = crisisBox({ name: 'Frank', number: '911', line: '988', guess: true });
+    expect(box).toContain('role="alert"');
+    expect(box).toContain('href="tel:911"');
+    expect(box).toContain('href="tel:988"');
+    expect(box).toContain('href="#/crisis"');
+    const s = crisisScreen({ name: 'Frank', number: '911', line: '988', lineGuess: true, numberGuess: false });
+    const un = (h: string) => h.replace(/<[^>]+>/g, ' ').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ');
+    const text = un(s);
+    expect(text).toContain('Stay with Frank');
+    expect(text).toMatch(/Do not leave Frank alone/);
+    expect(text).toMatch(/call 911 now/);
+    expect(text).toMatch(/call 988 now/);
+    expect(text).toMatch(/A "no" does not end it/);
+    expect(text).toMatch(/Tell Frank's doctor or nurse today/);
+    expect(text).toMatch(/No doctor or nurse has checked this wording/);
+    // the health worst case: nothing that lets a carer put it off
+    expect(text).not.toMatch(/\b(?:later|try again|another time|not now|wait and see)\b/i);
+    expect(s).toContain('href="tel:911"');
+    expect(s).toContain('href="tel:988"');
+    // with no line for the region: the doctor or nurse now, and where to put a line, never a number made up
+    const none = un(crisisScreen({ name: '', number: '112', line: '', lineGuess: false, numberGuess: true }));
+    expect(none).toMatch(/call their doctor or nurse now/);
+    expect(none).not.toMatch(/988|116 123/);
+  });
+  it('the tree ends there; the person reads "Thank you for telling me."; the diary counts it as a low day and the week names it', async () => {
+    const { after } = await import('../../core/tree');
+    const { EMPTY_PROFILE } = await import('../../core/types');
+    const { CRISIS } = await import('../../core/redflag');
+    const s = after({ asked: 'How are you feeling today?', kind: 'feeling' }, CRISIS, { ...EMPTY_PROFILE, personName: 'Frank' }, ['How are you feeling today?']);
+    expect(s.next).toEqual([]);
+    expect(s.end).toMatch(/Take it seriously\. Stay with Frank now/);
+    const e = ans('How are you feeling today?', CRISIS, 5);
+    expect(tags(e)).toEqual(expect.arrayContaining(['low-mood', 'crisis']));
+    const line = insights([...calm, e], NO_HEALTH, 'week', NOW, '911').find((l) => l.id === 'crisis');
+    expect(line).toMatchObject({ level: 'call', urgent: true, local: true });
+    expect(line?.act).toMatch(/call 911 now/);
+    const { COPY } = await import('../../core/copy');
+    expect(COPY.simple.person.thanksTold).toBe('Thank you for telling me.');
+  });
+  it('the web client: the box after the answer, and the give-back opens the safety screen', async () => {
+    const { readFileSync } = await import('node:fs');
+    const main = readFileSync(new URL('../../web/src/main.ts', import.meta.url), 'utf8');
+    expect(main).toContain("if (h === 'crisis') return 'crisis';");
+    expect(main).toMatch(/crisisAnswer\(state\.picked\?\.label \?\? ''\)\) go\('crisis'\)/);
+    expect(main).toMatch(/if \(p\.role === 'answer' && crisisAnswer\(p\.label\)\) return crisisBox\(/);
+  });
+});

@@ -8,7 +8,7 @@ import { cloudTimedOut, within, type CloudError, type Engine } from './engine';
 import { pictureFor } from './pictures';
 import { cloudPrompt, devicePrompt } from './prompt';
 import {
-  BODY_DETAIL, BODY_REGIONS, FEELING_MORE, FEELING_SCALES, isSelfFeeling, PAIN_LEVELS, choiceCap, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
+  BODY_DETAIL, BODY_REGIONS, FEELING_LAST, FEELING_MORE, FEELING_SCALES, isSelfFeeling, PAIN_LEVELS, choiceCap, dropBoth, dropGenericWhere, escapeFor, feelingSubtype, figures, fitFilter, hasNegative,
   heuristicTopic, householdFilter, isEscapeLabel, PAIN_ESCAPE, isQuiz, quizKind, offersOptions, wholePair, codePairRead, orHeadline, questionType, quizRephrase, validateOptions, validTopic, inventedNameFilter, isAuxYesNo, isBodyWhere, isFeelingQuestion, isOrNot, isPainLevel, isPartnerName,
   contactPool, dropGenericWho, fromAboutMe, ownFirst, ownSpecific, placesFirst, isUnguessable, isUnseenContact, madeUpVariants, orPair, plainPair, overlapFilter, recognitionPool, route, scaleLevel, snapToProfile, sourceFill, spokenLine, splitQuestion, stripVocative, timeScaleFilter,
   besideOwnFilter, codeOptions, contactFirst, dropWhichOne, fillerFilter, whenChoices, isNoneOption, leadIn, listedAnswers, withSame, noticeLead, numberScale, orList, painNumbers, plainQuestion, selfFilter, wrongListFilter, yesNoTopic,
@@ -380,6 +380,11 @@ export function assemble(
       // in code like the scale itself; its own way out is the real one.
       const page = finish({ ...base, source: 'code', topic: card.topic, kind, subtype, notes: [N.lastPage] }, [...FEELING_MORE], ['something else'], profile, support, FEELING_MORE.length);
       page.why = card.why;
+      // (phase 12) and a third page: worried, lonely, and "I can't go on"; its own way out is the real one
+      page.notes = [];
+      const last = finish({ ...base, source: 'code', topic: card.topic, kind, subtype, notes: [N.lastPage] }, [...FEELING_LAST], ['something else'], profile, support, FEELING_LAST.length);
+      last.why = card.why;
+      page.nextPage = last;
       card.nextPage = page;
       card.notes.push(N.feelingMore(FEELING_MORE.join(', '), 'something else'));
     }

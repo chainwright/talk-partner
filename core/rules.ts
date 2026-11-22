@@ -1211,6 +1211,11 @@ export function isSelfFeeling(q: string): boolean {
 }
 /** The feelings a good-to-bad scale does not hold, offered on its next page for such a question (set E, second run: "a bit sad"). */
 export const FEELING_MORE = ['sad', 'tired', 'in pain'];
+/**
+ * Phase 12 (judge round 9): the third page of "How are you feeling?": two more low feelings, and the person's own way
+ * to say the worst, "I can't go on" (a word tile, no cartoon), which brings the carer the crisis box and screen.
+ */
+export const FEELING_LAST = ['worried', 'lonely', "I can't go on"];
 
 /** Rule 5. Which scale a feeling question gets. */
 export function feelingSubtype(q: string, profile?: Profile): FeelingSubtype {

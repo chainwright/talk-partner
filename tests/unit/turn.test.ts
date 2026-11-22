@@ -136,7 +136,9 @@ describe('boundaries', () => {
   it('core/turn.ts reaches no engine and no network', () => {
     const src = readFileSync(join(ROOT, 'core/turn.ts'), 'utf8');
     expect([...src.matchAll(/^import .* from '([^']+)';$/gm)].map((x) => x[1]).sort()).toEqual(['./copy10', './copy4', './topics', './tree', './types']);
-    expect([...readFileSync(join(ROOT, 'core/tree.ts'), 'utf8').matchAll(/^import .* from '([^']+)';$/gm)].map((x) => x[1]).sort()).toEqual(['./topics', './types']);
+    expect([...readFileSync(join(ROOT, 'core/tree.ts'), 'utf8').matchAll(/^import .* from '([^']+)';$/gm)].map((x) => x[1]).sort()).toEqual(['./copy12', './redflag', './topics', './types']);
+    // (phase 12: the crisis words and their check; both files import nothing)
+    for (const f of ['core/copy12.ts', 'core/redflag.ts']) expect(readFileSync(join(ROOT, f), 'utf8'), f).not.toMatch(/^import /m);
     expect(src).not.toMatch(/fetch\(|engine\.|firebase/);
   });
   it('safety: what the person started is never counted by the answer check, and its line never stands on those screens', () => {

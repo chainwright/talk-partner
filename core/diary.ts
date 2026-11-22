@@ -12,6 +12,7 @@
 
 import { P10 } from './copy10';
 import { guardExempt } from './reliability';
+import { crisisAnswer } from './redflag';
 import type { TopicId } from './topics';
 
 /** The carer's one-tap log. */
@@ -152,7 +153,7 @@ export function dayWord(day: number, now: number): '' | 'Today' | 'Yesterday' {
 }
 
 // ---------------------------------------------------------------- what an entry counts as (for the insights)
-export type Tag = 'drink' | 'food' | 'sweet' | 'toilet' | 'sleep' | 'bad-sleep' | 'pain' | 'tired' | 'fall' | 'fall-head' | 'tablets' | 'low-mood' | 'strong-pain' | 'place-pain';
+export type Tag = 'drink' | 'food' | 'sweet' | 'toilet' | 'sleep' | 'bad-sleep' | 'pain' | 'tired' | 'fall' | 'fall-head' | 'tablets' | 'low-mood' | 'strong-pain' | 'place-pain' | 'crisis';
 
 const DRINK = /^(?:tea|coffee|water|juice|milk|a drink|drink|squash|cocoa|hot chocolate|lemonade|a cup of tea|a glass of water)$/;
 const SWEET = /\b(?:sweet|sweets|biscuit|biscuits|cake|chocolate|ice cream|pudding|dessert|candy|cookie|cookies|jam|honey|toffee|doughnut|pastry|pie)\b/;
@@ -209,6 +210,8 @@ export function tags(e: DiaryEntry): Tag[] {
   // (phase 8) a low day: "sad", "bad", "low" or "down" to a question about how the person feels (not about a photo);
   // (phase 12) and worried, scared, lonely, a yes to "Is something bothering you?", an answer to "What worries you most?"
   if (lowMood(q, l)) out.push('low-mood');
+  // (phase 12) the person's crisis choice, wherever it was chosen
+  if (crisisAnswer(l)) out.push('crisis');
   return out;
 }
 
