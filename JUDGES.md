@@ -66,7 +66,7 @@ meal?" → snack → "something sweet or something savoury?"), and a path ends o
 them a sweet snack."); `core/tree.ts`, walked answer by answer in `tests/unit/tree.test.ts`. *What it learns:* after
 three confirmed answers to the same question the carer sees "Usually: coffee (3 of 3)" and that choice first; it is
 counting, not AI, the app never sends it anywhere, and About them lists every learned line with "Remove" (`core/prefs.ts`).
-*Pictures:* 90 colour pictures made with Gemini (20 Nov, 14 of them made again or added on 22 Nov; reviewed by a person, generated offline and bundled, no model call at run time) and our own colour drawings for the rest (`PICTOGRAMS.md` names the source of each), and the family's own photos first wherever a choice is the photo's word; no AI
+*Pictures:* 91 colour pictures made with Gemini (20 Nov, 16 of them made again or added on 22 Nov; reviewed by a person, generated offline and bundled, no model call at run time) and our own colour drawings for the rest (`PICTOGRAMS.md` names the source of each), and the family's own photos first wherever a choice is the photo's word; no AI
 looks at a photo to put it on a card (the one place a model may be shown a photo is phase 4's "Talk about a photo",
 on the device only, after the carer's tap), and no background is removed (a segmentation model would be AI inference outside Firebase AI
 Logic, so it was not built). *Back and Home* stand at the top of every carer screen. None of this adds a model call:

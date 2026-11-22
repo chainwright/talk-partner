@@ -1,13 +1,13 @@
 // Built-in pictures: simple, realistic colour pictures (design/IMAGES_RESEARCH_2026-11-17.md: real-object colours,
 // one object per picture, plain background, light shading, no scenes; no emoji, no clip art, no 3D, no animation).
 // Since 20 Nov 2026 the set is mixed (PICTOGRAMS.md has the source of every picture):
-// - 90 pictures were made with Google's Gemini (gemini-3.1-flash-image, in Google AI Studio, on 20 and 22 Nov 2026,
+// - 91 pictures were made with Google's Gemini (gemini-3.1-flash-image, in Google AI Studio, on 20 and 22 Nov 2026,
 //   generated once and bundled: no model is asked for a picture at run time) and reviewed by a person: small WebP files in
 //   web/public/pictures/ (256 x 256, white background), listed in `IMAGE_IDS`. The prompt of each is in
 //   devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json. They are shown as an <img> with the word as its text.
 // - The rest are drawn by us as SVG on a 96 x 96 grid, in one style: a dark outline of 3 (so every picture stands out
 //   on the white card whatever its fill), flat real-object colours, one lighter or darker patch for shading, round
-//   joins: yes, no, the amount scale, this one / that one, show me, change topic, okay, someone else, morning,
+//   joins: yes, no, the amount scale, this one / that one, change topic, okay, someone else, morning,
 //   just right, something else, the body map, the monogram, and the controls. Those stayed drawn because the drawing
 //   is clearer (an abstract idea, a scale) or a hand sign could offend; "something else", the way out, keeps our
 //   dashed frame on every card so it never looks like a choice (the Gemini "?" was too close to "not sure").
@@ -226,7 +226,7 @@ export const MIC_STOP = control('<rect x="28" y="28" width="40" height="40" rx="
 export const PICTO_IDS = [...Object.keys(P), ...BODY_PARTS.map((b) => `body:${b}`), 'monogram'];
 
 /**
- * The ids shown as a picture made with Gemini (20 Nov 2026; 14 made again or added on 22 Nov), the same list as
+ * The ids shown as a picture made with Gemini (20 Nov 2026; 16 made again or added on 22 Nov), the same list as
  * devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json (tests/unit/pictures.test.ts checks both, and the files).
  */
 export const IMAGE_IDS: readonly string[] = ['not sure', 'somewhere else', 'good', 'bad', 'tasty', 'plain', 'too salty', 'good idea', 'leave it', 'like them', 'unhappy', 'listen', 'tea', 'coffee', 'change', 'wait', 'stop', 'write it', 'more', 'draw', 'later', 'tired', 'worried', "something's wrong", 'fall', 'tablets', 'pain',
@@ -234,8 +234,8 @@ export const IMAGE_IDS: readonly string[] = ['not sure', 'somewhere else', 'good
   'hot meal', 'cold meal', 'bed', 'chair', 'tv', 'music', 'news', 'film', 'radio', 'paper', 'photos', 'now', 'afternoon', 'stay in', 'go out', 'open', 'closed', 'glasses', 'hearing aid', 'company', 'time alone', 'walk', 'garden', 'drive', 'wash', 'exercises', 'plans', 'quiet',
   // (phase 12, 22 Nov 2026)
   'curtains open', 'curtains closed', 'church',
-  // (phase 12b, 22 Nov 2026: the pain scale's three faces)
-  'pain mild', 'pain medium', 'pain strong'];
+  // (phase 12b, 22 Nov 2026: the pain scale's three faces; show me, an angled finger with the thumb visible)
+  'pain mild', 'pain medium', 'pain strong', 'show me'];
 const IMAGES = new Set(IMAGE_IDS);
 /** The file of a picture, as the manifest names it: the id with every run of other characters made "_". */
 export const imageFile = (id: string) => `pictures/${id.replace(/[^a-z0-9]+/g, '_')}.webp`;

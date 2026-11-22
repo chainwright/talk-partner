@@ -1,0 +1,8 @@
+{
+ "pain_mild": "a simple round face showing mild pain, Faces Pain Scale style: eyebrows slightly raised at the inner ends, mouth a flat straight line, eyes open, no teeth, not angry, soft skin tone",
+ "pain_quite_bad": "a simple round bald face with no hair, same flat style as a smiley, showing quite bad pain, Faces Pain Scale style: inner eyebrows raised and drawn together, eyes half closed, mouth turned down, no teeth, not angry, soft peach skin tone, thick dark outline",
+ "pain_very_bad": "a simple round face showing very bad pain, Faces Pain Scale style: eyes squeezed shut, inner eyebrows raised, open down-turned grimacing mouth, a tear, not laughing, not angry, soft skin tone",
+ "pain": "a whole adult figure from the front, clearly in pain: wincing face with eyes squeezed, body hunched, both hands held to the body, red pain marks",
+ "wait": "a simple hourglass with sand flowing",
+ "show_me": "a hand pointing forward at an angle toward a small blank card, index finger extended, thumb clearly visible, other fingers curled, friendly"
+}

@@ -106,9 +106,9 @@
  },
  "wait": {
   "file": "pictures/wait.webp",
-  "prompt": "a raised open hand, palm forward, meaning wait",
+  "prompt": "a simple hourglass with sand flowing",
   "model": "gemini-3.1-flash-image",
-  "date": "2026-11-20",
+  "date": "2026-11-22",
   "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "stop": {
@@ -183,7 +183,7 @@
  },
  "pain": {
   "file": "pictures/pain.webp",
-  "prompt": "an adult seen from the FRONT, face clearly wincing in pain, one hand pressed to their side, small red pain marks around the hand",
+  "prompt": "a whole adult figure from the front, clearly in pain: wincing face with eyes squeezed, body hunched, both hands held to the body, red pain marks",
   "model": "gemini-3.1-flash-image",
   "date": "2026-11-22",
   "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
@@ -625,6 +625,13 @@
  "pain strong": {
   "file": "pictures/pain_strong.webp",
   "prompt": "a simple round face showing very bad pain, Faces Pain Scale style: eyes squeezed shut, inner eyebrows raised, open down-turned grimacing mouth, a tear, not laughing, not angry, soft skin tone",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
+ },
+ "show me": {
+  "file": "pictures/show_me.webp",
+  "prompt": "a hand pointing forward at an angle toward a small blank card, index finger extended, thumb clearly visible, other fingers curled, friendly",
   "model": "gemini-3.1-flash-image",
   "date": "2026-11-22",
   "tool": "Google AI Studio, generated offline, bundled; no model call at run time"

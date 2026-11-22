@@ -112,3 +112,18 @@ describe('5. After "something else", where the AI step goes online (a phone), it
     expect(await html(['where', 'needs', 'letter', 'show', 'narrow'])).toEqual(['way-where', 'way-needs', 'letter-go', 'show-write', 'narrow']);
   });
 });
+
+describe('6. The pictures of round 9b: pain (the whole body), wait (an hourglass), show me (an angled finger)', () => {
+  it('show me is a picture made with Gemini now; wait and pain are made again on 22 Nov; the files are the ones in r9b_regen', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { builtinPicto } = await import('../../web/src/pictos');
+    const root = new URL('../../', import.meta.url);
+    const manifest = JSON.parse(readFileSync(new URL('devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json', root), 'utf8')) as Record<string, { file: string; prompt: string; date: string }>;
+    expect(builtinPicto('show me')).toContain('src="/pictures/show_me.webp"');
+    for (const [id, file, word] of [['pain', 'pain', /whole adult figure/], ['wait', 'wait', /hourglass/], ['show me', 'show_me', /thumb clearly visible/]] as const) {
+      expect(manifest[id].date, id).toBe('2026-11-22');
+      expect(manifest[id].prompt, id).toMatch(word);
+      expect(readFileSync(new URL(`web/public/pictures/${file}.webp`, root)).equals(readFileSync(new URL(`devlog/quota_probe_2026-11-20/r9b_regen/${file}.webp`, root))), id).toBe(true);
+    }
+  });
+});
