@@ -437,3 +437,11 @@ describe('D16. "Try it with the Millers" from the first screen', () => {
     expect(COPY.simple.sampleSub).toBe('Made-up names: nothing of yours is used or changed.');
   });
 });
+
+describe('a guard for the stylesheet (phase 12: an edit of item 10 once dropped the rules after it)', () => {
+  it('simple.css still has the person\'s top row, the "Not now" button and the later block\'s rules', async () => {
+    const { readFileSync } = await import('node:fs');
+    const css = readFileSync(new URL('../../web/src/simple.css', import.meta.url), 'utf8');
+    for (const sel of ['.pv .p-top { display: flex;', '.pv .p-notnow {', '.simple .later-item .later-signs {', '.simple .try-ai-btn .tag {', '.simple .foot .sample-link {']) expect(css, sel).toContain(sel);
+  });
+});

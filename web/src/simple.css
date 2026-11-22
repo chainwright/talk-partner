@@ -718,6 +718,19 @@
 .simple .try-ai-btn b { font-size: 18px; }
 .simple .try-ai-btn .tq-q { font-size: 17px; }
 .simple .try-ai .tip { margin: 0; }
+/* phase 9: the person's own "Not now": small and quiet, on the top row opposite the carer's press and hold, never a choice */
+.pv .p-top { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
+/* One row whatever the font: before the web font arrives (or with large system text) the hint wraps inside its own
+   44 px button instead of pushing "Not now" to a second row (live e23b493: 44 -> 94 px, the escape tile below the fold). */
+.pv .p-top .hold { flex: 1 1 auto; min-width: 0; line-height: 1.15; }
+.pv .p-notnow { margin-left: auto; min-height: 44px; padding: 4px 14px; border: 2px solid var(--muted); border-radius: 12px; background: transparent; color: var(--ink); font-family: inherit; font-size: 18px; font-weight: 600; cursor: pointer; flex: none; white-space: nowrap; }
+.pv .p-notnow:focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
+
+/* phase 12: under a pain question left for later, the signs that do not wait and the call button; how long ago */
+.simple .later-item .later-ago { margin: 0; }
+.simple .later-item .later-signs { display: grid; gap: 8px; }
+.simple .later-item .later-signs p { margin: 0; font-weight: 600; }
+.simple .later-item .later-signs .urgent-acts { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
 /* phase 12: "See the AI at work" sits above the fold, compact: the label and the tag on the button, two short lines under it */
 .simple .try-ai { margin-top: 0; gap: 4px; }
 .simple .try-ai-btn { padding: 8px 12px; align-items: center; }
