@@ -699,6 +699,18 @@ const voiceFailedHtml = () => (p5.voiceFailed ? `<p class="warn" id="voice-faile
  */
 const callNumber = () => emergencyNumber(state.health.emergency, state.demo ? DEFAULT_NUMBER : localeNumber(navigator.language));
 const numberGuess = () => !state.demo && !numberSet(state.health.emergency);
+/**
+ * Phase 12: after "I can't go on", the phone given back opens the safety screen, with the carer's answer screen (its red
+ * box) under it, so Back from the safety screen lands there and not on the person's card.
+ */
+function toCrisis() {
+  // the simple view draws at once (no hashchange); the full view changes the hash and draws on its event
+  // (no lift animation here: its draw would come after the second step, and the answer screen would never be drawn)
+  lift = false;
+  if (simpleView()) { go(''); go('crisis'); return; }
+  window.addEventListener('hashchange', () => go('crisis'), { once: true });
+  go('');
+}
 /** Phase 12: the crisis line of the safety screen: the family's own helpline (About them), else the region's where we know one (the sample family is American: 988). */
 const crisisLineNow = () => (state.health.helpline ?? '').trim() || (state.demo ? '988' : crisisLine(navigator.language));
 /** Read aloud can run here at all: a copy with project settings, and never the sample family. */
@@ -1839,7 +1851,7 @@ function simpleScreen(): string {
       invite: state.inviteFor === c && !state.inviteOff,
       today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
       made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),
-      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber(), 'urgent', numberGuess()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) ? lowHelpLine(state.profile.personName.trim(), state.health.helpline ?? '', callNumber()) : ''}${turnHtml()}`,
+      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber(), 'urgent', numberGuess()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), state.health.helpline ?? '', callNumber()) : ''}${turnHtml()}`,
       outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
       // after the way out: the ways to find out what it is, in the rules' order; a step the rules make comes first
       ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),
@@ -2515,7 +2527,7 @@ function act(el: HTMLElement) {
     case 'how': state.settings.howFolded = !(state.settings.howFolded ?? true); saveSettings(); render(); document.querySelector<HTMLElement>('#how[data-act], #how [data-act=how]')?.focus({ preventScroll: true }); break;
     case 'topic': { const id = el.dataset.topic as TopicId; state.topicOpen = state.topicOpen === id ? null : id; render(); document.querySelector<HTMLElement>(`.topic[data-topic="${id}"]`)?.focus({ preventScroll: true }); break; }
     // the finish screen's button: the phone goes back to the carer, who sees the answer
-    case 'give-back': lift = true; if (state.p4.visitEnd) { state.p4.visitEnd = false; state.p4.visitRun = false; resetCard(); go('visit'); } else if (state.card?.kind === 'needs' && state.confirmed && state.picked?.label === WRONG_TILE) go('sudden'); else if (state.confirmed && crisisAnswer(state.picked?.label ?? '')) go('crisis'); else go(''); break; // (the board's "something's wrong" leads the carer straight to "Something new or sudden?")
+    case 'give-back': lift = true; if (state.p4.visitEnd) { state.p4.visitEnd = false; state.p4.visitRun = false; resetCard(); go('visit'); } else if (state.card?.kind === 'needs' && state.confirmed && state.picked?.label === WRONG_TILE) go('sudden'); else if (state.confirmed && crisisAnswer(state.picked?.label ?? '')) toCrisis(); else go(''); break; // (the board's "something's wrong" leads the carer straight to "Something new or sudden?")
     // ---- phase 4: the first letter, the person starts, before a doctor visit, talk about a photo
     case 'letter': {
       const c = state.card;

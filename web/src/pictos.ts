@@ -117,7 +117,7 @@ const P: Record<string, string> = {
   // to red, the word under each; the bars stay for amounts of food or drink
   'pain mild': face('#cfe8a0', '<path d="M36 64c8-4 16-4 24 0" stroke-width="4"/>', `<circle cx="36" cy="42" r="3.5" fill="${OUTLINE}" stroke="none"/><circle cx="60" cy="42" r="3.5" fill="${OUTLINE}" stroke="none"/><path d="M29 32l10 3M67 32l-10 3" stroke-width="3"/>`),
   'pain medium': face('#f6b04a', '<path d="M34 68c8-8 20-8 28 0" stroke-width="4"/>', `<circle cx="36" cy="44" r="3.5" fill="${OUTLINE}" stroke="none"/><circle cx="60" cy="44" r="3.5" fill="${OUTLINE}" stroke="none"/><path d="M28 31l12 6M68 31l-12 6" stroke-width="4"/>`),
-  'pain strong': face('#e8574a', `<path d="M34 62h28v6a9 9 0 01-9 9H43a9 9 0 01-9-9z" fill="${C.white}"/><path d="M34 69h28" stroke-width="2"/>`, '<path d="M28 38l10 5-10 5M68 38l-10 5 10 5" stroke-width="4"/><path d="M26 28l14 6M70 28l-14 6" stroke-width="4"/>'),
+  'pain strong': face('#e8574a', `<path d="M34 62h28v6a9 9 0 01-9 9H43a9 9 0 01-9-9z" fill="${C.white}"/><path d="M34 69h28" stroke-width="2"/>`, '<path d="M28 38l10 5-10 5M68 38l-10 5 10 5" stroke-width="4"/><path d="M26 30c4-4 10-5 14-3M70 30c-4-4-10-5-14-3" stroke-width="3"/>'),
   // (phase 12) the person's "I need something": the four squares of the needs button on Home, in colour
   needs: `<rect x="12" y="12" width="32" height="32" rx="7" fill="${C.blue}"/><rect x="52" y="12" width="32" height="32" rx="7" fill="${C.green}"/><rect x="12" y="52" width="32" height="32" rx="7" fill="${C.amber}"/><rect x="52" y="52" width="32" height="32" rx="7" fill="${C.red}"/>`,
   // (phase 12) the person's "I feel…": three small faces, glad, so-so and low, so it never opens on one answer
