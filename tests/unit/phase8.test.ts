@@ -15,8 +15,8 @@ describe('1. Safety (P0 6): the visit page never says "none entered" under an ow
   it('a "low" own answer to the mood question counts as a low day, and the line says so', () => {
     const s = sinceLines(calm, when(0, '00:00'), NOW, [own('mood', 'How have you been feeling in yourself?', 'low')], 'Frank');
     const mood = s.lines.find((l) => l.startsWith('Mood'))!;
-    expect(mood).toBe('Mood: "sad", "bad" or "low" on 1 day (Sun 22 Nov), counting Frank\'s own answer above.');
-    expect(s.lines.join(' ')).not.toMatch(/no "sad"/);
+    expect(mood).toBe('Mood: low or worried on 1 day (Sun 22 Nov), counting Frank\'s own answer above.');
+    expect(s.lines.join(' ')).not.toMatch(/no low or worried/);
     // no name: "their", never a guessed he or she
     expect(sinceLines(calm, when(0, '00:00'), NOW, [own('mood', 'How have you been feeling in yourself?', 'low')]).lines.join(' ')).toContain('counting their own answer above');
   });
@@ -37,7 +37,7 @@ describe('1. Safety (P0 6): the visit page never says "none entered" under an ow
     const s = sinceLines([], null, NOW, [own('pain', 'Are you in pain?', 'yes'), own('mood', 'How have you been feeling in yourself?', 'low')], 'Frank');
     expect(s.any).toBe(true);
     expect(s.lines.join(' ')).toContain('Pain: chosen or logged on 1 day');
-    expect(s.lines.join(' ')).toContain('Mood: "sad", "bad" or "low" on 1 day');
+    expect(s.lines.join(' ')).toContain('Mood: low or worried on 1 day');
   });
   it('the same day in the diary and in the own answers counts once', () => {
     const s = sinceLines([...calm, ans('How are you feeling today?', 'sad', 6, '09:00')], when(0, '00:00'), NOW, [own('mood', 'How have you been feeling in yourself?', 'low')], 'Frank');
@@ -46,7 +46,7 @@ describe('1. Safety (P0 6): the visit page never says "none entered" under an ow
   it('good answers count nothing, and "no" to pain is not a pain day', () => {
     const s = sinceLines(calm, when(0, '00:00'), NOW, [own('pain', 'Are you in pain?', 'no'), own('mood', 'How have you been feeling in yourself?', 'good'), own('sleep', 'How have you been sleeping?', 'well')], 'Frank');
     expect(s.lines.join(' ')).toContain('Pain: none entered.');
-    expect(s.lines.join(' ')).toContain('Mood: no "sad", "bad" or "low" day entered.');
+    expect(s.lines.join(' ')).toContain('Mood: no low or worried answer entered. That does not mean there was none: ask.');
     expect(s.lines.join(' ')).not.toContain('counting');
   });
   it('in the diary, "low" and every feelings question count as a low day; a photo that makes them sad does not count as mood', () => {

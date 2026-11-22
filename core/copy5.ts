@@ -102,7 +102,8 @@ export const P5 = {
     painAct: (number: string) => `Tell the doctor or nurse. If it is new or sudden, call ${number} now.`,
     noDrink: (d: string) => `No drink was chosen or logged on ${d}. If that is right, and not a gap in the diary, tell the doctor or nurse today.`,
     fewDrinksFluid: (d: string, n: number, several: boolean) => `Few drinks were entered on ${d}: ${n}${several ? ' each' : ''}. A fluid limit from the doctor is noted here: check the day against the doctor's plan.`,
-    mood: (n: number, span: string) => `"Sad", "bad" or "low" was the answer to a question about how they feel on ${days(n)} in the last ${span}.`,
+    // (phase 12, judge round 9: the line names what counts, so "worried" or "lonely" is not read as "not low")
+    mood: (n: number, span: string) => `A low or worried mood was chosen on ${days(n)} in the last ${span}: "sad", "low", "worried", "scared", "lonely", or something bothering them.`,
     moodBase: (d: string) => `Days: ${d}.`,
     // (phase 8, judge round 7: the crisis route, with the family's own helpline when one is set; the app invents no number)
     moodAct: (number: string, helpline = '') => `Talk to the GP or nurse about it. ${P5_HELP('', helpline, number)}`,
@@ -126,7 +127,7 @@ export const P5 = {
     falls: (n: number, d: string) => (n ? `Falls: ${n} logged (${d}).` : 'Falls: none logged.'),
     /** Phase 8 (judge round 7, the nurse's seat): with no dry day, the fewest drinks entered in one day, so a low day is not hidden. */
     drinks: (dry: number, withEntries: number, fewest?: { n: number; day: string }) => (withEntries ? `Drinks: on ${dry} of ${days(withEntries)} with entries, no drink was entered${fewest ? `; the fewest in one day: ${fewest.n} (${fewest.day})` : ''}.` : 'Drinks: no full day with entries in this time yet.'),
-    mood: (n: number, d: string, own = '') => (n ? `Mood: "sad", "bad" or "low" on ${days(n)} (${d})${counted(own)}.` : 'Mood: no "sad", "bad" or "low" day entered.'),
+    mood: (n: number, d: string, own = '') => (n ? `Mood: low or worried on ${days(n)} (${d})${counted(own)}.` : 'Mood: no low or worried answer entered. That does not mean there was none: ask.'),
     sleep: (n: number, d: string, own = '') => (n ? `Sleep: a bad night on ${days(n)} (${d})${counted(own)}.` : 'Sleep: no bad night entered.'),
     none: 'The diary holds nothing for this time.',
     qHeading: 'Questions for the doctor',

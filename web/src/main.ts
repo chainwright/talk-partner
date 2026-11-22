@@ -69,9 +69,9 @@ import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './tria
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
 import { P8 } from '../../core/copy8';
-import { LOW_MOOD, LOW_MOOD_Q, guessTopic, timeText } from '../../core/diary';
-/** Phase 8: "sad", "bad", "low" or "down" to a question about how the person feels (not a photo): the helpline line follows on the carer's side. */
-const lowMoodAnswer = (q: string, label: string) => LOW_MOOD_Q.test(q.trim().toLowerCase()) && !/\bphoto\b/i.test(q) && LOW_MOOD.test(label.trim().toLowerCase());
+import { guessTopic, lowMood, timeText } from '../../core/diary';
+/** Phase 8: a low answer to a question about how the person feels (not a photo): the helpline line follows on the carer's side. Phase 12: the diary's own rule (worried, scared, lonely, something bothering them). */
+const lowMoodAnswer = lowMood;
 import { addLater, cleanLater, doneLater, laterOf, noLastTime, shownLater, type Later } from '../../core/later';
 import { NO_PASSPORT, OFF_UNTIL_TICKED, cleanPassport, passport, passportText, toggleLine, OWN_MAX, type PassportInput, type PassportPrefs } from '../../core/passport';
 import { addEvent, cleanLog, lessSureCount, newLog, pickedPractice, practiceFlag, practiceReport, practiceText, practiceUrgent, togglePractice, type AskedBy, type PracticeEvent, type PracticeInput, type PracticeLog, type PracticeSpan, type Via } from '../../core/practice';
@@ -1996,7 +1996,7 @@ function visitView(): string {
   const m = sinceModel();
   const has = !!r && r.answers.length > 0;
   const urgent = has && (urgentAny(r.answers) || m.since.urgent);
-  const low = has && r.answers.some((a) => a.id === 'mood' && LOW_MOOD.test(a.label.trim().toLowerCase()));
+  const low = has && r.answers.some((a) => (a.id === 'mood' || a.id === 'worry') && lowMood(a.q, a.label));
   return visitScreen({ name: m.name, record: r, copied: state.p4.visitCopied, urgentHtml: `${urgent ? urgentBox(m.number, 'visit-urgent') : ''}${low ? lowHelpLine(m.name, state.health.helpline ?? '', m.number) : ''}`, sinceHtml: has ? sinceBlock(m) : '', controlsHtml: has ? sinceControls(m) : '' });
 }
 /** The questions about the picked photo: the rules' three, and one more when the on-device model named things in it. */

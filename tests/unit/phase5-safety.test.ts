@@ -186,7 +186,7 @@ describe('2d. what stands out', () => {
     const xs = insights([...day(0), sad(0), ...day(1), sad(1), ...day(3), sad(3)], NO_HEALTH, 'week', NOW);
     expect(ids(xs)).toEqual(['mood']);
     expect(xs[0]).toMatchObject({ level: 'mention', act: 'Talk to the GP or nurse about it. If they seem very low, or may harm themselves: call the doctor or nurse today, or a mental health helpline (you can put its number in About them, Health notes). If life is at risk, call 911 now.' });
-    expect(xs[0].text).toBe('"Sad", "bad" or "low" was the answer to a question about how they feel on 3 days in the last 7 days.');
+    expect(xs[0].text).toBe('A low or worried mood was chosen on 3 days in the last 7 days: "sad", "low", "worried", "scared", "lonely", or something bothering them.');
     expect(JSON.stringify(xs)).not.toMatch(/depress|diagnos|screen/i);
   });
   it('a fall is a line; with a blow to the head noted, the call box stands under it', () => {
@@ -365,7 +365,7 @@ describe('7. "Since the last visit": the diary\'s counts and up to three fixed q
       // (phase 9: the toilet and the tablets, as entered)
       'Toilet: none entered. That can be a gap: ask the family.',
       'Tablets taken: none logged. That can mean nobody tapped it.',
-      'Mood: "sad", "bad" or "low" on 1 day (Wed 18 Nov).',
+      'Mood: low or worried on 1 day (Wed 18 Nov).',
       'Sleep: a bad night on 1 day (Thu 19 Nov).',
     ]);
     expect(s.urgent).toBe(false);

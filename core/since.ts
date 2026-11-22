@@ -11,7 +11,7 @@
 import { P5 } from './copy5';
 import { P6 } from './copy6';
 import { P9 } from './copy9';
-import { byDay, dayStart, dayText, daysBefore, eventGroups, events, tags, type DiaryEntry } from './diary';
+import { byDay, dayStart, dayText, daysBefore, eventGroups, events, lowMood, tags, type DiaryEntry } from './diary';
 
 export const SINCE_DAYS = 30;
 export const SINCE_MAX_DAYS = 120;
@@ -53,7 +53,8 @@ const ownTags = (a: OwnAnswer): string[] => {
   const out: string[] = [];
   if ((a.id === 'pain' && l === 'yes') || (a.id === 'where' && !/^some(?:where|thing) else$|^not sure$/.test(l)) || (a.id === 'bad' && l !== 'not sure')) out.push('pain');
   if ((a.id === 'bad' && /^(?:quite bad|very bad)$/.test(l)) || (a.id === 'where' && /\b(?:head|chest)\b/.test(l))) out.push('hard');
-  if (a.id === 'mood' && /^(?:low|sad|bad|down)$/.test(l)) out.push('low');
+  // (phase 12) the mood question and "What worries you most?" by the diary's own rule (core/diary.ts, lowMood)
+  if ((a.id === 'mood' || a.id === 'worry') && lowMood(a.q, a.label)) out.push('low');
   if (a.id === 'sleep' && /^(?:badly|bad)$/.test(l)) out.push('night');
   return out;
 };

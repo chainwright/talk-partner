@@ -158,7 +158,27 @@ const DRINK = /^(?:tea|coffee|water|juice|milk|a drink|drink|squash|cocoa|hot ch
 const SWEET = /\b(?:sweet|sweets|biscuit|biscuits|cake|chocolate|ice cream|pudding|dessert|candy|cookie|cookies|jam|honey|toffee|doughnut|pastry|pie)\b/;
 /** Phase 8 (judge round 7): every feelings question counts, not only "How are you feeling today?"; and "low" counts. */
 export const LOW_MOOD_Q = /^how (?:are you|have you been|do you) feel(?:ing)?\b/;
-export const LOW_MOOD = /^(?:sad|bad|low|down)$/;
+export const LOW_MOOD = /^(?:sad|bad|low|down|very low|worried|scared|afraid|frightened|anxious|nervous|lonely|upset|fed up|hopeless|missing someone|i can't go on)$/;
+/** Phase 12 (judge round 9, a health P0): a question that asks what is wrong in the person's mind, not how they feel. */
+const BOTHER_Q = /\b(?:bothering|worried|worrying|worries|upset|the matter|on your mind)\b/;
+const NOT_A_WORRY = /^(?:no|nothing|nothing much|not sure|something else|someone else|somewhere else)$/;
+/**
+ * A low-mood answer (phase 12, judge round 9, a health P0: until now only "sad", "bad", "low" and "down" to a "how do
+ * you feel" question counted, so "worried", "scared", "lonely" or a yes to "Is something bothering you?" never reached
+ * the week's line or the visit page). Counts: a low or worried feeling to a question about how the person feels or what
+ * bothers them; a yes to "Is something bothering you?" (and its kin); any real answer to "What worries you most?". A
+ * photo that makes them sad is about the photo, not the day. Over-counting is the safe side: the line only says
+ * "talk to the GP or nurse", with the crisis route.
+ */
+export function lowMood(q: string, label: string): boolean {
+  const s = lc(q);
+  const l = lc(label).replace(/[\u2018\u2019]/g, "'");
+  if (/\bphoto\b/.test(s)) return false;
+  if (LOW_MOOD.test(l) && (LOW_MOOD_Q.test(s) || BOTHER_Q.test(s))) return true;
+  if (/^(?:is|are|has) (?:something|anything) (?:bothering|worrying|upsetting) you\b|^are you worried\b|^is something on your mind\b/.test(s) && l === 'yes') return true;
+  if (/^what worries you most\b/.test(s) && !NOT_A_WORRY.test(l)) return true;
+  return false;
+}
 const NOT_AN_ANSWER = /^(?:yes|no|not sure|something else|someone else|somewhere else)$/;
 const FOOD_Q = /\b(?:snack|meal|eat|sweet|savoury|breakfast|lunch|dinner|supper|pudding)\b/;
 
@@ -186,8 +206,9 @@ export function tags(e: DiaryEntry): Tag[] {
   // (the second step of the body card asks "Where in the chest?": a place chosen there is a pain entry too)
   if (/^where in the \w+\b/.test(q) && !/^some(?:where|thing) else$/.test(l) && !out.includes('pain')) out.push('pain');
   if ((/^where in the (?:head|chest)\b/.test(q) && !/^some(?:where|thing) else$/.test(l)) || (/^where does it hurt\b/.test(q) && /\b(?:head|chest)\b/.test(l))) out.push('place-pain');
-  // (phase 8) a low day: "sad", "bad", "low" or "down" to a question about how the person feels (not about a photo)
-  if (LOW_MOOD_Q.test(q) && !/\bphoto\b/.test(q) && LOW_MOOD.test(l)) out.push('low-mood');
+  // (phase 8) a low day: "sad", "bad", "low" or "down" to a question about how the person feels (not about a photo);
+  // (phase 12) and worried, scared, lonely, a yes to "Is something bothering you?", an answer to "What worries you most?"
+  if (lowMood(q, l)) out.push('low-mood');
   return out;
 }
 

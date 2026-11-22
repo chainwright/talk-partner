@@ -119,7 +119,7 @@ describe('2. P0 health: "Nothing stands out" never stands over a pain, a fall, a
   it('one low day', () => {
     const xs = insights([...calm, answerEntry({ q: 'How are you feeling?', label: 'low', at: when(2, '10:00') }, 'feel')], NO_HEALTH, 'week', NOW);
     expect(ids(xs)).toEqual(['mood']);
-    expect(xs[0].text).toBe('"Sad", "bad" or "low" was the answer to a question about how they feel on 1 day in the last 7 days.');
+    expect(xs[0].text).toBe('A low or worried mood was chosen on 1 day in the last 7 days: "sad", "low", "worried", "scared", "lonely", or something bothering them.');
   });
   it('"something\'s wrong", on the needs board or on a card: a line with whom to tell and the call box', () => {
     for (const e of [needEntry("something's wrong", when(2, '10:00')), answerEntry({ q: 'What is it?', label: "something's wrong", at: when(2, '10:00') }, 'body')]) {

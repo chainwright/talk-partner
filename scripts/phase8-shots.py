@@ -99,7 +99,7 @@ def rules(browser, url):
             page.locator('[data-confirm=yes]').click()
     e2e.give_back(page, 'main.visit #visit-page')
     vp = e2e.text(page, '#app')
-    check('visit page: with "low" and a yes to pain in Frank\'s own answers, no line says "none entered" or "no low day"', 'Pain: none entered' not in vp and 'no "sad", "bad" or "low" day' not in vp and "counting Frank's own answer above" in vp, vp[:900])
+    check('visit page: with "low" and a yes to pain in Frank\'s own answers, no line says "none entered" or "no low day"', 'Pain: none entered' not in vp and 'no low or worried answer' not in vp and "counting Frank's own answer above" in vp, vp[:900])
     check('visit page: under the "low" answer, the helpline line (none set: no number invented) and the emergency number', 'If Frank seems very low, or may harm themselves: call the doctor or nurse today, or a mental health helpline' in vp and 'If life is at risk, call 911 now.' in vp)
     shot(page, '03_visit_page_low_and_pain_counted_with_the_helpline_line')
     # the passport: the two fact lines off until ticked, the tired-yes line, no number set, the food line with diabetes noted
