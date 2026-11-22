@@ -81,7 +81,7 @@ function toChoices(answers: string[], escapes: string[], profile: Profile, asked
     const shown = isMe ? swap('you', 'your') : label;
     const spoken = isMe ? swap('me', 'my') : label;
     // "a lot (6 to 10)" keeps the picture of "a lot"
-    return { label: shown, spoken, role, picture: pictureFor(isMe ? 'you' : label.replace(/\s*\(\d[^)]*\)$/, ''), profile) };
+    return { label: shown, spoken, role, picture: pictureFor(isMe ? 'you' : label.replace(/\s*\(\d[^)]*\)$/, ''), profile, asked) };
   };
   return [...answers.map((a) => mk(a, 'answer')), ...escapes.map((e) => mk(e, 'escape'))];
 }

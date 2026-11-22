@@ -1,338 +1,611 @@
 {
  "not sure": {
   "file": "pictures/not_sure.webp",
-  "prompt": "a shrugging adult, shoulders up, palms up"
+  "prompt": "a shrugging adult, shoulders up, palms up",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "somewhere else": {
   "file": "pictures/somewhere_else.webp",
-  "prompt": "a signpost with arrows pointing different ways"
+  "prompt": "a signpost with arrows pointing different ways",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "good": {
   "file": "pictures/good.webp",
-  "prompt": "a thumbs-up hand"
+  "prompt": "a big friendly smiling face, simple yellow round face, happy",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "bad": {
   "file": "pictures/bad.webp",
-  "prompt": "a thumbs-down hand"
+  "prompt": "a simple round face that looks unwell and unhappy, frowning, pale green-grey tint",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "tasty": {
   "file": "pictures/tasty.webp",
-  "prompt": "a delicious steaming plate of roast dinner, appetising"
+  "prompt": "a delicious steaming plate of roast dinner, appetising",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "plain": {
   "file": "pictures/plain.webp",
-  "prompt": "a plain bowl of white rice"
+  "prompt": "a plain bowl of white rice",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "too salty": {
   "file": "pictures/too_salty.webp",
-  "prompt": "a salt shaker pouring too much salt on a plate"
+  "prompt": "a salt shaker pouring too much salt on a plate",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "good idea": {
   "file": "pictures/good_idea.webp",
-  "prompt": "a glowing yellow light bulb"
+  "prompt": "a glowing yellow light bulb",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "leave it": {
   "file": "pictures/leave_it.webp",
-  "prompt": "a hand pushing a plate away gently"
+  "prompt": "a hand pushing a plate away gently",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "like them": {
   "file": "pictures/like_them.webp",
-  "prompt": "a red heart"
+  "prompt": "a red heart",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "unhappy": {
   "file": "pictures/unhappy.webp",
-  "prompt": "an adult face with a sad frown"
+  "prompt": "an adult face with a sad frown",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "listen": {
   "file": "pictures/listen.webp",
-  "prompt": "a large ear with sound waves"
+  "prompt": "a large ear with sound waves",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "tea": {
   "file": "pictures/tea.webp",
-  "prompt": "a white china teacup on a white saucer, light amber-brown tea, a teabag string with a small green tag hanging over the rim, a little steam"
+  "prompt": "a white china teacup on a white saucer, light amber-brown tea, a teabag string with a small green tag hanging over the rim, a little steam",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "coffee": {
   "file": "pictures/coffee.webp",
-  "prompt": "a mug of black coffee with steam"
+  "prompt": "a mug of black coffee with steam",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "change": {
   "file": "pictures/change.webp",
-  "prompt": "two curved arrows forming a circle"
+  "prompt": "two curved arrows forming a circle",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "wait": {
   "file": "pictures/wait.webp",
-  "prompt": "a raised open hand, palm forward, meaning wait"
+  "prompt": "a raised open hand, palm forward, meaning wait",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "stop": {
   "file": "pictures/stop.webp",
-  "prompt": "a raised hand in front of a red circle, meaning stop"
+  "prompt": "a raised hand in front of a red circle, meaning stop",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "write it": {
   "file": "pictures/write_it.webp",
-  "prompt": "a hand writing with a pen on paper"
+  "prompt": "a hand writing with a pen on paper",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "more": {
   "file": "pictures/more.webp",
-  "prompt": "a plus sign on a plate"
+  "prompt": "a dinner plate with a second helping being added by a serving spoon, generous portion",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "draw": {
   "file": "pictures/draw.webp",
-  "prompt": "a pencil drawing a simple house on paper"
+  "prompt": "a pencil drawing a simple house on paper",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "later": {
   "file": "pictures/later.webp",
-  "prompt": "a clock with an arrow moving forward"
+  "prompt": "a clock with an arrow moving forward",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "tired": {
   "file": "pictures/tired.webp",
-  "prompt": "a tired adult face yawning with heavy eyes"
+  "prompt": "a tired adult face yawning with heavy eyes",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "worried": {
   "file": "pictures/worried.webp",
-  "prompt": "a worried adult face with furrowed brow"
+  "prompt": "a worried adult face with furrowed brow",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "something's wrong": {
   "file": "pictures/something_s_wrong.webp",
-  "prompt": "a yellow warning triangle with an exclamation mark"
+  "prompt": "a yellow warning triangle with an exclamation mark",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "fall": {
   "file": "pictures/fall.webp",
-  "prompt": "an elderly adult who has fallen on the floor beside a chair"
+  "prompt": "an elderly adult who has fallen on the floor beside a chair",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "tablets": {
   "file": "pictures/tablets.webp",
-  "prompt": "two white tablets and a small orange pill bottle"
+  "prompt": "two white tablets and a small orange pill bottle",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "pain": {
   "file": "pictures/pain.webp",
-  "prompt": "a grey human silhouette holding their lower back with a red pain mark"
+  "prompt": "an adult seen from the FRONT, face clearly wincing in pain, one hand pressed to their side, small red pain marks around the hand",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "spouse": {
   "file": "pictures/spouse.webp",
-  "prompt": "an older married couple, warm portrait"
+  "prompt": "an older husband and wife side by side, wedding rings clearly visible on their joined hands, warm",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "child": {
   "file": "pictures/child.webp",
-  "prompt": "a grown-up son and daughter, adult children, portrait"
+  "prompt": "an older parent with a grown-up adult son, the parent noticeably older with grey hair, the son about 40",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "sibling": {
   "file": "pictures/sibling.webp",
-  "prompt": "a brother and sister, adults, portrait"
+  "prompt": "two sisters of similar age, both about 60, looking alike, smiling together over an open family photo album",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "grandchild": {
   "file": "pictures/grandchild.webp",
-  "prompt": "a young grandchild smiling"
+  "prompt": "a young grandchild smiling",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "friend": {
   "file": "pictures/friend.webp",
-  "prompt": "two adult friends smiling side by side"
+  "prompt": "two adult friends of different appearance clinking coffee cups and laughing",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "neighbour": {
   "file": "pictures/neighbour.webp",
-  "prompt": "an adult waving over a garden fence"
+  "prompt": "an adult waving over a garden fence",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "carer": {
   "file": "pictures/carer.webp",
-  "prompt": "a carer in a blue tunic smiling"
+  "prompt": "a carer in a blue tunic smiling",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "nurse": {
   "file": "pictures/nurse.webp",
-  "prompt": "a nurse in a uniform with a stethoscope"
+  "prompt": "a nurse in a uniform with a stethoscope",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "doctor": {
   "file": "pictures/doctor.webp",
-  "prompt": "a doctor in a white coat with a stethoscope"
+  "prompt": "a doctor in a white coat with a stethoscope",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "speech therapist": {
   "file": "pictures/speech_therapist.webp",
-  "prompt": "a speech therapist holding picture cards"
+  "prompt": "a speech therapist holding picture cards",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "physio": {
   "file": "pictures/physio.webp",
-  "prompt": "a physiotherapist helping someone stretch an arm"
+  "prompt": "a physiotherapist helping someone stretch an arm",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "priest": {
   "file": "pictures/priest.webp",
-  "prompt": "a priest in a black shirt with a white collar"
+  "prompt": "a priest in a black shirt with a white collar",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "family": {
   "file": "pictures/family.webp",
-  "prompt": "a family group of four adults and a child"
+  "prompt": "a family group of four adults and a child",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "visitor": {
   "file": "pictures/visitor.webp",
-  "prompt": "a person at an open front door holding flowers"
+  "prompt": "a person at an open front door holding flowers",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "toilet": {
   "file": "pictures/toilet.webp",
-  "prompt": "a white toilet seen from the front"
+  "prompt": "a white toilet seen from the front",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "drink": {
   "file": "pictures/drink.webp",
-  "prompt": "a glass with a straw"
+  "prompt": "a glass with a straw",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "food": {
   "file": "pictures/food.webp",
-  "prompt": "a plate with a fork and a simple meal"
+  "prompt": "a plate with a fork and a simple meal",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "too hot": {
   "file": "pictures/too_hot.webp",
-  "prompt": "a red thermometer with a sun"
+  "prompt": "a red thermometer with a sun",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "too cold": {
   "file": "pictures/too_cold.webp",
-  "prompt": "a shivering adult wrapped in a scarf, with a blue snowflake beside them"
+  "prompt": "a shivering adult wrapped in a scarf, with a blue snowflake beside them",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "call someone": {
   "file": "pictures/call_someone.webp",
-  "prompt": "a mobile phone with a call icon"
+  "prompt": "a mobile phone with a call icon",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "water": {
   "file": "pictures/water.webp",
-  "prompt": "a clear glass of water"
+  "prompt": "a clear glass of water",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "juice": {
   "file": "pictures/juice.webp",
-  "prompt": "a glass of orange juice"
+  "prompt": "a glass of orange juice",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "milk": {
   "file": "pictures/milk.webp",
-  "prompt": "a glass of milk and a milk carton"
+  "prompt": "a glass of milk and a milk carton",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "hot drink": {
   "file": "pictures/hot_drink.webp",
-  "prompt": "a steaming mug"
+  "prompt": "a steaming mug",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "cold drink": {
   "file": "pictures/cold_drink.webp",
-  "prompt": "a glass with ice cubes"
+  "prompt": "a glass with ice cubes",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "snack": {
   "file": "pictures/snack.webp",
-  "prompt": "a small plate with biscuits and an apple"
+  "prompt": "a small plate with biscuits and an apple",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "meal": {
   "file": "pictures/meal.webp",
-  "prompt": "a full dinner plate with meat, potatoes and vegetables"
+  "prompt": "a full dinner plate with meat, potatoes and vegetables",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "something sweet": {
   "file": "pictures/something_sweet.webp",
-  "prompt": "a slice of cake"
+  "prompt": "a slice of cake",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "something savoury": {
   "file": "pictures/something_savoury.webp",
-  "prompt": "a sandwich and crisps"
+  "prompt": "a sandwich and crisps",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "hot meal": {
   "file": "pictures/hot_meal.webp",
-  "prompt": "a steaming bowl of soup"
+  "prompt": "a steaming bowl of soup",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "cold meal": {
   "file": "pictures/cold_meal.webp",
-  "prompt": "a fresh salad bowl"
+  "prompt": "a fresh salad bowl",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "bed": {
   "file": "pictures/bed.webp",
-  "prompt": "a single bed with a pillow and blue blanket"
+  "prompt": "a single bed with a pillow and blue blanket",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "chair": {
   "file": "pictures/chair.webp",
-  "prompt": "a comfortable armchair"
+  "prompt": "a comfortable armchair",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "tv": {
   "file": "pictures/tv.webp",
-  "prompt": "a flat television"
+  "prompt": "a flat television",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "music": {
   "file": "pictures/music.webp",
-  "prompt": "headphones with music notes"
+  "prompt": "headphones with music notes",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "news": {
   "file": "pictures/news.webp",
-  "prompt": "a newspaper"
+  "prompt": "a newspaper",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "film": {
   "file": "pictures/film.webp",
-  "prompt": "a film clapperboard and popcorn"
+  "prompt": "a film clapperboard and popcorn",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "radio": {
   "file": "pictures/radio.webp",
-  "prompt": "an old-style radio"
+  "prompt": "an old-style radio",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "paper": {
   "file": "pictures/paper.webp",
-  "prompt": "an open hardback book"
+  "prompt": "an open hardback book",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "photos": {
   "file": "pictures/photos.webp",
-  "prompt": "a stack of printed family photos"
+  "prompt": "a stack of printed family photos",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "now": {
   "file": "pictures/now.webp",
-  "prompt": "a clock with a bright dot, meaning now"
+  "prompt": "a clock with a bright dot, meaning now",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "afternoon": {
   "file": "pictures/afternoon.webp",
-  "prompt": "a bright sun high in a blue sky, simple, no face"
+  "prompt": "a bright sun high in a blue sky, simple, no face",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "stay in": {
   "file": "pictures/stay_in.webp",
-  "prompt": "a cosy house with warm light"
+  "prompt": "a cosy house with warm light",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "go out": {
   "file": "pictures/go_out.webp",
-  "prompt": "an open front door with a path outside"
+  "prompt": "an open front door with a path outside",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "open": {
   "file": "pictures/open.webp",
-  "prompt": "an open door"
+  "prompt": "an open door",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "closed": {
   "file": "pictures/closed.webp",
-  "prompt": "a closed door"
+  "prompt": "a closed door",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "glasses": {
   "file": "pictures/glasses.webp",
-  "prompt": "a pair of reading glasses"
+  "prompt": "a pair of reading glasses",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "hearing aid": {
   "file": "pictures/hearing_aid.webp",
-  "prompt": "a behind-the-ear hearing aid"
+  "prompt": "a behind-the-ear hearing aid",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "company": {
   "file": "pictures/company.webp",
-  "prompt": "two people talking happily"
+  "prompt": "two people talking happily",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "time alone": {
   "file": "pictures/time_alone.webp",
-  "prompt": "one person relaxing in an armchair with a book"
+  "prompt": "one person relaxing in an armchair with a book",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "walk": {
   "file": "pictures/walk.webp",
-  "prompt": "a walking shoe next to a wooden walking stick"
+  "prompt": "a walking shoe next to a wooden walking stick",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "garden": {
   "file": "pictures/garden.webp",
-  "prompt": "a small garden with flowers"
+  "prompt": "a small garden with flowers",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "drive": {
   "file": "pictures/drive.webp",
-  "prompt": "a small car on a road"
+  "prompt": "a small car on a road",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "wash": {
   "file": "pictures/wash.webp",
-  "prompt": "a washbasin with tap, soap and towel"
+  "prompt": "a washbasin with tap, soap and towel",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "exercises": {
   "file": "pictures/exercises.webp",
-  "prompt": "a person doing a gentle arm stretch"
+  "prompt": "a person doing a gentle arm stretch",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "plans": {
   "file": "pictures/plans.webp",
-  "prompt": "a calendar page"
+  "prompt": "a calendar page",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "quiet": {
   "file": "pictures/quiet.webp",
-  "prompt": "a finger over lips, shh"
+  "prompt": "a finger over lips, shh",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-20",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
+ },
+ "curtains open": {
+  "file": "pictures/curtains_open.webp",
+  "prompt": "a window with curtains pulled open, daylight outside",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
+ },
+ "curtains closed": {
+  "file": "pictures/curtains_closed.webp",
+  "prompt": "a window with curtains drawn closed",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
+ },
+ "church": {
+  "file": "pictures/church.webp",
+  "prompt": "a small stone church building with a simple bell tower",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-22",
+  "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  }
 }

@@ -108,7 +108,8 @@ export function talkMenu(profile: Profile): Card {
   const pic = (x: TalkPick): Choice['picture'] => {
     if (x.kind === 'me') return { type: 'person', personId: null, initial: (own || 'M').charAt(0).toUpperCase() };
     if (x.kind === 'person') { const p = profile.people.find((y) => nameOf(y) === x.word); return { type: 'person', personId: p?.id ?? null, initial: x.word.charAt(0).toUpperCase() }; }
-    return { type: 'builtin', id: x.kind === 'news' ? 'news' : 'go out' };
+    // (phase 12, judge round 9: the church showed a garden door) a church is the church picture; any other place, going out
+    return { type: 'builtin', id: x.kind === 'news' ? 'news' : /\b(?:church|chapel|cathedral)\b/i.test(x.word) ? 'church' : 'go out' };
   };
   const ps = pages(talkItems(profile));
   let next: Card | null = topicMenu();

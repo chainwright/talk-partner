@@ -1,7 +1,8 @@
 // Built-in pictures: simple, realistic colour pictures (design/IMAGES_RESEARCH_2026-11-17.md: real-object colours,
 // one object per picture, plain background, light shading, no scenes; no emoji, no clip art, no 3D, no animation).
 // Since 20 Nov 2026 the set is mixed (PICTOGRAMS.md has the source of every picture):
-// - 84 pictures were made with Google's Gemini (gemini-3.1-flash-image) and reviewed by a person: small WebP files in
+// - 87 pictures were made with Google's Gemini (gemini-3.1-flash-image, in Google AI Studio, on 20 and 22 Nov 2026,
+//   generated once and bundled: no model is asked for a picture at run time) and reviewed by a person: small WebP files in
 //   web/public/pictures/ (256 x 256, white background), listed in `IMAGE_IDS`. The prompt of each is in
 //   devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json. They are shown as an <img> with the word as its text.
 // - The rest are drawn by us as SVG on a 96 x 96 grid, in one style: a dark outline of 3 (so every picture stands out
@@ -189,6 +190,10 @@ const P: Record<string, string> = {
   company: `${bust(30, C.blue, 0.85, 38)}${bust(66, C.orange, 0.85, 38)}<path d="M48 22c-5-4-8-6-8-10a4 4 0 018-1 4 4 0 018 1c0 4-3 6-8 10z" fill="${C.red}"/>`,
   'time alone': `<path d="M20 88V72M76 88V72" stroke="${C.woodDark}" stroke-width="6"/><path d="M24 30h48a6 6 0 016 6v38H18V36a6 6 0 016-6z" fill="${C.violet}"/>${bust(48, C.blue, 0.8, 36)}<rect x="8" y="56" width="14" height="22" rx="6" fill="${C.violet}"/><rect x="74" y="56" width="14" height="22" rx="6" fill="${C.violet}"/>`,
   walk: `<path d="M6 86h84" stroke="${C.leaf}" stroke-width="5"/><path d="M40 82l8-24 12 24" stroke="${C.navy}" stroke-width="8"/><path d="M44 34l-10 14M54 36l12 10" stroke="${C.skin}" stroke-width="6"/><path d="M40 30h16l-2 30H42z" fill="${C.orange}"/><circle cx="48" cy="18" r="9" fill="${C.skin}"/>`,
+  // (phase 12, 22 Nov 2026) the curtain question and the church: the drawings stand behind the pictures made with Gemini
+  'curtains open': `<rect x="14" y="16" width="68" height="64" fill="${C.sky}"/><path d="M14 80l20-18 14 10 12-8 22 16z" fill="${C.leaf}" stroke="none"/><path d="M48 16v64M14 48h68" stroke="${C.white}"/><rect x="14" y="16" width="68" height="64"/><path d="M8 12h80" stroke-width="5" stroke="${C.woodDark}"/><path d="M12 14c0 26 0 46 10 70H10V14zM84 14c0 26 0 46-10 70h12V14z" fill="${C.blue}"/>`,
+  'curtains closed': `<path d="M8 12h80" stroke-width="5" stroke="${C.woodDark}"/><path d="M10 14h38v70H10zM48 14h38v70H48z" fill="${C.navy}"/><path d="M20 16v66M30 16v66M40 16v66M58 16v66M68 16v66M78 16v66" stroke="${C.blueDark}"/><path d="M6 86h84" stroke="${C.grey}" stroke-width="4"/>`,
+  church: `<path d="M10 86h76" stroke="${C.grey}" stroke-width="4"/><path d="M16 52l22-18 22 18v34H16z" fill="${C.greyLight}"/><path d="M12 54l26-22 26 22" stroke="${C.redDark}" stroke-width="5"/><path d="M60 38h18v48H60z" fill="${C.steel}"/><path d="M57 40l12-16 12 16z" fill="${C.redDark}"/><path d="M69 8v14M63 13h12" stroke-width="3"/><path d="M32 86V68a6 6 0 0112 0v18z" fill="${C.wood}"/><circle cx="69" cy="52" r="4" fill="${C.sky}"/>`,
   garden: `<path d="M4 84h88" stroke="${C.woodDark}" stroke-width="5"/><path d="M48 84V46" stroke="${C.greenDark}" stroke-width="5"/><path d="M48 66c-14 0-18-8-18-14 10 0 18 4 18 14zM48 60c12 0 16-8 16-14-10 0-16 6-16 14z" fill="${C.leaf}"/><circle cx="48" cy="22" r="7" fill="${C.yellow}"/><circle cx="34" cy="26" r="8" fill="${C.red}"/><circle cx="62" cy="26" r="8" fill="${C.red}"/><circle cx="40" cy="38" r="8" fill="${C.red}"/><circle cx="56" cy="38" r="8" fill="${C.red}"/><circle cx="48" cy="14" r="8" fill="${C.red}"/><circle cx="48" cy="28" r="7" fill="${C.yellow}"/>`,
   drive: `<path d="M6 80h84" stroke="${C.grey}" stroke-width="4"/><path d="M8 62c0-8 4-12 12-12l8-18h34l12 18c8 0 14 4 14 12v8H8z" fill="${C.blue}"/><path d="M32 36h14v14H26zM52 36h8l9 14H52z" fill="${C.sky}"/><circle cx="28" cy="72" r="9" fill="${C.dark}"/><circle cx="70" cy="72" r="9" fill="${C.dark}"/><circle cx="28" cy="72" r="3" fill="${C.steel}" stroke="none"/><circle cx="70" cy="72" r="3" fill="${C.steel}" stroke="none"/>`,
   wash: `<path d="M12 44h72v14c0 14-11 24-26 24H38c-15 0-26-10-26-24z" fill="${C.white}"/><path d="M14 46h68v6H14z" fill="${C.water}" stroke="none"/><path d="M12 44h72v14c0 14-11 24-26 24H38c-15 0-26-10-26-24z"/><path d="M66 44V22a8 8 0 0116 0" stroke="${C.steel}" stroke-width="5"/><circle cx="30" cy="30" r="6" fill="${C.sky}"/><circle cx="44" cy="22" r="5" fill="${C.sky}"/><circle cx="50" cy="34" r="4" fill="${C.sky}"/>`,
@@ -210,12 +215,14 @@ export const MIC_STOP = control('<rect x="28" y="28" width="40" height="40" rx="
 export const PICTO_IDS = [...Object.keys(P), ...BODY_PARTS.map((b) => `body:${b}`), 'monogram'];
 
 /**
- * The ids shown as a picture made with Gemini (20 Nov 2026), the same list as
+ * The ids shown as a picture made with Gemini (20 Nov 2026; 11 made again or added on 22 Nov), the same list as
  * devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json (tests/unit/pictures.test.ts checks both, and the files).
  */
 export const IMAGE_IDS: readonly string[] = ['not sure', 'somewhere else', 'good', 'bad', 'tasty', 'plain', 'too salty', 'good idea', 'leave it', 'like them', 'unhappy', 'listen', 'tea', 'coffee', 'change', 'wait', 'stop', 'write it', 'more', 'draw', 'later', 'tired', 'worried', "something's wrong", 'fall', 'tablets', 'pain',
   'spouse', 'child', 'sibling', 'grandchild', 'friend', 'neighbour', 'carer', 'nurse', 'doctor', 'speech therapist', 'physio', 'priest', 'family', 'visitor', 'toilet', 'drink', 'food', 'too hot', 'too cold', 'call someone', 'water', 'juice', 'milk', 'hot drink', 'cold drink', 'snack', 'meal', 'something sweet', 'something savoury',
-  'hot meal', 'cold meal', 'bed', 'chair', 'tv', 'music', 'news', 'film', 'radio', 'paper', 'photos', 'now', 'afternoon', 'stay in', 'go out', 'open', 'closed', 'glasses', 'hearing aid', 'company', 'time alone', 'walk', 'garden', 'drive', 'wash', 'exercises', 'plans', 'quiet'];
+  'hot meal', 'cold meal', 'bed', 'chair', 'tv', 'music', 'news', 'film', 'radio', 'paper', 'photos', 'now', 'afternoon', 'stay in', 'go out', 'open', 'closed', 'glasses', 'hearing aid', 'company', 'time alone', 'walk', 'garden', 'drive', 'wash', 'exercises', 'plans', 'quiet',
+  // (phase 12, 22 Nov 2026)
+  'curtains open', 'curtains closed', 'church'];
 const IMAGES = new Set(IMAGE_IDS);
 /** The file of a picture, as the manifest names it: the id with every run of other characters made "_". */
 export const imageFile = (id: string) => `pictures/${id.replace(/[^a-z0-9]+/g, '_')}.webp`;

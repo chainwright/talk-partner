@@ -186,6 +186,7 @@ describe('pictogram provenance: PICTOGRAMS.md lists exactly what the code bundle
   const md = readFileSync(join(__dirname, '..', '..', 'PICTOGRAMS.md'), 'utf8');
   const rows = md.split('\n').filter((l) => /^\|\s*(?:[a-z]|body:)/.test(l)).map((l) => l.split('|').map((x) => x.trim())).filter((r) => r[1] !== 'id');
   const ids = rows.map((r) => r[1]);
+  const MANIFEST = JSON.parse(readFileSync(join(__dirname, '..', '..', 'devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json'), 'utf8')) as Record<string, { date: string; model: string; tool: string }>;
   // (20 Nov 2026, phase 11) the columns are id | shows | source | date | licence/terms: the set is mixed, our SVG
   // drawings (Apache-2.0) and the pictures made with Gemini (the Gemini API terms); it was id | shows | drawn | licence
   it('the same ids, each with its source, a 2026 date and its licence or terms', () => {
@@ -194,8 +195,9 @@ describe('pictogram provenance: PICTOGRAMS.md lists exactly what the code bundle
     for (const r of rows) {
       expect(r[4], r[1]).toMatch(/2026/);
       if (IMAGE_IDS.includes(r[1])) {
-        expect(r[3], r[1]).toBe('Generated with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`), reviewed by a person');
-        expect(r[4], r[1]).toBe('20 Nov 2026');
+        // (phase 12: the tool and "no model call at run time" are said on every row, and the date is the manifest's)
+        expect(r[3], r[1]).toBe('Generated with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`) in Google AI Studio, generated offline, bundled; no model call at run time; reviewed by a person');
+        expect(r[4], r[1]).toMatch(MANIFEST[r[1]].date === '2026-11-22' ? /^22 Nov 2026/ : /^20 Nov 2026$/);
         expect(r[5], r[1]).toBe('output used under the Gemini API terms; no copyright claimed by us beyond what applies');
       } else {
         expect(r[3], r[1]).toBe('drawn by us (SVG)');

@@ -25,6 +25,8 @@ export const BUILTIN = new Set([
   'bed', 'chair', 'tv', 'music', 'news', 'film', 'radio', 'paper', 'photos', 'now', 'morning', 'afternoon', 'stay in', 'go out',
   'open', 'closed', 'glasses', 'hearing aid', 'company', 'time alone', 'walk', 'garden', 'drive', 'wash', 'exercises', 'quiet', 'just right', 'plans',
   'spouse', 'child', 'sibling', 'grandchild', 'friend', 'neighbour', 'carer', 'nurse', 'doctor', 'speech therapist', 'physio', 'priest', 'family', 'visitor',
+  // phase 12, 22 Nov 2026 (judge round 9: "open / closed" showed doors for the curtains, and church a garden door)
+  'curtains open', 'curtains closed', 'church',
 ]);
 
 /** Words that share a pictogram (§2.20: jumper -> sweater, telly -> TV; here the people roles and feelings). */
@@ -52,10 +54,17 @@ export const SYNONYM: Record<string, string> = {
   'something hot': 'hot drink', 'something cold': 'cold drink', people: 'family', 'a friend': 'friend', 'someone who helps': 'carer',
   'stay at home': 'stay in', 'quiet time': 'quiet', 'some quiet': 'quiet', 'some company': 'company', 'a phone call': 'call someone',
   fine: 'okay', ok: 'okay', alright: 'okay', 'all right': 'okay', 'so-so': 'okay',
+  // phase 12: "the curtains" as a thing to change for less light; a chapel or a cathedral is the church picture
+  curtains: 'curtains closed', chapel: 'church', cathedral: 'church', 'the church': 'church',
 };
 
-export function pictureFor(label: string, profile: Profile): PictureRef {
+/**
+ * The picture of a choice. `asked` is the question the card shows, for the one word whose picture depends on it:
+ * "open" or "closed" to a question about the curtains is the curtains, not a door (phase 12, judge round 9).
+ */
+export function pictureFor(label: string, profile: Profile, asked = ''): PictureRef {
   const l = label.toLowerCase().trim();
+  if (/^(?:open|closed)$/.test(l) && /\bcurtains?\b/i.test(asked)) return { type: 'builtin', id: `curtains ${l}` };
   if (BUILTIN.has(l)) return { type: 'builtin', id: l };
   // "your left arm" on the person's card (§2.11) is the "left arm" body picture
   const part = l.replace(/^your\s+/, '');

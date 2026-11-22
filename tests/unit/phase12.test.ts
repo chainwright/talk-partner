@@ -195,3 +195,33 @@ describe('A6. The emergency number follows the region; an unknown region gets 11
     expect(DEFAULT_NUMBER).toBe('911');
   });
 });
+
+describe('B7. The pictures made again after round 9, and the three new ones', () => {
+  it('the curtain question shows curtains, not doors; a church is a church, not a garden door', async () => {
+    const { makeCard } = await import('../../core/pipeline');
+    const { NullEngine } = await import('../../core/engine');
+    const { EMPTY_PROFILE } = await import('../../core/types');
+    const { SAMPLE_PROFILE } = await import('../../core/sample');
+    const { talkMenu } = await import('../../core/turn');
+    const { pictureFor } = await import('../../core/pictures');
+    const c = await makeCard('Would you like the curtains open or closed?', { profile: EMPTY_PROFILE, support: 'more', engine: new NullEngine(), allowCloud: false, deviceReady: false });
+    expect(c.choices.filter((x) => x.role === 'answer').map((x) => x.picture)).toEqual([{ type: 'builtin', id: 'curtains open' }, { type: 'builtin', id: 'curtains closed' }]);
+    // a door left open is still the door
+    expect(pictureFor('open', EMPTY_PROFILE, 'Shall I leave the door open or closed?')).toEqual({ type: 'builtin', id: 'open' });
+    expect(pictureFor('church', EMPTY_PROFILE)).toEqual({ type: 'builtin', id: 'church' });
+    const pics: string[] = [];
+    for (let p: typeof c | null | undefined = talkMenu(SAMPLE_PROFILE); p; p = p.nextPage) for (const ch of p.choices) if (ch.label === 'church') pics.push((ch.picture as { id: string }).id);
+    expect(pics).toEqual(['church']);
+  });
+  it('each new file is the one made on 22 Nov (same bytes as devlog/quota_probe_2026-11-20/r9_regen), with its model, date and tool in the manifest', async () => {
+    const { readFileSync } = await import('node:fs');
+    const root = new URL('../../', import.meta.url);
+    const manifest = JSON.parse(readFileSync(new URL('devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json', root), 'utf8')) as Record<string, { file: string; model: string; date: string; tool: string }>;
+    for (const f of ['pain', 'good', 'bad', 'more', 'spouse', 'child', 'sibling', 'friend', 'curtains_open', 'curtains_closed', 'church']) {
+      expect(readFileSync(new URL(`web/public/pictures/${f}.webp`, root)).equals(readFileSync(new URL(`devlog/quota_probe_2026-11-20/r9_regen/${f}.webp`, root))), f).toBe(true);
+      const m = manifest[f.replace(/_/g, ' ')];
+      expect(m, f).toMatchObject({ model: 'gemini-3.1-flash-image', date: '2026-11-22', tool: 'Google AI Studio, generated offline, bundled; no model call at run time' });
+    }
+    expect(Object.values(manifest).every((m) => m.model && m.date && m.tool)).toBe(true);
+  });
+});
