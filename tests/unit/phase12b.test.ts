@@ -172,3 +172,27 @@ describe('8. Beside "I can\'t go on": a calm "Stop for now" that simply ends the
     expect(end('How are you feeling today?', 'stop for now')).not.toMatch(/\b(?:fine|nothing|just)\b/i);
   });
 });
+
+describe('9. "Try it with the Millers" on a phone: the simple view with the sample family, never the on-device download', () => {
+  const base = { name: '', aboutLink: false, busy: false, error: null, question: '', howOpen: false, topics: [], topicOpen: null, aiTag: '', ai: [], privacy: [], micHtml: '', voiceHtml: '' };
+  it('the link goes where the main screen says: #/sample on a phone, #/demo on a computer; while it is open, the way out', async () => {
+    const { homeScreen } = await import('../../web/src/simple');
+    const { COPY } = await import('../../core/copy');
+    const h = (m: object) => homeScreen({ ...base, ...m } as unknown as Parameters<typeof homeScreen>[0]);
+    expect(h({ sampleHref: '#/sample' })).toContain('<a class="tlink" id="try-sample" href="#/sample">');
+    expect(h({})).toContain('id="try-sample" href="#/demo"');
+    const on = h({ sampleHref: '#/sample', sampleOn: true });
+    expect(on).toContain(COPY.simple.sampleOn);
+    expect(on).toContain('data-act="leave-demo"');
+    expect(on).not.toContain('id="try-sample"');
+  });
+  it('main.ts: #/sample keeps the simple view, opens on its first screen, and a phone or tablet is never offered the download', async () => {
+    const { readFileSync } = await import('node:fs');
+    const main = readFileSync(new URL('../../web/src/main.ts', import.meta.url), 'utf8');
+    expect(main).toContain("const simpleView = () => (!state.demo || sampleSimple) && state.settings.view !== 'full';");
+    expect(main).toContain("if (h === 'sample') { if (!state.demo) { sampleSimple = true; void enterDemo().then(() => render()); } return 'partner'; }");
+    expect(main).toContain("sampleHref: handheld() ? '#/sample' : '#/demo'");
+    expect(main).toMatch(/case 'downloadable': if \(handheld\(\)\) return `<span class="dot off">/);
+    expect(main).toContain('state.demo = false; sampleSimple = false;');
+  });
+});

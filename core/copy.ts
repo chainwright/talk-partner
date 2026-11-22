@@ -404,6 +404,9 @@ const COPY = {
     /** Phase 12 (judge round 9): the sample family, one tap from the first screen (judge mode, #/demo). */
     sample: 'Try it with the Millers, a sample family',
     sampleSub: 'Made-up names: nothing of yours is used or changed.',
+    /** Phase 12b (judge round 9b): on a phone the sample family opens in this simple view; the line that says so, and the way out. */
+    sampleOn: 'You are trying it with the Millers, a sample family. Nothing is saved.',
+    sampleLeave: 'Leave the sample family',
     madeLink: 'How was this made?',
     back: 'New question',
     /** The carer's screen before handing over. */

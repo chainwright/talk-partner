@@ -55,6 +55,12 @@ const TOPIC_SIGN = Object.fromEntries(Object.entries(TOPIC_PICTURES).map(([k, id
 export interface HomeModel {
   /** The person's name, or '' when About them has none yet (then the words say "them", never "him" or "her"). */
   name: string;
+  /**
+   * Phase 12b (judge round 9b): where "Try it with the Millers" goes: "#/sample" on a phone or a tablet (this simple
+   * view, with the sample family), "#/demo" on a computer (judge mode). `sampleOn`: the sample family is open here now.
+   */
+  sampleHref?: string;
+  sampleOn?: boolean;
   /** About them holds something, or a first card was answered here: the small link to it is on the first screen. */
   aboutLink: boolean;
   busy: boolean;
@@ -183,7 +189,8 @@ export function homeScreen(m: HomeModel): string {
   <footer class="foot">
     ${privacyBlock(m.privacy)}
     <p class="links">${insideLink('inside', S.inside)}${m.aboutLink ? `<a class="tlink" href="#/about">${esc(S.aboutLink(m.name))} →</a>` : ''}</p>
-    <p class="links sample-link"><a class="tlink" id="try-sample" href="#/demo">${esc(S.sample)} →</a><small class="muted">${esc(S.sampleSub)}</small></p>
+    ${m.sampleOn ? `<p class="links sample-link" id="sample-on">${esc(S.sampleOn)} <button type="button" class="tlink" data-act="leave-demo">${esc(S.sampleLeave)} →</button></p>`
+      : `<p class="links sample-link"><a class="tlink" id="try-sample" href="${m.sampleHref ?? '#/demo'}">${esc(S.sample)} →</a><small class="muted">${esc(S.sampleSub)}</small></p>`}
   </footer>
 </main>`;
 }

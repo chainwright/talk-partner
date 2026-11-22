@@ -314,12 +314,18 @@ const state: State = {
 /** When this page was opened: the simple view's "Today" list holds the answers confirmed since then. */
 const pageStart = Date.now();
 /** The simple view is what "/" shows unless the partner went inside (kept), or judge mode is on. */
-const simpleView = () => !state.demo && state.settings.view !== 'full';
+// (phase 12b, judge round 9b) the sample family opened from a phone (#/sample) stays in the simple view
+const simpleView = () => (!state.demo || sampleSimple) && state.settings.view !== 'full';
+/** Phase 12b: the sample family is open in the simple view (a phone or a tablet), not in judge mode. */
+let sampleSimple = false;
+/** A phone or a tablet: no on-device model to download, and the sample family opens in the simple view. */
+const handheld = () => copyDevice() !== 'computer';
 
 // ---------------------------------------------------------------- routing
 function route(): Route {
   const h = location.hash.replace(/^#\/?/, '');
   if (h === 'demo') { if (!state.demo) void enterDemo().then(() => { render(); judgeStep(); }); return 'partner'; }
+  if (h === 'sample') { if (!state.demo) { sampleSimple = true; void enterDemo().then(() => render()); } return 'partner'; }
   if (h === 'about') return 'about';
   if (h === 'cloud') return 'cloud';
   if (h === 'person') return 'person';
@@ -591,7 +597,8 @@ function enterDemo(): Promise<void> {
   state.profile = SAMPLE_PROFILE;
   state.history = []; // the sample family starts with no answers; the real list on disk is untouched
   resetCard();
-  return firstCard();
+  // (phase 12b) on a phone the sample family opens on the simple view's first screen, with no card made for it
+  return sampleSimple ? Promise.resolve() : firstCard();
 }
 /**
  * Judge mode opens with one card already made, so the first thing on screen is the product and not an empty pane.
@@ -613,7 +620,7 @@ async function firstCard(): Promise<void> {
   } catch { /* no first card: the screen opens empty, as it did before */ }
 }
 async function leaveDemo() {
-  state.demo = false;
+  state.demo = false; sampleSimple = false;
   state.profile = (await kvGet<Profile>('profile')) ?? { ...EMPTY_PROFILE };
   state.history = (await kvGet<Answered[]>('history')) ?? [];
   resetCard();
@@ -1036,7 +1043,9 @@ function statusLine(): string {
       return `<span class="dot ok"></span>${C.status.ready}${more ? ` <span class="step" data-step="${step}">${esc(more)}</span>` : ''}`;
     }
     case 'downloading': return `<span class="dot wait"></span>${C.status.downloading(state.downloading !== null ? `: ${Math.round(state.downloading * 100)}%` : '')}`;
-    case 'downloadable': return stepPending
+    // (phase 12b, judge round 9b: a phone or a tablet is never offered the on-device model's download)
+    case 'downloadable': if (handheld()) return `<span class="dot off"></span>${state.settings.cloudHelp ? C.status.unavailableCloudOn : `${C.status.unavailableCloudOff} <a href="#/cloud">${C.blocked.turnOn}</a>`}`;
+      return stepPending
       ? `<span class="dot wait"></span>${esc(J.notDownloaded)} <button class="link" data-act="download">${C.status.download}</button> ${J.downloadSize}`
       : `<span class="dot wait"></span>${C.status.notDownloaded} <button class="link" data-act="download">${C.status.download}</button>`;
     default: {
@@ -1877,7 +1886,7 @@ function simpleScreen(): string {
   } else {
     const p = state.profile;
     screen = homeScreen({
-      name,
+      name, sampleHref: handheld() ? '#/sample' : '#/demo', sampleOn: state.demo,
       aboutLink: !!state.settings.firstCard || !!(name || p.people.length || p.foods.length || p.places.length || p.tv.length || p.music.length),
       busy: state.busy, error: state.error, question: state.lastQuestion,
       // (phase 9, judge round 8: folded on the first visit too, to its one line with "Write the key word big.", so the
