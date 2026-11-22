@@ -31,7 +31,8 @@ const ROOT = join(__dirname, '..', '..');
 const read = (f: string) => readFileSync(join(ROOT, f), 'utf8');
 const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
 const ans = (q: string, label: string, d: number, t = '10:00', topic: DiaryEntry['topic'] = 'body') => answerEntry({ q, label, at: when(d, t) }, topic);
-const day = (d: number) => [logEntry('drank', when(d, '08:00')), logEntry('ate', when(d, '08:30')), logEntry('drank', when(d, '12:00')), logEntry('drank', when(d, '17:00'))];
+// (phase 12b: a calm day has six drinks; fewer is a line of its own)
+const day = (d: number) => [logEntry('drank', when(d, '08:00')), logEntry('ate', when(d, '08:30')), logEntry('drank', when(d, '10:00')), logEntry('drank', when(d, '12:00')), logEntry('drank', when(d, '14:00')), logEntry('drank', when(d, '17:00')), logEntry('drank', when(d, '20:00'))];
 const H = (h: Partial<HealthNotes>): HealthNotes => ({ ...NO_HEALTH, ...h });
 const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
 

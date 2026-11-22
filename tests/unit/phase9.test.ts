@@ -89,7 +89,8 @@ describe('1. P0 health: a care question left for later (pain, the body, the toil
 });
 
 describe('2. P0 health: "Nothing stands out" never stands over a pain, a fall, a low day, "something\'s wrong" or a day with no drink', () => {
-  const day = (d: number) => [logEntry('drank', when(d, '08:00')), logEntry('ate', when(d, '08:30')), logEntry('drank', when(d, '12:00')), logEntry('drank', when(d, '16:00'))];
+  // (phase 12b: a calm day has six drinks; fewer is a line of its own)
+  const day = (d: number) => [logEntry('drank', when(d, '08:00')), logEntry('ate', when(d, '08:30')), logEntry('drank', when(d, '10:00')), logEntry('drank', when(d, '12:00')), logEntry('drank', when(d, '14:00')), logEntry('drank', when(d, '17:00')), logEntry('drank', when(d, '20:00'))];
   const calm = [...day(0), ...day(1), ...day(2), ...day(3), ...day(4), ...day(5)];
   const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
   it('a calm week: "Nothing stands out", and only then', () => {

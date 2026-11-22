@@ -72,7 +72,7 @@ describe('the one text that may go to online help', () => {
     expect(html).toContain(COPY.simple.insights.sheet.never);
     expect(COPY.simple.insights.sheet.never).toMatch(/names, photos, the diary itself, the health notes/);
     expect(html).toContain('PREFER_IN_CLOUD');
-    expect(cloudLines(lines).length).toBe(2); // (phase 5: the "less sure" line has a fixed sentence and does not go)
+    expect(cloudLines(lines).length).toBe(1); // (phase 5: the "less sure" line has a fixed sentence and does not go; phase 12b: nor the few-drinks line)
   });
 });
 

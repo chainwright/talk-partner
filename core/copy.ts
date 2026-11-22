@@ -656,6 +656,8 @@ const COPY = {
       noDrinkFluid: (days: string) => `No drink was chosen or logged on ${days}. A fluid limit is not "no drinks": if that is right, and not a gap in the diary, tell the doctor or nurse today.`,
       noDrinkBase: (n: number) => `Other things were entered on ${n === 1 ? 'that day' : 'those days'}, and no drink.`,
       fewDrinks: (days: string, n: number, several: boolean) => `Few drinks were entered on ${days}: ${n}${several === true ? ' each' : ''}.`,
+      /** Phase 12b (judge round 9b): under the line, whom to tell and when; a fixed sentence, so the line never goes to a model. */
+      fewDrinksAct: 'If that is right, and not a gap in the diary, tell the doctor or nurse today.',
       fewDrinksBase: (n: number, several: boolean) => `Counted ${several === true ? 'on each of those days' : 'that day'}: ${n}. Every "Drank" tap counts, and every drink chosen on a card (tea, coffee, water, juice, milk, or yes to "something to drink"); a card and a tap within 20 minutes count once.`,
       fewDrinksReminders: 'Reminders to drink are noted here.',
       manyDrinks: (day: string, n: number) => `${n} drinks were entered on ${day}. A fluid limit from the doctor is noted here: check the day against the doctor's plan.`,

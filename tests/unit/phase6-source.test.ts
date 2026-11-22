@@ -21,7 +21,8 @@ const TOPIC: Record<LogKind, DiaryEntry['topic']> = { drank: 'food', ate: 'food'
 const log = (id: string, k: LogKind, d: number, t: string, label: string = k): DiaryEntry => ({ id, at: when(d, t), kind: 'log', log: k, label, topic: TOPIC[k] });
 const ans = (id: string, q: string, label: string, d: number, t: string, topic: DiaryEntry['topic'] = 'body', lessSure = false): DiaryEntry => ({ id, at: when(d, t), kind: 'answer', q, label, topic, ...(lessSure ? { lessSure: true } : {}) });
 /** A plain day: three drinks and three meals logged. Ids "d<day>-<n>". */
-const plain = (d: number): DiaryEntry[] => [['08:00', 'drank'], ['08:30', 'ate'], ['12:00', 'drank'], ['12:30', 'ate'], ['17:00', 'drank'], ['18:00', 'ate']].map(([t, k], i) => log(`d${d}-${i}`, k as LogKind, d, t));
+// (phase 12b: a plain day has six drinks; fewer is a line of its own)
+const plain = (d: number): DiaryEntry[] => [['08:00', 'drank'], ['08:30', 'ate'], ['10:00', 'drank'], ['12:00', 'drank'], ['12:30', 'ate'], ['15:00', 'drank'], ['17:00', 'drank'], ['18:00', 'ate'], ['20:00', 'drank']].map(([t, k], i) => log(`d${d}-${i}`, k as LogKind, d, t));
 const days = (...ds: number[]) => ds.flatMap(plain);
 const line = (xs: Insight[], id: Insight['id']) => { const x = xs.find((l) => l.id === id); if (!x) throw new Error(`no ${id} line among ${xs.map((l) => l.id).join(', ')}`); return x; };
 

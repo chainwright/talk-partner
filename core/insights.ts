@@ -128,7 +128,9 @@ export function thresholds(h: HealthNotes, span: InsightSpan): Thresholds {
   const weeks = span === 'week' ? 1 : 4;
   return {
     painDays: 3,
-    fewDrinks: h.reminders ? 4 : 3,
+    // (phase 12b, judge round 9b, the nurse's seat: under 3 let a dry week of 3 a day read "nothing stands out"; the
+    // public advice is 6 to 8 cups a day. Never a target: the line says what was entered and whom to tell)
+    fewDrinks: h.reminders ? 7 : 6,
     fewDrinksMention: h.reminders,
     manyDrinks: h.fluidLimit ? 8 : 0,
     sweets: (h.diabetes ? 3 : 6) * weeks,
@@ -216,14 +218,14 @@ function spanInsights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpa
   const sweets = events(entries, 'sweet').length;
   if (sweets >= T.sweets) out.push({ id: 'sweets', level: T.sweetsMention ? 'mention' : 'note', text: I.sweets(sweets, S), noted: T.sweetsMention ? I.sweetsDiabetes : '', base: `${I.sweetsBase(sweets, S)} ${I.only}`, source: counted(entries, 'sweet') });
 
-  // a day with few drinks entered (the day with the fewest): worth mentioning (two drinks in a day is low for anyone).
+  // a day with few drinks entered (the day with the fewest): worth mentioning (fewer than six in a day, phase 12b).
   // With a fluid limit the line still shows, and says to check the day against the doctor's plan: never "more".
   {
     const low = past.map((d) => ({ day: d.day, n: events(d.entries, 'drink').length })).filter((x) => x.n > 0 && x.n < T.fewDrinks);
     const least = Math.min(...low.map((x) => x.n));
     // every day that has the fewest is named (two days with one drink each are both worth a look), the last three at most
     const few = low.filter((x) => x.n === least).map((x) => x.day).sort((a, b) => a - b).slice(-3);
-    if (few.length) out.push({ id: 'few-drinks', level: 'mention', text: health.fluidLimit ? I5.fewDrinksFluid(names(few), least, few.length > 1) : I.fewDrinks(names(few), least, few.length > 1), noted: T.fewDrinksMention ? I.fewDrinksReminders : '', base: `${I.fewDrinksBase(least, few.length > 1)} ${I.only}`, ...(health.fluidLimit ? { local: true } : {}), source: merged(past.filter((d) => few.includes(d.day)).map((d) => counted(d.entries, 'drink'))) });
+    if (few.length) out.push({ id: 'few-drinks', level: 'mention', text: health.fluidLimit ? I5.fewDrinksFluid(names(few), least, few.length > 1) : I.fewDrinks(names(few), least, few.length > 1), noted: T.fewDrinksMention ? I.fewDrinksReminders : '', base: `${I.fewDrinksBase(least, few.length > 1)} ${I.only}`, ...(health.fluidLimit ? { local: true } : { act: I.fewDrinksAct }), source: merged(past.filter((d) => few.includes(d.day)).map((d) => counted(d.entries, 'drink'))) });
   }
   if (T.manyDrinks) {
     const many = days.map((d) => ({ day: d.day, n: events(d.entries, 'drink').length })).filter((x) => x.n >= T.manyDrinks).sort((a, b) => b.n - a.n)[0];

@@ -24,7 +24,8 @@ const H = (h: Partial<HealthNotes>): HealthNotes => ({ ...NO_HEALTH, ...h });
 const TOPIC: Record<LogKind, DiaryEntry['topic']> = { drank: 'food', ate: 'food', toilet: 'body', slept: 'rest', pain: 'body', fall: 'body', tablets: 'body' };
 const log = (id: string, k: LogKind, d: number, t: string, label: string = k): DiaryEntry => ({ id, at: when(d, t), kind: 'log', log: k, label, topic: TOPIC[k] });
 const ans = (id: string, q: string, label: string, d: number, t: string, topic: DiaryEntry['topic'] = 'body'): DiaryEntry => ({ id, at: when(d, t), kind: 'answer', q, label, topic });
-const plain = (d: number): DiaryEntry[] => [['08:00', 'drank'], ['08:30', 'ate'], ['12:00', 'drank'], ['12:30', 'ate'], ['17:00', 'drank'], ['18:00', 'ate']].map(([t, k], i) => log(`ID${d}x${i}`, k as LogKind, d, t));
+// (phase 12b: a plain day has six drinks; fewer is a line of its own)
+const plain = (d: number): DiaryEntry[] => [['08:00', 'drank'], ['08:30', 'ate'], ['10:00', 'drank'], ['12:00', 'drank'], ['12:30', 'ate'], ['15:00', 'drank'], ['17:00', 'drank'], ['18:00', 'ate'], ['20:00', 'drank']].map(([t, k], i) => log(`ID${d}x${i}`, k as LogKind, d, t));
 const days = (...ds: number[]) => ds.flatMap(plain);
 const family = (diary: DiaryEntry[], o: Partial<Parameters<typeof familyText>[0]> = {}) => familyText({ span: 'week', diary, health: null, name: 'Frank', now: NOW, ...o });
 const handover = (diary: DiaryEntry[], o: Partial<Parameters<typeof handoverText>[0]> = {}) => handoverText({ diary, health: null, learned: [], name: 'Frank', now: NOW, ...o });
@@ -46,7 +47,7 @@ describe('"Share with family": the text', () => {
     expect(lines[1]).toBe('');
     expect(lines[2]).toBe("Frank's diary, the last 7 days (Mon 16 Nov to Sun 22 Nov).");
     // (phase 9: Tuesday's pain is a line of its own, with its fixed sentence)
-    expect(t).toContain('WHAT STANDS OUT (the last 7 days)\n1. Worth mentioning to the doctor or nurse: Pain was chosen or logged on 1 day in the last 7 days.\n   Ask again today, and tell the doctor or nurse if it is new or still there.\n   How it was counted: Days with pain: Tue 17 Nov. Only what was entered here.\n2. Worth mentioning to the doctor or nurse: Few drinks were entered on Wed 18 Nov: 2.\n   How it was counted: Counted that day: 2. Every "Drank" tap counts');
+    expect(t).toContain('WHAT STANDS OUT (the last 7 days)\n1. Worth mentioning to the doctor or nurse: Pain was chosen or logged on 1 day in the last 7 days.\n   Ask again today, and tell the doctor or nurse if it is new or still there.\n   How it was counted: Days with pain: Tue 17 Nov. Only what was entered here.\n2. Worth mentioning to the doctor or nurse: Few drinks were entered on Wed 18 Nov: 2.\n   If that is right, and not a gap in the diary, tell the doctor or nurse today.\n   How it was counted: Counted that day: 2. Every "Drank" tap counts');
     expect(t).toContain(COPY.simple.insights.footer);
     expect(t).toContain('ENTRIES BY DAY\nMon 16 Nov\n  07:40  Would you like tea or coffee? tea\n');
     expect(t.endsWith(`${P6.share.gap}\n${P6.share.noAdvice}`)).toBe(true);

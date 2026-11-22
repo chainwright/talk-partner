@@ -50,7 +50,7 @@ describe('2. One "no" to the weakness question does not end the stroke check', (
 });
 
 describe('3. About them never teaches the family to stop offering a drink or food', () => {
-  const at = (d: number) => Date.UTC(2026, 10, 16 + d, 10);
+  const at = (d: number) => new Date(2026, 10, 16 + d, 10).getTime();
   const three = (q: string, label: string) => [0, 1, 2].map((d) => ({ q, label, at: at(d) }));
   it.each(['Would you like something to drink?', 'Would you like a cup of tea?', 'Are you hungry?', 'Would you like a snack?'])('three "no" to "%s": no "Usually says no" line, no "Keep as a fact"', async (q) => {
     const { learned } = await import('../../core/prefs');
@@ -73,5 +73,27 @@ describe('3. About them never teaches the family to stop offering a drink or foo
     const tv = aboutLearned(learned(three('Would you like the TV or the radio?', 'the radio'), []));
     expect(tv.length).toBe(1);
     expect(learnedBlock({ name: 'Frank', lines: tv, facts: [], short: null })).toContain('learned-keep');
+  });
+});
+
+describe('4. A day with fewer than six drinks entered is a line, with whom to tell; never a target', () => {
+  const at = (d: number, h: number) => new Date(2026, 10, 16 + d, h).getTime();
+  const drinks = (d: number, n: number) => Array.from({ length: n }, (_, i) => ({ id: `d${d}-${i}`, at: at(d, 7 + 2 * i), kind: 'log' as const, log: 'drank' as const, label: 'Drank', topic: 'food' as const }));
+  const NOW = at(6, 12);
+  it('five drinks on a past day: "Few drinks were entered on …: 5." and the fixed sentence; six: nothing stands out', async () => {
+    const { insights, NO_HEALTH } = await import('../../core/insights');
+    const five = insights([...drinks(0, 6), ...drinks(1, 5)], NO_HEALTH, 'week', NOW);
+    expect(five.map((x) => x.id)).toEqual(['few-drinks']);
+    expect(five[0].text).toMatch(/^Few drinks were entered on Tue 17 Nov: 5\.$/);
+    expect(five[0].act).toBe('If that is right, and not a gap in the diary, tell the doctor or nurse today.');
+    expect(insights([...drinks(0, 6), ...drinks(1, 6)], NO_HEALTH, 'week', NOW).map((x) => x.id)).toEqual(['nothing']);
+  });
+  it('with a fluid limit noted the line still shows and points to the doctor\'s plan: no amount, no "more", no target', async () => {
+    const { insights, NO_HEALTH } = await import('../../core/insights');
+    const xs = insights([...drinks(0, 6), ...drinks(1, 5)], { ...NO_HEALTH, fluidLimit: true }, 'week', NOW);
+    const words = xs.map((x) => `${x.text} ${x.noted} ${x.act ?? ''}`).join(' ');
+    expect(xs.map((x) => x.id)).toEqual(['few-drinks']);
+    expect(words).toMatch(/check the day against the doctor's plan/);
+    expect(words).not.toMatch(/\b(?:6|six|7|seven|8|eight) (?:cups|glasses|drinks a day)|target|aim for|at least|more to drink|drink more/i);
   });
 });
