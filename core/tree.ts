@@ -137,7 +137,7 @@ const TREE: Record<string, Node> = {
   },
   // (phase 12, judge round 9: pain in an arm, a hand, a leg, the feet or the face: the FAST sign first)
   'is it suddenly weak or numb yes or no': {
-    yes: { end: 'Suddenly weak or numb: this can be a stroke. Call the emergency number now, and note the time it started.' },
+    yes: { end: 'Suddenly weak or numb: this can be a stroke. Call {number} now, and note the time it started.' },
     // (phase 12b, judge round 9b, the SLP's seat: one wrong "no" must not stop the stroke check; the carer checks it)
     no: { next: [HOW_BAD], end: '{They} pointed to no. A yes or no can be wrong after a stroke: check it yourself now. Ask {them} to lift both arms and smile. If one side drops or the face droops, call {number} now.' },
     'not sure': { next: [HOW_BAD], end: 'Not sure: ask {them} to lift both arms and smile. If one side drops, call the emergency number now.' },

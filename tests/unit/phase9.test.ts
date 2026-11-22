@@ -191,7 +191,8 @@ describe('4. P1 the emergency number follows the locale, and asks', () => {
     const main = readFileSync(join(__dirname, '..', '..', 'web', 'src', 'main.ts'), 'utf8');
     expect(main).toContain('const callNumber = () => emergencyNumber(state.health.emergency, state.demo ? DEFAULT_NUMBER : localeNumber(navigator.language));');
     expect(main).toContain('const numberGuess = () => !state.demo && !numberSet(state.health.emergency);');
-    expect((main.match(/urgentBox\(callNumber\(\), 'urgent', numberGuess\(\)\)/g) ?? []).length).toBe(2);
+    // (phase 12b: with a fourth argument, the "now" box over a confirmed yes to weakness or numbness)
+    expect((main.match(/urgentBox\(callNumber\(\), 'urgent', numberGuess\(\), /g) ?? []).length).toBe(2);
   });
 });
 

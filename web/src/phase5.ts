@@ -72,7 +72,8 @@ export function crisisScreen(m: { name: string; number: string; line: string; li
 /** Phase 12 (judge round 9): under a pain question left for later, the signs that do not wait, a call button with the number, and the list. */
 export const laterPainHtml = (number: string, guess = false) => `<div class="later-signs"><p>${esc(COPY.simple.later.painSigns(number))}</p><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, 'later-guess')}</div>`;
 /** The boxed line over an answer that can be urgent (core/redflag.ts): the sentence, the call button, the way to the list. */
-export const urgentBox = (number: string, id = 'urgent', guess = false) => `<div class="urgent" id="${id}" role="alert">${ALERT}<div><b>${esc(P5.sudden.box(number))}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, `${id}-guess`)}</div></div>`;
+/** `now`: a yes to sudden weakness or numbness was confirmed (phase 12b): "Call … now. Note the time it started." */
+export const urgentBox = (number: string, id = 'urgent', guess = false, now = false) => `<div class="urgent" id="${id}" role="alert">${ALERT}<div><b>${esc(now ? P5.sudden.boxNow(number) : P5.sudden.box(number))}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, `${id}-guess`)}</div></div>`;
 /**
  * Phase 9: while About them holds no number, the call boxes use the language setting's guess (core/redflag.ts,
  * localeNumber), and say so: "Is this your emergency number? Change it", which opens About them at the number.

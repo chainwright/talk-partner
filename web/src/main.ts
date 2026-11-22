@@ -55,7 +55,7 @@ import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Li
 import { P5 } from '../../core/copy5';
 import { FALL_HEAD } from '../../core/diary';
 import { CARE_TOPICS } from '../../core/reliability';
-import { DEFAULT_NUMBER, WRONG_TILE, crisisAnswer, crisisLine, emergencyNumber, localeNumber, numberSet, urgentAnswer, urgentAny } from '../../core/redflag';
+import { DEFAULT_NUMBER, WRONG_TILE, crisisAnswer, crisisLine, emergencyNumber, localeNumber, numberSet, signNow, urgentAnswer, urgentAny } from '../../core/redflag';
 import { fromIsoDay, pickedQuestions, sinceLines, sinceText, toggleQuestion } from '../../core/since';
 import { SpeakCache, isPcm, pcmRate, pcmToWav, speakText, speakable } from '../../core/speak';
 import { P6 } from '../../core/copy6';
@@ -380,8 +380,8 @@ interface Snap {
   extra: unknown;
   /** How many doctor-visit answers there were (a step back to a visit question takes the later answers off again). */
   visitN: number;
-  /** The call box of the conversation was up. */
-  urgent: boolean;
+  /** The call box of the conversation was up; `signNow`: over a confirmed yes to weakness or numbness (phase 12b). */
+  urgent: boolean; signNow: boolean;
   /** A person's screen (key "person:…"); `sub`: the check or "Thank you" of one; `entry`: handed over from a carer's screen. */
   person: boolean; sub: boolean; entry: boolean;
 }
@@ -423,7 +423,7 @@ function takeSnap(key: string, entry: boolean): Snap {
   return {
     key, route: person ? 'person' : hashNow() === 'needs' || hashNow() === 'person' ? '' : hashNow(), view,
     p4: { letterNo: P.letterNo, letterPending: P.letterPending, turn: P.turn, talk: P.talk, letter: person ? P.letter : null, visitRun: person && P.visitRun, visitEnd: person && P.visitEnd },
-    extra: navExtra.take(), visitN: P.visit?.answers.length ?? 0, urgent: p5.urgent,
+    extra: navExtra.take(), visitN: P.visit?.answers.length ?? 0, urgent: p5.urgent, signNow: p5.signNow,
     person, sub: person && /:(?:check|done|recap|recap-done)$/.test(key), entry: person && entry,
   };
 }
@@ -448,7 +448,7 @@ function putSnap(x: Snap) {
   const v = state.p4.visit;
   if (x.p4.visitRun && v && v.answers.length > x.visitN) { v.answers = v.answers.slice(0, x.visitN); v.done = false; void kvSet('visit', v); }
   navExtra.put(x.extra);
-  p5.urgent = x.urgent;
+  p5.urgent = x.urgent; p5.signNow = x.signNow;
   state.sheet = false; state.waitStart = null; state.busy = false;
   trail.current = x;
 }
@@ -514,7 +514,7 @@ function backToCarer(): string | null {
 }
 /** "Home": the first screen, from anywhere. */
 function goHome() {
-  clearP4(); p5.urgent = false; p5.voiceFailed = false; p5.speakSheet = false; stopSound();
+  clearP4(); p5.urgent = false; p5.signNow = false; p5.voiceFailed = false; p5.speakSheet = false; stopSound();
   makeSeq++; state.busy = false; state.lastQuestion = ''; state.error = null; dictated = false; resetCard();
   history.replaceState(history.state, '', location.pathname + location.search);
   render(); window.scrollTo(0, 0);
@@ -667,6 +667,8 @@ async function load() {
  */
 const p5 = {
   urgent: false, once: false, speakSheet: false, speakSent: 0,
+  /** Phase 12b: a yes to sudden weakness or numbness in this conversation: the box says "Call … now. Note the time it started." */
+  signNow: false,
   hear: 'ready' as 'ready' | 'loading' | 'failed',
   /** Phase 8: Read aloud failed on the person's screen; the carer's next screen of this conversation says so. */
   voiceFailed: false,
@@ -1250,7 +1252,7 @@ function openNeeds() {
   if (step === 'waiting') step = 'cancelled'; // judge mode's automatic step stands down, as for a typed question
   makeSeq++;
   voiceAsk = false; voiceHeard = false; dictated = false; voice.cancel();
-  state.busy = false; state.error = null; state.lastQuestion = ''; resetCard(); p5.urgent = false;
+  state.busy = false; state.error = null; state.lastQuestion = ''; resetCard(); p5.urgent = false; p5.signNow = false;
   const card = needsCard();
   setCard(card); state.made.push(card); state.waitStart = Date.now();
 }
@@ -1851,7 +1853,7 @@ function simpleScreen(): string {
       invite: state.inviteFor === c && !state.inviteOff,
       today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
       made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),
-      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber(), 'urgent', numberGuess()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), state.health.helpline ?? '', callNumber()) : ''}${turnHtml()}`,
+      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), state.health.helpline ?? '', callNumber()) : ''}${turnHtml()}`,
       outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
       // after the way out: the ways to find out what it is, in the rules' order; a step the rules make comes first
       ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),
@@ -1867,7 +1869,7 @@ function simpleScreen(): string {
       lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(), tips: state.tips,
       usual: (() => { const u = usualFor(c); return u ? usualHint(u) : ''; })(),
       // (the call box stays over the next questions of a conversation in which an answer can be urgent)
-      topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess()) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,
+      topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,
       guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c),
       // the first-letter helper: its way in from "We're stuck", who found a letter card's words, and another letter when there was no word
       extraHtml: `${c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterButton(name, true) : letterBy(c.letter.by)) : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && (speakable(c) || speakOn()) ? speakSwitch({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}${p5.spoken.has(c) ? readAloudLine() : ''}`,
@@ -1910,7 +1912,7 @@ function clearP4() { state.p4.letter = null; state.p4.letterNo = false; state.p4
 /** The person's own start ("I want to say something"): from the Home button, or from the shortcut's address `#/turn`. */
 function openTurn() {
   if (step === 'waiting') step = 'cancelled';
-  makeSeq++; clearP4(); state.busy = false; state.error = null; state.lastQuestion = ''; resetCard(); p5.urgent = false;
+  makeSeq++; clearP4(); state.busy = false; state.error = null; state.lastQuestion = ''; resetCard(); p5.urgent = false; p5.signNow = false;
   const card = turnCard(); setCard(card); state.made.push(card); state.waitStart = Date.now();
   notePractice({ k: 'turn', at: Date.now() });
 }
@@ -2321,7 +2323,7 @@ async function make(q: string) {
   // was this question spoken, and its recording sent to the cloud? (the card then says so, onVoice)
   const spoken = dictated; dictated = false; voiceHeard = false; voiceAsk = false; voice.cancel();
   // a question that was not tapped as a next step of the tree starts a new conversation
-  if (!chained) { state.chain = [q]; p5.urgent = false; p5.voiceFailed = false; }
+  if (!chained) { state.chain = [q]; p5.urgent = false; p5.signNow = false; p5.voiceFailed = false; }
   chained = false;
   // (phase 7) where this question came from: the caller says so; a question asked again after the sheet keeps what it was
   const by = from ?? (p8.lastBy.q === q ? p8.lastBy.by : spoken ? 'spoken' : 'typed');
@@ -2392,6 +2394,7 @@ function onPersonTap(t: HTMLElement) {
     state.confirmed = true;
     // an answer that can be urgent (core/redflag.ts) keeps the call box up for the rest of this conversation
     if (state.picked && urgentAnswer(c.asked, state.picked.label)) p5.urgent = true;
+    if (state.picked && signNow(c.asked, state.picked.label)) p5.signNow = true;
     // (phase 8) "later": the question is kept for Home, to come back to (core/later.ts); never for the sample family
     const left = state.picked ? laterOf({ asked: c.asked, label: state.picked.label, repair: c.kind === 'repair', before: state.before?.asked ?? state.chain[0] ?? null }) : null;
     if (left) leaveForLater(left, careTopic(c));
@@ -2845,7 +2848,7 @@ app.addEventListener('click', (ev) => {
   if (t.dataset.q && t.dataset.short) state.shortcut = { q: t.dataset.q, of: t.dataset.of ?? '', label: t.dataset.label ?? '' };
   if (t.dataset.q && t.dataset.short) { if (t.dataset.of && !state.chain.includes(t.dataset.of)) state.chain = [...state.chain, t.dataset.of]; chained = true; state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
   // (a question that is not a next step of the tree starts a new conversation: the call box of the last one goes)
-  if (t.dataset.q && !t.dataset.next && !t.dataset.short) p5.urgent = false;
+  if (t.dataset.q && !t.dataset.next && !t.dataset.short) { p5.urgent = false; p5.signNow = false; }
   if (t.dataset.q) { state.chain = !t.dataset.next ? [t.dataset.q] : state.chain.includes(t.dataset.q) ? state.chain : [...state.chain, t.dataset.q]; chained = true; state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
   if (t.closest('#person')) onPersonTap(t);
 });

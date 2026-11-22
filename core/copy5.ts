@@ -41,6 +41,8 @@ export const P5 = {
     tileLine: 'Something is wrong. Look now for what is new or sudden. If you are not sure, call.',
     /** The boxed line over an answer that can be urgent (core/redflag.ts), and on the doctor-visit page. */
     box: (number: string) => `Call ${number} now if this is new or sudden.`,
+    /** Phase 12b: the box over a yes to sudden weakness or numbness (core/redflag.ts, signNow): no "if". */
+    boxNow: (number: string) => `Call ${number} now. Note the time it started.`,
     boxCall: (number: string) => `Call ${number}`,
     boxMore: 'What to look for',
     /** In About them, under Health notes. */

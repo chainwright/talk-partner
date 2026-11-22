@@ -93,5 +93,13 @@ export function urgentAnswer(asked: string, label: string): boolean {
   return false;
 }
 
+/**
+ * Phase 12b (judge round 9b): a yes to sudden weakness or numbness is a sign the carer has already checked, so its box
+ * does not ask "if this is new or sudden": it says to call now and to note the time it started.
+ */
+export function signNow(asked: string, label: string): boolean {
+  return lc(label) === 'yes' && /\b(?:weak|weakness|numb|numbness)\b/.test(lc(asked));
+}
+
 /** The same, over the answers of one conversation or one page: one urgent answer is enough. */
 export const urgentAny = (answers: { q?: string; label: string }[]) => answers.some((a) => urgentAnswer(a.q ?? '', a.label));

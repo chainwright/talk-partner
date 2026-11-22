@@ -127,3 +127,30 @@ describe('6. The pictures of round 9b: pain (the whole body), wait (an hourglass
     }
   });
 });
+
+describe('7. A confirmed yes to sudden weakness or numbness: "Call … now. Note the time it started." (no "if")', () => {
+  it('the box over that answer has no "if this is new or sudden"; other boxes keep it', async () => {
+    const { signNow, urgentAnswer } = await import('../../core/redflag');
+    const { urgentBox } = await import('../../web/src/phase5');
+    const Q = 'Is it suddenly weak or numb, yes or no?';
+    expect(urgentAnswer(Q, 'yes')).toBe(true);
+    expect(signNow(Q, 'yes')).toBe(true);
+    expect(signNow('Is one arm weak?', 'yes')).toBe(true);
+    for (const [q, l] of [[Q, 'no'], [Q, 'not sure'], ['Is it hard to breathe?', 'yes'], ['How bad is the pain?', 'very bad']]) expect(signNow(q, l), `${q} ${l}`).toBe(false);
+    const now = urgentBox('999', 'urgent', false, true);
+    expect(now).toContain('Call 999 now. Note the time it started.');
+    expect(now).not.toMatch(/if this is new or sudden/);
+    expect(now).toContain('href="tel:999"');
+    expect(urgentBox('999')).toContain('Call 999 now if this is new or sudden.');
+  });
+  it('the end line under it names the number too', () => {
+    expect(end('Is it suddenly weak or numb, yes or no?', 'yes', '', '999')).toBe('Suddenly weak or numb: this can be a stroke. Call 999 now, and note the time it started.');
+  });
+  it('main.ts keeps the "now" box for the rest of the conversation, and on a step back', async () => {
+    const { readFileSync } = await import('node:fs');
+    const main = readFileSync(new URL('../../web/src/main.ts', import.meta.url), 'utf8');
+    expect(main).toContain("if (state.picked && signNow(c.asked, state.picked.label)) p5.signNow = true;");
+    expect(main).toContain("urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label))");
+    expect(main).toContain('p5.signNow = x.signNow;');
+  });
+});
