@@ -78,7 +78,8 @@ describe('2a. "Something new or sudden?": a fixed card with a call button', () =
   it('it is reachable from the first screen and from "Body & care", and no model or request is in it', () => {
     const main = read('web/src/main.ts');
     expect(main).toContain("bodyHtml: suddenLink('sudden-body'),");
-    expect(main).toContain('turnHtml: `${turnButton(name)}${suddenLink()}');
+    // (phase 12b: on the first screen with the number in it, and "Change it")
+    expect(main).toContain('turnHtml: `${turnButton(name)}${suddenFirst(callNumber(), numberGuess())}');
     for (const f of ['core/redflag.ts', 'web/src/phase5.ts']) expect(read(f)).not.toMatch(/from '.*(?:engine|pipeline|prompt|requests|firebase)/);
     expect(read('core/redflag.ts')).not.toMatch(/^import /m);
   });

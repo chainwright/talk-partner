@@ -64,7 +64,7 @@ import { ABOUT_LEADS, aboutWhatCard, moreCard, moreChoices, moreSubject, outWays
 import { understoodBlock } from './phase7';
 import { aboutLearned, familyText, handoverText, riskyNotes } from '../../core/share';
 import { handoverLink, shareSheet } from './phase6';
-import { crisisBox, crisisScreen, fallBlock, hearButton, laterPainHtml, lowHelpLine, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenLink, suddenScreen, urgentBox } from './phase5';
+import { crisisBox, crisisScreen, fallBlock, hearButton, laterPainHtml, lowHelpLine, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenFirst, suddenLink, suddenScreen, urgentBox } from './phase5';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
@@ -1896,7 +1896,7 @@ function simpleScreen(): string {
       bodyHtml: suddenLink('sudden-body'),
       tryHtml: tryAiBlock({ q: AI_QUESTION, tag: tryAiTag(whereInput()), busy: state.busy && p9sample.q !== null && state.lastQuestion === p9sample.q }),
       laterHtml: (p9notNow ? `<p class="tip" id="not-now" role="status">${esc(P9.later.notNow(name, p9notNow.kept))}</p>` : '') + laterBlock(shownLater(p8later.list, Date.now()).map((x) => ({ q: x.q, time: laterTime(x.at), ago: agoText(x.at, Date.now()), i: p8later.list.indexOf(x), care: !!x.care, pain: !!x.pain, asking: p8later.asking === x })), laterPainHtml(callNumber(), numberGuess())),
-      turnHtml: `${turnButton(name)}${suddenLink()}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
+      turnHtml: `${turnButton(name)}${suddenFirst(callNumber(), numberGuess())}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
     });
   }
   if (!state.sheet || !c?.unsentPayload) return screen;

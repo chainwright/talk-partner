@@ -24,6 +24,12 @@ const SOUND = sign('<path d="M12 38h16l22-18v56L28 58H12z"/><path d="M64 34a20 2
 // ---------------------------------------------------------------- "Something new or sudden?"
 /** The way in: on the first screen, and at the top of "Body & care". */
 export const suddenLink = (id = 'sudden-link') => `<a class="btn sudden-link" id="${id}" href="#/sudden">${ALERT}<span><b>${P5.sudden.link}</b><small>${P5.sudden.linkSub}</small></span></a>`;
+/**
+ * Phase 12b (judge round 9b): the same box on the first screen, with the number in it, and under it "Change it" (with
+ * "Is this your emergency number?" while the number is a guess), which opens About them at the number.
+ */
+export const suddenFirst = (number: string, guess: boolean) => `<a class="btn sudden-link" id="sudden-link" href="#/sudden">${ALERT}<span><b>${P5.sudden.link}</b><small>${esc(P5.sudden.linkSubNumber(number))}</small></span></a>
+<p class="tip number-guess" id="first-number">${guess ? `${P9.number.guess} ` : ''}<button type="button" class="tlink" data-act="sudden-number">${P9.number.change} →</button></p>`;
 
 /** The call button: a plain tel: link, so the phone's own dialler opens with the number in it. Nothing is dialled by the app. */
 export const callButton = (number: string, big = false) => `<a class="btn call${big ? ' big' : ''}" data-call="1" href="${telHref(number)}">${PHONE}<span>${esc(big ? P5.sudden.call(number) : P5.sudden.boxCall(number))}</span></a>`;

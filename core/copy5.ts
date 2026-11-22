@@ -18,6 +18,8 @@ export const P5 = {
     link: 'Something new or sudden?',
     /** Phase 8 (judge round 7): what it is for, in the words a frightened relative would look for. */
     linkSub: 'Signs of a new stroke, chest pain, a fall: call.',
+    /** Phase 12b (judge round 9b, the nurse's seat): on the first screen the number is in the box itself. */
+    linkSubNumber: (number: string) => `Signs of a new stroke, chest pain, a fall: call ${number}.`,
     heading: 'Something new or sudden?',
     lead: (number: string) => `If you see any one of these, and it is new or sudden, call ${number} now. Do not wait to see if it passes.`,
     fastHeading: 'FAST',

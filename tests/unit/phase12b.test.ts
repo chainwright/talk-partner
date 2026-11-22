@@ -196,3 +196,19 @@ describe('9. "Try it with the Millers" on a phone: the simple view with the samp
     expect(main).toContain('state.demo = false; sampleSimple = false;');
   });
 });
+
+describe('10. The first screen\'s red box names the number, with "Change it"', () => {
+  it('the number in the box, and under it "Is this your emergency number? Change it" while it is a guess, "Change it" after', async () => {
+    const { suddenFirst } = await import('../../web/src/phase5');
+    const g = suddenFirst('112', true);
+    expect(g).toContain('<small>Signs of a new stroke, chest pain, a fall: call 112.</small>');
+    expect(g).toContain('href="#/sudden"');
+    expect(g).toContain('Is this your emergency number? <button type="button" class="tlink" data-act="sudden-number">Change it →</button>');
+    const set = suddenFirst('999', false);
+    expect(set).toContain('call 999.');
+    expect(set).not.toContain('Is this your emergency number?');
+    expect(set).toContain('data-act="sudden-number">Change it →</button>');
+    // the button is outside the link (no button inside an <a>)
+    expect(g.indexOf('</a>')).toBeLessThan(g.indexOf('<button'));
+  });
+});

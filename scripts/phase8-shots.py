@@ -11,6 +11,7 @@ import datetime
 import importlib.util
 import json
 import os
+import re
 import sys
 from urllib.parse import urlparse
 
@@ -58,7 +59,8 @@ def rules(browser, url):
     page.reload()
     page.wait_for_selector('main.simple.home')
     home = e2e.text(page)
-    check('Home: "Needs something now?"; the red card: "Signs of a new stroke, chest pain, a fall: call."', 'Needs something now?' in home and 'Signs of a new stroke, chest pain, a fall: call.' in home, home[:300])
+    # (phase 12b: the number is in the red card now, "call 911." or the locale's)
+    check('Home: "Needs something now?"; the red card: "Signs of a new stroke, chest pain, a fall: call [number]."', 'Needs something now?' in home and re.search(r'Signs of a new stroke, chest pain, a fall: call \d+\.', home) is not None, home[:300])
     check('Home after the first card: the 4 steps are one line, with "Write the key word big."', page.locator('button.how-line').count() == 1 and 'Write the key word big.' in e2e.text(page, '#how'))
     for w, h in ((360, 740), (390, 844)):
         page.set_viewport_size({'width': w, 'height': h})
