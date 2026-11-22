@@ -164,16 +164,20 @@ export function topicGrid(m: Pick<HomeModel, 'name' | 'topics' | 'topicOpen' | '
  */
 export function homeScreen(m: HomeModel): string {
   const S = COPY.simple;
+  // (phase 12b, judge round 9b: a pain question left for later stands directly under "Needs something now?", so its
+  // signs and call button are on the screen at 360 px; other questions left for later stay lower down)
+  const painLater = (m.laterHtml ?? '').includes('class="warn later-pain"');
   const status = m.busy ? `<p class="making" role="status"><span class="dot wait"></span>${S.making}</p>` : m.error ? `<p class="warn" role="alert">${esc(m.error)}</p>` : '';
   return `<main class="simple wrap home" data-screen="home">
   ${navBar({ back: false, name: m.name })}
   <div class="col">
     <h1 id="hope">${esc(S.hope(m.name))}</h1>
     <button type="button" class="btn needs" data-act="needs">${SIGN.grid}<span><b>${S.needs}</b><small>${esc(S.needsSub(m.name))}</small></span></button>
+    ${painLater ? m.laterHtml : ''}
     ${m.turnHtml ?? ''}
     ${m.tryHtml ?? ''}
     ${howBlock(m.name, m.howOpen)}
-    ${m.laterHtml ?? ''}
+    ${painLater ? '' : m.laterHtml ?? ''}
   </div>
   <div class="col">
     <div class="stack"><h2 class="sec">${S.topicsHeading}</h2>${topicGrid(m)}</div>
