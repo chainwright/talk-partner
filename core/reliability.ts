@@ -61,7 +61,7 @@ export function careAnswer(q: string, label = '', topic: string | null = null): 
  * notes for other people (core/share.ts, core/passport.ts) still keep a usual yes to a drink on purpose (ed0395d), so
  * `careAnswer` itself is unchanged.
  */
-const DRINK_FOOD_WORDS = /\b(?:drink|drinks|drinking|thirsty|water|tea|coffee|juice|milk|squash|eat|eating|hungry|food|snack|meal|breakfast|lunch|dinner|supper)\b/i;
+export const DRINK_FOOD_WORDS = /\b(?:drink|drinks|drinking|thirsty|water|tea|coffee|juice|milk|squash|eat|eating|hungry|food|snack|meal|breakfast|lunch|dinner|supper)\b/i;
 export function guardExempt(q: string, label = '', topic: string | null = null): boolean {
   return careAnswer(q, label, topic) || DRINK_FOOD_WORDS.test(q);
 }

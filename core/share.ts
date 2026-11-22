@@ -27,7 +27,7 @@ import { HEALTH_TOGGLES, NO_HEALTH, hasHealth, insights, type HealthNotes, type 
 import type { Learned } from './prefs';
 import { DEFAULT_NUMBER } from './redflag';
 import { P12 } from './copy12';
-import { careAnswer } from './reliability';
+import { careAnswer, DRINK_FOOD_WORDS } from './reliability';
 import { agoWords, laterPain } from './later';
 
 const K = P6.share;
@@ -118,9 +118,15 @@ export function usualForOthers(l: Learned): boolean {
  * would otherwise say `Usually says no to "Are you in pain?"` and offer "Keep as a fact", which teaches a carer to stop
  * asking. A need of the board about pain, the toilet or "something's wrong" is still shown as counted, but marked
  * `care`, so it is never offered as a fact to keep. The counting in core/prefs.ts is unchanged.
+ * Phase 12b (judge round 9b, the nurse's seat): the same for a drink or food question (`DRINK_FOOD_WORDS`): a usual
+ * "no" is left out (`Usually says no to "Would you like something to drink?"` could teach a family to stop offering
+ * drinks to someone at risk of drying out), and any other line about one is marked `care`, never a fact to keep.
  */
 export function aboutLearned(lines: Learned[]): Learned[] {
-  return lines.filter((l) => !(l.q && careAnswer(l.q, '', guessTopic(l.q)))).map((l) => (l.kind === 'need' && careAnswer('', l.key.replace(/^n:/, '')) ? { ...l, care: true } : l));
+  return lines
+    .filter((l) => !(l.q && careAnswer(l.q, '', guessTopic(l.q))))
+    .filter((l) => !(l.kind === 'no' && DRINK_FOOD_WORDS.test(l.q)))
+    .map((l) => ((l.kind === 'need' && careAnswer('', l.key.replace(/^n:/, ''))) || (l.q && DRINK_FOOD_WORDS.test(l.q)) ? { ...l, care: true } : l));
 }
 
 export interface HandoverShare {

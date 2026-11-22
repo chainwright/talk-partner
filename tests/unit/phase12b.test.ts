@@ -48,3 +48,30 @@ describe('2. One "no" to the weakness question does not end the stroke check', (
     expect(after(card(Q), 'no', EMPTY_PROFILE, []).next).toEqual(['How bad is the pain?']);
   });
 });
+
+describe('3. About them never teaches the family to stop offering a drink or food', () => {
+  const at = (d: number) => Date.UTC(2026, 10, 16 + d, 10);
+  const three = (q: string, label: string) => [0, 1, 2].map((d) => ({ q, label, at: at(d) }));
+  it.each(['Would you like something to drink?', 'Would you like a cup of tea?', 'Are you hungry?', 'Would you like a snack?'])('three "no" to "%s": no "Usually says no" line, no "Keep as a fact"', async (q) => {
+    const { learned } = await import('../../core/prefs');
+    const { aboutLearned } = await import('../../core/share');
+    const { learnedBlock } = await import('../../web/src/simple');
+    // the counting itself still sees it
+    expect(learned(three(q, 'no'), []).map((l) => l.kind)).toContain('no');
+    const lines = aboutLearned(learned(three(q, 'no'), []));
+    expect(lines.map((l) => l.text).join(' ')).not.toMatch(/usually says no/i);
+    expect(learnedBlock({ name: 'Frank', lines, facts: [], short: null })).not.toContain('learned-keep');
+  });
+  it('a usual drink choice is still shown, but never offered as a fact to keep; other questions keep the button', async () => {
+    const { learned } = await import('../../core/prefs');
+    const { aboutLearned } = await import('../../core/share');
+    const { learnedBlock } = await import('../../web/src/simple');
+    const tea = aboutLearned(learned(three('Would you like tea or coffee?', 'tea'), []));
+    expect(tea.map((l) => l.text)).toEqual(['"Would you like tea or coffee": usually tea (3 of 3).']);
+    expect(tea.every((l) => l.care)).toBe(true);
+    expect(learnedBlock({ name: 'Frank', lines: tea, facts: [], short: null })).not.toContain('learned-keep');
+    const tv = aboutLearned(learned(three('Would you like the TV or the radio?', 'the radio'), []));
+    expect(tv.length).toBe(1);
+    expect(learnedBlock({ name: 'Frank', lines: tv, facts: [], short: null })).toContain('learned-keep');
+  });
+});
