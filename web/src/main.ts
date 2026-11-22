@@ -471,7 +471,9 @@ function backStep(from: string): string | null {
     if (state.busy) { makeSeq++; putSnap(trail.current); return trail.current.route; }
     const onPerson = trail.current.person;
     let to = trail.stack.pop();
-    while (to && (to.sub || (!onPerson && to.entry))) to = trail.stack.pop();
+    // (phase 12 walk: from the carer's side every person's screen is passed over, not only the one the phone was handed
+    // over on: after the body map, whose second step is a person's screen of its own, Back landed on the person's card)
+    while (to && (to.sub || (!onPerson && to.person))) to = trail.stack.pop();
     if (to) { putSnap(to); return to.route; }
   }
   // nothing under this screen (it was opened by its own address, or after a reload): the screen it belongs to
