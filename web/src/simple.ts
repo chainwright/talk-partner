@@ -458,7 +458,8 @@ export function answeredScreen(m: AnsweredModel): string {
   const another = `<button type="button" class="btn${m.next || lead || m.out ? '' : ' primary'}" id="another" data-act="new">${lead ? S.anotherElse : S.another}</button>`;
   const end = m.end && !lead ? `<p class="do-now" id="do-now">${SIGN.tick}<span><small>${S.doNow}</small>${esc(m.end)}</span></p>` : '';
   // the way out was chosen: what to do now, in order of how often it helps (never a dead end)
-  const narrow = m.narrow ? `<button type="button" class="btn narrow" id="narrow" data-act="narrow" ${m.narrow === 'offline' ? 'disabled' : ''}>${SIGN.spark}<span>${S.narrow.go}</span></button>
+  const online = m.narrow === 'cloudOn' || m.narrow === 'ask';
+  const narrow = m.narrow ? `<button type="button" class="btn narrow" id="narrow" data-act="narrow" ${m.narrow === 'offline' ? 'disabled' : ''}>${SIGN.spark}<span>${online ? S.narrow.goOnline : S.narrow.go}</span></button>
       <p class="tip" id="narrow-where">${esc(S.narrow[m.narrow])}</p>` : '';
   // (18 Nov, the role-play: six things to press were too many for a tired carer. Three stay on the screen: the next
   // question, the AI's broader choices, and "Ask them to show or write it"; the rest is under "More".)
@@ -469,7 +470,7 @@ export function answeredScreen(m: AnsweredModel): string {
   // ways in the rules' order (core/more.ts): a step the rules make first, the AI's last, and no question of another
   // topic. A question of the same conversation stays the first step where the person started it, `keepLead`.)
   void tryMain; void showWrite;
-  const waysHtml = m.out && m.ways ? waysBlock({ ways: m.ways, moreFirst: m.moreFirst ?? [], letterHtml: m.outExtra ?? '', narrowHtml: narrow }) : '';
+  const waysHtml = m.out && m.ways ? waysBlock({ ways: m.ways, moreFirst: m.moreFirst ?? [], letterHtml: m.outExtra ?? '', narrowHtml: narrow, aiSecond: online }) : '';
   const outBlock = m.out ? `<div class="next-steps" id="after-out"><p class="steplabel out-lead" id="out-lead">${S.out.heading}</p>
       ${m.keepLead ? nextBtn : ''}${waysHtml}${m.narrowLast ? `<p class="tip">${S.narrow.last}</p>` : ''}</div>` : '';
   const outMore = m.out ? `<div class="next-steps" id="out-more">${m.label === 'not sure' ? `<p class="tip">${esc(S.out.notSure)}</p>` : ''}

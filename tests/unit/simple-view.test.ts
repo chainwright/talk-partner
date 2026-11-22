@@ -422,7 +422,8 @@ describe('simple view: after an answer', () => {
     // the next question of the topic or of the tree is not on this screen any more, shown or under "More"
     const three = answeredScreen(model({ label: 'something else', out: true, narrow: 'ask', follow: ['Are you hungry?'], tryNext: 'Would you like water, juice or milk?', ways: [...W], moreFirst: ['water'] }));
     const shown = three.slice(three.indexOf('id="after-out"'), three.indexOf('id="left-line"'));
-    expect([...shown.matchAll(/<button[^>]*>/g)].map((m) => (m[0].match(/id="([^"]+)"/) ?? [])[1])).toEqual(['way-more', 'show-write', 'narrow']);
+    // (phase 12b: online, the AI's step is the second way)
+    expect([...shown.matchAll(/<button[^>]*>/g)].map((m) => (m[0].match(/id="([^"]+)"/) ?? [])[1])).toEqual(['way-more', 'narrow', 'show-write']);
     expect(three).not.toContain('Are you hungry?');
     expect(three).not.toContain('id="next-q"');
     expect(three).not.toContain('data-q=');
@@ -449,17 +450,22 @@ describe('simple view: after an answer', () => {
     expect(body).toContain('id="way-needs" data-act="needs"');
     expect(count(body, 'class="btn way primary"') + count(body, 'class="btn ask-next way primary"')).toBe(1);
   });
-  it('after "something else" an AI can narrow it down, as the last way: the button, and where that AI runs, in plain words', () => {
+  it('after "something else" an AI can narrow it down: the button, and where that AI runs, in plain words', () => {
     const W = { ways: ['more', 'letter', 'show', 'narrow'] as ('more' | 'letter' | 'show' | 'narrow')[], moreFirst: ['water'] };
     const cloud = answeredScreen(model({ label: 'something else', out: true, narrow: 'cloudOn', ...W }));
     expect(cloud).toContain('id="narrow" data-act="narrow"');
-    expect(text(cloud)).toContain('Narrow it down: AI suggests the next choices');
+    // (phase 12b, judge round 9b: online, a phone, it is the second way, after the step the rules make)
+    expect(text(cloud)).toContain('Find more choices (online, after your yes)');
     expect(text(cloud)).toContain(S.narrow.cloudOn);
-    expect(text(cloud)).toContain('The last way, when the others did not find it:');
-    // (18 Nov: it was the second thing on the screen; it is the last now, after every way the rules make)
-    expect(cloud.indexOf('id="show-write"')).toBeLessThan(cloud.indexOf('id="narrow"'));
-    expect(cloud.indexOf('id="way-more"')).toBeLessThan(cloud.indexOf('id="show-write"'));
-    expect(text(answeredScreen(model({ label: 'something else', out: true, narrow: 'device', ...W })))).toContain('Nothing is sent.');
+    expect(text(cloud)).not.toContain('The last way, when the others did not find it:');
+    expect(cloud.indexOf('id="way-more"')).toBeLessThan(cloud.indexOf('id="narrow"'));
+    expect(cloud.indexOf('id="narrow"')).toBeLessThan(cloud.indexOf('id="show-write"'));
+    // on the device (Chrome's own AI) it stays the last way, after every way the rules make
+    const device = answeredScreen(model({ label: 'something else', out: true, narrow: 'device', ...W }));
+    expect(text(device)).toContain('Narrow it down: AI suggests the next choices');
+    expect(text(device)).toContain('The last way, when the others did not find it:');
+    expect(device.indexOf('id="show-write"')).toBeLessThan(device.indexOf('id="narrow"'));
+    expect(text(device)).toContain('Nothing is sent.');
     expect(text(answeredScreen(model({ label: 'something else', out: true, narrow: 'ask', ...W })))).toContain('the app asks you first');
     const off = answeredScreen(model({ label: 'something else', out: true, narrow: 'offline', ...W }));
     expect(off).toMatch(/id="narrow" data-act="narrow" disabled/);

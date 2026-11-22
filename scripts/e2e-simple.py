@@ -445,7 +445,7 @@ def phone(browser, url, live):
     rest = text(page, '#more-body')
     check('after "something else": under "More": ask another question, the needs board, a new way; no question of another topic and no "Try"',
           all(page.locator(f'#more-body [data-act={a}]').is_visible() for a in ('needs', 'own', 'new')) and page.locator('#more-body [data-q]').count() == 0 and 'Try:' not in rest, rest[:300])
-    check('after "something else": an AI can narrow it down, and the screen says that on this phone it uses online help and asks first', page.locator('#narrow').is_visible() and text(page, '#narrow') == 'Narrow it down: AI suggests the next choices' and text(page, '#narrow-where') == 'This uses online help: the app asks you first, and shows the line that would go.', text(page, '#after-out')[:300])
+    check('after "something else": an AI can narrow it down, and the screen says that on this phone it uses online help and asks first', page.locator('#narrow').is_visible() and text(page, '#narrow') == 'Find more choices (online, after your yes)' and text(page, '#narrow-where') == 'This uses online help: the app asks you first, and shows the line that would go.', text(page, '#after-out')[:300])
     screen_checks(page, 'after "something else"')
     n0 = len(outside)
     page.locator('#narrow').click()

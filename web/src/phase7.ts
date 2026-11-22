@@ -18,6 +18,11 @@ export interface WaysModel {
   letterHtml: string;
   /** The AI's step with its line about where it runs, as it was (web/src/simple.ts). Empty when there is none here. */
   narrowHtml: string;
+  /**
+   * Phase 12b (judge round 9b): the AI's step goes online here (a phone), so it is the second way, not the last. Not on
+   * a card about pain, the body or a feeling: there the body card and the needs board stay ahead of it.
+   */
+  aiSecond?: boolean;
 }
 
 /** One way: the first on the list is the main button of the screen. */
@@ -29,7 +34,9 @@ const way = (id: string, first: boolean, attrs: string, title: string, sub: stri
  */
 export function waysBlock(m: WaysModel): string {
   const O = P7.out;
-  const html = m.ways.map((w, i) => {
+  const second = !!m.aiSecond && !!m.narrowHtml && m.ways.length > 2 && m.ways.includes('narrow') && !m.ways.includes('where') && !m.ways.includes('needs');
+  const ways = second ? [m.ways[0], 'narrow' as Way, ...m.ways.slice(1).filter((w) => w !== 'narrow')] : m.ways;
+  const html = ways.map((w, i) => {
     const first = i === 0;
     if (w === 'more') return way('more', first, 'data-act="more-like"', O.more, O.moreSub(m.moreFirst));
     if (w === 'about') return way('about', first, 'data-act="about-what"', O.about, O.aboutSub);
@@ -37,6 +44,7 @@ export function waysBlock(m: WaysModel): string {
     if (w === 'needs') return way('needs', first, 'data-act="needs"', O.needs, O.needsSub);
     if (w === 'letter') return m.letterHtml;
     if (w === 'show') return `<button type="button" class="btn way" id="show-write" data-act="stuck">${COPY.simple.out.showWrite}</button>`;
+    if (second) return m.narrowHtml;
     return m.narrowHtml ? `<p class="tip way-last" id="narrow-last">${O.narrowLast}</p>${m.narrowHtml}` : '';
   }).filter(Boolean);
   return `<ol class="ways" id="ways">${html.map((h) => `<li>${h}</li>`).join('')}</ol>`;

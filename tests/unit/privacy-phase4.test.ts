@@ -105,8 +105,12 @@ describe('the carer\'s screens', () => {
     // (18 Nov, the owner's walk on his phone: the ways stand in the rules' order, all on the screen, numbered)
     const html = answeredScreen({ ...base, outExtra: letterButton('Frank'), ways: ['more', 'letter', 'show', 'narrow'], moreFirst: ['water', 'juice', 'milk'] });
     const shown = html.slice(html.indexOf('id="after-out"'), html.indexOf('id="left-line"'));
-    expect([...shown.matchAll(/<button[^>]*id="([^"]+)"/g)].map((m) => m[1])).toEqual(['way-more', 'letter-go', 'show-write', 'narrow']);
+    // (phase 12b, judge round 9b: where the AI's step goes online, a phone, it is the second way, not the last)
+    expect([...shown.matchAll(/<button[^>]*id="([^"]+)"/g)].map((m) => m[1])).toEqual(['way-more', 'narrow', 'letter-go', 'show-write']);
     expect(outButtons(html)).toBe(4);
+    const device = answeredScreen({ ...base, narrow: 'device', outExtra: letterButton('Frank'), ways: ['more', 'letter', 'show', 'narrow'], moreFirst: ['water', 'juice', 'milk'] });
+    const onDevice = device.slice(device.indexOf('id="after-out"'), device.indexOf('id="left-line"'));
+    expect([...onDevice.matchAll(/<button[^>]*id="([^"]+)"/g)].map((m) => m[1])).toEqual(['way-more', 'letter-go', 'show-write', 'narrow']);
   });
   it('with no AI and no list of the kind, "What is it about?", the first letter and "Ask them to show or write it" stand', () => {
     const html = answeredScreen({ ...base, tryNext: null, narrow: null, outExtra: letterButton('Frank'), ways: ['about', 'letter', 'show', 'narrow'] });

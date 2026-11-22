@@ -97,3 +97,18 @@ describe('4. A day with fewer than six drinks entered is a line, with whom to te
     expect(words).not.toMatch(/\b(?:6|six|7|seven|8|eight) (?:cups|glasses|drinks a day)|target|aim for|at least|more to drink|drink more/i);
   });
 });
+
+describe('5. After "something else", where the AI step goes online (a phone), it is the second way', () => {
+  const html = async (ways: import('../../core/more').Way[], narrowHtml = '<button id="narrow"></button>') => {
+    const { waysBlock } = await import('../../web/src/phase7');
+    const h = waysBlock({ ways, moreFirst: ['water'], letterHtml: '<button id="letter-go"></button>', narrowHtml, aiSecond: true });
+    return [...h.matchAll(/<button[^>]*id="([^"]+)"/g)].map((m) => m[1]);
+  };
+  it('second, after the step the rules make, and before the first letter and "show or write it"', async () => {
+    expect(await html(['more', 'letter', 'show', 'narrow'])).toEqual(['way-more', 'narrow', 'letter-go', 'show-write']);
+    expect(await html(['about', 'letter', 'show', 'narrow'])).toEqual(['way-about', 'narrow', 'letter-go', 'show-write']);
+  });
+  it('never ahead of the body card or the needs board on a care card', async () => {
+    expect(await html(['where', 'needs', 'letter', 'show', 'narrow'])).toEqual(['way-where', 'way-needs', 'letter-go', 'show-write', 'narrow']);
+  });
+});

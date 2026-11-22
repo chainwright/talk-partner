@@ -498,6 +498,8 @@ const COPY = {
     /** After the way out: an AI suggests the next, broader choices (core/narrow.ts). Two levels at most. */
     narrow: {
       go: 'Narrow it down: AI suggests the next choices',
+      /** Phase 12b (judge round 9b): the same step where it would go online (a phone), as the second way after "something else". */
+      goOnline: 'Find more choices (online, after your yes)',
       device: 'The AI built into Chrome does this on this computer. Nothing is sent.',
       cloudOn: "Google's online AI does this. It gets the question and the choices that did not fit, with any names you listed swapped out, and the app's fixed instructions. Never the answers they chose.",
       ask: 'This uses online help: the app asks you first, and shows the line that would go.',
