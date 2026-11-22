@@ -368,6 +368,8 @@ const COPY = {
       /** Phase 9 (judge round 8, a health P0): a care question stays pinned until the carer has found out. */
       careNote: 'A question about pain, the body, the toilet, a drink or feelings stays here until you have found out. Kept on this computer. Nothing is sent.',
       painLine: "If the pain is new or strong, don't wait: call the nurse or doctor.",
+      /** Phase 12 (judge round 9): the signs that do not wait, and the emergency route, under a pain question left for later. */
+      painSigns: (number: string) => `Call ${number} now if there is sudden weakness or numbness, a drooping face, chest pain, trouble breathing, a sudden very bad headache, or very bad pain.`,
       found: 'Did you find out?',
       foundYes: 'Yes',
       foundNo: 'Not yet',

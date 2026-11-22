@@ -723,3 +723,9 @@
 .pv .p-top .hold { flex: 1 1 auto; min-width: 0; line-height: 1.15; }
 .pv .p-notnow { margin-left: auto; min-height: 44px; padding: 4px 14px; border: 2px solid var(--muted); border-radius: 12px; background: transparent; color: var(--ink); font-family: inherit; font-size: 18px; font-weight: 600; cursor: pointer; flex: none; white-space: nowrap; }
 .pv .p-notnow:focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
+
+/* phase 12: under a pain question left for later, the signs that do not wait and the call button; how long ago */
+.simple .later-item .later-ago { margin: 0; }
+.simple .later-item .later-signs { display: grid; gap: 8px; }
+.simple .later-item .later-signs p { margin: 0; font-weight: 600; }
+.simple .later-item .later-signs .urgent-acts { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }

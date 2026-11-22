@@ -64,7 +64,7 @@ import { ABOUT_LEADS, aboutWhatCard, moreCard, moreChoices, moreSubject, outWays
 import { understoodBlock } from './phase7';
 import { aboutLearned, familyText, handoverText, riskyNotes } from '../../core/share';
 import { handoverLink, shareSheet } from './phase6';
-import { fallBlock, hearButton, lowHelpLine, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenLink, suddenScreen, urgentBox } from './phase5';
+import { fallBlock, hearButton, laterPainHtml, lowHelpLine, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenLink, suddenScreen, urgentBox } from './phase5';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
@@ -72,7 +72,7 @@ import { P8 } from '../../core/copy8';
 import { guessTopic, lowMood, timeText } from '../../core/diary';
 /** Phase 8: a low answer to a question about how the person feels (not a photo): the helpline line follows on the carer's side. Phase 12: the diary's own rule (worried, scared, lonely, something bothering them). */
 const lowMoodAnswer = lowMood;
-import { addLater, cleanLater, doneLater, laterOf, noLastTime, shownLater, type Later } from '../../core/later';
+import { addLater, agoText, cleanLater, doneLater, laterOf, noLastTime, shownLater, type Later } from '../../core/later';
 import { NO_PASSPORT, OFF_UNTIL_TICKED, cleanPassport, passport, passportText, toggleLine, OWN_MAX, type PassportInput, type PassportPrefs } from '../../core/passport';
 import { addEvent, cleanLog, lessSureCount, newLog, pickedPractice, practiceFlag, practiceReport, practiceText, practiceUrgent, togglePractice, type AskedBy, type PracticeEvent, type PracticeInput, type PracticeLog, type PracticeSpan, type Via } from '../../core/practice';
 import { passportLink, passportScreen, practiceScreen, type PassPicture } from './care7';
@@ -1866,7 +1866,7 @@ function simpleScreen(): string {
       privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: `${diaryLink()}${!state.demo && state.diary.length ? handoverLink() : ''}${p4Links(name)}${passportLink(name)}`,
       bodyHtml: suddenLink('sudden-body'),
       tryHtml: tryAiBlock({ q: AI_QUESTION, tag: tryAiTag(whereInput()), busy: state.busy && p9sample.q !== null && state.lastQuestion === p9sample.q }),
-      laterHtml: (p9notNow ? `<p class="tip" id="not-now" role="status">${esc(P9.later.notNow(name, p9notNow.kept))}</p>` : '') + laterBlock(shownLater(p8later.list, Date.now()).map((x) => ({ q: x.q, time: laterTime(x.at), i: p8later.list.indexOf(x), care: !!x.care, pain: !!x.pain, asking: p8later.asking === x }))),
+      laterHtml: (p9notNow ? `<p class="tip" id="not-now" role="status">${esc(P9.later.notNow(name, p9notNow.kept))}</p>` : '') + laterBlock(shownLater(p8later.list, Date.now()).map((x) => ({ q: x.q, time: laterTime(x.at), ago: agoText(x.at, Date.now()), i: p8later.list.indexOf(x), care: !!x.care, pain: !!x.pain, asking: p8later.asking === x })), laterPainHtml(callNumber(), numberGuess())),
       turnHtml: `${turnButton(name)}${suddenLink()}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
     });
   }

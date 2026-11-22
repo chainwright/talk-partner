@@ -145,3 +145,31 @@ describe('A4. Pain on the needs board: "Where does it hurt?" is the main button,
     expect(COPY.needs.lines.pain).not.toMatch(/AI/);
   });
 });
+
+describe('A5. Pain left for later: the signs to watch for, the emergency route, and how long ago', () => {
+  it('"how long ago" in plain words', async () => {
+    const { agoText } = await import('../../core/later');
+    const now = when(6, '12:00');
+    expect(agoText(now - 5 * 60_000, now)).toBe('Left 5 minutes ago.');
+    expect(agoText(now - 60 * 60_000, now)).toBe('Left 1 hour ago.');
+    expect(agoText(now - 150 * 60_000, now)).toBe('Left 2 hours ago.');
+    expect(agoText(now - 30 * 3600_000, now)).toBe('Left 1 day ago.');
+    expect(agoText(now - 20_000, now)).toBe('Left just now.');
+  });
+  it('a pain question on Home: the line, the signs that do not wait, a call button with the number, the list, and the time', async () => {
+    const { laterBlock } = await import('../../web/src/simple');
+    const { laterPainHtml } = await import('../../web/src/phase5');
+    const html = laterBlock([{ q: 'Are you in pain?', time: '09:10', ago: 'Left 3 hours ago.', i: 0, care: true, pain: true }], laterPainHtml('999'));
+    expect(html).toContain('If the pain is new or strong, don&#39;t wait: call the nurse or doctor.');
+    expect(html).toMatch(/Call 999 now if/);
+    expect(html).toMatch(/weakness or numbness/);
+    expect(html).toMatch(/chest pain/);
+    expect(html).toContain('href="tel:999"');
+    expect(html).toContain('href="#/sudden"');
+    expect(html).toContain('Left 3 hours ago.');
+    // an everyday question left for later carries none of it
+    const plain = laterBlock([{ q: 'Shall we go out?', time: '09:10', ago: 'Left 3 hours ago.', i: 0 }], laterPainHtml('999'));
+    expect(plain).not.toContain('tel:');
+    expect(plain).toContain('Left 3 hours ago.');
+  });
+});

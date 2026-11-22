@@ -45,6 +45,8 @@ export function suddenScreen(m: { number: string; guess?: boolean }): string {
 </main>`;
 }
 
+/** Phase 12 (judge round 9): under a pain question left for later, the signs that do not wait, a call button with the number, and the list. */
+export const laterPainHtml = (number: string, guess = false) => `<div class="later-signs"><p>${esc(COPY.simple.later.painSigns(number))}</p><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, 'later-guess')}</div>`;
 /** The boxed line over an answer that can be urgent (core/redflag.ts): the sentence, the call button, the way to the list. */
 export const urgentBox = (number: string, id = 'urgent', guess = false) => `<div class="urgent" id="${id}" role="alert">${ALERT}<div><b>${esc(P5.sudden.box(number))}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, `${id}-guess`)}</div></div>`;
 /**

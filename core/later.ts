@@ -95,3 +95,14 @@ export function cleanLater(raw: unknown): Later[] {
 export function noLastTime(c: { kind: string; asked: string }, topic: string | null = null): boolean {
   return c.kind === 'body' || c.kind === 'pain' || c.kind === 'feeling' || laterCare(c.asked, topic);
 }
+
+/** Phase 12 (judge round 9): how long ago a question was left, in plain words ("Left 2 hours ago."), by this device's clock. */
+export function agoText(at: number, now: number): string {
+  const min = Math.max(0, Math.floor((now - at) / 60_000));
+  if (min < 1) return 'Left just now.';
+  if (min < 60) return `Left ${min} minute${min === 1 ? '' : 's'} ago.`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `Left ${h} hour${h === 1 ? '' : 's'} ago.`;
+  const d = Math.floor(h / 24);
+  return `Left ${d} day${d === 1 ? '' : 's'} ago.`;
+}
