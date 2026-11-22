@@ -44,7 +44,8 @@ async function walk(profile: Profile): Promise<Walk> {
         const where = `${here.join(' > ')} > [${label}]`;
         if (!step.next.length && !step.end) w.problems.push(`silent end: ${where}`);
         if (!step.end) w.problems.push(`no end line: ${where}`);
-        if (step.end && (step.end.length > 120 || /\{|\}|undefined/.test(step.end) || !/[.!]$/.test(step.end))) w.problems.push(`bad end line "${step.end}": ${where}`);
+        // (phase 12b: a line that walks the carer through the stroke check itself may run to 200 characters)
+        if (step.end && (step.end.length > (/lift both arms/.test(step.end) ? 200 : 120) || /\{|\}|undefined/.test(step.end) || !/[.!]$/.test(step.end))) w.problems.push(`bad end line "${step.end}": ${where}`);
         for (const n of step.next) if (here.includes(n)) w.problems.push(`asked twice: ${n} in ${where}`);
         if (!step.next.length) { w.paths++; w.ends++; continue; }
         // the carer may also stop here: the end line of this answer is the fallback at the depth limit

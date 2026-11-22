@@ -5,7 +5,7 @@ import { after } from '../../core/tree';
 import { EMPTY_PROFILE } from '../../core/types';
 
 const card = (asked: string) => ({ asked, kind: 'choice' as const });
-const end = (asked: string, label: string, name = '') => after(card(asked), label, { ...EMPTY_PROFILE, personName: name }, []).end;
+const end = (asked: string, label: string, name = '', number = '') => after(card(asked), label, { ...EMPTY_PROFILE, personName: name }, [], number).end;
 
 describe('1. The pain scale: pictures of pain, not anger; "quite bad" calls now', () => {
   it('the three faces are pictures made with Gemini (the Faces Pain Scale style), the words stay under them', async () => {
@@ -34,5 +34,17 @@ describe('1. The pain scale: pictures of pain, not anger; "quite bad" calls now'
       expect(e, label).toMatch(/call the emergency number/);
     }
     expect(end('How bad is the pain?', 'quite bad')).not.toMatch(/^Quite bad\. Follow/);
+  });
+});
+
+describe('2. One "no" to the weakness question does not end the stroke check', () => {
+  const Q = 'Is it suddenly weak or numb, yes or no?';
+  it('the carer is asked to check it now, with the arms and the smile, and the number to call', () => {
+    expect(end(Q, 'no', 'Frank', '999')).toBe('Frank pointed to no. A yes or no can be wrong after a stroke: check it yourself now. Ask Frank to lift both arms and smile. If one side drops or the face droops, call 999 now.');
+    expect(end(Q, 'no')).toBe('They pointed to no. A yes or no can be wrong after a stroke: check it yourself now. Ask them to lift both arms and smile. If one side drops or the face droops, call the emergency number now.');
+    expect(end(Q, 'no')).not.toMatch(/^Not weak or numb/);
+  });
+  it('the pain questions still follow ("How bad is the pain?")', () => {
+    expect(after(card(Q), 'no', EMPTY_PROFILE, []).next).toEqual(['How bad is the pain?']);
   });
 });

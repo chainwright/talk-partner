@@ -1817,10 +1817,10 @@ function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: st
   const sc = state.shortcut;
   if (sc && sc.q === c.asked) {
     if (p.label.toLowerCase() !== 'yes') return { follow: [sc.of], end: '' };
-    const viaChoice = after({ asked: sc.of, kind: 'choice' }, sc.label, state.profile, state.chain.length ? state.chain : [sc.of]);
+    const viaChoice = after({ asked: sc.of, kind: 'choice' }, sc.label, state.profile, state.chain.length ? state.chain : [sc.of], callNumber());
     return { follow: viaChoice.next, end: viaChoice.end };
   }
-  const step = after(c, p.label, state.profile, state.chain.length ? state.chain : [c.asked]);
+  const step = after(c, p.label, state.profile, state.chain.length ? state.chain : [c.asked], callNumber());
   if (step.next.length || step.end) return { follow: step.next, end: step.end };
   return { follow: out || p.role !== 'answer' ? [] : followUps(c, p.label, state.profile), end: '' };
 }

@@ -138,7 +138,8 @@ const TREE: Record<string, Node> = {
   // (phase 12, judge round 9: pain in an arm, a hand, a leg, the feet or the face: the FAST sign first)
   'is it suddenly weak or numb yes or no': {
     yes: { end: 'Suddenly weak or numb: this can be a stroke. Call the emergency number now, and note the time it started.' },
-    no: { next: [HOW_BAD], end: 'Not weak or numb. Ask how bad the pain is, and ask again in an hour.' },
+    // (phase 12b, judge round 9b, the SLP's seat: one wrong "no" must not stop the stroke check; the carer checks it)
+    no: { next: [HOW_BAD], end: '{They} pointed to no. A yes or no can be wrong after a stroke: check it yourself now. Ask {them} to lift both arms and smile. If one side drops or the face droops, call {number} now.' },
     'not sure': { next: [HOW_BAD], end: 'Not sure: ask {them} to lift both arms and smile. If one side drops, call the emergency number now.' },
   },
   // (the card keeps the question's first part as what was asked: "Which side?")
@@ -456,13 +457,14 @@ function rawStep(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string,
 /**
  * What comes after `label` was confirmed on `card`. `chain` is the questions already asked in this conversation, this
  * card's included: a question is never offered twice in one conversation, and after TREE_DEPTH questions only the end
- * line is left. For a question the trees do not know (the carer typed it), both are empty.
+ * line is left. For a question the trees do not know (the carer typed it), both are empty. `number` is the emergency
+ * number the call buttons use ("{number}" in a line; "the emergency number" when none is given).
  */
-export function after(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string, profile: Profile, chain: string[] = []): Step {
+export function after(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string, profile: Profile, chain: string[] = [], number = ''): Step {
   const raw = rawStep(card, label, profile);
   if (!raw) return { next: [], end: '' };
   const name = profile.personName.trim();
-  let end = raw.end.replace(/\{name\} says/g, name ? `${name} says` : 'they say').replace(/\{them\}/g, name || 'them').replace(/\{They\}/g, name || 'They').replace(/\{they\}/g, name || 'they').replace(/\{their\}/g, name ? `${name}'s` : 'their');
+  let end = raw.end.replace(/\{name\} says/g, name ? `${name} says` : 'they say').replace(/\{them\}/g, name || 'them').replace(/\{They\}/g, name || 'They').replace(/\{they\}/g, name || 'they').replace(/\{their\}/g, name ? `${name}'s` : 'their').replace(/\{number\}/g, number || 'the emergency number');
   // with a name the verb is singular: "Frank has had enough", "Frank does not want", "Frank wants to go on"
   if (name) end = end.split(`${name} `).map((part, i) => (i === 0 ? part : part.replace(/^(have|do|want|take|need|like|move|reach)\b/, (v) => SINGULAR[v]))).join(`${name} `);
   // a two-part question is kept by its first part on the card ("Which side?"): compared by that part
