@@ -438,8 +438,8 @@ def phone(browser, url, live):
     # (18 Nov, the owner's walk on his phone: no question of another topic after the way out; the ways in the rules' order)
     check('after "something else": the screen says so, and no question is offered in its place (the tree\'s next question is not on this screen)', text(page, '#chose') == 'Would you like water, juice or milk? Something else' and nexts(page) == [] and page.locator('main.s-answered [data-q]').count() == 0, out[:200])
     shown = page.evaluate("[...document.querySelectorAll('#after-out button')].map((b) => b.id)")
-    check('after "something else": one line that says what to do, then the ways in order: more choices of the same kind (the rules), the first letter, "show or write it", and the AI last; never a dead end',
-          'None of these. Find out what it is: one step at a time.' in out and shown == ['way-more', 'letter-go', 'show-write', 'narrow'] and page.locator('main.s-answered > .col [data-act=own], main.s-answered > .col #another').count() == 0, f'{shown} {out[:300]}')
+    check('after "something else": one line that says what to do, then the ways in order: more choices of the same kind (the rules), the AI (online, phase 12b: second), the first letter, "show or write it"; never a dead end',
+          'None of these. Find out what it is: one step at a time.' in out and shown == ['way-more', 'narrow', 'letter-go', 'show-write'] and page.locator('main.s-answered > .col [data-act=own], main.s-answered > .col #another').count() == 0, f'{shown} {out[:300]}')
     check('after "something else": "More choices like these" says what comes next, and none of it was refused (tea, coffee; not water, juice or milk)', text(page, '#way-more') == 'More choices like these Next: tea, coffee. Then more, three at a time.', text(page, '#way-more'))
     more(page)
     rest = text(page, '#more-body')
@@ -813,7 +813,8 @@ def learning(browser, url):
     check('learning: About them lists what was learned, in plain words with the counts (the usual choice, and the need asked for three times)',
           len(lines) == 2 and lines[0] == '"Would you like tea or coffee": usually coffee (3 of 3).' and lines[1].startswith('Asked for "drink" on the needs board 3 times'), str(lines))
     check('learning: it says how it was learned (counted on this phone, no AI, never sent by the app, only a hint)', 'Counted on this phone from the answers they confirmed: no AI, and the app never sends it anywhere (the usual choices leave only in a note for the next carer or on the page "How to talk", if you share or print one yourself).' in text(page, '#learned') and 'they always choose for themselves' in text(page, '#learned'))
-    check('learning: each line has "Keep as a fact" and "Remove", and there is "Forget everything learned"', page.locator('[data-act=learned-keep]').count() == 2 and page.locator('[data-act=learned-remove]').count() == 2 and page.locator('[data-act=learned-forget]').is_visible())
+    # (phase 12b: a line about a drink question is never offered as a fact to keep, so only the needs line has "Keep")
+    check('learning: each line has "Remove", the needs line "Keep as a fact" (the drink question line not), and there is "Forget everything learned"', page.locator('[data-act=learned-keep]').count() == 1 and page.locator('[data-act=learned-remove]').count() == 2 and page.locator('[data-act=learned-forget]').is_visible())
     screen_checks(page, 'learning: About them, what was learned', primary=False)
     page.locator('#learned-list li', has_text='drink').locator('[data-act=learned-keep]').click()
     page.wait_for_selector('#learned-kept')
@@ -1092,7 +1093,7 @@ def phase4(browser, url, live):
     answer(page, 'something else')
     out = page.locator('#after-out button').count()
     # (18 Nov, the owner's walk on his phone: the ways stand in order, numbered; the first letter is the second of them)
-    check('letter: after "something else" the carer is offered "Try the first letter", second on the list after the step the rules make, four ways at most', page.locator('#after-out #letter-go').count() == 1 and out <= 4 and page.evaluate("[...document.querySelectorAll('#ways > li > button')].map((b) => b.id).indexOf('letter-go')") == 1, f'{out} buttons: {text(page, "#after-out")}')
+    check('letter: after "something else" the carer is offered "Try the first letter", after the step the rules make (and the online AI step, second since phase 12b), four ways at most', page.locator('#after-out #letter-go').count() == 1 and out <= 4 and [x for x in page.evaluate("[...document.querySelectorAll('#ways > li > button')].map((b) => b.id)") if x != 'narrow'].index('letter-go') == 1, f'{out} buttons: {text(page, "#after-out")}')
     screen_checks(page, 'letter: after "something else"', primary=True)
     page.locator('#letter-go').click()
     page.wait_for_selector('main.pv.letters #abc')
@@ -1577,8 +1578,9 @@ def diary(browser, url, live):
     page.wait_for_selector('#ins-sheet')
     sheet = page.locator('#ins-sheet-text').inner_text()
     # (phase 5: the "less sure" line carries a fixed sentence about pain and need answers, so no model rewords it and it does not go)
-    want = f'1. Something sweet was chosen 3 times in the last 7 days.\n2. Few drinks were entered on {name(2)}: 2.'
-    check('wording sheet: it shows the exact text that would go, the two counted lines that may go and nothing else', sheet.strip() == want, sheet)
+    # (phase 12b: the few-drinks line carries a fixed "tell the doctor or nurse today", so it does not go either)
+    want = '1. Something sweet was chosen 3 times in the last 7 days.'
+    check('wording sheet: it shows the exact text that would go, the one counted line that may go and nothing else', sheet.strip() == want, sheet)
     stxt = text(page, '#ins-sheet')
     check('wording sheet: no name, no health note, nothing of the diary is in that text', not any(w in sheet for w in ('Frank', 'Carol', 'Beth', 'Tom', 'Diabetes', 'diabetes', 'Type 2', 'Patel', 'ginger', 'porridge', 'tea')))
     check('wording sheet: says what is never sent (names, photos, the diary itself, the health notes) and that it is for these lines, once', 'names, photos, the diary itself, the health notes, the answers they chose.' in stxt and 'This is for these lines, this once. It does not turn online help on for anything else.' in stxt, stxt)
@@ -2342,7 +2344,8 @@ def ways(browser, url):
     ids = way_ids()
     check('ways: the screen opens with one line in plain words: "None of these. Find out what it is: one step at a time."', text(page, '#out-lead') == 'None of these. Find out what it is: one step at a time.', text(page, '#after-out')[:200])
     check('ways, the drinks example: the first and main button is "More choices like these", and it says what comes next (water, juice, milk)', ids[:1] == ['way-more'] and 'primary' in page.locator('#way-more').get_attribute('class') and text(page, '#way-more') == 'More choices like these Next: water, juice, milk. Then more, three at a time.', str(ids) + text(page, '#way-more'))
-    check('ways: then the first letter, then "Ask them to show or write it", and the AI\'s step last (where there is one)', ids[1:3] == ['letter-go', 'show-write'] and ids[3:] in ([], ['narrow']), str(ids))
+    # (phase 12b: online, the AI step is the second way)
+    check('ways: then the AI\'s step online (where there is one), the first letter, then "Ask them to show or write it"', [x for x in ids if x != 'narrow'][1:3] == ['letter-go', 'show-write'] and ('narrow' not in ids or ids.index('narrow') == 1), str(ids))
     check('ways: one main button on the screen, and it is the first way', page.locator('main.s-answered .btn.primary').count() == 1 and page.locator('main.s-answered .btn.primary').first.get_attribute('id') == 'way-more')
     check('ways: no question of another topic on the screen ("Are you hungry?" is gone), shown or under "More"', 'Are you hungry' not in out and page.locator('main.s-answered [data-q]').count() == 0, out[:300])
     more(page)
@@ -2393,7 +2396,7 @@ def ways(browser, url):
     tap_yes(page, 'something else')
     give_back(page)
     ids = way_ids()
-    check('ways: after every drink the rules have was refused, the same list is not offered again: the first letter is the next step', ids[:2] == ['letter-go', 'show-write'] and 'way-more' not in ids and 'way-about' not in ids, str(ids))
+    check('ways: after every drink the rules have was refused, the same list is not offered again: the first letter is the next step', [x for x in ids if x != 'narrow'][:2] == ['letter-go', 'show-write'] and 'way-more' not in ids and 'way-about' not in ids, str(ids))
 
     # ---- "show me" goes on: understood -> typed -> confirmed by the person
     page.locator('#show-write').click()
@@ -2407,7 +2410,7 @@ def ways(browser, url):
     shot(page, 'r2_04_show_me_did_you_understand')
     page.locator('#not-yet').click()
     page.wait_for_selector('#ways')
-    check('ways, "Not yet: try another way": back on the list of ways of the same question, not on the first screen', page.locator('main.simple.home').count() == 0 and way_ids()[:2] == ['letter-go', 'show-write'] and text(page, '#out-lead').startswith('None of these.'), page.evaluate(SIG))
+    check('ways, "Not yet: try another way": back on the list of ways of the same question, not on the first screen', page.locator('main.simple.home').count() == 0 and [x for x in way_ids() if x != 'narrow'][:2] == ['letter-go', 'show-write'] and text(page, '#out-lead').startswith('None of these.'), page.evaluate(SIG))
     page.locator('#show-write').click()
     page.wait_for_selector('main.simple.card')
     page.locator('[data-act=show]').click()

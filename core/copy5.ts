@@ -20,6 +20,8 @@ export const P5 = {
     linkSub: 'Signs of a new stroke, chest pain, a fall: call.',
     /** Phase 12b (judge round 9b, the nurse's seat): on the first screen the number is in the box itself. */
     linkSubNumber: (number: string) => `Signs of a new stroke, chest pain, a fall: call ${number}.`,
+    /** Under it, short so the first row of topics stays above the fold at 360 px (the long question is on every call box). */
+    firstGuess: 'Not your number?',
     heading: 'Something new or sudden?',
     lead: (number: string) => `If you see any one of these, and it is new or sudden, call ${number} now. Do not wait to see if it passes.`,
     fastHeading: 'FAST',

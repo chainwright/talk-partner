@@ -10,6 +10,13 @@ the safety screen; a pain question left for later (the signs, a call button, how
 church; About them after three "no" to pain. Each is left with Back one step at a time to the first screen, and each
 way out is followed to an action. Nothing may scroll sideways, no page error, nothing is asked of another host.
 
+Phase 12b (judge round 9b) adds: the pain scale's three pictures (each loaded before it is checked) and "quite bad"
+calling now; one "no" to the weakness question (check the arms and the smile); a confirmed yes ("Call 911 now. Note
+the time it started."); "stop for now" beside "I can't go on"; "Try it with the Millers" on a phone (the simple view,
+no download); the number in the first screen's red box with "Change it"; a pain question left for later right under
+"Needs something now?" and on screen at 360 px; "Find more choices (online, after your yes)" as the second way after
+"something else"; the new pictures for pain, wait and show me loaded; About them after three "no" to a drink.
+
 Usage: python3 scripts/phase12-walk.py [--url URL] [OUT_DIR]   (default http://localhost:5179/, devlog/evidence_phase12/walk)
 Exit code 0 when every check passes, 1 otherwise.
 """
@@ -88,6 +95,29 @@ def topic_q(page, topic, text):
     page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
 
 
+def loaded(page, sel='main.pv img.pic', n=None):
+    """Waits until the pictures under `sel` have loaded (at most 8 s); True when all of them are 256 px wide."""
+    js = f"[...document.querySelectorAll('{sel}')]" + (f'.slice(0, {n})' if n else '')
+    try:
+        page.wait_for_function(js + '.every((i) => i.complete && i.naturalWidth > 0)', timeout=8000)
+    except Exception:
+        pass
+    return page.evaluate(js + '.length > 0 && ' + js + '.every((i) => i.complete && i.naturalWidth === 256)')
+
+
+def to_weak(page):
+    """Body & care, "Are you in pain?", yes, the arms, the left arm: the carer's screen with the weakness question next."""
+    topic_q(page, 'body', 'in pain')
+    person_pick(page, 'yes'); give(page); page.wait_for_selector('main.simple.s-answered')
+    page.locator('#next-q').first.click(); page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    for _ in range(2):
+        page.locator('main.pv .pt', has_text='somewhere else').click(); page.wait_for_timeout(250)
+    page.wait_for_selector('main.pv .pt >> text=arms')
+    page.locator('main.pv .pt', has_text='arms').first.click(); page.wait_for_selector('main.pv .pt >> text=your left arm')
+    person_pick(page, 'your left arm'); give(page); page.wait_for_selector('main.simple.s-answered')
+
+
 def ids(page):
     return page.evaluate("[...document.querySelectorAll('main.pv .pt')].map((t) => { const i = t.querySelector('img.pic, svg'); return i ? (i.dataset.id || i.getAttribute('aria-label') || '') : ''; })")
 
@@ -116,17 +146,30 @@ def walk(b, w, h, scheme):
         # (at 360 px the strip folds, so the first row of topics stays above the fold; the button's tag says where its AI runs)
         check(f'{tag}: at 360 px the strip folds; the button\'s tag says where its AI runs, and the lines stay its description', page.evaluate("getComputedStyle(document.querySelector('#ai-strip')).display") == 'none' and "uses Google's AI, after your yes" in e2e.text(page, '#try-ai-tag') and page.locator('#try-ai [aria-describedby=ai-strip]').count() == 1, strip)
     check(f'{tag}: "See the AI at work" comes before "How it works" and the topics', page.evaluate("(() => { const a = document.querySelector('#try-ai'), h = document.querySelector('#how'), t = document.querySelector('#topics'); return !!a && !!(a.compareDocumentPosition(h) & 4) && !!(a.compareDocumentPosition(t) & 4); })()"))
-    check(f'{tag}: "Try it with the Millers, a sample family" at the foot of Home, to judge mode', page.locator('#try-sample[href="#/demo"]').count() == 1 and 'Try it with the Millers, a sample family' in e2e.text(page, '#try-sample'))
+    # (phase 12b: on a phone the sample family opens in this simple view, not in judge mode)
+    check(f'{tag}: "Try it with the Millers, a sample family" at the foot of Home, to the simple view on a phone', page.locator('#try-sample[href="#/sample"]').count() == 1 and 'Try it with the Millers, a sample family' in e2e.text(page, '#try-sample'))
+    # (phase 12b: the red box names the number, and "Change it" is under it)
+    fn = e2e.text(page, '#first-number') if page.locator('#first-number').count() else ''
+    check(f'{tag}: the red box on the first screen names the number, with "Not your number? Change it" under it', 'Signs of a new stroke, chest pain, a fall: call 911.' in e2e.text(page, '#sudden-link') and 'Not your number? Change it' in fn, e2e.text(page, '#sudden-link') + ' / ' + fn)
     check(f'{tag}: first screen: no sideways scroll', noscroll(page))
     shot(page, tag, '01_home')
     page.screenshot(path=os.path.join(OUT, f'{tag}_01_home_full.png'), full_page=True)
+    page.locator('#first-number [data-act=sudden-number]').click(); page.wait_for_timeout(500)
+    check(f'{tag}: "Change it" opens About them at the emergency number', page.locator('[data-health=emergency]').count() == 1, e2e.text(page)[:200])
+    back_home(page, tag, '"Change it" under the red box')
     page.locator('#try-sample').click(); page.wait_for_timeout(1200)
-    check(f'{tag}: the Millers: judge mode opens with the sample family (Frank)', page.evaluate("location.hash") == '#/demo' and 'Frank' in e2e.text(page), page.evaluate('location.hash'))
+    mt = e2e.text(page)
+    check(f'{tag}: the Millers on a phone: the simple view\'s first screen with the sample family (Frank), saying so, with a way out', page.locator('main.simple.home').count() == 1 and 'Frank' in mt and 'You are trying it with the Millers, a sample family.' in mt and page.locator('#sample-on [data-act=leave-demo]').count() == 1, mt[:300])
+    check(f'{tag}: the Millers on a phone: no on-device download offered, no judge mode', page.locator('[data-act=download]').count() == 0 and 'Judge mode' not in mt and 'Gemini Nano' not in mt, mt[:300])
     shot(page, tag, '02_millers')
+    page.locator('#sample-on [data-act=leave-demo]').click(); page.wait_for_timeout(800)
+    check(f'{tag}: "Leave the sample family" goes back to the family\'s own first screen', page.locator('main.simple.home').count() == 1 and page.locator('#try-sample').count() == 1 and 'Frank' not in e2e.text(page, '#hope'), e2e.text(page)[:200])
     home(page)
 
     # ---- 2. pain on the needs board (item 4)
     page.locator('.btn[data-act=needs]').first.click(); page.wait_for_selector('main.pv .p-tiles.board')
+    check(f'{tag}: needs board: the pictures loaded, "pain" among them (the whole-body picture)', loaded(page) and page.evaluate("(() => { const i = document.querySelector('main.pv img.pic[data-id=pain]'); return !!i && i.complete && i.naturalWidth === 256; })()"))
+    shot(page, tag, '03a_needs_board')
     person_pick(page, 'pain'); give(page)
     page.wait_for_selector('main.simple.s-answered')
     where = page.locator('#need-where')
@@ -158,16 +201,36 @@ def walk(b, w, h, scheme):
     person_pick(page, 'yes'); give(page); page.wait_for_selector('main.simple.s-answered')
     t = e2e.text(page)
     check(f'{tag}: a yes raises the call box, and the end line says call now and note the time', page.locator('#urgent a[href="tel:911"]').count() >= 1 and 'this can be a stroke' in t and 'note the time it started' in t, t[:300])
+    # (phase 12b: a confirmed yes: no "if this is new or sudden")
+    ub = e2e.text(page, '#urgent')
+    check(f'{tag}: the box over a confirmed yes: "Call 911 now. Note the time it started.", no "if"', 'Call 911 now. Note the time it started.' in ub and 'if this is new or sudden' not in ub, ub)
     shot(page, tag, '05_weak_yes')
     back_home(page, tag, 'pain in an arm')
+    # (phase 12b: one "no" does not end the stroke check; a fresh first screen, so the topic opens)
+    home(page)
+    to_weak(page)
+    page.locator('#next-q').first.click(); page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    person_pick(page, 'no'); give(page); page.wait_for_selector('main.simple.s-answered')
+    tn = e2e.text(page)
+    check(f'{tag}: one "no" to the weakness question: check it yourself now, the arms and the smile, call 911 if one side drops', 'They pointed to no. A yes or no can be wrong after a stroke: check it yourself now. Ask them to lift both arms and smile. If one side drops or the face droops, call 911 now.' in tn and 'Not weak or numb' not in tn, tn[:400])
+    check(f'{tag}: after that "no": no sideways scroll', noscroll(page))
+    shot(page, tag, '05b_weak_no')
+    back_home(page, tag, 'one "no" to the weakness question')
     # (not a topic question: typed, as a carer would; the rules make the scale)
     page.locator('#q').fill('How bad is the pain?'); page.locator('#make').click(); page.wait_for_selector('main.simple.card')
     page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
     sc = ids(page)
     check(f'{tag}: "How bad is the pain?": three faces, mild / medium / strong, the word under each', sc[:3] == ['pain mild', 'pain medium', 'pain strong'] and [x.strip() for x in page.locator('main.pv .pt').all_inner_texts()][:3] == ['a little', 'quite bad', 'very bad'], str(sc))
+    # (phase 12b: the faces are pictures made with Gemini now; each is loaded before it is checked)
+    check(f'{tag}: the pain scale: the three pictures loaded (256 px), from /pictures/', loaded(page, 'main.pv img.pic', 3) and page.evaluate("[...document.querySelectorAll('main.pv img.pic')].slice(0, 3).map((i) => new URL(i.src).pathname).join(' ')") == '/pictures/pain_mild.webp /pictures/pain_medium.webp /pictures/pain_strong.webp')
     check(f'{tag}: the pain scale: no sideways scroll', noscroll(page))
     shot(page, tag, '06_pain_scale')
-    page.goto(URL); page.wait_for_selector('main.simple.home')
+    person_pick(page, 'quite bad'); give(page); page.wait_for_selector('main.simple.s-answered')
+    tq = e2e.text(page)
+    check(f'{tag}: "quite bad": call the nurse or doctor now, and the call box', 'Quite bad. Call their nurse or doctor now.' in tq and 'care plan' not in tq and page.locator('#urgent a[href="tel:911"]').count() >= 1, tq[:300])
+    shot(page, tag, '06b_quite_bad')
+    back_home(page, tag, '"quite bad"')
 
     # ---- 4. the person starts (item 8) and the crisis choice (item 14)
     page.locator('#turn-go').click(); page.wait_for_selector('main.pv .pt')
@@ -200,6 +263,20 @@ def walk(b, w, h, scheme):
     page.locator('#crisis-box a[href="#/crisis"]').click(); page.wait_for_selector('main[data-screen=crisis]')
     check(f'{tag}: "What to do now" in the box opens the safety screen again', True)
     back_home(page, tag, 'the crisis choice')
+    # (phase 12b: "stop for now" ends the card calmly, with no crisis box)
+    page.locator('#turn-go').click(); page.wait_for_selector('main.pv .pt')
+    page.locator('main.pv .pt').nth(2).click(); page.wait_for_selector('[data-confirm=yes]')
+    if page.locator('[data-confirm=yes]').count():
+        page.locator('[data-confirm=yes]').click()
+    page.wait_for_selector('main.pv .pt >> text=so-so')
+    for _ in range(2):
+        page.locator('main.pv .pt.esc').first.click(); page.wait_for_timeout(400)
+    check(f'{tag}: "stop for now" is a word tile, no picture', page.evaluate("(() => { const t = [...document.querySelectorAll('main.pv .pt')].find((x) => x.innerText.trim() === 'stop for now'); return !!t && !t.querySelector('img, svg'); })()"))
+    person_pick(page, 'stop for now'); give(page); page.wait_for_selector('main.simple.s-answered')
+    ts = e2e.text(page)
+    check(f'{tag}: "stop for now": the card ends calmly, the carer stays near and asks again; no crisis box', 'They want to stop for now. Stay near, and ask again later today, one small question at a time.' in ts and page.locator('#crisis-box').count() == 0 and noscroll(page), ts[:300])
+    shot(page, tag, '11b_stop_for_now')
+    back_home(page, tag, '"stop for now"')
 
     # ---- 5. a pain question left for later (item 5)
     now = int(time.time() * 1000)
@@ -208,11 +285,23 @@ def walk(b, w, h, scheme):
     lt = e2e.text(page, '#later')
     check(f'{tag}: Home, pain left for later: how long ago, the signs that do not wait, a call button, the list', 'Left 3 hours ago.' in lt and 'Call 911 now if there is sudden weakness or numbness' in lt and page.locator('#later a[href="tel:911"]').count() == 1 and page.locator('#later a[href="#/sudden"]').count() == 1, lt)
     check(f'{tag}: pain left for later: no sideways scroll', noscroll(page))
+    # (phase 12b: directly under "Needs something now?", its call button on the screen)
+    pos = page.evaluate("""(() => { const n = document.querySelector('.btn[data-act=needs]'), l = document.querySelector('#later'), t = document.querySelector('#turn-go'), a = document.querySelector('#try-ai'), c = document.querySelector('#later a[href^="tel:"]'); return { next: n.nextElementSibling === l, beforeTurn: !!(l.compareDocumentPosition(t) & 4), beforeAi: !a || !!(l.compareDocumentPosition(a) & 4), call: Math.round(c.getBoundingClientRect().bottom) }; })()""")
+    check(f'{tag}: pain left for later stands directly under "Needs something now?", above "I want to say something" and the AI box, its call button on screen ({pos["call"]} px of {h})', pos['next'] and pos['beforeTurn'] and pos['beforeAi'] and pos['call'] <= h, json.dumps(pos))
     shot(page, tag, '12_later_pain')
     page.locator('#later a[href="#/sudden"]').click(); page.wait_for_selector('main.sudden')
     check(f'{tag}: "What to look for" opens "Something new or sudden?" (FAST)', 'FAST' in e2e.text(page))
     back_home(page, tag, 'pain left for later')
     page.evaluate(e2e.KV_PUT, {'later': []})
+
+    # ---- 5b. (phase 12b) after "something else": "Find more choices (online, after your yes)" is the second way
+    home(page)
+    topic_q(page, 'food', 'tea or coffee')
+    person_pick(page, 'something else'); give(page); page.wait_for_selector('#after-out')
+    order = page.evaluate("[...document.querySelectorAll('#ways > li')].map((li) => (li.querySelector('button') || {}).id || '')")
+    check(f'{tag}: after "something else": the AI step is the second way, "Find more choices (online, after your yes)"', len(order) >= 3 and order[1] == 'narrow' and e2e.text(page, '#narrow') == 'Find more choices (online, after your yes)', str(order))
+    shot(page, tag, '12b_ways')
+    back_home(page, tag, 'after "something else"')
 
     # ---- 6. the curtains and the church (item 7)
     home(page)
@@ -240,10 +329,12 @@ def walk(b, w, h, scheme):
 
     # ---- 7. About them after three "no" to "Are you in pain?" (item 2)
     page.goto(URL); page.wait_for_selector('main.simple.home')
-    page.evaluate(e2e.KV_PUT, {'history': [{'q': 'Are you in pain?', 'topic': '', 'label': 'no', 'at': now - d * 86400000} for d in (1, 2, 3)] + [{'q': 'Would you like tea or coffee?', 'topic': '', 'label': 'tea', 'at': now - d * 86400000} for d in (1, 2, 3)]})
+    page.evaluate(e2e.KV_PUT, {'history': [{'q': 'Are you in pain?', 'topic': '', 'label': 'no', 'at': now - d * 86400000} for d in (1, 2, 3)] + [{'q': 'Would you like tea or coffee?', 'topic': '', 'label': 'tea', 'at': now - d * 86400000} for d in (1, 2, 3)] + [{'q': 'Would you like something to drink?', 'topic': '', 'label': 'no', 'at': now - d * 86400000 - 3600000} for d in (1, 2, 3)]})
     page.goto(URL + '#/about'); page.reload(); page.wait_for_selector('#learned'); page.wait_for_timeout(500)
     ln = e2e.text(page, '#learned')
     check(f'{tag}: About them: no "Usually says no to \'Are you in pain?\'", no "Keep as a fact" for it; the tea line is there', 'pain' not in ln.lower() and 'usually tea (3 of 3)' in ln, ln)
+    # (phase 12b: no usual "no" to a drink, and no "Keep as a fact" on a drink line)
+    check(f'{tag}: About them: no "Usually says no" to a drink, and no "Keep as a fact" on the tea line', 'usually says no' not in ln.lower() and page.locator('#learned [data-act=learned-keep]').count() == 0, ln)
     shot(page, tag, '15_about_learned')
     back_home(page, tag, 'About them')
 

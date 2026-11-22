@@ -541,6 +541,9 @@
 .simple .btn.sudden-link .sg { width: 30px; height: 30px; color: var(--no); flex: none; }
 .simple .btn.sudden-link small { display: block; font-weight: 400; font-size: 15px; color: var(--muted); }
 .simple .tqs .btn.sudden-link { margin-bottom: 8px; }
+/* (phase 12b) the number line under the first screen's red box: one line, in the gap under the box */
+.simple #first-number { margin: -12px 0 -2px; font-size: 15px; line-height: 1.2; }
+.simple #first-number .tlink { font-size: 15px; padding: 0; }
 .simple .btn.call { background: var(--no); border-color: var(--no); color: var(--panel); font-weight: 700; text-decoration: none; gap: 10px; }
 .simple .btn.call .sg { width: 26px; height: 26px; flex: none; }
 .simple .btn.call.big { min-height: 76px; font-size: 22px; }
