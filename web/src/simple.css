@@ -740,8 +740,10 @@
 .simple .ai-strip { margin: 0; padding: 0 4px; list-style: none; display: grid; gap: 2px; font-size: 14px; line-height: 1.3; color: var(--muted); }
 .simple .ai-strip li { display: flex; gap: 6px; align-items: center; }
 .simple .ai-strip li .sg { width: 16px; height: 16px; flex: none; color: var(--cloud); }
+/* at 360 px the first row of topics must stay above the fold too (phase 8): there the button's own tag says where
+   its AI runs, and the two lines stay its description for a screen reader (aria-describedby) */
 @media (max-width: 370px) {
-  .simple .ai-strip { font-size: 13px; }
+  .simple .ai-strip { display: none; }
   .simple .try-ai-btn { padding: 6px 10px; }
 }
 /* phase 12: the sample family, under the footer links */

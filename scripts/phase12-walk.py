@@ -106,11 +106,15 @@ def walk(b, w, h, scheme):
 
     # ---- 1. the first screen (item 10, item 16)
     r = page.evaluate("(() => { const b = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().bottom) : 9999; }; return { ai: b('#try-ai [data-act=try-ai]'), strip: b('#ai-strip'), row: Math.max(...[...document.querySelectorAll('.topic')].slice(0, 2).map((e) => Math.round(e.getBoundingClientRect().bottom))) }; })()")
-    strip = e2e.text(page, '#ai-strip')
+    strip = page.locator('#ai-strip').inner_text().strip()
     if w == 390:
         check(f'{tag}: "See the AI at work" and its two lines end above the fold ({r["strip"]} px of {h})', r['strip'] <= h, json.dumps(r))
     check(f'{tag}: the first row of topics ends above the fold ({r["row"]} px of {h})', r['row'] <= h, json.dumps(r))
-    check(f'{tag}: the strip says where the AI runs on a phone and on a laptop', "Phone: Google's AI, online, after your yes" in strip and "Laptop with Chrome's own AI: nothing is sent" in strip, strip)
+    if w == 390:
+        check(f'{tag}: the strip says where the AI runs on a phone and on a laptop', "Phone: Google's AI, online, after your yes" in strip and "Laptop with Chrome's own AI: nothing is sent" in strip, strip)
+    else:
+        # (at 360 px the strip folds, so the first row of topics stays above the fold; the button's tag says where its AI runs)
+        check(f'{tag}: at 360 px the strip folds; the button\'s tag says where its AI runs, and the lines stay its description', strip == '' and "uses Google's AI, after your yes" in e2e.text(page, '#try-ai-tag') and page.locator('#try-ai [aria-describedby=ai-strip]').count() == 1, strip)
     check(f'{tag}: "See the AI at work" comes before "How it works" and the topics', page.evaluate("(() => { const a = document.querySelector('#try-ai'), h = document.querySelector('#how'), t = document.querySelector('#topics'); return !!a && !!(a.compareDocumentPosition(h) & 4) && !!(a.compareDocumentPosition(t) & 4); })()"))
     check(f'{tag}: "Try it with the Millers, a sample family" at the foot of Home, to judge mode', page.locator('#try-sample[href="#/demo"]').count() == 1 and 'Try it with the Millers, a sample family' in e2e.text(page, '#try-sample'))
     check(f'{tag}: first screen: no sideways scroll', noscroll(page))
