@@ -1,0 +1,223 @@
+PASS  360_light: the first row of topics ends above the fold (737 px of 740)
+PASS  360_light: at 360 px the strip folds; the button's tag says where its AI runs, and the lines stay its description
+PASS  360_light: "See the AI at work" comes before "How it works" and the topics
+PASS  360_light: "Try it with the Millers, a sample family" at the foot of Home, to the simple view on a phone
+PASS  360_light: the red box on the first screen names the number, with "Not your number? Change it" under it
+PASS  360_light: first screen: no sideways scroll
+PASS  360_light: "Change it" opens About them at the emergency number
+PASS  360_light: "Change it" under the red box: Back one step at a time reaches the first screen (1 steps: home)
+PASS  360_light: the Millers on a phone: the simple view's first screen with the sample family (Frank), saying so, with a way out
+PASS  360_light: the Millers on a phone: no on-device download offered, no judge mode
+PASS  360_light: "Leave the sample family" goes back to the family's own first screen
+PASS  360_light: needs board: the pictures loaded, "pain" among them (the whole-body picture)
+PASS  360_light: needs board, pain: "Where does it hurt?" is the main button, first
+PASS  360_light: needs board, pain: the call box has the number and a real call button, and asks if it is your number
+PASS  360_light: needs board, pain: no sideways scroll
+PASS  360_light: needs board, pain: "Where does it hurt?" opens the body card (the way on ends on an action)
+PASS  360_light: needs board, pain: Back one step at a time reaches the first screen (2 steps: answered > home)
+PASS  360_light: "your left arm": the next question is "Is it suddenly weak or numb, yes or no?"
+PASS  360_light: the weakness question is a yes / no card
+PASS  360_light: a yes raises the call box, and the end line says call now and note the time
+PASS  360_light: the box over a confirmed yes: "Call 911 now. Note the time it started.", no "if"
+PASS  360_light: pain in an arm: Back one step at a time reaches the first screen (8 steps: card > answered > person full pv > person full pv > card > answered > card > home)
+PASS  360_light: one "no" to the weakness question: check it yourself now, the arms and the smile, call 911 if one side drops
+PASS  360_light: after that "no": no sideways scroll
+PASS  360_light: one "no" to the weakness question: Back one step at a time reaches the first screen (8 steps: card > answered > person full pv > person full pv > card > answered > card > home)
+PASS  360_light: "How bad is the pain?": three faces, mild / medium / strong, the word under each
+PASS  360_light: the pain scale: the three pictures loaded (256 px), from /pictures/
+PASS  360_light: the pain scale: no sideways scroll
+PASS  360_light: "quite bad": call the nurse or doctor now, and the call box
+PASS  360_light: "quite bad": Back one step at a time reaches the first screen (2 steps: card > home)
+PASS  360_light: the person's starters: "I need something" the four squares, "I feel…" three faces, no raised finger, no thumbs
+PASS  360_light: the feelings card, its third page: worried / lonely / I can't go on / stop for now, and the way out
+PASS  360_light: "I can't go on" is a word tile, no picture
+PASS  360_light: the person reads "Thank you for telling me."
+PASS  360_light: giving the phone back opens the safety screen: stay, the emergency number, the crisis line, the steps
+PASS  360_light: the safety screen: no "later", no "try again"; no sideways scroll
+PASS  360_light: Back from the safety screen: the carer's answer with the red box and its call buttons
+PASS  360_light: "What to do now" in the box opens the safety screen again
+PASS  360_light: the crisis choice: Back one step at a time reaches the first screen (4 steps: answered > person full pv > person full pv rowtiles > home)
+PASS  360_light: "stop for now" is a word tile, no picture
+PASS  360_light: "stop for now": the card ends calmly, the carer stays near and asks again; no crisis box
+PASS  360_light: "stop for now": Back one step at a time reaches the first screen (3 steps: person full pv > person full pv rowtiles > home)
+PASS  360_light: Home, pain left for later: how long ago, the signs that do not wait, a call button, the list
+PASS  360_light: pain left for later: no sideways scroll
+PASS  360_light: pain left for later stands directly under "Needs something now?", above "I want to say something" and the AI box, its call button on screen (610 px of 740)
+PASS  360_light: "What to look for" opens "Something new or sudden?" (FAST)
+PASS  360_light: pain left for later: Back one step at a time reaches the first screen (1 steps: home)
+PASS  360_light: after "something else": the AI step is the second way, "Find more choices (online, after your yes)"
+PASS  360_light: after "something else": Back one step at a time reaches the first screen (2 steps: card > home)
+PASS  360_light: the curtain question shows the curtains open and closed (pictures loaded), not doors
+PASS  360_light: "I want to talk about…": the church is the church picture, the lake (next screen) still "go out"
+PASS  360_light: About them: no "Usually says no to 'Are you in pain?'", no "Keep as a fact" for it; the tea line is there
+PASS  360_light: About them: no "Usually says no" to a drink, and no "Keep as a fact" on the tea line
+PASS  360_light: About them: Back one step at a time reaches the first screen (1 steps: home)
+PASS  360_light: no page error, nothing asked of another host
+PASS  360_dark: the first row of topics ends above the fold (737 px of 740)
+PASS  360_dark: at 360 px the strip folds; the button's tag says where its AI runs, and the lines stay its description
+PASS  360_dark: "See the AI at work" comes before "How it works" and the topics
+PASS  360_dark: "Try it with the Millers, a sample family" at the foot of Home, to the simple view on a phone
+PASS  360_dark: the red box on the first screen names the number, with "Not your number? Change it" under it
+PASS  360_dark: first screen: no sideways scroll
+PASS  360_dark: "Change it" opens About them at the emergency number
+PASS  360_dark: "Change it" under the red box: Back one step at a time reaches the first screen (1 steps: home)
+PASS  360_dark: the Millers on a phone: the simple view's first screen with the sample family (Frank), saying so, with a way out
+PASS  360_dark: the Millers on a phone: no on-device download offered, no judge mode
+PASS  360_dark: "Leave the sample family" goes back to the family's own first screen
+PASS  360_dark: needs board: the pictures loaded, "pain" among them (the whole-body picture)
+PASS  360_dark: needs board, pain: "Where does it hurt?" is the main button, first
+PASS  360_dark: needs board, pain: the call box has the number and a real call button, and asks if it is your number
+PASS  360_dark: needs board, pain: no sideways scroll
+PASS  360_dark: needs board, pain: "Where does it hurt?" opens the body card (the way on ends on an action)
+PASS  360_dark: needs board, pain: Back one step at a time reaches the first screen (2 steps: answered > home)
+PASS  360_dark: "your left arm": the next question is "Is it suddenly weak or numb, yes or no?"
+PASS  360_dark: the weakness question is a yes / no card
+PASS  360_dark: a yes raises the call box, and the end line says call now and note the time
+PASS  360_dark: the box over a confirmed yes: "Call 911 now. Note the time it started.", no "if"
+PASS  360_dark: pain in an arm: Back one step at a time reaches the first screen (8 steps: card > answered > person full pv > person full pv > card > answered > card > home)
+PASS  360_dark: one "no" to the weakness question: check it yourself now, the arms and the smile, call 911 if one side drops
+PASS  360_dark: after that "no": no sideways scroll
+PASS  360_dark: one "no" to the weakness question: Back one step at a time reaches the first screen (8 steps: card > answered > person full pv > person full pv > card > answered > card > home)
+PASS  360_dark: "How bad is the pain?": three faces, mild / medium / strong, the word under each
+PASS  360_dark: the pain scale: the three pictures loaded (256 px), from /pictures/
+PASS  360_dark: the pain scale: no sideways scroll
+PASS  360_dark: "quite bad": call the nurse or doctor now, and the call box
+PASS  360_dark: "quite bad": Back one step at a time reaches the first screen (2 steps: card > home)
+PASS  360_dark: the person's starters: "I need something" the four squares, "I feel…" three faces, no raised finger, no thumbs
+PASS  360_dark: the feelings card, its third page: worried / lonely / I can't go on / stop for now, and the way out
+PASS  360_dark: "I can't go on" is a word tile, no picture
+PASS  360_dark: the person reads "Thank you for telling me."
+PASS  360_dark: giving the phone back opens the safety screen: stay, the emergency number, the crisis line, the steps
+PASS  360_dark: the safety screen: no "later", no "try again"; no sideways scroll
+PASS  360_dark: Back from the safety screen: the carer's answer with the red box and its call buttons
+PASS  360_dark: "What to do now" in the box opens the safety screen again
+PASS  360_dark: the crisis choice: Back one step at a time reaches the first screen (4 steps: answered > person full pv > person full pv rowtiles > home)
+PASS  360_dark: "stop for now" is a word tile, no picture
+PASS  360_dark: "stop for now": the card ends calmly, the carer stays near and asks again; no crisis box
+PASS  360_dark: "stop for now": Back one step at a time reaches the first screen (3 steps: person full pv > person full pv rowtiles > home)
+PASS  360_dark: Home, pain left for later: how long ago, the signs that do not wait, a call button, the list
+PASS  360_dark: pain left for later: no sideways scroll
+PASS  360_dark: pain left for later stands directly under "Needs something now?", above "I want to say something" and the AI box, its call button on screen (610 px of 740)
+PASS  360_dark: "What to look for" opens "Something new or sudden?" (FAST)
+PASS  360_dark: pain left for later: Back one step at a time reaches the first screen (1 steps: home)
+PASS  360_dark: after "something else": the AI step is the second way, "Find more choices (online, after your yes)"
+PASS  360_dark: after "something else": Back one step at a time reaches the first screen (2 steps: card > home)
+PASS  360_dark: the curtain question shows the curtains open and closed (pictures loaded), not doors
+PASS  360_dark: "I want to talk about…": the church is the church picture, the lake (next screen) still "go out"
+PASS  360_dark: About them: no "Usually says no to 'Are you in pain?'", no "Keep as a fact" for it; the tea line is there
+PASS  360_dark: About them: no "Usually says no" to a drink, and no "Keep as a fact" on the tea line
+PASS  360_dark: About them: Back one step at a time reaches the first screen (1 steps: home)
+PASS  360_dark: no page error, nothing asked of another host
+PASS  390_light: "See the AI at work" and its two lines end above the fold (594 px of 844)
+PASS  390_light: the first row of topics ends above the fold (783 px of 844)
+PASS  390_light: the strip says where the AI runs on a phone and on a laptop
+PASS  390_light: "See the AI at work" comes before "How it works" and the topics
+PASS  390_light: "Try it with the Millers, a sample family" at the foot of Home, to the simple view on a phone
+PASS  390_light: the red box on the first screen names the number, with "Not your number? Change it" under it
+PASS  390_light: first screen: no sideways scroll
+PASS  390_light: "Change it" opens About them at the emergency number
+PASS  390_light: "Change it" under the red box: Back one step at a time reaches the first screen (1 steps: home)
+PASS  390_light: the Millers on a phone: the simple view's first screen with the sample family (Frank), saying so, with a way out
+PASS  390_light: the Millers on a phone: no on-device download offered, no judge mode
+PASS  390_light: "Leave the sample family" goes back to the family's own first screen
+PASS  390_light: needs board: the pictures loaded, "pain" among them (the whole-body picture)
+PASS  390_light: needs board, pain: "Where does it hurt?" is the main button, first
+PASS  390_light: needs board, pain: the call box has the number and a real call button, and asks if it is your number
+PASS  390_light: needs board, pain: no sideways scroll
+PASS  390_light: needs board, pain: "Where does it hurt?" opens the body card (the way on ends on an action)
+PASS  390_light: needs board, pain: Back one step at a time reaches the first screen (2 steps: answered > home)
+PASS  390_light: "your left arm": the next question is "Is it suddenly weak or numb, yes or no?"
+PASS  390_light: the weakness question is a yes / no card
+PASS  390_light: a yes raises the call box, and the end line says call now and note the time
+PASS  390_light: the box over a confirmed yes: "Call 911 now. Note the time it started.", no "if"
+PASS  390_light: pain in an arm: Back one step at a time reaches the first screen (8 steps: card > answered > person full pv > person full pv > card > answered > card > home)
+PASS  390_light: one "no" to the weakness question: check it yourself now, the arms and the smile, call 911 if one side drops
+PASS  390_light: after that "no": no sideways scroll
+PASS  390_light: one "no" to the weakness question: Back one step at a time reaches the first screen (8 steps: card > answered > person full pv > person full pv > card > answered > card > home)
+PASS  390_light: "How bad is the pain?": three faces, mild / medium / strong, the word under each
+PASS  390_light: the pain scale: the three pictures loaded (256 px), from /pictures/
+PASS  390_light: the pain scale: no sideways scroll
+PASS  390_light: "quite bad": call the nurse or doctor now, and the call box
+PASS  390_light: "quite bad": Back one step at a time reaches the first screen (2 steps: card > home)
+PASS  390_light: the person's starters: "I need something" the four squares, "I feel…" three faces, no raised finger, no thumbs
+PASS  390_light: the feelings card, its third page: worried / lonely / I can't go on / stop for now, and the way out
+PASS  390_light: "I can't go on" is a word tile, no picture
+PASS  390_light: the person reads "Thank you for telling me."
+PASS  390_light: giving the phone back opens the safety screen: stay, the emergency number, the crisis line, the steps
+PASS  390_light: the safety screen: no "later", no "try again"; no sideways scroll
+PASS  390_light: Back from the safety screen: the carer's answer with the red box and its call buttons
+PASS  390_light: "What to do now" in the box opens the safety screen again
+PASS  390_light: the crisis choice: Back one step at a time reaches the first screen (4 steps: answered > person full pv > person full pv rowtiles > home)
+PASS  390_light: "stop for now" is a word tile, no picture
+PASS  390_light: "stop for now": the card ends calmly, the carer stays near and asks again; no crisis box
+PASS  390_light: "stop for now": Back one step at a time reaches the first screen (3 steps: person full pv > person full pv rowtiles > home)
+PASS  390_light: Home, pain left for later: how long ago, the signs that do not wait, a call button, the list
+PASS  390_light: pain left for later: no sideways scroll
+PASS  390_light: pain left for later stands directly under "Needs something now?", above "I want to say something" and the AI box, its call button on screen (636 px of 844)
+PASS  390_light: "What to look for" opens "Something new or sudden?" (FAST)
+PASS  390_light: pain left for later: Back one step at a time reaches the first screen (1 steps: home)
+PASS  390_light: after "something else": the AI step is the second way, "Find more choices (online, after your yes)"
+PASS  390_light: after "something else": Back one step at a time reaches the first screen (2 steps: card > home)
+PASS  390_light: the curtain question shows the curtains open and closed (pictures loaded), not doors
+PASS  390_light: "I want to talk about…": the church is the church picture, the lake (next screen) still "go out"
+PASS  390_light: About them: no "Usually says no to 'Are you in pain?'", no "Keep as a fact" for it; the tea line is there
+PASS  390_light: About them: no "Usually says no" to a drink, and no "Keep as a fact" on the tea line
+PASS  390_light: About them: Back one step at a time reaches the first screen (1 steps: home)
+PASS  390_light: no page error, nothing asked of another host
+PASS  390_dark: "See the AI at work" and its two lines end above the fold (594 px of 844)
+PASS  390_dark: the first row of topics ends above the fold (783 px of 844)
+PASS  390_dark: the strip says where the AI runs on a phone and on a laptop
+PASS  390_dark: "See the AI at work" comes before "How it works" and the topics
+PASS  390_dark: "Try it with the Millers, a sample family" at the foot of Home, to the simple view on a phone
+PASS  390_dark: the red box on the first screen names the number, with "Not your number? Change it" under it
+PASS  390_dark: first screen: no sideways scroll
+PASS  390_dark: "Change it" opens About them at the emergency number
+PASS  390_dark: "Change it" under the red box: Back one step at a time reaches the first screen (1 steps: home)
+PASS  390_dark: the Millers on a phone: the simple view's first screen with the sample family (Frank), saying so, with a way out
+PASS  390_dark: the Millers on a phone: no on-device download offered, no judge mode
+PASS  390_dark: "Leave the sample family" goes back to the family's own first screen
+PASS  390_dark: needs board: the pictures loaded, "pain" among them (the whole-body picture)
+PASS  390_dark: needs board, pain: "Where does it hurt?" is the main button, first
+PASS  390_dark: needs board, pain: the call box has the number and a real call button, and asks if it is your number
+PASS  390_dark: needs board, pain: no sideways scroll
+PASS  390_dark: needs board, pain: "Where does it hurt?" opens the body card (the way on ends on an action)
+PASS  390_dark: needs board, pain: Back one step at a time reaches the first screen (2 steps: answered > home)
+PASS  390_dark: "your left arm": the next question is "Is it suddenly weak or numb, yes or no?"
+PASS  390_dark: the weakness question is a yes / no card
+PASS  390_dark: a yes raises the call box, and the end line says call now and note the time
+PASS  390_dark: the box over a confirmed yes: "Call 911 now. Note the time it started.", no "if"
+PASS  390_dark: pain in an arm: Back one step at a time reaches the first screen (8 steps: card > answered > person full pv > person full pv > card > answered > card > home)
+PASS  390_dark: one "no" to the weakness question: check it yourself now, the arms and the smile, call 911 if one side drops
+PASS  390_dark: after that "no": no sideways scroll
+PASS  390_dark: one "no" to the weakness question: Back one step at a time reaches the first screen (8 steps: card > answered > person full pv > person full pv > card > answered > card > home)
+PASS  390_dark: "How bad is the pain?": three faces, mild / medium / strong, the word under each
+PASS  390_dark: the pain scale: the three pictures loaded (256 px), from /pictures/
+PASS  390_dark: the pain scale: no sideways scroll
+PASS  390_dark: "quite bad": call the nurse or doctor now, and the call box
+PASS  390_dark: "quite bad": Back one step at a time reaches the first screen (2 steps: card > home)
+PASS  390_dark: the person's starters: "I need something" the four squares, "I feel…" three faces, no raised finger, no thumbs
+PASS  390_dark: the feelings card, its third page: worried / lonely / I can't go on / stop for now, and the way out
+PASS  390_dark: "I can't go on" is a word tile, no picture
+PASS  390_dark: the person reads "Thank you for telling me."
+PASS  390_dark: giving the phone back opens the safety screen: stay, the emergency number, the crisis line, the steps
+PASS  390_dark: the safety screen: no "later", no "try again"; no sideways scroll
+PASS  390_dark: Back from the safety screen: the carer's answer with the red box and its call buttons
+PASS  390_dark: "What to do now" in the box opens the safety screen again
+PASS  390_dark: the crisis choice: Back one step at a time reaches the first screen (4 steps: answered > person full pv > person full pv rowtiles > home)
+PASS  390_dark: "stop for now" is a word tile, no picture
+PASS  390_dark: "stop for now": the card ends calmly, the carer stays near and asks again; no crisis box
+PASS  390_dark: "stop for now": Back one step at a time reaches the first screen (3 steps: person full pv > person full pv rowtiles > home)
+PASS  390_dark: Home, pain left for later: how long ago, the signs that do not wait, a call button, the list
+PASS  390_dark: pain left for later: no sideways scroll
+PASS  390_dark: pain left for later stands directly under "Needs something now?", above "I want to say something" and the AI box, its call button on screen (584 px of 844)
+PASS  390_dark: "What to look for" opens "Something new or sudden?" (FAST)
+PASS  390_dark: pain left for later: Back one step at a time reaches the first screen (1 steps: home)
+PASS  390_dark: after "something else": the AI step is the second way, "Find more choices (online, after your yes)"
+PASS  390_dark: after "something else": Back one step at a time reaches the first screen (2 steps: card > home)
+PASS  390_dark: the curtain question shows the curtains open and closed (pictures loaded), not doors
+PASS  390_dark: "I want to talk about…": the church is the church picture, the lake (next screen) still "go out"
+PASS  390_dark: About them: no "Usually says no to 'Are you in pain?'", no "Keep as a fact" for it; the tea line is there
+PASS  390_dark: About them: no "Usually says no" to a drink, and no "Keep as a fact" on the tea line
+PASS  390_dark: About them: Back one step at a time reaches the first screen (1 steps: home)
+PASS  390_dark: no page error, nothing asked of another host
+222 of 222 checks passed

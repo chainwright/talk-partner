@@ -1300,7 +1300,16 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-**Live: the build of `9dc8060`** (phase 12: the fixes of judge round 9: low mood, pain and the weak-or-numb question,
+**Live: the build of `51470a8`** (phase 12b, the fixes of judge round 9b: pain-scale faces, the stroke check after one
+"no", drinks never learned as a habit, few-drinks under 6, "Find more choices" second, the crisis page's "Stop for now",
+the sample family on a phone, the emergency number on the first screen), deployed 22 Nov 2026 about 18:05 UTC. The
+hosted script (`index-5-VejOQ5.js`) has the same SHA-256 as our `dist/`. Run against the hosted copy: `e2e-simple.py
+--live` 1022/1022, `pwa-check.py` 34/34, `e2e-needs.mjs` 13/13, `phase12-walk.py --url` 222/222. Read aloud on this
+build: three runs were refused by App Check (403, "initial-throttle" for a day) after a long day of automated runs from
+one machine, so no sound came back; the speech code did not change in phase 12b, and on `9dc8060` the hosted copy
+passed 3 of 3 (below). Logs: `devlog/evidence_live/51470a8/`.
+
+Before it: **the build of `9dc8060`** (phase 12: the fixes of judge round 9: low mood, pain and the weak-or-numb question,
 the needs-board call box, the crisis choice, eight pictures made again and three added, the first screen's pictures
 preloaded, "See the AI at work" above the fold), deployed 22 Nov 2026 about 16:00 UTC. The hosted script
 (`index-BYKP941p.js`) has the same SHA-256 as our `dist/`. Run against the hosted copy: `e2e-simple.py --live`

@@ -16,7 +16,7 @@ Repository: <https://github.com/chainwright/talk-partner> (public, Apache-2.0)
 11. **I want to say something → I feel…**, the way out twice: "worried / lonely / I can't go on"; the last opens the carer's safety screen.
 12. At the foot of Home: **Try it with the Millers, a sample family** (judge mode below), and **How it works inside →**.
 
-**Live: the build of `9dc8060`** (README "Deploy" says what was run against it).
+**Live: the build of `51470a8`** (README "Deploy" says what was run against it).
 
 Nothing here needs an account. Hosted copy: <https://talk-partner.web.app/#/demo> (our project settings are in it, so
 cloud help can be turned on there; the on-device step needs Gemini Nano in your own Chrome). **Cloud help there needs
