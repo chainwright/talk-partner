@@ -1,0 +1,49 @@
+PASS  360_light: topic tiles show 6 pictures and the body drawing on their white plate
+PASS  360_light: the way out is our dashed drawing on every card, never a picture file
+PASS  360_light: tea/coffee: tea and coffee as loaded pictures, 104-128 px, the way out smaller; no sideways scroll
+PASS  360_light: the check "So: coffee. Right?" shows the coffee picture
+PASS  360_light: Back one step at a time reaches the first screen (2 steps)
+PASS  360_light: needs board (pain): ten tiles, nine Gemini pictures loaded and the way out our dashed drawing, no sideways scroll
+PASS  360_light: pain: the next screen shows a picture or the body map, nothing broken
+PASS  360_light: needs board (toilet): ten tiles, nine Gemini pictures loaded and the way out our dashed drawing, no sideways scroll
+PASS  360_light: toilet: the next screen shows a picture or the body map, nothing broken
+PASS  360_light: a person: the way out is our dashed drawing
+PASS  360_light: a person: company / time alone as loaded pictures, no sideways scroll
+PASS  360_light: no page error, nothing asked of another host
+PASS  360_dark: topic tiles show 6 pictures and the body drawing on their white plate
+PASS  360_dark: the way out is our dashed drawing on every card, never a picture file
+PASS  360_dark: tea/coffee: tea and coffee as loaded pictures, 104-128 px, the way out smaller; no sideways scroll
+PASS  360_dark: the check "So: coffee. Right?" shows the coffee picture
+PASS  360_dark: Back one step at a time reaches the first screen (2 steps)
+PASS  360_dark: needs board (pain): ten tiles, nine Gemini pictures loaded and the way out our dashed drawing, no sideways scroll
+PASS  360_dark: pain: the next screen shows a picture or the body map, nothing broken
+PASS  360_dark: needs board (toilet): ten tiles, nine Gemini pictures loaded and the way out our dashed drawing, no sideways scroll
+PASS  360_dark: toilet: the next screen shows a picture or the body map, nothing broken
+PASS  360_dark: a person: the way out is our dashed drawing
+PASS  360_dark: a person: company / time alone as loaded pictures, no sideways scroll
+PASS  360_dark: no page error, nothing asked of another host
+PASS  390_light: topic tiles show 6 pictures and the body drawing on their white plate
+PASS  390_light: the way out is our dashed drawing on every card, never a picture file
+PASS  390_light: tea/coffee: tea and coffee as loaded pictures, 104-128 px, the way out smaller; no sideways scroll
+PASS  390_light: the check "So: coffee. Right?" shows the coffee picture
+PASS  390_light: Back one step at a time reaches the first screen (2 steps)
+PASS  390_light: needs board (pain): ten tiles, nine Gemini pictures loaded and the way out our dashed drawing, no sideways scroll
+PASS  390_light: pain: the next screen shows a picture or the body map, nothing broken
+PASS  390_light: needs board (toilet): ten tiles, nine Gemini pictures loaded and the way out our dashed drawing, no sideways scroll
+PASS  390_light: toilet: the next screen shows a picture or the body map, nothing broken
+PASS  390_light: a person: the way out is our dashed drawing
+PASS  390_light: a person: company / time alone as loaded pictures, no sideways scroll
+PASS  390_light: no page error, nothing asked of another host
+PASS  390_dark: topic tiles show 6 pictures and the body drawing on their white plate
+PASS  390_dark: the way out is our dashed drawing on every card, never a picture file
+PASS  390_dark: tea/coffee: tea and coffee as loaded pictures, 104-128 px, the way out smaller; no sideways scroll
+PASS  390_dark: the check "So: coffee. Right?" shows the coffee picture
+PASS  390_dark: Back one step at a time reaches the first screen (2 steps)
+PASS  390_dark: needs board (pain): ten tiles, nine Gemini pictures loaded and the way out our dashed drawing, no sideways scroll
+PASS  390_dark: pain: the next screen shows a picture or the body map, nothing broken
+PASS  390_dark: needs board (toilet): ten tiles, nine Gemini pictures loaded and the way out our dashed drawing, no sideways scroll
+PASS  390_dark: toilet: the next screen shows a picture or the body map, nothing broken
+PASS  390_dark: a person: the way out is our dashed drawing
+PASS  390_dark: a person: company / time alone as loaded pictures, no sideways scroll
+PASS  390_dark: no page error, nothing asked of another host
+48 of 48 checks passed

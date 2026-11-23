@@ -1300,7 +1300,14 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-**Live: the build of `51470a8`** (phase 12b, the fixes of judge round 9b: pain-scale faces, the stroke check after one
+**Live: the build of `39e8f33`** (after phase 12b: the general pain picture made again on 23 Nov 2026 with the arms
+down, so it reads as pain all over and not as a stomach ache or as "too cold"; the sample family kept apart from the
+family's own data on a phone and a desktop), deployed 23 Nov 2026 about 21:40 UTC. The hosted script
+(`index-zcpxbGxV.js`) has the same SHA-256 as our `dist/`, and so does `pictures/pain.webp`. Run against the hosted
+copy: `e2e-simple.py --live` 1022/1022, `pwa-check.py` 34/34, `e2e-needs.mjs` 13/13, `phase11-walk.py --url` 48/48,
+`phase12-walk.py --url` 255/255. The speech code did not change since `51470a8` (below). Logs: `devlog/evidence_live/39e8f33/`.
+
+Before it: **the build of `51470a8`** (phase 12b, the fixes of judge round 9b: pain-scale faces, the stroke check after one
 "no", drinks never learned as a habit, few-drinks under 6, "Find more choices" second, the crisis page's "Stop for now",
 the sample family on a phone, the emergency number on the first screen), deployed 22 Nov 2026 about 18:05 UTC. The
 hosted script (`index-5-VejOQ5.js`) has the same SHA-256 as our `dist/`. Run against the hosted copy: `e2e-simple.py
