@@ -17,6 +17,10 @@ no download); the number in the first screen's red box with "Change it"; a pain 
 "Needs something now?" and on screen at 360 px; "Find more choices (online, after your yes)" as the second way after
 "something else"; the new pictures for pain, wait and show me loaded; About them after three "no" to a drink.
 
+23 Nov 2026 adds: "Try it with the Millers" with the family's own diary, health notes and lists on the device, as a
+phone at 360 and 390 px and on a desktop (judge mode): the sample family shows none of them and keeps what it does in
+memory only, nothing on the device changes, and leaving it brings the family's own back exactly as they were.
+
 Usage: python3 scripts/phase12-walk.py [--url URL] [OUT_DIR]   (default http://localhost:5179/, devlog/evidence_phase12/walk)
 Exit code 0 when every check passes, 1 otherwise.
 """
@@ -342,8 +346,65 @@ def walk(b, w, h, scheme):
     ctx.close()
 
 
+KV_ALL = """() => new Promise((res) => { const r = indexedDB.open('talk-partner', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => { const s = r.result.transaction('kv', 'readonly').objectStore('kv'); const k = s.getAllKeys(); k.onsuccess = () => { const v = s.getAll(); v.onsuccess = () => { const o = {}; k.result.forEach((key, i) => { o[key] = v.result[i]; }); res(JSON.stringify(o, Object.keys(o).sort())); }; }; }; r.onerror = () => res('{}'); })"""
+
+
+def sample_apart(b, w, h, phone):
+    """23 Nov 2026: "Try it with the Millers" with the family's own diary, health notes and lists on this device. The
+    sample family must show none of them, keep nothing it does, and leaving it must bring the family's own back untouched."""
+    tag = f'{w}_{"phone" if phone else "desktop"}_sample'
+    kw = dict(viewport={'width': w, 'height': h}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=e2e.PHONE_UA) if phone else dict(viewport={'width': w, 'height': h})
+    ctx = b.new_context(service_workers='block', locale='en-US', **kw)
+    outside = []
+    ctx.route('**/*', lambda r: (outside.append(r.request.url), r.abort()) if not r.request.url.startswith(URL) else r.continue_())
+    page = ctx.new_page(); errs = []
+    page.on('pageerror', lambda e: errs.append(str(e)))
+    now = int(time.time() * 1000)
+    page.goto(URL); page.wait_for_selector('main.simple.home')
+    page.evaluate(e2e.KV_PUT, {
+        'settings': {'cloudHelp': False, 'support': 'more', 'welcomed': True, 'firstCard': True, 'howFolded': True},
+        'profile': {'personName': 'Walter', 'partnerName': 'Edith', 'people': [], 'foods': ['pea soup'], 'places': [], 'tv': [], 'music': [], 'other': []},
+        'diary': [{'id': 'real1', 'at': now - 3600000, 'kind': 'answer', 'q': 'Do you want pea soup?', 'label': 'pea soup', 'topic': 'food'},
+                  {'id': 'real2', 'at': now - 7200000, 'kind': 'log', 'log': 'drank', 'label': 'Drank', 'topic': 'food'}],
+        'history': [{'q': 'Do you want pea soup?', 'topic': '', 'label': 'pea soup', 'at': now - d * 86400000} for d in (1, 2, 3)],
+        'needs': [{'label': 'toilet', 'at': now - 600000}],
+        'health': {'text': 'Walter takes his tablets at eight', 'diabetes': True, 'swallowing': False, 'fluidLimit': False, 'reminders': False, 'emergency': '112'},
+    })
+    home(page)
+    before = page.evaluate(KV_ALL)
+    check(f'{tag}: the family\'s own first screen names Walter before the sample family is opened', 'Walter' in e2e.text(page), e2e.text(page)[:200])
+    page.locator('#try-sample').click(); page.wait_for_timeout(1500)
+    check(f'{tag}: the sample family is open (Frank), Walter is not named', 'Frank' in e2e.text(page) and 'Walter' not in e2e.text(page), e2e.text(page)[:300])
+    page.evaluate("location.hash = '#/diary'"); page.wait_for_timeout(900)
+    dt = e2e.text(page)
+    check(f'{tag}: the sample family\'s diary shows none of the family\'s own entries', 'pea soup' not in dt and 'Walter' not in dt and page.locator('[data-act=log-undo]').count() == 0, dt[:400])
+    page.locator('[data-act=log][data-log=drank]').click(); page.wait_for_timeout(500)
+    check(f'{tag}: a drink logged for the sample family shows in its diary (in memory), with Undo', page.locator('[data-act=log-undo]').count() >= 1, e2e.text(page)[:300])
+    page.evaluate("location.hash = '#/about'"); page.wait_for_timeout(900)
+    at = e2e.text(page)
+    vals = page.evaluate("[...document.querySelectorAll('input, textarea')].map((e) => e.value).join(' | ')")
+    check(f'{tag}: the sample family\'s About them shows none of the family\'s own words, health notes or number', 'Walter' not in at and 'pea soup' not in at and 'Walter' not in vals and 'tablets at eight' not in vals and '112' not in vals, (at[:200] + ' // ' + vals[:200]))
+    mid = page.evaluate(KV_ALL)
+    check(f'{tag}: nothing on this device changed while the sample family was open (a drink was logged in it)', mid == before, mid[:300])
+    page.evaluate("location.hash = ''"); page.wait_for_timeout(700)
+    page.locator('[data-act=leave-demo]').first.click(); page.wait_for_timeout(1200)
+    check(f'{tag}: after leaving, the family\'s own first screen (Walter) is back', 'Walter' in e2e.text(page) and 'Frank' not in e2e.text(page), e2e.text(page)[:200])
+    page.evaluate("location.hash = '#/diary'"); page.wait_for_timeout(900)
+    dt = e2e.text(page)
+    check(f'{tag}: after leaving, the family\'s own diary is back, without the sample family\'s drink', 'pea soup' in dt, dt[:400])
+    after = page.evaluate(KV_ALL)
+    check(f'{tag}: after leaving, every list on this device is exactly as before', after == before, after[:300])
+    page.reload(); page.wait_for_timeout(1200)
+    check(f'{tag}: after a reload, the family\'s own diary is still there', 'pea soup' in e2e.text(page), e2e.text(page)[:300])
+    check(f'{tag}: no page error, nothing asked of another host', not errs and not outside, str(errs + outside))
+    ctx.close()
+
+
 with sync_playwright() as p:
     b = p.chromium.launch()
+    for w, h in ((360, 740), (390, 844)):
+        sample_apart(b, w, h, True)
+    sample_apart(b, 1280, 900, False)
     for w, h in ((360, 740), (390, 844)):
         for scheme in ('light', 'dark'):
             walk(b, w, h, scheme)

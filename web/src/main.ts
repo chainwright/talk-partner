@@ -45,7 +45,7 @@ import { pickEngine } from './ai/pick';
 import { fetchSettings } from './ai/remoteConfig';
 import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile, pictoFallback } from './pictos';
 import { aboutSimple, answeredScreen, cardScreen, chipBlock, consentSheet, frameStyle, homeScreen, laterBlock, personSimple, photoSheet, shortBlock, tryAiBlock, type AboutRow } from './simple';
-import { kvClear, kvGet, kvSet } from './store';
+import { kvClear, kvGet, kvSet, setSampleScope } from './store';
 import { P4 } from '../../core/copy4';
 import { LETTER_CLOUD_TASK, letterCard, letterEnd, type LetterInput } from '../../core/letter';
 import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
@@ -591,11 +591,31 @@ window.addEventListener('popstate', () => {
   stepBack(drawnAt);
 });
 
+/**
+ * The family's own data in memory, emptied (23 Nov 2026: on a phone "Try it with the Millers" showed the family's own
+ * diary, health notes and learned lines, because only the profile and the answers were swapped). Used when the sample
+ * family opens, and again when it is left, before the family's own lists are read back from this device.
+ */
+function clearFamily() {
+  state.profile = { ...EMPTY_PROFILE, people: [] }; state.history = []; state.needsLog = []; state.forgotten = NOTHING_FORGOTTEN;
+  state.learnedShort = null; state.photos = []; state.photoDraft = null; state.diary = []; state.health = NO_HEALTH; state.asks = [];
+  state.logged = null; state.diaryCopied = false; state.diaryDeleted = false; state.importDraft = null; state.backupError = ''; state.backupDone = '';
+  state.backupHealth = false; state.ins = { key: '', words: null, source: 'rules', busy: false, note: '' }; state.insSheet = null; state.tipWords = null;
+  state.p4.visit = null; p8later.list = []; p8later.asking = null; p8.log = newLog(Date.now()); p8.picked = []; p8.pass = NO_PASSPORT; p8.page = false; p8.health = false;
+  p6.share = null; clearP4();
+}
+/** What was on screen in this page before the sample family opened (in memory only, never stored): back when it is left. */
+let beforeSample: { answers: State['answers']; made: Card[] } | null = null;
 function enterDemo(): Promise<void> {
   if (state.demo) return Promise.resolve();
   state.demo = true;
+  // the sample family reads and writes a store of its own in memory: the family's own lists on this device are
+  // neither shown nor changed while it is open (web/src/store.ts, `setSampleScope`)
+  setSampleScope(true);
+  beforeSample = { answers: state.answers, made: state.made };
+  state.answers = []; state.made = [];
+  clearFamily();
   state.profile = SAMPLE_PROFILE;
-  state.history = []; // the sample family starts with no answers; the real list on disk is untouched
   resetCard();
   // (phase 12b) on a phone the sample family opens on the simple view's first screen, with no card made for it
   return sampleSimple ? Promise.resolve() : firstCard();
@@ -621,9 +641,11 @@ async function firstCard(): Promise<void> {
 }
 async function leaveDemo() {
   state.demo = false; sampleSimple = false;
-  state.profile = (await kvGet<Profile>('profile')) ?? { ...EMPTY_PROFILE };
-  state.history = (await kvGet<Answered[]>('history')) ?? [];
+  setSampleScope(false);
+  clearFamily();
+  if (beforeSample) { state.answers = beforeSample.answers; state.made = beforeSample.made; beforeSample = null; }
   resetCard();
+  await load();
   go('');
 }
 function resetCard() { state.tips = false; state.more = false; state.sheet = false; state.card = null; state.first = false; state.before = null; state.picked = null; state.confirmed = false; state.less = false; state.recap = false; state.recapDone = false; state.waitStart = null; }
@@ -637,32 +659,32 @@ function setCard(c: Card | null) { state.card = c; state.first = false; if (c) {
 
 // ---------------------------------------------------------------- persistence
 async function load() {
-  const p = await kvGet<Profile>('profile');
-  if (p) state.profile = { ...EMPTY_PROFILE, ...p, people: p.people ?? [] };
-  const s = await kvGet<Settings>('settings');
+  // every key is asked for at once, so all of them come from the same store; if the sample family was opened while
+  // they were being read (a tap during the first load), only this browser's settings are taken, and none of the
+  // family's own lists reach the sample family's screens (23 Nov 2026)
+  const [p, s, h, n, ph, f, d, hn, a, lt, v, pr, pa, ps] = await Promise.all([
+    kvGet<Profile>('profile'), kvGet<Settings>('settings'), kvGet<Answered[]>('history'), kvGet<Need[]>('needs'),
+    kvGet<Photo[]>('photos'), kvGet<Forgotten>('learned'), kvGet<DiaryEntry[]>('diary'), kvGet<HealthNotes>('health'),
+    kvGet<Ask[]>('asks'), kvGet<Later[]>('later'), kvGet<VisitRecord>('visit'), kvGet<PracticeLog>('practice'),
+    kvGet<string[]>('practiceAsk'), kvGet<PassportPrefs>('passport'),
+  ]);
   if (s) state.settings = { ...state.settings, ...s };
-  const h = await kvGet<Answered[]>('history');
+  if (state.demo) return;
+  if (p) state.profile = { ...EMPTY_PROFILE, ...p, people: p.people ?? [] };
   if (Array.isArray(h)) state.history = h;
-  const n = await kvGet<Need[]>('needs');
   if (Array.isArray(n)) state.needsLog = n;
-  const ph = await kvGet<Photo[]>('photos');
   if (Array.isArray(ph)) state.photos = ph;
-  const f = await kvGet<Forgotten>('learned');
   if (f) state.forgotten = { ...NOTHING_FORGOTTEN, ...f };
-  const d = await kvGet<DiaryEntry[]>('diary');
   if (Array.isArray(d)) state.diary = d;
-  state.health = cleanHealth(await kvGet<HealthNotes>('health'));
-  const a = await kvGet<Ask[]>('asks');
+  state.health = cleanHealth(hn);
   if (Array.isArray(a)) state.asks = a;
-  p8later.list = cleanLater(await kvGet<Later[]>('later'));
-  const v = await kvGet<VisitRecord>('visit');
+  p8later.list = cleanLater(lt);
   if (v && Array.isArray(v.answers)) state.p4.visit = v;
   // phase 7: the log of the conversations starts the first time a build that has it runs here, and says so on its page
-  const pr = await kvGet<PracticeLog>('practice');
   p8.log = cleanLog(pr, Date.now());
   if (!pr) void kvSet('practice', p8.log);
-  p8.picked = pickedPractice(await kvGet<string[]>('practiceAsk'));
-  p8.pass = cleanPassport(await kvGet<PassportPrefs>('passport'));
+  p8.picked = pickedPractice(pa);
+  p8.pass = cleanPassport(ps);
 }
 
 // ---------------------------------------------------------------- phase 5: the call box, Read aloud, since the last visit
