@@ -1307,7 +1307,10 @@ hosted script (`index-5-VejOQ5.js`) has the same SHA-256 as our `dist/`. Run aga
 --live` 1022/1022, `pwa-check.py` 34/34, `e2e-needs.mjs` 13/13, `phase12-walk.py --url` 222/222. Read aloud on this
 build: three runs were refused by App Check (403, "initial-throttle" for a day) after a long day of automated runs from
 one machine, so no sound came back; the speech code did not change in phase 12b, and on `9dc8060` the hosted copy
-passed 3 of 3 (below). Logs: `devlog/evidence_live/51470a8/`.
+passed 3 of 3 (below). On 23 Nov 2026 about 20:00 UTC, in a normal (headed) browser window with no debug token, we
+ran it three more times on this build: the first run was still refused by App Check (the same throttle, no sound,
+6 of 10 checks), the next two passed 10 of 10 (`inferenceSource=in_cloud`, about 8.9 s of sound, "Hear it again"
+asked nothing). Logs: `devlog/evidence_live/51470a8/` and `devlog/evidence_live/51470a8/speak_2026-11-23/`.
 
 Before it: **the build of `9dc8060`** (phase 12: the fixes of judge round 9: low mood, pain and the weak-or-numb question,
 the needs-board call box, the crisis choice, eight pictures made again and three added, the first screen's pictures
