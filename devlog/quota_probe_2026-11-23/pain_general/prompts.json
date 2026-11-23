@@ -1,6 +1,6 @@
 {
  "pain_a": {
-  "prompt": "(the exact words were not kept)",
+  "prompt": "an older adult man from the front, upper body, face clearly wincing in pain with eyes squeezed shut and brow furrowed, one hand pressed to his forehead, the other hand open in a distressed gesture, a few short red jagged pain lines around his head and shoulders, not holding his stomach",
   "shows": "an older man, one hand pressed to his forehead, the other hand open, red pain lines around the head",
   "model": "gemini-3.1-flash-image",
   "date": "2026-11-23",
@@ -15,7 +15,7 @@
   "why": "used as web/public/pictures/pain.webp: the whole upper body in pain, no one body part; the picture it replaced (a man holding his stomach) read as a stomach ache and is kept in replaced/pain_old.webp"
  },
  "pain_c": {
-  "prompt": "(the exact words were not kept)",
+  "prompt": "an older adult woman from the front, upper body, wincing in pain with eyes squeezed shut and teeth slightly clenched, one hand raised near her temple, short red jagged pain lines around her, not holding her stomach",
   "shows": "an older woman, one hand to the side of her head, teeth clenched, red pain lines around the head",
   "model": "gemini-3.1-flash-image",
   "date": "2026-11-23",
