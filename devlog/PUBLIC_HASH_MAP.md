@@ -295,6 +295,12 @@ the table.
 | 272 | `6b340ba` | `7591eae` | 2026-11-22 11:18 | Phase 12b, item 11: a pain question left for later stands directly under "Needs something… |
 | 273 | `51470a8` | `0ea9498` | 2026-11-22 11:43 | Phase 12b: the walk covers the changed screens (pictures loaded first); e2e-simple follow… |
 | 274 | `b8f5655` | `070bd61` | 2026-11-22 12:15 | Live: the build of 51470a8 (phase 12b); Read aloud on it refused by App Check after a day… |
+| 275 | `a8ee978` | `3407d2a` | 2026-11-23 14:02 | Read aloud on the hosted 51470a8: 1 refused by App Check, 2 of 2 after it passed |
+| 276 | `40d43ec` | `d171f51` | 2026-11-23 14:32 | The sample family never reads or writes the family's own data, on a phone or a desktop |
+| 277 | `629dcba` | `5599d6f` | 2026-11-23 14:33 | Pain as the whole upper body in pain, not a stomach ache (picture made with Gemini on 23 Nov) |
+| 278 | `1f6ee8c` | `a927805` | 2026-11-23 14:50 | Pain picture prompts: exact words of the two rejected options |
+| 279 | `39e8f33` | `008f884` | 2026-11-23 15:29 | Pain picture: arms down, fists clenched, not crossed arms that look like 'too cold' |
+| 280 | `60fc893` | `36ff036` | 2026-11-23 15:45 | Docs: live is 39e8f33 (pain picture, sample family kept apart); hosted checks and logs |
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
 
