@@ -197,7 +197,7 @@ describe('pictogram provenance: PICTOGRAMS.md lists exactly what the code bundle
       if (IMAGE_IDS.includes(r[1])) {
         // (phase 12: the tool and "no model call at run time" are said on every row, and the date is the manifest's)
         expect(r[3], r[1]).toBe('Generated with Gemini 3.1 Flash Image (`gemini-3.1-flash-image`) in Google AI Studio, generated offline, bundled; no model call at run time; reviewed by a person');
-        expect(r[4], r[1]).toMatch(MANIFEST[r[1]].date === '2026-11-22' ? /^22 Nov 2026/ : /^20 Nov 2026$/);
+        expect(r[4], r[1]).toMatch({ '2026-11-23': /^23 Nov 2026/, '2026-11-22': /^22 Nov 2026/ }[MANIFEST[r[1]].date] ?? /^20 Nov 2026$/);
         expect(r[5], r[1]).toBe('output used under the Gemini API terms; no copyright claimed by us beyond what applies');
       } else {
         expect(r[3], r[1]).toBe('drawn by us (SVG)');

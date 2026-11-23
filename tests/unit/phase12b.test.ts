@@ -114,13 +114,13 @@ describe('5. After "something else", where the AI step goes online (a phone), it
 });
 
 describe('6. The pictures of round 9b: pain (the whole body), wait (an hourglass), show me (an angled finger)', () => {
-  it('show me is a picture made with Gemini now; wait and pain are made again on 22 Nov; the files are the ones in r9b_regen', async () => {
+  it('show me is a picture made with Gemini now; wait is made again on 22 Nov; the files are the ones in r9b_regen', async () => {
     const { readFileSync } = await import('node:fs');
     const { builtinPicto } = await import('../../web/src/pictos');
     const root = new URL('../../', import.meta.url);
     const manifest = JSON.parse(readFileSync(new URL('devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json', root), 'utf8')) as Record<string, { file: string; prompt: string; date: string }>;
     expect(builtinPicto('show me')).toContain('src="/pictures/show_me.webp"');
-    for (const [id, file, word] of [['pain', 'pain', /whole adult figure/], ['wait', 'wait', /hourglass/], ['show me', 'show_me', /thumb clearly visible/]] as const) {
+    for (const [id, file, word] of [['wait', 'wait', /hourglass/], ['show me', 'show_me', /thumb clearly visible/]] as const) {
       expect(manifest[id].date, id).toBe('2026-11-22');
       expect(manifest[id].prompt, id).toMatch(word);
       expect(readFileSync(new URL(`web/public/pictures/${file}.webp`, root)).equals(readFileSync(new URL(`devlog/quota_probe_2026-11-20/r9b_regen/${file}.webp`, root))), id).toBe(true);
@@ -227,5 +227,24 @@ describe('11. A pain question left for later stands directly under "Needs someth
     const tv = laterBlock([{ q: 'Would you like the TV on?', time: '14:00', i: 0 }]);
     const h2 = homeScreen({ ...base, laterHtml: tv } as unknown as Parameters<typeof homeScreen>[0]);
     expect(h2.indexOf('id="later"')).toBeGreaterThan(h2.indexOf('id="try-ai"'));
+  });
+});
+
+describe('6b. Pain made once more (23 Nov 2026): the one of 22 Nov held its stomach and read as a stomach ache', () => {
+  it('the file is pain_b of devlog/quota_probe_2026-11-23/pain_general, the whole upper body in pain; the old one is kept outside the app', async () => {
+    const { readFileSync } = await import('node:fs');
+    const root = new URL('../../', import.meta.url);
+    const read = (f: string) => readFileSync(new URL(f, root));
+    const manifest = JSON.parse(read('devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json').toString('utf8')) as Record<string, { file: string; prompt: string; model: string; date: string; tool: string }>;
+    expect(manifest.pain).toMatchObject({ file: 'pictures/pain.webp', model: 'gemini-3.1-flash-image', date: '2026-11-23', tool: 'Google AI Studio, generated offline, bundled; no model call at run time' });
+    expect(manifest.pain.prompt).toMatch(/whole upper body evenly, not pointing at one body part$/);
+    expect(read('web/public/pictures/pain.webp').equals(read('devlog/quota_probe_2026-11-23/pain_general/pain_b.webp'))).toBe(true);
+    expect(read('devlog/quota_probe_2026-11-23/pain_general/replaced/pain_old.webp').equals(read('devlog/quota_probe_2026-11-20/r9b_regen/pain.webp'))).toBe(true);
+    const prompts = JSON.parse(read('devlog/quota_probe_2026-11-23/pain_general/prompts.json').toString('utf8')) as Record<string, { prompt: string; used: boolean }>;
+    expect(Object.keys(prompts)).toEqual(['pain_a', 'pain_b', 'pain_c']);
+    expect(prompts.pain_b).toMatchObject({ prompt: manifest.pain.prompt, used: true });
+    expect([prompts.pain_a.used, prompts.pain_c.used]).toEqual([false, false]);
+    const md = read('PICTOGRAMS.md').toString('utf8');
+    expect(md).toMatch(/^\| pain \| an older man from the front, upper body.*\| 23 Nov 2026 /m);
   });
 });

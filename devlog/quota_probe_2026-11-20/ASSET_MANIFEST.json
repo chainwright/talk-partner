@@ -183,9 +183,9 @@
  },
  "pain": {
   "file": "pictures/pain.webp",
-  "prompt": "a whole adult figure from the front, clearly in pain: wincing face with eyes squeezed, body hunched, both hands held to the body, red pain marks",
+  "prompt": "an older adult man from the front, upper body, grimacing in pain with eyes squeezed shut, both arms hugging his own chest and shoulders loosely, several short red jagged pain lines radiating around the whole upper body evenly, not pointing at one body part",
   "model": "gemini-3.1-flash-image",
-  "date": "2026-11-22",
+  "date": "2026-11-23",
   "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
  },
  "spouse": {

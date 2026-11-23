@@ -217,9 +217,9 @@ describe('B7. The pictures made again after round 9, and the three new ones', ()
     const { readFileSync } = await import('node:fs');
     const root = new URL('../../', import.meta.url);
     const manifest = JSON.parse(readFileSync(new URL('devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json', root), 'utf8')) as Record<string, { file: string; model: string; date: string; tool: string }>;
-    for (const f of ['pain', 'good', 'bad', 'more', 'spouse', 'child', 'sibling', 'friend', 'curtains_open', 'curtains_closed', 'church']) {
-      // (phase 12b: pain was made again once more after round 9b, from r9b_regen; tests/unit/phase12b.test.ts checks it)
-      const from = f === 'pain' ? 'r9b_regen' : 'r9_regen';
+    // (phase 12b: pain was made again after round 9b, and once more on 23 Nov; tests/unit/phase12b.test.ts checks it)
+    for (const f of ['good', 'bad', 'more', 'spouse', 'child', 'sibling', 'friend', 'curtains_open', 'curtains_closed', 'church']) {
+      const from = 'r9_regen';
       expect(readFileSync(new URL(`web/public/pictures/${f}.webp`, root)).equals(readFileSync(new URL(`devlog/quota_probe_2026-11-20/${from}/${f}.webp`, root))), f).toBe(true);
       const m = manifest[f.replace(/_/g, ' ')];
       expect(m, f).toMatchObject({ model: 'gemini-3.1-flash-image', date: '2026-11-22', tool: 'Google AI Studio, generated offline, bundled; no model call at run time' });

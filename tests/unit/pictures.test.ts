@@ -1,5 +1,5 @@
 // The colour pictures (web/src/pictos.ts; design/IMAGES_RESEARCH_2026-11-17.md). Since 20 Nov 2026 the set is mixed:
-// 91 pictures made with Gemini (84 on 20 Nov, 16 made again or added on 22 Nov; WebP files in web/public/pictures/, listed in IMAGE_IDS and in
+// 91 pictures made with Gemini (84 on 20 Nov, 16 made again or added on 22 Nov, pain once more on 23 Nov; WebP files in web/public/pictures/, listed in IMAGE_IDS and in
 // devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json) and our own SVG drawings (redrawn in colour on 18 Nov 2026).
 // Our SVGs: one style, real colours written into the drawing, visible on the card in the light and in the dark theme;
 // the drawing of an id that now has a picture is kept as its fallback and follows the same rules. The picture files:

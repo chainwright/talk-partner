@@ -1,0 +1,25 @@
+{
+ "pain_a": {
+  "prompt": "(the exact words were not kept)",
+  "shows": "an older man, one hand pressed to his forehead, the other hand open, red pain lines around the head",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-23",
+  "used": false,
+  "why": "rejected: it reads as a headache, not pain in general"
+ },
+ "pain_b": {
+  "prompt": "an older adult man from the front, upper body, grimacing in pain with eyes squeezed shut, both arms hugging his own chest and shoulders loosely, several short red jagged pain lines radiating around the whole upper body evenly, not pointing at one body part",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-23",
+  "used": true,
+  "why": "used as web/public/pictures/pain.webp: the whole upper body in pain, no one body part; the picture it replaced (a man holding his stomach) read as a stomach ache and is kept in replaced/pain_old.webp"
+ },
+ "pain_c": {
+  "prompt": "(the exact words were not kept)",
+  "shows": "an older woman, one hand to the side of her head, teeth clenched, red pain lines around the head",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-23",
+  "used": false,
+  "why": "rejected: it reads as a headache, not pain in general"
+ }
+}

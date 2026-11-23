@@ -172,7 +172,7 @@ def walk(b, w, h, scheme):
 
     # ---- 2. pain on the needs board (item 4)
     page.locator('.btn[data-act=needs]').first.click(); page.wait_for_selector('main.pv .p-tiles.board')
-    check(f'{tag}: needs board: the pictures loaded, "pain" among them (the whole-body picture)', loaded(page) and page.evaluate("(() => { const i = document.querySelector('main.pv img.pic[data-id=pain]'); return !!i && i.complete && i.naturalWidth === 256; })()"))
+    check(f'{tag}: needs board: the pictures loaded, "pain" among them (the whole upper body in pain)', loaded(page) and page.evaluate("(() => { const i = document.querySelector('main.pv img.pic[data-id=pain]'); return !!i && i.complete && i.naturalWidth === 256; })()"))
     shot(page, tag, '03a_needs_board')
     person_pick(page, 'pain'); give(page)
     page.wait_for_selector('main.simple.s-answered')
