@@ -11,8 +11,8 @@
   "prompt": "an older adult man from the front, upper body, grimacing in pain with eyes squeezed shut, both arms hugging his own chest and shoulders loosely, several short red jagged pain lines radiating around the whole upper body evenly, not pointing at one body part",
   "model": "gemini-3.1-flash-image",
   "date": "2026-11-23",
-  "used": true,
-  "why": "used as web/public/pictures/pain.webp: the whole upper body in pain, no one body part; the picture it replaced (a man holding his stomach) read as a stomach ache and is kept in replaced/pain_old.webp"
+  "used": false,
+  "why": "rejected after it went in: arms across the chest look like the 'too cold' picture two tiles away on the needs board"
  },
  "pain_c": {
   "prompt": "an older adult woman from the front, upper body, wincing in pain with eyes squeezed shut and teeth slightly clenched, one hand raised near her temple, short red jagged pain lines around her, not holding her stomach",
@@ -21,5 +21,26 @@
   "date": "2026-11-23",
   "used": false,
   "why": "rejected: it reads as a headache, not pain in general"
+ },
+ "pain_d": {
+  "prompt": "an older adult man from the front, upper body, grimacing in strong pain with eyes squeezed shut and teeth clenched, both arms down at his sides with fists clenched tight, shoulders tense and raised, several short red jagged pain lines radiating around the whole body, arms NOT crossed, NOT hugging himself, no hat, no scarf, indoor shirt",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-23",
+  "used": true,
+  "why": "used as web/public/pictures/pain.webp: the whole body in pain, arms down, not one body part and not like 'too cold'"
+ },
+ "pain_e": {
+  "prompt": "an older adult man from the front, upper body, face twisted in pain with eyes squeezed shut, mouth open in a groan, body bent slightly forward, both hands open and raised a little in front of him trembling, red jagged pain lines all around him, arms NOT crossed, NOT hugging himself, indoor shirt",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-23",
+  "used": false,
+  "why": "rejected: a hand on the chest reads as chest pain"
+ },
+ "pain_f": {
+  "prompt": "an older adult man from the front, upper body, grimacing in pain, eyes squeezed shut, one hand gripping the other wrist in front of his belly-free chest area, red jagged pain lines and a red glow all around the body, arms NOT crossed, NOT hugging himself, indoor shirt, no winter clothes",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-23",
+  "used": false,
+  "why": "rejected: holding the wrist reads as pain in the arm"
  }
 }

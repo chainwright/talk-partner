@@ -183,7 +183,7 @@
  },
  "pain": {
   "file": "pictures/pain.webp",
-  "prompt": "an older adult man from the front, upper body, grimacing in pain with eyes squeezed shut, both arms hugging his own chest and shoulders loosely, several short red jagged pain lines radiating around the whole upper body evenly, not pointing at one body part",
+  "prompt": "an older adult man from the front, upper body, grimacing in strong pain with eyes squeezed shut and teeth clenched, both arms down at his sides with fists clenched tight, shoulders tense and raised, several short red jagged pain lines radiating around the whole body, arms NOT crossed, NOT hugging himself, no hat, no scarf, indoor shirt",
   "model": "gemini-3.1-flash-image",
   "date": "2026-11-23",
   "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
