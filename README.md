@@ -121,7 +121,7 @@ words go through the same step as every typed question (`core/pipeline.ts`): Gem
 after the consent sheet's yes, with the names you listed swapped out. Two rules stand around it (`core/ownwords.ts`):
 words about pain, the body, a need, feelings, a warning sign or a crisis never reach a model (the rules make the card,
 with one line saying why and the call box; no "Find more", no Read aloud), and when the AI cannot help (the carer's
-"No, not now", offline, App Check refusing the browser, a failed call, no AI on the copy) the rules' best card for the
+"No, not for this question", offline, App Check refusing the browser, a failed call, no AI on the copy) the rules' best card for the
 words stands in place of "No card", labelled "Made by the app's rules (no AI)". The field is typed only: the app's
 microphone sends a recording to a model before any rule could read it, so it is not on this form. The topics follow
 as "Or pick a topic".
@@ -130,7 +130,7 @@ Measured on 24 Nov 2026 with `node scripts/eval-heldout.mjs --own` (reports in `
 18 open questions of `eval/heldout_r2.json` (`--open`) and 10 everyday questions written the way a carer says them
 (`eval/phase16_everyday.json`, labelled before the first run; one is about back pain on purpose). The sample family,
 the simple view at 390 x 844, cloud help off, so every cloud card went through the sheet's "Just this once"; on the
-device leg the sheet's "No, not now" was pressed when it came up.
+device leg the sheet's "No, not for this question" was pressed when it came up.
 
 | "Ask in your own words" | Rules alone (no model) | On this computer: Gemini Nano, `ONLY_ON_DEVICE` | Online: `PREFER_IN_CLOUD`, no Nano |
 |---|---|---|---|
@@ -138,7 +138,7 @@ device leg the sheet's "No, not now" was pressed when it came up.
 | 18 open questions: the card matched our label | 0/18 (18 rules' best cards, which answer a nearer question) | **15/18** | **13/18** |
 | 18 open questions: made by an AI (the SDK's `inferenceSource`) | 0/18 | 18/18 | 17/18 (1 rules' best card) |
 | 10 everyday questions: the card matched our label | 2/10 | **8/10** | **10/10** |
-| 10 everyday questions: made by an AI | 0/10 | 6/10 (2 rules' best cards after "No, not now") | 8/10 |
+| 10 everyday questions: made by an AI | 0/10 | 6/10 (2 rules' best cards after "No, not for this question") | 8/10 |
 | kept from every model by the guard (the back pain) | 1/10 | 1/10 | 1/10 |
 | made by the rules from the words (the either-or) | 1/10 | 1/10 | 1/10 |
 | median time from submit to card (18 / 10) | 1.3 ms / 3 ms, Node | 3.7 s / 4.0 s | 1.3 s / 1.3 s, sheet tap included |
