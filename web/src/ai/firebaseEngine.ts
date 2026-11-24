@@ -377,6 +377,26 @@ export class FirebaseEngine implements Engine {
     report('speak', 'ONLY_IN_CLOUD', r.response.inferenceSource, ms);
     return { base64: part.inlineData.data, mimeType: part.inlineData.mimeType, source, ms };
   }
+
+  private letterLocal: GenerativeModel | null = null;
+  /**
+   * Phase 18b (a live walk with Gemini Nano: "steam" and "stir" under ST in Food & drink): the letter step on this
+   * computer, ONLY_ON_DEVICE on the no-App-Check app, with the letter step's own instructions and schema (each word with
+   * its kind, core/prompt.ts), so code can drop a word of another kind inside the topic (core/letter.ts, topicFit). The
+   * prompt holds About me and what did not fit; anything but an on-device answer is an error.
+   */
+  async letterDevice(prompt: string): Promise<ModelResult> {
+    this.letterLocal ??= getGenerativeModel(this.local, {
+      mode: InferenceMode.ONLY_ON_DEVICE,
+      onDeviceParams: { createOptions: { ...IO, initialPrompts: sys(LETTER_SYSTEM_PROMPT) }, promptOptions: { responseConstraint: LETTER_SCHEMA } },
+    });
+    const t0 = performance.now();
+    const r = await this.letterLocal.generateContent(prompt);
+    if (r.response.inferenceSource !== InferenceSource.ON_DEVICE) throw new Error("the letter step didn't run on this computer");
+    const ms = Math.round(performance.now() - t0);
+    report('letter', 'ONLY_ON_DEVICE', r.response.inferenceSource, ms);
+    return { text: r.response.text(), source: 'on-device', ms };
+  }
 }
 
 /**
@@ -417,6 +437,7 @@ export class LazyFirebaseEngine implements Engine {
   runCloud(strippedQuestion: string) { return this.e.runCloud(strippedQuestion); }
   letterRequest(text: string) { return letterRequest(text, this.textModel); }
   runLetter(text: string) { return this.e.runLetter(text); }
+  letterDevice(prompt: string) { return this.e.letterDevice(prompt); }
   transcribe(clip: AudioClip) { return this.e.transcribe(clip); }
   speakRequest(text: string) { return speakRequest(text); }
   speak(text: string) { return this.e.speak(text); }

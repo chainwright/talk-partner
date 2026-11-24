@@ -1166,7 +1166,8 @@ def phase4(browser, url, live):
     if page.locator('#sheet').count():
         sheet = text(page, '#sheet')
         line = text(page, '#sheet-line')
-        check('letter: with no word for "X" the sheet comes up before anything is sent, in plain words first, and shows the one line that would go', sheet.startswith('Ask online help for words?') and line == 'Would you like tea or coffee? They cannot say the word. It starts with the letter "X". The conversation is about something to drink. The person is an adult, most often 60 or older: give common, plain words that an older adult uses at home.' and 'Never sent: Names, photos, the answers so far, and everything in About them.' in sheet, sheet[:300])
+        # (phase 18b: the line says which words, when the topic is known: "Only drinks: no other kind of word.")
+        check('letter: with no word for "X" the sheet comes up before anything is sent, in plain words first, and shows the one line that would go', sheet.startswith('Ask online help for words?') and line == 'Would you like tea or coffee? They cannot say the word. It starts with the letter "X". The conversation is about something to drink. The person is an adult, most often 60 or older: give common, plain words that an older adult uses at home. Only drinks: no other kind of word.' and 'Never sent: Names, photos, the answers so far, and everything in About them.' in sheet, sheet[:300])
         whole = page.locator('#sheet-whole pre').text_content()
         check('letter: the whole request holds the question and the letter, and nothing of About them', 'PREFER_IN_CLOUD' in whole and 'letter \\"X\\"' in whole and not page.evaluate("/\\b(?:Frank|Carol|Beth|Tom|Bo|ginger|porridge|lake|did not want)\\b/.test(document.querySelector('#sheet-whole pre').textContent)"), whole[:200])
         screen_checks(page, 'letter: the sheet', primary=True)

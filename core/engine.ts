@@ -85,6 +85,13 @@ export interface Engine {
   /** The exact request `runLetter` would send. */
   letterRequest?(text: string): unknown;
   /**
+   * Optional (phase 18b): the letter step on this device, ONLY_ON_DEVICE, with the letter step's own instructions and
+   * schema (`{"kind", "words", "kinds"}`), so each word comes with its kind. The prompt holds About them and what did not
+   * fit, like `runDevice`; nothing leaves the device. An engine without it is asked through `runDevice` (the card's
+   * schema, no kind of each word: then only the app's own words of the topic stay).
+   */
+  letterDevice?(prompt: string): Promise<ModelResult>;
+  /**
    * Optional: voice input. One recording of the PARTNER's spoken question (never the person's) goes to the model
    * through Firebase AI Logic and comes back as JSON `{"transcript": string}`. `source` is the SDK's report of where
    * it ran. An engine without it (a copy with no project settings) has no microphone button.

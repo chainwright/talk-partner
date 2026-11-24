@@ -274,8 +274,9 @@ describe('4. letters with no word: the sponsor\'s AI for the topic and the lette
   });
   it('after App Check refused this browser: the line says so, "Try Google\'s AI again" comes first, and the sheet does not come back by itself', async () => {
     const refusing: Engine = Object.assign(new Spy(), { checkCloud: async () => { throw new Error('appCheck/fetch-status-error 403'); } });
-    const c = await noWord('GA', 'plans', refusing, { allowCloud: true, asked: 'Would you like to go out this morning or this afternoon?', rejected: ['garden'] });
-    expect(c.blocked).toBe(P4.letter.refused('GA'));
+    // (phase 18b: GA now has the garden centre in the places list; YO has no place word)
+    const c = await noWord('YO', 'plans', refusing, { allowCloud: true, asked: 'Would you like to go out this morning or this afternoon?', rejected: ['garden'] });
+    expect(c.blocked).toBe(P4.letter.refused('YO'));
     const w = letterWays(c, { online: true, cloudConfigured: true, deviceReady: false, topic: 'plans', asked: c.asked });
     expect(w.ways).toEqual(['again', 'write', 'show', 'another']);
     const main = read('web/src/main.ts');
@@ -283,9 +284,9 @@ describe('4. letters with no word: the sponsor\'s AI for the topic and the lette
     expect(main).toContain('state.sheet = !once && simpleView() && isOnline()');
   });
   it('after "No, keep it here": "You kept it on this phone", then the ways; the AI stays one tap away', async () => {
-    const c = await noWord('GA', 'plans', new Spy(), { asked: 'Would you like to go out this morning or this afternoon?', rejected: ['garden'] });
+    const c = await noWord('YO', 'plans', new Spy(), { asked: 'Would you like to go out this morning or this afternoon?', rejected: ['garden'] });
     expect(c.unsentPayload).toBeTruthy();
-    const kept = { ...c, blocked: P4.letter.kept('GA') };
+    const kept = { ...c, blocked: P4.letter.kept('YO') };
     expect(letterWays(kept, { online: true, cloudConfigured: true, deviceReady: false, topic: 'plans', asked: c.asked }).ways).toEqual(['ai', 'write', 'show', 'another']);
   });
   it('the letters of "I want to say something > Today & plans" stay in places: C is church, not coffee', async () => {

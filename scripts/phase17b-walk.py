@@ -45,18 +45,24 @@ FAMILY = {'personName': 'Frank', 'partnerName': 'Carol',
           'foods': ['pot roast', 'chili', 'ginger biscuits'], 'places': ['the lake', 'church', 'hardware store'], 'tv': ['Wheel of Fortune', 'Packers games'], 'music': ['Johnny Cash'], 'other': ['Bo (dog)']}
 
 # what each topic may show on a letter card: its own words (core/letter.ts, TOPIC_WORDS) and the family's of that topic
-FOOD = ['tea', 'coffee', 'water', 'juice', 'milk', 'sandwich', 'soup', 'toast', 'bread', 'cheese', 'chicken', 'pizza', 'pasta', 'potatoes', 'pie', 'eggs', 'fish', 'rice', 'cake', 'biscuits', 'chocolate', 'ice cream', 'fruit', 'apple', 'banana', 'salad', 'vegetables', 'porridge', 'cereal', 'yoghurt', 'ham', 'bacon', 'beans', 'butter', 'carrots', 'chips', 'crisps', 'custard', 'grapes', 'gravy', 'honey', 'hot chocolate', 'iced tea', 'jam', 'jelly', 'lamb', 'lemonade', 'melon', 'muffin', 'mushrooms', 'noodles', 'nuts', 'oatmeal', 'omelette', 'onions', 'orange juice', 'oranges', 'pancakes', 'peas', 'pears', 'pudding', 'quiche', 'raisins', 'roast beef', 'sausages', 'scone', 'spaghetti', 'strawberries', 'sweets', 'tomatoes', 'tuna', 'waffles', 'cocoa', 'pot roast', 'chili', 'ginger biscuits']
-DRINK = ['tea', 'coffee', 'water', 'juice', 'milk', 'hot chocolate', 'cocoa', 'iced tea', 'lemonade', 'orange juice', 'apple juice', 'squash', 'smoothie', 'milkshake', 'cola', 'ginger ale', 'herbal tea', 'green tea', 'hot milk', 'decaf', 'soda', 'tonic']
+# (phase 18b: read from the source, so the walk checks the lists the app ships, however long they are)
+import re as _re
+with open(os.path.join(HERE, '..', 'core', 'letter.ts'), encoding='utf8') as _f:
+    _block = _f.read().split('export const TOPIC_WORDS')[1].split('};')[0]
+TOPIC = {m.group(1): [a or b for a, b in _re.findall(r"'([^']*)'|\"([^\"]*)\"", m.group(2))] for m in _re.finditer(r'^\s+(\w+): \[(.*)\],$', _block, _re.M)}
+FOOD = TOPIC['food'] + ['pot roast', 'chili', 'ginger biscuits']
+DRINK = TOPIC['drink']
 ALLOWED = {
     'food': FOOD + DRINK,
     'drink': FOOD + DRINK,
-    'people': ['family', 'friend', 'neighbour', 'visitor', 'carer', 'priest', 'brother', 'sister', 'son', 'daughter', 'wife', 'husband', 'grandchild', 'grandson', 'granddaughter', 'mother', 'father', 'aunt', 'uncle', 'cousin', 'doctor', 'nurse', 'physio', 'speech therapist', 'jen', 'jenny', 'tyler', 'beth', 'carol'],
-    'plans': ['bakery', 'bank', 'beach', 'cafe', 'church', 'garden', 'hairdresser', 'library', 'lake', 'market', 'park', 'post office', 'river', 'shop', 'town', 'walk', 'drive', 'exercises', 'kitchen', 'bedroom', 'porch', 'hardware store'],
-    'fun': ['tv', 'music', 'news', 'film', 'radio', 'paper', 'puzzle', 'cards', 'crossword', 'quiz show', 'football', 'golf', 'gardening', 'photos', 'book', 'bingo', 'painting', 'piano', 'wheel of fortune', 'packers games', 'johnny cash'],
-    'rest': ['bed', 'chair', 'quiet', 'nap', 'pillow', 'blanket', 'sofa', 'sleep'],
-    'body': ['toilet', 'glasses', 'hearing aid', 'wash', 'pain', 'doctor', 'nurse', 'bath', 'shower', 'teeth', 'blanket'],
-    'feel': ['tired', 'worried', 'company', 'happy', 'sad', 'lonely', 'bored', 'scared'],
+    'people': TOPIC['people'] + ['jen', 'jenny', 'tyler', 'beth', 'carol'],
+    'plans': TOPIC['plans'] + ['lake', 'hardware store'],
+    'fun': TOPIC['fun'] + ['wheel of fortune', 'packers games', 'johnny cash'],
+    'rest': TOPIC['rest'],
+    'body': TOPIC['body'],
+    'feel': TOPIC['feel'],
 }
+ALLOWED = {k: [w.lower() for w in v] for k, v in ALLOWED.items()}
 
 
 def check(name, ok, detail=''):
