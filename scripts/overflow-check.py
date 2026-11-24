@@ -578,6 +578,10 @@ def phase4(url, width, browser):
     page.locator('main.pv .pt:not(.esc)').first.click()
     page.wait_for_timeout(300)
     yes(page.locator('main.pv .pt:not(.esc)').first.inner_text().strip())
+    # (phase 13: a pain in the head stops the questions: the person gives the phone back, the carer reads the call box)
+    page.wait_for_selector('.p-give'); page.locator('.p-give').click(); page.wait_for_selector('#visit-stop')
+    check(page, width, 'phase 13: before a doctor visit, the call box after a pain in the head, with "Go on with the questions"')
+    page.locator('#visit-stop [data-act=visit-resume]').click()
     page.wait_for_selector('main.pv .pt >> text=very bad')
     check(page, width, "phase 4: a doctor-visit question on the person's screen (three choices and not sure)")
     for label in ['very bad', 'badly', 'poor', 'low']:

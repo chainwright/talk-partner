@@ -879,7 +879,7 @@ lines still name `39e8f33`: phase 13 waits for its deploy.
   a published pain scale**: the three faces are drawn for this app. **Online help** asks App Check first, inside the same
   20 s, and a refused browser is told at once what to do, with the app's own card one tap away.
 
-**Counts** (phase 13, before its production walks): `npm run check` 3085 unit tests.
+**Counts** (the production build of phase 13 on `npx vite preview`, port 5179): `npm run check` 3086 unit tests; `e2e-simple.py` 1035/1035; `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` (360 and 390 px) 290/290; `contrast-check.mjs` 144 of 144 pairs; `phase11-walk.py` 48/48; `phase12-walk.py` 335/335 (with the phase 13 screens, Back one step at a time, every way out followed; shots in `devlog/evidence_phase13/`).
 
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104

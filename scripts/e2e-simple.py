@@ -1304,6 +1304,11 @@ def phase4(browser, url, live):
     tap_yes(page, where)
     # (phase 9: the page keeps the part of the body with the place: "Where it hurts: chest, middle")
     where = f"{region}, {re.sub(r'^your ', '', where)}"
+    # (phase 13, judge round 10: a pain in the head stops the questions; the carer reads the call box first, then goes on)
+    give_back(page, 'main.visit #visit-page')
+    vs = text(page, '#visit-stop') if page.locator('#visit-stop').count() else ''
+    check('visit: a pain in the head stops the questions: the call box names it, with the call button and "Go on with the questions"', 'call 911 now if it is new or sudden' in vs and 'in the head' in vs and page.locator('#visit-stop a[href="tel:911"]').count() == 1 and page.locator('#visit-stop [data-act=visit-resume]').count() == 1, vs)
+    page.locator('#visit-stop [data-act=visit-resume]').click()
     page.wait_for_selector('main.pv .pt >> text=very bad')
     fits(page, 'visit: "How bad is the pain?"')
     for label in ['very bad', 'badly', 'poor', 'low', 'my body', 'my tablets']:
@@ -1454,7 +1459,8 @@ def diary(browser, url, live):
 
     # ---- the answer check: "yes" to five yes / no questions in a row (none about pain, the toilet or a need)
     # (phase 8: a yes to a food or drink question is taken as said, like pain: "Are you hungry?" counts for nothing, so a sixth question is asked)
-    asked = (('food', 'Are you hungry?'), ('people', 'Would you like a visitor today?'), ('rest', 'Are you tired?'), ('fun', 'Would you like some music on?'), ('plans', 'Would you like to go for a walk?'), ('fun', 'Would you like the radio on?'))
+    # (phase 13: a rest answer such as "Are you tired?" is taken as said too, so the paper stands in for it)
+    asked = (('food', 'Are you hungry?'), ('people', 'Would you like a visitor today?'), ('fun', 'Would you like to look at the paper?'), ('fun', 'Would you like some music on?'), ('plans', 'Would you like to go for a walk?'), ('fun', 'Would you like the radio on?'))
     for i, (topic, q) in enumerate(asked):
         ask_topic(page, topic, q)
         if i == len(asked) - 1:
@@ -1548,8 +1554,9 @@ def diary(browser, url, live):
     ls = by.get('less-sure', {})
     # (the fixture's Sunday is today: an answer later in the day than now is not in the span yet)
     n_ans = len([e for e in entries if e['kind'] == 'answer' and e['at'] <= time.time() * 1000])
-    check('week fixture, Friday: the answers marked "less sure" are a line of their own', ls.get('text', '').startswith(f'5 answers on {name(4)} are marked "less sure"') and ls.get('base') == f'5 of {n_ans} answers in 7 days.', str(ls))
-    check('week fixture: Friday evening\'s five answers carry "less sure" in the timeline', page.locator(f'#timeline .day[data-day="{name(4)}"] .de[data-less-sure]').count() == 5)
+    # (phase 13: Friday's "Are you tired? yes" is a rest answer, never marked: four of the run are)
+    check('week fixture, Friday: the answers marked "less sure" are a line of their own', ls.get('text', '').startswith(f'4 answers on {name(4)} are marked "less sure"') and ls.get('base') == f'4 of {n_ans} answers in 7 days.', str(ls))
+    check('week fixture: Friday evening\'s four answers after "Are you tired? yes" carry "less sure" in the timeline', page.locator(f'#timeline .day[data-day="{name(4)}"] .de[data-less-sure]').count() == 4)
     whole = text(page, '#insights')
     check('insights: the fixed footer ("not medical advice and not a diagnosis"), and who counted and worded them (the rules, no AI, nothing sent)', 'They are not medical advice and not a diagnosis.' in whole and "Counted and worded by the app's rules on this phone. No AI, nothing sent." in whole, whole[-400:])
     check('insights: no medical advice in any line (no dose, medicine, diet, "should", "drink more")', not any(w in whole.lower() for w in ('dose', 'medicine', 'medication', 'insulin', ' diet', 'should', 'drink more', 'more to drink', 'dehydrat')), whole)
@@ -1565,7 +1572,7 @@ def diary(browser, url, live):
     page.locator('#tab-month').click()
     page.wait_for_timeout(150)
     month = text(page, '#insights')
-    check('week fixture: the Month tab counts 30 days, and (phase 5) keeps this week\'s line that a month\'s threshold would hide: the 3 sweet choices, marked "From the last 7 days."', 'What stands out: the last 30 days' in month and f'Few drinks were entered on {name(2)}: 2.' in month and f'5 of {n_ans} answers in 30 days.' in month and 'From the last 7 days. Chosen 3 times in 7 days.' in month, month[:600])
+    check('week fixture: the Month tab counts 30 days, and (phase 5) keeps this week\'s line that a month\'s threshold would hide: the 3 sweet choices, marked "From the last 7 days."', 'What stands out: the last 30 days' in month and f'Few drinks were entered on {name(2)}: 2.' in month and f'4 of {n_ans} answers in 30 days.' in month and 'From the last 7 days. Chosen 3 times in 7 days.' in month, month[:600])
     page.locator('#tab-today').click()
     page.wait_for_timeout(150)
     check('week fixture: Today has no "what stands out" (one day is too little to count)', page.locator('#insights').count() == 0)
@@ -1600,11 +1607,13 @@ def diary(browser, url, live):
         page.locator('[data-act=ins-yes]').click()
         page.wait_for_function("document.querySelector('#ins-by') && /own wording stands/.test(document.querySelector('#ins-by').innerText)", timeout=40000)
         after = text(page, '#insights')
-        check('wording: with online help refused by this test, the screen says the lines may have left and the app\'s own wording stands (never "nothing was sent")', "Online help did not answer, so the app's own wording stands. The lines you saw on the sheet may have left this phone." in after and 'Something sweet was chosen 3 times in the last 7 days.' in after, after[-400:])
+        # (phase 13: App Check is asked first; this test lets no request reach another host, so the token never comes and
+        # the lines never leave: the screen says so, and the privacy line counts nothing)
+        check('wording: with online help refused by this test (App Check first), the app\'s own wording stands and the screen says nothing was sent', "Online help could not be reached, so the app's own wording stands. Nothing was sent." in after and 'Something sweet was chosen 3 times' in after, after)
         check('wording: the yes did not turn online help on for anything else', not (page.evaluate(KV_GET, 'settings') or {}).get('cloudHelp'))
         page.locator('[data-act=home]').click()
         page.wait_for_selector('main.simple.home')
-        check('wording: the first screen\'s privacy line says the lines were handed to Google\'s online AI for their wording', "Lines from the diary's \"What stands out\" were handed to Google's online AI once this session, for their wording" in text(page, '#s-privacy'), text(page, '#s-privacy'))
+        check('wording: the first screen\'s privacy line still says nothing left this phone (the lines were never handed over)', 'Nothing you asked has left this phone since the app was opened.' in text(page, '#s-privacy'), text(page, '#s-privacy'))
         page.locator('#diary-link').click()
         page.wait_for_selector('main.simple.diary')
 
@@ -1912,9 +1921,11 @@ def phase5(browser, url, live):
         give_back(page)
         check('read aloud failed (phase 8): the carer\'s screen says it, and what to do: "Read aloud did not work for that card. Read the question out loud to …"', text(page, '#voice-failed').startswith('Read aloud did not work for that card. Read the question out loud to'), text(page, '#voice-failed') if page.locator('#voice-failed').count() else '(none)')
         more(page)
-        check('read aloud on: a card whose words were handed over never says "Nothing was sent"', 'Read aloud is on: the words on this card went to Google to be spoken.' in text(page) and 'Nothing was sent.' not in text(page, '#left-line'), text(page, '#left-line'))
+        # (phase 13: App Check is asked first; this test lets nothing reach another host, so no token comes and the card's
+        # words never leave: the card and the first screen say nothing was sent, and the switch still says where words go)
+        check('read aloud on, App Check refused first: the words of this card never left, and the card says so', 'Nothing was sent.' in text(page, '#left-line') and 'went to Google to be spoken' not in text(page, '#left-line'), text(page, '#left-line'))
         new_q(page)
-        check('read aloud on: the first screen\'s privacy line counts it', 'went to Google to be spoken (Read aloud)' in text(page, '#s-privacy') and 'Nothing you asked has left' not in text(page, '#s-privacy'), text(page, '#s-privacy'))
+        check('read aloud on, App Check refused first: the first screen\'s privacy line counts nothing', 'Nothing you asked has left this phone' in text(page, '#s-privacy'), text(page, '#s-privacy'))
         ask_topic(page, 'food', 'Would you like tea or coffee?')
         page.locator('#speak-toggle').click()
         page.wait_for_selector('#speak[data-on="0"]')
@@ -1932,8 +1943,11 @@ def phase5(browser, url, live):
         n0 = len(outside)
         page.locator('[data-act=sheet-yes]').click()
         page.wait_for_selector('#sheet', state='detached')
-        page.wait_for_selector('#made-where[data-left=maybe], #made-where[data-left=sent]', timeout=40000)
-        check('sheet: "Just this once" hands this one question to online help (the card says it was sent, or may have left: every request to another host is refused here) and leaves online help off', page.locator('#made-where').get_attribute('data-left') in ('maybe', 'sent') and page.evaluate(KV_GET, 'settings').get('cloudHelp') is False, f"{page.locator('#made-where').get_attribute('data-left')} {outside[n0:]}"[:300])
+        # (phase 13: App Check is asked first; every request to another host is refused here, so no token comes, the
+        # question never leaves, and the no-card screen says so at once with what to do and the rules' card)
+        page.wait_for_selector('#made-where[data-left]', timeout=40000)
+        check('phase 13, sheet: App Check refused first: the no-card screen says what to do and offers the rules\' card at once', 'Online help could not check this browser' in text(page) and page.locator('#no-card-ways[data-act=stuck]').count() == 1, text(page)[:300])
+        check('sheet: "Just this once" hands this one question to online help (the card says it was sent, may have left, or, refused by App Check first, that nothing was sent) and leaves online help off', page.locator('#made-where').get_attribute('data-left') in ('maybe', 'sent', 'nothing') and page.evaluate(KV_GET, 'settings').get('cloudHelp') is False, f"{page.locator('#made-where').get_attribute('data-left')} {outside[n0:]}"[:300])
     else:
         page.locator('[data-act=sheet-no]').click()
     page.locator('[data-act=home]').click()
@@ -1984,6 +1998,10 @@ def phase5(browser, url, live):
     page.wait_for_selector('main.pv[data-kind=body] .pt')
     page.locator('main.pv .pt', has_text='chest').first.click()
     tap_yes(page, 'middle')
+    # (phase 13: a pain in the chest stops the questions; the carer reads the call box, then goes on)
+    give_back(page, 'main.visit #visit-stop')
+    check('phase 13, visit: a pain in the chest stops the questions with the call box and "Go on with the questions"', 'Pain in the chest (middle): call 911 now if it is new or sudden.' in text(page, '#visit-stop'), text(page, '#visit-stop'))
+    page.locator('#visit-stop [data-act=visit-resume]').click()
     for label in ['quite bad', 'so-so', 'so-so', 'low', 'my body', 'my tablets']:
         page.wait_for_function("(l) => !document.querySelector('[data-confirm]') && [...document.querySelectorAll('main.pv .pt')].some((e) => e.innerText.trim() === l)", arg=label)
         tap_yes(page, label)

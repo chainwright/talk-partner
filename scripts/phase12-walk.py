@@ -21,6 +21,12 @@ no download); the number in the first screen's red box with "Change it"; a pain 
 phone at 360 and 390 px and on a desktop (judge mode): the sample family shows none of them and keeps what it does in
 memory only, nothing on the device changes, and leaving it brings the family's own back exactly as they were.
 
+23 Nov 2026, phase 13 (judge round 10) adds: the weakness question's "no" and "not sure" from the needs board (the
+check line a red box ABOVE "Next", with a call button); chest pain "a little" (call now, whatever the amount; the call
+the main action); a head pain before a doctor visit stopping the questions (the call box, "Go on with the questions");
+the crisis line by the number set (999: 116 123); a pain question left for later kept through "Ask it again"; the
+intended-purpose line on Home. Each with Back one step at a time to the first screen, each way out followed.
+
 Usage: python3 scripts/phase12-walk.py [--url URL] [OUT_DIR]   (default http://localhost:5179/, devlog/evidence_phase12/walk)
 Exit code 0 when every check passes, 1 otherwise.
 """
@@ -124,6 +130,88 @@ def to_weak(page):
 
 def ids(page):
     return page.evaluate("[...document.querySelectorAll('main.pv .pt')].map((t) => { const i = t.querySelector('img.pic, svg'); return i ? (i.dataset.id || i.getAttribute('aria-label') || '') : ''; })")
+
+
+def needs_to_body(page):
+    """The needs board, pain, "Where does it hurt?": the body card on the person's screen."""
+    page.locator('.btn[data-act=needs]').first.click(); page.wait_for_selector('main.pv .p-tiles.board')
+    person_pick(page, 'pain'); give(page); page.wait_for_selector('#need-where')
+    page.locator('#need-where').click(); page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+
+
+def phase13(page, tag, h):
+    # ---- 13.1 the weakness question from the needs board: "no" and "not sure", the red box above "Next"
+    for label in ('no', 'not sure'):
+        home(page)
+        needs_to_body(page)
+        for _ in range(2):
+            page.locator('main.pv .pt', has_text='somewhere else').click(); page.wait_for_timeout(250)
+        page.wait_for_selector('main.pv .pt >> text=arms')
+        page.locator('main.pv .pt', has_text='arms').first.click(); page.wait_for_selector('main.pv .pt >> text=your left arm')
+        person_pick(page, 'your left arm'); give(page); page.wait_for_selector('main.simple.s-answered')
+        page.locator('#next-q').first.click(); page.wait_for_selector('main.simple.card')
+        page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+        person_pick(page, label); give(page); page.wait_for_selector('main.simple.s-answered')
+        pos = page.evaluate("""(() => { const a = document.querySelector('#now-alert'), n = document.querySelector('#next-q'); if (!a || !n) return null; return { before: !!(a.compareDocumentPosition(n) & 4), q: n.dataset.q, top: Math.round(a.getBoundingClientRect().top), tick: !!document.querySelector('#chose.alert') }; })()""")
+        al = e2e.text(page, '#now-alert') if page.locator('#now-alert').count() else ''
+        check(f'{tag}: needs board, arm, weakness "{label}": the check line is a red box ABOVE "Next: How bad is the pain?", with a call button, no green tick', bool(pos) and pos['before'] and pos['q'] == 'How bad is the pain?' and pos['tick'] and 'lift both arms and smile' in al and 'call 911 now' in al and page.locator('#now-alert a[href="tel:911"]').count() == 1 and page.locator('#do-now').count() == 0, json.dumps(pos) + ' ' + al)
+        check(f'{tag}: weakness "{label}": the box is on the screen ({pos["top"] if pos else -1} px of {h}); no sideways scroll', bool(pos) and pos['top'] < h and noscroll(page), json.dumps(pos))
+        shot(page, tag, f'13a_weak_{label.replace(" ", "_")}')
+        # the way on: "Next: How bad is the pain?" -> "a little" on an arm: an action line (no red flag here)
+        page.locator('#next-q').first.click(); page.wait_for_selector('main.simple.card')
+        page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+        person_pick(page, 'a little'); give(page); page.wait_for_selector('main.simple.s-answered')
+        check(f'{tag}: weakness "{label}" -> "a little": the path ends on an action line', page.locator('#do-now, #now-alert').count() >= 1, e2e.text(page)[:200])
+        back_home(page, tag, f'weakness "{label}" from the needs board', most=14)
+
+    # ---- 13.2 chest pain "a little": call now, whatever the amount; the call is the main action
+    home(page)
+    needs_to_body(page)
+    page.locator('main.pv .pt', has_text='chest').first.click(); page.wait_for_selector('main.pv .pt >> text=middle')
+    person_pick(page, 'middle'); give(page); page.wait_for_selector('main.simple.s-answered')
+    cm = e2e.text(page, '#now-alert') if page.locator('#now-alert').count() else ''
+    check(f'{tag}: chest, middle: the call line is a red box above "Next: How bad is the pain?"', 'Pain in the chest: call 911 now, whatever the amount.' in cm and page.evaluate("(() => { const a = document.querySelector('#now-alert'), n = document.querySelector('#next-q'); return !!a && !!n && !!(a.compareDocumentPosition(n) & 4); })()"), cm)
+    page.locator('#next-q').first.click(); page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    person_pick(page, 'a little'); give(page); page.wait_for_selector('main.simple.s-answered')
+    t = e2e.text(page)
+    check(f'{tag}: chest, "a little": "call 911 now, whatever the amount", never "Ask again in an hour"; the call button first, "Ask another question" not the main button', 'Pain in the chest: call 911 now, whatever the amount. Do not wait to see if it passes. Note the time it started.' in t and 'ask again in an hour' not in t.lower() and page.locator('#now-alert a[href="tel:911"]').count() == 1 and 'primary' not in (page.locator('#another').get_attribute('class') or ''), t[:400])
+    check(f'{tag}: chest, "a little": no sideways scroll', noscroll(page))
+    shot(page, tag, '13b_chest_a_little')
+    back_home(page, tag, 'chest pain "a little"', most=14)
+
+    # ---- 13.3 before a doctor visit: a pain in the head stops the questions
+    page.goto(URL + '#/visit'); page.wait_for_selector('main.visit')
+    page.locator('#visit-start').click(); page.wait_for_selector('main.pv .pt')
+    # (a visit question leads on to the next one on the same screen: no "Give the phone back" in between)
+    page.locator('main.pv .pt', has_text='yes').first.click(); page.wait_for_selector('[data-confirm=yes]'); page.locator('[data-confirm=yes]').click()
+    page.wait_for_selector('main.pv[data-kind=body] .pt')
+    page.locator('main.pv .pt', has_text='head').first.click(); page.wait_for_selector('main.pv .pt >> text=top of head')
+    person_pick(page, 'top of head')
+    pv = e2e.text(page)
+    check(f'{tag}: visit, a pain in the head: the person\'s questions end ("Thank you", "Give the phone back")', page.locator('.p-give').count() == 1 and 'How bad is the pain?' not in pv, pv[:200])
+    give(page); page.wait_for_selector('main.visit #visit-page')
+    vs = e2e.text(page, '#visit-stop') if page.locator('#visit-stop').count() else ''
+    check(f'{tag}: visit: the carer reads the call box first ("Pain in the head (top of head): call 911 now if it is new or sudden"), with the call and "Go on with the questions"', 'Pain in the head (top of head): call 911 now if it is new or sudden.' in vs and page.locator('#visit-stop a[href="tel:911"]').count() == 1 and page.locator('#visit-stop [data-act=visit-resume]').count() == 1 and noscroll(page), vs)
+    shot(page, tag, '13c_visit_stop')
+    page.locator('#visit-stop [data-act=visit-resume]').click(); page.wait_for_selector('main.pv .pt >> text=very bad')
+    check(f'{tag}: visit: "Go on with the questions" goes on with "How bad is the pain?"', 'How bad is the pain?' in e2e.text(page))
+    page.go_back(); page.wait_for_timeout(400)
+    back_home(page, tag, 'the visit stop', most=10)
+
+    # ---- 13.4 the crisis line by the number set: 999 -> Samaritans 116 123; 13.5 "Ask it again" keeps a pain question
+    page.evaluate(e2e.KV_PUT, {'health': {'text': '', 'diabetes': False, 'swallowing': False, 'fluidLimit': False, 'reminders': False, 'emergency': '999'}, 'later': [{'q': 'Are you in pain?', 'at': int(time.time() * 1000) - 3600000}]})
+    home(page)
+    check(f'{tag}: Home: the intended-purpose line at the foot (not a medical device; call 999)', 'It is not a medical device.' in e2e.text(page, '#purpose') and 'call 999' in e2e.text(page, '#purpose'), e2e.text(page, '#purpose') if page.locator('#purpose').count() else 'none')
+    page.locator('#later [data-act=later-ask]').first.click(); page.wait_for_selector('main.simple.card')
+    back_home(page, tag, '"Ask it again" on a pain question left for later')
+    check(f'{tag}: after "Ask it again" (and no answer), the pain question is still left for later on Home', 'Are you in pain?' in (e2e.text(page, '#later') if page.locator('#later').count() else ''), e2e.text(page)[:300])
+    page.goto(URL + '#/crisis'); page.wait_for_selector('main[data-screen=crisis]')
+    check(f'{tag}: the safety screen with 999 set: the crisis line is Samaritans 116 123, not 988; the purpose line', page.locator('main[data-screen=crisis] a[href="tel:116123"]').count() == 1 and page.locator('main[data-screen=crisis] a[href="tel:988"]').count() == 0 and page.locator('main[data-screen=crisis] a[href="tel:999"]').count() >= 1 and page.locator('#purpose').count() == 1, e2e.text(page)[:300])
+    shot(page, tag, '13d_crisis_999')
+    page.evaluate(e2e.KV_PUT, {'health': {'text': '', 'diabetes': False, 'swallowing': False, 'fluidLimit': False, 'reminders': False, 'emergency': ''}, 'later': []})
+    home(page)
 
 
 def walk(b, w, h, scheme):
@@ -341,6 +429,9 @@ def walk(b, w, h, scheme):
     check(f'{tag}: About them: no "Usually says no" to a drink, and no "Keep as a fact" on the tea line', 'usually says no' not in ln.lower() and page.locator('#learned [data-act=learned-keep]').count() == 0, ln)
     shot(page, tag, '15_about_learned')
     back_home(page, tag, 'About them')
+
+    # ---- 13. the fixes of judge round 10
+    phase13(page, tag, h)
 
     check(f'{tag}: no page error, nothing asked of another host', not errs and not outside, str(errs + outside))
     ctx.close()

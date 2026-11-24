@@ -405,3 +405,13 @@ describe('B10. The judge files say what the live app does (the official seats\' 
     expect(r).toContain('the full view that "How was this made?" opens');
   });
 });
+
+describe('B11b. After App Check refused the browser, the consent sheet does not pop up again over the no-card screen', () => {
+  it('web/src/main.ts: every place that opens the sheet after a card leaves out the refusal card', async () => {
+    const { readFileSync } = await import('node:fs');
+    const main = readFileSync('web/src/main.ts', 'utf8');
+    const opens = main.match(/state\.sheet = simpleView\(\) && isOnline\(\) &&[^;]*sheetWanted\(card[^;]*;/g) ?? [];
+    expect(opens.length).toBe(3);
+    for (const o of opens) expect(o).toContain('card.blocked !== C.notes.cloudCheckBlocked');
+  });
+});

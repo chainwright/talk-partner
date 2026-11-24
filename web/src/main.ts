@@ -1823,7 +1823,7 @@ async function runNarrow(i: NarrowInput) {
   if (!card.blocked) noteAsk(card);
   if (seq !== makeSeq) return;
   setCard(card);
-  state.sheet = simpleView() && isOnline() && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
+  state.sheet = simpleView() && isOnline() && card.blocked !== C.notes.cloudCheckBlocked && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
   state.busy = false; state.waitStart = Date.now(); useSettings(); render();
 }
 
@@ -1892,8 +1892,8 @@ function simpleScreen(): string {
       today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
       made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),
       alertHtml,
-      // (the red box with the call button stands over the answer; with a safety-check alert it is that alert's, below)
-      leadHtml: `${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), crisisLineNow(), callNumber()) : ''}${turnHtml()}`,
+      // (the red box with the call button stands over the answer, for the whole conversation; a safety-check alert carries its own call above "Next")
+      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), crisisLineNow(), callNumber()) : ''}${turnHtml()}`,
       outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
       // after the way out: the ways to find out what it is, in the rules' order; a step the rules make comes first
       ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),
@@ -1987,7 +1987,7 @@ async function runLetter(i: LetterInput) {
   state.made.push(card);
   if (seq !== makeSeq) return;
   setCard(card);
-  state.sheet = simpleView() && isOnline() && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
+  state.sheet = simpleView() && isOnline() && card.blocked !== C.notes.cloudCheckBlocked && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
   state.busy = false; state.waitStart = Date.now(); useSettings();
   // words were found: they are on the person's screen at once; none: the carer's screen says so (and may ask about online help)
   if (card.blocked && route() === 'person') { lift = true; go(''); } else render();
@@ -2401,7 +2401,7 @@ async function make(q: string) {
     setCard(simpleView() ? guardOrder(usualOrder(card)) : card);
     // simple view: a question that needs online help, with cloud help off, brings up the consent sheet (never a page)
     // (with no connection the sheet could send nothing: the screen then says the question needs the internet)
-    state.sheet = simpleView() && isOnline() && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
+    state.sheet = simpleView() && isOnline() && card.blocked !== C.notes.cloudCheckBlocked && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
   } catch (e) {
     if (seq !== makeSeq) return;
     state.card = null; state.error = (e as Error).message;
