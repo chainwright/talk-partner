@@ -18,7 +18,7 @@ import { HOW_BAD, LIMB, WEAK_NUMB, WHAT_BOTHERS, WHERE_HURTS, WHICH_SIDE, awayNa
 export { WEAK_NUMB } from './topics';
 import { EMPTY_PROFILE, type Card, type Profile } from './types';
 import { P12 } from './copy12';
-import { crisisAnswer } from './redflag';
+import { crisisAnswer, type RedPlace } from './redflag';
 
 /** A conversation is at most this many questions deep: the topic question and two that narrow it down. */
 export const TREE_DEPTH = 3;
@@ -398,6 +398,18 @@ export function who(verb: 'call' | 'see', names: string[]): string[] {
   return [`Who would you like to ${verb}? ${xs.slice(0, -1).join(', ')} or ${xs[xs.length - 1]}?`];
 }
 
+/**
+ * Phase 13 (judge round 10, a health P0: seats 13b and 01): a pain in the chest or the head, or a yes to trouble
+ * breathing, weakness or numbness in the same conversation (core/redflag.ts, redPlace). Every "How bad is the pain?"
+ * end, and the body card's second step for the chest or the head, then says to call now, whatever the amount: never
+ * "Ask again in an hour", never only "the nurse or doctor". The nurse seat's words (ADV-13b-1).
+ */
+const RED_END: Record<RedPlace, string> = {
+  chest: 'Pain in the chest: call {number} now, whatever the amount. Do not wait to see if it passes. Note the time it started.',
+  head: 'Pain in the head: call {number} now, whatever the amount. Do not wait to see if it passes. Note the time it started.',
+  sign: 'There was a yes to trouble breathing, weakness or numbness: call {number} now, whatever the pain. Do not wait to see if it passes. Note the time it started.',
+};
+
 /** The family's own questions that stand for a marker in the tree ("@foods", "@call" …): none when About them has none. */
 function own(marker: string, profile: Profile): string[] {
   const under = (q: string) => ownQuestions(profile).filter((o) => o.under === q).map((o) => o.q);
@@ -425,11 +437,14 @@ function shaped(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string):
   if (card.kind === 'body') {
     // the first step of the body map leads to its second by itself; after the second: how bad, and which side
     if (card.bodyStep !== 2) return null;
+    // (phase 13) the chest or the head: the call line, as an alert above the next question
+    const region = /^where in the (chest|head)\b/i.exec(card.asked.trim())?.[1]?.toLowerCase() as 'chest' | 'head' | undefined;
+    const redOf = (r: Raw): Raw => (region && l !== 'somewhere else' && l !== 'something else' ? { ...r, end: RED_END[region], alert: true } : r);
     const sided = !/\b(?:left|right|middle|both)\b/i.test(label) && !/\b(?:head|face|eyes|mouth|neck|top of head|stomach|upper stomach|lower stomach|upper back|lower back|back|chest)\b/i.test(label);
     const where = label.replace(/^your\s+/i, '');
     // (phase 12) an arm, a hand, a leg, the feet or the face: whether it is suddenly weak or numb is asked first
-    if (LIMB.test(label)) return { next: [WEAK_NUMB, HOW_BAD, ...(sided ? [WHICH_SIDE] : [])], end: `It hurts here: ${where}. Suddenly weak or numb? Call the emergency number now. Tell the nurse or doctor where.` };
-    return { next: sided ? [HOW_BAD, WHICH_SIDE] : [HOW_BAD], end: `It hurts here: ${where}. Tell the nurse or doctor where, and ask how bad it is.` };
+    if (LIMB.test(label)) return redOf({ next: [WEAK_NUMB, HOW_BAD, ...(sided ? [WHICH_SIDE] : [])], end: `It hurts here: ${where}. Suddenly weak or numb? Call the emergency number now. Tell the nurse or doctor where.` });
+    return redOf({ next: sided ? [HOW_BAD, WHICH_SIDE] : [HOW_BAD], end: `It hurts here: ${where}. Tell the nurse or doctor where, and ask how bad it is.` });
   }
   if (card.kind === 'feeling' && l === 'in pain') return { next: [WHERE_HURTS], end: 'In pain. Ask where it hurts, and tell the nurse or doctor.' };
   // (phase 12) the crisis choice: no next question; the red box and the safety screen carry what to do
@@ -466,11 +481,14 @@ function rawStep(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string,
  * What comes after `label` was confirmed on `card`. `chain` is the questions already asked in this conversation, this
  * card's included: a question is never offered twice in one conversation, and after TREE_DEPTH questions only the end
  * line is left. For a question the trees do not know (the carer typed it), both are empty. `number` is the emergency
- * number the call buttons use ("{number}" in a line; "the emergency number" when none is given).
+ * number the call buttons use ("{number}" in a line; "the emergency number" when none is given). `red` (phase 13): the
+ * conversation's red flag (core/redflag.ts, redPlace), which turns every "how bad" end into the call line.
  */
-export function after(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string, profile: Profile, chain: string[] = [], number = ''): Step {
-  const raw = rawStep(card, label, profile);
-  if (!raw) return { next: [], end: '' };
+export function after(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string, profile: Profile, chain: string[] = [], number = '', red: RedPlace | null = null): Step {
+  const found = rawStep(card, label, profile);
+  if (!found) return { next: [], end: '' };
+  // (phase 13) `red`: the conversation holds a chest or head pain, or a breathing, weakness or numbness yes
+  const raw: Raw = red && norm(card.asked) === 'how bad is the pain' ? { ...found, end: RED_END[red], alert: true } : found;
   const name = profile.personName.trim();
   let end = raw.end.replace(/\{name\} says/g, name ? `${name} says` : 'they say').replace(/\{them\}/g, name || 'them').replace(/\{They\}/g, name || 'They').replace(/\{they\}/g, name || 'they').replace(/\{their\}/g, name ? `${name}'s` : 'their').replace(/\{number\}/g, number || 'the emergency number');
   // with a name the verb is singular: "Frank has had enough", "Frank does not want", "Frank wants to go on"

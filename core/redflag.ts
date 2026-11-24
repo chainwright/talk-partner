@@ -101,5 +101,25 @@ export function signNow(asked: string, label: string): boolean {
   return lc(label) === 'yes' && /\b(?:weak|weakness|numb|numbness)\b/.test(lc(asked));
 }
 
+/**
+ * Phase 13 (judge round 10, a health P0: seats 13b, 01): where the red flag of a conversation is, for the end lines of
+ * "How bad is the pain?" (core/tree.ts). A pain in the chest or the head, or a yes to trouble breathing, weakness or
+ * numbness, is never followed by "Ask again in an hour": every "how bad" answer then says to call now. Null when the
+ * answer holds none of them. The worst case of this rule is a call line that was not needed.
+ */
+export type RedPlace = 'chest' | 'head' | 'sign';
+const RED_SIGN_Q = /\b(?:breath|breathe|breathing|breathless|weak|weakness|numb|numbness)\b/;
+export function redPlace(asked: string, label: string): RedPlace | null {
+  const q = lc(asked);
+  const l = lc(label);
+  if (/^(?:somewhere else|something else|not sure|no)$/.test(l)) return null;
+  if (/^where in the chest\b/.test(q)) return 'chest';
+  if (/^where in the head\b/.test(q)) return 'head';
+  if (/\bchest\b/.test(l) && (PAIN_Q.test(q) || /^where\b/.test(q))) return 'chest';
+  if (/\b(?:head|headache)\b/.test(l) && (PAIN_Q.test(q) || /^where\b/.test(q))) return 'head';
+  if (l === 'yes' && RED_SIGN_Q.test(q)) return 'sign';
+  return null;
+}
+
 /** The same, over the answers of one conversation or one page: one urgent answer is enough. */
 export const urgentAny = (answers: { q?: string; label: string }[]) => answers.some((a) => urgentAnswer(a.q ?? '', a.label));

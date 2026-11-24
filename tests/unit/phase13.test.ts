@@ -53,3 +53,73 @@ describe('A1. After a "no" or "not sure" to the weakness question, the check lin
     expect(html).not.toContain('now-alert');
   });
 });
+
+describe('A2. Chest or head pain, or a breathing / weak / numb yes in the conversation: every "how bad" end calls now', () => {
+  const HOW = 'How bad is the pain?';
+  const LEVELS = ['a little', 'quite bad', 'very bad', 'not sure'];
+  it('the conversation knows where the red flag is (core/redflag.ts, redPlace)', async () => {
+    const { redPlace } = await import('../../core/redflag');
+    expect(redPlace('Where in the chest?', 'middle')).toBe('chest');
+    expect(redPlace('Where in the chest?', 'left side')).toBe('chest');
+    expect(redPlace('Where in the head?', 'top of head')).toBe('head');
+    expect(redPlace('Where in the head?', 'face')).toBe('head');
+    expect(redPlace('Where does it hurt?', 'chest')).toBe('chest');
+    expect(redPlace('Where does it hurt?', 'a headache')).toBe('head');
+    expect(redPlace('Is it suddenly weak or numb, yes or no?', 'yes')).toBe('sign');
+    expect(redPlace('Is it hard to breathe?', 'yes')).toBe('sign');
+    // not a red flag
+    expect(redPlace('Where in the chest?', 'somewhere else')).toBeNull();
+    expect(redPlace('Where in the arms?', 'left arm')).toBeNull();
+    expect(redPlace('Is it suddenly weak or numb, yes or no?', 'no')).toBeNull();
+    expect(redPlace('Is it hard to breathe?', 'no')).toBeNull();
+    expect(redPlace('Would you like tea or coffee?', 'tea')).toBeNull();
+  });
+  for (const red of ['chest', 'head', 'sign'] as const) {
+    for (const label of LEVELS) {
+      it(`${red}, "${label}": never "Ask again in an hour", never only the nurse or doctor: call now, an alert`, () => {
+        const s = after(card(HOW), label, { ...EMPTY_PROFILE, personName: 'Frank' }, ['Are you in pain?', 'Where in the chest?', HOW], '999', red);
+        expect(s.end, `${red} ${label}`).not.toMatch(/ask again in an hour/i);
+        expect(s.end, `${red} ${label}`).not.toMatch(/^(?:A little|Quite bad|Very bad)\. Call Frank's nurse or doctor now/);
+        expect(s.end, `${red} ${label}`).toMatch(/call 999 now/);
+        expect(s.end, `${red} ${label}`).toMatch(/Do not wait to see if it passes/);
+        expect(s.end, `${red} ${label}`).toMatch(/Note the time it started/);
+        expect(s.alert, `${red} ${label}`).toBe(true);
+      });
+    }
+  }
+  it('the words of the chest line are the nurse seat\'s: "whatever the amount"', () => {
+    expect(after(card(HOW), 'a little', EMPTY_PROFILE, [], '911', 'chest').end).toBe('Pain in the chest: call 911 now, whatever the amount. Do not wait to see if it passes. Note the time it started.');
+    expect(after(card(HOW), 'a little', EMPTY_PROFILE, [], '911', 'head').end).toBe('Pain in the head: call 911 now, whatever the amount. Do not wait to see if it passes. Note the time it started.');
+  });
+  it('an arm or a leg (no red flag): the older lines stand, and they are not alerts', () => {
+    const s = after(card(HOW), 'a little', EMPTY_PROFILE, [], '911', null);
+    expect(s.end).toMatch(/^A little pain\. Ask again in an hour/);
+    expect(s.alert).toBeFalsy();
+  });
+  it('the body card\'s second step for the chest or the head: the call line is an alert above "Next: How bad is the pain?"', () => {
+    for (const [region, label] of [['chest', 'middle'], ['chest', 'left side'], ['head', 'top of head'], ['head', 'face'], ['head', 'neck']] as const) {
+      const s = after({ asked: `Where in the ${region}?`, kind: 'body', bodyStep: 2 }, label, EMPTY_PROFILE, ['Are you in pain?'], '911');
+      expect(s.end, `${region} ${label}`).toMatch(/call 911 now, whatever the amount/);
+      expect(s.end, `${region} ${label}`).not.toMatch(/ask how bad it is\.$/);
+      expect(s.alert, `${region} ${label}`).toBe(true);
+    }
+    // the stomach: unchanged, no alert
+    const st = after({ asked: 'Where in the stomach?', kind: 'body', bodyStep: 2 }, 'upper stomach', EMPTY_PROFILE, ['Are you in pain?'], '911');
+    expect(st.alert).toBeFalsy();
+  });
+  it('the person\'s screen: the red flag of the conversation is kept and reset with the call box (web/src/main.ts)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const main = readFileSync('web/src/main.ts', 'utf8');
+    expect(main).toContain('const r = redPlace(c.asked, state.picked.label); if (r && !p5.red) p5.red = r;');
+    expect(main.match(/p5\.signNow = false;/g)?.length).toBe(main.match(/p5\.signNow = false; p5\.red = null;/g)?.length);
+  });
+});
+
+describe('A2b. Under the chest line the call is the main button; "Ask another question" is below it, not primary', () => {
+  it('the answered screen', () => {
+    const s = after(card('How bad is the pain?'), 'a little', EMPTY_PROFILE, [], '911', 'chest');
+    const html = answered({ label: 'a little', question: 'How bad is the pain?', follow: s.next, end: s.end, alertHtml: '<div class="urgent now-alert" id="now-alert"><a class="btn call" href="tel:911">Call 911</a></div>' });
+    expect(html).toMatch(/<button type="button" class="btn" id="another"/);
+    expect(html.indexOf('id="now-alert"')).toBeLessThan(html.indexOf('id="another"'));
+  });
+});

@@ -473,7 +473,8 @@ export function answeredScreen(m: AnsweredModel): string {
   const tryMain = m.out && !lead && !m.next && !!m.tryNext;
   const nextBtn = lead ? `<button type="button" class="btn primary ask-next" id="next-q" data-q="${esc(m.follow[0])}" data-next="1"><span><small>${S.nextLabel}</small>${esc(m.follow[0])}</span></button>`
     : tryMain ? `<button type="button" class="btn primary ask-next" id="next-q" data-q="${esc(m.tryNext!)}"><span><small>${S.nextLabel}</small>${esc(m.tryNext!)}</span></button>` : '';
-  const another = `<button type="button" class="btn${m.next || lead || m.out ? '' : ' primary'}" id="another" data-act="new">${lead ? S.anotherElse : S.another}</button>`;
+  // (phase 13: under a safety-check alert the call button is the main action; "Ask another question" is not primary)
+  const another = `<button type="button" class="btn${m.next || lead || m.out || m.alertHtml ? '' : ' primary'}" id="another" data-act="new">${lead ? S.anotherElse : S.another}</button>`;
   const end = m.alertHtml ? m.alertHtml : m.end && !lead ? `<p class="do-now" id="do-now">${SIGN.tick}<span><small>${S.doNow}</small>${esc(m.end)}</span></p>` : '';
   // the way out was chosen: what to do now, in order of how often it helps (never a dead end)
   const online = m.narrow === 'cloudOn' || m.narrow === 'ask';
