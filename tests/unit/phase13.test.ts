@@ -377,3 +377,13 @@ describe('B11. A judge\'s first cloud tap: App Check first, inside the same wait
     expect(html).toContain('data-act="new"');
   });
 });
+
+describe('B9. No claim to the Faces Pain Scale: the faces are drawn for this app, the prompts stay as they were written', () => {
+  it('no doc, page or code names the instrument; only the dated prompt records and the commit map keep their own words', async () => {
+    const { execSync } = await import('node:child_process');
+    const hits = execSync('git grep -n -i "faces pain scale" -- . ":!devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json" ":!devlog/quota_probe_2026-11-20/r9b_regen/prompts.json" ":!devlog/PUBLIC_HASH_MAP.md" ":!tests/unit/phase13.test.ts" || true', { encoding: 'utf8' }).trim();
+    expect(hits).toBe('');
+    const { readFileSync } = await import('node:fs');
+    expect(readFileSync('DISCLOSURE.md', 'utf8')).toContain('three faces from calm to crying, drawn for this app');
+  });
+});

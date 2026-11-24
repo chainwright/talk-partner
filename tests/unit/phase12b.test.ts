@@ -8,7 +8,7 @@ const card = (asked: string) => ({ asked, kind: 'choice' as const });
 const end = (asked: string, label: string, name = '', number = '') => after(card(asked), label, { ...EMPTY_PROFILE, personName: name }, [], number).end;
 
 describe('1. The pain scale: pictures of pain, not anger; "quite bad" calls now', () => {
-  it('the three faces are pictures made with Gemini (the Faces Pain Scale style), the words stay under them', async () => {
+  it('the three faces are pictures made with Gemini for this app (calm to crying), the words stay under them', async () => {
     const { builtinPicto, IMAGE_IDS, svgPicto } = await import('../../web/src/pictos');
     for (const [id, file] of [['pain mild', 'pain_mild'], ['pain medium', 'pain_medium'], ['pain strong', 'pain_strong']]) {
       expect(IMAGE_IDS, id).toContain(id);

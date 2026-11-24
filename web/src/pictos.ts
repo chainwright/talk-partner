@@ -115,7 +115,7 @@ const P: Record<string, string> = {
   coffee: `${steam([36, 50], 24)}${mug(C.red, C.coffee)}`,
   // (phase 12, judge round 9: the bars read as phone signal on the pain scale) the pain scale is three faces, green
   // to red, the word under each; the bars stay for amounts of food or drink. (phase 12b, judge round 9b: the faces read
-  // as angry and laughing; since then the scale shows pictures made with Gemini in the Faces Pain Scale style, and
+  // as angry and laughing; since then the scale shows three faces made with Gemini for this app, from calm to crying, and
   // these drawings, the fallback, have brows raised at the inner ends, no teeth and no grin)
   'pain mild': face('#cfe8a0', '<path d="M38 64h20" stroke-width="4"/>', `<circle cx="36" cy="42" r="3.5" fill="${OUTLINE}" stroke="none"/><circle cx="60" cy="42" r="3.5" fill="${OUTLINE}" stroke="none"/><path d="M29 34l10-3M67 34l-10-3" stroke-width="3"/>`),
   'pain medium': face('#f6b04a', '<path d="M34 68c8-8 20-8 28 0" stroke-width="4"/>', `<circle cx="36" cy="44" r="3.5" fill="${OUTLINE}" stroke="none"/><circle cx="60" cy="44" r="3.5" fill="${OUTLINE}" stroke="none"/><path d="M28 36l12-6M68 36l-12-6" stroke-width="4"/>`),
