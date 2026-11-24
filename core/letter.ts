@@ -59,7 +59,7 @@ export const TOPIC_WORDS: Record<string, string[]> = {
   fun: ['tv', 'music', 'news', 'film', 'radio', 'paper', 'puzzle', 'cards', 'crossword', 'quiz show', 'football', 'golf', 'gardening', 'photos', 'book', 'bingo', 'painting', 'piano'],
   rest: ['bed', 'chair', 'quiet', 'nap', 'pillow', 'blanket', 'sofa', 'sleep'],
   // (phase 17b: a drink question keeps its letters to drinks: "tea or coffee?", then "something else", then L is lemonade, never lamb)
-  drink: ['tea', 'coffee', 'water', 'juice', 'milk', 'hot chocolate', 'cocoa', 'iced tea', 'lemonade', 'orange juice', 'apple juice', 'squash', 'smoothie', 'milkshake', 'cola', 'ginger ale', 'herbal tea', 'green tea', 'hot milk', 'decaf', 'soda', 'tonic'],
+  drink: ['tea', 'coffee', 'water', 'juice', 'milk', 'hot chocolate', 'cocoa', 'iced tea', 'lemonade', 'orange juice', 'apple juice', 'squash', 'smoothie', 'milkshake', 'cola', 'ginger ale', 'herbal tea', 'green tea', 'hot milk', 'decaf', 'soda', 'tonic', 'peppermint tea', 'pineapple juice', 'pop'],
   body: ['toilet', 'glasses', 'hearing aid', 'wash', 'pain', 'doctor', 'nurse', 'bath', 'shower', 'teeth', 'blanket'],
   feel: ['tired', 'worried', 'company', 'happy', 'sad', 'lonely', 'bored', 'scared'],
 };
@@ -133,8 +133,8 @@ export function letterWords(i: LetterInput, profile: Profile): string[] {
   // (phase 17) the topic of the conversation: by the caller's topic, else by what the question is about
   const kind = subjectOf(i.asked, i.rejected);
   const topic = letterTopic(i.topic ?? null, kind);
-  // (phase 17b) drinks: the drinks first, then the foods of "Food & drink" (one topic on the first screen), nothing else
-  const every = topic === 'drink' ? [...TOPIC_WORDS.drink, ...TOPIC_WORDS.food] : topic ? TOPIC_WORDS[topic] : Object.values(EVERYDAY).flat();
+  // (phase 17b; live walk 24 Nov: L under a drink question gave lemonade, lamb) a drink question: drinks, then only the family's own foods (About them: "tea or coffee?" then B is their ginger biscuits), never a stock food
+  const every = topic === 'drink' ? [...TOPIC_WORDS.drink] : topic ? TOPIC_WORDS[topic] : Object.values(EVERYDAY).flat();
   // inside a known topic only its own words: the topic's list, and About them's words of that topic (phase 17b: for
   // EVERY topic). People: the family's names, never their foods or places; the body, feelings and rest: the list only.
   const inTopic = (w: string) => !topic || TOPIC_WORDS[topic].some((x) => bare(x) === bare(w)) || (OWN_IN[topic]?.(w, profile) ?? false) || (KIND_IN[topic] && kind && KIND_IN[topic].includes(kind) ? ofKind(w, kind, profile) : false);
@@ -162,7 +162,7 @@ const drinkWord = (w: string) => { const b = bare(w); return eq(TOPIC_WORDS.drin
 const OWN_IN: Record<string, (w: string, p: Profile) => boolean> = {
   people: (w, p) => eq(p.people.flatMap((x) => [x.name, x.nickname ?? '']).filter((n) => n.trim()), w),
   food: (w, p) => eq(p.foods, w) || drinkWord(w),
-  drink: (w, p) => drinkWord(w) || eq([...p.foods, ...TOPIC_WORDS.food], w),
+  drink: (w, p) => drinkWord(w) || eq(p.foods, w),
   plans: (w, p) => eq(p.places, w),
   fun: (w, p) => eq([...p.tv, ...p.music], w),
 };
