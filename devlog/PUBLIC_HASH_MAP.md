@@ -316,6 +316,16 @@ the table.
 | 293 | `ca04bc9` | `f5a9b5e` | 2026-11-23 20:30 | Walks for phase 13: weakness no / not sure, chest pain, the visit stop, the crisis line by number, later kept… |
 | 294 | `c7b1d9b` | `543b0c2` | 2026-11-23 20:45 | Docs: live is ca04bc9 (phase 13); hosted checks and logs |
 | 295 | `7e2a404` | `1e06aa6` | 2026-11-23 20:46 | Docs: phase 13 live walk count 335/335 |
+| 296 | `91609c5` | `6dfc5f0` | 2026-11-23 21:02 | Find more choices (Google's AI, after your yes): the second button of a topic card |
+| 297 | `fb9a725` | `514a401` | 2026-11-23 21:04 | Read aloud offered before handing over: one button under the main one while it is off |
+| 298 | `175e5d2` | `8de3fdc` | 2026-11-23 21:06 | eval-heldout: a cloud leg (--cloud) and the time to decide on the rules leg |
+| 299 | `1d86854` | `1a8828e` | 2026-11-23 21:12 | Back from a card made after the consent sheet's yes lands on the card it was asked from |
+| 300 | `5381661` | `5ba8a47` | 2026-11-23 21:14 | Narrowing on a browser App Check refuses: says so, and the consent sheet does not come back by itself |
+| 301 | `4b38b80` | `4382174` | 2026-11-23 21:28 | A tapped question opens its card at the top |
+| 302 | `da0f6a5` | `e6288a5` | 2026-11-23 21:49 | Docs and walks for phase 14: the three legs measured, the AI step at taps 3 and 4 on a phone |
+| 303 | `479ce07` | `dab35e7` | 2026-11-23 22:14 | e2e-simple: the handover worst cases sit 23 h ago, not at fixed clock times, so the check holds after 21:00 |
+| 304 | `e9e898a` | `f7e9a27` | 2026-11-23 22:29 | Docs: live is 479ce07 (phase 14); hosted checks and logs |
+Public-only commit after row 295: `9f2d60a` (DISCLOSURE: no claim to a published pain scale, as in phase 13; the public DISCLOSURE is its own file).
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
 
