@@ -60,8 +60,8 @@ import { cloudTextRequest, letterRequest } from '../../../core/requests';
 import { REWORD_SCHEMA, REWORD_SYSTEM_PROMPT, rewordRequest } from '../../../core/reword';
 import { appCheckConfigured, appCheckToken, appWithAppCheck, forgetAppCheckRefusal, namedAppCheckFailure, type WebConfig } from './app';
 
-/** Phase 17: every cloud request with an App Check token of its own (AIOptions.useLimitedUseAppCheckTokens). */
-export const LIMITED_USE_TOKENS = true;
+/** Phase 17: off (24 Nov 2026): on 17 Nov limited-use tokens got 403 per request on the hosted copy; the session token served a real phone's cloud card on 21bb1e0. */
+export const LIMITED_USE_TOKENS = false;
 
 export type { WebConfig };
 

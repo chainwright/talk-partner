@@ -11,7 +11,7 @@ describe('B. App Check: started early, limited-use tokens, one more try on refus
   it('the installed Firebase AI Logic SDK has the limited-use option, and the cloud AI instance turns it on', () => {
     expect(read('node_modules/@firebase/ai/dist/ai-public.d.ts')).toMatch(/useLimitedUseAppCheckTokens\?: boolean;/);
     const engine = read('web/src/ai/firebaseEngine.ts');
-    expect(engine).toContain('export const LIMITED_USE_TOKENS = true;');
+    expect(engine).toContain('export const LIMITED_USE_TOKENS = false;');
     expect(engine).toContain('useLimitedUseAppCheckTokens: LIMITED_USE_TOKENS');
   });
   it('App Check starts when the question field gets the cursor, on a phone only (never with Chrome\'s own AI, never offline)', () => {

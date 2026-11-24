@@ -176,10 +176,10 @@ test on his phone added three: a yes to "I would like to something?" ended there
   a health answer, and never says "may be tired, try again later".
 - **App Check** (`web/src/main.ts` `warmCloud`, `web/src/ai/app.ts`). On a phone App Check starts when the question
   field gets the cursor (reCAPTCHA checks the browser; no word of the question goes), never with Chrome's own AI and
-  never offline. Cloud requests use limited-use tokens (`useLimitedUseAppCheckTokens`, firebase 13.3.0). After a
-  refusal the rules' card stays and **Try Google's AI again** asks once more, with the same yes. **Not yet run on the
-  hosted copy or a real Android phone**; limited-use tokens were taken out on 17 Nov because every request then needs
-  its own attestation, and that risk stands (`LIMITED_USE_TOKENS` in `web/src/ai/firebaseEngine.ts` turns it off).
+  never offline. Cloud requests keep the App Check session token: limited-use tokens (`LIMITED_USE_TOKENS` in
+  `web/src/ai/firebaseEngine.ts`) were tried in phase 17 and left off before deploy, because on 17 Nov they meant a
+  new attestation per request and a 403 with no card, while the session token is what gave a real phone its cloud card
+  on 21bb1e0. After a refusal the rules' card stays and **Try Google's AI again** asks once more, with the same yes.
 - **The first screen**: "For you and someone with aphasia: you ask, hand them the phone, they point.", the block
   "Type your question. We make picture answers." and the button "Make picture answers".
 - **Pictures and checks**: the back drawn from behind; one, two and three filled bars under the pain faces; "Change

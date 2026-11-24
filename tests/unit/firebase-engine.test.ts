@@ -106,14 +106,15 @@ describe('FirebaseEngine: the stripped leg', () => {
   // 17 Nov 2026, evening: limited-use tokens are gone again. With them the SDK makes a new reCAPTCHA attestation for
   // every cloud request and throws before sending when one fails (live: 403 "App attestation failed", then no card).
   // With the session token a failed attestation still sends the request, and one attestation serves the session.
-  // 24 Nov 2026, phase 17 (judge round 12, P0 2): limited-use tokens are back, with App Check started early on the
+  // 24 Nov 2026, phase 17 (judge round 12, P0 2): limited-use tokens were tried, with App Check started early on the
   // question field (web/src/main.ts, warmCloud), so a refused browser is known before the yes. The risk named on
   // 17 Nov stands: a failed attestation per request means no card; LIMITED_USE_TOKENS turns it off in one line.
-  it('the AI Logic instance of the cloud step uses limited-use App Check tokens; the private step has no App Check', async () => {
+  // and turned off again before deploy: the session token served a real phone's cloud card on 21bb1e0.
+  it('the AI Logic instance of the cloud step uses the session App Check token (limited-use off); the private step has no App Check', async () => {
     const e = new LazyFirebaseEngine(CFG);
     await e.runCloud('x');
     await e.runDevice('y');
-    expect(rec.ais.find((a) => a.app === '[DEFAULT]')?.options.useLimitedUseAppCheckTokens).toBe(true);
+    expect(rec.ais.find((a) => a.app === '[DEFAULT]')?.options.useLimitedUseAppCheckTokens).toBe(false);
     expect(rec.ais.find((a) => a.app === 'private-on-device')?.options.useLimitedUseAppCheckTokens).toBeUndefined();
     expect(rec.ais).toHaveLength(2);
   });
@@ -214,7 +215,7 @@ describe('FirebaseEngine: the voice step', () => {
     expect(rec.apps).toEqual(['[DEFAULT]']);
     expect(rec.appChecks).toEqual(['[DEFAULT]']);
     expect(rec.ais).toHaveLength(1);
-    expect(rec.ais[0].options.useLimitedUseAppCheckTokens).toBe(true); // (phase 17: limited-use tokens, as the stripped step)
+    expect(rec.ais[0].options.useLimitedUseAppCheckTokens).toBe(false); // (phase 17: limited-use off, as the stripped step)
     const m = rec.models[0];
     expect(m.mode).toBe('only_in_cloud');
     expect(m.params.inCloudParams.systemInstruction).toBe(TRANSCRIBE_SYSTEM_PROMPT);
