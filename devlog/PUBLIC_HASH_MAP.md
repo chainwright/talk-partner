@@ -301,6 +301,21 @@ the table.
 | 278 | `1f6ee8c` | `a927805` | 2026-11-23 14:50 | Pain picture prompts: exact words of the two rejected options |
 | 279 | `39e8f33` | `008f884` | 2026-11-23 15:29 | Pain picture: arms down, fists clenched, not crossed arms that look like 'too cold' |
 | 280 | `60fc893` | `36ff036` | 2026-11-23 15:45 | Docs: live is 39e8f33 (pain picture, sample family kept apart); hosted checks and logs |
+| 281 | `5b18050` | `968496a` | 2026-11-23 19:01 | Weakness check: after 'no' or 'not sure' the arms-and-smile line is a red box above 'Next', with the call but… |
+| 282 | `cfc1d89` | `c6778f9` | 2026-11-23 19:04 | Chest or head pain, or a breathing / weak / numb yes: every 'how bad' end says call now, whatever the amount;… |
+| 283 | `20a8424` | `457f927` | 2026-11-23 19:05 | Doctor visit: an answer that can be urgent stops the questions; the carer sees the call box with 'Go on with … |
+| 284 | `8139f5f` | `66a60e2` | 2026-11-23 19:06 | Mood: a confirmed 'worry' (and worried, scared, anxious, lonely, a yes to 'something bothering you') counts o… |
+| 285 | `48e3f13` | `beb51c9` | 2026-11-23 19:08 | Left for later: kept through 'Ask it again' and 'change topic' over pain; only 'Did you find out? Yes' or a c… |
+| 286 | `de8a3c2` | `bb1d782` | 2026-11-23 19:09 | Pain picture: leaning forward, open hands on the knees, no teeth, no fists (the one with fists read as angry … |
+| 287 | `dc7aa31` | `e94942f` | 2026-11-23 19:11 | Crisis line: About them first, else by the emergency number (999 Samaritans, 000 Lifeline, 911 988, 111 1737)… |
+| 288 | `570ea8d` | `b8705b5` | 2026-11-23 19:13 | Stroke sign and 'something's wrong' in the next-carer note, 'What stands out' (id sign) and the visit page; '… |
+| 289 | `db7c9d5` | `4b9661d` | 2026-11-23 19:15 | Answer check leaves rest and sleep answers alone; one intended-purpose line on Home, the sudden page and the … |
+| 290 | `40f0592` | `c42a0af` | 2026-11-23 19:19 | Cloud failure path: App Check first within the same 20 s; a refusal says at once what to do and offers the ru… |
+| 291 | `adc5f60` | `40d8593` | 2026-11-23 19:20 | No claim to the Faces Pain Scale: three faces from calm to crying, drawn for this app; prompt records kept as… |
+| 292 | `24c3613` | `7e32371` | 2026-11-23 19:23 | Docs: judge round 10 FALSE/OVERSTATED lines fixed (refusal line, back button, test count, chest pain); README… |
+| 293 | `ca04bc9` | `f5a9b5e` | 2026-11-23 20:30 | Walks for phase 13: weakness no / not sure, chest pain, the visit stop, the crisis line by number, later kept… |
+| 294 | `c7b1d9b` | `543b0c2` | 2026-11-23 20:45 | Docs: live is ca04bc9 (phase 13); hosted checks and logs |
+| 295 | `7e2a404` | `1e06aa6` | 2026-11-23 20:46 | Docs: phase 13 live walk count 335/335 |
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
 
