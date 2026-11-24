@@ -77,7 +77,7 @@ export type InsightSpan = 'week' | 'month';
 /** Phase 8 (judge round 7, the nurse's seat): 'call' is the level of a line with the call box (a strong pain, the head or the chest, a fall with a blow to the head): its own label, and first. */
 export type Level = 'call' | 'tell' | 'mention' | 'note';
 export interface Insight {
-  id: 'crisis' | 'pain' | 'pain-some' | 'wrong' | 'pain-day' | 'no-drink' | 'few-drinks' | 'many-drinks' | 'sweets' | 'no-food' | 'sleep' | 'mood' | 'fall' | 'less-sure' | 'nothing';
+  id: 'sign' | 'crisis' | 'pain' | 'pain-some' | 'wrong' | 'pain-day' | 'no-drink' | 'few-drinks' | 'many-drinks' | 'sweets' | 'no-food' | 'sleep' | 'mood' | 'fall' | 'less-sure' | 'nothing';
   /** 'tell': a red flag. 'mention': worth mentioning to the doctor or nurse. 'note': for the carer to keep in mind. */
   level: Level;
   /** What was counted, in plain words. The only part a model may put into plainer words. */
@@ -201,6 +201,10 @@ function spanInsights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpa
     const others = hardDays.slice(0, -1);
     out.push({ id: 'pain-day', level: 'mention', text, noted: '', base: `${[strong.length ? I5.strongPainBase : '', places.length ? I5.placePainBase : ''].filter(Boolean).join(' ')}${others.length ? ` Also on: ${names(others, 5)}.` : ''} ${I.only}`, act: I5.painAct(number), urgent: true, source: src(hard) });
   }
+
+  // (phase 13, judge round 10, the nurse's seat: ADV-13b-2) a yes or "not sure" to sudden weakness or numbness: its own line, first
+  const signs = entries.filter((e) => tags(e).includes('sign'));
+  if (signs.length) { const sd = daysOf(signs.map((e) => e.at)); out.push({ id: 'sign', level: 'tell', text: P9.insights.sign(listed([...new Set(signs.map((e) => `"${e.label.trim().toLowerCase()}"`))]), names(sd, 5)), noted: '', base: `${P9.insights.signBase} ${I.only}`, act: P9.insights.signAct(number), urgent: true, local: true, source: src(signs) }); }
 
   // (phase 12) "I can't go on", chosen by the person: one is enough, first, with the crisis route; never sent to online help
   const crisis = entries.filter((e) => tags(e).includes('crisis'));

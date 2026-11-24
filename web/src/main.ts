@@ -69,7 +69,7 @@ import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './tria
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
 import { P8 } from '../../core/copy8';
-import { guessTopic, lowMood, timeText } from '../../core/diary';
+import { guessTopic, lowMood, signAnswer, timeText } from '../../core/diary';
 /** Phase 8: a low answer to a question about how the person feels (not a photo): the helpline line follows on the carer's side. Phase 12: the diary's own rule (worried, scared, lonely, something bothering them). */
 const lowMoodAnswer = lowMood;
 import { addLater, agoText, answeredLater, askAgainLater, cleanLater, doneLater, laterOf, noLastTime, repairLine, shownLater, type Later } from '../../core/later';
@@ -2485,6 +2485,9 @@ function onPersonTap(t: HTMLElement) {
         state.diary = addEntry(state.diary, needEntry(state.picked.label, at));
         saveDiary();
       }
+    } else if (state.picked && state.picked.role === 'escape' && learns() && !c.sample && signAnswer(c.asked, state.picked.label)) {
+      // (phase 13) a "not sure" to a stroke sign is not a way out: the diary keeps it, for the next carer and the doctor
+      state.diary = addEntry(state.diary, answerEntry({ q: c.asked, label: state.picked.label, at: Date.now() }, topicOf(state.chain[0] ?? c.asked, state.profile)?.id ?? null)); saveDiary();
     }
     if (simpleView()) refreshShort();
     render(); return;

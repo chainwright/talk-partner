@@ -54,6 +54,9 @@ export const P6 = {
     hNoToilet: 'Toilet: none entered.',
     hPain: (items: string) => `Pain: ${items}.`,
     hPainAsk: 'Ask again on your shift, and take the answer as said.',
+    /** Phase 13 (judge round 10, the nurse's and the carer's seats): at the top of the note, above the counts. */
+    hSign: (items: string, number: string, unsure: boolean) => `Sudden weakness or numbness: ${items}. If ${number} was not called, call now. Tell the doctor today.${unsure ? ` After a "not sure": check both arms and the smile now; call ${number} if one side drops.` : ''}`,
+    hWrong: (times: string, number: string) => `Something's wrong: they pointed to "something's wrong" (${times}). Find out what, and if it is new or sudden call ${number} now.`,
     hNoPain: 'Pain: none entered. That does not show there was none: ask, and take the answer as said.',
     hFalls: (n: number, times: string) => `Falls: ${n} logged (${times}).`,
     hFallHead: (times: string) => `With a blow to the head: ${times}.`,

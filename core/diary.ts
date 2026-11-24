@@ -153,7 +153,7 @@ export function dayWord(day: number, now: number): '' | 'Today' | 'Yesterday' {
 }
 
 // ---------------------------------------------------------------- what an entry counts as (for the insights)
-export type Tag = 'drink' | 'food' | 'sweet' | 'toilet' | 'sleep' | 'bad-sleep' | 'pain' | 'tired' | 'fall' | 'fall-head' | 'tablets' | 'low-mood' | 'strong-pain' | 'place-pain' | 'crisis';
+export type Tag = 'drink' | 'food' | 'sweet' | 'toilet' | 'sleep' | 'bad-sleep' | 'pain' | 'tired' | 'fall' | 'fall-head' | 'tablets' | 'low-mood' | 'strong-pain' | 'place-pain' | 'crisis' | 'sign' | 'wrong';
 
 const DRINK = /^(?:tea|coffee|water|juice|milk|a drink|drink|squash|cocoa|hot chocolate|lemonade|a cup of tea|a glass of water)$/;
 const SWEET = /\b(?:sweet|sweets|biscuit|biscuits|cake|chocolate|ice cream|pudding|dessert|candy|cookie|cookies|jam|honey|toffee|doughnut|pastry|pie)\b/;
@@ -195,7 +195,7 @@ export function tags(e: DiaryEntry): Tag[] {
   const q = lc(e.q ?? '');
   if (e.kind === 'log') return e.log === 'drank' ? ['drink'] : e.log === 'ate' ? ['food'] : e.log === 'toilet' ? ['toilet'] : e.log === 'slept' ? ['sleep'] : e.log === 'fall' ? (l === FALL_HEAD ? ['fall', 'fall-head'] : ['fall']) : e.log === 'tablets' ? ['tablets'] : ['pain'];
   if (e.kind === 'later' || e.kind === 'started') return [];
-  if (e.kind === 'need') return l === 'drink' ? ['drink'] : l === 'food' ? ['food'] : l === 'toilet' ? ['toilet'] : l === 'pain' ? ['pain'] : l === 'tired' ? ['tired'] : [];
+  if (e.kind === 'need') return l === 'drink' ? ['drink'] : l === 'food' ? ['food'] : l === 'toilet' ? ['toilet'] : l === 'pain' ? ['pain'] : l === 'tired' ? ['tired'] : l === "something's wrong" ? ['wrong'] : [];
   const out: Tag[] = [];
   if (DRINK.test(l) || (/\bsomething to drink\b/.test(q) && l === 'yes')) out.push('drink');
   if (SWEET.test(l)) out.push('sweet');
@@ -214,7 +214,15 @@ export function tags(e: DiaryEntry): Tag[] {
   if (lowMood(q, l)) out.push('low-mood');
   // (phase 12) the person's crisis choice, wherever it was chosen
   if (crisisAnswer(l)) out.push('crisis');
+  // (phase 13, judge round 10: a stroke sign, and "something's wrong" on a card, for the handover note and the visit page)
+  if (signAnswer(q, l)) out.push('sign');
+  if (l === "something's wrong") out.push('wrong');
   return out;
+}
+
+/** Phase 13: a yes or a "not sure" to the weakness question (core/topics.ts, WEAK_NUMB): a stroke sign the next carer and the doctor must hear of. */
+export function signAnswer(q: string, label: string): boolean {
+  return /\b(?:weak|weakness|numb|numbness)\b/.test(lc(q)) && /^(?:yes|not sure)$/.test(lc(label));
 }
 
 /** A card and a tap of the same thing less than this apart are one event ("tea" on a card, then "Drank" tapped). */

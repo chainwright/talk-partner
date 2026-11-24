@@ -11,6 +11,11 @@ export const P9 = {
     /** Fixed, under that line: never a model's words, never sent. */
     painSomeAct: 'Ask again today, and tell the doctor or nurse if it is new or still there.',
     wrong: (n: number, d: string) => `"Something's wrong" was pointed to on ${days(n)}: ${d}. Ask what it was.`,
+    /** Phase 13: a yes or "not sure" to the weakness question, its own line, first (core/insights.ts, 'sign'). */
+    sign: (answers: string, d: string) => `Sudden weakness or numbness: ${answers} on ${d}.`,
+    signBase: 'Every "yes" or "not sure" to "Is it suddenly weak or numb?" counts.',
+    signAct: (number: string) => `If ${number} was not called, call now. Tell the doctor today.`,
+    signSince: (answers: string) => `Suddenly weak or numb: ${answers}. Tell the doctor.`,
     wrongBase: 'Every "something\'s wrong", on the needs board or on a card, counts.',
   },
   later: {

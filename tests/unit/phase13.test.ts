@@ -252,3 +252,62 @@ describe('A6. The crisis line: the family\'s own first, else by the emergency nu
     expect(main).not.toContain('crisisLine(navigator.language)');
   });
 });
+
+describe('A7. "For the next carer", "What stands out" and the visit page carry every stroke sign and "something\'s wrong"', () => {
+  const now = new Date(2026, 10, 23, 18, 0).getTime();
+  const W = 'Is it suddenly weak or numb, yes or no?';
+  it('core/diary.ts: a yes or "not sure" to the weakness question is a sign; the board\'s "something\'s wrong" is a "wrong"', async () => {
+    const { tags, answerEntry, needEntry } = await import('../../core/diary');
+    expect(tags(answerEntry({ q: W, label: 'yes', at: now }))).toContain('sign');
+    expect(tags(answerEntry({ q: W, label: 'not sure', at: now }))).toContain('sign');
+    expect(tags(answerEntry({ q: W, label: 'no', at: now }))).not.toContain('sign');
+    expect(tags(needEntry("something's wrong", now))).toContain('wrong');
+  });
+  it('the handover note: both at the top, with when and what to do, and the call sentence', async () => {
+    const { handoverText } = await import('../../core/share');
+    const { answerEntry, needEntry } = await import('../../core/diary');
+    const diary = [
+      { ...answerEntry({ q: W, label: 'yes', at: now - 47 * 60000 }), id: 's1' },
+      { ...answerEntry({ q: W, label: 'not sure', at: now - 40 * 60000 }), id: 's2' },
+      { ...needEntry("something's wrong", now - 13 * 60000), id: 'w1' },
+    ];
+    const t = handoverText({ diary, health: null, learned: [], name: 'Rose', now, number: '999' });
+    const lines = t.split('\n');
+    expect(lines[1]).toMatch(/^Call 999 now if this is new or sudden/);
+    const sign = lines.find((l) => l.startsWith('Sudden weakness or numbness:'))!;
+    expect(sign).toContain('"yes" (Mon 17:13)');
+    expect(sign).toContain('"not sure" (Mon 17:20)');
+    expect(sign).toContain('If 999 was not called, call now. Tell the doctor today.');
+    expect(sign).toContain('check both arms and the smile now');
+    const wrong = lines.find((l) => l.startsWith("Something's wrong:"))!;
+    expect(wrong).toBe('Something\'s wrong: they pointed to "something\'s wrong" (Mon 17:47). Find out what, and if it is new or sudden call 999 now.');
+    // both stand above the 24 hours' counts
+    expect(lines.indexOf(sign)).toBeLessThan(lines.findIndex((l) => l.startsWith('For the next carer')));
+    expect(lines.indexOf(wrong)).toBeLessThan(lines.findIndex((l) => l.startsWith('For the next carer')));
+  });
+  it('"What stands out": a sign is its own line, first, with the call box', async () => {
+    const { insights, NO_HEALTH } = await import('../../core/insights');
+    const { answerEntry } = await import('../../core/diary');
+    const xs = insights([{ ...answerEntry({ q: W, label: 'yes', at: now - 3600000 }), id: 's1' }], NO_HEALTH, 'week', now, '999');
+    expect(xs[0]).toMatchObject({ id: 'sign', level: 'call', urgent: true });
+    expect(xs[0].text).toBe('Sudden weakness or numbness: "yes" on Mon 23 Nov.');
+    expect(xs[0].act).toBe('If 999 was not called, call now. Tell the doctor today.');
+  });
+  it('the visit page: "I can\'t go on" and a stroke sign each get their own first lines, not folded into "Mood"', async () => {
+    const { sinceLines } = await import('../../core/since');
+    const { answerEntry } = await import('../../core/diary');
+    const diary = [
+      { ...answerEntry({ q: 'How are you feeling today?', label: "I can't go on", at: now - 3600000 }), id: 'c1' },
+      { ...answerEntry({ q: W, label: 'yes', at: now - 7200000 }), id: 's1' },
+    ];
+    const s = sinceLines(diary as never, null, now);
+    expect(s.lines[0]).toBe('Said "I can\'t go on": Mon 23 Nov 17:00 (the safety screen was shown). Tell the doctor.');
+    expect(s.lines[1]).toBe('Suddenly weak or numb: "yes" (Mon 23 Nov 16:00). Tell the doctor.');
+    expect(s.urgent).toBe(true);
+  });
+  it('web/src/main.ts: a "not sure" to a stroke sign is written to the diary too', async () => {
+    const { readFileSync } = await import('node:fs');
+    const main = readFileSync('web/src/main.ts', 'utf8');
+    expect(main).toContain("} else if (state.picked && state.picked.role === 'escape' && learns() && !c.sample && signAnswer(c.asked, state.picked.label)) {");
+  });
+});

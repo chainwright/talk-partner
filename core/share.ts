@@ -177,8 +177,11 @@ export function handoverText(m: HandoverShare): string {
   const falls = entries.filter((e) => has(e, 'fall'));
   const heads = falls.filter((e) => has(e, 'fall-head'));
   const tablets = entries.filter((e) => has(e, 'tablets'));
+  // (phase 13) a stroke sign and "something's wrong": at the top, with when and what to do
+  const signs = entries.filter((e) => has(e, 'sign'));
+  const wrongs = entries.filter((e) => has(e, 'wrong'));
   // (in a note for the hours after it, every fall carries the call sentence, a blow to the head noted or not)
-  const urgent = hard.length > 0 || falls.length > 0;
+  const urgent = hard.length > 0 || falls.length > 0 || signs.length > 0 || wrongs.length > 0;
   const fluid = !!m.health?.fluidLimit || !!m.safety?.fluidLimit;
   const always = [...(m.safety?.swallowing || m.health?.swallowing ? [`- ${K.hSwallow}`] : []), ...(fluid ? [`- ${K.hFluidAlways}`] : [])];
   // (the two notes printed under ALWAYS are not printed a second time among the ticked ones)
@@ -200,6 +203,8 @@ export function handoverText(m: HandoverShare): string {
     K.stamp(stampWhen(m.now)),
     ...(urgent ? [K.call(number, K.whereHandover)] : []),
     ...(crisis.length ? [P12.crisis.handover(listed(crisis.map((e) => shortWhen(e.at))), number)] : []),
+    ...(signs.length ? [K.hSign(listed(signs.map((e) => `"${e.label.trim().toLowerCase()}" (${shortWhen(e.at)})`)), number, signs.some((e) => e.label.trim().toLowerCase() === 'not sure'))] : []),
+    ...(wrongs.length ? [K.hWrong(listed(wrongs.map((e) => shortWhen(e.at))), number)] : []),
     ...(open.length ? ['', K.hOpen, ...open] : []),
     '',
     K.hTitle(m.name, shortWhen(from), shortWhen(m.now)),
