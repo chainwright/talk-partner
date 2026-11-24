@@ -18,7 +18,7 @@ runs. The sponsor's AI is at taps 2 and 3:
 11. **I want to say something → I feel…**, the way out twice: "worried / lonely / I can't go on"; the last opens the carer's safety screen.
 12. At the foot of Home: **Try it with the Millers, a sample family** (judge mode below), and **How it works inside →**. The measured tables (phase 14: rules 0/18, Gemini Nano 16/18, online 12/18 on the 18 open questions; phase 16, "Ask in your own words": rules 0/18, Gemini Nano 15/18, online 13/18, and on 10 everyday questions 2/10, 8/10, 10/10) are in README.
 
-**Live: the build of `cf4aa33`** (README "Deploy" says what was run against it).
+**Live: the build of `21bb1e0`** (README "Deploy" says what was run against it).
 
 Nothing here needs an account. Hosted copy: <https://talk-partner.web.app/#/demo> (our project settings are in it, so
 cloud help can be turned on there; the on-device step needs Gemini Nano in your own Chrome). **Cloud help there needs

@@ -1470,7 +1470,11 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-**Live: the build of `cf4aa33`** (phase 15: the fixes of judge round 11: the sample family's diary, Read aloud and Beth / Bo / biscuits; the card stays
+**Live: the build of `21bb1e0`** (phase 16: "Ask in your own words" first on the first screen, the sponsor's AI makes the card), deployed
+24 Nov 2026 about 10:30 UTC. The hosted script (`index-DSComVT-.js`) is the same file as our `dist/`. Run against the hosted copy:
+`e2e-simple.py --live` 1027/1027, `pwa-check.py` 34/34, `e2e-needs.mjs` 13/13, `phase12-walk.py --url` 559/559. Logs: `devlog/evidence_live/21bb1e0/`.
+
+Before it: **the build of `cf4aa33`** (phase 15: the fixes of judge round 11: the sample family's diary, Read aloud and Beth / Bo / biscuits; the card stays
 with "Asking Google's AI… Stop waiting"; call-now wording in the shared texts), deployed 24 Nov 2026 about 06:45 UTC. The hosted script
 (`index-CHpgjZ-M.js`) is the same file as our `dist/`. Run against the hosted copy: `e2e-simple.py --live` 1024/1024, `pwa-check.py` 34/34,
 `e2e-needs.mjs` 13/13, `phase12-walk.py --url` 457/457. Logs: `devlog/evidence_live/cf4aa33/`.
