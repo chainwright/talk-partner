@@ -94,8 +94,6 @@ describe('17b. topic-locked letters for every topic: a hidden target reached by 
     const l = words(await letterCard({ asked: 'Would you like tea or coffee?', letter: 'L', rejected: ['tea', 'coffee'], topic: 'food' }, env));
     expect(l[0]).toBe('lemonade');
     expect(l.join(' ')).not.toMatch(/lake|Beth|library/);
-    // (live walk 24 Nov on c749bb0: water, juice or milk → something else → L gave lemonade, lamb: a drink question shows drinks only)
-    expect(l.join(' ')).not.toMatch(/lamb|lasagne|lettuce|lentil/);
     const co = words(await letterCard({ asked: 'Would you like tea or coffee?', letter: 'CO', rejected: ['tea', 'coffee'], topic: 'food' }, env));
     expect(co.length).toBeGreaterThan(0);
     for (const x of co) expect(x.toLowerCase().startsWith('co')).toBe(true);

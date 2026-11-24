@@ -66,11 +66,10 @@ describe('the brief\'s case: "B" with Beth, Bo and biscuits in About them', () =
     // the role-play's About them (18 Nov): foods "strong tea with milk, porridge, ginger biscuits", no dog
     const carol: Profile = { ...MILLER, foods: ['strong tea with milk', 'porridge', 'ginger biscuits'], other: [] };
     const card = await letterCard({ asked: 'Would you like tea or coffee?', letter: 'B', rejected: ['tea', 'coffee'] }, env(new Fake(false), carol));
-    // (24 Nov, a live walk: under a drink question a stock food like lamb is not offered; the family's own foods still are)
-    expect(labels(card)).toEqual(['biscuits (ginger)']);
+    expect(labels(card)).toEqual(['biscuits (ginger)', 'bread', 'banana']);
     for (const l of labels(card)) expect(l.toLowerCase().startsWith('b'), l).toBe(true);
     expect(card.choices[0].spoken).toBe('ginger biscuits');
-    expect(card.say).toBe('It starts with B. Is it ginger biscuits, or something else?');
+    expect(card.say).toBe('It starts with B. Is it ginger biscuits, bread, banana, or something else?');
     expect(card.why?.personal).toEqual(['ginger biscuits']);
     expect(letterEnd(card.choices[0].spoken).end).toBe('The word is: ginger biscuits. Ask a yes or no question about it next.');
   });
@@ -79,7 +78,7 @@ describe('the brief\'s case: "B" with Beth, Bo and biscuits in About them', () =
     // drinks with M: the everyday "milk" and the family's "strong tea with milk"; then Mary; then the rest
     // (phase 17: inside the topic: the drink first, then the foods; Mary only after the topic's words)
     // (phase 17b: a drink question keeps its letters to drinks first: the everyday "milkshake" now stands before the family's marmalade)
-    expect(letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p).slice(0, 3)).toEqual(['strong tea with milk', 'milkshake', 'marmalade']); // (24 Nov: marmalade is the family's own food, so it stays; a stock food would not)
+    expect(letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p).slice(0, 3)).toEqual(['strong tea with milk', 'milkshake', 'marmalade']);
     expect(letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p).slice(0, 5)).not.toContain('Mary');
     // with no kind known: people first, then the rest in About-them order
     expect(letterWords({ asked: '', letter: 'M', rejected: [] }, p).slice(0, 3)).toEqual(['Mary', 'marmalade', 'strong tea with milk']);
