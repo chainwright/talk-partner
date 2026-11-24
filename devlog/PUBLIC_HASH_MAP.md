@@ -337,6 +337,20 @@ the table.
 | 314 | `23e3ab3` | `ac292be` | 2026-11-24 03:26 | CLAIMS: rows 181 to 188 for phase 16 (branch) |
 | 315 | `21bb1e0` | `1f0a60d` | 2026-11-24 04:00 | README (phase 16 branch): the own-words sheet's no is 'No, not for this question', as on screen |
 | 316 | `b50057a` | `35708e1` | 2026-11-24 04:45 | Docs: live is 21bb1e0 (phase 16); hosted checks and logs |
+| 317 | `4c91821` | `2a090ce` | 2026-11-24 06:46 | Phase 17 A: typed-question health guard and health lines for others (judge round 12, P0 3 and 4) |
+| 318 | `b2b2a90` | `5795651` | 2026-11-24 06:50 | Phase 17 B: App Check started on the question field, limited-use tokens, 'Try Google's AI again' (judge round… |
+| 319 | `4596abb` | `2f291c3` | 2026-11-24 06:56 | Phase 17 G: the owner's phone test: 'want something?' goes on, the letter stays in the topic, letter by letter |
+| 320 | `8af95e0` | `00d1ada` | 2026-11-24 06:59 | Phase 17 D and E: who it is for on the first screen; back from behind, the pain bars, Change it, the check |
+| 321 | `febbc8a` | `bc21e83` | 2026-11-24 07:03 | Phase 17 G: after the first measured letter run: no word of another topic, no plural twice, rules and AI in t… |
+| 322 | `bc7ad2d` | `b7aaf10` | 2026-11-24 07:05 | devlog: phase 17 letter-by-letter run (rules / Nano / online) at febbc8a |
+| 323 | `403bff7` | `8b6b6ef` | 2026-11-24 08:10 | Phase 17: the red box stays above the fold at 360 x 740; walks and checks for the phase 17 screens |
+| 324 | `0f1e1a0` | `cb5172a` | 2026-11-24 08:11 | Docs (phase 17): the hound's FALSE and overstated lines, CLAIMS rows 189 to 196, README phase 17, logs |
+| 325 | `9f2a3d7` | `8564cac` | 2026-11-24 08:13 | Phase 17: limited-use App Check tokens off before deploy; the session token served a real phone's cloud card |
+| 326 | `1a25a17` | `09c4a8c` | 2026-11-24 08:23 | Phase 17 H: the topic card after a typed 'want something?' goes on (food or drink, people, plans), never ends… |
+| 327 | `c749bb0` | `c5afbe3` | 2026-11-24 09:17 | Phase 17b: no dead end in any topic; the first letter stays inside every topic |
+| 328 | `5b0c1b4` | `d759487` | 2026-11-24 09:24 | Phase 17b: a drink question's letters are drinks and the family's own foods, never a stock food (L gave lemon… |
+| 329 | `0852ce8` | `973ae81` | 2026-11-24 10:00 | Revert the drinks-only letters (5b0c1b4): the topic on screen is Food & drink, so a food after a drink questi… |
+| 330 | `c44657a` | `27d1d27` | 2026-11-24 10:34 | Docs: live is 0852ce8 (phases 17 and 17b); hosted checks and logs |
 Public-only commit after row 295: `9f2d60a` (DISCLOSURE: no claim to a published pain scale, as in phase 13; the public DISCLOSURE is its own file).
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
