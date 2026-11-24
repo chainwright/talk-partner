@@ -4,6 +4,11 @@
 //   node scripts/eval-heldout.mjs --port 9335          the real app in a Chrome that has Gemini Nano, cloud help off:
 //                                                      the on-device step (Firebase AI Logic, ONLY_ON_DEVICE) answers
 //                                                      the open questions. Needs `npm run dev` in another shell.
+//   node scripts/eval-heldout.mjs --cloud              (phase 14) the real app in a fresh Chrome profile it starts itself
+//                                                      (so no Gemini Nano), online help on: the stripped step (Firebase AI
+//                                                      Logic, PREFER_IN_CLOUD) answers the open questions. Needs
+//                                                      `npm run dev`; HEADED=1 opens a normal window (App Check's
+//                                                      reCAPTCHA refuses a headless browser on a copy with no debug token).
 //   options: --set FILE  --out DIR (default: a new folder devlog/eval_runs/<time>, so no saved run is overwritten)
 //            --url http://localhost:5179/
 //
@@ -22,9 +27,10 @@
 //    The report gives the open-question result with and without them.
 // The headline of the report is the open questions, because that is where a model is needed at all: rules alone make
 // no card for them. Counting "no card" as correct there (as the first report did) hid what the model adds.
-import { execSync } from 'node:child_process';
+import { execSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -32,7 +38,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const SET = resolve(ROOT, arg('--set', 'eval/heldout_r2.json'));
 const OUT = resolve(ROOT, arg('--out', `devlog/eval_runs/${new Date().toISOString().replace(/[-:]/g, '').replace(/\..*/, '').replace('T', '-')}`));
-const PORT = Number(arg('--port', '0'));
+const CLOUD = process.argv.includes('--cloud');
+const PORT = CLOUD ? 9343 : Number(arg('--port', '0'));
 const URL_ = arg('--url', 'http://localhost:5179/');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const git = (c) => { try { return execSync(`git ${c}`, { cwd: ROOT }).toString().trim(); } catch { return 'unknown'; } };
@@ -108,8 +115,9 @@ async function rulesPass() {
     const { SAMPLE_PROFILE } = await server.ssrLoadModule('/core/sample.ts');
     const rows = [];
     for (const item of set.questions) {
+      const t0 = performance.now();
       const c = await makeCard(item.q, { profile: SAMPLE_PROFILE, support: 'more', engine: new NullEngine(), allowCloud: false, deviceReady: false });
-      const obs = { kind: c.kind, blocked: !!c.blocked, answers: c.choices.filter((x) => x.role === 'answer').map((x) => x.label), escape: c.choices.find((x) => x.role === 'escape')?.label ?? null, coach: c.coach ?? '', source: c.source };
+      const obs = { kind: c.kind, blocked: !!c.blocked, answers: c.choices.filter((x) => x.role === 'answer').map((x) => x.label), escape: c.choices.find((x) => x.role === 'escape')?.label ?? null, coach: c.coach ?? '', source: c.source, ms: Math.round((performance.now() - t0) * 10) / 10 };
       rows.push({ item, obs, ...score(item, obs, false), sealedOk: score(item, obs, false, item.expect).ok });
     }
     return rows;
@@ -140,17 +148,18 @@ async function devicePass() {
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
   await send('Page.navigate', { url: `${URL_}#/cloud` });
   await waitFor(`!!document.querySelector('main')`); await sleep(500);
-  await js(`document.querySelector('[data-act="cloud-off"]')?.click()`); await sleep(300); // cloud help off: the device step alone
+  if (CLOUD) { await js(`document.querySelector('#consent')?.click()`); await sleep(300); await js(`document.querySelector('[data-act="cloud-on"]')?.click()`); await sleep(300); } // online help on: the cloud step answers
+  else { await js(`document.querySelector('[data-act="cloud-off"]')?.click()`); await sleep(300); } // cloud help off: the device step alone
   // a hash change does not load the page again: mark the old document, reload, and wait for the new one
   await send('Page.navigate', { url: `${URL_}#/demo` }); await sleep(300);
   await js(`window.__before = true`); await send('Page.reload');
   await waitFor(`!window.__before && document.readyState === 'complete' && !!document.querySelector('.chip') && !!document.querySelector('#status')`);
   await js(`(() => { const s = document.querySelector('#support'); if (s.value !== 'more') { s.value = 'more'; s.dispatchEvent(new Event('change', { bubbles: true })); } })()`);
-  const ready = await waitFor(`/Ready/.test(document.querySelector('#status').innerText)`, 180000);
+  const ready = CLOUD ? await waitFor(`/Gemini Nano (?:in this browser|is not downloaded)/.test(document.querySelector('#status').innerText)`, 20000) : await waitFor(`/Ready/.test(document.querySelector('#status').innerText)`, 180000);
   const status = await js(`document.querySelector('#status').innerText`);
   const cloud = await js(`[...document.querySelectorAll('header nav a')].map((a) => a.innerText).find((t) => t.startsWith('Cloud help'))`);
-  if (!ready) throw new Error(`the on-device model is not ready in this Chrome: "${status}"`);
-  if (cloud !== 'Cloud help: off') throw new Error(`cloud help must be off for this pass: "${cloud}"`);
+  if (!ready) throw new Error(CLOUD ? `this fresh profile must have no on-device model: "${status}"` : `the on-device model is not ready in this Chrome: "${status}"`);
+  if (cloud !== (CLOUD ? 'Cloud help: on' : 'Cloud help: off')) throw new Error(`cloud help must be ${CLOUD ? 'on' : 'off'} for this pass: "${cloud}"`);
   const rows = [];
   for (const item of set.questions) {
     consoleLines.length = 0; outside.length = 0;
@@ -207,7 +216,7 @@ function report(title, rows, withModel, extra = []) {
   L.push(`- commit: \`${git('rev-parse HEAD')}\`${TREE ? ` (uncommitted changes in ${TREE.split('\n').length} file(s) when the run started)` : ' (clean working tree when the run started)'}`);
   L.push(`- set: \`${SET.replace(`${ROOT}/`, '')}\`, ${set.questions.length} questions, sha256 \`${sha}\``);
   if (amendSha) L.push(`- label amendments (stricter, written after the first runs): \`${AMEND_FILE.replace(`${ROOT}/`, '')}\`, questions ${Object.keys(amendments.amend).join(', ')}, sha256 \`${amendSha}\``);
-  L.push(`- command: \`node scripts/eval-heldout.mjs${PORT ? ` --port ${PORT}` : ''}\``, ...extra, '');
+  L.push(`- command: \`node scripts/eval-heldout.mjs${CLOUD ? `${process.env.HEADED === '1' ? ' (HEADED=1)' : ''} --cloud` : PORT ? ` --port ${PORT}` : ''}\``, ...extra, '');
   // The set's own "about" text was written before its first run and ends "no rule was changed after that run". That
   // was true of the first run only, and the sealed file is not edited (its checksum is in every report). So the
   // report no longer copies that sentence: it says what the set is, and counts from git how many commits have
@@ -221,7 +230,7 @@ function report(title, rows, withModel, extra = []) {
   L.push('## Result', '');
   L.push(`### Open questions (who, where, what): ${o.n} of the ${rows.length}`, '');
   L.push('These are the questions the rules cannot answer: the choices are not in the question. A model is needed, and the family\'s own names, places and foods are only in About me, which only the on-device step sees.', '');
-  L.push(`| On the ${o.n} open questions | ${withModel ? 'On-device model (this run)' : 'Rules alone (this run)'} |`, '|---|---|');
+  L.push(`| On the ${o.n} open questions | ${withModel ? (CLOUD ? 'Online help, PREFER_IN_CLOUD (this run)' : 'On-device model (this run)') : 'Rules alone (this run)'} |`, '|---|---|');
   L.push(`| a card with two or more answers was made | ${o.made}/${o.n} |`);
   L.push(`| the card matched our label | **${o.matched}/${o.n}** |`);
   L.push(`| the card matched our label and offers the family's own entries from About me (a personal card) | **${o.personal}/${o.n}** |`);
@@ -239,9 +248,13 @@ function report(title, rows, withModel, extra = []) {
   L.push('', `**Cards (or, for a memory question, the "tell, don't test" line) matching our label, all ${rows.length} questions: ${closedOk + o.matched}/${rows.length}** (${closedOk}/${closedN} where the rules decide, ${o.matched}/${o.n} open).`, '');
   if (withModel) {
     const open = rows.filter((r) => isOpen(r.item));
-    const onDev = rows.filter((r) => r.obs.sdk.some((l) => /inferenceSource=on_device/.test(l))).length;
+    const src = CLOUD ? 'in_cloud' : 'on_device';
+    const onDev = rows.filter((r) => r.obs.sdk.some((l) => new RegExp(`inferenceSource=${src}`).test(l))).length;
     const ms = open.map((r) => r.obs.ms).sort((a, b) => a - b);
-    L.push(`Cards for which the SDK reported \`inferenceSource=on_device\`: ${onDev}/${rows.length} (the rest ran no model). Requests to hosts other than the app's own during the run: ${rows.some((r) => r.obs.outside.length) ? [...new Set(rows.flatMap((r) => r.obs.outside))].join(', ') : 'none'}. Time from submit to card on the open questions: median ${ms[Math.floor(ms.length / 2)]} ms, range ${ms[0]}–${ms.at(-1)} ms.`, '');
+    L.push(`Cards for which the SDK reported \`inferenceSource=${src}\`: ${onDev}/${rows.length} (the rest ran no model). Requests to hosts other than the app's own during the run: ${rows.some((r) => r.obs.outside.length) ? [...new Set(rows.flatMap((r) => r.obs.outside))].join(', ') : 'none'}. Time from submit to card on the open questions: median ${ms[Math.floor(ms.length / 2)]} ms, range ${ms[0]}–${ms.at(-1)} ms.`, '');
+  } else {
+    const ms = rows.filter((r) => isOpen(r.item)).map((r) => r.obs.ms).sort((a, b) => a - b);
+    L.push(`Time to decide on the open questions (no card; no model, no network): median ${ms[Math.floor(ms.length / 2)]} ms, range ${ms[0]}–${ms.at(-1)} ms.`, '');
   }
   L.push('## Misses', '');
   const misses = rows.filter((r) => !r.ok);
@@ -261,11 +274,21 @@ mkdirSync(OUT, { recursive: true });
 const stem = SET.split('/').pop().replace(/\.json$/, '');
 try {
   if (PORT) {
-    const { rows, status, version } = await devicePass();
-    const f = join(OUT, `${stem}_ondevice.md`);
-    const rep = report(`Labelled set (first run 16 Nov 2026; ${HELD}), the real app with the on-device model (cloud help off)`, rows, true, [`- browser: ${version}, attached on port ${PORT}; status line: "${status}"`, `- app: ${URL_} (${/^https?:\/\/(?:localhost|127\.0\.0\.1)[:/]/.test(URL_) ? 'the dev server of this commit' : 'a hosted copy, not a dev server: the commit above is this checkout\'s; which build the host serves is in the README'}), judge mode`]);
+    // (phase 14) the cloud pass starts its own Chrome with a throwaway profile, so the browser has no on-device model
+    let chrome = null; let profile = null;
+    if (CLOUD) {
+      profile = mkdtempSync(join(tmpdir(), 'tp-eval-cloud-'));
+      chrome = spawn(process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [...(process.env.HEADED === '1' ? [] : ['--headless=new']), `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check', '--window-size=1280,900', 'about:blank'], { stdio: 'ignore' });
+      for (let i = 0; i < 50; i++) { try { await fetch(`http://127.0.0.1:${PORT}/json/version`); break; } catch { await sleep(200); } }
+    }
+    let pass;
+    try { pass = await devicePass(); } finally { if (chrome) { chrome.kill(); await sleep(500); rmSync(profile, { recursive: true, force: true }); } }
+    const { rows, status, version } = pass;
+    const kind = CLOUD ? 'cloud' : 'ondevice';
+    const f = join(OUT, `${stem}_${kind}.md`);
+    const rep = report(`Labelled set (first run 16 Nov 2026; ${HELD}), the real app ${CLOUD ? 'with online help on, in a fresh profile with no on-device model (PREFER_IN_CLOUD)' : 'with the on-device model (cloud help off)'}`, rows, true, [`- browser: ${version}, ${CLOUD ? `started by this script with a throwaway profile (${process.env.HEADED === '1' ? 'a normal window' : 'headless'})` : `attached on port ${PORT}`}; status line: "${status}"`, `- app: ${URL_} (${/^https?:\/\/(?:localhost|127\.0\.0\.1)[:/]/.test(URL_) ? 'the dev server of this commit' : 'a hosted copy, not a dev server: the commit above is this checkout\'s; which build the host serves is in the README'}), judge mode`]);
     writeFileSync(f, rep.text);
-    writeFileSync(join(OUT, `${stem}_ondevice.json`), `${JSON.stringify(rows.map((r) => ({ id: r.item.id, q: r.item.q, type: r.item.type, ok: r.ok, okWithSealedLabel: r.sealedOk, why: r.why, ...r.obs })), null, 1)}\n`);
+    writeFileSync(join(OUT, `${stem}_${kind}.json`), `${JSON.stringify(rows.map((r) => ({ id: r.item.id, q: r.item.q, type: r.item.type, ok: r.ok, okWithSealedLabel: r.sealedOk, why: r.why, ...r.obs })), null, 1)}\n`);
     console.log(`\nopen questions: ${rep.o.matched}/${rep.o.n} cards matched the label, ${rep.o.personal}/${rep.o.n} personal; rules-decided: ${rep.closedOk}/${rep.closedN} -> ${f.replace(`${ROOT}/`, '')}`);
   } else {
     const rows = await rulesPass();
