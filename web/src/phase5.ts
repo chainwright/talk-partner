@@ -82,6 +82,11 @@ export const laterPainHtml = (number: string, guess = false) => `<div class="lat
 /** `now`: a yes to sudden weakness or numbness was confirmed (phase 12b): "Call … now. Note the time it started." */
 export const urgentBox = (number: string, id = 'urgent', guess = false, now = false) => `<div class="urgent" id="${id}" role="alert">${ALERT}<div><b>${esc(now ? P5.sudden.boxNow(number) : P5.sudden.box(number))}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, `${id}-guess`)}</div></div>`;
 /**
+ * Phase 13 (judge round 10, a health P0): an end line that is a safety check (core/tree.ts, `alert`), as a red box over
+ * the next question: the line, then the call button full width as the main action, then the way to the list.
+ */
+export const nowAlert = (line: string, number: string, guess = false) => `<div class="urgent now-alert" id="now-alert" role="alert">${ALERT}<div><b>${esc(line)}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, 'now-alert-guess')}</div></div>`;
+/**
  * Phase 9: while About them holds no number, the call boxes use the language setting's guess (core/redflag.ts,
  * localeNumber), and say so: "Is this your emergency number? Change it", which opens About them at the number.
  */

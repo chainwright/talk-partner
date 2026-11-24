@@ -28,9 +28,14 @@ export interface Step {
   next: string[];
   /** What the carer does now, in one short line. '' only for a question the trees do not know (a typed one). */
   end: string;
+  /**
+   * Phase 13 (judge round 10, a health P0): the end line is a safety check the carer must see now, even while a next
+   * question is offered: it is drawn as a red box ABOVE "Next", never hidden behind it, and never under a green tick.
+   */
+  alert?: true;
 }
 
-type Raw = { next?: string[]; end: string };
+type Raw = { next?: string[]; end: string; alert?: true };
 type Node = Record<string, Raw>;
 
 const SNACK_MEAL = 'Would you like a snack or a meal?';
@@ -139,8 +144,9 @@ const TREE: Record<string, Node> = {
   'is it suddenly weak or numb yes or no': {
     yes: { end: 'Suddenly weak or numb: this can be a stroke. Call {number} now, and note the time it started.' },
     // (phase 12b, judge round 9b, the SLP's seat: one wrong "no" must not stop the stroke check; the carer checks it)
-    no: { next: [HOW_BAD], end: '{They} pointed to no. A yes or no can be wrong after a stroke: check it yourself now. Ask {them} to lift both arms and smile. If one side drops or the face droops, call {number} now.' },
-    'not sure': { next: [HOW_BAD], end: 'Not sure: ask {them} to lift both arms and smile. If one side drops, call the emergency number now.' },
+    // (phase 13, judge round 10: the line was hidden while "Next: How bad is the pain?" was offered; it is now a red box above it)
+    no: { next: [HOW_BAD], alert: true, end: '{They} pointed to no. A yes or no can be wrong after a stroke: check it yourself now. Ask {them} to lift both arms and smile. If one side drops or the face droops, call {number} now.' },
+    'not sure': { next: [HOW_BAD], alert: true, end: '{They} pointed to not sure. Check it yourself now: ask {them} to lift both arms and smile. If one side drops or the face droops, call {number} now.' },
   },
   // (the card keeps the question's first part as what was asked: "Which side?")
   'which side': {
@@ -474,7 +480,7 @@ export function after(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: st
   const asked = new Set([...chain, card.asked].map(head));
   const deep = chain.length >= TREE_DEPTH;
   const next = deep ? [] : (raw.next ?? []).flatMap((q) => (q.startsWith('@') ? own(q, profile) : [q])).filter((q, i, all) => !asked.has(head(q)) && all.indexOf(q) === i).slice(0, 3);
-  return { next, end };
+  return { next, end, ...(raw.alert ? { alert: true as const } : {}) };
 }
 
 /** Every end line of the table, with the person's name put in (for the grammar test: no "them can", "them is"). */

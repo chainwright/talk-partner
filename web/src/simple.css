@@ -221,6 +221,9 @@
 
 .simple .chose.out { border-color: var(--field); background: var(--panel); }
 .simple .chose.out .sg { color: var(--muted); }
+/* (phase 13) an answer whose end line is a safety check: no tick, the alert sign, the red border */
+.simple .chose.alert { border-color: var(--no); background: var(--panel); }
+.simple .chose.alert .sg { color: var(--no); }
 .simple .next-steps { display: grid; gap: 10px; }
 .simple .btn.ask-next { justify-content: flex-start; text-align: left; }
 .simple .who-form { display: grid; gap: 6px; font-size: 16px; }
@@ -562,6 +565,8 @@
 .simple .urgent-acts .btn.call { min-height: 52px; padding: 6px 16px; font-size: 19px; width: auto; }
 .simple .urgent-acts .btn.quiet { width: auto; }
 .simple .ins .urgent { margin-top: 8px; }
+/* (phase 13) the safety check above "Next": the call button is the main button, full width, first */
+.simple .now-alert .urgent-acts .btn.call { width: 100%; justify-content: center; }
 .simple .ins-act { margin: 4px 0 0; font-size: 17px; font-weight: 700; }
 /* Read aloud: the carer's switch, and the button on the person's screen */
 .simple .speak { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 10px; align-items: center; border: 2px solid var(--line); background: var(--panel); border-radius: 14px; padding: 10px 12px; }

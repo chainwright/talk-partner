@@ -64,7 +64,7 @@ import { ABOUT_LEADS, aboutWhatCard, moreCard, moreChoices, moreSubject, outWays
 import { understoodBlock } from './phase7';
 import { aboutLearned, familyText, handoverText, riskyNotes } from '../../core/share';
 import { handoverLink, shareSheet } from './phase6';
-import { crisisBox, crisisScreen, fallBlock, hearButton, laterPainHtml, lowHelpLine, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenFirst, suddenLink, suddenScreen, urgentBox } from './phase5';
+import { crisisBox, crisisScreen, fallBlock, hearButton, laterPainHtml, lowHelpLine, nowAlert, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenFirst, suddenLink, suddenScreen, urgentBox } from './phase5';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
@@ -1831,7 +1831,7 @@ async function runNarrow(i: NarrowInput) {
  * What comes after this answer (core/tree.ts): the next questions and, at the end of a path, the line that says what
  * to do now. For a question the trees do not know (a typed one) the older follow-ups of core/topics.ts stand.
  */
-function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: string } {
+function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: string; alert?: true } {
   if (c.kind === 'needs' || c.kind === 'repair') return { follow: [], end: '' };
   // "What is it about?": the body leads to the body card and the first questions of "Body & care", a feeling to the feelings card
   if (c.aboutWhat) return { follow: out ? [] : ABOUT_LEADS[p.label] === 'body' ? [WHERE_HURTS, ...BODY_FIRST.filter((q) => q !== WHERE_HURTS)].slice(0, 3) : ABOUT_LEADS[p.label] === 'feeling' ? [FEEL_QUESTION] : [], end: '' };
@@ -1854,7 +1854,7 @@ function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: st
     return { follow: viaChoice.next, end: viaChoice.end };
   }
   const step = after(c, p.label, state.profile, state.chain.length ? state.chain : [c.asked], callNumber());
-  if (step.next.length || step.end) return { follow: step.next, end: step.end };
+  if (step.next.length || step.end) return { follow: step.next, end: step.end, ...(step.alert ? { alert: step.alert } : {}) };
   return { follow: out || p.role !== 'answer' ? [] : followUps(c, p.label, state.profile), end: '' };
 }
 
@@ -1867,12 +1867,15 @@ function simpleScreen(): string {
     const lead = c.aboutWhat && p.role === 'answer' ? ABOUT_LEADS[p.label] : undefined;
     const next = lead && lead !== 'body' && lead !== 'feeling' ? { act: 'more-like', label: P7.more.next(P7.more.ask[lead]) } : partnerActions(c, { less: false, hasAnswers: false }).find((a) => a.act === 'next' && !!c.pending) ?? null;
     // the way out of a card (not of the needs board, which has its own line, and not a way to try from the repair card)
-    const out = p.role === 'escape' && c.kind !== 'needs';
+    // (phase 13: "not sure" to a stroke sign is not a way out: its end line is a safety check, `alert`, and the pain questions follow)
+    const step0 = treeStep(c, p, p.role === 'escape' && c.kind !== 'needs');
+    const out = p.role === 'escape' && c.kind !== 'needs' && !step0.alert;
+    const alertHtml = step0.alert ? nowAlert(step0.end, callNumber(), numberGuess()) : '';
     screen = answeredScreen({
       name, label: p.label, question: c.kind === 'needs' ? '' : c.asked, more: state.more, next, out, hasAnswers: state.answers.length > 0,
       afterHtml: `${afterAnswer(c, p, 'btn')}${c.photoTalk ? `<a class="btn" id="pt-back" href="#/phototalk">${P4.photo.questions}</a>` : ''}`,
       ...(() => {
-        const step = treeStep(c, p, out);
+        const step = step0;
         // a shorter way, as a suggestion: the usual side of the next either-or, asked first (the full question stays)
         const sc = learns() && step.follow[0] && !careAnswer(step.follow[0], '', careTopic(c)) ? shortcut(state.history, step.follow[0], state.forgotten) : null;
         return { ...step, shortcut: sc ? { q: sc.q, line: sc.line, of: step.follow[0], label: sc.usual.label } : null };
@@ -1884,7 +1887,9 @@ function simpleScreen(): string {
       invite: state.inviteFor === c && !state.inviteOff,
       today: state.history.filter((h) => h.at >= pageStart).slice(-5).reverse().map((h) => ({ q: h.q, label: h.label })),
       made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),
-      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), state.health.helpline ?? '', callNumber()) : ''}${turnHtml()}`,
+      alertHtml,
+      // (the red box with the call button stands over the answer; with a safety-check alert it is that alert's, below)
+      leadHtml: `${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), state.health.helpline ?? '', callNumber()) : ''}${turnHtml()}`,
       outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
       // after the way out: the ways to find out what it is, in the rules' order; a step the rules make comes first
       ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),

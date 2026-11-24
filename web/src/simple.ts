@@ -37,6 +37,7 @@ export const SIGN = {
   grid: sign('<rect x="14" y="14" width="28" height="28" rx="6"/><rect x="54" y="14" width="28" height="28" rx="6"/><rect x="14" y="54" width="28" height="28" rx="6"/><rect x="54" y="54" width="28" height="28" rx="6"/>'),
   person: sign('<circle cx="48" cy="30" r="14"/><path d="M20 84c2-18 14-28 28-28s26 10 28 28"/>'),
   tick: sign('<path d="M20 50l18 18 38-40"/>'),
+  alert: sign('<path d="M48 12L88 80H8z"/><path d="M48 38v20"/><circle cx="48" cy="68" r="2" fill="currentColor"/>'),
   out: sign('<circle cx="48" cy="48" r="36"/><path d="M36 38c0-8 5-13 12-13s12 5 12 12c0 9-12 9-12 19"/><circle cx="48" cy="69" r="2" fill="currentColor"/>'),
   net: sign('<path d="M14 40a50 50 0 0168 0M26 54a32 32 0 0144 0M38 68a14 14 0 0120 0"/><circle cx="48" cy="80" r="2" fill="currentColor"/>'),
   spark: sign('<path d="M48 10l9 27 27 9-27 9-9 27-9-27-27-9 27-9z"/>'),
@@ -453,6 +454,12 @@ export interface AnsweredModel {
   leadHtml?: string;
   /** After the way out: the first-letter helper's button or buttons (web/src/phase4.ts), drawn by main.ts. */
   outExtra?: string;
+  /**
+   * Phase 13 (judge round 10, a health P0): the end line is a safety check (core/tree.ts, `alert`): main.ts draws it
+   * as a red box with the call button (web/src/phase5.ts, nowAlert). It stands ABOVE "Next" and replaces the green
+   * "Now:" line, and the answer above it carries no tick.
+   */
+  alertHtml?: string;
 }
 
 /** They answered: what they chose, "Ask another question" as the main button, and the next step where there is one. */
@@ -467,7 +474,7 @@ export function answeredScreen(m: AnsweredModel): string {
   const nextBtn = lead ? `<button type="button" class="btn primary ask-next" id="next-q" data-q="${esc(m.follow[0])}" data-next="1"><span><small>${S.nextLabel}</small>${esc(m.follow[0])}</span></button>`
     : tryMain ? `<button type="button" class="btn primary ask-next" id="next-q" data-q="${esc(m.tryNext!)}"><span><small>${S.nextLabel}</small>${esc(m.tryNext!)}</span></button>` : '';
   const another = `<button type="button" class="btn${m.next || lead || m.out ? '' : ' primary'}" id="another" data-act="new">${lead ? S.anotherElse : S.another}</button>`;
-  const end = m.end && !lead ? `<p class="do-now" id="do-now">${SIGN.tick}<span><small>${S.doNow}</small>${esc(m.end)}</span></p>` : '';
+  const end = m.alertHtml ? m.alertHtml : m.end && !lead ? `<p class="do-now" id="do-now">${SIGN.tick}<span><small>${S.doNow}</small>${esc(m.end)}</span></p>` : '';
   // the way out was chosen: what to do now, in order of how often it helps (never a dead end)
   const online = m.narrow === 'cloudOn' || m.narrow === 'ask';
   const narrow = m.narrow ? `<button type="button" class="btn narrow" id="narrow" data-act="narrow" ${m.narrow === 'offline' ? 'disabled' : ''}>${SIGN.spark}<span>${online ? S.narrow.goOnline : S.narrow.go}</span></button>
@@ -500,7 +507,7 @@ export function answeredScreen(m: AnsweredModel): string {
   ${navBar({ back: true })}
   <div class="col">
     ${m.leadHtml ?? ''}
-    <div class="chose${m.out ? ' out' : ''}" id="chose" role="status">${m.out ? SIGN.out : SIGN.tick}<div>${m.question ? `<span class="asked" id="chose-q">${esc(m.question)}</span>` : `<span class="muted small">${esc(S.choseNeed(m.name))}</span>`}<b id="chose-a">${esc(big)}</b></div></div>
+    <div class="chose${m.alertHtml ? ' alert' : m.out ? ' out' : ''}" id="chose" role="status">${m.alertHtml ? SIGN.alert : m.out ? SIGN.out : SIGN.tick}<div>${m.question ? `<span class="asked" id="chose-q">${esc(m.question)}</span>` : `<span class="muted small">${esc(S.choseNeed(m.name))}</span>`}<b id="chose-a">${esc(big)}</b></div></div>
     ${m.guardHtml ?? ''}
     ${m.afterHtml}
     ${end}
