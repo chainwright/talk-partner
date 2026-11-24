@@ -2546,13 +2546,19 @@ def phase6(browser, url, live):
     now = datetime.datetime.now()
     at = lambda d, h, m: int(datetime.datetime.combine(datetime.date.today() - datetime.timedelta(days=d), datetime.time(h, m)).timestamp() * 1000)
     early = lambda h, m: at(0, h, m) if (h, m) < (now.hour, now.minute) else None
+    # (24.11.2026) the worst cases sit 23 h ago, so they are "yesterday" and inside "the last 24 hours" at any hour
+    # except 23:00-23:59 local, when 23 h ago is already today; fixed clock times made this check fail after 21:00.
+    base = now - datetime.timedelta(hours=23)
+    rel = lambda mins: int((base + datetime.timedelta(minutes=mins)).timestamp() * 1000)
+    x2_hm = (base + datetime.timedelta(minutes=1)).strftime('%H:%M')
+    x4_hm = (base + datetime.timedelta(minutes=30)).strftime('%H:%M')
     extra = [
-        {'id': 'x1', 'at': at(1, 21, 0), 'kind': 'answer', 'q': 'Are you in pain?', 'label': 'yes', 'topic': 'body'},
-        {'id': 'x2', 'at': at(1, 21, 1), 'kind': 'answer', 'q': 'Where does it hurt?', 'label': 'chest', 'topic': 'body'},
-        {'id': 'x3', 'at': at(1, 21, 2), 'kind': 'answer', 'q': 'How bad is the pain?', 'label': 'quite bad', 'topic': 'body'},
-        {'id': 'x4', 'at': at(1, 22, 30), 'kind': 'log', 'log': 'fall', 'label': 'fall: hit head', 'topic': 'body'},
-        {'id': 'x5', 'at': at(1, 23, 0), 'kind': 'log', 'log': 'tablets', 'label': 'tablets', 'topic': 'body'},
-        {'id': 'x6', 'at': at(1, 23, 5), 'kind': 'log', 'log': 'drank', 'label': 'drank', 'topic': 'food'},
+        {'id': 'x1', 'at': rel(0), 'kind': 'answer', 'q': 'Are you in pain?', 'label': 'yes', 'topic': 'body'},
+        {'id': 'x2', 'at': rel(1), 'kind': 'answer', 'q': 'Where does it hurt?', 'label': 'chest', 'topic': 'body'},
+        {'id': 'x3', 'at': rel(2), 'kind': 'answer', 'q': 'How bad is the pain?', 'label': 'quite bad', 'topic': 'body'},
+        {'id': 'x4', 'at': rel(30), 'kind': 'log', 'log': 'fall', 'label': 'fall: hit head', 'topic': 'body'},
+        {'id': 'x5', 'at': rel(40), 'kind': 'log', 'log': 'tablets', 'label': 'tablets', 'topic': 'body'},
+        {'id': 'x6', 'at': rel(45), 'kind': 'log', 'log': 'drank', 'label': 'drank', 'topic': 'food'},
     ]
     entries = [e for e in entries if e['at'] <= time.time() * 1000] + extra
     history = [{'q': e['q'], 'topic': '', 'label': e['label'], 'at': e['at']} for e in entries if e['kind'] == 'answer' and e['id'].startswith('w')]
@@ -2655,7 +2661,7 @@ def phase6(browser, url, live):
     page.locator('#share-family').click()
     page.wait_for_selector('#share-sheet')
     today = page.evaluate("document.querySelector('#share-text').textContent")
-    check('A, worst case, the Today tab (the chest pain and the fall were yesterday): the text is about today, and still carries this week\'s lines and the call sentence', today.split('\n')[1].startswith('Call 911 now if this is new or sudden') and f"Frank's diary, today ({name(6)})." in today and 'WHAT STANDS OUT (the last 7 days)' in today and 'Pain in the head or the chest was chosen' in today and '21:01' not in today, today[:400])
+    check('A, worst case, the Today tab (the chest pain and the fall were yesterday): the text is about today, and still carries this week\'s lines and the call sentence', today.split('\n')[1].startswith('Call 911 now if this is new or sudden') and f"Frank's diary, today ({name(6)})." in today and 'WHAT STANDS OUT (the last 7 days)' in today and 'Pain in the head or the chest was chosen' in today and x2_hm not in today, today[:400])
     page.locator('#share-cancel').click()
     page.wait_for_function("!document.querySelector('#share-sheet')")
 
@@ -2715,7 +2721,7 @@ def phase6(browser, url, live):
     fall_i = [i for i, x in enumerate(since) if x['t'].startswith('Falls:')][0]
     page.locator(f'.src-toggle[data-src=since-{fall_i}]').click()
     page.wait_for_selector(f'#src-since-{fall_i}')
-    check('D, the visit page: the falls line opens to the fall, with its time and the blow to the head', 'Fall Noted: a blow to the head.' in text(page, f'#src-since-{fall_i}') and '22:30' in text(page, f'#src-since-{fall_i}'))
+    check('D, the visit page: the falls line opens to the fall, with its time and the blow to the head', 'Fall Noted: a blow to the head.' in text(page, f'#src-since-{fall_i}') and x4_hm in text(page, f'#src-since-{fall_i}'))
     check('D, the visit page: the call box is still the first thing on the page', text(page, '#visit-page').startswith('Call 911 now if this is new or sudden.'))
     screen_checks(page, 'D: the visit page with a line opened')
     page.locator('#since').scroll_into_view_if_needed()
