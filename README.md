@@ -114,6 +114,42 @@ regression set, not a held-out test, and not a trial with people. The cloud leg 
 App Check debug provider registered for development; on the hosted copy App Check needs reCAPTCHA in a normal Chrome.
 The "Find more choices" request was not part of this run (it is the narrowing request; see the table above).
 
+### Phase 16 (a branch, waiting for the owner's yes; the hosted copy is unchanged): "Ask in your own words", measured
+**The first action on the first screen is now a field: the carer types the question as they would say it.** The
+words go through the same step as every typed question (`core/pipeline.ts`): Gemini Nano on a laptop that has it
+(`ONLY_ON_DEVICE`, About them in the prompt, nothing sent), else the cloud (`PREFER_IN_CLOUD` with `onDeviceParams`)
+after the consent sheet's yes, with the names you listed swapped out. Two rules stand around it (`core/ownwords.ts`):
+words about pain, the body, a need, feelings, a warning sign or a crisis never reach a model (the rules make the card,
+with one line saying why and the call box; no "Find more", no Read aloud), and when the AI cannot help (the carer's
+"No, not now", offline, App Check refusing the browser, a failed call, no AI on the copy) the rules' best card for the
+words stands in place of "No card", labelled "Made by the app's rules (no AI)". The field is typed only: the app's
+microphone sends a recording to a model before any rule could read it, so it is not on this form. The topics follow
+as "Or pick a topic".
+
+Measured on 24 Nov 2026 with `node scripts/eval-heldout.mjs --own` (reports in `devlog/evidence_phase16/eval/`): the
+18 open questions of `eval/heldout_r2.json` (`--open`) and 10 everyday questions written the way a carer says them
+(`eval/phase16_everyday.json`, labelled before the first run; one is about back pain on purpose). The sample family,
+the simple view at 390 x 844, cloud help off, so every cloud card went through the sheet's "Just this once"; on the
+device leg the sheet's "No, not now" was pressed when it came up.
+
+| "Ask in your own words" | Rules alone (no model) | On this computer: Gemini Nano, `ONLY_ON_DEVICE` | Online: `PREFER_IN_CLOUD`, no Nano |
+|---|---|---|---|
+| 18 open questions: a card, never a blank "No card" | 18/18 | 18/18 | 18/18 |
+| 18 open questions: the card matched our label | 0/18 (18 rules' best cards, which answer a nearer question) | **15/18** | **13/18** |
+| 18 open questions: made by an AI (the SDK's `inferenceSource`) | 0/18 | 18/18 | 17/18 (1 rules' best card) |
+| 10 everyday questions: the card matched our label | 2/10 | **8/10** | **10/10** |
+| 10 everyday questions: made by an AI | 0/10 | 6/10 (2 rules' best cards after "No, not now") | 8/10 |
+| kept from every model by the guard (the back pain) | 1/10 | 1/10 | 1/10 |
+| made by the rules from the words (the either-or) | 1/10 | 1/10 | 1/10 |
+| median time from submit to card (18 / 10) | 1.3 ms / 3 ms, Node | 3.7 s / 4.0 s | 1.3 s / 1.3 s, sheet tap included |
+| hosts other than the app's own | none | none | the AI Logic host, App Check, reCAPTCHA |
+
+**Limits.** One run per leg; the labels are ours (the everyday set was written by us, not by carers); not a trial
+with people. The device leg ran on the production build, the cloud leg on the dev server with the App Check debug
+provider, both at `1972661` with later uncommitted changes in the working copy (the reports say so); on the hosted copy
+App Check needs reCAPTCHA in a normal Chrome. "Matched" scores a rules' best card as a miss, because it answers the
+nearest ready question, not the one typed.
+
 The same question through the two steps, in our recorded run: "What do you want to do this weekend?" gives
 *lake / church* on this computer (the family's own places, read from About me by Gemini Nano; nothing sent) and
 *stay home / go out* from the cloud, which gets the question only. The details are under
@@ -1191,7 +1227,7 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `core/pipeline.ts:743` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:861` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:891` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:1139` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
+| `web/src/main.ts:1142` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all, and since 17 Nov neither does any either-or whose two options the code reads whole. Every cut is visible per card in "Why this card".
