@@ -255,21 +255,3 @@ describe('FirebaseEngine: the voice step', () => {
     expect(rec.calls.map((c) => c.mode)).toEqual(['prefer_in_cloud', 'only_in_cloud', 'only_in_cloud']);
   });
 });
-
-describe('FirebaseEngine: the letter step on this device (phase 18b)', () => {
-  it('runs ONLY_ON_DEVICE on the private app, without App Check, with the letter step\'s instructions and schema (each word with its kind)', async () => {
-    const { LETTER_SYSTEM_PROMPT, LETTER_SCHEMA } = await import('../../core/prompt');
-    answers.only_on_device = { text: '{"kind":"food","words":["stew","steak","steamed pudding","stir fry"],"kinds":["food","food","food","food"]}', source: 'on_device' };
-    const e = new FirebaseEngine(CFG);
-    const r = await e.letterDevice('ABOUT … Partner asks: x');
-    expect(r).toMatchObject({ source: 'on-device' });
-    expect(rec.calls).toEqual([{ mode: 'only_on_device', prompt: 'ABOUT … Partner asks: x' }]);
-    expect(rec.apps).toEqual(['private-on-device']);
-    expect(rec.appChecks).toEqual([]);
-    expect(rec.models[0].params.inCloudParams).toBeUndefined();
-    expect(rec.models[0].params.onDeviceParams.createOptions.initialPrompts[0].content[0].value).toBe(LETTER_SYSTEM_PROMPT);
-    expect(rec.models[0].params.onDeviceParams.promptOptions.responseConstraint).toBe(LETTER_SCHEMA);
-    answers.only_on_device = { text: '{}', source: 'in_cloud' };
-    await expect(new FirebaseEngine(CFG).letterDevice('x')).rejects.toThrow(/didn't run on this computer/);
-  });
-});

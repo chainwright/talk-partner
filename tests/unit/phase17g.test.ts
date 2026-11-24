@@ -20,8 +20,6 @@ class Fake implements Engine {
   async deviceStatus(): Promise<DeviceStatus> { return 'available'; }
   async prepareDevice() {}
   async runDevice(p: string): Promise<ModelResult> { this.device.push(p); return { text: JSON.stringify({ topic: '', kind: 'choice', choices: this.words }), source: 'on-device', ms: 3 }; }
-  // (phase 18b) the letter step on this device: each word with its kind ("pain" is the body, the rest food)
-  async letterDevice(p: string): Promise<ModelResult> { this.device.push(p); return { text: JSON.stringify({ kind: 'food', words: this.words, kinds: this.words.map((w) => (w === 'pain' ? 'comfort' : 'food')) }), source: 'on-device', ms: 3 }; }
   cloudRequest(q: string) { return cloudTextRequest(q); }
   async runCloud(q: string): Promise<ModelResult> { this.cloud.push(q); return { text: JSON.stringify({ words: this.words }), source: 'in-cloud', ms: 3 }; }
 }
@@ -63,20 +61,17 @@ describe('G2. the first letter stays inside the topic', () => {
 describe('G3. letter by letter: the guess narrows', () => {
   it('the rules filter the topic\'s words by the letters so far: P, PI, PIZ', () => {
     const at = (letter: string) => letterWords({ asked: 'Would you like a snack or a meal?', letter, rejected: [], topic: 'food' }, EMPTY_PROFILE);
-    // (phase 18b: the longer food list has pickles, pineapple and pitta under PI too)
-    expect([...at('PI')].sort()).toEqual(['pickles', 'pie', 'pineapple', 'pitta', 'pizza']);
+    expect([...at('PI')].sort()).toEqual(['pie', 'pizza']);
     expect(at('PIZ')).toEqual(['pizza']);
   });
   it('two letters or more: the AI is asked with the topic and the letters (on this device), its words first, every word starts with the letters', async () => {
-    // (phase 18b: "pickles" is a rules word now; "pinto beans" is the model's own, of kind food)
-    const e = new Fake(['pizza', 'pinto beans', 'pie', 'pain']);
+    const e = new Fake(['pizza', 'pickles', 'pie', 'pain']);
     const c = await letterCard({ asked: 'Would you like a snack or a meal?', letter: 'PI', rejected: [], topic: 'food' }, env(e, { device: true }, SAMPLE_PROFILE));
     expect(e.device).toHaveLength(1);
     expect(e.device[0]).toMatch(/It starts with the letters "PI", in this order\./);
     expect(c.letter?.by).toBe('device');
     for (const w of labels(c)) expect(w.startsWith('pi'), w).toBe(true);
-    expect(labels(c)).toContain('pinto beans');
-    expect(labels(c)).not.toContain('pain');
+    expect(labels(c)).toContain('pickles');
   });
   it('online after the yes: the cloud text holds the question with names swapped, the letters and the topic, nothing else', async () => {
     const t = letterCloudText('What would you like for lunch?', 'PI', SAMPLE_PROFILE, 'food');

@@ -26,22 +26,14 @@ export const LETTER_SYSTEM_PROMPT = `You help a family member talk with an adult
 Return JSON:
 - "kind": what the conversation is about, one of: ${LETTER_KINDS.join(', ')}.
 - "words": exactly 4 different everyday words or short phrases, 1 or 2 words each, in lower case, that could be the answer AND start with the given letter. Plain words an older adult uses at home.
-- "kinds": exactly 4, the kind of each word in "words", in the same order, one of: ${LETTER_KINDS.join(', ')}.
-When the text says which words ("Only food and drink words"), every word must be of that kind: no other kind of word.
 No names of people, no brands, no alcohol, tobacco or medicines. Never answer for the person.`;
-/**
- * Phase 18b (a live walk with Gemini Nano, 24 Nov 2026: "strawberries, steam, stir" under ST in Food & drink): the kind
- * of EACH word, from the same closed list, so code can drop a word of another kind inside a known topic
- * (core/letter.ts, topicFit). The model only names it; code still checks the word against the app's own lists.
- */
 export const LETTER_SCHEMA = {
   type: 'object',
   properties: {
     kind: { type: 'string', enum: LETTER_KINDS },
     words: { type: 'array', items: { type: 'string' }, minItems: 4, maxItems: 4 },
-    kinds: { type: 'array', items: { type: 'string', enum: LETTER_KINDS }, minItems: 4, maxItems: 4 },
   },
-  required: ['kind', 'words', 'kinds'],
+  required: ['kind', 'words'],
 } as const;
 
 export const SYSTEM_PROMPT = `You help a family member talk with an adult who has aphasia after a stroke. Intelligence is intact; words are hard.

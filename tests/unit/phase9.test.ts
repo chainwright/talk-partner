@@ -372,15 +372,13 @@ describe('8. P1 the cloud letter step: its own schema (the kind as an enum, exac
     expect(letterWordsOf('{"topic":"x","kind":"choice","choices":["kettle","kiwi"]}')).toEqual(['kettle', 'kiwi']);
     expect(letterWordsOf('not json')).toEqual([]);
   });
-  // (phase 18b: the longer lists give K words of their own (kebab, ketchup, kippers), so the case is U, which still has
-  // none; and a word of no drink ("urn", here with no kind named) is dropped inside the drink question, as "kettle" now would be)
-  it('worst case of round 8 (a letter with no word): 4 words, those that do not start with it or are not of the topic are dropped by code, the rest make the card; the card step is not asked', async () => {
-    const e = new Letters(['urn', 'tea', 'unsweetened tea', 'coffee']);
-    const c = await letterCard({ asked: 'Would you like tea or coffee?', letter: 'U', rejected: ['tea', 'coffee'] }, { profile: EMPTY_PROFILE, support: 'more', engine: e, allowCloud: true, deviceReady: false });
+  it('worst case of round 8 (K gave no word): 4 words, those that do not start with K are dropped by code, the rest make the card; the card step is not asked', async () => {
+    const e = new Letters(['kettle', 'tea', 'kiwi juice', 'coffee']);
+    const c = await letterCard({ asked: 'Would you like tea or coffee?', letter: 'K', rejected: ['tea', 'coffee'] }, { profile: EMPTY_PROFILE, support: 'more', engine: e, allowCloud: true, deviceReady: false });
     expect(e.viaCard).toBe(0);
-    expect(e.sent).toEqual([letterCloudText('Would you like tea or coffee?', 'U', EMPTY_PROFILE).text]);
-    expect(c.choices.filter((x) => x.role === 'answer').map((x) => x.label)).toEqual(['unsweetened tea']);
-    expect(c.why?.dropped.map((d) => d.label)).toEqual(expect.arrayContaining(['tea', 'coffee', 'urn']));
+    expect(e.sent).toEqual([letterCloudText('Would you like tea or coffee?', 'K', EMPTY_PROFILE).text]);
+    expect(c.choices.filter((x) => x.role === 'answer').map((x) => x.label)).toEqual(['kettle', 'kiwi juice']);
+    expect(c.why?.dropped.map((d) => d.label)).toEqual(expect.arrayContaining(['tea', 'coffee']));
     expect(c.cloudPayload).toBe(JSON.stringify(letterRequest(e.sent[0]), null, 2));
     expect(c.letter?.by).toBe('cloud');
   });
