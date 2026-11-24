@@ -221,3 +221,10 @@ describe('a browser App Check refuses (the failure path)', () => {
     expect(main).toContain('card.blocked !== C.notes.cloudCheckBlocked && card.blocked !== C.notes.narrowCheckBlocked && sheetWanted(card');
   });
 });
+
+describe('the card opens at its top', () => {
+  it('a tapped question (a topic, "Next: …") opens its card scrolled to the top, so step 1, the main button and "Find more choices" are on the first screen', () => {
+    const main = readFileSync(join(__dirname, '..', '..', 'web/src/main.ts'), 'utf8');
+    expect(main).toContain('state.lastQuestion = t.dataset.q; void make(t.dataset.q).then(() => { if (simpleView() && state.card && !state.busy && !state.sheet) window.scrollTo(0, 0); }); return; }');
+  });
+});

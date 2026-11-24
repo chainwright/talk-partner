@@ -2915,7 +2915,7 @@ app.addEventListener('click', (ev) => {
   if (t.dataset.q && t.dataset.short) { if (t.dataset.of && !state.chain.includes(t.dataset.of)) state.chain = [...state.chain, t.dataset.of]; chained = true; state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
   // (a question that is not a next step of the tree starts a new conversation: the call box of the last one goes)
   if (t.dataset.q && !t.dataset.next && !t.dataset.short) { p5.urgent = false; p5.signNow = false; p5.red = null; }
-  if (t.dataset.q) { state.chain = !t.dataset.next ? [t.dataset.q] : state.chain.includes(t.dataset.q) ? state.chain : [...state.chain, t.dataset.q]; chained = true; state.lastQuestion = t.dataset.q; void make(t.dataset.q); return; }
+  if (t.dataset.q) { state.chain = !t.dataset.next ? [t.dataset.q] : state.chain.includes(t.dataset.q) ? state.chain : [...state.chain, t.dataset.q]; chained = true; state.lastQuestion = t.dataset.q; void make(t.dataset.q).then(() => { if (simpleView() && state.card && !state.busy && !state.sheet) window.scrollTo(0, 0); }); return; }
   if (t.closest('#person')) onPersonTap(t);
 });
 app.addEventListener('submit', (ev) => {

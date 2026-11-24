@@ -71,7 +71,7 @@ describe('the questions asked most often, for the one-tap chips above the questi
     const chips = main.slice(main.indexOf('function againChips()'), main.indexOf('function partnerScreen()'));
     expect(chips).toContain('topQuestions(state.history, 3)');
     expect(chips).not.toMatch(/label|lastAnswer|answerCounts/); // the chip never carries what was answered
-    expect(main).toMatch(/if \(t\.dataset\.q\) \{[^\n]*state\.lastQuestion = t\.dataset\.q; void make\(t\.dataset\.q\); return; \}/);
+    expect(main).toMatch(/if \(t\.dataset\.q\) \{[^\n]*state\.lastQuestion = t\.dataset\.q; void make\(t\.dataset\.q\)[^\n]*; return; \}/);
   });
 });
 
