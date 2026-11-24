@@ -13,9 +13,9 @@ the Institute's words).
 
 | Criterion | Section | Proof |
 |---|---|---|
-| Technological implementation | [Where the AI runs](#where-the-ai-runs-firebase-ai-logic-hybrid-inference), [How we built it](#how-we-built-it-one-ai-logic-call-three-legs-measured) | the data classes routed in code (`web/src/ai/firebaseEngine.ts`); the three-leg table (rules 0/18, Gemini Nano 16/18, online 12/18; our labels, dev server); "Find more choices" at taps 3 and 4 on a phone |
-| Design | [For judges: 60 seconds](#for-judges-60-seconds), [Screens](#screens) | the person's screen (big pictures, "So: tea. Right?"); Back one step at a time (`scripts/phase12-walk.py`) |
-| Potential impact | the first lines, [Sources](#sources-for-the-first-lines) | NIDCD, Haley and Hardy 2025, the Aphasia Institute; every safety line rules-made and tested on its worst case (`tests/unit/phase13.test.ts`, `tests/unit/phase15.test.ts`); no trial with people yet |
+| Technological implementation | [Where the AI runs](#where-the-ai-runs-firebase-ai-logic-hybrid-inference), [How we built it](#how-we-built-it-one-ai-logic-call-three-legs-measured) | the data classes routed in code (`web/src/ai/firebaseEngine.ts`); the phase-16 table ("Ask in your own words": rules 0/18, Gemini Nano 15/18, online 13/18; our labels, dev server); the AI step at taps 2 and 3 on a phone; the phase-17 letter-by-letter table (10 cases) |
+| Design | [For judges: 60 seconds](#for-judges-60-seconds), [Screens](#screens) | the person's screen (big pictures, "So: tea. Right?"); Back one step at a time in the simple view (`scripts/phase12-walk.py`; the phone's Back does nothing in the full view) |
+| Potential impact | the first lines, [Sources](#sources-for-the-first-lines) | NIDCD, Haley and Hardy 2025, the Aphasia Institute; every safety line rules-made; the health lines judge rounds found have a test on their worst case (`tests/unit/phase13.test.ts`, `phase15.test.ts`, `phase17.test.ts`); no clinician has read them; no trial with people yet |
 | Quality of the idea | the paragraph below, [Look-alikes, named](#look-alikes-named) | it coaches the partner, not the person; the AI is split by data class, not by device |
 
 After a stroke, many adults with aphasia understand what is said but can't find the words to answer.
@@ -44,7 +44,7 @@ Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a 
 
 ## Where the AI runs (Firebase AI Logic hybrid inference)
 **Family data → `ONLY_ON_DEVICE`; the stripped question → `PREFER_IN_CLOUD`, which falls back to Gemini Nano when
-offline on a desktop Chrome that has it (on a phone there is no fallback and no card); `inferenceSource` drives every badge.** Every model call goes through Firebase AI Logic, the
+offline on a desktop Chrome that has it (on a phone, offline or refused, "Ask in your own words" shows the rules' nearest card, labelled "Made by the app's rules (no AI)"); `inferenceSource` drives every badge.** Every model call goes through Firebase AI Logic, the
 optional microphone included (it sends the partner's recorded question to Gemini, `ONLY_IN_CLOUD`, for its words). The
 code is in **`web/src/ai/firebaseEngine.ts`**. See [Added on 17 Nov](#added-on-17-nov-quick-needs-voice-input-feedback).
 
@@ -64,7 +64,7 @@ Android or iOS, and a carer mostly holds a phone. So on a phone the topic questi
 About them and "Today in short" are made by the app's rules with no AI, and a question the carer types that the rules
 cannot turn into choices (an open question) uses online help, asked for at that moment on a sheet that shows the exact
 line that would go. Home says this in one line under "See the AI at work" ("Phone: Google's AI, online, after your yes"), and the line
-under the question box says it again ("On this phone that AI is online (Google's): the app asks you first…"). Neither the narrowing step nor "Today in short" has been run against the real Gemini Nano yet: on the device both
+under the question box says it again ("Google's AI, online, after your yes. Google checks this browser first."). Neither the narrowing step nor "Today in short" has been run against the real Gemini Nano yet: on the device both
 are tested with scripted engines only. The narrowing step has two recorded runs through the real cloud model on
 localhost and none on the hosted copy (`CLAIMS.md`, rows 53 and 54).
 
@@ -114,12 +114,12 @@ regression set, not a held-out test, and not a trial with people. The cloud leg 
 App Check debug provider registered for development; on the hosted copy App Check needs reCAPTCHA in a normal Chrome.
 The "Find more choices" request was not part of this run (it is the narrowing request; see the table above).
 
-### Phase 16 (a branch, waiting for the owner's yes; the hosted copy is unchanged): "Ask in your own words", measured
+### Phase 16 (live since 24 Nov, build `21bb1e0`): "Ask in your own words", measured
 **The first action on the first screen is now a field: the carer types the question as they would say it.** The
 words go through the same step as every typed question (`core/pipeline.ts`): Gemini Nano on a laptop that has it
 (`ONLY_ON_DEVICE`, About them in the prompt, nothing sent), else the cloud (`PREFER_IN_CLOUD` with `onDeviceParams`)
 after the consent sheet's yes, with the names you listed swapped out. Two rules stand around it (`core/ownwords.ts`):
-words about pain, the body, a need, feelings, a warning sign or a crisis never reach a model (the rules make the card,
+words the guard's list recognises about pain, the body, a need, feelings, a warning sign or a crisis never reach a model (a word list: it can miss a wording; phase 17 widened it) (the rules make the card,
 with one line saying why and the call box; no "Find more", no Read aloud), and when the AI cannot help (the carer's
 "No, not for this question", offline, App Check refusing the browser, a failed call, no AI on the copy) the rules' best card for the
 words stands in place of "No card", labelled "Made by the app's rules (no AI)". The field is typed only: the app's
@@ -154,6 +154,65 @@ The same question through the two steps, in our recorded run: "What do you want 
 *lake / church* on this computer (the family's own places, read from About me by Gemini Nano; nothing sent) and
 *stay home / go out* from the cloud, which gets the question only. The details are under
 [Where the AI runs, in detail](#where-the-ai-runs-in-detail).
+
+### Phase 17 (the branch `phase17-r12`, waiting for the deploy; the live build is still `21bb1e0`): the fixes of judge round 12
+Judge round 12 (nine seats) found typed health questions that ended on a green tick, App Check's cold start eating the
+20 s wait on phones, a first screen that did not say who it is for, and stale lines in these texts. The owner's own
+test on his phone added three: a yes to "I would like to something?" ended there, the first letter left the topic
+(food, P: pain, priest, photos), and there was no second letter. Every change has a test that failed first at `main`
+(`tests/unit/phase17*.test.ts`, logs in `devlog/evidence_phase17/`).
+- **Typed health questions** (`core/redflag.ts` `healthOf`, `core/ownwords.ts` `ownAfter`). The guard's word lists now
+  take the chest, tightness and pressure, breathing, the face and the smile, an arm, a leg or a hand that feels wrong,
+  speech, sight, new confusion, "are you OK", "you look grey", pale, sick, dizzy, a fall, the blood sugar and a limb
+  pain: none of them reaches a model or the Read-aloud offer. A word list can still miss a wording. After an answer
+  the carer reads one red box with what to do, never a green tick: the chest on any answer but "no" says "call
+  [number] now, whatever the amount, even if it has happened before", then "How bad is the pain?"; a stroke sign
+  "yes" says call now; "no" or "not sure" is checked by the carer (smile, both arms); a limb pain asks "Is it
+  suddenly weak or numb?" first. Such an answer is tagged a warning: "For the next carer" leads with it, "Today in
+  short" files it under "Health" (and is written by the rules that day), "What stands out" and the visit page name it,
+  and the day gets no tip. The visit page says "call now, whatever the amount" for the head or the chest, and the
+  lines for others after "I can't go on" say "Take it seriously, every time", call first. A limb pain whose weakness
+  question was skipped still ends on the stroke check. The answer check never marks a request for company, a call or
+  a health answer, and never says "may be tired, try again later".
+- **App Check** (`web/src/main.ts` `warmCloud`, `web/src/ai/app.ts`). On a phone App Check starts when the question
+  field gets the cursor (reCAPTCHA checks the browser; no word of the question goes), never with Chrome's own AI and
+  never offline. Cloud requests use limited-use tokens (`useLimitedUseAppCheckTokens`, firebase 13.3.0). After a
+  refusal the rules' card stays and **Try Google's AI again** asks once more, with the same yes. **Not yet run on the
+  hosted copy or a real Android phone**; limited-use tokens were taken out on 17 Nov because every request then needs
+  its own attestation, and that risk stands (`LIMITED_USE_TOKENS` in `web/src/ai/firebaseEngine.ts` turns it off).
+- **The first screen**: "For you and someone with aphasia: you ask, hand them the phone, they point.", the block
+  "Type your question. We make picture answers." and the button "Make picture answers".
+- **Pictures and checks**: the back drawn from behind; one, two and three filled bars under the pain faces; "Change
+  it" opens the emergency number, focused; one call box when an alert carries its own; "So: your left arm. Is that
+  it?" beside a side, and "So: yes, you are in pain. Right?" for a yes or a no.
+- **The owner's phone test**: a yes or "not sure" to a typed "want / need / like something?" goes on to "Is it about
+  food or drink, people, or plans?"; the first letter stays inside the topic (`core/letter.ts` `TOPIC_WORDS`): after
+  "tea or coffee?" B gives the family's ginger biscuits, bread and banana (no longer Beth and Bo, who come for a
+  question about people or with no topic); **Add the next letter (P…)** narrows letter by letter, and for two
+  letters or more the AI is asked with the topic and the letters (on a laptop with Gemini Nano `ONLY_ON_DEVICE`; on a
+  phone online after the yes, names swapped), its words and the rules' in turn on the card. Never on the body,
+  feelings or a health question.
+
+Measured on 24 Nov 2026 (`devlog/evidence_phase17/eval/letters_run3.md`, commit `febbc8a`): ten letter cases in food,
+drink, places and people, labelled before the first run; the app's own `letterCard` and `FirebaseEngine` in a
+headless Chrome 157 with Gemini Nano, from the Vite dev server (the online leg with the App Check debug provider).
+
+| On the 10 cases | Rules alone | Gemini Nano, `ONLY_ON_DEVICE` | Online, `PREFER_IN_CLOUD` |
+|---|---|---|---|
+| the meant word on the card | 5/10 | 4/10 | 5/10 |
+| the same, other spelling counted | 5/10 | 4/10 | 6/10 |
+| a card with at least one word | 7/10 | 8/10 | 10/10 |
+| words added by an AI (`by` device / cloud) | 0/10 | 5/10 | 10/10 |
+| median time | 0 ms | 3781 ms | 1236 ms |
+
+**Counts** (the production build of phase 17 on `npx vite preview`, port 5179): `npm run check` 3237 unit tests; `e2e-simple.py` 1039/1039; `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` 552/552; `contrast-check.mjs` 144 of 144 pairs; `phase11-walk.py` 48/48; `phase12-walk.py` 631/631 (with the phase 17 screens at 360 and 390 px, light and dark: Back one step at a time, every way out followed; logs and the phase 17 shots in `devlog/evidence_phase17/`). Not run: `e2e:noconfig`, `update-check.py`, any hosted or headed run.
+
+**What this says.** On these ten cases the AI does not find the meant word more often than the rules: it adds words
+the topic list does not hold (it always gave a card online, 10/10 against 7/10), and its words can push the rules'
+right word off a three-word card (case 10). It is not yet the part a phone cannot do without. **Not done in this
+phase:** the AI's short question for the person's screen (item C of the round's plan: not built); a run of the cloud
+leg on the hosted copy; a headed live log at `21bb1e0` or later; the phone's Back in the full view; generic TV and
+music in the sample family; any trial with people or a clinician's read-through.
 
 Built for #BuildHybridAI 2026. Status on 18 Nov 2026, in three lines:
 - **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo> (the full view, in judge mode; the bare address opens the simple view for families, added 17 Nov and rebuilt the same evening around topics, the person's own screens and a how-to block: [Screens](#screens)). It can be installed to the home screen and opens with no connection. It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI), a microphone for the partner's question (through Firebase AI Logic, in the cloud) and a feedback form (Cloud Firestore), all untried by anyone they are for.
@@ -974,7 +1033,7 @@ did not carry weight in a judge's first minute. Each logic change has a test tha
   under the main one while Read aloud is off: the first tap opens the same sheet as before; after one yes the tap
   turns it on with no sheet. Off by default.
 - **Back and refusals.** A card waiting for the sheet's yes is no step of its own: Back from the "Find more choices" card made after the
-  yes lands on the card it was asked from (from the "See the AI at work" card it showed a leftover "No card" screen once in judge round 11), and "No, not now" goes there too. Where App Check refuses the browser, the
+  yes lands on the card it was asked from (phone Back on the "See the AI at work" sheet still lands on "No card for this one": judge rounds 11 and 12; not fixed), and "No, not now" goes there too. Where App Check refuses the browser, the
   screen says "Online help could not check this browser, so nothing was sent" and what to do; the sheet no longer comes
   back by itself (it did, after "something else", before). A tapped question now opens its card at the top (it kept
   the first screen's scroll: 580 px down at 360 px).
@@ -991,7 +1050,7 @@ walk with App Check refusing only); a hosted run of the cloud leg; any trial wit
 Judge round 11 (seven seats, one of them the honesty hound) found the sample family short of what the texts and the
 planned video show, and health lines in the notes for others softer than the screen. Each change has a test that
 failed on the round's build (`tests/unit/phase15.test.ts`, 25 tests). All of it is rules, fixed text and the screen;
-no model was called. Phase 15 waits for its deploy: the "Live:" lines name `479ce07`.
+no model was called. Phase 15 is live (first as `cf4aa33`, now inside `21bb1e0`).
 
 - **The sample family as the texts say.** Its diary fills from confirmed answers, needs and a stroke-sign "not sure",
   in its own store in memory (nothing reaches the device, the 23 Nov separation holds): "What stands out", the visit

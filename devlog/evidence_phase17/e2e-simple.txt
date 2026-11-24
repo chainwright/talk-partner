@@ -1,0 +1,1044 @@
+url: http://localhost:5179/
+browser: Chromium 148.0.7778.96 (headless)
+PASS  "/" on a first visit is the simple first screen, not the first-run page and not judge mode
+PASS  the simple view carries its own look (data-view="simple")
+PASS  first visit: the header is the hope line, with "them" and no default "him"
+PASS  first visit, top to bottom: your own words, the AI line, "Needs it now?", how it works, topics, the privacy line
+PASS  first visit: "Needs it now?" is right under "Ask in your own words", on the first screenful
+PASS  first visit: "How it works: 4 steps" is one highlighted line with "Write the key word big."
+PASS  first visit: "Show" opens four numbered steps, each with a picture
+PASS  first visit: the line "Wait. Count to ten. Don't answer for them." is visible in the steps
+PASS  first visit: no empty video slot and no walkthrough over the screen
+PASS  first visit: About them is not offered before the first card
+PASS  first visit: seven topics, closed, under "Or pick a topic"
+PASS  first visit: one plain AI line under the field: on this phone the AI is online and asks first; what never goes to an AI (phase 17 words)
+PASS  first visit: one small privacy line, "Nothing you asked has left this phone."; never "this computer"
+PASS  first visit: "How it works inside" is on it
+PASS  first visit: nothing technical (no status box, badge, byte count or judge mode), and the word "card" is not used
+PASS  first visit: every control is at least 24 x 24 px
+PASS  first visit: every button and stand-alone link is at least 44 px tall
+PASS  first visit: the main button is at least 60 px tall
+PASS  first visit: nothing runs off the side of the screen
+PASS  a topic opens its questions in place: six one-tap rows under a lead line
+PASS  no tile moves sideways or changes row partner when a topic opens (the panel goes under the row)
+PASS  every question row is at least 54 px tall
+PASS  first visit, a topic open: every control is at least 24 x 24 px
+PASS  first visit, a topic open: every button and stand-alone link is at least 44 px tall
+PASS  first visit, a topic open: the main button is at least 60 px tall
+PASS  first visit, a topic open: nothing runs off the side of the screen
+PASS  before handing over: "1 Say it out loud" with the line, "2 Turn the phone to them" with the main button
+PASS  before handing over: "Wait. Count to ten. Don't answer for them." is on the screen, in normal size, under the main button
+PASS  before handing over: the carer sees what they will see (the question and three choices), and how to come back
+PASS  before handing over: two short lines of advice at most (the "wait" line and one tip), the rest behind "More tips"
+PASS  "More tips": how to come back, the weak hand, "Hide the choices"; and it folds again
+PASS  before handing over, more tips open: every control is at least 24 x 24 px
+PASS  before handing over, more tips open: every button and stand-alone link is at least 44 px tall
+PASS  before handing over, more tips open: the main button is at least 60 px tall
+PASS  before handing over, more tips open: nothing runs off the side of the screen
+PASS  the top bar: "Back" and "Talk Partner / Home"
+PASS  before handing over: "We're stuck" and "Hide the choices" are on this screen
+PASS  before handing over: the screen itself says where the choices were made (rules on this phone, no AI, nothing sent)
+PASS  before handing over: "How was this made?" leads inside
+PASS  before handing over: every control is at least 24 x 24 px
+PASS  before handing over: every button and stand-alone link is at least 44 px tall
+PASS  before handing over: the main button is at least 60 px tall
+PASS  before handing over: nothing runs off the side of the screen
+PASS  We're stuck, pressed before any answer: five other ways, with the way back to the choices
+PASS  the other ways, carer's side: every control is at least 24 x 24 px
+PASS  the other ways, carer's side: every button and stand-alone link is at least 44 px tall
+PASS  the other ways, carer's side: the main button is at least 60 px tall
+PASS  the other ways, carer's side: nothing runs off the side of the screen
+PASS  the person's screen takes the whole screen, white
+PASS  the person: "Point to your answer", then the question itself, then the choices
+PASS  the person: no category word above the choices (no headline, no "drink")
+PASS  the person: one centred column, every choice as wide as the screen and at least 80 px tall, the way out last
+PASS  the person: each choice has its picture with the word under it
+PASS  the person: the question and the choices are one unit (the first choice starts right under the question)
+PASS  the person: nothing but the choices, the carer's labelled control and "Not now" can be pressed
+PASS  the person: nothing on the screen is animated
+PASS  the person's choices: every control is at least 24 x 24 px
+PASS  the person's choices: every button and stand-alone link is at least 44 px tall
+PASS  the person's choices: nothing runs off the side of the screen
+PASS  a tap on the carer's control does nothing: it needs a press and hold
+PASS  the check: "So: tea. Right?", the picture with its word, "Yes" above "No, something else"
+PASS  the person's check: every control is at least 24 x 24 px
+PASS  the person's check: every button and stand-alone link is at least 44 px tall
+PASS  the person's check: nothing runs off the side of the screen
+PASS  "No, something else" brings the choices back, with the way out among them
+PASS  the finish: "Thank you. Tea." and one big button, "Give the phone back"; no press-and-hold needed
+PASS  the person's finish: every control is at least 24 x 24 px
+PASS  the person's finish: every button and stand-alone link is at least 44 px tall
+PASS  the person's finish: nothing runs off the side of the screen
+PASS  after an answer: the question with its answer under it ("Would you like tea or coffee?" then "Tea"), never "said yes to"
+PASS  after an answer the tree leads: "Next: Would you like milk in it?" is the main button, the first one under the answer, and "Ask something else" stands under it
+PASS  after an answer: little on the screen: one line on what left ("Nothing was sent."), the rest behind "More"
+PASS  the top bar is on this screen too
+PASS  after an answer, "More" closed: every control is at least 24 x 24 px
+PASS  after an answer, "More" closed: every button and stand-alone link is at least 44 px tall
+PASS  after an answer, "More" closed: the main button is at least 60 px tall
+PASS  after an answer, "More" closed: nothing runs off the side of the screen
+PASS  after the first card: About them is offered, below the main button, never as the main button
+PASS  after an answer: today's answers, and "Today in short" written by the app's rules with a Copy button
+PASS  after an answer: says the answers are kept on this phone only, and where the choices were made
+PASS  after an answer: every control is at least 24 x 24 px
+PASS  after an answer: every button and stand-alone link is at least 44 px tall
+PASS  after an answer: the main button is at least 60 px tall
+PASS  after an answer: nothing runs off the side of the screen
+PASS  "Not now": the offer goes, and nothing else changes
+PASS  the next question is made by the rules: "Would you like milk in it?" yes / no / not sure
+PASS  the end of a path: "Now: Make it with milk.", and "Ask another question" is the main button again
+PASS  the end of a path: every control is at least 24 x 24 px
+PASS  the end of a path: every button and stand-alone link is at least 44 px tall
+PASS  the end of a path: the main button is at least 60 px tall
+PASS  the end of a path: nothing runs off the side of the screen
+PASS  after the first card the how-to block is one highlighted line at the top, and the topic is still open
+PASS  the field does not take the cursor (no keyboard over the topics on a phone)
+PASS  About them is now one small link at the foot
+PASS  returning visit, how-to folded: every control is at least 24 x 24 px
+PASS  returning visit, how-to folded: every button and stand-alone link is at least 44 px tall
+PASS  returning visit, how-to folded: the main button is at least 60 px tall
+PASS  returning visit, how-to folded: nothing runs off the side of the screen
+PASS  the fold is remembered across a reload
+PASS  "Show" opens the four steps again, and "Hide" folds them
+PASS  folded again
+PASS  three choices and the way out: still one column, all on a phone screen without scrolling
+PASS  the person's choices, three and the way out: every control is at least 24 x 24 px
+PASS  the person's choices, three and the way out: every button and stand-alone link is at least 44 px tall
+PASS  the person's choices, three and the way out: nothing runs off the side of the screen
+PASS  the way out is checked like any answer: "So: something else. Right?"
+PASS  after "something else": the screen says so, and no question is offered in its place (the tree's next question is not on this screen)
+PASS  after "something else": one line that says what to do, then the ways in order: more choices of the same kind (the rules), the AI (online, phase 12b: second), the first letter, "show or write it"; never a dead end
+PASS  after "something else": "More choices like these" says what comes next, and none of it was refused (tea, coffee; not water, juice or milk)
+PASS  after "something else": under "More": ask another question, the needs board, a new way; no question of another topic and no "Try"
+PASS  after "something else": an AI can narrow it down, and the screen says that on this phone it uses online help and asks first
+PASS  after "something else": every control is at least 24 x 24 px
+PASS  after "something else": every button and stand-alone link is at least 44 px tall
+PASS  after "something else": the main button is at least 60 px tall
+PASS  after "something else": nothing runs off the side of the screen
+PASS  the narrowing step with online help off: the sheet leads with plain words and the conversation's own line (the question and what did not fit, nothing they chose)
+PASS  the narrowing sheet says the data use of the paid service, and what is never sent
+PASS  the narrowing sheet: the whole request is one tap away, word for word (that line, and the fixed instructions)
+PASS  asking for it sent nothing to any other host
+PASS  the consent sheet for a narrowing step: every control is at least 24 x 24 px
+PASS  the consent sheet for a narrowing step: every button and stand-alone link is at least 44 px tall
+PASS  the consent sheet for a narrowing step: the main button is at least 60 px tall
+PASS  the consent sheet for a narrowing step: nothing runs off the side of the screen
+PASS  "No": no narrowing card, nothing sent, and the screen says what to do
+PASS  "Are you in pain?" yes: the next question is the main button ("Next: Where does it hurt?")
+PASS  after a yes, with the next question: every control is at least 24 x 24 px
+PASS  after a yes, with the next question: every button and stand-alone link is at least 44 px tall
+PASS  after a yes, with the next question: the main button is at least 60 px tall
+PASS  after a yes, with the next question: nothing runs off the side of the screen
+PASS  the body map: two parts and "somewhere else", each with its picture
+PASS  the body map names left and right: "your left arm", "your right arm"
+PASS  a part with two sides: "Is it suddenly weak or numb, yes or no?" is the main button, then "How bad is the pain?" and "Which side? Left or right?"
+PASS  the pain scale: three steps and "not sure", made by the rules
+PASS  the pain scale, before handing over: every control is at least 24 x 24 px
+PASS  the pain scale, before handing over: every button and stand-alone link is at least 44 px tall
+PASS  the pain scale, before handing over: the main button is at least 60 px tall
+PASS  the pain scale, before handing over: nothing runs off the side of the screen
+PASS  the third question of a conversation ends it with what to do: "Very bad. Call their nurse or doctor now. …"
+PASS  hot or cold has a neutral answer: hot, cold, just right
+PASS  Feelings, after "yes": no dead end ("What is bothering you? Your body, people, or plans?")
+PASS  that question is one idea with three answers and a way out, made by the rules
+PASS  the answer check says nothing in an ordinary flow (pain -> where -> how bad, then "is something bothering you")
+PASS  a press and hold on the carer's control goes back before any answer
+PASS  with a keyboard, Enter on it goes back too
+PASS  "Do you want to call someone?" yes, nobody in About them: a field for one name
+PASS  the name becomes one yes / no question, made by the rules
+PASS  the one open question in the topics is tagged "needs internet"
+PASS  an open question on a phone with online help off brings up the consent sheet (a dialog over an inert screen)
+PASS  the sheet shows the exact line that would go
+PASS  the sheet says what is sent (the line and the fixed instructions; names can be missed), what is never sent, and the data use; never "nothing else"
+PASS  the sheet: "Yes" and "No" are the same size, at least 60 px tall, and both are on the screen without scrolling
+PASS  showing the sheet asked nothing of any other host
+PASS  the consent sheet: every control is at least 24 x 24 px
+PASS  the consent sheet: every button and stand-alone link is at least 44 px tall
+PASS  the consent sheet: the main button is at least 60 px tall
+PASS  the consent sheet: nothing runs off the side of the screen
+PASS  Escape is "No": the sheet closes, there is no card, and the screen says so and what to do
+PASS  still nothing asked of any other host
+PASS  no card: every control is at least 24 x 24 px
+PASS  no card: every button and stand-alone link is at least 44 px tall
+PASS  no card: nothing runs off the side of the screen
+PASS  "Use online help for this question" brings the sheet back; "No, not for this question" closes it again
+PASS  "Yes" asks the question again at once, through cloud help (other hosts are asked only now)
+PASS  with every other host refused, cloud help fails: no card, and the line does not say "nothing was sent"
+PASS  the first screen then no longer says "Nothing you asked has left this phone"; the AI line says online help is on
+PASS  "Needs it now?": one tap opens the board full screen: "Point to your answer", "What do you need?", nine needs two to a row (the ninth is "something's wrong") and the way out
+PASS  the needs board: every control is at least 24 x 24 px
+PASS  the needs board: every button and stand-alone link is at least 44 px tall
+PASS  the needs board: nothing runs off the side of the screen
+PASS  a need is checked and finished like any answer: "Thank you. Toilet."
+PASS  back from the board: the carer sees the need and what to do ("Go now. The rest can wait.")
+PASS  after a need: every control is at least 24 x 24 px
+PASS  after a need: every button and stand-alone link is at least 44 px tall
+PASS  after a need: the main button is at least 60 px tall
+PASS  after a need: nothing runs off the side of the screen
+PASS  About them has the top bar: "Back" and "Talk Partner / Home"
+PASS  About them: five rows (the fifth is health notes), "Everything here stays on this phone, unless you share it yourself.", nothing required
+PASS  About them, a row open: every control is at least 24 x 24 px
+PASS  About them, a row open: every button and stand-alone link is at least 44 px tall
+PASS  About them, a row open: the main button is at least 60 px tall
+PASS  About them, a row open: nothing runs off the side of the screen
+PASS  About them: the rows show what was typed
+PASS  the first screen now names the person: "let Frank point", "with Frank", "About Frank"
+PASS  the family's own question is added under the generic one, never in its place: tea or coffee, then pot roast or chili (tagged "Frank's own")
+PASS  People: one yes / no "call Jenny?" row under "Do you want to call someone?", which stays
+PASS  first screen with a name, People open: every control is at least 24 x 24 px
+PASS  first screen with a name, People open: every button and stand-alone link is at least 44 px tall
+PASS  first screen with a name, People open: the main button is at least 60 px tall
+PASS  first screen with a name, People open: nothing runs off the side of the screen
+PASS  the carer's screen names the person: "Turn the phone to Frank", "Show Frank the choices", "Don't answer for Frank."
+PASS  the call question is a yes / no about that one person
+PASS  navigation: the first screen has the app's name at the top and no "Back" (there is nowhere to go back to)
+PASS  navigation, the "Back" button: from the hand-over screen back to the first screen, the topic still open
+PASS  navigation, the "Back" button: from the answer back to the same question, ready to show again
+PASS  navigation, the "Back" button: and once more, to the first screen
+PASS  navigation, the "Back" button: from About them back to the first screen
+PASS  navigation, the "Back" button: "No, not now" gives the rules' best card, "Made by the app's rules (no AI)", not "No card"
+PASS  navigation, the "Back" button: from the rules' best card back to the first screen
+PASS  navigation: "Back" and "Home" are at the top of every carer screen (hand-over, answer, About them, no card)
+PASS  navigation, the browser's back button: from the hand-over screen back to the first screen, the topic still open
+PASS  navigation, the browser's back button on the person's choices: back to the carer's screen, the same question
+PASS  navigation, the browser's back button on the check ("So: tea. Right?"): back to the choices
+PASS  navigation, the browser's back button: from the answer back to the same question, ready to show again
+PASS  navigation, the browser's back button: and once more, to the first screen
+PASS  navigation, the browser's back button: from About them back to the first screen
+PASS  navigation, the browser's back button: "No, not now" gives the rules' best card, "Made by the app's rules (no AI)", not "No card"
+PASS  navigation, the browser's back button: from the rules' best card back to the first screen
+PASS  navigation: "Back" and "Home" are at the top of every carer screen (hand-over, answer, About them, no card)
+PASS  navigation, the browser's back button on the needs board: back to the first screen
+PASS  navigation: "Home" from two questions deep goes to the first screen in one tap
+PASS  navigation: the browser's back stays inside the app while there is a step to take, and leaves it from the first screen
+PASS  "How was this made?" opens the full view on the same card, its fold open
+PASS  the full view has the way back on it ("Simple view")
+PASS  the full view is remembered across a reload
+PASS  the full view with no card yet: the card area says in plain words what will be there, with no ear picture
+PASS  the full view at 390 px: the placeholder ("Your question") fits in the field, nothing is cut
+PASS  the full view while a card is being made: the card area says "Making the card…"
+PASS  every inner page of the full view has the way back
+PASS  "Simple view" goes back, and that is remembered too; About them is kept
+PASS  /#/demo opens the full judge view directly, whatever view was chosen
+PASS  judge mode keeps the full view's own card for the person (its headline, its tiles)
+PASS  "Simple view" in judge mode leaves it: the simple first screen, with the family's own About them
+PASS  the first-run page is still there by its address
+PASS  phone: no page error in the whole run
+PASS  learning: nothing is said before three answers (no "Usually" on the first asking; tea stands first, as asked)
+PASS  learning: after two answers still nothing
+PASS  learning: after coffee three times, the carer's screen says "Usually: coffee (3 of 3)"
+PASS  learning: the usual choice is first among the choices, none is removed, and the line to say follows the same order
+PASS  learning: before handing over, with the usual choice: every control is at least 24 x 24 px
+PASS  learning: before handing over, with the usual choice: every button and stand-alone link is at least 44 px tall
+PASS  learning: before handing over, with the usual choice: the main button is at least 60 px tall
+PASS  learning: before handing over, with the usual choice: nothing runs off the side of the screen
+PASS  learning: the person's screen shows the same choices, nothing chosen for them, and no word about what is usual
+PASS  learning: About them lists what was learned, in plain words with the counts (the usual choice, and the need asked for three times)
+PASS  learning: it says how it was learned (counted on this phone, no AI, never sent by the app, only a hint)
+PASS  learning: each line has "Remove", the needs line "Keep as a fact" (the drink question line not), and there is "Forget everything learned"
+PASS  learning: About them, what was learned: every control is at least 24 x 24 px
+PASS  learning: About them, what was learned: every button and stand-alone link is at least 44 px tall
+PASS  learning: About them, what was learned: nothing runs off the side of the screen
+PASS  learning: "Keep as a fact" moves the line to the facts the carer kept
+PASS  learning: "Remove" takes the line away
+PASS  learning: after "Remove" the hint is gone and the choices are in the question's own order again
+PASS  learning: the removal is remembered across a reload
+PASS  learning: in a tree, the usual side of the next question is offered as a short question, under the main "Next" button, which stays
+PASS  learning: after an answer, with the short question: every control is at least 24 x 24 px
+PASS  learning: after an answer, with the short question: every button and stand-alone link is at least 44 px tall
+PASS  learning: after an answer, with the short question: the main button is at least 60 px tall
+PASS  learning: after an answer, with the short question: nothing runs off the side of the screen
+PASS  learning: the short question is a yes / no, made by the rules; nothing is answered for them
+PASS  learning: a yes to it ends the path as that choice would ("Bring them a sweet snack. …")
+PASS  learning: nothing was asked of any other host in the whole run
+PASS  learning: no page error
+PASS  photos: About them has "Their own photos": what they are for, "No photos yet.", "Add a photo"
+PASS  photos: the privacy line says where they stay, and is true on every device: on this phone no AI looks at them; on a desktop Chrome with the built-in AI it can look at one there, never online
+PASS  photos: About them, no photos yet: every control is at least 24 x 24 px
+PASS  photos: About them, no photos yet: every button and stand-alone link is at least 44 px tall
+PASS  photos: About them, no photos yet: nothing runs off the side of the screen
+PASS  photos: a chosen photo opens "Frame the picture": a dialog over an inert screen, the picture in a square
+PASS  photos: frame the picture: every control is at least 24 x 24 px
+PASS  photos: frame the picture: every button and stand-alone link is at least 44 px tall
+PASS  photos: frame the picture: the main button is at least 60 px tall
+PASS  photos: frame the picture: nothing runs off the side of the screen
+PASS  photos: "+" zooms in (the slider follows), and a drag moves the picture inside its square
+PASS  photos: with a keyboard the arrow keys move it
+PASS  photos: the square is always filled by the picture (it cannot be dragged past an edge)
+PASS  photos: then "One word for it": the framed square, a field for the word, "Save photo"
+PASS  photos: one word for it: every control is at least 24 x 24 px
+PASS  photos: one word for it: every button and stand-alone link is at least 44 px tall
+PASS  photos: one word for it: the main button is at least 60 px tall
+PASS  photos: one word for it: nothing runs off the side of the screen
+PASS  photos: no word, no photo: "Type the word first."
+PASS  photos: saved: the photo stands in the list with its word and its own "Delete"
+PASS  photos: About them, one photo: every control is at least 24 x 24 px
+PASS  photos: About them, one photo: every button and stand-alone link is at least 44 px tall
+PASS  photos: About them, one photo: nothing runs off the side of the screen
+PASS  photos: it is kept in IndexedDB on this device (key "photos"): one small JPEG with its word
+PASS  photos: on the card the choice "tea" shows the family's photo, "coffee" and the way out keep their drawings
+PASS  photos: before handing over, with a photo: every control is at least 24 x 24 px
+PASS  photos: before handing over, with a photo: every button and stand-alone link is at least 44 px tall
+PASS  photos: before handing over, with a photo: the main button is at least 60 px tall
+PASS  photos: before handing over, with a photo: nothing runs off the side of the screen
+PASS  photos: the person's screen shows the photo, at least 60 px, with the word under it
+PASS  photos: the person's choices, with a photo: every control is at least 24 x 24 px
+PASS  photos: the person's choices, with a photo: every button and stand-alone link is at least 44 px tall
+PASS  photos: the person's choices, with a photo: nothing runs off the side of the screen
+PASS  photos: the check ("So: tea. Right?") and the finish show the same photo
+PASS  photos: and so does "Thank you. Tea."
+PASS  photos: the photo is still there after a reload
+PASS  photos: a second photo, "glasses"
+PASS  photos: the choice "your glasses" shows the photo called "glasses" (the word is compared without "your")
+PASS  photos: "Delete" on one photo takes that one away
+PASS  photos: the choice "tea" is the drawing again
+PASS  photos: "Delete all photos" (after a yes) leaves none, on the screen and in IndexedDB
+PASS  photos: "Delete everything on this phone" is on About them
+PASS  photos: "Delete everything" (after a yes) empties the app's storage: the name, the photos and the rest are gone
+PASS  photos: in the whole run nothing was asked of any other host, and nothing was posted anywhere (a photo never left the page)
+PASS  photos: no page error
+PASS  diary: the first screen has "Diary" under the questions, not above them
+PASS  diary: opens on Today, empty, and says it is kept on this phone only, leaves only when the carer shares it, and is never shown on their screen
+PASS  diary: seven one-tap log buttons (Drank, Ate, Toilet, Slept, Pain, and since phase 5 Fall and Tablets taken), each at least 80 px tall
+PASS  diary: an empty diary has no "what stands out", nothing to copy and nothing to delete
+PASS  diary: empty: every control is at least 24 x 24 px
+PASS  diary: empty: every button and stand-alone link is at least 44 px tall
+PASS  diary: empty: nothing runs off the side of the screen
+PASS  diary: one tap on "Drank" logs it with the time, and says so
+PASS  diary: the entry is on today's timeline with its time
+PASS  diary: "Undo" takes it out again
+PASS  diary: five taps, five entries, in order of time
+PASS  diary: the topic filter (Body & care: Toilet and Pain)
+PASS  diary: a topic with nothing in it says so
+PASS  diary: today, five entries: every control is at least 24 x 24 px
+PASS  diary: today, five entries: every button and stand-alone link is at least 44 px tall
+PASS  diary: today, five entries: nothing runs off the side of the screen
+PASS  diary: kept across a reload (IndexedDB on this phone)
+PASS  diary: Back goes to the first screen
+PASS  guard: nothing is said after 1 "yes" (four quick ones are an ordinary flow)
+PASS  guard: nothing is said after 2 "yes" (four quick ones are an ordinary flow)
+PASS  guard: nothing is said after 3 "yes" (four quick ones are an ordinary flow)
+PASS  guard: nothing is said after 4 "yes" (four quick ones are an ordinary flow)
+PASS  guard: nothing is said after 5 "yes" (four quick ones are an ordinary flow)
+PASS  guard: the person's own screen says nothing of it ("Thank you. Yes." and "Give the phone back", no line, no mark)
+PASS  guard: after the fifth "yes" the carer reads the headline and one line (phase 17: "Several yes answers in a row. Check the last one the other way round" / marked "less sure"), the rest under "More"
+PASS  guard: "More" says why, and that answers about pain, the body, feelings, the toilet or a need are never marked
+PASS  guard: the answered screen with the line: every control is at least 24 x 24 px
+PASS  guard: the answered screen with the line: every button and stand-alone link is at least 44 px tall
+PASS  guard: the answered screen with the line: nothing runs off the side of the screen
+PASS  guard: the five answers are marked "less sure" in the answers kept here; (phase 8) the yes to "Are you hungry?" is not
+PASS  guard and pain: no "may be tired" on the screen before a pain question is shown
+PASS  guard and pain: after "Are you in pain? Yes" there is no "may be tired" line, and the screen leads on with "Next: Where does it hurt?"
+PASS  guard and pain: the pain answer is not marked "less sure", in the answers and in the diary
+PASS  guard: the next either-or has its answers in a different order (coffee, tea), none removed, and the line to say follows; (phase 8) no "may be tired" line on a drink question
+PASS  guard: in the diary the five answers carry "less sure"; the pain answer and what the carer logged do not
+PASS  diary: the answers are there with their questions ("Are you hungry? yes")
+PASS  tip of the day: one sentence about the carer's own questions, with what it is from, worded by the rules
+PASS  tip of the day: "Hide tips" hides it, and it stays hidden after a reload
+PASS  diary: today, with answers and "less sure": every control is at least 24 x 24 px
+PASS  diary: today, with answers and "less sure": every button and stand-alone link is at least 44 px tall
+PASS  diary: today, with answers and "less sure": nothing runs off the side of the screen
+PASS  health notes: four toggles, free text and (phase 5) the emergency number; "never sent to online help"; "not a medical record"
+PASS  About them: health notes open: every control is at least 24 x 24 px
+PASS  About them: health notes open: every button and stand-alone link is at least 44 px tall
+PASS  About them: health notes open: nothing runs off the side of the screen
+PASS  health notes: kept on this phone across a reload, and shown on the closed row
+PASS  health notes: not part of the profile the card prompts read
+PASS  week fixture: the diary is Frank's ("Frank's diary")
+PASS  week fixture: the Week tab shows the days newest first, each a timeline
+PASS  week fixture: Monday reads as a day ("07:40 Would you like tea or coffee? tea … 10:30 Drank … 14:00 Are you tired? yes")
+PASS  week fixture: three lines, in order: sweets, Wednesday's drinks, Friday's "less sure"
+PASS  week fixture, Thursday: sweets with diabetes noted -> "Worth mentioning to the doctor or nurse", and no diet advice
+PASS  week fixture, Wednesday: the drinks line names the day, and its base says how drinks are counted (every "Drank" tap, every drink chosen on a card; a card and a tap within 20 minutes once)
+PASS  week fixture, Wednesday: the count in the line equals what the timeline shows (one tea on a card, one "Drank")
+PASS  week fixture, Friday: the answers marked "less sure" are a line of their own
+PASS  week fixture: Friday evening's four answers after "Are you tired? yes" carry "less sure" in the timeline
+PASS  insights: the fixed footer ("not medical advice and not a diagnosis"), and who counted and worded them (the rules, no AI, nothing sent)
+PASS  insights: no medical advice in any line (no dose, medicine, diet, "should", "drink more")
+PASS  insights: no line names Frank, his family or what he chose
+PASS  diary: the week, with what stands out: every control is at least 24 x 24 px
+PASS  diary: the week, with what stands out: every button and stand-alone link is at least 44 px tall
+PASS  diary: the week, with what stands out: nothing runs off the side of the screen
+PASS  week fixture: the topic filter narrows the timeline, and the counted lines stay the whole week's
+PASS  week fixture: Body & care holds the pain and toilet answers
+PASS  week fixture: the Month tab counts 30 days, and (phase 5) keeps this week's line that a month's threshold would hide: the 3 sweet choices, marked "From the last 7 days."
+PASS  week fixture: Today has no "what stands out" (one day is too little to count)
+PASS  wording sheet: it shows the exact text that would go, the one counted line that may go and nothing else
+PASS  wording sheet: no name, no health note, nothing of the diary is in that text
+PASS  wording sheet: says what is never sent (names, photos, the diary itself, the health notes) and that it is for these lines, once
+PASS  wording sheet: the whole request can be read (mode PREFER_IN_CLOUD, the fixed instructions, the same text)
+PASS  wording sheet: nothing was asked of any other host while it is up
+PASS  wording sheet: every control is at least 24 x 24 px
+PASS  wording sheet: every button and stand-alone link is at least 44 px tall
+PASS  wording sheet: the main button is at least 60 px tall
+PASS  wording sheet: nothing runs off the side of the screen
+PASS  wording sheet: "No" keeps the app's own words, and nothing was sent
+PASS  wording: with online help refused by this test (App Check first), the app's own wording stands and the screen says nothing was sent
+PASS  wording: the yes did not turn online help on for anything else
+PASS  wording: the first screen's privacy line still says nothing left this phone (the lines were never handed over)
+PASS  backup: "Keep a copy" says what it is for, that the file is made here and sent nowhere, and holds names and photos
+PASS  phase 10, backup: "Include health notes" is there, unticked, with one line on why
+PASS  phase 10, backup: by default the file has no health notes (no "health", no diabetes), and has the format, version 1 and the emergency number
+PASS  backup: with the box ticked the file is JSON with the profile, the photos as data URLs and the health notes
+PASS  phase 10, backup: after the save the box is unticked again
+PASS  backup: saving the file asked nothing of any other host
+PASS  backup: "Delete everything on this phone" clears About them, the photos, the health notes and the diary
+PASS  backup: a file that is not ours is refused in plain words, and nothing changes
+PASS  backup: before anything changes, the file's contents are shown (the name, 3 people, 2 places, 1 photo, health notes: diabetes …), with Replace, Add and Cancel
+PASS  backup: the preview sheet: every control is at least 24 x 24 px
+PASS  backup: the preview sheet: every button and stand-alone link is at least 44 px tall
+PASS  backup: the preview sheet: the main button is at least 60 px tall
+PASS  backup: the preview sheet: nothing runs off the side of the screen
+PASS  phase 10, backup: Cancel closes it and nothing was saved
+PASS  phase 10, backup: after "Replace what is here" the screen says so
+PASS  backup: save -> clear -> bring back = identical (profile, photos, health notes)
+PASS  backup: the diary is not in the file (it was deleted with everything, and stays empty)
+PASS  backup: after a reload About them is Frank's again, with the photo and the health notes
+PASS  phase 10, backup: a file without health notes says the ones here stay
+PASS  phase 10, backup: "Add to what is here" with the same family: nothing doubles, nothing is removed, the health notes stay
+PASS  phase 10, backup: <script> in a name is shown as text in the preview, and runs nowhere
+PASS  phase 10, backup: a version-2 file is refused: "from a newer version of the app"
+PASS  About them: with "Keep a copy": every control is at least 24 x 24 px
+PASS  About them: with "Keep a copy": every button and stand-alone link is at least 44 px tall
+PASS  About them: with "Keep a copy": the main button is at least 60 px tall
+PASS  About them: with "Keep a copy": nothing runs off the side of the screen
+PASS  diary: "Delete the diary" (after a yes) empties it on this phone and says so
+PASS  pictures: with three choices each picture is 110 to 130 px tall and fills most of its tile
+PASS  pictures: the word stays large (30 px or more)
+PASS  pictures: three choices and "something else" stand on 390 x 844 without scrolling
+PASS  pictures: three choices on the person's screen: every control is at least 24 x 24 px
+PASS  pictures: three choices on the person's screen: every button and stand-alone link is at least 44 px tall
+PASS  pictures: three choices on the person's screen: nothing runs off the side of the screen
+PASS  pictures: with two choices each picture is 110 to 130 px tall
+PASS  people: after "yes" to "Do you want to call someone?" the next question is one card, "Who would you like to call? Beth or Tom?"
+PASS  people: the rules make it a choice card with the family's names (each with its initial or photo) and "someone else"
+PASS  people: the answer ends on what to do ("Call Tom now, together.")
+PASS  About them: no word of "Chrome's built-in AI" for a carer, and the lines use the name once it is set ("a place Frank knows", "the answers Frank confirmed")
+PASS  diary run: no page error
+PASS  phase 4, first screen: (phase 10) "Frank: I want to say something" stands right under the quick needs, and the two new ways in under the diary
+PASS  phase 4, first screen: every control is at least 24 x 24 px
+PASS  phase 4, first screen: every button and stand-alone link is at least 44 px tall
+PASS  phase 4, first screen: the main button is at least 60 px tall
+PASS  phase 4, first screen: nothing runs off the side of the screen
+PASS  letter: after "something else" the carer is offered "Try the first letter", after the step the rules make (and the online AI step, second since phase 12b), four ways at most
+PASS  letter: after "something else": every control is at least 24 x 24 px
+PASS  letter: after "something else": every button and stand-alone link is at least 44 px tall
+PASS  letter: after "something else": the main button is at least 60 px tall
+PASS  letter: after "something else": nothing runs off the side of the screen
+PASS  letter: the person's screen asks "Do you know how the word starts?" and says "Point to the first letter", with 26 letters and "No, I don't know"
+PASS  letter: six letters to a row, five rows; every letter is at least 44 x 56 px
+PASS  letter: the alphabet at 390 x 844: fits the screen without scrolling (844 px tall)
+PASS  letter: no score, no count and no mark on the person's screen
+PASS  letter: "B" after "tea or coffee?" offers the ginger biscuits from About them first, then food and drink words, every tile starting with B, and "something else": three choices at most
+PASS  letter: no word of another topic (no Beth, no Bo, no bed) under a food question
+PASS  letter: the words with B: fits the screen without scrolling (844 px tall)
+PASS  letter: the carer reads the word and what to do next; nothing was sent
+PASS  letter: the word: every control is at least 24 x 24 px
+PASS  letter: the word: every button and stand-alone link is at least 44 px tall
+PASS  letter: the word: the main button is at least 60 px tall
+PASS  letter: the word: nothing runs off the side of the screen
+PASS  letter: "No, I don't know" goes back to the carer with one calm line; nothing is counted
+PASS  letter, safety: "pain" as the word leads straight to "Where does it hurt?", with the line about the nurse or doctor, and no "may be tired" line
+PASS  letter: with no word for "X" the sheet comes up before anything is sent, in plain words first, and shows the one line that would go
+PASS  letter: the whole request holds the question and the letter, and nothing of About them
+PASS  letter: the sheet: every control is at least 24 x 24 px
+PASS  letter: the sheet: every button and stand-alone link is at least 44 px tall
+PASS  letter: the sheet: the main button is at least 60 px tall
+PASS  letter: the sheet: nothing runs off the side of the screen
+PASS  letter: after "No" the carer's screen says there is no such word in About them, and offers another letter
+PASS  letter: "We're stuck" offers the first letter too
+PASS  his turn: the person's screen opens with three starters and "something else" (phase 10: "I want to talk about…")
+PASS  his turn: the starters: fits the screen without scrolling (844 px tall)
+PASS  his turn: "I need something" leads to the needs board, still on the person's screen
+PASS  his turn: the carer reads "Frank started this: something is needed." over the need; pain keeps its own next step, and no "may be tired" line
+PASS  his turn: after a need: every control is at least 24 x 24 px
+PASS  his turn: after a need: every button and stand-alone link is at least 44 px tall
+PASS  his turn: after a need: nothing runs off the side of the screen
+PASS  his turn: "I want to talk about…", first screen: fits the screen without scrolling (844 px tall)
+PASS  his turn: "I want to talk about…", second screen: fits the screen without scrolling (844 px tall)
+PASS  phase 10, his turn: "I want to talk about…" offers "me", Beth and Tom, then the lake (with its photo), church and the news / TV, never Carol
+PASS  his turn: the topics, first screen: fits the screen without scrolling (844 px tall)
+PASS  his turn: the last "something else" of "I want to talk about…" leads to the topics as pictures, three to a screen, "something else" leading to the next three
+PASS  his turn: after "People & family" the person is asked "Who is it about?" with (phase 8) "me" first, the family's names and "someone else", still on their screen
+PASS  his turn: "Who is it about?": fits the screen without scrolling (844 px tall)
+PASS  his turn: the carer reads who started and what it is about, with three questions about the TELLING, never an offer to call or see
+PASS  his turn: after a topic: every control is at least 24 x 24 px
+PASS  his turn: after a topic: every button and stand-alone link is at least 44 px tall
+PASS  his turn: after a topic: the main button is at least 60 px tall
+PASS  his turn: after a topic: nothing runs off the side of the screen
+PASS  phase 10, his turn: Beth -> the carer reads "Frank wants to talk about Beth." first, with three questions: the telling first, a call last
+PASS  phase 10, his turn: after Beth: every control is at least 24 x 24 px
+PASS  phase 10, his turn: after Beth: every button and stand-alone link is at least 44 px tall
+PASS  phase 10, his turn: after Beth: the main button is at least 60 px tall
+PASS  phase 10, his turn: after Beth: nothing runs off the side of the screen
+PASS  phase 10, his turn: "Is it good news, or a worry?" after Beth is a card the rules make
+PASS  his turn: "Is it good news, or a worry?" is a card the rules make; "worry" is taken as said, and the tree leads on
+PASS  his turn: "Today & plans" asks "Is it about today, or another day?", and the carer reads it
+PASS  his turn: the feelings card: fits the screen without scrolling (844 px tall)
+PASS  his turn: "I feel…" leads to the feelings card, and the carer reads that it is about a feeling
+PASS  visit: the carer's screen says what it is, that the list is fixed with no AI, and that the answers stay on this device
+PASS  visit: before the first question: every control is at least 24 x 24 px
+PASS  visit: before the first question: every button and stand-alone link is at least 44 px tall
+PASS  visit: before the first question: the main button is at least 60 px tall
+PASS  visit: before the first question: nothing runs off the side of the screen
+PASS  visit: "Are you in pain?": fits the screen without scrolling (844 px tall)
+PASS  visit: "How have you been sleeping?": fits the screen without scrolling (844 px tall)
+PASS  visit: "How is your appetite?": fits the screen without scrolling (844 px tall)
+PASS  visit: pain "no" skips the two pain questions; stopped half-way, the page says how far it got and offers to go on
+PASS  visit: the page has his six answers as given, the date, "something else" asking for time, and the fixed footer
+PASS  visit: with no pain there is no pain line; nothing is marked "less sure"
+PASS  visit: a pain in the head stops the questions: the call box names it, with the call button and "Go on with the questions"
+PASS  visit: "How bad is the pain?": fits the screen without scrolling (844 px tall)
+PASS  visit, safety (pain yes, very bad, mood low): all eight answers stand exactly as given; outside the page the carer is told not to wait for the visit; no line says tired, later or less sure
+PASS  visit: the page: every control is at least 24 x 24 px
+PASS  visit: the page: every button and stand-alone link is at least 44 px tall
+PASS  visit: the page: the main button is at least 60 px tall
+PASS  visit: the page: nothing runs off the side of the screen
+PASS  visit: the answers are kept on this device under their own key, survive a reload, and are in neither the history nor the diary
+PASS  visit: "Delete these answers" removes them
+PASS  photo: the carer picks one of the family's photos; the screen says no photo is ever sent, and that it is not a test
+PASS  photo: pick a photo: every control is at least 24 x 24 px
+PASS  photo: pick a photo: every button and stand-alone link is at least 44 px tall
+PASS  photo: pick a photo: nothing runs off the side of the screen
+PASS  photo: on a phone the three questions are the rules', from the photo's word and About them; no AI is offered a look, and the screen says so
+PASS  photo: never a test question
+PASS  photo: the questions: every control is at least 24 x 24 px
+PASS  photo: the questions: every button and stand-alone link is at least 44 px tall
+PASS  photo: the questions: nothing runs off the side of the screen
+PASS  photo: the question is a card made by the rules; nothing was sent
+PASS  photo: the person sees the photo over the question, three choices and "something else"
+PASS  photo: the photo, three choices and the way out: fits the screen without scrolling (844 px tall)
+PASS  photo: after the answer the carer can go back to the questions about this photo
+PASS  photo: "Would you like to call Beth?" yes ends with what to do now
+PASS  phase 4: nothing was asked of any other host in the whole run
+PASS  phase 4: no page error
+PASS  phase 5, first screen with no name: "Hand over the phone: they can start." (never "them can")
+PASS  phase 5, first screen: "Something new or sudden?" stands under the quick needs, before "I want to say something", above "How it works"
+PASS  phase 5, first screen: every control is at least 24 x 24 px
+PASS  phase 5, first screen: every button and stand-alone link is at least 44 px tall
+PASS  phase 5, first screen: the main button is at least 60 px tall
+PASS  phase 5, first screen: nothing runs off the side of the screen
+PASS  sudden: FAST (face, arm, speech, time), four more reasons to call, and "Call emergency services: 911" twice
+PASS  sudden: the call button is a plain tel: link, at least 60 px tall, on the first screenful
+PASS  sudden: it says to call when unsure, names 911 / 999 / 112, and says what it is: a fixed list, no AI, nothing sent, not checked by a clinician
+PASS  sudden: every control is at least 24 x 24 px
+PASS  sudden: every button and stand-alone link is at least 44 px tall
+PASS  sudden: nothing runs off the side of the screen
+PASS  sudden: it is also the first thing in "Body & care"
+PASS  sudden: the number set in About them (999) is the one the button calls, and it is kept on this phone
+PASS  sudden: the number is set to 911 for the rest of the run, and kept
+PASS  urgent: before any answer the carer's screen has no call box
+PASS  urgent: "Are you in pain? yes" alone has no box yet: the next question is "Where does it hurt?"
+PASS  urgent: head pain: one boxed line with the call button stands at the top, over the answer ("whatever the amount", phase 17)
+PASS  urgent: the pain flow that was there stays under it ("Next: How bad is the pain?")
+PASS  "Next:" label on the main button: contrast 6.3:1, at least 4.5:1
+PASS  urgent: the answered screen: every control is at least 24 x 24 px
+PASS  urgent: the answered screen: every button and stand-alone link is at least 44 px tall
+PASS  urgent: the answered screen: the main button is at least 60 px tall
+PASS  urgent: the answered screen: nothing runs off the side of the screen
+PASS  urgent: the box stays on the next question of the same conversation
+PASS  urgent: "a little" does not take the box away (the head was named in this conversation)
+PASS  urgent: a new conversation starts without the box
+PASS  read aloud: offered on the carer's screen of an everyday topic card with one button, and it is off
+PASS  read aloud: the sheet says "The words on this card, including names on it, go to Google to be spoken. Nothing else." and shows the words of this card
+PASS  read aloud: the sheet is a dialog over an inert screen; nothing was asked of another host to show it
+PASS  read aloud: "No, keep it off" leaves it off
+PASS  read aloud off: the person's screen has no "Hear it" button, and nothing was sent
+PASS  read aloud on: the switch says where the words go ("On. The words on each card you show go to Google to be spoken.")
+PASS  read aloud on: the person's screen has the button over the three choices (a control, not a choice); here the request is refused like every request to another host, and (phase 8) the person's screen only says "No sound", asking nothing of them
+PASS  read aloud on: the person's screen: fits the screen without scrolling (844 px tall)
+PASS  read aloud failed (phase 8): the carer's screen says it, and what to do: "Read aloud did not work for that card. Read the question out loud to …"
+PASS  read aloud on, App Check refused first: the words of this card never left, and the card says so
+PASS  read aloud on, App Check refused first: the first screen's privacy line counts nothing
+PASS  read aloud: one tap turns it off again
+PASS  read aloud: after one yes, the offer turns it on again with one tap, no sheet
+PASS  sheet: one plain name ("online help", which is Google's AI), and the first yes is "Just this once"; the technical words are folded inside
+PASS  sheet: "Just this once": every control is at least 24 x 24 px
+PASS  sheet: "Just this once": every button and stand-alone link is at least 44 px tall
+PASS  sheet: "Just this once": the main button is at least 60 px tall
+PASS  sheet: "Just this once": nothing runs off the side of the screen
+PASS  phase 13/16, sheet: App Check refused first: the rules' best card at once, saying nothing was sent
+PASS  sheet: "Just this once" hands this one question to online help (the card says it was sent, may have left, or, refused by App Check first, that nothing was sent) and leaves online help off
+PASS  needs board: nine needs and the way out; the ninth is "something's wrong"
+PASS  needs board with nine tiles, 390 x 844: fits the screen without scrolling (844 px tall)
+PASS  needs board: after "something's wrong" the carer is on "Something new or sudden?" as soon as the phone comes back
+PASS  diary: "Tablets taken" is one tap and one line: no count, no reminder, no box
+PASS  diary: after "Fall", when to call and the call button, at once: "A fall: call 911 now if the head was hit, if getting up is not possible, or if there is new pain."
+PASS  diary: after a fall: every control is at least 24 x 24 px
+PASS  diary: after a fall: every button and stand-alone link is at least 44 px tall
+PASS  diary: after a fall: nothing runs off the side of the screen
+PASS  diary, week: the fall is a line ("Worth mentioning"), with the blow to the head, whom to tell, and the call box
+PASS  diary, week: the head pain of this morning is a line of one day, with when to call
+PASS  diary, week: the urgent lines: every control is at least 24 x 24 px
+PASS  diary, week: the urgent lines: every button and stand-alone link is at least 44 px tall
+PASS  diary, week: the urgent lines: nothing runs off the side of the screen
+PASS  phase 13, visit: a pain in the chest stops the questions with the call box and "Go on with the questions"
+PASS  visit: chest pain, quite bad: the boxed "Call 911 now if this is new or sudden." is the first thing on the page, inside the printed part, with the call button
+PASS  visit: the line that was there stays under the page (phase 15: "Other new or strong pain: do not wait for the visit")
+PASS  visit: "Since the last visit" stands under his own answers, says whose lines they are, and counts from the diary: pain, a fall, drinks, mood, sleep
+PASS  visit: up to three questions for the doctor, picked from a fixed list; a fourth cannot be ticked; they are printed under the lines
+PASS  visit: the picks are kept on this phone with the answers
+PASS  visit: the page with the box and "Since the last visit": every control is at least 24 x 24 px
+PASS  visit: the page with the box and "Since the last visit": every button and stand-alone link is at least 44 px tall
+PASS  visit: the page with the box and "Since the last visit": the main button is at least 60 px tall
+PASS  visit: the page with the box and "Since the last visit": nothing runs off the side of the screen
+PASS  phase 5: no page error
+PASS  phase 6, first screen with an empty diary: no "For the next carer" yet (there is nothing to hand over)
+PASS  phase 6, first screen: "For the next carer" stands under "Diary" once the diary holds something
+PASS  phase 6, first screen: every control is at least 24 x 24 px
+PASS  phase 6, first screen: every button and stand-alone link is at least 44 px tall
+PASS  phase 6, first screen: the main button is at least 60 px tall
+PASS  phase 6, first screen: nothing runs off the side of the screen
+PASS  diary: the privacy line is true with sharing in the app: kept here only, never sent by the app, leaves only when the carer shares it as a text seen first
+PASS  D: every line of "What stands out" has "See the entries (N)", closed at first
+PASS  D: the week has the chest pain of one day, the fall, the sweets, Wednesday's drinks
+PASS  D: "Few drinks … : 2" opens to Wednesday's two drinks, each with its time: the tea on a card and one "Drank"
+PASS  D: the button now reads "Hide the entries", and the entries stand inside the same line, on the same screen
+PASS  D, worst case (a pain in the chest): the opened line keeps (phase 15) "Pain in the head or the chest: call 911 now, whatever the amount." and the call box, above its entries
+PASS  D, worst case (a fall with a blow to the head): its entry reads "Fall  Noted: a blow to the head.", under the call box
+PASS  D: the week with three lines opened: every control is at least 24 x 24 px
+PASS  D: the week with three lines opened: every button and stand-alone link is at least 44 px tall
+PASS  D: the week with three lines opened: nothing runs off the side of the screen
+PASS  D: "Hide the entries" closes the line again; the others stay open
+PASS  D: the 30-day view has the same button on every line
+PASS  A: "Share with family" and "For the next carer" stand on the diary
+PASS  A, the sheet: "This text leaves the phone through the app you pick (message, email). Talk Partner keeps no copy and has no server."
+PASS  A, the sheet: the text starts "Shared from Talk Partner on [date]. Counted by the app's rules from what was entered here; not a medical record."
+PASS  A, worst case: a line carries a call box, so the call sentence is the second line of the text
+PASS  A: the span is the tab's (the last 7 days), with "What stands out", each line's base, and the entries by day
+PASS  A, worst cases in the text: the chest pain says call now whatever the amount (phase 15); the fall with a blow to the head has "Call 911 now if this is new or sudden."
+PASS  A: "Include the health notes" is off, and the text holds no health note (no "Diabetes", none of the carer's own words)
+PASS  A: while the box is off, the sheet names the note the reader will not know (diabetes)
+PASS  A: no photo and no data URL in the text; "Photos never go in."
+PASS  A: Share, Copy and Cancel, in that order, under the text
+PASS  A: the sheet fits a 390 x 844 screen with its three buttons in reach (the long text scrolls inside its own box)
+PASS  A: nothing has left before a button is pressed
+PASS  A, the sheet: every button at least 44 px tall, the box at least 24 px
+PASS  A, the sheet: nothing runs off the side of the screen
+PASS  A: with the box ticked the text has the health notes as the family noted them, and the line that rests on one says so
+PASS  A, Copy: the clipboard holds the sheet's text, character for character; the button says "Copied" and the last one "Close"
+PASS  A, Share: navigator.share is called once, with { text } and nothing else, and the text is the sheet's, character for character
+PASS  A, Share: the sheet says "Handed to the app you picked. Talk Partner kept no copy."
+PASS  A: the box is off again every time the sheet opens
+PASS  A: Escape is "Cancel": the sheet is gone and nothing more was handed over
+PASS  A, worst case, the Today tab (the chest pain and the fall were yesterday): the text is about today, and still carries this week's lines and the call sentence
+PASS  A, handover: the same sheet ("Share this with the next carer?"), the same first sentence, the last 24 hours
+PASS  A, handover, worst cases: the call sentence at the top; the pain as it was answered, with whom to tell and when to call; the fall with the blow to the head
+PASS  A, handover: drinks, food, toilet and tablets of the last 24 hours; the tablets line says to check before giving any
+PASS  A, handover: the usual choices learned ("usually tea"), and never one about pain, the body, a feeling or a need
+PASS  A, handover: no health note with the box off
+PASS  A, handover, Share: the stub was handed { text } with the note, character for character
+PASS  A, handover from the first screen: the same sheet over the first screen
+PASS  A, worst case, a fluid limit noted and the box off: the sheet names it to the carer; the text states no limit and never suggests more to drink
+PASS  A, worst case, a fluid limit noted and the box ticked: the drinks line points to the doctor's plan; still never "more"
+PASS  D, the visit page: a line of "Since the last visit" that counted something has "See the entries (N)"; one that counted nothing has no button
+PASS  D, the visit page: the falls line opens to the fall, with its time and the blow to the head
+PASS  D, the visit page: the call box is still the first thing on the page
+PASS  D: the visit page with a line opened: every control is at least 24 x 24 px
+PASS  D: the visit page with a line opened: every button and stand-alone link is at least 44 px tall
+PASS  D: the visit page with a line opened: the main button is at least 60 px tall
+PASS  D: the visit page with a line opened: nothing runs off the side of the screen
+PASS  D, print: the page prints clean: no "See the entries", no entry list, no control; the lines and the call box are printed
+PASS  phase 6: nothing was asked of any other host in the whole run (no AI, no server: the text left through the stub and the clipboard only)
+PASS  phase 6: no page error
+PASS  A, no Web Share in the browser: only "Copy" and "Cancel", and the sheet says the text leaves only if the carer pastes it
+PASS  A, no Web Share: Copy works, with the sheet's text
+PASS  phase 6, no Web Share: no page error
+PASS  phase 7, first run: the log of the conversations starts now, empty, and holds a day and rows only
+PASS  phase 7, first screen: "How to talk with Frank" stands with the other ways in, under "Talk about a photo"
+PASS  phase 7, first screen: every control is at least 24 x 24 px
+PASS  phase 7, first screen: every button and stand-alone link is at least 44 px tall
+PASS  phase 7, first screen: the main button is at least 60 px tall
+PASS  phase 7, first screen: nothing runs off the side of the screen
+PASS  part 1, the check: "So: coffee. Right?" with "Yes" and "No, something else"
+PASS  part 1: "something else", then the first letter: the word is ginger biscuits
+PASS  part 1: a typed question with two things in it is asked one at a time ("Next: second question" is there)
+PASS  part 1: a memory question gets no card and a line to say instead
+PASS  part 1, the log: one row for each question, each "Yes" on the check, the "No, something else", Frank's start and "We're stuck"
+PASS  part 1, the log holds no word of a question or an answer (no "tea", no "Bo", no "hungry", no "lunch")
+PASS  part 1, the log: where each question came from, its topic, and what the app flagged
+PASS  part 1: "For the speech therapist" stands on the diary screen, under the two share buttons
+PASS  part 1: the diary with the way in: every control is at least 24 x 24 px
+PASS  part 1: the diary with the way in: every button and stand-alone link is at least 44 px tall
+PASS  part 1: the diary with the way in: nothing runs off the side of the screen
+PASS  part 1, the page counts what was done: "Conversations with Frank, the last 7 days"
+PASS  part 1, the page counts what was done: "Counted by the app from this phone. Only what was entered here."
+PASS  part 1, the page counts what was done: "These are counts to talk over. They are not a score of the family or o"
+PASS  part 1, the page counts what was done: "Questions asked: 6. Counted: each question that became a card or a lin"
+PASS  part 1, the page counts what was done: "By topic: Food & drink 4, Rest & sleep 2."
+PASS  part 1, the page counts what was done: "Picked from the app's own questions (one thought each): 3. Typed by th"
+PASS  part 1, the page counts what was done: "Two things in one question: 1 time. The app asked them one at a time."
+PASS  part 1, the page counts what was done: "The second of the two was then asked: 1 time."
+PASS  part 1, the page counts what was done: "A question that asked to remember something: 1 time. The app made no c"
+PASS  part 1, the page counts what was done: ""Something else" was chosen: 1 time, in 1 conversation."
+PASS  part 1, the page counts what was done: "After it, an answer was confirmed by:"
+PASS  part 1, the page counts what was done: "the first letter: 1"
+PASS  part 1, the page counts what was done: "After it, no answer was confirmed: 0 times."
+PASS  part 1, the page counts what was done: ""We're stuck" (show, write or draw) was opened: 1 time, 0 of them afte"
+PASS  part 1, the page counts what was done: "Frank started the conversation (the button "I want to say something"):"
+PASS  part 1, the page counts what was done: "The check ("So: tea. Right?"): "Yes" 6 times, "No, something else" 1 t"
+PASS  part 1, the page counts what was done: "Answers marked "less sure" by the answer check in this time (a run of "
+PASS  part 1, the page counts what was done: "A yes on the check is not proof: when tired, a yes can mean no."
+PASS  part 1, the page counts what was done: "Read aloud is off on this phone today."
+PASS  part 1, the page counts what was done: "Nothing about needs, pain or health is on this page. Those are in the "
+PASS  part 1, the page counts what was done: "Counted by fixed rules on this phone. No AI. Not an assessment and not"
+PASS  part 1: the app began to count today, and the page says from which day
+PASS  part 1: no line of the page grades anyone (good, bad, well done, poor, should, must, failed), and none has an exclamation mark
+PASS  part 2: opened again, the box "Include the needs and pain answers" is off
+PASS  part 2, worst case (a pain in the chest, quite bad, in the diary of this time): with the box off the SCREEN says so, with whom to tell and when to call
+PASS  part 2, box off: the page itself holds nothing of the diary (no "chest", no "toilet", no call sentence)
+PASS  part 2, box off (phase 8): the printed page still says, with no detail, that the diary holds a pain answer: ask the family
+PASS  part 2: the counting began before this week, so the page does not say "began to count"
+PASS  part 2: "For the speech therapist": every control is at least 24 x 24 px
+PASS  part 2: "For the speech therapist": every button and stand-alone link is at least 44 px tall
+PASS  part 2: "For the speech therapist": the main button is at least 60 px tall
+PASS  part 2: "For the speech therapist": nothing runs off the side of the screen
+PASS  part 2, box ticked: the call sentence stands at the top of the page
+PASS  part 2, box ticked: the needs with their counts; the pain entered once (three answers and a tap ten minutes later are one entry); the answers as given; whom to tell
+PASS  part 2, box ticked: the warning for the carer is gone (the page now says it itself)
+PASS  part 2, box ticked: still no line of the app's own wording grades anyone (the answer "quite bad" is Frank's, in quotes)
+PASS  part 2: "Last 30 days" counts the older questions as well (11), and names its span
+PASS  part 2: three questions picked; the other seven cannot be ticked; they close the page
+PASS  part 2: the picks are kept on this phone
+PASS  part 2: the page with the box ticked and three questions: every control is at least 24 x 24 px
+PASS  part 2: the page with the box ticked and three questions: every button and stand-alone link is at least 44 px tall
+PASS  part 2: the page with the box ticked and three questions: the main button is at least 60 px tall
+PASS  part 2: the page with the box ticked and three questions: nothing runs off the side of the screen
+PASS  part 2, the sheet: its own heading, where the text goes, that this is the exact text, and no box (what is in it was decided on the page)
+PASS  part 2, the text: the first line of every shared text, then the call sentence, then the page line for line
+PASS  part 2, the text and the page are the same lines
+PASS  part 2, the sheet fits the 390 x 844 screen: Share, Copy and Cancel can all be reached
+PASS  part 2: nothing was handed over before a button was pressed
+PASS  part 2, Share: `navigator.share` was called once, with { text } and nothing else, and the text is the one the sheet showed
+PASS  part 2, Copy: the clipboard holds exactly the text the sheet showed
+PASS  part 2: the sheet closes back onto the page; the box is as it was
+PASS  part 2: with the sheet up, the phone's back button closes the sheet and stays on the page
+PASS  part 2, printed: the page, and nothing around it (no bar, no box, no questions to pick, no buttons)
+PASS  part 2: "Print this page" calls the browser's own print, once
+PASS  Back from the page opened by its own address: the first screen
+PASS  opened again from the diary: the box is off again, and the screen warns again
+PASS  Back from "For the speech therapist": exactly one step, to the diary it was opened from
+PASS  the phone's own back button does the same: one step, to the diary
+PASS  Back from the diary: the first screen
+PASS  "Delete these counts" (after a yes): the log is empty and starts now; the page says nothing was counted; the diary is as it was
+PASS  the page with nothing counted: every control is at least 24 x 24 px
+PASS  the page with nothing counted: every button and stand-alone link is at least 44 px tall
+PASS  the page with nothing counted: the main button is at least 60 px tall
+PASS  the page with nothing counted: nothing runs off the side of the screen
+PASS  passport, first screen: the title with the name, what it is for, that every line is the carer's to decide, and that the app sends nothing
+PASS  passport: the five "how to talk" lines carry the name, each with its box; (phase 8) the two that state a fact about Frank are off until ticked, "Tick if true"
+PASS  passport (phase 8): under how yes and no are shown, the fixed line on a tired yes, with no box
+PASS  passport (phase 8): with diabetes noted in About them, the food line says to ask the family, and names no condition
+PASS  passport: About Frank from About them (people, food and drink, places, TV, the family's own fact)
+PASS  passport, "Words that worked": the words found by their first letter with how often, and the usual choice with its count
+PASS  passport, "Things Frank likes to talk about": Bo and Tom with their counts; not Beth (three times "no")
+PASS  passport, worst case: no habit about pain, the body or a need, and no usual "no", anywhere on it (the answers held "no" to pain and to a drink three times each, and "toilet" four times)
+PASS  passport, "If something is wrong": the emergency number and the fixed text of phase 5 (FAST), always on the page, with no box
+PASS  passport, first screen: nothing can be printed or shared from here (only "Look at the page")
+PASS  passport: no guessed pronoun on the screen but in the family's own fact ("Bo is his dog")
+PASS  passport, the lines: every control is at least 24 x 24 px
+PASS  passport, the lines: every button and stand-alone link is at least 44 px tall
+PASS  passport, the lines: the main button is at least 60 px tall
+PASS  passport, the lines: nothing runs off the side of the screen
+PASS  passport: what the carer set is kept on this phone (one line ticked, one off, yes and no, her own line)
+PASS  passport, the page: the lines left on, in their sections; the two taken off are not there; yes and no as typed; her own line under "Also"
+PASS  passport, the page: "If something is wrong" stands on it whole, and the footer says what the page is not
+PASS  passport, the page: the family's own pictures where there is one (Beth, Bo, the lake), an initial otherwise (Carol, Tom)
+PASS  passport, the page: Print, Share and "Change the lines" stand under it
+PASS  passport, the page: every control is at least 24 x 24 px
+PASS  passport, the page: every button and stand-alone link is at least 44 px tall
+PASS  passport, the page: the main button is at least 60 px tall
+PASS  passport, the page: nothing runs off the side of the screen
+PASS  passport, printed: the page, and nothing around it
+PASS  passport: "Print this page" calls the browser's own print, once
+PASS  passport, the sheet: its heading, where the text goes, no box, and that no health notes and no photos are in it
+PASS  passport, the text: the title, the sections, only the lines left on, no photo and no data URL
+PASS  passport, the text and the page are the same lines
+PASS  passport, Share: handed over once, as { text }, exactly the text the sheet showed
+PASS  Back from the passport's page: exactly one step, to its lines, as the carer left them
+PASS  "Change the lines" is the same one step back
+PASS  the phone's own back button from the page: the lines
+PASS  Back from the passport's lines: the first screen it was opened from
+PASS  About them has the way in as well
+PASS  opened from About them, Back goes back to About them
+PASS  after a reload the passport opens on its lines, with what the carer set
+PASS  with no name the way in reads "How to talk together"
+PASS  passport with nothing in About them: "this person" and "they", in the right form, and the way to About them
+PASS  passport with nothing in About them: no empty section and no broken line ("They likes", "People: .", "undefined")
+PASS  passport with nothing in About them: the page still holds how to talk (phase 8: not the two lines that are off until ticked), "Not filled in yet", and "If something is wrong" whole
+PASS  passport with nothing in About them, the page: every control is at least 24 x 24 px
+PASS  passport with nothing in About them, the page: every button and stand-alone link is at least 44 px tall
+PASS  passport with nothing in About them, the page: the main button is at least 60 px tall
+PASS  passport with nothing in About them, the page: nothing runs off the side of the screen
+PASS  phase 7: "Home" from the passport's page is the first screen
+PASS  phase 7: no request went to any other host (no model, no server: rules on the device)
+PASS  phase 7: no page error
+PASS  back, the case found on the phone: on the carer's screen of "Would you like a hot drink or a cold drink?" …
+PASS  back, the case found on the phone: … one tap on Back lands on "Would you like something to drink? Yes" with its "Next:" button, not on the first screen
+PASS  back: from the answer, Back shows the question again on the carer's screen (before it is handed over)
+PASS  back: from the first question, Back lands on the first screen with the topic still open (the topic's questions are there)
+PASS  back: six carer's screens after the first one (question, answer, question, answer, question, answer: the tree is three questions deep)
+PASS  back, a topic's tree, six steps deep: Back no. 1 of 6 lands on the screen before (card)
+PASS  back, a topic's tree, six steps deep: Back no. 2 of 6 lands on the screen before (answered: Would you like a hot drink or a cold drink? Hot drink)
+PASS  back, a topic's tree, six steps deep: Back no. 3 of 6 lands on the screen before (card)
+PASS  back, a topic's tree, six steps deep: Back no. 4 of 6 lands on the screen before (answered: Would you like something to drink? Yes)
+PASS  back, a topic's tree, six steps deep: Back no. 5 of 6 lands on the screen before (card)
+PASS  back, a topic's tree, six steps deep: Back no. 6 of 6 lands on the screen before (home)
+PASS  back, a topic's tree, six steps deep: 6 steps back with Back, never a jump to the first screen before the last step
+PASS  back, a topic's tree, six steps deep: the first screen is the bottom: it has no Back button
+PASS  back, a topic's tree, six steps deep: the browser's own back no. 1 of 6 lands on the screen before (card)
+PASS  back, a topic's tree, six steps deep: the browser's own back no. 2 of 6 lands on the screen before (answered: Would you like a hot drink or a cold drink? Hot drink)
+PASS  back, a topic's tree, six steps deep: the browser's own back no. 3 of 6 lands on the screen before (card)
+PASS  back, a topic's tree, six steps deep: the browser's own back no. 4 of 6 lands on the screen before (answered: Would you like something to drink? Yes)
+PASS  back, a topic's tree, six steps deep: the browser's own back no. 5 of 6 lands on the screen before (card)
+PASS  back, a topic's tree, six steps deep: the browser's own back no. 6 of 6 lands on the screen before (home)
+PASS  back, a topic's tree, six steps deep: 6 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, a topic's tree, six steps deep: the first screen is the bottom: it has no Back button
+PASS  back, the tree: no page error
+PASS  back, the needs board: the way was first screen, "pain" on the board, "Where does it hurt?", the body card and "Where in the chest?" on the person's screen, the answer with the call box, "Something new or sudden?"
+PASS  back, the needs board, the body card and the call list: Back no. 1 of 6 lands on the screen before (answered: Where in the chest? Middle)
+PASS  back, the needs board, the body card and the call list: Back no. 2 of 6 lands on the screen before (person)
+PASS  back, the needs board, the body card and the call list: Back no. 3 of 6 lands on the screen before (person)
+PASS  back, the needs board, the body card and the call list: Back no. 4 of 6 lands on the screen before (card)
+PASS  back, the needs board, the body card and the call list: Back no. 5 of 6 lands on the screen before (answered)
+PASS  back, the needs board, the body card and the call list: Back no. 6 of 6 lands on the screen before (home)
+PASS  back, the needs board, the body card and the call list: 6 steps back with Back, never a jump to the first screen before the last step
+PASS  back, the needs board, the body card and the call list: the first screen is the bottom: it has no Back button
+PASS  back, the needs board: no page error
+PASS  back, the needs board: the way was first screen, "pain" on the board, "Where does it hurt?", the body card and "Where in the chest?" on the person's screen, the answer with the call box, "Something new or sudden?"
+PASS  back, the needs board, the body card and the call list: the browser's own back no. 1 of 6 lands on the screen before (answered: Where in the chest? Middle)
+PASS  back, the needs board, the body card and the call list: the browser's own back no. 2 of 6 lands on the screen before (person)
+PASS  back, the needs board, the body card and the call list: the browser's own back no. 3 of 6 lands on the screen before (person)
+PASS  back, the needs board, the body card and the call list: the browser's own back no. 4 of 6 lands on the screen before (card)
+PASS  back, the needs board, the body card and the call list: the browser's own back no. 5 of 6 lands on the screen before (answered)
+PASS  back, the needs board, the body card and the call list: the browser's own back no. 6 of 6 lands on the screen before (home)
+PASS  back, the needs board, the body card and the call list: 6 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, the needs board, the body card and the call list: the first screen is the bottom: it has no Back button
+PASS  back, the needs board: no page error
+PASS  back, the first letter: the way was first screen, the question, "something else", the alphabet, its words (phase 8: each a step), the word found by its letter
+PASS  back, the first letter: Back no. 1 of 5 lands on the screen before (person)
+PASS  back, the first letter: Back no. 2 of 5 lands on the screen before (person)
+PASS  back, the first letter: Back no. 3 of 5 lands on the screen before (answered: Would you like tea or coffee? Something else)
+PASS  back, the first letter: Back no. 4 of 5 lands on the screen before (card)
+PASS  back, the first letter: Back no. 5 of 5 lands on the screen before (home)
+PASS  back, the first letter: 5 steps back with Back, never a jump to the first screen before the last step
+PASS  back, the first letter: the first screen is the bottom: it has no Back button
+PASS  back, "wants to say something": the way was the first screen, the three starters, the feelings card (both on the person's screen), the answer
+PASS  back, "wants to say something": Back no. 1 of 3 lands on the screen before (person)
+PASS  back, "wants to say something": Back no. 2 of 3 lands on the screen before (person)
+PASS  back, "wants to say something": Back no. 3 of 3 lands on the screen before (home)
+PASS  back, "wants to say something": 3 steps back with Back, never a jump to the first screen before the last step
+PASS  back, "wants to say something": the first screen is the bottom: it has no Back button
+PASS  back, phase 10, "I want to talk about…": the way was the first screen, the starters, the talk screen, the carer's screen
+PASS  back, phase 10, "I want to talk about…": Back no. 1 of 3 lands on the screen before (person)
+PASS  back, phase 10, "I want to talk about…": Back no. 2 of 3 lands on the screen before (person)
+PASS  back, phase 10, "I want to talk about…": Back no. 3 of 3 lands on the screen before (home)
+PASS  back, phase 10, "I want to talk about…": 3 steps back with Back, never a jump to the first screen before the last step
+PASS  back, phase 10, "I want to talk about…": the first screen is the bottom: it has no Back button
+PASS  back, the topics of "I want to talk about…": the way was the first screen, the starters, the topics, the carer's screen
+PASS  back, the topics of "I want to talk about…": Back no. 1 of 4 lands on the screen before (person)
+PASS  back, the topics of "I want to talk about…": Back no. 2 of 4 lands on the screen before (person)
+PASS  back, the topics of "I want to talk about…": Back no. 3 of 4 lands on the screen before (person)
+PASS  back, the topics of "I want to talk about…": Back no. 4 of 4 lands on the screen before (home)
+PASS  back, the topics of "I want to talk about…": 4 steps back with Back, never a jump to the first screen before the last step
+PASS  back, the topics of "I want to talk about…": the first screen is the bottom: it has no Back button
+PASS  back, the needs board inside a conversation: the way was the first screen, the question, the answer, the board
+PASS  back, the needs board opened inside a conversation: Back no. 1 of 3 lands on the screen before (answered: Would you like tea or coffee? Tea)
+PASS  back, the needs board opened inside a conversation: Back no. 2 of 3 lands on the screen before (card)
+PASS  back, the needs board opened inside a conversation: Back no. 3 of 3 lands on the screen before (home)
+PASS  back, the needs board opened inside a conversation: 3 steps back with Back, never a jump to the first screen before the last step
+PASS  back, the needs board opened inside a conversation: the first screen is the bottom: it has no Back button
+PASS  back, the needs board inside a conversation: the press and hold gives the phone back to the answer it was opened from
+PASS  back, the first letter and the person's turn: no page error
+PASS  back, the first letter: the way was first screen, the question, "something else", the alphabet, its words (phase 8: each a step), the word found by its letter
+PASS  back, the first letter: the browser's own back no. 1 of 5 lands on the screen before (person)
+PASS  back, the first letter: the browser's own back no. 2 of 5 lands on the screen before (person)
+PASS  back, the first letter: the browser's own back no. 3 of 5 lands on the screen before (answered: Would you like tea or coffee? Something else)
+PASS  back, the first letter: the browser's own back no. 4 of 5 lands on the screen before (card)
+PASS  back, the first letter: the browser's own back no. 5 of 5 lands on the screen before (home)
+PASS  back, the first letter: 5 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, the first letter: the first screen is the bottom: it has no Back button
+PASS  back, "wants to say something": the way was the first screen, the three starters, the feelings card (both on the person's screen), the answer
+PASS  back, "wants to say something": the browser's own back no. 1 of 3 lands on the screen before (person)
+PASS  back, "wants to say something": the browser's own back no. 2 of 3 lands on the screen before (person)
+PASS  back, "wants to say something": the browser's own back no. 3 of 3 lands on the screen before (home)
+PASS  back, "wants to say something": 3 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, "wants to say something": the first screen is the bottom: it has no Back button
+PASS  back, phase 10, "I want to talk about…": the way was the first screen, the starters, the talk screen, the carer's screen
+PASS  back, phase 10, "I want to talk about…": the browser's own back no. 1 of 3 lands on the screen before (person)
+PASS  back, phase 10, "I want to talk about…": the browser's own back no. 2 of 3 lands on the screen before (person)
+PASS  back, phase 10, "I want to talk about…": the browser's own back no. 3 of 3 lands on the screen before (home)
+PASS  back, phase 10, "I want to talk about…": 3 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, phase 10, "I want to talk about…": the first screen is the bottom: it has no Back button
+PASS  back, the topics of "I want to talk about…": the way was the first screen, the starters, the topics, the carer's screen
+PASS  back, the topics of "I want to talk about…": the browser's own back no. 1 of 4 lands on the screen before (person)
+PASS  back, the topics of "I want to talk about…": the browser's own back no. 2 of 4 lands on the screen before (person)
+PASS  back, the topics of "I want to talk about…": the browser's own back no. 3 of 4 lands on the screen before (person)
+PASS  back, the topics of "I want to talk about…": the browser's own back no. 4 of 4 lands on the screen before (home)
+PASS  back, the topics of "I want to talk about…": 4 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, the topics of "I want to talk about…": the first screen is the bottom: it has no Back button
+PASS  back, the needs board inside a conversation: the way was the first screen, the question, the answer, the board
+PASS  back, the needs board opened inside a conversation: the browser's own back no. 1 of 3 lands on the screen before (answered: Would you like tea or coffee? Tea)
+PASS  back, the needs board opened inside a conversation: the browser's own back no. 2 of 3 lands on the screen before (card)
+PASS  back, the needs board opened inside a conversation: the browser's own back no. 3 of 3 lands on the screen before (home)
+PASS  back, the needs board opened inside a conversation: 3 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, the needs board opened inside a conversation: the first screen is the bottom: it has no Back button
+PASS  back, the needs board inside a conversation: the press and hold gives the phone back to the answer it was opened from
+PASS  back, the first letter and the person's turn: no page error
+PASS  back, the diary: a log and a change of tab are not steps: the way was first screen, the diary
+PASS  back, the diary: Back no. 1 of 1 lands on the screen before (home)
+PASS  back, the diary: 1 steps back with Back, never a jump to the first screen before the last step
+PASS  back, the diary: the first screen is the bottom: it has no Back button
+PASS  back, "Something new or sudden?": the way was first screen, the list, About them (to change the number)
+PASS  back, "Something new or sudden?" and About them: Back no. 1 of 2 lands on the screen before (sudden)
+PASS  back, "Something new or sudden?" and About them: Back no. 2 of 2 lands on the screen before (home)
+PASS  back, "Something new or sudden?" and About them: 2 steps back with Back, never a jump to the first screen before the last step
+PASS  back, "Something new or sudden?" and About them: the first screen is the bottom: it has no Back button
+PASS  back, the visit page: the questions run on the person's screen, and the page of answers is the same step as the page they started from
+PASS  back, the doctor-visit page: Back no. 1 of 1 lands on the screen before (home)
+PASS  back, the doctor-visit page: 1 steps back with Back, never a jump to the first screen before the last step
+PASS  back, the doctor-visit page: the first screen is the bottom: it has no Back button
+PASS  back, the visit questions: from the second question, the phone's back is the first question again, and its answer is taken off to be given again
+PASS  back, the visit questions: from the first question, the visit page
+PASS  back, the diary and the visit page: no page error
+PASS  back, the diary: a log and a change of tab are not steps: the way was first screen, the diary
+PASS  back, the diary: the browser's own back no. 1 of 1 lands on the screen before (home)
+PASS  back, the diary: 1 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, the diary: the first screen is the bottom: it has no Back button
+PASS  back, "Something new or sudden?": the way was first screen, the list, About them (to change the number)
+PASS  back, "Something new or sudden?" and About them: the browser's own back no. 1 of 2 lands on the screen before (sudden)
+PASS  back, "Something new or sudden?" and About them: the browser's own back no. 2 of 2 lands on the screen before (home)
+PASS  back, "Something new or sudden?" and About them: 2 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, "Something new or sudden?" and About them: the first screen is the bottom: it has no Back button
+PASS  back, the visit page: the questions run on the person's screen, and the page of answers is the same step as the page they started from
+PASS  back, the doctor-visit page: the browser's own back no. 1 of 1 lands on the screen before (home)
+PASS  back, the doctor-visit page: 1 steps back with the browser's own back, never a jump to the first screen before the last step
+PASS  back, the doctor-visit page: the first screen is the bottom: it has no Back button
+PASS  back, the visit questions: from the second question, the phone's back is the first question again, and its answer is taken off to be given again
+PASS  back, the visit questions: from the first question, the visit page
+PASS  back, the diary and the visit page: no page error
+PASS  back, the full view: from "Something new or sudden?" opened from the diary, Back is the diary, not the first screen
+PASS  back, the full view: from the diary, Back is the screen it was opened from
+PASS  back, the full view: the passport's page goes back to its lines
+PASS  back, the full view: from the passport's lines, Back is the screen it was opened from
+PASS  back, the full view: from the visit page, Back is the screen it was opened from
+PASS  back, the full view: no page error
+PASS  back, the demo view: from "Something new or sudden?" opened from the diary, Back is the diary, not the first screen
+PASS  back, the demo view: from the diary, Back is the screen it was opened from
+PASS  back, the demo view: the passport's page goes back to its lines
+PASS  back, the demo view: from the passport's lines, Back is the screen it was opened from
+PASS  back, the demo view: from the visit page, Back is the screen it was opened from
+PASS  back, the demo view: no page error
+PASS  ways: the screen opens with one line in plain words: "None of these. Find out what it is: one step at a time."
+PASS  ways, the drinks example: the first and main button is "More choices like these", and it says what comes next (water, juice, milk)
+PASS  ways: then the AI's step online (where there is one), the first letter, then "Ask them to show or write it"
+PASS  ways: one main button on the screen, and it is the first way
+PASS  ways: no question of another topic on the screen ("Are you hungry?" is gone), shown or under "More"
+PASS  ways: under "More": "Ask something else" / "Ask another question" and "Ask it a new way"; still no question of another topic
+PASS  ways: after "something else" to a drink: every control is at least 24 x 24 px
+PASS  ways: after "something else" to a drink: every button and stand-alone link is at least 44 px tall
+PASS  ways: after "something else" to a drink: the main button is at least 60 px tall
+PASS  ways: after "something else" to a drink: nothing runs off the side of the screen
+PASS  ways, more choices: the carer's screen says what to say out loud ("Which drink? Water, juice, milk, or something else"), and that the rules made it and nothing was sent
+PASS  ways: the carer's screen of more drinks: every control is at least 24 x 24 px
+PASS  ways: the carer's screen of more drinks: every button and stand-alone link is at least 44 px tall
+PASS  ways: the carer's screen of more drinks: the main button is at least 60 px tall
+PASS  ways: the carer's screen of more drinks: nothing runs off the side of the screen
+PASS  ways, more choices, the person's screen: water, juice, milk and "something else", each with a picture
+PASS  ways: more drinks on the person's screen: fits the screen without scrolling (844 px tall)
+PASS  ways, more choices: "something else" on the first page brings the next three (tea, coffee), not the same ones
+PASS  ways: Back from the card of more choices lands on the list of ways again
+PASS  ways, the drinks example to the end: something else -> more drinks -> "juice" -> confirmed by the person: the carer reads "Which drink? Juice"
+PASS  ways: after a real answer the screen is the usual one: "Ask another question" is the main button, and no list of ways
+PASS  ways: the answer is in the diary under its question ("Which drink?" juice), kept on this phone
+PASS  ways: after every drink the rules have was refused, the same list is not offered again: the first letter is the next step
+PASS  ways, "show me": the carer's screen goes on: "Did you understand?", "Yes: type it" with a field, and "Not yet: try another way"
+PASS  ways: after "show me": every control is at least 24 x 24 px
+PASS  ways: after "show me": every button and stand-alone link is at least 44 px tall
+PASS  ways: after "show me": nothing runs off the side of the screen
+PASS  ways, "Not yet: try another way": back on the list of ways of the same question, not on the first screen
+PASS  ways, "Yes: type it" with nothing typed: nothing happens, the field waits
+PASS  ways, typed: the word goes onto the person's screen as a choice, with "something else"; nothing is picked for them
+PASS  ways: the typed word on the person's screen: fits the screen without scrolling (844 px tall)
+PASS  ways, typed: the person points to it and is asked "So: lemonade. Right?"
+PASS  ways, typed: confirmed by the person: the carer reads "Lemonade"
+PASS  ways, typed: it is in the diary as an answer, and counts as a drink like any other
+PASS  ways, no kind known: the first and main button is "What is it about?"
+PASS  ways, "What is it about?": a picture card: a drink, food, a person, and "something else" for the next three
+PASS  ways: "What is it about?" on the person's screen: fits the screen without scrolling (844 px tall)
+PASS  ways, "What is it about?" -> a person: the main button is "Next: Who?"
+PASS  ways, "Who?": the choices are people (a friend, a neighbour, the carer) with nothing in About them
+PASS  ways, worst case, "Body & care" ("Are you comfortable?" -> not sure): "Show me where" is the main button, the needs board second; no list of guesses, no other topic
+PASS  ways, "Show me where": the body card ("Where does it hurt?")
+PASS  ways, worst case: a place in the chest chosen on that card brings one boxed call line, "whatever the amount", with the call button
+PASS  ways: nothing was asked of any other host in the whole run (rules only)
+PASS  ways: no page error
+PASS  offline: this copy has a service worker that controls the page (a production build)
+PASS  offline: the first screen opens with no connection (first visit: how-to folded, seven topics)
+PASS  offline: the line under "Ask in your own words" says the rules make what they can
+PASS  offline, first screen: every control is at least 24 x 24 px
+PASS  offline, first screen: every button and stand-alone link is at least 44 px tall
+PASS  offline, first screen: the main button is at least 60 px tall
+PASS  offline, first screen: nothing runs off the side of the screen
+PASS  offline: a topic question makes its choices by the rules
+PASS  offline: topic -> question -> the person points -> check -> finish -> give back: the carer sees the answer, and the next question of the tree
+PASS  offline: "Needs it now?" opens
+PASS  offline: About them opens
+PASS  offline: a photo can be added with no connection (it never needed one)
+PASS  offline: the card shows the family's photo for "tea"
+PASS  offline: a question that needs online help gets the rules' best card, "You are offline, so nothing was sent.", and no sheet
+PASS  offline, the rules' best card: every control is at least 24 x 24 px
+PASS  offline, the rules' best card: every button and stand-alone link is at least 44 px tall
+PASS  offline, the rules' best card: the main button is at least 60 px tall
+PASS  offline, the rules' best card: nothing runs off the side of the screen
+PASS  offline: the diary opens, holds the answer given offline, and a tap logs "Drank"
+PASS  offline: the week's lines are counted and worded by the rules on this phone, and online wording is not offered
+PASS  offline, the diary: every control is at least 24 x 24 px
+PASS  offline, the diary: every button and stand-alone link is at least 44 px tall
+PASS  offline, the diary: nothing runs off the side of the screen
+PASS  offline: the person starts ("I need something" -> the needs board -> drink), and the carer reads who started
+PASS  offline: the first letter works with no connection: "T" offers everyday words by the rules (never the refused tea)
+PASS  offline: the doctor-visit questions and their page work with no connection
+PASS  offline: "Talk about a photo" opens with no connection
+PASS  offline: no page error
+PASS  desktop, 1440 x 900: the first screen says "this computer" and "Turn the computer to them"
+PASS  desktop, 1440 x 900, first screen: every control is at least 24 x 24 px
+PASS  desktop, 1440 x 900, first screen: every button and stand-alone link is at least 44 px tall
+PASS  desktop, 1440 x 900, first screen: the main button is at least 60 px tall
+PASS  desktop, 1440 x 900, first screen: nothing runs off the side of the screen
+PASS  desktop, 1440 x 900: the carer's screen says "Made by the app's rules on this computer" and "Turn the computer to them"
+PASS  desktop, 1440 x 900, before handing over: every control is at least 24 x 24 px
+PASS  desktop, 1440 x 900, before handing over: every button and stand-alone link is at least 44 px tall
+PASS  desktop, 1440 x 900, before handing over: the main button is at least 60 px tall
+PASS  desktop, 1440 x 900, before handing over: nothing runs off the side of the screen
+PASS  desktop, 1440 x 900: the carer sees the answer, and "More" says the answers are kept on this computer only
+PASS  desktop, 1440 x 900, after an answer: every control is at least 24 x 24 px
+PASS  desktop, 1440 x 900, after an answer: every button and stand-alone link is at least 44 px tall
+PASS  desktop, 1440 x 900, after an answer: the main button is at least 60 px tall
+PASS  desktop, 1440 x 900, after an answer: nothing runs off the side of the screen
+PASS  desktop, 1440 x 900: the sheet says "This computer has no AI of its own"
+PASS  desktop, 1440 x 900: the sheet's two buttons are on the screen
+PASS  desktop, 1440 x 900: the full view uses the same word
+PASS  desktop, 1440 x 900: no page error
+PASS  tablet, 800 x 1280: the first screen says "this tablet" and "Turn the tablet to them"
+PASS  tablet, 800 x 1280, first screen: every control is at least 24 x 24 px
+PASS  tablet, 800 x 1280, first screen: every button and stand-alone link is at least 44 px tall
+PASS  tablet, 800 x 1280, first screen: the main button is at least 60 px tall
+PASS  tablet, 800 x 1280, first screen: nothing runs off the side of the screen
+PASS  tablet, 800 x 1280: the carer's screen says "Made by the app's rules on this tablet" and "Turn the tablet to them"
+PASS  tablet, 800 x 1280, before handing over: every control is at least 24 x 24 px
+PASS  tablet, 800 x 1280, before handing over: every button and stand-alone link is at least 44 px tall
+PASS  tablet, 800 x 1280, before handing over: the main button is at least 60 px tall
+PASS  tablet, 800 x 1280, before handing over: nothing runs off the side of the screen
+PASS  tablet, 800 x 1280: the carer sees the answer, and "More" says the answers are kept on this tablet only
+PASS  tablet, 800 x 1280, after an answer: every control is at least 24 x 24 px
+PASS  tablet, 800 x 1280, after an answer: every button and stand-alone link is at least 44 px tall
+PASS  tablet, 800 x 1280, after an answer: the main button is at least 60 px tall
+PASS  tablet, 800 x 1280, after an answer: nothing runs off the side of the screen
+PASS  tablet, 800 x 1280: the sheet says "This tablet has no AI of its own"
+PASS  tablet, 800 x 1280: the sheet's two buttons are on the screen
+PASS  tablet, 800 x 1280: the full view uses the same word
+PASS  tablet, 800 x 1280: no page error
+
+1039 of 1039 checks passed
+exit=0
