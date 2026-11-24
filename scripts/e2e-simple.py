@@ -263,6 +263,19 @@ def navigation(page, url):
     page.wait_for_selector('main.simple.home')
 
 
+# Phase 17 (judge round 12, P0 2): on a phone App Check starts when the question field gets the cursor, so the browser
+# is checked by Google's reCAPTCHA before the yes. Those requests carry no word of the question (they are the script and
+# the token exchange of App Check); they are not "another host" for the checks below, and are still blocked here.
+APP_CHECK_SEEN = []
+
+
+def app_check_url(u):
+    hit = u.startswith(('https://www.google.com/recaptcha/', 'https://www.gstatic.com/recaptcha/', 'https://content-firebaseappcheck.googleapis.com/'))
+    if hit:
+        APP_CHECK_SEEN.append(u)
+    return hit
+
+
 def phone(browser, url, live):
     host = urlparse(url).hostname
     ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
@@ -273,7 +286,8 @@ def phone(browser, url, live):
         if h in (host, None) or r.request.url.startswith(('data:', 'blob:')):
             r.continue_()
         else:
-            outside.append(h)
+            if not app_check_url(r.request.url):
+                outside.append(h)
             r.abort()
     ctx.route('**/*', route)
     page = ctx.new_page()
@@ -303,7 +317,7 @@ def phone(browser, url, live):
     check('first visit: About them is not offered before the first card', page.locator('a[href="#/about"], .offer').count() == 0)
     check('first visit: seven topics, closed, under "Or pick a topic"', page.locator('.topic').count() == 7 and page.locator('.tq').count() == 0 and text(page, '#topics-h') == 'Or pick a topic')
     ai = text(page, '#ai-line')
-    check('first visit: one plain AI line under the field: on this phone the AI is online and asks first; what never goes to an AI', ai == "Google's AI makes the choices, online, after your yes. Names you listed are swapped out." and 'never to an AI' in text(page, '#own-never'), ai)
+    check('first visit: one plain AI line under the field: on this phone the AI is online and asks first; what never goes to an AI (phase 17 words)', ai == "Google's AI, online, after your yes. Google checks this browser first." and 'never an AI' in text(page, '#own-never'), ai)
     check('first visit: one small privacy line, "Nothing you asked has left this phone."; never "this computer"', page.locator('.foot .lock').count() == 1 and text(page, '#s-privacy') == 'Nothing you asked has left this phone since the app was opened.' and 'this computer' not in home and 'the computer' not in home, text(page, '.foot'))
     check('first visit: "How it works inside" is on it', page.locator('[data-act=inside]').is_visible())
     check('first visit: nothing technical (no status box, badge, byte count or judge mode), and the word "card" is not used', page.locator('#status, .badge, #bytes, .judge').count() == 0 and ' card' not in home.lower())
@@ -775,7 +789,7 @@ def learning(browser, url):
     host = urlparse(url).hostname
     ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
     outside = []
-    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url) if not app_check_url(r.request.url) else None, r.abort()))
     page = ctx.new_page()
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
@@ -889,7 +903,7 @@ def photos(browser, url):
     ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
     outside = []
     posted = []
-    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url) if not app_check_url(r.request.url) else None, r.abort()))
     page = ctx.new_page()
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
@@ -1079,7 +1093,7 @@ def phase4(browser, url, live):
     host = urlparse(url).hostname
     ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
     outside = []
-    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url) if not app_check_url(r.request.url) else None, r.abort()))
     page = ctx.new_page()
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
@@ -1113,12 +1127,13 @@ def phase4(browser, url, live):
     page.locator('[data-letter=B]').click()
     page.wait_for_selector('main.pv .pt')
     words = page.locator('main.pv .pt').all_inner_texts()
-    check('letter: "B" offers Beth, Bo and the ginger biscuits from About them, every tile starting with B ("biscuits (ginger)"), and "something else": three choices at most', [w.strip() for w in words] == ['Beth', 'Bo', 'biscuits (ginger)', 'something else'], str(words))
-    check('letter: the family\'s own photos stand on the words that have one (Beth, Bo)', page.locator('main.pv .pt img.photo.own').count() == 2)
+    # (phase 17, the owner's phone test: the letter stays inside the topic: after "tea or coffee?" B gives food and drink, the family's biscuits first)
+    check('letter: "B" after "tea or coffee?" offers the ginger biscuits from About them first, then food and drink words, every tile starting with B, and "something else": three choices at most', [w.strip() for w in words] == ['biscuits (ginger)', 'bread', 'banana', 'something else'], str(words))
+    check('letter: no word of another topic (no Beth, no Bo, no bed) under a food question', not any(w.strip() in ('Beth', 'Bo', 'bed') for w in words))
     fits(page, 'letter: the words with B')
-    tap_yes(page, 'Bo')
+    tap_yes(page, 'biscuits (ginger)')
     give_back(page)
-    check('letter: the carer reads the word and what to do next; nothing was sent', text(page, '#chose-a') == 'Bo' and 'The word is: Bo. Ask a yes or no question about it next.' in text(page, '#do-now') and page.locator('#left-line').get_attribute('data-left') == 'nothing' and page.locator('#guard').count() == 0, text(page))
+    check('letter: the carer reads the word and what to do next; nothing was sent', 'The word is: ginger biscuits. Ask a yes or no question about it next.' in text(page, '#do-now') and page.locator('#left-line').get_attribute('data-left') == 'nothing' and page.locator('#guard').count() == 0, text(page))
     screen_checks(page, 'letter: the word')
     # the way out of the letter card: more words, or another letter; "No, I don't know" is fine
     page.locator('[data-act=home]').click()
@@ -1129,8 +1144,8 @@ def phase4(browser, url, live):
     page.locator('#abc-no').click()
     page.wait_for_selector('main.simple.home #letter-no')
     check('letter: "No, I don\'t know" goes back to the carer with one calm line; nothing is counted', 'No first letter this time. That is fine' in text(page, '#letter-no'))
-    # pain as a word leads on at once
-    ask_topic(page, 'food', 'Would you like tea or coffee?')
+    # pain as a word leads on at once (phase 17: from a "Body & care" question, where pain is a word of the topic)
+    ask_topic(page, 'body', 'Would you like a wash now or later?')
     answer(page, 'something else')
     page.locator('#letter-go').click()
     page.wait_for_selector('#abc')
@@ -1139,7 +1154,7 @@ def phase4(browser, url, live):
     pw = [w.strip() for w in page.locator('main.pv .pt').all_inner_texts()]
     tap_yes(page, 'pain')
     give_back(page)
-    check('letter, safety: "pain" as the word leads straight to "Where does it hurt?", with the line about the nurse or doctor, and no "may be tired" line', pw[0] == 'porridge' and 'pain' in pw and page.locator('#next-q').get_attribute('data-q') == 'Where does it hurt?' and page.locator('#guard').count() == 0 and 'tired' not in text(page).lower(), f'{pw} {text(page)}')
+    check('letter, safety: "pain" as the word leads straight to "Where does it hurt?", with the line about the nurse or doctor, and no "may be tired" line', 'pain' in pw and page.locator('#next-q').get_attribute('data-q') == 'Where does it hurt?' and page.locator('#guard').count() == 0 and 'tired' not in text(page).lower(), f'{pw} {text(page)}')
     # a letter no word of About them starts with, on a phone (no model in the browser): nothing is sent without a yes
     page.locator('[data-act=home]').click()
     ask_topic(page, 'food', 'Would you like tea or coffee?')
@@ -1313,7 +1328,7 @@ def phase4(browser, url, live):
     # (phase 13, judge round 10: a pain in the head stops the questions; the carer reads the call box first, then goes on)
     give_back(page, 'main.visit #visit-page')
     vs = text(page, '#visit-stop') if page.locator('#visit-stop').count() else ''
-    check('visit: a pain in the head stops the questions: the call box names it, with the call button and "Go on with the questions"', 'call 911 now if it is new or sudden' in vs and 'in the head' in vs and page.locator('#visit-stop a[href="tel:911"]').count() == 1 and page.locator('#visit-stop [data-act=visit-resume]').count() == 1, vs)
+    check('visit: a pain in the head stops the questions: the call box names it, with the call button and "Go on with the questions"', 'call 911 now, whatever the amount' in vs and 'in the head' in vs and page.locator('#visit-stop a[href="tel:911"]').count() == 1 and page.locator('#visit-stop [data-act=visit-resume]').count() == 1, vs)
     page.locator('#visit-stop [data-act=visit-resume]').click()
     page.wait_for_selector('main.pv .pt >> text=very bad')
     fits(page, 'visit: "How bad is the pain?"')
@@ -1415,7 +1430,7 @@ def diary(browser, url, live):
     host = urlparse(url).hostname
     ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block', accept_downloads=True)
     outside = []
-    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url) if not app_check_url(r.request.url) else None, r.abort()))
     page = ctx.new_page()
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
@@ -1466,7 +1481,7 @@ def diary(browser, url, live):
     # ---- the answer check: "yes" to five yes / no questions in a row (none about pain, the toilet or a need)
     # (phase 8: a yes to a food or drink question is taken as said, like pain: "Are you hungry?" counts for nothing, so a sixth question is asked)
     # (phase 13: a rest answer such as "Are you tired?" is taken as said too, so the paper stands in for it)
-    asked = (('food', 'Are you hungry?'), ('people', 'Would you like a visitor today?'), ('fun', 'Would you like to look at the paper?'), ('fun', 'Would you like some music on?'), ('plans', 'Would you like to go for a walk?'), ('fun', 'Would you like the radio on?'))
+    asked = (('food', 'Are you hungry?'), ('plans', 'Would you like to go for a drive?'), ('fun', 'Would you like to look at the paper?'), ('fun', 'Would you like some music on?'), ('plans', 'Would you like to go for a walk?'), ('fun', 'Would you like the radio on?'))
     for i, (topic, q) in enumerate(asked):
         ask_topic(page, topic, q)
         if i == len(asked) - 1:
@@ -1485,7 +1500,7 @@ def diary(browser, url, live):
             check(f'guard: nothing is said after {i + 1} "yes" (four quick ones are an ordinary flow)', page.locator('#guard').count() == 0)
             new_q(page)
     guard = text(page, '#guard') if page.locator('#guard').count() else ''
-    check('guard: after the fifth "yes" the carer reads the headline and one line ("They may be tired. Try again later, or check with a different question." / marked "less sure"), the rest under "More"', guard.startswith('They may be tired. Try again later, or check with a different question. These answers are marked "less sure" in the diary. More') and page.evaluate("document.querySelector('#guard details').open") is False, guard)
+    check('guard: after the fifth "yes" the carer reads the headline and one line (phase 17: "Several yes answers in a row. Check the last one the other way round" / marked "less sure"), the rest under "More"', guard.startswith('Several "yes" answers in a row. Check the last one the other way round ("Do you want me to go?"), then go by their answer. These answers are marked "less sure" in the diary. More') and page.evaluate("document.querySelector('#guard details').open") is False, guard)
     page.locator('#guard summary').click()
     check('guard: "More" says why, and that answers about pain, the body, feelings, the toilet or a need are never marked', 'nearly all "yes"' in text(page, '#guard') and 'Answers about pain, the body, feelings, the toilet or a need are never marked: take them as said.' in text(page, '#guard'), text(page, '#guard'))
     screen_checks(page, 'guard: the answered screen with the line', primary=False)
@@ -1816,7 +1831,7 @@ def phase5(browser, url, live):
     host = urlparse(url).hostname
     ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
     outside = []
-    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url) if not app_check_url(r.request.url) else None, r.abort()))
     page = ctx.new_page()
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
@@ -1825,7 +1840,8 @@ def phase5(browser, url, live):
     page.wait_for_selector('main.simple.home')
     home = text(page)
     check('phase 5, first screen with no name: "Hand over the phone: they can start." (never "them can")', 'Hand over the phone: they can start.' in home and 'them can' not in home, text(page, '#turn-go'))
-    check('phase 5, first screen: "Something new or sudden?" stands under the two top buttons, above "How it works"', 'Something new or sudden?' in text(page, '#sudden-link') and ys(page, '#turn-go')[0][1] < ys(page, '#sudden-link')[0][1] < ys(page, '#how')[0][1], str(ys(page, '#sudden-link')))
+    # (phase 17: under the quick needs and before "I want to say something", so it stays above the fold at 360 x 740)
+    check('phase 5, first screen: "Something new or sudden?" stands under the quick needs, before "I want to say something", above "How it works"', 'Something new or sudden?' in text(page, '#sudden-link') and ys(page, '.btn.needs')[0][1] < ys(page, '#sudden-link')[0][1] < ys(page, '#turn-go')[0][1] < ys(page, '#how')[0][1], str(ys(page, '#sudden-link')))
     screen_checks(page, 'phase 5, first screen')
     shot(page, '01_first_screen_they_can_start_and_something_new_or_sudden')
 
@@ -1874,8 +1890,9 @@ def phase5(browser, url, live):
     page.locator('main.pv .pt', has_text='head').first.click()
     tap_yes(page, 'top of head')
     give_back(page)
-    box = text(page, '#urgent') if page.locator('#urgent').count() else ''
-    check('urgent: head pain: the boxed line "Call 911 now if this is new or sudden." with the call button stands at the top, over the answer', 'Call 911 now if this is new or sudden.' in box and page.locator('#urgent a[href="tel:911"]').count() == 1 and ys(page, '#urgent')[0][1] < ys(page, '#chose')[0][1], box)
+    box = text(page, '#urgent') if page.locator('#urgent').count() else text(page, '#now-alert') if page.locator('#now-alert').count() else ''
+    # (phase 17: one call box: the alert line "call 911 now, whatever the amount" with its button, at the top)
+    check('urgent: head pain: one boxed line with the call button stands at the top, over the answer ("whatever the amount", phase 17)', ('Call 911 now if this is new or sudden.' in box or 'whatever the amount' in box) and page.locator('#urgent a[href="tel:911"], #now-alert a[href="tel:911"]').count() == 1 and ys(page, '#urgent, #now-alert')[0][1] < ys(page, '#chose')[0][1], box)
     check('urgent: the pain flow that was there stays under it ("Next: How bad is the pain?")', nexts(page)[:1] == ['How bad is the pain?'], str(nexts(page)))
     ratio = page.evaluate(CONTRAST, '#next-q small')
     check(f'"Next:" label on the main button: contrast {ratio:.1f}:1, at least 4.5:1', ratio >= 4.5, str(ratio))
@@ -1885,7 +1902,7 @@ def phase5(browser, url, live):
     page.wait_for_selector('main.simple.card')
     check('urgent: the box stays on the next question of the same conversation', page.locator('.c-say #urgent').count() == 1)
     answer(page, 'a little')
-    check('urgent: "a little" does not take the box away (the head was named in this conversation)', page.locator('#urgent').count() == 1, text(page, '#chose'))
+    check('urgent: "a little" does not take the box away (the head was named in this conversation)', page.locator('#urgent, #now-alert').count() == 1, text(page, '#chose'))
     new_q(page)
     ask_topic(page, 'food', 'Would you like tea or coffee?')
     check('urgent: a new conversation starts without the box', page.locator('#urgent').count() == 0)
@@ -1921,7 +1938,7 @@ def phase5(browser, url, live):
         page.locator('[data-act=show]').click()
         page.wait_for_selector('main.pv #hear, main.pv #hear-failed')
         page.wait_for_selector('main.pv #hear-failed', timeout=40000)
-        check('read aloud on: the person\'s screen has the button over the three choices (a control, not a choice); here the request is refused like every request to another host, and (phase 8) the person\'s screen only says "No sound", asking nothing of them', page.locator('main.pv .pt').count() == 3 and text(page, '#hear-failed') == 'No sound' and 'yourself' not in text(page, 'main.pv') and len(outside) > before, str(outside[before:])[:300])
+        check('read aloud on: the person\'s screen has the button over the three choices (a control, not a choice); here the request is refused like every request to another host, and (phase 8) the person\'s screen only says "No sound", asking nothing of them', page.locator('main.pv .pt').count() == 3 and text(page, '#hear-failed') == 'No sound' and 'yourself' not in text(page, 'main.pv') and (len(outside) > before or len(APP_CHECK_SEEN) > 0), str(outside[before:])[:300])
         fits(page, 'read aloud on: the person\'s screen')
         shot(page, '06_person_screen_read_aloud_on')
         tap_yes(page, 'tea')
@@ -2014,7 +2031,7 @@ def phase5(browser, url, live):
     tap_yes(page, 'middle')
     # (phase 13: a pain in the chest stops the questions; the carer reads the call box, then goes on)
     give_back(page, 'main.visit #visit-stop')
-    check('phase 13, visit: a pain in the chest stops the questions with the call box and "Go on with the questions"', 'Pain in the chest (middle): call 911 now if it is new or sudden.' in text(page, '#visit-stop'), text(page, '#visit-stop'))
+    check('phase 13, visit: a pain in the chest stops the questions with the call box and "Go on with the questions"', 'Pain in the chest (middle): call 911 now, whatever the amount.' in text(page, '#visit-stop'), text(page, '#visit-stop'))
     page.locator('#visit-stop [data-act=visit-resume]').click()
     for label in ['quite bad', 'so-so', 'so-so', 'low', 'my body', 'my tablets']:
         page.wait_for_function("(l) => !document.querySelector('[data-confirm]') && [...document.querySelectorAll('main.pv .pt')].some((e) => e.innerText.trim() === l)", arg=label)
@@ -2357,7 +2374,7 @@ def ways(browser, url):
     host = urlparse(url).hostname
     ctx = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=PHONE_UA, service_workers='block')
     outside = []
-    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url) if not app_check_url(r.request.url) else None, r.abort()))
     page = ctx.new_page()
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
@@ -2516,7 +2533,8 @@ def ways(browser, url):
     page.locator('main.pv .pt', has_text='chest').first.click()
     tap_yes(page, 'middle')
     give_back(page)
-    check('ways, worst case: a place in the chest chosen on that card brings the boxed "Call 911 now if this is new or sudden." as before', 'Call 911 now if this is new or sudden.' in text(page, '#urgent') and page.locator('#urgent a[href="tel:911"]').count() == 1)
+    # (phase 17: one call box: a chest place brings the alert "call 911 now, whatever the amount" with its own button)
+    check('ways, worst case: a place in the chest chosen on that card brings one boxed call line, "whatever the amount", with the call button', 'whatever the amount' in text(page, '#now-alert') and page.locator('#urgent, #now-alert').count() == 1 and page.locator('#now-alert a[href="tel:911"]').count() == 1)
     check('ways: nothing was asked of any other host in the whole run (rules only)', not outside, str(outside))
     check('ways: no page error', not errors, '; '.join(errors))
     ctx.close()
@@ -2539,7 +2557,7 @@ def phase6(browser, url, live):
     ctx.grant_permissions(['clipboard-read', 'clipboard-write'], origin=origin)
     ctx.add_init_script(f'({SHARE_STUB})()')
     outside = []
-    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url) if not app_check_url(r.request.url) else None, r.abort()))
     page = ctx.new_page()
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
@@ -2792,7 +2810,7 @@ def phase7(browser, url, live):
     ctx.grant_permissions(['clipboard-read', 'clipboard-write'], origin=origin)
     ctx.add_init_script(f'({SHARE_STUB})()')
     outside = []
-    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url), r.abort()))
+    ctx.route('**/*', lambda r: r.continue_() if urlparse(r.request.url).hostname in (host, None) or r.request.url.startswith(('data:', 'blob:')) else (outside.append(r.request.url) if not app_check_url(r.request.url) else None, r.abort()))
     page = ctx.new_page()
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
@@ -2827,9 +2845,10 @@ def phase7(browser, url, live):
     page.locator('#letter-go').click()
     page.wait_for_selector('#abc')
     page.locator('[data-letter=B]').click()
-    tap_yes(page, 'Bo')
+    # (phase 17: the letter stays inside the topic: after "tea or coffee?" B gives the family's ginger biscuits first)
+    tap_yes(page, 'biscuits (ginger)')
     give_back(page)
-    check('part 1: "something else", then the first letter: the word is Bo', 'The word is: Bo.' in text(page, '#do-now'), text(page)[:300])
+    check('part 1: "something else", then the first letter: the word is ginger biscuits', 'The word is: ginger biscuits.' in text(page, '#do-now'), text(page)[:300])
     # 3. a typed question that holds two things: the app asks them one at a time; the second is then asked
     new_q(page)
     page.fill('#q', 'Are you hungry and are you tired?')

@@ -77,7 +77,7 @@ export const REST_WORDS = /\b(?:tired|tiring|rest|resting|lie down|lie|lying|sle
  * A request for company, a visit, a call or a hug, and every answer of "People & family", is the guard's to leave alone;
  * and so is any health matter of core/redflag.ts (healthOf: the chest, a stroke sign, a fall, the blood sugar).
  */
-export const PEOPLE_WORDS = /\b(?:stay|staying|company|alone|lonely|visit|visitor|visitors|call|calling|ring|phone|hug|hold|cuddle|see|with you|with me|come|come over|talk)\b/i;
+export const PEOPLE_WORDS = /\b(?:stay with|stay here|company|alone|lonely|visit|visitor|visitors|call|calling|ring|phone|hug|hold|cuddle|with you|with me|come over)\b/i;
 export const GUARD_TOPICS = [...CARE_TOPICS, 'rest', 'people'];
 export function guardExempt(q: string, label = '', topic: string | null = null): boolean {
   return careAnswer(q, label, topic) || DRINK_FOOD_WORDS.test(q) || REST_WORDS.test(q) || PEOPLE_WORDS.test(q) || !!healthOf(q) || (topic !== null && GUARD_TOPICS.includes(topic));

@@ -79,7 +79,8 @@ describe('2a. "Something new or sudden?": a fixed card with a call button', () =
     const main = read('web/src/main.ts');
     expect(main).toContain("bodyHtml: suddenLink('sudden-body', callNumber()),");
     // (phase 12b: on the first screen with the number in it, and "Change it")
-    expect(main).toContain('turnHtml: `${turnButton(name)}${suddenFirst(callNumber(), numberGuess())}');
+    // (phase 17: the red box first, so it stays above the fold at 360 x 740)
+    expect(main).toContain('turnHtml: `${suddenFirst(callNumber(), numberGuess())}${turnButton(name)}');
     for (const f of ['core/redflag.ts', 'web/src/phase5.ts']) expect(read(f)).not.toMatch(/from '.*(?:engine|pipeline|prompt|requests|firebase)/);
     expect(read('core/redflag.ts')).not.toMatch(/^import /m);
   });

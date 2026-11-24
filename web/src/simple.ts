@@ -527,7 +527,8 @@ export function answeredScreen(m: AnsweredModel): string {
     : tryMain ? `<button type="button" class="btn primary ask-next" id="next-q" data-q="${esc(m.tryNext!)}"><span><small>${S.nextLabel}</small>${esc(m.tryNext!)}</span></button>` : '';
   // (phase 13: under a safety-check alert the call button is the main action; "Ask another question" is not primary)
   const another = `<button type="button" class="btn${m.next || lead || m.out || m.alertHtml ? '' : ' primary'}" id="another" data-act="new">${lead ? S.anotherElse : S.another}</button>`;
-  const end = m.alertHtml ? m.alertHtml : m.end && !lead ? `<p class="do-now" id="do-now">${SIGN.tick}<span><small>${S.doNow}</small>${esc(m.end)}</span></p>` : '';
+  // (phase 17: the alert, with its call button, is the one call box and stands at the top, over the answer)
+  const end = m.alertHtml ? '' : m.end && !lead ? `<p class="do-now" id="do-now">${SIGN.tick}<span><small>${S.doNow}</small>${esc(m.end)}</span></p>` : '';
   // the way out was chosen: what to do now, in order of how often it helps (never a dead end)
   const online = m.narrow === 'cloudOn' || m.narrow === 'ask';
   const narrow = m.narrow ? `<button type="button" class="btn narrow" id="narrow" data-act="narrow" ${m.narrow === 'offline' ? 'disabled' : ''}>${SIGN.spark}<span>${online ? S.narrow.goOnline : S.narrow.go}</span></button>
@@ -559,7 +560,7 @@ export function answeredScreen(m: AnsweredModel): string {
   return `<main class="simple wrap s-answered" data-screen="answered">
   ${navBar({ back: true })}
   <div class="col">
-    ${m.leadHtml ?? ''}
+    ${m.leadHtml ?? ''}${m.alertHtml ?? ''}
     <div class="chose${m.alertHtml ? ' alert' : m.out ? ' out' : m.neutral ? ' neutral' : ''}" id="chose" role="status" data-tone="${m.alertHtml ? 'alert' : m.out ? 'out' : m.neutral ? 'neutral' : 'done'}">${m.alertHtml ? SIGN.alert : m.out ? SIGN.out : m.neutral ? SIGN.info : SIGN.tick}<div>${(m.neutral || m.alertHtml) && m.question ? `<span class="muted small" id="chose-tone">${esc(COPY.simple.answeredNeutral)}</span>` : ''}${m.question ? `<span class="asked" id="chose-q">${esc(m.question)}</span>` : `<span class="muted small">${esc(S.choseNeed(m.name))}</span>`}<b id="chose-a">${esc(big)}</b></div></div>
     ${m.guardHtml ?? ''}
     ${m.afterHtml}
@@ -612,7 +613,7 @@ export function consentSheet(m: SheetModel): string {
   </ul>
   <div class="choice"><button type="button" class="btn primary" data-act="sheet-yes">${N.yes}</button>
   <button type="button" class="btn" data-act="sheet-no">${N.no}</button></div>
-  <p class="small muted after">${esc(K.after)}</p>
+  <p class="small muted after">${esc(K.after.replace(/ "Every time"[^.]*\.(?:[^.]*\.)?/, ''))}</p>
   <details class="whole" id="sheet-whole"><summary>${N.whole}</summary><pre>${esc(m.narrow.request)}</pre></details>
   <p class="links"><a class="tlink" href="${COPY.consent.termsLink}" target="_blank" rel="noopener">${K.terms}</a></p>
 </div>`;

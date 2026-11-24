@@ -1997,7 +1997,8 @@ function simpleScreen(): string {
       bodyHtml: suddenLink('sudden-body', callNumber()),
       tryHtml: tryAiBlock({ q: AI_QUESTION, tag: tryAiTag(whereInput()), busy: state.busy && p9sample.q !== null && state.lastQuestion === p9sample.q }),
       laterHtml: (p9notNow ? `<p class="tip" id="not-now" role="status">${esc(P9.later.notNow(name, p9notNow.kept))}</p>` : '') + laterBlock(shownLater(p8later.list, Date.now()).map((x) => ({ q: x.q, time: laterTime(x.at), ago: agoText(x.at, Date.now()), i: p8later.list.indexOf(x), care: !!x.care, pain: !!x.pain, asking: p8later.asking === x, ...(x.red ? { red: x.red } : {}) })), laterPainHtml(callNumber(), numberGuess()), callNumber()),
-      turnHtml: `${turnButton(name)}${suddenFirst(callNumber(), numberGuess())}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
+      // (phase 17: the red "Something new or sudden?" box before "I want to say something", so it stays above the fold at 360 x 740)
+      turnHtml: `${suddenFirst(callNumber(), numberGuess())}${turnButton(name)}${state.p4.letterNo ? `<p class="tip" id="letter-no" role="status">${esc(P4.letter.noLetter(name))}</p>` : ''}`,
     });
   }
   if (!state.sheet || !c?.unsentPayload) return screen;

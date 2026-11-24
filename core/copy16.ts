@@ -20,14 +20,14 @@ export const P16 = {
     where: {
       device: "Chrome's own AI on this computer makes them. Nothing is sent.",
       // (phase 17: App Check starts when the field gets the cursor, so the line says so; no word of the question goes)
-      ask: "Google's AI makes them, online, after your yes. Google checks this browser first; your words wait for the yes.",
+      ask: "Google's AI, online, after your yes. Google checks this browser first.",
       cloudOn: "Google's AI makes them, online (online help is on). Google checks this browser first.",
       offline: "You are offline: the app's rules make what they can from your words.",
       none: "This copy has no AI set up: the app's rules make what they can from your words.",
       checking: 'The app is checking where its AI can run here.',
     } as Record<string, string>,
     /** Under the "where" line, always: what never goes to an AI. */
-    never: "Pain, the body, warning signs: the app's fixed rules answer, never an AI.",
+    never: "Pain and warning signs: fixed rules, never an AI.",
     topicsHeading: 'Or pick a topic',
   },
   /** The line over a card the rules made because the words were about care, a warning sign or a crisis. */

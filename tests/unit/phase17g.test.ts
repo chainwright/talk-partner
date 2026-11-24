@@ -115,7 +115,7 @@ describe('D. the cold 10 seconds: who it is for, and that they point after you h
     expect(P16.own.heading).toBe('Type your question. We make picture answers.');
     expect(P16.own.heading.replace(/[.]/g, '').split(/\s+/).length).toBeLessThanOrEqual(8);
     expect(P16.own.make).toBe('Make picture answers');
-    expect(P16.own.where.ask).toMatch(/Google checks this browser first; your words wait for the yes\./);
+    expect(P16.own.where.ask).toMatch(/Google checks this browser first\./);
   });
 });
 

@@ -213,7 +213,7 @@ def phase13(page, tag, h):
     check(f'{tag}: visit, a pain in the head: the person\'s questions end ("Thank you", "Give the phone back")', page.locator('.p-give').count() == 1 and 'How bad is the pain?' not in pv, pv[:200])
     give(page); page.wait_for_selector('main.visit #visit-page')
     vs = e2e.text(page, '#visit-stop') if page.locator('#visit-stop').count() else ''
-    check(f'{tag}: visit: the carer reads the call box first ("Pain in the head (top of head): call 911 now if it is new or sudden"), with the call and "Go on with the questions"', 'Pain in the head (top of head): call 911 now if it is new or sudden.' in vs and page.locator('#visit-stop a[href="tel:911"]').count() == 1 and page.locator('#visit-stop [data-act=visit-resume]').count() == 1 and noscroll(page), vs)
+    check(f'{tag}: visit: the carer reads the call box first ("Pain in the head (top of head): call 911 now, whatever the amount", phase 17), with the call and "Go on with the questions"', 'Pain in the head (top of head): call 911 now, whatever the amount.' in vs and page.locator('#visit-stop a[href="tel:911"]').count() == 1 and page.locator('#visit-stop [data-act=visit-resume]').count() == 1 and noscroll(page), vs)
     shot(page, tag, '13c_visit_stop')
     page.locator('#visit-stop [data-act=visit-resume]').click(); page.wait_for_selector('main.pv .pt >> text=very bad')
     check(f'{tag}: visit: "Go on with the questions" goes on with "How bad is the pain?"', 'How bad is the pain?' in e2e.text(page))
@@ -328,11 +328,12 @@ def phase16(page, tag, h, outside):
     # ---- 16.1 the first screen: "Ask in your own words" first, then quick needs, the red box, "Or pick a topic"
     home(page)
     r = page.evaluate("(() => { const b = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().bottom) : 9999; }; const t = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().top + scrollY) : 9999; }; return { own: t('#own-h'), field: b('#q'), make: b('#make'), lines: b('#own-never'), needs: t('.btn[data-act=needs]'), sudden: b('#sudden-link'), topics: t('#topics-h') }; })()")
-    check(f'{tag}: "Ask in your own words" is the first action: its field, button and two lines end above the fold ({r["lines"]} px of {h})', r['own'] < r['needs'] < r['topics'] and r['lines'] <= h and e2e.text(page, '#own-h') == 'Ask in your own words', json.dumps(r))
+    check(f'{tag}: "Ask in your own words" is the first action: its field, button and two lines end above the fold ({r["lines"]} px of {h})', r['own'] < r['needs'] < r['topics'] and r['lines'] <= h and e2e.text(page, '#own-h') == 'Type your question. We make picture answers.', json.dumps(r))
     check(f'{tag}: the red "Something new or sudden?" box is still on the first screen ({r["sudden"]} px of {h})', r['sudden'] <= h, json.dumps(r))
     check(f'{tag}: the topics are the second path, "Or pick a topic"', e2e.text(page, '#topics-h') == 'Or pick a topic' and page.locator('.topic').count() == 7)
     line = e2e.text(page, '#ai-line')
-    check(f'{tag}: the line under it says where its AI runs on this phone, and what never goes to an AI', "Google's AI makes the choices, online, after your yes." in line and 'never to an AI' in e2e.text(page, '#own-never'), line)
+    check(f'{tag}: the line under it says where its AI runs on this phone, and what never goes to an AI (phase 17 words)', "Google's AI, online, after your yes." in line and 'never an AI' in e2e.text(page, '#own-never'), line)
+    check(f'{tag}: (phase 17) one line says who it is for and that they point after the hand-over, above the block', 'you ask, hand them the phone, they point' in e2e.text(page, '#who-line') and page.evaluate("document.querySelector('#who-line').getBoundingClientRect().top < document.querySelector('#own-h').getBoundingClientRect().top"), e2e.text(page, '#who-line'))
     check(f'{tag}: typed only: no microphone on the own-words form', page.locator('#ask #mic, #ask .mic').count() == 0)
     shot(page, tag, '16_1_home')
     # ---- 16.2 a warning sign in the carer's own words: the rules' card, one line why, the call box; nothing asked of any host
@@ -340,7 +341,7 @@ def phase16(page, tag, h, outside):
     own_ask(page, 'Is your chest tight again?')
     g = e2e.text(page, '#own-guard') if page.locator('#own-guard').count() else ''
     check(f'{tag}: a warning sign typed in own words: the rules\' card, the line "Your words did not go to any AI", the call box', page.locator('main.simple.card #own-guard[data-guard=red]').count() == 1 and 'did not go to any AI' in g and page.locator('#urgent a[href^="tel:"]').count() == 1 and page.locator('#sheet').count() == 0, g)
-    check(f'{tag}: no AI button and no Read aloud on it; no request to any other host', page.locator('#find-more').count() == 0 and page.locator('#speak-offer').count() == 0 and len(outside) == n0, str(outside[n0:]))
+    check(f'{tag}: no AI button and no Read aloud on it; no request to any other host', page.locator('#find-more').count() == 0 and page.locator('#speak-offer').count() == 0 and not [u for u in outside[n0:] if not APP_CHECK(u)], str(outside[n0:]))
     check(f'{tag}: it says it was made by the rules and nothing was sent', page.locator('#made-where[data-maker=code][data-left=nothing]').count() == 1)
     shot(page, tag, '16_2_guard_red')
     answer_and_leave(page, tag, 'the warning-sign card', 'yes')
@@ -398,6 +399,97 @@ def phase16(page, tag, h, outside):
     own_ask(page, 'Do you want to go out later or stay in?')
     check(f'{tag}: an either-or in own words: the rules\' card of those words, no guard or fall-back line', page.locator('#own-guard, #own-fallback').count() == 0 and 'go out later' in e2e.text(page, '#person'), e2e.text(page)[:160])
     answer_and_leave(page, tag, 'the either-or card')
+
+
+APP_CHECK = lambda u: u.startswith(('https://www.google.com/recaptcha/', 'https://www.gstatic.com/recaptcha/', 'https://content-firebaseappcheck.googleapis.com/'))
+
+
+def leave(page, tag, what, most=9):
+    seen = []
+    steps = 0
+    while page.locator('main.simple.home').count() == 0 and steps < most:
+        if page.locator('main.pv').count():
+            page.go_back()
+        else:
+            page.locator('#s-top [data-act=back]').first.click()
+        page.wait_for_timeout(350); steps += 1
+        seen.append(page.evaluate("document.querySelector('main')?.dataset.screen || ''"))
+    check(f'{tag}: {what}: Back one step at a time to the first screen, never through "No card" ({" > ".join(seen)})', page.locator('main.simple.home').count() == 1 and 'nocard' not in seen and noscroll(page), ' > '.join(seen))
+
+
+def phase17(page, tag, h, outside):
+    # ---- 17.1 a chest question typed, "yes": one red box, whatever the amount; no green tick; next: how bad
+    own_ask(page, 'Is your chest tight again?')
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    person_pick(page, 'yes'); give(page); page.wait_for_selector('main.simple.s-answered')
+    a = e2e.text(page, '#now-alert') if page.locator('#now-alert').count() else ''
+    check(f'{tag}: chest typed, yes: one red box "call 911 now, whatever the amount, even if it has happened before", over the answer', 'whatever the amount, even if it has happened before' in a and page.locator('#urgent').count() == 0 and page.locator('#now-alert a[href^="tel:"]').count() == 1 and page.evaluate("document.querySelector('#now-alert').getBoundingClientRect().top < document.querySelector('#chose').getBoundingClientRect().top"), a)
+    check(f'{tag}: chest typed, yes: the answer in a box with no green tick, and "Next: How bad is the pain?"', page.locator('#chose[data-tone=alert], #chose[data-tone=neutral]').count() == 1 and e2e.text(page, '#next-q') == 'Next: How bad is the pain?', e2e.text(page)[:200])
+    shot(page, tag, '17_1_chest_yes')
+    page.locator('#next-q').click(); page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    person_pick(page, 'a little'); give(page); page.wait_for_selector('main.simple.s-answered')
+    check(f'{tag}: chest then "a little": still call now, whatever the amount', 'whatever the amount' in e2e.text(page, '#now-alert'), e2e.text(page)[:200])
+    leave(page, tag, 'the typed chest question and its "how bad"')
+    # ---- 17.2 "Is your smile lopsided?" yes: a stroke, call now; "Does your arm hurt?" yes: the weakness question next
+    own_ask(page, 'Is your smile lopsided?')
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    person_pick(page, 'yes'); give(page); page.wait_for_selector('main.simple.s-answered')
+    check(f'{tag}: "Is your smile lopsided?" yes: "This can be a stroke: call 911 now"', 'This can be a stroke: call 911 now' in e2e.text(page, '#now-alert'), e2e.text(page)[:200])
+    shot(page, tag, '17_2_smile_yes')
+    leave(page, tag, 'the typed stroke question')
+    own_ask(page, 'Does your arm hurt?')
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    person_pick(page, 'yes'); give(page); page.wait_for_selector('main.simple.s-answered')
+    check(f'{tag}: "Does your arm hurt?" yes: the call box stays, and "Next: Is it suddenly weak or numb, yes or no?"', page.locator('#now-alert a[href^="tel:"]').count() == 1 and e2e.text(page, '#next-q') == 'Next: Is it suddenly weak or numb, yes or no?', e2e.text(page)[:200])
+    leave(page, tag, 'the typed limb pain')
+    # ---- 17.3 the owner's test: "I would like to something?" yes goes on
+    own_ask(page, 'I would like to something?')
+    if page.locator('#sheet').count():
+        page.locator('[data-act=sheet-no]').click(); page.wait_for_timeout(600)
+    # (here the AI is refused, so the rules' card may not be a yes / no; the yes / no the owner saw came from Google's AI;
+    # core/tree.ts typedStep is pinned by tests/unit/phase17g.test.ts for that card)
+    if page.locator('[data-act=show]').count():
+        page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    if page.locator('main.pv .pt', has_text='yes').count():
+        person_pick(page, 'yes'); give(page); page.wait_for_selector('main.simple.s-answered')
+        check(f'{tag}: "I would like to something?" yes: "Next: Is it about food or drink, people, or plans?", never a bare end', e2e.text(page, '#next-q') == 'Next: Is it about food or drink, people, or plans?', e2e.text(page)[:200])
+        shot(page, tag, '17_3_want_yes')
+        leave(page, tag, 'the typed "want something?"')
+    # ---- 17.4 refused by App Check: the rules' card stays, "Try Google's AI again" asks once more
+    own_ask(page, 'What shall we do this evening?')
+    if page.locator('#sheet').count():
+        page.locator('[data-act=sheet-yes]').click(); page.wait_for_selector('#own-fallback', timeout=30000); page.wait_for_timeout(400)
+    check(f'{tag}: refused: the rules\' card and "Try Google\'s AI again"', page.locator('#own-retry').count() == 1 and page.locator('main.simple.card [data-act=show]').count() == 1, e2e.text(page)[:200])
+    if page.locator('#own-retry').count():
+        page.locator('#own-retry').click(); page.wait_for_selector('#own-retry-line', timeout=30000); page.wait_for_timeout(400)
+        check(f'{tag}: after "Try Google\'s AI again" refused once more: the card stays, with a line that nothing was sent', page.locator('main.simple.card [data-act=show]').count() == 1 and 'nothing was sent' in e2e.text(page, '#own-retry-line'), e2e.text(page, '#own-retry-line'))
+        shot(page, tag, '17_4_retry')
+    leave(page, tag, 'the refused card after "Try again"')
+    # ---- 17.5 letter by letter inside the topic: food, P, then "Add the next letter", I
+    home(page)
+    topic_q(page, 'food', 'tea or coffee')
+    person_pick(page, 'something else'); give(page); page.wait_for_selector('#letter-go')
+    page.locator('#letter-go').click(); page.wait_for_selector('main.pv.letters #abc')
+    page.locator('[data-letter=P]').click(); page.wait_for_selector('main.pv .pt')
+    words = [x.strip().split('\n')[-1].strip().lower() for x in page.locator('main.pv .pt').all_inner_texts()]
+    check(f'{tag}: food, P: food words only (no pain, priest, photos)', not any(w in ('pain', 'priest', 'photos') for w in words) and len(words) >= 3, str(words))
+    person_pick(page, 'something else'); give(page); page.wait_for_selector('#letter-add')
+    page.locator('#letter-add').click(); page.wait_for_selector('main.pv.letters #abc')
+    check(f'{tag}: the alphabet again, with the letters so far: "It starts with P. Do you know the next letter?"', 'It starts with P. Do you know the next letter?' in e2e.text(page, '#abc-ask'), e2e.text(page, '#abc-ask'))
+    shot(page, tag, '17_5_next_letter')
+    page.locator('[data-letter=I]').click(); page.wait_for_selector('main.pv .pt')
+    words = [x.strip().split('\n')[-1].strip().lower() for x in page.locator('main.pv .pt:not(.esc)').all_inner_texts()]
+    check(f'{tag}: PI: every word starts with "pi" (pie, pizza)', words and all(w.startswith('pi') for w in words), str(words))
+    shot(page, tag, '17_5_pi')
+    leave(page, tag, 'letter by letter', most=12)
+    # ---- 17.6 "Change it": the emergency number, focused
+    home(page)
+    if not page.locator('[data-act=sudden-number]').count():
+        page.locator('#sudden-link').click(); page.wait_for_timeout(600)
+    page.locator('[data-act=sudden-number]').first.click(); page.wait_for_timeout(700)
+    check(f'{tag}: "Change it" focuses the emergency number field', page.evaluate("document.activeElement && document.activeElement.id") == 'emergency-number', page.evaluate("document.activeElement && document.activeElement.id"))
+    back_home(page, tag, '"Change it", focused')
 
 
 def walk(b, w, h, scheme):
@@ -620,8 +712,12 @@ def walk(b, w, h, scheme):
     phase14(page, tag, h, outside)
     # ---- 16. "Ask in your own words" as the first action (phase 16)
     phase16(page, tag, h, outside)
+    # ---- 17. the fixes of judge round 12 and of the owner's phone test (phase 17)
+    phase17(page, tag, h, outside)
 
-    check(f'{tag}: no page error, nothing asked of another host', not errs and not outside, str(errs + outside))
+    # (phase 17: on a phone App Check starts when the question field gets the cursor: reCAPTCHA only, no word of a question)
+    rest = [u for u in outside if not APP_CHECK(u)]
+    check(f'{tag}: no page error, nothing asked of another host but App Check\'s reCAPTCHA', not errs and not rest, str(errs + rest))
     ctx.close()
 
 
@@ -741,7 +837,8 @@ def phase15(b, w, h):
     page.locator('#letter-go').click(); page.wait_for_selector('main.pv.letters #abc')
     page.locator('[data-letter=B]').click(); page.wait_for_selector('main.pv .pt')
     words = [x.strip().split('\n')[-1].strip() for x in page.locator('main.pv .pt').all_inner_texts()]  # (a person with no photo has a monogram letter above the name)
-    check(f'{tag}: "B" gives Beth, Bo, biscuits (ginger), then "something else"', words == ['Beth', 'Bo', 'biscuits (ginger)', 'something else'], str(words))
+    # (phase 17, the owner's phone test: the letter stays inside the topic: after "tea or coffee?" B gives food and drink)
+    check(f'{tag}: "B" after "tea or coffee?" gives biscuits (ginger), bread, banana, then "something else"; no Beth or Bo', words == ['biscuits (ginger)', 'bread', 'banana', 'something else'], str(words))
     shot(page, tag, '15_4_letter_b')
     back_home(page, tag, 'the first letter, in the sample family', most=12)
     # ---- 15.5 a pain on the needs board fills the sample family's diary and "What stands out"

@@ -779,4 +779,4 @@
 .simple .own-why b { display: block; }
 
 /* phase 17: who it is for, under the hope line (the cold 10-second test) */
-.simple .who-line { margin: -6px 0 2px; font-size: 17px; line-height: 1.35; color: var(--ink); }
+.simple .who-line { margin: -6px 0 2px; font-size: 16px; line-height: 1.35; color: var(--ink); }
