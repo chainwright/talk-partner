@@ -106,8 +106,9 @@ See `git log` for dates. Day by day: `devlog/`.
   spouse, child, sibling, friend) and three were added (curtains open, curtains closed, church), the same way: Gemini 3.1
   Flash Image in Google AI Studio, reviewed by a person, bundled.
 - 22 Nov 2026 (phase 12b, after judge round 9b): the pain scale's three faces (our drawings read as angry and
-  laughing) were made the same way, in the Faces Pain Scale style, with show me (an angled finger), pain (the whole
-  body) and wait (an hourglass). 91 pictures on the cards are now made with Gemini.
+  laughing) were made the same way, as three faces from calm to crying, drawn for this app (not a copy of, and not a
+  claim to, any published pain scale or its artwork), with show me (an angled finger), pain (the whole body) and wait
+  (an hourglass). 91 pictures on the cards are now made with Gemini.
 
 Fonts in `web/public/fonts/` are third-party, each under the SIL Open Font License 1.1 (licence text in each folder): Instrument
 Sans, IBM Plex Mono, Atkinson Hyperlegible Next (fontsource 5.3.0 packages, latin subset). Overpass, Lexend and Public Sans were
