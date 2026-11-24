@@ -351,6 +351,13 @@ the table.
 | 328 | `5b0c1b4` | `d759487` | 2026-11-24 09:24 | Phase 17b: a drink question's letters are drinks and the family's own foods, never a stock food (L gave lemon… |
 | 329 | `0852ce8` | `973ae81` | 2026-11-24 10:00 | Revert the drinks-only letters (5b0c1b4): the topic on screen is Food & drink, so a food after a drink questi… |
 | 330 | `c44657a` | `27d1d27` | 2026-11-24 10:34 | Docs: live is 0852ce8 (phases 17 and 17b); hosted checks and logs |
+| 331 | `377f5dc` | `3b4143b` | 2026-11-24 12:40 | Phase 18: the fixes of judge round 13 (crisis answers keep the crisis box; chest and heart places call now wh… |
+| 332 | `604ea75` | `f819f69` | 2026-11-24 12:41 | Docs for phase 18: the live build 0852ce8 in JUDGES, README and CLAIMS (the hound's FALSE lines of round 13),… |
+| 333 | `7d7a8fe` | `0f30e22` | 2026-11-24 13:26 | Phase 18b: topic words for the first letter (food 73 to 313, drinks 22 to 70, places 21 to 144, TV and hobbie… |
+| 334 | `60dc5cf` | `579c0ea` | 2026-11-24 13:32 | Revert "Phase 18b: topic words for the first letter (food 73 to 313, drinks 22 to 70, places 21 to 144, TV an… |
+| 335 | `31aeb05` | `59a683a` | 2026-11-24 13:26 | Phase 18b: topic words for the first letter (food 73 to 313, drinks 22 to 70, places 21 to 144, TV and hobbie… |
+| 336 | `cb54ec0` | `5f39644` | 2026-11-24 14:06 | Phase 18c: the letter path never waits for ever; the device letter step back on the card's schema |
+| 337 | `1858b19` | `6cc6ce1` | 2026-11-24 14:44 | Docs: live is cb54ec0 (phase 18, 18b, 18c); hosted checks and logs |
 Public-only commit after row 295: `9f2d60a` (DISCLOSURE: no claim to a published pain scale, as in phase 13; the public DISCLOSURE is its own file).
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
