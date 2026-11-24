@@ -2,20 +2,21 @@ Repository: <https://github.com/chainwright/talk-partner> (public, Apache-2.0)
 
 # For judges: the 60-second path
 
-**On a phone first, in 12 steps** (Chrome on Android; the bare address opens the simple view, made for a carer). The
-sponsor's AI is at taps 3 and 4:
-1. Open <https://talk-partner.web.app/>. The first screen: "Needs something now?", "I want to say something", "Something new or sudden?".
-2. Under them, **See the AI at work**, and two lines: "Phone: Google's AI, online, after your yes" / "Laptop with Chrome's own AI: nothing is sent".
-3. **Food & drink → "Would you like tea or coffee?"** (taps 1 and 2): "1 Say it out loud", "2 Turn the phone to them", the main button **Show them the choices**, and under it the second button, **Find more choices (Google's AI, after your yes)**, then **Read it aloud to them (Google's AI, a calm, slow voice)** (in the sample family: "to Frank", since phase 15).
-4. **Find more choices** (tap 3): a sheet shows the exact line that would go ("Would you like tea or coffee? On the card already: tea, coffee."); **Just this once** (tap 4) asks Firebase AI Logic (`PREFER_IN_CLOUD`) for other kinds of answer; while it works, the card stays on screen with "Asking Google's AI… Stop waiting" (phase 15). The card it makes says "AI suggested these other choices with online help, after your yes" and its chip "Made online, after your yes · on a laptop with Chrome's AI this runs on that computer". On a laptop with Gemini Nano the same button reads "Find more choices (Chrome's AI, on this computer)" and is built to run there and send nothing (not yet run against the real Nano). If App Check refuses your browser, the screen says nothing was sent and what to do. **Back** (tap 5) returns to tea or coffee.
-5. **Show them the choices**: the person's screen, "Point to your answer", tea and coffee with their pictures.
-6. Tap **tea** → "So: tea. Right?" → **Yes** → "Thank you. Tea." → **Give the phone back**. The carer's screen: what was chosen, "Next: Would you like milk in it?", and "Made by the app's rules on this phone. No AI used."
-7. **Home → See the AI at work**: a sheet shows the exact line that would go to Google; **Just this once** makes an open question's card online; the card says "Made with online help".
-8. "Find more choices" is never offered on pain, the body, feelings, a red flag or the crisis line: try **Body & care → "Are you in pain?"** (no such button).
-9. **Needs something now? → pain → Yes**: the carer gets "Where does it hurt?" first and the call box with your region's number.
-10. **Body & care → "Are you in pain?" → yes → arms → your left arm**: the next question is "Is it suddenly weak or numb, yes or no?".
+**On a phone first, in 12 steps** (Chrome on Android; the bare address opens the simple view, made for a carer). These
+are the screens of phase 16, on the branch `phase16-ai-first`; the "Live:" line below names the build the hosted copy
+runs. The sponsor's AI is at taps 2 and 3:
+1. Open <https://talk-partner.web.app/>. Under the hope line ("When the words won't come, let them point.") the first block is **Ask in your own words**: a field with "What would you like for lunch?" in grey, the button **Make the choices**, and two lines: "Google's AI makes the choices, online, after your yes. Names you listed are swapped out." / "Pain, the body, feelings, warning signs: never to an AI, only the app's rules." Under it: "Needs something now?", "I want to say something", "Something new or sudden?", then **See the AI at work** with its two lines, "Phone: Google's AI, online, after your yes" / "Laptop with Chrome's own AI: nothing is sent".
+2. Tap the field (tap 1) and type the question as you would say it: "What do you fancy for lunch today?". There is no microphone on this form: a recording reaches a model before any rule could read it. **Make the choices** (tap 2): a sheet, "This question needs online help", "This is the line that would go:" and "Partner asks: What do you fancy for lunch today?", then "Sent to Google:", "Never sent:" and three buttons: **Just this once**, **Yes, every time**, **No, not for this question**.
+3. **Just this once** (tap 3) asks Firebase AI Logic (`PREFER_IN_CLOUD` with `onDeviceParams`) for one card; it carries the chip "Made online, after your yes". In our recorded run (dev server, `devlog/evidence_phase16/eval/phase16_everyday_own_cloud.md`) the card was *sandwich / soup / something else*; the words vary. If App Check refuses your browser, the card reads "Made by the app's rules (no AI)" and "Online help could not check this browser, so nothing was sent.", with the rules' nearest ready question.
+4. **Show them the choices**: the person's screen, "Point to your answer"; a tap gives "So: … Right?" with **Yes**, then **Give the phone back**.
+5. Home, type the same question, **Make the choices**, then **No, not for this question**: "Made by the app's rules (no AI) You said no to online help, so nothing was sent. For "What do you fancy for lunch today?" the app's rules picked the nearest ready question instead." The card under it: "Would you like something to eat or something to drink?". Never a blank "No card".
+6. Home, type "Is your chest tight again?", **Make the choices**: no sheet. The red box "Call 911 now if this is new or sudden." with **Call 911** (the number is guessed from the phone's language), the line "This may be a warning sign, so the app's rules made this card. Your words did not go to any AI." and the card "Is your chest tight again? Yes, no, or not sure?".
+7. On a laptop with Chrome's Gemini Nano the line under the field reads "Chrome's own AI on this computer makes the choices. Nothing is sent." and the card is made on that computer (`ONLY_ON_DEVICE`, About them in the prompt). We measured this leg on our Mac (README, phase 16).
+8. **Or pick a topic** is the second path: **Food & drink → "Would you like tea or coffee?"**: "1 Say it out loud", "2 Turn the phone to them", **Show them the choices**, and under it **Find more choices (Google's AI, after your yes)**, then **Read it aloud to them (Google's AI, a calm, slow voice)** (in the sample family: "to Frank"). **Find more choices** opens a sheet with the exact line ("Would you like tea or coffee? On the card already: tea, coffee."); after **Just this once** the card stays on screen with "Asking Google's AI… Stop waiting", and the card it makes says "AI suggested these other choices with online help, after your yes". On a laptop with Gemini Nano this button is built to run on that computer and send nothing (not yet run against the real Nano). **Back** returns to tea or coffee.
+9. Tap **tea** on the person's screen → "So: tea. Right?" → **Yes** → "Thank you. Tea." → **Give the phone back**. The carer's screen: "Next: Would you like milk in it?", and "Made by the app's rules on this phone. No AI used."
+10. "Find more choices" is never offered on pain, the body, feelings, a red flag or the crisis line: **Body & care → "Are you in pain?"** has no such button. **Needs something now? → pain → Yes**: the carer gets "Where does it hurt?" first and the call box with your region's number. **Body & care → "Are you in pain?" → yes → arms → your left arm**: the next question is "Is it suddenly weak or numb, yes or no?".
 11. **I want to say something → I feel…**, the way out twice: "worried / lonely / I can't go on"; the last opens the carer's safety screen.
-12. At the foot of Home: **Try it with the Millers, a sample family** (judge mode below), and **How it works inside →**. The measured table of the three legs (rules 0/18, Gemini Nano 16/18, online 12/18 on 18 open questions) is in README, "How we built it".
+12. At the foot of Home: **Try it with the Millers, a sample family** (judge mode below), and **How it works inside →**. The measured tables (phase 14: rules 0/18, Gemini Nano 16/18, online 12/18 on the 18 open questions; phase 16, "Ask in your own words": rules 0/18, Gemini Nano 15/18, online 13/18, and on 10 everyday questions 2/10, 8/10, 10/10) are in README.
 
 **Live: the build of `cf4aa33`** (README "Deploy" says what was run against it).
 
@@ -28,9 +29,9 @@ question), and Back returns to the app's own card, made with no AI (`README.md`,
 in detail"). Everything else on this page works without it. Or from a clone:
 
 **Two views of one app (since 17 Nov).** `/#/demo`, the address above, opens the full view in judge mode, and this
-page is about it. The bare address `/` opens the **simple view**, made for a carer on a phone. Its first screen: the
-hope line, "Needs something now?" (the quick-needs board), "I want to say something", "Something new or sudden?",
-"See the AI at work", "How it works: 4 steps", seven topics with one-tap questions, then "Or ask your own question". A question leads to "1 Say it out loud", "2 Turn the phone to them" and the line
+page is about it. The bare address `/` opens the **simple view**, made for a carer on a phone. Its first screen (phase 16): the
+hope line, "Ask in your own words" (the field, "Make the choices" and its two lines), "Needs something now?" (the quick-needs board), "I want to say something", "Something new or sudden?",
+"See the AI at work", "How it works: 4 steps", then "Or pick a topic" with seven topics and their one-tap questions. A question leads to "1 Say it out loud", "2 Turn the phone to them" and the line
 "Wait. Count to ten. Don't answer for them."; the person then sees "Point to your answer", the question and the
 choices, "So: tea. Right?" with "Yes" / "No, something else", and "Thank you. Tea." with "Give the phone back". It
 draws less and computes nothing about a card: the same pipeline makes every card. On the carer's screens it says in
@@ -44,12 +45,12 @@ it is the same switch as the tick box below.
 
 **Where the AI is in the simple view, and where it is not.** The 40 topic questions the rules can make, quick needs,
 the person's screens and every line about health use no AI. AI is used in these places, all through Firebase AI
-Logic (`web/src/ai/firebaseEngine.ts`; README, "Where the sponsor runs on a phone"): a question the carer types that
-the rules cannot turn into choices (and **See the AI at work**, its sample); **Narrow it down** after the person points
+Logic (`web/src/ai/firebaseEngine.ts`; README, "Where the sponsor runs on a phone"): **Ask in your own words**, for a question the
+rules cannot turn into choices and that has no word about pain, the body, a need, feelings, a warning sign or a crisis (`core/ownwords.ts`; those get the rules' card), and **See the AI at work**, its sample; **Find more choices** on a topic card; **Narrow it down** after the person points
 to "something else" (`core/narrow.ts`: on the device first, else online help when it is on; two levels at most; the
 screen says an AI made the follow-up), and words for a first letter; **Today in short** on the answers screen
 (`core/summary.ts`: `ONLY_ON_DEVICE`, and written by the app's rules where the browser has no model, because the
-answers are never sent); plainer words for the week's lines; the carer's spoken question as text; and **Read aloud**.
+answers are never sent); plainer words for the week's lines; and **Read aloud**. (Since phase 16 the microphone, the carer's spoken question as text, is in the full view only.)
 **Gemini Nano is in desktop Chrome only**: on a phone each of these is a cloud call behind a sheet or a notice that
 shows what goes, and "Today in short" is written by the rules.
 
@@ -119,7 +120,7 @@ line says "none entered" under them. Back is one step in every view we walked, t
 person's own screens. The passport's two lines about understanding are off until ticked, it says a tired yes may not
 mean yes, and with no number set it names none. Every card an AI made says where the SDK ran it:
 "Made on this computer", "Made online, after your yes" or "Made with online help…", with why. To see the chip on a phone: type "What do you want
-to do this weekend?" under "Or ask your own question" and press "Just this once" on the sheet.
+to do this weekend?" under "Ask in your own words", press "Make the choices", then "Just this once" on the sheet.
 
 **Added on 18 Nov, phase 7: for the speech therapist, and "How to talk with Frank"** (`CLAIMS.md` rows 108 to 113;
 README "Added on 18 Nov, phase 7"; `devlog/evidence_phase7/`). **No AI is in this phase**: rules and fixed text on the
@@ -232,12 +233,12 @@ has the same two questions answered by the cloud alone); the same run against th
 `devlog/ondevice_proof_1/RUN_LOG.md`.
 
 **If you have five minutes more**
-- `npm run check` (lint, types, 3131 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
+- `npm run check` (lint, types, 3131 unit tests) (3159 on the phase 16 branch) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
 - `npm run eval`: the labelled set of 60 questions against the rules alone (it writes its report to a new folder under
   `devlog/eval_runs/`): 40 of 42 code-decided questions, 0 of 18 open. What the on-device model adds on the 18 open
   questions: `devlog/evidence_phase5/heldout_at_d198eb0/` (three runs at `d198eb0`); our reading of the cards of the first runs:
   `devlog/evidence_r2/heldout_r2_NOTES.md`.
-- `CLAIMS.md`: every claim we make, with its status (rows 157 to 180: phases 13 to 15). `EVIDENCE.md`: where each one is proved.
+- `CLAIMS.md`: every claim we make, with its status (rows 157 to 180: phases 13 to 15; rows 181 to 188: phase 16, on its branch). `EVIDENCE.md`: where each one is proved.
 - `DISCLOSURE.md`: what existed before the contest period.
 
 **What is not here yet:** a video, and any trial with people.
