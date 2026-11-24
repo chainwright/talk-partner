@@ -35,7 +35,14 @@ export interface Step {
   alert?: true;
 }
 
-type Raw = { next?: string[]; end: string; alert?: true };
+/**
+ * Phase 17b: the answer names a kind of thing, or is a yes to wanting one ("a snack", "TV", "people", "yes" to "Are you
+ * hungry?"). When no question is left to ask (the depth limit, or the questions were asked), the screen offers the
+ * ways to find WHICH one under the end line (core/endstep.ts, openEnd): more choices of that kind, the first letter
+ * inside that topic, show or write it. Never a green tick alone.
+ */
+export type OpenKind = 'food' | 'drink' | 'people' | 'place' | 'activity' | 'about' | 'body';
+type Raw = { next?: string[]; end: string; alert?: true; open?: OpenKind };
 type Node = Record<string, Raw>;
 
 const SNACK_MEAL = 'Would you like a snack or a meal?';
@@ -62,6 +69,8 @@ const NEWS_FILM = 'Would you like to watch the news or a film?';
 const MUSIC_KIND = 'Would you like quiet music or lively music?';
 const TIRED = 'Are you tired?';
 const SHOW = 'Ask {them} to show you, or to point to it.';
+/** The topic card after a typed "want something?" (phase 17), and after "nothing happened" (phase 17b). */
+export const WHAT_TOPIC = 'Is it about food or drink, people, or plans?';
 // When the person has something to TELL (core/turn.ts: "[Name] wants to say something"), the carer's questions are
 // about the telling, not offers: is it good or a worry, did something happen, now or later.
 // (worded so that the rules read both sides whole: "good news" / "worry", "today" / "another day"; tests/unit/turn.test.ts)
@@ -78,33 +87,33 @@ export const TELL = [TELL_NEWS, TELL_HAPPENED, TELL_WHEN];
 const TREE: Record<string, Node> = {
   // ---------------------------------------------------------------- food and drink
   'are you hungry': {
-    yes: { next: [SNACK_MEAL], end: 'Bring {them} something to eat.' },
+    yes: { open: 'food', next: [SNACK_MEAL], end: 'Bring {them} something to eat.' },
     no: { next: [DRINK], end: 'Not hungry now. Ask again in an hour.' },
     'not sure': { next: [DRINK], end: 'Offer something small, and see if {they} take it.' },
   },
   'would you like a snack or a meal': {
-    snack: { next: [SWEET_SAVOURY], end: 'Bring {them} a snack.' },
-    meal: { next: ['@foods', HOT_COLD_MEAL], end: 'Make {them} a meal.' },
+    snack: { open: 'food', next: [SWEET_SAVOURY], end: 'Bring {them} a snack.' },
+    meal: { open: 'food', next: ['@foods', HOT_COLD_MEAL], end: 'Make {them} a meal.' },
     'something else': { next: [DRINK], end: 'Show {them} what is in the kitchen, and let {them} point.' },
   },
   'would you like something sweet or something savoury': {
-    'something sweet': { end: 'Bring {them} a sweet snack. Show two to pick from, if you can.' },
-    'something savoury': { end: 'Bring {them} a savoury snack. Show two to pick from, if you can.' },
+    'something sweet': { open: 'food', end: 'Bring {them} a sweet snack. Show two to pick from, if you can.' },
+    'something savoury': { open: 'food', end: 'Bring {them} a savoury snack. Show two to pick from, if you can.' },
     'something else': { end: 'Show {them} what there is, and let {them} point.' },
   },
   'would you like a hot meal or a cold meal': {
-    'hot meal': { end: 'Make a hot meal. Show two things {they} could have, and let {them} point.' },
-    'cold meal': { end: 'Make a cold meal: a sandwich or a salad. Show {them} what there is.' },
+    'hot meal': { open: 'food', end: 'Make a hot meal. Show two things {they} could have, and let {them} point.' },
+    'cold meal': { open: 'food', end: 'Make a cold meal: a sandwich or a salad. Show {them} what there is.' },
     'something else': { end: 'Show {them} what is in the kitchen, and let {them} point.' },
   },
   'would you like something to drink': {
-    yes: { next: [HOT_COLD], end: 'Bring {them} a drink.' },
+    yes: { open: 'drink', next: [HOT_COLD], end: 'Bring {them} a drink.' },
     no: { end: 'No drink for now. Offer one again in an hour.' },
     'not sure': { next: [HOT_COLD], end: 'Leave a glass of water where {they} can reach it.' },
   },
   'would you like a hot drink or a cold drink': {
-    'hot drink': { next: [TEA_COFFEE], end: 'Make {them} a hot drink.' },
-    'cold drink': { next: [WATER_JUICE], end: 'Bring {them} a cold drink.' },
+    'hot drink': { open: 'drink', next: [TEA_COFFEE], end: 'Make {them} a hot drink.' },
+    'cold drink': { open: 'drink', next: [WATER_JUICE], end: 'Bring {them} a cold drink.' },
     'something else': { next: ['Are you hungry?'], end: 'Not a drink, then. ' + SHOW },
   },
   'would you like tea or coffee': {
@@ -122,6 +131,12 @@ const TREE: Record<string, Node> = {
     juice: { end: 'Bring {them} a glass of juice.' },
     milk: { end: 'Bring {them} a glass of milk.' },
     'something else': { next: [HOT_COLD], end: 'Show {them} what is in the fridge, and let {them} point.' },
+  },
+  // (phase 17b: the rules' nearest card for typed words about food (core/ownwords.ts, NEAREST) ended on the answer)
+  'would you like something to eat or something to drink': {
+    'something to eat': { open: 'food', next: [SNACK_MEAL], end: 'Bring {them} something to eat.' },
+    'something to drink': { open: 'drink', next: [HOT_COLD], end: 'Bring {them} a drink.' },
+    'something else': { end: 'Not food or drink, then. ' + SHOW },
   },
   'would you like some more': {
     yes: { end: 'Give a little more, then ask again.' },
@@ -219,12 +234,12 @@ const TREE: Record<string, Node> = {
   },
   // ---------------------------------------------------------------- people and family
   'would you like a visitor today': {
-    yes: { next: ['@see'], end: 'Say one name at a time, and wait for a yes. Then arrange the visit.' },
+    yes: { open: 'people', next: ['@see'], end: 'Say one name at a time, and wait for a yes. Then arrange the visit.' },
     no: { end: 'No visitors today. Let people know.' },
     'not sure': { next: [COMPANY], end: 'Ask again later, before anyone sets off.' },
   },
   'do you want to call someone': {
-    yes: { next: ['@call'], end: 'Say one name at a time, and wait for a yes. Then make the call together.' },
+    yes: { open: 'people', next: ['@call'], end: 'Say one name at a time, and wait for a yes. Then make the call together.' },
     no: { end: 'No call for now.' },
     'not sure': { next: [COMPANY], end: 'Ask again later.' },
   },
@@ -253,32 +268,32 @@ const TREE: Record<string, Node> = {
     'in pain': { next: [WHERE_HURTS], end: 'In pain. Ask where it hurts, and tell the nurse or doctor.' },
     'something else': { next: [BOTHERING], end: SHOW },
     // (phase 12: the third page of the feelings card)
-    worried: { next: [BOTHERING], end: 'Worried. Stay near, and ask what it is about, one small question at a time.' },
-    lonely: { next: [COMPANY], end: 'Lonely. Stay a while, and ask who {they} would like to see or call.' },
+    worried: { open: 'about', next: [BOTHERING], end: 'Worried. Stay near, and ask what it is about, one small question at a time.' },
+    lonely: { open: 'people', next: [COMPANY], end: 'Lonely. Stay a while, and ask who {they} would like to see or call.' },
     "i can't go on": { end: P12.crisis.end },
     // (phase 12b, judge round 9b: the calm way out beside it; it ends the card, and the carer still asks again)
     'stop for now': { end: '{They} want to stop for now. Stay near, and ask again later today, one small question at a time.' },
   },
   'is something bothering you': {
-    yes: { next: [WHAT_BOTHERS], end: 'Something is bothering {them}. Ask what it is about: the body, people, or plans.' },
+    yes: { open: 'about', next: [WHAT_BOTHERS], end: 'Something is bothering {them}. Ask what it is about: the body, people, or plans.' },
     no: { end: 'Nothing is bothering {them}. Good.' },
     'not sure': { next: [TALK_WHEN], end: 'Leave it for now, and ask again this evening.' },
   },
   'what is bothering you': {
-    body: { next: [IN_PAIN, COMFORTABLE], end: 'It is about the body. Ask about pain first, then comfort.' },
-    people: { next: [COMPANY], end: 'It is about people. Say one name at a time, and wait for a yes.' },
-    plans: { next: [IN_OUT], end: 'It is about plans. Go through today, one thing at a time.' },
+    body: { open: 'body', next: [IN_PAIN, COMFORTABLE], end: 'It is about the body. Ask about pain first, then comfort.' },
+    people: { open: 'people', next: [COMPANY], end: 'It is about people. Say one name at a time, and wait for a yes.' },
+    plans: { open: 'place', next: [IN_OUT], end: 'It is about plans. Go through today, one thing at a time.' },
     'something else': { end: '{They} cannot say it this way. ' + SHOW },
   },
   // (phase 17 H, a live walk 24 Nov: the topic card after a typed "want something?" ended on the topic; it goes on)
   'is it about food or drink people or plans': {
-    'about food or drink': { next: ['Are you hungry?', 'Would you like something to drink?'], end: 'It is about food or drink. Ask if {they} are hungry, or would like a drink.' },
-    people: { next: [COMPANY], end: 'It is about people. Say one name at a time, and wait for a yes.' },
-    plans: { next: [IN_OUT], end: 'It is about plans. Go through today, one thing at a time.' },
+    'about food or drink': { open: 'food', next: ['Are you hungry?', 'Would you like something to drink?'], end: 'It is about food or drink. Ask about food first, then a drink.' },
+    people: { open: 'people', next: [COMPANY], end: 'It is about people. Say one name at a time, and wait for a yes.' },
+    plans: { open: 'place', next: [IN_OUT], end: 'It is about plans. Go through today, one thing at a time.' },
     'something else': { end: '{They} cannot say it this way. ' + SHOW },
   },
   'would you like to talk about how you feel now or later': {
-    now: { next: [BOTHERING], end: 'Sit down with {them}, and ask one small question at a time.' },
+    now: { open: 'about', next: [BOTHERING], end: 'Sit down with {them}, and ask one small question at a time.' },
     later: { end: 'Later. Come back to it this evening.' },
     'something else': { end: '{They} do not want to talk about it now. That is fine.' },
   },
@@ -294,49 +309,50 @@ const TREE: Record<string, Node> = {
   },
   // ---------------------------------------------------------------- the person has something to tell
   'is it good news or a worry': {
-    'good news': { next: [TELL_HAPPENED], end: 'Good news. Ask what it is about, one small question at a time, and wait.' },
-    worry: { next: [TELL_HAPPENED, IN_PAIN], end: 'A worry. Stay near, and ask one small question at a time. It is {their} worry to tell: do not guess it away.' },
+    'good news': { open: 'about', next: [TELL_HAPPENED], end: 'Good news. Ask what it is about, one small question at a time, and wait.' },
+    worry: { open: 'about', next: [TELL_HAPPENED, IN_PAIN], end: 'A worry. Stay near, and ask one small question at a time. It is {their} worry to tell: do not guess it away.' },
     'something else': { next: [TELL_WHEN], end: SHOW },
   },
   'did something happen': {
-    yes: { next: [TELL_DAY], end: 'Something happened. Ask when, then who was there, one question at a time.' },
-    no: { end: 'Nothing happened. It may be a thought or a wish. Ask: "Is it something you want?"' },
+    yes: { open: 'about', next: [TELL_DAY], end: 'Something happened. Ask when, then who was there, one question at a time.' },
+    // (phase 17b: the line asked a question that was no button; the topic card follows)
+    no: { open: 'about', next: [WHAT_TOPIC], end: 'Nothing happened. It may be a thought or a wish: find out what it is, one topic at a time.' },
     'not sure': { end: 'Ask it again in other words, or ask {them} to show you.' },
   },
   'do you want to tell me now or later': {
-    now: { end: 'Sit down together. Ask one small question at a time, and wait.' },
+    now: { open: 'about', end: 'Sit down together. Ask one small question at a time, and wait.' },
     later: { end: 'Later. Agree when, and come back to it. Make sure you do.' },
     'something else': { end: SHOW },
   },
   // (phase 10: "I want to talk about… the news / TV")
   'is it the news or something on tv': {
     news: { next: [TELL_NEWS], end: 'The news. Put it on, or find the story, and ask one small question at a time.' },
-    'something on tv': { next: [TELL_NEWS], end: 'Something on TV. Show the list on the screen, and let {them} point.' },
+    'something on tv': { open: 'activity', next: [TELL_NEWS], end: 'Something on TV. Show the list on the screen, and let {them} point.' },
     'something else': { end: SHOW },
   },
   'shall we put the tv on': {
-    yes: { end: 'Put the TV on together. Show the choices on the screen, and let {them} point.' },
+    yes: { open: 'activity', end: 'Put the TV on together. Show the choices on the screen, and let {them} point.' },
     no: { end: 'No TV now. Ask one small question at a time about what {they} saw, and wait.' },
     'not sure': { end: 'Put it on quietly, and see.' },
   },
   'is it today or another day': {
-    today: { end: 'It is about today. Go through today, one thing at a time.' },
-    'another day': { end: 'Another day. Ask: "Has it happened, or is it still to come?"' },
+    today: { open: 'about', end: 'It is about today. Go through today, one thing at a time.' },
+    'another day': { open: 'about', end: 'Another day. Find out when, one small question at a time, and let {them} point.' },
     'something else': { end: SHOW },
   },
   // ---------------------------------------------------------------- today and plans
   'would you like to stay in or go out': {
-    'stay in': { next: [TV_MUSIC], end: 'A day at home.' },
-    'go out': { next: [WHEN_OUT, '@places'], end: 'Plan to go out. Say when and where, one thing at a time.' },
+    'stay in': { open: 'activity', next: [TV_MUSIC], end: 'A day at home.' },
+    'go out': { open: 'place', next: [WHEN_OUT, '@places'], end: 'Plan to go out. Say when and where, one thing at a time.' },
     'something else': { next: [TIRED], end: SHOW },
   },
   'would you like to go out this morning or this afternoon': {
-    'this morning': { next: ['@places'], end: 'Go out this morning. Say it again nearer the time.' },
-    'this afternoon': { next: ['@places'], end: 'Go out this afternoon. Say it again nearer the time.' },
+    'this morning': { open: 'place', next: ['@places'], end: 'Go out this morning. Say it again nearer the time.' },
+    'this afternoon': { open: 'place', next: ['@places'], end: 'Go out this afternoon. Say it again nearer the time.' },
     'something else': { end: 'Maybe not today. Ask again tomorrow.' },
   },
   'would you like to go for a drive': {
-    yes: { next: ['@places', WHEN_OUT], end: 'Plan a drive. Tell {them} when you will set off.' },
+    yes: { open: 'place', next: ['@places', WHEN_OUT], end: 'Plan a drive. Tell {them} when you will set off.' },
     no: { end: 'No drive today.' },
     'not sure': { end: 'Ask again nearer the time.' },
   },
@@ -357,23 +373,23 @@ const TREE: Record<string, Node> = {
   },
   // ---------------------------------------------------------------- TV, music and hobbies
   'would you like tv or music': {
-    tv: { next: [NEWS_FILM, '@tv'], end: 'Put the TV on. Show the choices on the screen, and let {them} point.' },
-    music: { next: ['@music', MUSIC_KIND], end: 'Put some music on.' },
+    tv: { open: 'activity', next: [NEWS_FILM, '@tv'], end: 'Put the TV on. Show the choices on the screen, and let {them} point.' },
+    music: { open: 'activity', next: ['@music', MUSIC_KIND], end: 'Put some music on.' },
     'something else': { next: ['Would you like to look at the paper?'], end: SHOW },
   },
   'would you like to watch the news or a film': {
     news: { end: 'Put the news on.' },
-    film: { end: 'Pick a film together: show two, and let {them} point.' },
+    film: { open: 'activity', end: 'Pick a film together: show two, and let {them} point.' },
     'something else': { next: ['@tv'], end: 'Show the choices on the screen, and let {them} point.' },
   },
   'would you like some music on': {
-    yes: { next: ['@music', MUSIC_KIND], end: 'Put some music on.' },
+    yes: { open: 'activity', next: ['@music', MUSIC_KIND], end: 'Put some music on.' },
     no: { end: 'No music now.' },
     'not sure': { end: 'Play something quietly, and watch {their} face.' },
   },
   'would you like quiet music or lively music': {
-    'quiet music': { end: 'Put on something quiet.' },
-    'lively music': { end: 'Put on something lively.' },
+    'quiet music': { open: 'activity', end: 'Put on something quiet.' },
+    'lively music': { open: 'activity', end: 'Put on something lively.' },
     'something else': { end: 'Show {them} the records or the list, and let {them} point.' },
   },
   'is the tv too loud': {
@@ -524,6 +540,15 @@ export function after(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: st
   return { next, end, ...(raw.alert ? { alert: true as const } : {}) };
 }
 
+/** Phase 17b: the kind of thing an answer leaves open (see OpenKind), from the table; null when the answer is an end in itself. */
+export function openKind(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string, profile: Profile = EMPTY_PROFILE): OpenKind | null {
+  const raw = TREE[norm(card.asked)]?.[key(label)];
+  if (raw) return raw.open ?? null;
+  // the family's own questions: "Who would you like to call?" with "someone else" is the way out; a name is an end
+  void profile;
+  return null;
+}
+
 /** Every end line of the table, with the person's name put in (for the grammar test: no "them can", "them is"). */
 export const treeEnds = (name: string) => Object.entries(TREE).flatMap(([q, node]) => Object.keys(node).map((label) => after({ asked: q, kind: 'choice' }, label, { ...EMPTY_PROFILE, personName: name }).end));
 /** Every question the table knows, as written (for the coverage test). */
@@ -537,7 +562,6 @@ export const treeSize = () => ({ questions: Object.keys(TREE).length, answers: O
  * wanting, needing or liking something is not an end: it goes on to what it is, one topic at a time ("Is it about food
  * or drink, people, or plans?", a card the rules make), and the end line says so. Null for any other answer or question.
  */
-export const WHAT_TOPIC = 'Is it about food or drink, people, or plans?';
 const WANTS = /\b(?:want|wants|wanted|like|would like|need|needs|wish|fancy|fancies|after|looking for|something|anything)\b/i;
 export function typedStep(asked: string, label: string, profile: Profile = EMPTY_PROFILE): Step | null {
   const l = key(label);

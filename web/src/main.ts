@@ -22,8 +22,10 @@ import { canNarrow, narrowCard, narrowInput, narrowLine, type NarrowInput } from
 import { aiPlace } from '../../core/simple';
 import { findMoreOffer } from '../../core/findmore';
 import { daySummary, rulesSummary, todays, type DaySummary } from '../../core/summary';
-import { asksWho, awayNames, callQuestion, followUps, nextInTopic, topics, type TopicId } from '../../core/topics';
-import { after, typedStep } from '../../core/tree';
+import { asksWho, awayNames, callQuestion, nextInTopic, topics, type TopicId } from '../../core/topics';
+import { after } from '../../core/tree';
+import { answerStep, type OpenEnd } from '../../core/endstep';
+import { waysBlock } from './phase7';
 import { NOTHING_FORGOTTEN, checkedSummary, forgetAll, forgetOne, keepOne, learned, learnedPrompt, shortcut, usual, usualFirst, usualHint, type Forgotten, type Need } from '../../core/prefs';
 import { spokenLine } from '../../core/rules';
 import { START_FRAME, addPhoto as addOwnPhoto, clampFrame, cleanWord, photoFor, removePhoto, type Frame, type Photo } from '../../core/photos';
@@ -48,7 +50,7 @@ import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile, pictoFal
 import { SIGN as SIMPLE_SIGN, aboutSimple, answeredScreen, cardScreen, chipBlock, consentSheet, findMoreBlock, findStoppedLine, findWaitLine, frameStyle, homeScreen, laterBlock, personSimple, photoSheet, shortBlock, tryAiBlock, type AboutRow } from './simple';
 import { kvClear, kvGet, kvSet, setSampleScope } from './store';
 import { P4 } from '../../core/copy4';
-import { LETTER_CLOUD_TASK, letterCard, letterEnd, type LetterInput } from '../../core/letter';
+import { LETTER_CLOUD_TASK, letterCard, type LetterInput } from '../../core/letter';
 import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
 import { BODY_FIRST, FEEL_QUESTION, aboutCard, laterQuestion, menuTopic, starterOf, talkLead, talkMenu, talkPick, turnCard, turnLead, type Starter, type TalkPick } from '../../core/turn';
 import { nextVisit, visitAlert, visitCard, visitLabel, visitStops, visitText, type VisitRecord } from '../../core/visit';
@@ -1890,16 +1892,12 @@ function ownHealthStep(c: Card, label: string): { follow: string[]; end: string;
   const asked = new Set([...state.chain, c.asked].map((q) => q.split('?')[0].trim().toLowerCase()));
   return { follow: s.next.filter((q) => !asked.has(q.split('?')[0].trim().toLowerCase())), end: s.end, alert: true, red: s.red, now: s.now };
 }
-function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: string; alert?: true } {
+function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: string; alert?: true; open?: OpenEnd } {
   if (c.kind === 'needs' || c.kind === 'repair') return { follow: [], end: '' };
   // "What is it about?": the body leads to the body card and the first questions of "Body & care", a feeling to the feelings card
   if (c.aboutWhat) return { follow: out ? [] : ABOUT_LEADS[p.label] === 'body' ? [WHERE_HURTS, ...BODY_FIRST.filter((q) => q !== WHERE_HURTS)].slice(0, 3) : ABOUT_LEADS[p.label] === 'feeling' ? [FEEL_QUESTION] : [], end: '' };
-  // a word the carer typed after "show me": a word about pain, the toilet or help leads on as it does for a first-letter word
-  if (c.typed) return out ? { follow: [], end: '' } : letterEnd(p.spoken);
-  // a card of more choices of one kind: the confirmed choice ends with what to do ("Bring Frank juice.")
-  if (c.more) return out ? { follow: [], end: '' } : { follow: [], end: P7.more.end(c.more.subject, p.spoken || p.label, state.profile.personName.trim()) };
-  // a first-letter card: the word is the answer; the menu the person started from: up to three questions of that topic
-  if (c.letter) return out ? { follow: [], end: '' } : letterEnd(p.spoken);
+  // a word the carer typed after "show me", a card of more choices, a first-letter word: what to do (core/endstep.ts)
+  if (c.typed || c.more || c.letter) return stepOf(c, p, out);
   if (c.photoTalk && photoEnd(c.asked, p.label, state.profile.personName.trim())) return { follow: [], end: photoEnd(c.asked, p.label, state.profile.personName.trim()) };
   // (the questions about the telling follow what it is about, also after "someone else" there; the way out of the topics has none)
   // (phase 10) after "I want to talk about…": three questions by what was picked (core/turn.ts, talkLead)
@@ -1912,23 +1910,26 @@ function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: st
     const viaChoice = after({ asked: sc.of, kind: 'choice' }, sc.label, state.profile, state.chain.length ? state.chain : [sc.of], callNumber());
     return { follow: viaChoice.next, end: viaChoice.end };
   }
-  // (phase 17, judge round 12, health P0 3: a health card the guard made from the carer's own words ends on a red box
-  // with what to do and goes on to where it hurts or how bad, never on a green tick: core/ownwords.ts, ownAfter)
-  const ownStep = ownHealthStep(c, p.label);
-  if (ownStep) return ownStep;
-  const step = after(c, p.label, state.profile, state.chain.length ? state.chain : [c.asked], callNumber(), p5.red ?? redPlace(c.asked, p.label));
-  if (step.next.length || step.end) return { follow: step.next, end: step.end, ...(step.alert ? { alert: step.alert } : {}) };
-  const fu = out || p.role !== 'answer' ? [] : followUps(c, p.label, state.profile);
-  // (phase 17, the owner's phone test: a yes to a typed "want something?" ended on "Ask another question")
-  const typed = !out && !fu.length && c.kind === 'yesno' ? typedStep(c.asked, p.label, state.profile) : null;
-  if (typed) return { follow: typed.next.filter((q) => !state.chain.includes(q)), end: typed.end };
-  return { follow: fu, end: '' };
+  // (phase 17b: the rest is core/endstep.ts, answerStep: the same function the dead-end audit walks)
+  return stepOf(c, p, out);
 }
+function stepOf(c: Card, p: Choice, out: boolean): { follow: string[]; end: string; alert?: true; open?: OpenEnd } {
+  const st = answerStep(c, p, { profile: state.profile, chain: state.chain, number: callNumber(), red: p5.red ?? redPlace(c.asked, p.label), out });
+  return { follow: st.follow, end: st.end, ...(st.alert ? { alert: st.alert } : {}), ...(st.open ? { open: st.open } : {}) };
+}
+/**
+ * Phase 17b: the ways to find WHICH one under an answer that names a kind of thing, while it is on the screen (the
+ * buttons "More choices like these" and the first letter read it: the kind, and the topic of the letters).
+ */
+let p17open: OpenEnd | null = null;
+/** The topic of this conversation for the first-letter helper: the latest question of it that belongs to a topic. */
+const chainTopic = (asked: string): string | null => [...state.chain, asked].reverse().map((q) => topicOf(q, state.profile)?.id ?? null).find(Boolean) ?? null;
 
 function simpleScreen(): string {
   const c = state.card;
   const name = state.profile.personName.trim();
   let screen: string;
+  p17open = null;
   if (c && state.confirmed && state.picked && !state.recap && !state.recapDone) {
     const p = state.picked;
     const lead = c.aboutWhat && p.role === 'answer' ? ABOUT_LEADS[p.label] : undefined;
@@ -1938,8 +1939,11 @@ function simpleScreen(): string {
     const step0 = treeStep(c, p, p.role === 'escape' && c.kind !== 'needs');
     const out = p.role === 'escape' && c.kind !== 'needs' && !step0.alert;
     const alertHtml = step0.alert ? nowAlert(step0.end, callNumber(), numberGuess()) : '';
+    // (phase 17b) an answer that names a kind of thing, with no question left: the ways to find which one
+    p17open = !out && !step0.alert && !step0.follow.length && step0.open ? step0.open : null;
+    const openHtml = p17open ? `<div class="next-steps" id="open-ways"><p class="steplabel out-lead" id="open-lead">${esc(P17.openLead)}</p>${waysBlock({ ways: p17open.ways, moreFirst: p17open.moreFirst, letterHtml: letterButton(name), narrowHtml: '' })}</div>` : '';
     screen = answeredScreen({
-      name, label: p.label, question: c.kind === 'needs' ? '' : c.asked, more: state.more, next, out, hasAnswers: state.answers.length > 0,
+      name, label: p.label, question: c.kind === 'needs' ? '' : c.asked, more: state.more, next, out, hasAnswers: state.answers.length > 0, openHtml,
       afterHtml: `${afterAnswer(c, p, 'btn')}${c.photoTalk ? `<a class="btn" id="pt-back" href="#/phototalk">${P4.photo.questions}</a>` : ''}`,
       ...(() => {
         const step = step0;
@@ -2758,7 +2762,9 @@ function act(el: HTMLElement) {
       const shown = (x: Card | null | undefined) => (x && x.kind !== 'repair' && x.kind !== 'needs' ? x.choices.filter((y) => y.role === 'answer').map((y) => (x.letter ? y.spoken : y.label)) : []);
       const asked = c?.letter ? state.p4.letterPending?.asked ?? '' : of && of.kind !== 'needs' && !of.turn ? of.asked : '';
       const rejected = c?.letter ? [...c.letter.rejected, ...shown(c)] : [...(of?.narrow?.rejected ?? []), ...shown(of)];
-      state.p4.letter = { asked, rejected: rejected.filter((x, k, all) => all.indexOf(x) === k), topic: topicOf(state.chain[0] ?? asked, state.profile)?.id ?? null };
+      // (phase 17b) the letters stay inside the topic: of the open answer, else the latest question of this conversation with one
+      const topic = c && c.kind !== 'repair' && state.confirmed && state.picked?.role === 'answer' && p17open ? p17open.topic : chainTopic(asked);
+      state.p4.letter = { asked, rejected: rejected.filter((x, k, all) => all.indexOf(x) === k && !/^(?:yes|no|not sure)$/i.test(x)), topic };
       state.p4.letterNo = false; lift = true; go('person');
       break;
     }
@@ -2979,8 +2985,10 @@ function act(el: HTMLElement) {
       const c = state.card;
       if (!c) break;
       const lead = c.aboutWhat && state.picked?.role === 'answer' ? ABOUT_LEADS[state.picked.label] : undefined;
-      const subject: MoreSubject | null = lead && lead !== 'body' && lead !== 'feeling' ? lead : c.more?.subject ?? moreSubject(c.asked, shownOn(c));
-      const card = subject ? moreCard(subject, c.aboutWhat ? [] : shownOn(c), state.profile) : null;
+      // (phase 17b) under an answer that names a kind of thing: more of that kind (never "yes" or "no" as a choice shown)
+      const opened = !lead && state.picked?.role === 'answer' && p17open?.subject ? p17open.subject : null;
+      const subject: MoreSubject | null = lead && lead !== 'body' && lead !== 'feeling' ? lead : opened ?? c.more?.subject ?? moreSubject(c.asked, shownOn(c));
+      const card = subject ? moreCard(subject, c.aboutWhat ? [] : shownOn(c).filter((x) => !/^(?:yes|no|not sure)$/i.test(x)), state.profile) : null;
       if (card) showRuleCard(card);
       break;
     }

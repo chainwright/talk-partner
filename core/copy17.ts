@@ -29,6 +29,8 @@ export const P17 = {
   /** The AI's short question for the person's screen (core/short.ts): what the carer sees under the card. */
   shortBy: "Google's AI wrote the short question on their screen. Say yours out loud as well.",
   shortByDevice: "Chrome's own AI wrote the short question on their screen. Say yours out loud as well.",
+  /** Phase 17b (the owner's rule, 24 Nov: "this principle works for ANY topic"): under an answer that names a kind of thing. */
+  openLead: 'Which one? Find out together:',
 };
 
 /**

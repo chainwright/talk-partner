@@ -142,7 +142,9 @@ describe('A. after a health answer: a red box with what to do, then where or how
   it('the screen: a health card keeps the call box, the answer box is neutral, and one call box stands when an alert carries its own', () => {
     const main = readFileSync(join(ROOT, 'web/src/main.ts'), 'utf8');
     expect(main).toContain("if (own && (card.own?.guard === 'red' || card.own?.matter)) p5.urgent = true;");
-    expect(main).toContain('const ownStep = ownHealthStep(c, p.label);');
+    // (phase 17b: the step after an answer moved to core/endstep.ts, answerStep, which the dead-end audit walks too)
+    expect(main).toContain('return stepOf(c, p, out);');
+    expect(readFileSync(join(ROOT, 'core/endstep.ts'), 'utf8')).toContain('const s = ownAfter(h, pick.label, x.number, name);');
     expect(main).toContain("leadHtml: `${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(");
     const simple = readFileSync(join(ROOT, 'web/src/simple.ts'), 'utf8');
     expect(simple).toContain("m.neutral ? ' neutral'");

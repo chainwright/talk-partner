@@ -1,0 +1,131 @@
+PASS  390: food: the target "pancakes" is not on the first card (snack, meal)
+PASS  390: food, P: every word is of the topic (pot roast, pasta, potatoes)
+PASS  390: food, PA: every word is of the topic (pancakes)
+PASS  390: food: "pancakes" reached with PA, and the carer's screen says what to do with it
+PASS  390: food, pancakes: Back one step at a time to the first screen (7 steps:  >  > answered > card > answered > card > home)
+PASS  390: drink: the target "lemonade" is not on the first card (water, juice, milk)
+PASS  390: drink, L: every word is of the topic (lemonade, lamb)
+PASS  390: drink: "lemonade" reached with L, and the carer's screen says what to do with it
+PASS  390: drink, lemonade: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  390: people: the target "Tyler" is not on the first card (company, some time alone)
+PASS  390: people, T: every word is of the topic (Tyler)
+PASS  390: people: "Tyler" reached with T, and the carer's screen says what to do with it
+PASS  390: people, Tyler: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  390: plans: the target "library" is not on the first card (stay in, go out)
+PASS  390: plans, L: every word is of the topic (the lake, library)
+PASS  390: plans: "library" reached with L, and the carer's screen says what to do with it
+PASS  390: plans, library: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  390: fun: the target "piano" is not on the first card (news, film)
+PASS  390: fun, P: every word is of the topic (Packers games, paper, puzzle)
+PASS  390: fun, PI: every word is of the topic (piano)
+PASS  390: fun: "piano" reached with PI, and the carer's screen says what to do with it
+PASS  390: fun, piano: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  390: rest: the target "sofa" is not on the first card (bed, chair)
+PASS  390: rest, S: every word is of the topic (sofa, sleep)
+PASS  390: rest: "sofa" reached with S, and the carer's screen says what to do with it
+PASS  390: rest, sofa: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  390: feel: the target "scared" is not on the first card (yes, no)
+PASS  390: feel, S: every word is of the topic (sad, scared)
+PASS  390: feel: "scared" reached with S, and the carer's screen says what to do with it
+PASS  390: feel, scared: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  390: body: the target "shower" is not on the first card (your glasses, your hearing aid)
+PASS  390: body, S: every word is of the topic (shower)
+PASS  390: body: "shower" reached with S, and the carer's screen says what to do with it
+PASS  390: body, shower: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  typed "Would you like something?" yes: "Next: Is it about food or drink, people, or plans?"
+PASS  390: typed, "about food or drink": "Next: Are you hungry?"
+PASS  390: typed > food > hungry > yes: "Bring Frank something to eat." and "Which one? Find out together:" with more choices, the first letter, show or write (['way-more', 'letter-go', 'show-write'])
+PASS  390: typed > food: "More choices like these" gives food (something sweet, something savoury, a hot meal)
+PASS  390: Back from more choices: the screen with the ways again
+PASS  390: typed > food: "show or write it" opens the person's show-me card
+PASS  390: back on the ways after "show or write it"
+PASS  390: food, P: every word is of the topic (pot roast, pasta, potatoes)
+PASS  390: food, PA: every word is of the topic (pancakes)
+PASS  390: typed > food > hungry > yes > the first letter: "pancakes" reached with PA
+PASS  390: typed, food, pancakes: Back one step at a time to the first screen (9 steps:  >  > answered > card > answered > card > answered > card > home)
+PASS  typed "Would you like something?" yes: "Next: Is it about food or drink, people, or plans?"
+PASS  390: typed > plans > go out: an action line and the ways to find where
+PASS  390: plans, H: every word is of the topic (hardware store, hairdresser)
+PASS  390: typed > plans > go out > the first letter: "hardware store" reached with H, and "Next: Would you like to go to hardware store?"
+PASS  390: typed, plans: Back one step at a time to the first screen (9 steps:  >  > answered > card > answered > card > answered > card > home)
+PASS  typed "Would you like something?" yes: "Next: Is it about food or drink, people, or plans?"
+PASS  390: typed > people > company: an action line ("Stay with Frank, or ask someone to come.")
+PASS  390: typed, people: Back one step at a time to the first screen (6 steps: card > answered > card > answered > card > home)
+PASS  390: no page error; only App Check's reCAPTCHA was asked of another host (and refused)
+PASS  360: food: the target "pancakes" is not on the first card (snack, meal)
+PASS  360: food, P: every word is of the topic (pot roast, pasta, potatoes)
+PASS  360: food, PA: every word is of the topic (pancakes)
+PASS  360: food: "pancakes" reached with PA, and the carer's screen says what to do with it
+PASS  360: food, pancakes: Back one step at a time to the first screen (7 steps:  >  > answered > card > answered > card > home)
+PASS  360: drink: the target "lemonade" is not on the first card (water, juice, milk)
+PASS  360: drink, L: every word is of the topic (lemonade, lamb)
+PASS  360: drink: "lemonade" reached with L, and the carer's screen says what to do with it
+PASS  360: drink, lemonade: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  360: people: the target "Tyler" is not on the first card (company, some time alone)
+PASS  360: people, T: every word is of the topic (Tyler)
+PASS  360: people: "Tyler" reached with T, and the carer's screen says what to do with it
+PASS  360: people, Tyler: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  360: plans: the target "library" is not on the first card (stay in, go out)
+PASS  360: plans, L: every word is of the topic (the lake, library)
+PASS  360: plans: "library" reached with L, and the carer's screen says what to do with it
+PASS  360: plans, library: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  360: fun: the target "piano" is not on the first card (news, film)
+PASS  360: fun, P: every word is of the topic (Packers games, paper, puzzle)
+PASS  360: fun, PI: every word is of the topic (piano)
+PASS  360: fun: "piano" reached with PI, and the carer's screen says what to do with it
+PASS  360: fun, piano: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  360: rest: the target "sofa" is not on the first card (bed, chair)
+PASS  360: rest, S: every word is of the topic (sofa, sleep)
+PASS  360: rest: "sofa" reached with S, and the carer's screen says what to do with it
+PASS  360: rest, sofa: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  360: feel: the target "scared" is not on the first card (yes, no)
+PASS  360: feel, S: every word is of the topic (sad, scared)
+PASS  360: feel: "scared" reached with S, and the carer's screen says what to do with it
+PASS  360: feel, scared: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  360: body: the target "shower" is not on the first card (your glasses, your hearing aid)
+PASS  360: body, S: every word is of the topic (shower)
+PASS  360: body: "shower" reached with S, and the carer's screen says what to do with it
+PASS  360: body, shower: Back one step at a time to the first screen (5 steps:  >  > answered > card > home)
+PASS  typed "Would you like something?" yes: "Next: Is it about food or drink, people, or plans?"
+PASS  360: typed, "about food or drink": "Next: Are you hungry?"
+PASS  360: typed > food > hungry > yes: "Bring Frank something to eat." and "Which one? Find out together:" with more choices, the first letter, show or write (['way-more', 'letter-go', 'show-write'])
+PASS  360: typed > food: "More choices like these" gives food (something sweet, something savoury, a hot meal)
+PASS  360: Back from more choices: the screen with the ways again
+PASS  360: typed > food: "show or write it" opens the person's show-me card
+PASS  360: back on the ways after "show or write it"
+PASS  360: food, P: every word is of the topic (pot roast, pasta, potatoes)
+PASS  360: food, PA: every word is of the topic (pancakes)
+PASS  360: typed > food > hungry > yes > the first letter: "pancakes" reached with PA
+PASS  360: typed, food, pancakes: Back one step at a time to the first screen (9 steps:  >  > answered > card > answered > card > answered > card > home)
+PASS  typed "Would you like something?" yes: "Next: Is it about food or drink, people, or plans?"
+PASS  360: typed > plans > go out: an action line and the ways to find where
+PASS  360: plans, H: every word is of the topic (hardware store, hairdresser)
+PASS  360: typed > plans > go out > the first letter: "hardware store" reached with H, and "Next: Would you like to go to hardware store?"
+PASS  360: typed, plans: Back one step at a time to the first screen (9 steps:  >  > answered > card > answered > card > answered > card > home)
+PASS  typed "Would you like something?" yes: "Next: Is it about food or drink, people, or plans?"
+PASS  360: typed > people > company: an action line ("Stay with Frank, or ask someone to come.")
+PASS  360: typed, people: Back one step at a time to the first screen (6 steps: card > answered > card > answered > card > home)
+PASS  360: no page error; only App Check's reCAPTCHA was asked of another host (and refused)
+390 food    target 'pancakes'           reached with PA: pot roast, pasta, potatoes | pancakes
+390 drink   target 'lemonade'           reached with L: lemonade, lamb
+390 people  target 'Tyler'              reached with T: Tyler
+390 plans   target 'library'            reached with L: the lake, library
+390 fun     target 'piano'              reached with PI: Packers games, paper, puzzle | piano
+390 rest    target 'sofa'               reached with S: sofa, sleep
+390 feel    target 'scared'             reached with S: sad, scared
+390 body    target 'shower'             reached with S: shower
+390 typed>food target 'pancakes' reached with PA
+390 typed>plans target 'hardware store' reached with H
+390 typed>people company: action line
+360 food    target 'pancakes'           reached with PA: pot roast, pasta, potatoes | pancakes
+360 drink   target 'lemonade'           reached with L: lemonade, lamb
+360 people  target 'Tyler'              reached with T: Tyler
+360 plans   target 'library'            reached with L: the lake, library
+360 fun     target 'piano'              reached with PI: Packers games, paper, puzzle | piano
+360 rest    target 'sofa'               reached with S: sofa, sleep
+360 feel    target 'scared'             reached with S: sad, scared
+360 body    target 'shower'             reached with S: shower
+360 typed>food target 'pancakes' reached with PA
+360 typed>plans target 'hardware store' reached with H
+360 typed>people company: action line
+108 of 108 checks passed

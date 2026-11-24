@@ -456,6 +456,8 @@ export function cardScreen(m: CardModel): string {
 // ---------------------------------------------------------------- the carer's screen after an answer
 export interface AnsweredModel {
   name: string;
+  /** Phase 17b: the answer names a kind of thing and no question is left: the ways to find which one, under the end line. */
+  openHtml?: string;
   /** Phase 17: an answer about pain, the body, a warning sign, a need or a feeling: a neutral box, never the green tick. */
   neutral?: boolean;
   /** The label they chose and confirmed. */
@@ -526,7 +528,7 @@ export function answeredScreen(m: AnsweredModel): string {
   const nextBtn = lead ? `<button type="button" class="btn primary ask-next" id="next-q" data-q="${esc(m.follow[0])}" data-next="1"><span><small>${S.nextLabel}</small>${esc(m.follow[0])}</span></button>`
     : tryMain ? `<button type="button" class="btn primary ask-next" id="next-q" data-q="${esc(m.tryNext!)}"><span><small>${S.nextLabel}</small>${esc(m.tryNext!)}</span></button>` : '';
   // (phase 13: under a safety-check alert the call button is the main action; "Ask another question" is not primary)
-  const another = `<button type="button" class="btn${m.next || lead || m.out || m.alertHtml ? '' : ' primary'}" id="another" data-act="new">${lead ? S.anotherElse : S.another}</button>`;
+  const another = `<button type="button" class="btn${m.next || lead || m.out || m.alertHtml || m.openHtml ? '' : ' primary'}" id="another" data-act="new">${lead ? S.anotherElse : S.another}</button>`;
   // (phase 17: the alert, with its call button, is the one call box and stands at the top, over the answer)
   const end = m.alertHtml ? '' : m.end && !lead ? `<p class="do-now" id="do-now">${SIGN.tick}<span><small>${S.doNow}</small>${esc(m.end)}</span></p>` : '';
   // the way out was chosen: what to do now, in order of how often it helps (never a dead end)
@@ -564,7 +566,7 @@ export function answeredScreen(m: AnsweredModel): string {
     <div class="chose${m.alertHtml ? ' alert' : m.out ? ' out' : m.neutral ? ' neutral' : ''}" id="chose" role="status" data-tone="${m.alertHtml ? 'alert' : m.out ? 'out' : m.neutral ? 'neutral' : 'done'}">${m.alertHtml ? SIGN.alert : m.out ? SIGN.out : m.neutral ? SIGN.info : SIGN.tick}<div>${(m.neutral || m.alertHtml) && m.question ? `<span class="muted small" id="chose-tone">${esc(COPY.simple.answeredNeutral)}</span>` : ''}${m.question ? `<span class="asked" id="chose-q">${esc(m.question)}</span>` : `<span class="muted small">${esc(S.choseNeed(m.name))}</span>`}<b id="chose-a">${esc(big)}</b></div></div>
     ${m.guardHtml ?? ''}
     ${m.afterHtml}
-    ${end}
+    ${end}${!m.out && !lead && m.openHtml ? m.openHtml : ''}
     ${m.next ? `<button type="button" class="btn primary" data-act="${m.next.act}">${esc(m.next.label)}</button>` : ''}
     ${m.out ? '' : nextBtn}${!m.out && lead && m.shortcut ? `<div class="shortcut" id="shortcut"><p class="tip">${SIGN.person}<span>${esc(m.shortcut.line)}</span></p><button type="button" class="btn ask-next" data-short="1" data-of="${esc(m.shortcut.of)}" data-label="${esc(m.shortcut.label)}" data-q="${esc(m.shortcut.q)}">${esc(m.shortcut.q)}</button></div>` : ''}${m.out ? '' : follow}
     ${m.out ? '' : another}

@@ -77,7 +77,8 @@ describe('the brief\'s case: "B" with Beth, Bo and biscuits in About them', () =
     const p: Profile = { ...MILLER, people: [...MILLER.people, { id: 'p4', name: 'Mary', relation: 'sister', household: false }], foods: ['strong tea with milk', 'marmalade', 'porridge'] };
     // drinks with M: the everyday "milk" and the family's "strong tea with milk"; then Mary; then the rest
     // (phase 17: inside the topic: the drink first, then the foods; Mary only after the topic's words)
-    expect(letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p).slice(0, 2)).toEqual(['strong tea with milk', 'marmalade']);
+    // (phase 17b: a drink question keeps its letters to drinks first: the everyday "milkshake" now stands before the family's marmalade)
+    expect(letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p).slice(0, 3)).toEqual(['strong tea with milk', 'milkshake', 'marmalade']);
     expect(letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p).slice(0, 5)).not.toContain('Mary');
     // with no kind known: people first, then the rest in About-them order
     expect(letterWords({ asked: '', letter: 'M', rejected: [] }, p).slice(0, 3)).toEqual(['Mary', 'marmalade', 'strong tea with milk']);

@@ -214,6 +214,42 @@ phase:** the AI's short question for the person's screen (item C of the round's 
 leg on the hosted copy; a headed live log at `21bb1e0` or later; the phone's Back in the full view; generic TV and
 music in the sample family; any trial with people or a clinician's read-through.
 
+### Phase 17b (the branch `phase17b-deadends`, waiting for the deploy): no dead end, in any topic
+The owner's rule after his phone test (24 Nov): "this principle works for ANY topic". So the class was fixed, not the
+food case. `tests/unit/phase17-deadends.test.ts` walks what the carer's screen does after a confirmed answer
+(`core/endstep.ts` `answerStep`, the function the screen now calls): every question of the seven topics on the first
+screen, every answer, down every path; the questions of the trees no topic reaches first; a typed "want something?";
+the rules' card for typed words the AI could not help with; the cards of more choices; every way out. Each end is a
+thing to do (a), a deliberate stop (b), health with a red box or a call line (c), the way out with its ways (w), or a
+dead end (d): an answer that names a kind of thing, a yes to wanting one, or a line that asks a question that is no
+button, with no next question and no way to find which. Written first, it found 106 dead ends with nothing in About
+them and 98 with the sample family (`devlog/evidence_phase17b/deadend_audit_before.md`); after the fixes, 0 and 0
+(`deadend_audit.md`).
+- **Which one? Find out together:** under the line of an answer that names a kind of thing ("a snack", "hot drink",
+  "TV", "go out", "people", a yes to "Are you hungry?") when no question is left (the depth limit of three questions,
+  or the question was asked): **More choices like these** of that kind, **Try the first letter** inside that topic,
+  and **Ask them to show or write it**. For the body: "Show me where" and the needs board first. "Ask another
+  question" is then no longer the main button.
+- Lines that asked a question that was no button now lead on: "Did something happen?" no goes to "Is it about food or
+  drink, people, or plans?"; a found name leads to "Would you like to call Tyler?" and "Would you like to see
+  Tyler?", a found place to "Would you like to go to hardware store?". The rules' card for typed food words ("Would
+  you like something to eat or something to drink?") now goes on to "a snack or a meal" or "a hot drink or a cold
+  drink". "something sweet" or "a friend" on a card of more choices keeps the ways.
+- **The first letter for every topic** (`core/letter.ts`): people get the family's names and family words only (B:
+  Beth, brother; never Bo the dog, a food or a place); places the family's places and place words ("the lake" once);
+  TV, music and hobbies the family's shows and hobbies; a drink question the drinks first, then the foods of "Food &
+  drink"; rest, the body and feelings their own short lists only, and the body and feelings never through a model.
+  The letters follow the latest question of the conversation that has a topic, also after a typed question.
+
+Walked at 390 and 360 px on a production build (`scripts/phase17b-walk.py`, `devlog/evidence_phase17b/walk/`), a
+target that is not on the first card, driven question, "something else", letters until it shows: food "pancakes"
+(P, then PA), drink "lemonade" (L), people "Tyler" (T), places "library" (L), TV "piano" (P, then PI), rest "sofa"
+(S), feelings "scared" (S, after "not sure"), body "shower" (S): every one reached, every word on every letter card of
+its topic, Back one step at a time to the first screen. The typed path "Would you like something?", yes, "about food
+or drink", "Are you hungry?", yes ends on "Bring Frank something to eat." with the three ways, each followed; then
+"pancakes" by PA. **Limits:** the classes are our own reading of each line; a model's letter words are checked for
+the letter, not for the topic; not tried on a real phone or with carers.
+
 Built for #BuildHybridAI 2026. Status on 18 Nov 2026, in three lines:
 - **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo> (the full view, in judge mode; the bare address opens the simple view for families, added 17 Nov and rebuilt the same evening around topics, the person's own screens and a how-to block: [Screens](#screens)). It can be installed to the home screen and opens with no connection. It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI), a microphone for the partner's question (through Firebase AI Logic, in the cloud) and a feedback form (Cloud Firestore), all untried by anyone they are for.
 - **The three legs, measured on 23 Nov (phase 14):** rules 0/18, Gemini Nano on this computer 16/18, online 12/18 on the 18 open questions ([the table](#how-we-built-it-one-ai-logic-call-three-legs-measured)). Before that:
@@ -1286,7 +1322,7 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `core/pipeline.ts:743` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:861` | `ran: r.source` | the stripped step's trace line is the engine's report |
 | `core/pipeline.ts:891` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:1148` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
+| `web/src/main.ts:1150` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all, and since 17 Nov neither does any either-or whose two options the code reads whole. Every cut is visible per card in "Why this card".

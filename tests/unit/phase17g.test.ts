@@ -34,8 +34,9 @@ describe('G1. a yes to a typed "want something?" goes on to what it is', () => {
       expect(s?.end, q).toMatch(/find out what it is/);
     }
     expect(typedStep!('I would like to something?', 'no')).toBeNull();
-    const main = readFileSync(join(ROOT, 'web/src/main.ts'), 'utf8');
-    expect(main).toContain("const typed = !out && !fu.length && c.kind === 'yesno' ? typedStep(c.asked, p.label, state.profile) : null;");
+    // (phase 17b: the step after an answer moved to core/endstep.ts, answerStep, which the screen calls)
+    const step = readFileSync(join(ROOT, 'core/endstep.ts'), 'utf8');
+    expect(step).toContain("const typed = !x.out && !fu.length && c.kind === 'yesno' ? typedStep(c.asked, pick.label, x.profile) : null;");
   });
 });
 

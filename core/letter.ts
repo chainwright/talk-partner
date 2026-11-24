@@ -58,6 +58,8 @@ export const TOPIC_WORDS: Record<string, string[]> = {
   people: ['family', 'friend', 'neighbour', 'visitor', 'carer', 'priest', 'brother', 'sister', 'son', 'daughter', 'wife', 'husband', 'grandchild', 'grandson', 'granddaughter', 'mother', 'father', 'aunt', 'uncle', 'cousin', 'doctor', 'nurse', 'physio', 'speech therapist'],
   fun: ['tv', 'music', 'news', 'film', 'radio', 'paper', 'puzzle', 'cards', 'crossword', 'quiz show', 'football', 'golf', 'gardening', 'photos', 'book', 'bingo', 'painting', 'piano'],
   rest: ['bed', 'chair', 'quiet', 'nap', 'pillow', 'blanket', 'sofa', 'sleep'],
+  // (phase 17b: a drink question keeps its letters to drinks: "tea or coffee?", then "something else", then L is lemonade, never lamb)
+  drink: ['tea', 'coffee', 'water', 'juice', 'milk', 'hot chocolate', 'cocoa', 'iced tea', 'lemonade', 'orange juice', 'apple juice', 'squash', 'smoothie', 'milkshake', 'cola', 'ginger ale', 'herbal tea', 'green tea', 'hot milk', 'decaf', 'soda', 'tonic'],
   body: ['toilet', 'glasses', 'hearing aid', 'wash', 'pain', 'doctor', 'nurse', 'bath', 'shower', 'teeth', 'blanket'],
   feel: ['tired', 'worried', 'company', 'happy', 'sad', 'lonely', 'bored', 'scared'],
 };
@@ -131,19 +133,22 @@ export function letterWords(i: LetterInput, profile: Profile): string[] {
   // (phase 17) the topic of the conversation: by the caller's topic, else by what the question is about
   const kind = subjectOf(i.asked, i.rejected);
   const topic = letterTopic(i.topic ?? null, kind);
-  const every = topic ? TOPIC_WORDS[topic] : Object.values(EVERYDAY).flat();
-  // inside a known topic, About them's words of another kind come after the topic's own (never before them)
-  const inTopic = (w: string) => !topic || topic === 'people' || (kind && kind !== 'people' ? ofKind(w, kind, profile) : false) || TOPIC_WORDS[topic].some((x) => lc(x) === lc(w)) || (topic === 'food' && profile.foods.some((x) => lc(x) === lc(w))) || (topic === 'plans' && profile.places.some((x) => lc(x) === lc(w))) || (topic === 'fun' && [...profile.tv, ...profile.music].some((x) => lc(x) === lc(w)));
+  // (phase 17b) drinks: the drinks first, then the foods of "Food & drink" (one topic on the first screen), nothing else
+  const every = topic === 'drink' ? [...TOPIC_WORDS.drink, ...TOPIC_WORDS.food] : topic ? TOPIC_WORDS[topic] : Object.values(EVERYDAY).flat();
+  // inside a known topic only its own words: the topic's list, and About them's words of that topic (phase 17b: for
+  // EVERY topic). People: the family's names, never their foods or places; the body, feelings and rest: the list only.
+  const inTopic = (w: string) => !topic || TOPIC_WORDS[topic].some((x) => bare(x) === bare(w)) || (OWN_IN[topic]?.(w, profile) ?? false) || (KIND_IN[topic] && kind && KIND_IN[topic].includes(kind) ? ofKind(w, kind, profile) : false);
   const starts = own.filter((w) => startsWith(w, i.letter));
   const later = own.filter((w) => !startsWith(w, i.letter) && holds(w, i.letter));
   // (a word of another topic is not offered inside a known topic: "the lake" under food was the owner's complaint)
+  // (phase 17b: "the lake" and "lake" are one word)
   const ordered = [...starts.filter(inTopic), ...later.filter(inTopic), ...every.filter((w) => startsWith(w, i.letter))]
-    .filter((w, k, xs) => !gone.has(lc(w)) && xs.findIndex((x) => lc(x) === lc(w)) === k)
+    .filter((w, k, xs) => !gone.has(lc(w)) && !gone.has(bare(w)) && xs.findIndex((x) => bare(x) === bare(w)) === k)
     // a topic word the family's own words already hold ("biscuits" beside "ginger biscuits") is not offered twice
-    .filter((w, _k, xs) => !TOPIC_WORDS[topic ?? '']?.includes(w) || !xs.some((x) => x !== w && bare(x).split(/\s+/).includes(lc(w))));
+    .filter((w, _k, xs) => !(topic && every.includes(w)) || !xs.some((x) => x !== w && bare(x).split(/\s+/).includes(lc(w))));
   if (topic) {
     // inside the topic, the kind the question is about first ("tea or coffee?": a drink before a food)
-    const first = (w: string) => (kind && kind !== 'people' && ofKind(w, kind, profile) ? 0 : 1);
+    const first = (w: string) => (topic === 'drink' ? (drinkWord(w) ? 0 : 1) : kind && kind !== 'people' && ofKind(w, kind, profile) ? 0 : 1);
     return ordered.map((w, k) => ({ w, k })).sort((x, y) => first(x.w) - first(y.w) || x.k - y.k).map((x) => x.w);
   }
   const people = new Set(profile.people.flatMap((p) => [lc(p.name), lc(p.nickname ?? '')]).filter(Boolean));
@@ -151,9 +156,24 @@ export function letterWords(i: LetterInput, profile: Profile): string[] {
   return ordered.map((w, k) => ({ w, k, r: rank(w) })).sort((x, y) => x.r - y.r || x.k - y.k).map((x) => x.w);
 }
 
+/** Phase 17b: About them's words that belong to a topic. */
+const eq = (xs: string[], w: string) => xs.some((x) => bare(x) === bare(w));
+const drinkWord = (w: string) => { const b = bare(w); return eq(TOPIC_WORDS.drink, w) || [b, ...b.split(/\s+/)].some((x) => placeOf(x, 'drink')?.subject === 'drink' && placeOf(x, 'drink')?.as === 'item'); };
+const OWN_IN: Record<string, (w: string, p: Profile) => boolean> = {
+  people: (w, p) => eq(p.people.flatMap((x) => [x.name, x.nickname ?? '']).filter((n) => n.trim()), w),
+  food: (w, p) => eq(p.foods, w) || drinkWord(w),
+  drink: (w, p) => drinkWord(w) || eq([...p.foods, ...TOPIC_WORDS.food], w),
+  plans: (w, p) => eq(p.places, w),
+  fun: (w, p) => eq([...p.tv, ...p.music], w),
+};
+/** The kinds (core/kinds.ts) whose words a topic takes from About them; none for the body, feelings and rest. */
+const KIND_IN: Record<string, string[]> = { food: ['food', 'drink'], drink: ['drink', 'food'], plans: ['place'], fun: ['activity'] };
+
 /** Phase 17: the topic of a letter step: the caller's topic, else the kind of thing the question is about (core/kinds.ts). */
-const KIND_TOPIC: Record<string, string> = { food: 'food', drink: 'food', place: 'plans', activity: 'fun', people: 'people' };
+const KIND_TOPIC: Record<string, string> = { food: 'food', drink: 'drink', place: 'plans', activity: 'fun', people: 'people' };
 export function letterTopic(topic: string | null, kind: string | null | undefined): string | null {
+  // (phase 17b) a drink question inside "Food & drink": the drinks
+  if (topic === 'food' && kind === 'drink') return 'drink';
   if (topic && TOPIC_WORDS[topic]) return topic;
   return kind && KIND_TOPIC[kind] ? KIND_TOPIC[kind] : null;
 }
@@ -193,7 +213,7 @@ export function letterCloudText(asked: string, letter: string, profile: Profile,
 }
 /** Phase 17: one letter, or the letters pointed to so far ("It starts with the letters P, I."). */
 const startsLine = (letter: string) => (letter.length > 1 ? `It starts with the letters "${letter.toUpperCase()}", in this order.` : `It starts with the letter "${letter.toUpperCase()}".`);
-const TOPIC_NAMES: Record<string, string> = { food: 'food and drink', plans: 'places and plans', people: 'people', fun: 'TV, music and hobbies', rest: 'rest and sleep' };
+const TOPIC_NAMES: Record<string, string> = { food: 'food and drink', plans: 'places and plans', people: 'people', fun: 'TV, music and hobbies', rest: 'rest and sleep', drink: 'drinks' };
 /** Phase 17: the topic of the conversation, when the app knows it and the kind of thing does not already say it. */
 const topicLine = (topic: string | null, kind: string | null | undefined) => (topic && TOPIC_NAMES[topic] && !kind ? `The topic is ${TOPIC_NAMES[topic]}. ` : '');
 /** Phase 17: the cloud step's task for two letters or more. */
