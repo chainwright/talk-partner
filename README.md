@@ -23,7 +23,7 @@ After a stroke, many adults with aphasia understand what is said but can't find 
 materials describe (our reading; no speech therapist has reviewed it): it says when the question itself is the
 problem (two things in one, a memory test), and it turns the partner's own question into a
 written-choice card (a keyword, two choices, pictured where we have drawn a picture, an escape every time, a
-tick/cross check) and gives the partner the exact line to say. It never picks the answer; a tap on the card confirms it, and the app asks the carer to hand the phone over for that
+tick/cross check) and gives the partner the exact line to say. It never picks the answer; a tap on the card confirms it (a crisis question keeps the crisis line whatever the answer, and since phase 19 the notes quote what was asked and pointed to, never "chose"), and the app asks the carer to hand the phone over for that
 tap. Pictures (131 and the monogram since 22 Nov: 91 colour pictures made with Gemini and our own colour drawings for the rest; the source of each in `PICTOGRAMS.md`): yes / no, feelings, the body
 map, people, drinks and food, rest, TV and music, going out, the ways out, the needs of the quick-needs board. The
 family's own places and foods ("lake", "pot roast") show the family's own photo where one was added, and the word
@@ -74,9 +74,9 @@ through Firebase AI Logic, each behind a sheet that shows what goes, and the car
 
 | On a phone | Firebase AI Logic call | When | Run against the real model |
 |---|---|---|---|
-| **Read aloud**: the question and the choices of the card, spoken on the person's screen (`core/speak.ts`) | Gemini text-to-speech (`gemini-3.8-flash-tts`), `ONLY_IN_CLOUD`, the words of that one card, the voice and the style | every card the carer shows, the 40 topic questions and the needs board included, once the carer turned it on on a sheet ("The words on this card, including names on it, go to Google to be spoken. Nothing else."); off by default; never a doctor-visit card | yes, on localhost: `leg=speak mode=ONLY_IN_CLOUD inferenceSource=in_cloud`, 4.4 s for about 8 s of sound ("Would you like tea or coffee? Tea. Coffee. Or something else."), "Hear it again" asked nothing, 10 of 10 checks at `de631b1` on the dev server with the App Check debug token (`devlog/evidence_phase5/AI_RUN_LOG.md`); on the hosted copy our headless test browser was refused by App Check (no sound; see Deploy) |
+| **Read aloud**: the question and the choices of the card, spoken on the person's screen (`core/speak.ts`) | Gemini text-to-speech (`gemini-3.8-flash-tts`), `ONLY_IN_CLOUD`, the words of that one card, the voice and the style | every topic card the carer shows, never the needs board or a body, pain or health card, once the carer turned it on on a sheet ("The words on this card, including names on it, go to Google to be spoken. Nothing else."); off by default; never a doctor-visit card | yes, on localhost: `leg=speak mode=ONLY_IN_CLOUD inferenceSource=in_cloud`, 4.4 s for about 8 s of sound ("Would you like tea or coffee? Tea. Coffee. Or something else."), "Hear it again" asked nothing, 10 of 10 checks at `de631b1` on the dev server with the App Check debug token (`devlog/evidence_phase5/AI_RUN_LOG.md`); on the hosted copy our headless test browser was refused by App Check (no sound; see Deploy) |
 | A question the carer types that the rules cannot turn into choices | `PREFER_IN_CLOUD`, the question with About-them words swapped out | after "Just this once" or "Yes, every time" on the sheet | yes (`devlog/evidence_live/`, on the hosted copy at `4d7edee`; on `479ce07` a judge's headless phone browser got it once, judge round 11, seat 05) |
-| **Find more choices** (phase 14): the second button under "Show them the choices" on a topic card, and the second way after "something else" (`core/findmore.ts`, `core/narrow.ts`) | the same step: `PREFER_IN_CLOUD` with `onDeviceParams`, the question and the choices on the card, About-them words swapped out; on a laptop with Gemini Nano the `ONLY_ON_DEVICE` step instead, About me in it, nothing sent | after "Just this once" on its sheet; never on pain, the body, feelings, a red flag or the crisis line | the narrowing request: yes, on localhost (`CLAIMS.md` rows 53, 79); the new wording ("On the card already"): the cloud half ran on the hosted copy at `479ce07` in a judge's run (judge round 11, seat 05: a card "something cold / something to eat"); the on-device half not yet against the real Nano |
+| **Find more choices** (phase 14): the second button under "Show them the choices" on a topic card with choices, and the second way after "something else" (`core/findmore.ts`, `core/narrow.ts`) | the same step: `PREFER_IN_CLOUD` with `onDeviceParams`, the question and the choices on the card, About-them words swapped out; on a laptop with Gemini Nano the `ONLY_ON_DEVICE` step instead, About me in it, nothing sent | after "Just this once" on its sheet; never on pain, the body, feelings, a red flag or the crisis line | the narrowing request: yes, on localhost (`CLAIMS.md` rows 53, 79); the new wording ("On the card already"): the cloud half ran on the hosted copy at `479ce07` in a judge's run (judge round 11, seat 05: a card "something cold / something to eat"); the on-device half not yet against the real Nano |
 | Words for a first letter the rules have fewer than two for | the same step | after "Just this once" on its sheet | yes, on localhost (`CLAIMS.md` row 79) |
 | "What stands out" in plainer words | `PREFER_IN_CLOUD`, the counted lines only | after "Just this once", each time; never a line that says whom to tell or when to call | no |
 | The carer's spoken question as text | `ONLY_IN_CLOUD`, one recording | after a yes to its notice | yes, on the hosted copy at `40fedec` |
@@ -114,7 +114,7 @@ regression set, not a held-out test, and not a trial with people. The cloud leg 
 App Check debug provider registered for development; on the hosted copy App Check needs reCAPTCHA in a normal Chrome.
 The "Find more choices" request was not part of this run (it is the narrowing request; see the table above).
 
-### Phase 16 (live on 24 Nov as `21bb1e0`, now inside `0852ce8`): "Ask in your own words", measured
+### Phase 16 (live on 24 Nov as `21bb1e0`, now inside the live build `cb54ec0`): "Ask in your own words", measured
 **The first action on the first screen is now a field: the carer types the question as they would say it.** The
 words go through the same step as every typed question (`core/pipeline.ts`): Gemini Nano on a laptop that has it
 (`ONLY_ON_DEVICE`, About them in the prompt, nothing sent), else the cloud (`PREFER_IN_CLOUD` with `onDeviceParams`)
@@ -155,7 +155,7 @@ The same question through the two steps, in our recorded run: "What do you want 
 *stay home / go out* from the cloud, which gets the question only. The details are under
 [Where the AI runs, in detail](#where-the-ai-runs-in-detail).
 
-### Phase 17 (live since 24 Nov 2026 about 16:01 UTC as `0852ce8`): the fixes of judge round 12
+### Phase 17 (live since 24 Nov 2026 about 16:01 UTC; now inside the live build `cb54ec0`): the fixes of judge round 12
 Judge round 12 (nine seats) found typed health questions that ended on a green tick, App Check's cold start eating the
 20 s wait on phones, a first screen that did not say who it is for, and stale lines in these texts. The owner's own
 test on his phone added three: a yes to "I would like to something?" ended there, the first letter left the topic
@@ -174,9 +174,9 @@ test on his phone added three: a yes to "I would like to something?" ended there
   lines for others after "I can't go on" say "Take it seriously, every time", call first. A limb pain whose weakness
   question was skipped still ends on the stroke check. The answer check never marks a request for company, a call or
   a health answer, and never says "may be tired, try again later".
-- **App Check** (`web/src/main.ts` `warmCloud`, `web/src/ai/app.ts`). On a phone App Check starts when the question
-  field gets the cursor (reCAPTCHA checks the browser; no word of the question goes), never with Chrome's own AI and
-  never offline. Cloud requests keep the App Check session token: limited-use tokens (`LIMITED_USE_TOKENS` in
+- **App Check** (`web/src/main.ts` `warmCloud`, `web/src/ai/app.ts`). In phase 17 App Check started when the question
+  field got the cursor; since phase 18 (live in `cb54ec0`) it starts when the app opens on a phone (reCAPTCHA checks
+  the browser; no word of a question goes), never with Chrome's own AI and never offline. Cloud requests keep the App Check session token: limited-use tokens (`LIMITED_USE_TOKENS` in
   `web/src/ai/firebaseEngine.ts`) were tried in phase 17 and left off before deploy, because on 17 Nov they meant a
   new attestation per request and a 403 with no card, while the session token is what gave the owner's Android phone a cloud card
   on 21bb1e0 (by hand, no saved log). After a refusal the rules' card stays and **Try Google's AI again** asks once more, with the same yes.
@@ -214,7 +214,7 @@ phase:** the AI's short question for the person's screen (item C of the round's 
 leg on the hosted copy; a headed live log at `21bb1e0` or later; the phone's Back in the full view; generic TV and
 music in the sample family; any trial with people or a clinician's read-through.
 
-### Phase 17b (live in `0852ce8`): no dead end, in any topic
+### Phase 17b (live since 24 Nov; now inside the live build `cb54ec0`): no dead end, in any topic
 The owner's rule after his phone test (24 Nov): "this principle works for ANY topic". So the class was fixed, not the
 food case. `tests/unit/phase17-deadends.test.ts` walks what the carer's screen does after a confirmed answer
 (`core/endstep.ts` `answerStep`, the function the screen now calls): every question of the seven topics on the first
@@ -250,7 +250,7 @@ or drink", "Are you hungry?", yes ends on "Bring Frank something to eat." with t
 "pancakes" by PA. **Limits:** the classes are our own reading of each line; a model's letter words are checked for
 the letter, not for the topic; not tried on a real phone or with carers.
 
-### Phase 18 (the branch `phase18-r13`, waiting for the deploy; the live build is `0852ce8`): the fixes of judge round 13
+### Phase 18 (live since 24 Nov 2026 20:08 UTC as `cb54ec0`, with 18b and 18c): the fixes of judge round 13
 Judge round 13 (nine seats on the live build `0852ce8`) found a typed crisis question that lost its crisis box on a
 "no" or a "good", chest pain that "somewhere else" or "if it is new or sudden" could talk down, "Are your words
 worse?" ending on a green tick, "Ask it again" that sent a body card's question to the consent sheet, six hidden
@@ -302,7 +302,42 @@ was run on the hosted copy or a real phone. **Not done in this phase:** limited-
 cloud cards; the phone's Back on letter screens (it can skip a step); generic sample-family TV and music; a video; any
 trial with people.
 
-Status on 24 Nov 2026: live `0852ce8` (phases 17 and 17b); phase 18 on the branch `phase18-r13`, waiting for the deploy. The
+### Phase 19 (the branch `phase19-r14`, waiting for the deploy; the live build is `cb54ec0`): the fixes of judge round 14
+Judge round 14 (ten seats on the live build `cb54ec0`) found a typed crisis question answered "no" recorded as 'They
+chose "I can't go on"' on the safety screen and in the next carer's note; a note softer than the screen for a pain in
+the upper stomach or a shoulder ("Ask again on your shift"); misspelt chest and breathing questions ("Is ur chesst
+hurtin?", "Can u breth ok?") ending on a green tick, and "hows ur shoulder today" reaching the AI sheet; a doubt line
+under "Pain: yes" on the doctor page; a cloud answer that came after the 20 s wait thrown away; letter cards with
+drinks after "something sweet", spelling twins and words already passed; and third-party names in the sample family.
+Tests written first: `devlog/evidence_phase19/failing_first.txt` (49 of 49 failed).
+- **A crisis question as it was asked**: "Asked "Do you want to end your life?" and pointed to "no"" on the safety
+  screen, in "For the next carer", in "What stands out" and on the visit page; the crisis line and both call buttons
+  stay; the person's own "I can't go on" tile is still written as their choice.
+- **The next carer reads what the screen said**: a pain in the chest, the upper stomach, the upper back, the jaw or a
+  shoulder, at any amount, leads the note with "Call 911 now, whatever the amount"; a chest or heart-place question
+  left for later says the same, never "if it is sudden or severe"; on Home it stands at the top in a red card, and
+  "Not now" in such a flow gives a red box; a warning question answered "no" stays in the note as asked and answered.
+- **The guard reads misspellings and text-speak** (one edit from a health word, and "u", "ur", "r", "cant"), and a
+  part of the body named with no pain word ("shoulder", "my arm"): the rules' body card with the heart-place line or
+  the stroke check. Ordinary words one edit away ("chess", "heard", "had", "paint") are left alone.
+- **The doctor page** never doubts a "yes" to pain: "a yes to pain is taken as a yes"; a "no" reads "can be wrong
+  after a stroke: watch".
+- **Online help**: an answer of Google's AI after the wait takes the place of the rules' card while that card is still
+  on screen, labelled so; a carer-started cloud step clears an earlier App Check refusal of the page; the rules'
+  stand-in keeps the carer's words ("What do you fancy for lunch today? Hot meal, cold meal, or something else?").
+- **Letters**: the kind confirmed last ("something sweet", "a hot meal") leads the words, drinks last; yoghurt/yogurt,
+  shop/shops and "go for a walk"/"a walk" are one word; nothing passed in the conversation is offered again; "The word
+  is: barber." leads to "Would you like to go to the barber?".
+- **The sample family**: "the quiz show", "football", "old country songs".
+
+**Counts** (the production build of phase 19 on `npx vite preview`, port 5179): `npm run check` 3441 unit tests; `e2e-simple.py` 1039/1039; `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` 552/552; `contrast-check.mjs` 144 of 144 pairs; `phase11-walk.py` 48/48; `phase12-walk.py` 695/695; `phase17b-walk.py` 148/148 (logs: `devlog/evidence_phase19/logs/`).
+
+**Limits:** unit tests and scripted browser walks only; not run on the hosted copy, against the real AI service, or
+on a real phone; no clinician has read the new lines; a word list and one edit can still miss a wording; a shoulder
+pain is called like the chest on purpose. **Not done in this phase:** the phone's Back on letter screens; pictures on
+cloud cards; the pain picture; limited-use App Check tokens; a video; any trial with people.
+
+Status on 24 Nov 2026: live `cb54ec0` (phases 16 to 18c, deployed 20:08 UTC); phase 19 on the branch `phase19-r14`, waiting for the deploy. The
 three lines below were written on 18 Nov and are kept as they were.
 
 Built for #BuildHybridAI 2026. Status on 18 Nov 2026, in three lines:
@@ -1373,12 +1408,12 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:366` | `InferenceMode.ONLY_IN_CLOUD` | its mode: the SDK has no on-device speech, so the mode says what happens, and the sheet says it first |
 | `web/src/ai/firebaseEngine.ts:370` | `generateContent(` | Read aloud call: one per card text (the sound is kept, so "Hear it again" sends nothing); never a doctor-visit card |
 | `web/src/ai/firebaseEngine.ts:375` | `inferenceSource === InferenceSource.ON_DEVICE` | where the words were spoken, from the SDK's report |
-| `web/src/ai/firebaseEngine.ts:397` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
-| `web/src/ai/app.ts:36` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started by the first cloud call (a card, a recording) or the first feedback note, never at page load |
-| `core/pipeline.ts:744` | `ran: r.source` | the private step's trace line is the engine's report |
-| `core/pipeline.ts:869` | `ran: r.source` | the stripped step's trace line is the engine's report |
-| `core/pipeline.ts:899` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:1179` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
+| `web/src/ai/firebaseEngine.ts:397` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so on a laptop loading the app with cloud help off contacts no Google host; on a phone, App Check and reCAPTCHA are contacted at open (phase 18) (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
+| `web/src/ai/app.ts:36` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started at app open on a phone (phase 18, `warmCloud`), elsewhere by the first cloud call (a card, a recording) or the first feedback note |
+| `core/pipeline.ts:754` | `ran: r.source` | the private step's trace line is the engine's report |
+| `core/pipeline.ts:859` | `ran: r.source` | the stripped step's trace line is the engine's report |
+| `core/pipeline.ts:889` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
+| `web/src/main.ts:1191` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all, and since 17 Nov neither does any either-or whose two options the code reads whole. Every cut is visible per card in "Why this card".
@@ -1415,7 +1450,7 @@ body map, memory questions) run no model. The model only proposes; code decides.
 The private step runs on its own Firebase app instance with no App Check, so a card made on this computer contacts no
 host at all (in the recorded runs, on localhost and on the hosted copy: 0 requests outside the app's own host for
 every on-device card). App Check starts
-with the first cloud call and gives the cloud step its session token. For most of 17 Nov the cloud step asked for a
+at app open on a phone (since phase 18; before that, with the first cloud call) and gives the cloud step its session token. For most of 17 Nov the cloud step asked for a
 limited-use token per request instead (`useLimitedUseAppCheckTokens`). That evening reCAPTCHA Enterprise refused our
 test browsers after many automated runs (HTTP 403, "App attestation failed") and, with limited-use tokens, the SDK
 then throws before it sends anything: the hosted copy made no cloud card (`e2e-cloud.mjs --url` 16 or 17 of 27, three
@@ -1430,7 +1465,7 @@ browser there is no cloud card. The card said "Cloud help could not confirm this
 the page again and try once more, …"; since phase 13 (judge round 10) App Check is asked first, inside the same 20 s,
 and the card says "Online help could not check this browser, so nothing was sent and there is no card. Ask it as a
 choice…", with the app's own card one tap away; App Check's message and the service's stand under "Where each step ran"; and
-no second request is made, because after a 403 App Check refuses every try for a day, until the page is loaded again
+no second request is made by itself, because after a 403 App Check refuses every try for a day, until the page is loaded again; since phase 17 the carer's **Try Google's AI again** makes one more attempt with the same yes, and since phase 19 every carer-started cloud step clears that refusal first
 (`namedAppCheckFailure` in `web/src/ai/app.ts`, `cloudRetryWait` in `core/pipeline.ts`). What was measured, step by step:
 `devlog/evidence_live/appcheck_probe_2026-11-17_2c5673e.md`. Why reCAPTCHA began to refuse our machine that evening
 we do not know (many automated runs from one address is a guess), nor whether a judge's browser passes. One availability probe (`LanguageModel.availability`, a capability query, no inference) is
