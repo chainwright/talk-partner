@@ -145,7 +145,8 @@ describe('A. after a health answer: a red box with what to do, then where or how
     // (phase 17b: the step after an answer moved to core/endstep.ts, answerStep, which the dead-end audit walks too)
     expect(main).toContain('return stepOf(c, p, out);');
     expect(readFileSync(join(ROOT, 'core/endstep.ts'), 'utf8')).toContain('const s = ownAfter(h, pick.label, x.number, name);');
-    expect(main).toContain("leadHtml: `${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(");
+    // (phase 18: the crisis box of a card of crisis words comes first in the same line)
+    expect(main).toContain("${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(");
     const simple = readFileSync(join(ROOT, 'web/src/simple.ts'), 'utf8');
     expect(simple).toContain("m.neutral ? ' neutral'");
     expect(COPY.simple.answeredNeutral).toBe('They answered');
@@ -196,7 +197,8 @@ describe('A. the notes for others lead with a health answer', () => {
   });
   it('"What stands out" names it with the call line', () => {
     const xs = insights([chest], NO_HEALTH, 'week', NOW, '911');
-    expect(xs[0]).toMatchObject({ id: 'warning', level: 'call', urgent: true });
+    // (phase 18, judge round 13, the hound's H1: its heading was "Call now if it is new or sudden") "whatever the amount"
+    expect(xs[0]).toMatchObject({ id: 'warning', level: 'now', urgent: true });
     expect(xs[0].act).toMatch(/call now, whatever the amount/);
   });
 });

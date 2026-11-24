@@ -18,7 +18,7 @@ import { HOW_BAD, LIMB, WEAK_NUMB, WHAT_BOTHERS, WHERE_HURTS, WHICH_SIDE, awayNa
 export { WEAK_NUMB } from './topics';
 import { EMPTY_PROFILE, type Card, type Profile } from './types';
 import { P12 } from './copy12';
-import { crisisAnswer, type RedPlace } from './redflag';
+import { crisisAnswer, redPlace, type RedPlace } from './redflag';
 
 /** A conversation is at most this many questions deep: the topic question and two that narrow it down. */
 export const TREE_DEPTH = 3;
@@ -431,6 +431,8 @@ export function who(verb: 'call' | 'see', names: string[]): string[] {
 const RED_END: Record<Exclude<RedPlace, 'sign-check' | 'limb'>, string> = {
   chest: 'Pain in the chest: call {number} now, whatever the amount. Do not wait to see if it passes. Note the time it started.',
   head: 'Pain in the head: call {number} now, whatever the amount. Do not wait to see if it passes. Note the time it started.',
+  // (phase 18, judge round 13: the upper stomach, the upper back, the jaw or a shoulder with "a little" read "Ask again in an hour")
+  heart: 'Upper stomach, upper back, jaw or shoulder pain can come from the heart: call {number} now, whatever the amount. Do not wait to see if it passes.',
   sign: 'There was a yes to trouble breathing, weakness or numbness: call {number} now, whatever the pain. Do not wait to see if it passes. Note the time it started.',
 };
 /**
@@ -475,7 +477,11 @@ function shaped(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: string):
     if (card.bodyStep !== 2) return null;
     // (phase 13) the chest or the head: the call line, as an alert above the next question
     const region = /^where in the (chest|head)\b/i.exec(card.asked.trim())?.[1]?.toLowerCase() as 'chest' | 'head' | undefined;
-    const redOf = (r: Raw): Raw => (region && l !== 'somewhere else' && l !== 'something else' ? { ...r, end: RED_END[region], alert: true } : r);
+    // (phase 18, judge round 13, the SLP's seat: chest, then "somewhere else", lost the call line) any answer of the chest
+    // or the head keeps it; the upper stomach and the upper back get the heart's line (core/redflag.ts, redPlace)
+    const heart = !region && redPlace(card.asked, label) === 'heart';
+    const redOf = (r: Raw): Raw => (region ? { ...r, end: RED_END[region], alert: true } : heart ? { ...r, end: RED_END.heart, alert: true } : r);
+    if (region && (l === 'somewhere else' || l === 'something else')) return redOf({ next: [HOW_BAD], end: '' });
     const sided = !/\b(?:left|right|middle|both)\b/i.test(label) && !/\b(?:head|face|eyes|mouth|neck|top of head|stomach|upper stomach|lower stomach|upper back|lower back|back|chest)\b/i.test(label);
     const where = label.replace(/^your\s+/i, '');
     // (phase 12) an arm, a hand, a leg, the feet or the face: whether it is suddenly weak or numb is asked first

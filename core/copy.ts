@@ -379,7 +379,7 @@ const COPY = {
       // (phase 15, judge round 11, the SLP's seat: after a chest or head pain this line sent the carer to the nurse)
       painLine: (number: string) => `If the pain is in the chest or the head, or new or strong, do not wait: call ${number} now. Otherwise tell the nurse or doctor today.`,
       /** Phase 15: over a question left in a conversation with a red flag, first, with the time. */
-      redLine: (red: 'chest' | 'head' | 'sign', time: string, number: string) => `${red === 'chest' ? 'Chest pain was pointed to' : red === 'head' ? 'Head pain was pointed to' : 'There was a yes to weakness, numbness or trouble breathing'} (${time}): call ${number} now, whatever the amount. Do not wait to see if it passes.`,
+      redLine: (red: 'chest' | 'head' | 'heart' | 'sign', time: string, number: string) => `${red === 'chest' ? 'Chest pain was pointed to' : red === 'head' ? 'Head pain was pointed to' : red === 'heart' ? 'A pain in the upper stomach, the upper back, the jaw or a shoulder was pointed to' : 'There was a yes to weakness, numbness or trouble breathing'} (${time}): call ${number} now, whatever the amount. Do not wait to see if it passes.`,
       /** Phase 12 (judge round 9): the signs that do not wait, and the emergency route, under a pain question left for later. */
       painSigns: (number: string) => `Call ${number} now if there is sudden weakness or numbness, a drooping face, chest pain, trouble breathing, a sudden very bad headache, or very bad pain.`,
       found: 'Did you find out?',
@@ -683,7 +683,7 @@ const COPY = {
      */
     insights: {
       heading: { week: 'What stands out: the last 7 days', month: 'What stands out: the last 30 days' } as Record<string, string>,
-      level: { crisis: 'Take it seriously, every time: call now', call: 'Call now if it is new or sudden, and tell the doctor or nurse', tell: 'Tell the doctor or nurse', mention: 'Worth mentioning to the doctor or nurse', note: 'To keep in mind' } as Record<string, string>,
+      level: { crisis: 'Take it seriously, every time: call now', now: 'Call now, whatever the amount, and tell the doctor or nurse', call: 'Call now if it is new or sudden, and tell the doctor or nurse', tell: 'Tell the doctor or nurse', mention: 'Worth mentioning to the doctor or nurse', note: 'To keep in mind' } as Record<string, string>,
       footer: 'These lines are counts of what was entered in this app, made by fixed rules. They are not medical advice and not a diagnosis. If something worries you, ask the doctor or nurse.',
       only: 'Only what was entered here.',
       span: { week: '7 days', month: '30 days' } as Record<string, string>,
@@ -928,6 +928,7 @@ const COPY = {
         sameAsTopic: 'the same as the headline',
         repeat: 'repeated',
         sameKind: 'more of the kind that did not fit: a narrowing card must be broader',
+        promptExample: 'an example written in the request itself: the model copied it, so it says nothing about this question',
         negative: 'negative wording',
         madeUpLabel: 'a label the cloud made up',
         both: '"both" is not a choice',

@@ -29,6 +29,8 @@ export const P6 = {
     /** At the top when a line below carries the call box. */
     call: (number: string, where: string) => `Call ${number} now if this is new or sudden: see ${where} below.`,
     callLine: (number: string) => `Call ${number} now if this is new or sudden.`,
+    /** Phase 18 (judge round 13, the hound's H1): at the top when a line below is the head or the chest: never "if". */
+    callNow: (number: string, where: string) => `Call ${number} now, whatever the amount: see ${where} below.`,
     whereFamily: '"What stands out"',
     whereHandover: 'the lines on pain and falls',
     title: { today: (name: string, day: string) => `${name ? `${name}'s diary` : 'The diary'}, today (${day}).`, week: (name: string, from: string, to: string) => `${name ? `${name}'s diary` : 'The diary'}, the last 7 days (${from} to ${to}).`, month: (name: string, from: string, to: string) => `${name ? `${name}'s diary` : 'The diary'}, the last 30 days (${from} to ${to}).` },

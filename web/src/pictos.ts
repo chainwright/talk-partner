@@ -55,12 +55,15 @@ const plate = (food: string) => `<ellipse cx="48" cy="54" rx="38" ry="24" fill="
 const house = (x: number, y: number, s: number, wall: string) => `<path d="M${x} ${y + 18 * s}l${20 * s}-${18 * s} ${20 * s} ${18 * s}v${24 * s}H${x}z" fill="${wall}"/><path d="M${x - 4 * s} ${y + 20 * s}l${24 * s}-${22 * s} ${24 * s} ${22 * s}" stroke="${C.redDark}" stroke-width="5"/><rect x="${x + 15 * s}" y="${y + 26 * s}" width="${10 * s}" height="${16 * s}" fill="${C.wood}"/>`;
 const note = (x: number, y: number, fill: string) => `<path d="M${x + 10} ${y + 30}V${y}l22-6v30" stroke-width="4"/><ellipse cx="${x + 4}" cy="${y + 31}" rx="7" ry="5" fill="${fill}"/><ellipse cx="${x + 26}" cy="${y + 25}" rx="7" ry="5" fill="${fill}"/>`;
 
-// The body figure faces the viewer, so the person's LEFT is on the viewer's right (x > 48). Labels say "your left arm".
+// The body figure faces the viewer for the head, the face and the front of the trunk. Phase 18 (judge round 13, the
+// nurse's seat, ADV-13b-4: "your left arm" was red on the viewer's right, and a person with aphasia points at the side
+// that matches his own body): the arms, the hands, the legs and the feet are drawn from BEHIND, like the back, so the
+// person's left is on the viewer's left (x < 48), as it is on the person's own body. Labels say "your left arm".
 const HI = C.red;
 const BODY_OUTLINE = `<path d="M34 30l-12 28M62 30l12 28" stroke="${C.skinShade}" stroke-width="7"/><path d="M38 64l-4 26M58 64l4 26" stroke="${C.navy}" stroke-width="8"/><path d="M34 28h28l4 36H30z" fill="${C.sky}"/><circle cx="48" cy="14" r="9" fill="${C.skin}"/>`;
 /** Phase 17: the same figure seen from behind: the back of the head (hair, no face), the spine, a turn-round arrow. */
 const BODY_BEHIND = `<path d="M34 30l-12 28M62 30l12 28" stroke="${C.skinShade}" stroke-width="7"/><path d="M38 64l-4 26M58 64l4 26" stroke="${C.navy}" stroke-width="8"/><path d="M34 28h28l4 36H30z" fill="${C.sky}"/><circle cx="48" cy="14" r="9" fill="${C.hair}"/><path d="M41 9c4-3 10-3 14 0" stroke="${C.black}" stroke-width="2"/><path d="M48 31v31" stroke="${C.navy}" stroke-width="2"/><path d="M45 36h6M45 44h6M45 52h6" stroke="${C.navy}" stroke-width="2"/><path d="M76 10a9 9 0 11-9-6" stroke="${OUTLINE}" stroke-width="3"/><path d="M64 1l4 4-5 3" stroke="${OUTLINE}" stroke-width="3"/>`;
-const BACK_PARTS = ['back', 'upper back', 'lower back'];
+const BACK_PARTS = ['back', 'upper back', 'lower back', 'arms', 'hands', 'legs', 'feet', 'left arm', 'right arm', 'left leg', 'right leg'];
 const BODY_HIGHLIGHT: Record<string, string> = {
   head: `<circle cx="48" cy="14" r="9" fill="${HI}"/>`,
   face: `<circle cx="48" cy="15" r="6.5" fill="${HI}" stroke="none"/>`,
@@ -83,10 +86,11 @@ const BODY_HIGHLIGHT: Record<string, string> = {
   legs: `<path d="M38 64l-4 26M58 64l4 26" stroke="${HI}" stroke-width="9"/>`,
   hands: `<circle cx="22" cy="60" r="6" fill="${HI}" stroke="none"/><circle cx="74" cy="60" r="6" fill="${HI}" stroke="none"/>`,
   feet: `<path d="M28 90h8M60 90h8" stroke="${HI}" stroke-width="8"/>`,
-  'left arm': `<path d="M62 30l12 28" stroke="${HI}" stroke-width="9"/>`,
-  'right arm': `<path d="M34 30l-12 28" stroke="${HI}" stroke-width="9"/>`,
-  'left leg': `<path d="M58 64l4 26" stroke="${HI}" stroke-width="10"/>`,
-  'right leg': `<path d="M38 64l-4 26" stroke="${HI}" stroke-width="10"/>`,
+  // (seen from behind: the person's left arm and leg are on the viewer's left)
+  'left arm': `<path d="M34 30l-12 28" stroke="${HI}" stroke-width="9"/>`,
+  'right arm': `<path d="M62 30l12 28" stroke="${HI}" stroke-width="9"/>`,
+  'left leg': `<path d="M38 64l-4 26" stroke="${HI}" stroke-width="10"/>`,
+  'right leg': `<path d="M58 64l4 26" stroke="${HI}" stroke-width="10"/>`,
 };
 export const BODY_PARTS = Object.keys(BODY_HIGHLIGHT);
 
@@ -248,7 +252,7 @@ export function svgPicto(id: string): string {
   if (id.startsWith('body:')) {
     const part = id.slice(5);
     // (phase 17, judge round 12, seat 02n, ADV-02n-4: "back" read as the chest) the back is drawn from behind: hair over the
-    // whole head, no face, the spine down the middle, and a small arrow that turns round
+    // whole head, no face, the spine down the middle, and a small arrow that turns round; (phase 18) the limbs too
     return svg((BACK_PARTS.includes(part) ? BODY_BEHIND : BODY_OUTLINE) + (BODY_HIGHLIGHT[part] ?? ''), part);
   }
   return svg(P[id] ?? P['something else'], id);

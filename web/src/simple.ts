@@ -129,7 +129,7 @@ export function howBlock(name: string, open: boolean): string {
  * question (pain, the body, the toilet, a drink, feelings) is pinned first; its "Done" first asks "Did you find out?"
  * (`asking`), and under a pain question stands the line that new or strong pain does not wait.
  */
-export function laterBlock(items: { q: string; time: string; ago?: string; i: number; care?: boolean; pain?: boolean; asking?: boolean; red?: 'chest' | 'head' | 'sign' }[], painHtml = '', number = DEFAULT_NUMBER): string {
+export function laterBlock(items: { q: string; time: string; ago?: string; i: number; care?: boolean; pain?: boolean; asking?: boolean; red?: 'chest' | 'head' | 'heart' | 'sign' }[], painHtml = '', number = DEFAULT_NUMBER): string {
   const L = COPY.simple.later;
   if (!items.length) return '';
   const buttons = (x: (typeof items)[number]) => (x.asking
@@ -418,6 +418,8 @@ export function cardScreen(m: CardModel): string {
   if (c.kind === 'no-quiz' || c.blocked) {
     const body = c.kind === 'no-quiz'
       ? `<p class="steplabel">${COPY.memory.line}</p><p class="say">${esc(c.say.replace(COPY.notes.tellPrefix, ''))}</p>`
+      // (phase 18: a letter card with no word has its own ways under the line, in the extra block; never "Just ask it normally")
+      : c.letter ? `<h1>${S.noCard}</h1><p class="why-not" id="letter-why">${esc(c.blocked ?? '')}</p>${m.offline ? `<p class="offline" id="offline" role="status">${SIGN.net}<span>${S.offline}</span></p>` : ''}`
       : `<h1>${S.noCard}</h1>${m.offline ? `<p class="offline" id="offline" role="status">${SIGN.net}<span>${S.offline}</span></p>` : `<p class="why-not">${esc(c.blocked ?? '')}</p>`}<p class="say">${K.justAsk}</p>
          ${m.canAskOnline && !m.offline ? `<button type="button" class="btn" data-act="sheet">${S.useOnline}</button>` : ''}
          <p class="tip">${S.askChoice}</p>

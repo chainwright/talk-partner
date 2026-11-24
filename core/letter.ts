@@ -22,7 +22,7 @@
 import { P4 } from './copy4';
 import { checkedCloud, type CloudError } from './engine';
 import { placeOf, subjectOf, type Subject } from './kinds';
-import { finish, parseModelOutput, type PipelineEnv } from './pipeline';
+import { cloudWasAppCheck, finish, parseModelOutput, type PipelineEnv } from './pipeline';
 import { devicePrompt, letterContext } from './prompt';
 import { hasNegative, inventedNameFilter, isEscapeLabel, snapToProfile } from './rules';
 import { findLeaks, hasPlaceholder, restoreNames, stripQuestion } from './strip';
@@ -345,6 +345,9 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
   } catch (e) {
     trace.push(T('stripped', 'failed', (e as Error).message));
     const left: Partial<Card> = (e as CloudError).notSent ? { unsentPayload: preview, cloudSwaps: swaps } : { cloudAttempted: preview, cloudAttempts: 1, cloudSwaps: swaps };
-    return rules.length ? make(rules, 'rules', 'code', 0, null, [], left) : none(L.failed, left);
+    // (phase 18, judge round 13: "Online help did not answer. Nothing else was tried." beside "Nothing was sent", after a
+    // refusal the carer could not see) the line says what happened: App Check refused this browser, or no answer came
+    return rules.length ? make(rules, 'rules', 'code', 0, null, [], left) : none((e as CloudError).notSent && cloudWasAppCheck(e) ? L.refused(letter) : L.failed(letter), left);
   }
 }
+

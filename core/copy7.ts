@@ -15,6 +15,10 @@ export const P7 = {
     whereSub: 'The body card: they point to the place.',
     needs: 'Open the needs board',
     needsSub: 'Toilet, pain, too hot, too cold, tired, call someone.',
+    /** Phase 18: after a kind of thing on a card of the AI ("meat"): the next question, made into choices the same way. */
+    which: (q: string) => q,
+    whichSub: "The app's AI makes the choices, as for your own question (online after your yes; on a laptop with Chrome's AI, nothing is sent).",
+    whichEnd: (word: string) => `${word.charAt(0).toUpperCase()}${word.slice(1)}. Find out which one.`,
     /** Under the list, when the last way is the AI's. */
     narrowLast: 'The last way, when the others did not find it:',
     /** After a card of more choices was used up. */

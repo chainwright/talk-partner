@@ -27,8 +27,30 @@ export interface Later {
    * the head, or a yes to weakness, numbness or trouble breathing: Home shows the call line first, and "Ask it again"
    * puts the call box back over the card.
    */
-  red?: 'chest' | 'head' | 'sign';
+  red?: 'chest' | 'head' | 'heart' | 'sign';
+  /**
+   * Phase 18 (judge round 13, seats 02n and 13b, a regression: "Ask it again" of "Where in the arms?" sent the
+   * sub-question to the consent sheet as a typed question): the card it was left on, so that "Ask it again" builds that
+   * card again (core/laterask.ts), never a typed question. The body card (with its region on the second step), or a card
+   * the guard made from the carer's own words (with those words). None for any other card: its question is asked again.
+   */
+  node?: LaterNode;
 }
+export type LaterNode = { kind: 'body'; region?: string } | { kind: 'guard'; guard: 'care' | 'red' | 'crisis'; asked: string };
+/** The node of the card a question was left on (see `Later.node`), or null. */
+export function laterNode(c: { kind?: string; bodyStep?: number; region?: string; own?: { asked: string; guard?: 'care' | 'red' | 'crisis' } } | null | undefined): LaterNode | null {
+  if (!c) return null;
+  if (c.own?.guard) return { kind: 'guard', guard: c.own.guard, asked: c.own.asked };
+  if (c.kind === 'body') return c.bodyStep === 2 && c.region ? { kind: 'body', region: c.region } : { kind: 'body' };
+  return null;
+}
+const cleanNode = (n: unknown): LaterNode | null => {
+  const x = n as Record<string, unknown> | null;
+  if (!x || typeof x !== 'object') return null;
+  if (x.kind === 'body') return typeof x.region === 'string' && /^(?:head|chest|stomach|back|arms|legs)$/.test(x.region) ? { kind: 'body', region: x.region } : { kind: 'body' };
+  if (x.kind === 'guard' && (x.guard === 'care' || x.guard === 'red' || x.guard === 'crisis') && typeof x.asked === 'string' && x.asked.trim()) return { kind: 'guard', guard: x.guard, asked: x.asked.slice(0, 300) };
+  return null;
+};
 export type LaterRed = NonNullable<Later['red']>;
 export const LATER_MAX = 2;
 export const LATER_MS = 24 * 60 * 60 * 1000;
@@ -64,10 +86,13 @@ const flagged = (q: string, at: number, topic: string | null): Later => ({ q, at
  * One more left for later: the same question is kept once, with the newest time. Every care question is kept (they
  * never expire); of the others, the newest few.
  */
-export function addLater(xs: Later[], q: string, at: number, topic: string | null = null, red: LaterRed | null = null): Later[] {
+export function addLater(xs: Later[], q: string, at: number, topic: string | null = null, red: LaterRed | null = null, node: LaterNode | null = null): Later[] {
   const before = xs.find((x) => x.q === q);
   const x = flagged(q, at, topic);
   if (before?.care) x.care = true;
+  const n = node ?? before?.node;
+  // (phase 18) a body card or a card the guard made is a care question, pinned like one
+  if (n) { x.node = n; x.care = true; }
   const r = red ?? before?.red;
   if (r) { x.red = r; x.care = true; }
   const all = [...xs.filter((y) => y.q !== q), x].sort((a, b) => a.at - b.at);
@@ -112,7 +137,9 @@ export function cleanLater(raw: unknown): Later[] {
   return Array.isArray(raw) ? raw.filter((x): x is Later => !!x && typeof x.q === 'string' && x.q.trim() !== '' && typeof x.at === 'number' && Number.isFinite(x.at)).map((x) => {
     const y = flagged(x.q.slice(0, 300), x.at, null);
     if (x.care === true) y.care = true;
-    if (x.red === 'chest' || x.red === 'head' || x.red === 'sign') { y.red = x.red; y.care = true; }
+    if (x.red === 'chest' || x.red === 'head' || x.red === 'heart' || x.red === 'sign') { y.red = x.red; y.care = true; }
+    const n = cleanNode(x.node);
+    if (n) { y.node = n; y.care = true; }
     return y;
   }) : [];
 }

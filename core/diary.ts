@@ -12,7 +12,7 @@
 
 import { P10 } from './copy10';
 import { guardExempt } from './reliability';
-import { crisisAnswer, healthOf, healthWarning } from './redflag';
+import { crisisAnswer, crisisWords, healthOf, healthWarning } from './redflag';
 import type { TopicId } from './topics';
 
 /** The carer's one-tap log. */
@@ -215,7 +215,9 @@ export function tags(e: DiaryEntry): Tag[] {
   // (phase 12) and worried, scared, lonely, a yes to "Is something bothering you?", an answer to "What worries you most?"
   if (lowMood(q, l)) out.push('low-mood');
   // (phase 12) the person's crisis choice, wherever it was chosen
-  if (crisisAnswer(l)) out.push('crisis');
+  // (phase 18, judge round 13: a typed "Do you want to die?" answered "no" left no trace) any answer to a question in
+  // words of a crisis: the screen records it under the carer's own words (web/src/main.ts), so a "no" is kept too
+  if (crisisAnswer(l) || crisisWords(q)) out.push('crisis');
   // (phase 13, judge round 10: a stroke sign, and "something's wrong" on a card, for the handover note and the visit page)
   if (signAnswer(q, l)) out.push('sign');
   if (l === "something's wrong") out.push('wrong');

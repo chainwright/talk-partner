@@ -47,6 +47,10 @@ card, one line why, the call box; no AI button, no Read aloud, no request to any
 card, "Made by the app's rules (no AI)", never "No card"); the phone's back over the sheet (the first screen, the words
 still in the field); every card shown, answered and left with Back one step at a time to the first screen.
 
+Phase 18 (judge round 13): a typed crisis question answered "no" or "good" (the safety screen, then the answer with the
+crisis box), the chest box before the answer, chest then "somewhere else", the red page's chest line, the arm card
+drawn from behind and "Ask it again" of "Where in the arms?" (`phase18`), each left with Back one step at a time.
+
 Usage: python3 scripts/phase12-walk.py [--url URL] [OUT_DIR]   (default http://localhost:5179/, devlog/evidence_phase12/walk)
 Exit code 0 when every check passes, 1 otherwise.
 """
@@ -261,7 +265,8 @@ def phase14(page, tag, h, outside):
     page.wait_for_selector('main.simple.nocard', timeout=30000); page.wait_for_timeout(600)
     # (after the yes, App Check's reCAPTCHA script is asked for, and refused here: the one request to another host on purpose)
     asked = outside[n0:]; del outside[n0:]
-    check(f'{tag}: after the yes, only App Check\'s reCAPTCHA script was asked for (and refused); no AI request', asked and all('recaptcha' in u for u in asked), str(asked))
+    # (phase 18: App Check starts when the app opens, so its script may have been asked for, and refused, before the yes)
+    check(f'{tag}: after the yes, nothing but App Check\'s reCAPTCHA script was asked for (and refused); no AI request', all('recaptcha' in u for u in asked), str(asked))
     nc = e2e.text(page)
     check(f'{tag}: App Check refused: the screen says nothing was sent and what to do; the sheet does not come back by itself', page.locator('#sheet').count() == 0 and 'could not check this browser, so nothing was sent' in nc and 'Go back to the card and show it' in nc, nc[:300])
     shot(page, tag, '14_3_refused')
@@ -354,7 +359,8 @@ def phase16(page, tag, h, outside):
     check(f'{tag}: its way out, "What to do now", opens the safety screen', page.locator('main[data-screen=crisis], main.crisis').count() == 1 or 'Stay with' in e2e.text(page), e2e.text(page)[:160])
     page.locator('#s-top [data-act=back]').first.click(); page.wait_for_timeout(500)
     check(f'{tag}: Back from it lands on the card again', page.locator('main.simple.card #own-guard[data-guard=crisis]').count() == 1, e2e.text(page)[:160])
-    answer_and_leave(page, tag, 'the crisis card')
+    # (phase 18: any answer to it gives the safety screen on giving the phone back: walked in phase18 below)
+    leave(page, tag, 'the crisis card')
     # ---- 16.4 a need in own words: the rules' card, the line, the way to "Something new or sudden?"
     own_ask(page, 'Do you need the loo before we go?')
     check(f'{tag}: a need typed in own words: the rules\' card with the care line and the red way to "Something new or sudden?"', page.locator('#own-guard[data-guard=care]').count() == 1 and page.locator('#own-sudden').count() == 1 and page.locator('#find-more').count() == 0)
@@ -490,6 +496,74 @@ def phase17(page, tag, h, outside):
     page.locator('[data-act=sudden-number]').first.click(); page.wait_for_timeout(700)
     check(f'{tag}: "Change it" focuses the emergency number field', page.evaluate("document.activeElement && document.activeElement.id") == 'emergency-number', page.evaluate("document.activeElement && document.activeElement.id"))
     back_home(page, tag, '"Change it", focused')
+
+
+def phase18(page, tag, h):
+    # ---- 18.1 a typed crisis question answered "no": the safety screen when the phone is given back; Back: the answer
+    # with the crisis box and a line that does not end it; never a green tick; then Back one step at a time
+    for q, label, line in (('Do you want to die?', 'no', 'A "no" does not end it'), ("I can't go on", 'good', 'pointed to "good"')):
+        own_ask(page, q)
+        page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+        person_pick(page, label); give(page); page.wait_for_timeout(500)
+        check(f'{tag}: typed "{q}", "{label}": the phone given back opens the safety screen', page.locator('main[data-screen=crisis]').count() == 1, e2e.text(page)[:160])
+        shot(page, tag, f'18_1_crisis_{label}_safety')
+        page.locator('#s-top [data-act=back]').first.click(); page.wait_for_timeout(500)
+        t = e2e.text(page)
+        check(f'{tag}: typed "{q}", "{label}": Back is the answer, with the crisis box and both call buttons and "{line}", never "A good day"', page.locator('main.simple.s-answered #own-crisis a[href^="tel:"]').count() >= 1 and line in e2e.text(page, '#now-alert') and 'good day' not in t.lower() and 'Nothing to fix' not in t and page.locator('#chose[data-tone=done]').count() == 0, t[:300])
+        shot(page, tag, f'18_1_crisis_{label}_answer')
+        leave(page, tag, f'the typed crisis question, "{label}"')
+    # ---- 18.2 the chest box before the answer: never "if this is new or sudden"
+    own_ask(page, 'Is your chest tight again?')
+    u = e2e.text(page, '#urgent') if page.locator('#urgent').count() else ''
+    check(f'{tag}: "Is your chest tight again?" before the answer: "even if it has happened before", never "if this is new or sudden"', 'even if it has happened before' in u and 'new or sudden' not in u, u)
+    leave(page, tag, 'the chest question before its answer')
+    # ---- 18.3 the body card: chest, then "somewhere else": the call line stays; Read aloud is not offered on the body card
+    home(page)
+    topic_q(page, 'body', 'in pain')
+    person_pick(page, 'yes'); give(page); page.wait_for_selector('main.simple.s-answered')
+    page.locator('#next-q').first.click(); page.wait_for_selector('main.simple.card')
+    check(f'{tag}: "Where does it hurt?": no Read aloud offered (pain cards are never spoken by a model)', page.locator('#speak-offer').count() == 0)
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    page.locator('main.pv .pt', has_text='chest').first.click(); page.wait_for_selector('main.pv .pt >> text=middle')
+    # ("somewhere else" turns the page while the chest has more places; on the last page it is the answer)
+    for _ in range(4):
+        page.locator('main.pv .pt', has_text='somewhere else').first.click(); page.wait_for_timeout(400)
+        if page.locator('[data-confirm=yes]').count():
+            break
+    page.locator('[data-confirm=yes]').click(); page.wait_for_selector('.p-give'); give(page); page.wait_for_selector('main.simple.s-answered')
+    a = e2e.text(page, '#now-alert') if page.locator('#now-alert').count() else ''
+    check(f'{tag}: chest, then "somewhere else": the red box "call 911 now, whatever the amount" with its call button', 'whatever the amount' in a and page.locator('#now-alert a[href^="tel:"]').count() == 1, a or e2e.text(page)[:200])
+    shot(page, tag, '18_3_chest_somewhere_else')
+    leave(page, tag, 'chest, then somewhere else', most=12)
+    # ---- 18.4 the red page: chest pain on its own line, not in the "new or sudden" list
+    home(page)
+    page.locator('#sudden-link').click(); page.wait_for_selector('main[data-screen=sudden]')
+    check(f'{tag}: "Something new or sudden?": chest pain has its own line, above the list, and is not in it', 'even if it has happened before' in e2e.text(page, '#sudden-chest') and 'Chest' not in e2e.text(page, '#also'), e2e.text(page)[:300])
+    shot(page, tag, '18_4_sudden')
+    back_home(page, tag, '"Something new or sudden?"')
+    # ---- 18.5 "Where in the arms?" left for later by the person, then "Ask it again": the same body card, no sheet;
+    # the arms drawn from behind
+    home(page)
+    topic_q(page, 'body', 'in pain')
+    person_pick(page, 'yes'); give(page); page.wait_for_selector('main.simple.s-answered')
+    page.locator('#next-q').first.click(); page.wait_for_selector('main.simple.card')
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    for _ in range(2):
+        page.locator('main.pv .pt', has_text='somewhere else').click(); page.wait_for_timeout(250)
+    page.wait_for_selector('main.pv .pt >> text=arms')
+    page.locator('main.pv .pt', has_text='arms').first.click(); page.wait_for_selector('main.pv .pt >> text=your left arm')
+    left = page.evaluate("(() => { const t = [...document.querySelectorAll('main.pv .pt')].find((x) => x.innerText.includes('your left arm')); return t ? t.innerHTML : ''; })()")
+    check(f'{tag}: the arm card is drawn from behind (the spine), the left arm on the viewer\'s left', 'M48 31v31' in left and 'M34 30l-12 28" stroke="#d9453c"' in left, left[:200])
+    shot(page, tag, '18_5_arms_from_behind')
+    page.locator('#p-notnow').click(); page.wait_for_selector('main.simple.home')
+    page.locator('[data-act=later-ask]').first.click()
+    page.wait_for_selector('main.simple.card'); page.wait_for_timeout(400)
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    ws = [x.strip().split('\n')[-1].strip() for x in page.locator('main.pv .pt').all_inner_texts()]
+    check(f'{tag}: "Ask it again" brings back "Where in the arms?" as the body card ({", ".join(ws)}), no consent sheet', 'your left arm' in ws and 'your right arm' in ws and page.locator('#sheet').count() == 0, str(ws))
+    shot(page, tag, '18_5_ask_again')
+    page.go_back(); page.wait_for_timeout(400)
+    leave(page, tag, '"Ask it again" of the arms', most=12)
 
 
 def walk(b, w, h, scheme):
@@ -714,6 +788,8 @@ def walk(b, w, h, scheme):
     phase16(page, tag, h, outside)
     # ---- 17. the fixes of judge round 12 and of the owner's phone test (phase 17)
     phase17(page, tag, h, outside)
+    # ---- 18. the fixes of judge round 13 (phase 18)
+    phase18(page, tag, h)
 
     # (phase 17: on a phone App Check starts when the question field gets the cursor: reCAPTCHA only, no word of a question)
     rest = [u for u in outside if not APP_CHECK(u)]
@@ -772,7 +848,9 @@ def sample_apart(b, w, h, phone):
     check(f'{tag}: after leaving, every list on this device is exactly as before', after == before, after[:300])
     page.reload(); page.wait_for_timeout(1200)
     check(f'{tag}: after a reload, the family\'s own diary is still there', 'pea soup' in e2e.text(page), e2e.text(page)[:300])
-    check(f'{tag}: no page error, nothing asked of another host', not errs and not outside, str(errs + outside))
+    # (phase 18: on a phone App Check starts when the app opens, the sample family's view too: its reCAPTCHA only)
+    rest = [u for u in outside if not APP_CHECK(u)]
+    check(f'{tag}: no page error, nothing asked of another host but App Check\'s reCAPTCHA', not errs and not rest, str(errs + rest))
     ctx.close()
 
 

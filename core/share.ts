@@ -77,7 +77,7 @@ export function familyText(m: FamilyShare): string {
   const noted = m.health && hasHealth(m.health) ? healthLines(m.health) : [];
   return [
     K.stamp(stampWhen(m.now)),
-    ...(urgent ? [K.call(number, K.whereFamily)] : []),
+    ...(urgent ? [lines.some((l) => l.level === 'now') ? K.callNow(number, K.whereFamily) : K.call(number, K.whereFamily)] : []),
     '',
     title,
     '',
@@ -203,7 +203,7 @@ export function handoverText(m: HandoverShare): string {
   return [
     K.stamp(stampWhen(m.now)),
     ...(warns.length ? [K.hWarn(listed(warns.map((e) => `"${(e.q ?? '').trim()}" ${e.label.trim().toLowerCase()} (${shortWhen(e.at)})`)), number, warns.some((e) => healthOf(e.q ?? '') === 'chest'))] : []),
-    ...(hard.length || falls.length || signs.length || wrongs.length ? [K.call(number, K.whereHandover)] : []),
+    ...(hard.length || falls.length || signs.length || wrongs.length ? [hard.some((e) => has(e, 'place-pain')) ? K.callNow(number, K.whereHandover) : K.call(number, K.whereHandover)] : []),
     ...(crisis.length ? [P12.crisis.handover(listed(crisis.map((e) => shortWhen(e.at))), number, ((l) => (l === number ? '' : l))(crisisLineFor(m.health?.helpline ?? '', number)))] : []),
     ...(signs.length ? [K.hSign(listed(signs.map((e) => `"${e.label.trim().toLowerCase()}" (${shortWhen(e.at)})`)), number, signs.some((e) => e.label.trim().toLowerCase() === 'not sure'))] : []),
     ...(wrongs.length ? [K.hWrong(listed(wrongs.map((e) => shortWhen(e.at))), number)] : []),

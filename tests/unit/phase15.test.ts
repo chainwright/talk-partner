@@ -157,8 +157,9 @@ describe('P0 health: "Left for later" keeps the chest or head urgency (seat 13, 
     expect(COPY.simple.later.painLine('911')).toMatch(/^If the pain is in the chest or the head, or new or strong, do not wait: call 911 now\./);
   });
   it('"Ask it again" puts the call box back over the card (web/src/main.ts)', () => {
-    expect(main).toContain("if (red) { p5.urgent = true; p5.red = red; if (red === 'sign') p5.signNow = true; render(); }");
-    expect(main).toContain("addLater(p8later.list, q, at, topic, p5.red && p5.red !== 'sign-check' && p5.red !== 'limb' ? p5.red : null)");
+    // (phase 18: askLaterAgain builds the card it was left on, then puts the call box back)
+    expect(main).toContain("if (red) { p5.urgent = true; p5.red = red; if (red === 'sign') p5.signNow = true; }");
+    expect(main).toContain("addLater(p8later.list, q, at, topic, p5.red && p5.red !== 'sign-check' && p5.red !== 'limb' ? p5.red : null, node)");
   });
 });
 

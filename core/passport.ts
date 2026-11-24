@@ -195,6 +195,8 @@ export function passport(m: PassportInput): Passport {
   const unset = m.numberSet !== undefined && !m.numberSet.trim();
   const wrong: PassLine[] = [
     fixed('wrong:number', unset ? K.noNumber : K.emergency(number)),
+    // (phase 18, judge round 13, the hound's H1: chest pain left the "new or sudden" list for its own line, first)
+    fixed('wrong:chest', S.chest(unset ? 'the emergency number' : number)),
     fixed('wrong:lead', S.lead(unset ? 'the emergency number' : number)),
     ...S.fast.map(([k, v], i) => fixed(`wrong:fast${i}`, `${k}: ${v}`)),
     fixed('wrong:also', `${S.alsoHeading}: ${S.also.join(' ')}`),

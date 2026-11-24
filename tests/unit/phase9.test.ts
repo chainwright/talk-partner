@@ -410,7 +410,8 @@ describe('9. P1 the person\'s own "Not now"', () => {
     const main = readFileSync(join(__dirname, '..', '..', 'web', 'src', 'main.ts'), 'utf8');
     // (19 Nov, role-play round 5) the same question, through laterQuestion (core/turn.ts) for the person's own start
     expect(main).toContain("const q = laterQuestion(c.kind === 'repair' ? state.before?.asked ?? state.chain[0] ?? '' : c.asked);");
-    expect(main).toContain('if (q.trim() && !c.sample) leaveForLater(q, careTopic(c));');
+    // (phase 18: with the card it was left on, for "Ask it again")
+    expect(main).toContain("if (q.trim() && !c.sample) leaveForLater(q, careTopic(c), laterNode(c.kind === 'repair' ? state.before : c));");
     expect(main).toContain("if (c.visit) { state.p4.visitRun = false; resetCard(); lift = true; go('visit'); return; }");
   });
 });

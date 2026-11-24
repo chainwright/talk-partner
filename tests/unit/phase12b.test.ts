@@ -150,7 +150,9 @@ describe('7. A confirmed yes to sudden weakness or numbness: "Call … now. Note
     const { readFileSync } = await import('node:fs');
     const main = readFileSync(new URL('../../web/src/main.ts', import.meta.url), 'utf8');
     expect(main).toContain("if (state.picked && signNow(c.asked, state.picked.label)) p5.signNow = true;");
-    expect(main).toContain("urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label))");
+    // (phase 18: the box mode carries the "now" line, and the chest's own line before it)
+    expect(main).toContain("boxMode(c) !== 'new' ? boxMode(c) : signNow(c.asked, p.label) ? 'now' : 'new')");
+    expect(main).toContain("p5.signNow ? 'now' : 'new'");
     expect(main).toContain('p5.signNow = x.signNow;');
   });
 });

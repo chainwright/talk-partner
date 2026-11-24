@@ -77,7 +77,8 @@ export interface Source {
 export type InsightSpan = 'week' | 'month';
 /** Phase 8 (judge round 7, the nurse's seat): 'call' is the level of a line with the call box (a strong pain, the head or the chest, a fall with a blow to the head): its own label, and first. */
 /** Phase 17: 'crisis' is the level of "I can't go on": its own label ("Take it seriously, every time: call now"), first. */
-export type Level = 'crisis' | 'call' | 'tell' | 'mention' | 'note';
+/** Phase 18 (judge round 13, the hound's H1): 'now' is a line whose act says "whatever the amount" (the head, the chest): its heading never says "if it is new or sudden". */
+export type Level = 'crisis' | 'now' | 'call' | 'tell' | 'mention' | 'note';
 export interface Insight {
   id: 'sign' | 'warning' | 'crisis' | 'pain' | 'pain-some' | 'wrong' | 'pain-day' | 'no-drink' | 'few-drinks' | 'many-drinks' | 'sweets' | 'no-food' | 'sleep' | 'mood' | 'fall' | 'less-sure' | 'nothing';
   /** 'tell': a red flag. 'mention': worth mentioning to the doctor or nurse. 'note': for the carer to keep in mind. */
@@ -147,7 +148,7 @@ export function thresholds(h: HealthNotes, span: InsightSpan): Thresholds {
 
 const I = COPY.simple.insights;
 const I5 = P5.insights;
-const ORDER: Record<Level, number> = { crisis: -2, call: -1, tell: 0, mention: 1, note: 2 };
+const ORDER: Record<Level, number> = { crisis: -2, now: -1, call: -1, tell: 0, mention: 1, note: 2 };
 const daysOf = (ts: number[]) => [...new Set(ts.map(dayStart))].sort((a, b) => a - b);
 const listed = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
 const names = (days: number[], max = 3) => listed(days.slice(-max).map(dayText));
@@ -286,7 +287,7 @@ export function insights(diary: DiaryEntry[], health: HealthNotes, span: Insight
     if (week.length) out = [...out.filter((x) => x.id !== 'nothing'), ...week];
   }
   // (phase 8: a line with the call box is never labelled softer than three days of mild pain: its own level, first)
-  out = out.map((x) => (x.id === 'crisis' ? { ...x, level: 'crisis' as const } : x.urgent ? { ...x, level: 'call' as const } : x));
+  out = out.map((x) => (x.id === 'crisis' ? { ...x, level: 'crisis' as const } : x.urgent ? { ...x, level: /whatever the amount/.test(x.act ?? '') ? 'now' as const : 'call' as const } : x));
   const rank = (x: Insight) => ORDER[x.level] * 2 - (x.urgent ? 1 : 0);
   return out.map((x, i) => ({ x, i })).sort((a, b) => rank(a.x) - rank(b.x) || a.i - b.i).map((p) => p.x).slice(0, MAX_INSIGHTS);
 }

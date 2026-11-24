@@ -42,6 +42,7 @@ export function suddenScreen(m: { number: string; guess?: boolean }): string {
   const S = P5.sudden;
   return `<main class="simple wrap one sudden" data-screen="sudden">${navBar({ back: true })}
   <div><h1 id="sudden-h">${S.heading}</h1><p class="sub" id="sudden-lead">${esc(S.lead(m.number))}</p></div>
+  <div class="urgent" id="sudden-chest">${ALERT}<div><b>${esc(S.chest(m.number))}</b></div></div>
   ${callButton(m.number, true)}${guessLine(!!m.guess, 'sudden-guess')}
   <section class="fast" id="fast" aria-labelledby="fast-h"><h2 class="sec" id="fast-h">${S.fastHeading}</h2>
     <ol class="fast-list">${S.fast.map(([k, v]) => `<li><b>${k}</b><span>${v}</span></li>`).join('')}</ol></section>
@@ -92,7 +93,9 @@ export function crisisScreen(m: { name: string; number: string; line: string; li
 export const laterPainHtml = (number: string, guess = false) => `<div class="later-signs"><p>${esc(COPY.simple.later.painSigns(number))}</p><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, 'later-guess')}</div>`;
 /** The boxed line over an answer that can be urgent (core/redflag.ts): the sentence, the call button, the way to the list. */
 /** `now`: a yes to sudden weakness or numbness was confirmed (phase 12b): "Call … now. Note the time it started." */
-export const urgentBox = (number: string, id = 'urgent', guess = false, now = false) => `<div class="urgent" id="${id}" role="alert">${ALERT}<div><b>${esc(now ? P5.sudden.boxNow(number) : P5.sudden.box(number))}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, `${id}-guess`)}</div></div>`;
+/** Phase 18: which line the call box says: "if this is new or sudden", "now, note the time" (a weakness yes), or the chest's own (never "if"). */
+export type BoxMode = 'new' | 'now' | 'chest';
+export const urgentBox = (number: string, id = 'urgent', guess = false, now: boolean | BoxMode = false) => `<div class="urgent" id="${id}" role="alert">${ALERT}<div><b>${esc(now === 'chest' ? P5.sudden.boxChest(number) : now === true || now === 'now' ? P5.sudden.boxNow(number) : P5.sudden.box(number))}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, `${id}-guess`)}</div></div>`;
 /** Phase 17 (judge round 12, the hound's H3): under "I can't go on" in "What stands out": never "if it is new or sudden". */
 export const crisisCallBox = (number: string, id = 'urgent-crisis', guess = false) => `<div class="urgent crisis" id="${id}" role="alert">${ALERT}<div><b>${esc(P16.crisisBox)}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/crisis">${P12.crisis.open} →</a></div>${guessLine(guess, `${id}-guess`)}</div></div>`;
 /**

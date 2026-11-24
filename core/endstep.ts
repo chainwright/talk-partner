@@ -8,12 +8,19 @@
 
 import { letterEnd } from './letter';
 import { moreChoices, shownOn, type MoreSubject, type Way } from './more';
-import { ownAfter } from './ownwords';
+import { ownAfter, ownCrisisAfter } from './ownwords';
 import type { RedPlace } from './redflag';
 import { followUps } from './topics';
 import { after, openKind, typedStep, type OpenKind } from './tree';
 import type { Card, Profile } from './types';
 import { P7 } from './copy7';
+import { placeOf } from './kinds';
+import { crisisAnswer, healthOf } from './redflag';
+
+/** Phase 18: the open kind of a word picked on a card of the AI ("meat" is food), by the app's list of kinds (core/kinds.ts). */
+const KIND_OPEN: Record<string, OpenKind> = { food: 'food', drink: 'drink', place: 'place', activity: 'activity', people: 'people' };
+const whichKind = (word: string): OpenKind => { const b = bareWord(word); return KIND_OPEN[placeOf(b)?.subject ?? ''] ?? KIND_OPEN[b.split(/\s+/).map((w) => placeOf(w)?.subject ?? '').find((s) => KIND_OPEN[s]) ?? ''] ?? 'about'; };
+const bareWord = (s: string) => s.trim().toLowerCase().replace(/^(?:the|a|an|some|my|your)\s+/, '');
 
 /**
  * Phase 17b: the ways to find WHICH one, under the end line of an answer that leaves a kind of thing open and has no
@@ -28,8 +35,10 @@ export interface OpenEnd {
   topic: string | null;
   /** The first three of the more choices, for the button's second line. */
   moreFirst: string[];
+  /** Phase 18: the question of the way "Which one?" after a kind of thing on a card of the AI. */
+  which?: string;
 }
-export interface AnswerStep { follow: string[]; end: string; alert?: true; red?: RedPlace | null; now?: boolean; open?: OpenEnd }
+export interface AnswerStep { follow: string[]; end: string; alert?: true; red?: RedPlace | null; now?: boolean; open?: OpenEnd; /** Phase 18: the crisis box stays over this answer, and the phone given back opens the safety screen. */ crisis?: true }
 
 const OPEN_SUBJECT: Record<OpenKind, MoreSubject | null> = { food: 'food', drink: 'drink', people: 'people', place: 'place', activity: 'activity', about: null, body: null };
 /** The first-letter topic of each open kind (core/letter.ts, TOPIC_WORDS). */
@@ -71,9 +80,11 @@ export interface AnswerCtx {
   red: RedPlace | null;
   /** The person chose the way out ("something else", "not sure"): the screen then shows the ways (core/more.ts, outWays). */
   out: boolean;
+  /** Phase 18: the crisis line the call buttons use (core/redflag.ts, crisisLineFor), for the line after a crisis card. */
+  crisisLine?: string;
 }
 
-type C = Pick<Card, 'asked' | 'kind' | 'bodyStep' | 'more' | 'letter' | 'typed' | 'own'>;
+type C = Pick<Card, 'asked' | 'kind' | 'bodyStep' | 'more' | 'letter' | 'typed' | 'own'> & Partial<Pick<Card, 'source' | 'choices'>>;
 const head = (q: string) => q.split('?')[0].trim().toLowerCase();
 
 export function answerStep(c: C, pick: { label: string; spoken?: string; role: string }, x: AnswerCtx): AnswerStep {
@@ -85,6 +96,10 @@ export function answerStep(c: C, pick: { label: string; spoken?: string; role: s
     const more = s.follow.length ? s.follow : wordFollow(word, x.profile).filter((q) => !asked(q));
     return { follow: more, end: s.end };
   };
+  // (phase 18, judge round 13, a health P0: a typed "Do you want to die?" answered "no", or a typed "I can't go on" answered
+  // "good" on the feelings card the rules made of it, ended on "A good day. Nothing to fix.") ANY answer to a card the
+  // guard made from a crisis, the way out included: the crisis line, never a stop, never a next question
+  if (c.own?.guard === 'crisis') { const s = ownCrisisAfter(pick.label, x.number, x.crisisLine ?? '', name); return { follow: [], end: s.end, alert: true, crisis: true }; }
   if (c.typed) return x.out ? { follow: [], end: '' } : found(letterEnd(word));
   if (c.more) {
     if (x.out) return { follow: [], end: '' };
@@ -107,5 +122,13 @@ export function answerStep(c: C, pick: { label: string; spoken?: string; role: s
   const fu = x.out || pick.role !== 'answer' ? [] : followUps(c, pick.label, x.profile);
   const typed = !x.out && !fu.length && c.kind === 'yesno' ? typedStep(c.asked, pick.label, x.profile) : null;
   if (typed) { const follow = typed.next.filter((q) => !x.chain.includes(q)); return { follow, end: typed.end, ...open(follow, 'about') }; }
+  // (phase 18, judge round 13, seat 01: "What would you like for dinner tonight?" on a card of the AI, then "meat", ended
+  // on "Ask another question" only) a kind of thing picked on a card the AI made: "Which one?", asked the same way (the
+  // guard first, then the AI after the same yes, the rules' card if it cannot), with more choices, the letter, show
+  if (!fu.length && !x.out && pick.role === 'answer' && (c.source === 'in-cloud' || c.source === 'on-device') && !c.own?.guard && !c.own?.matter && !/^(?:yes|no|not sure)$/i.test(pick.label) && !healthOf(word) && !healthOf(c.asked) && !crisisAnswer(word)) {
+    const kind = whichKind(word);
+    const o = openEnd(kind, c as Card, x.profile);
+    return { follow: [], end: P7.out.whichEnd(word), open: { ...o, ways: ['which', ...o.ways], which: `Which ${bareWord(word)} would you like?` } };
+  }
   return { follow: fu, end: '' };
 }

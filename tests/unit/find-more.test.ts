@@ -119,7 +119,7 @@ describe('what the step is given', () => {
     expect(narrowAsk({ ...i, offered: false })).toContain(NARROW_TASK);
   });
   it('on a phone (no model, after the yes): the PREFER_IN_CLOUD step gets the stripped line and never the answers so far; the card says it was made online, after your yes', async () => {
-    const e = new Fake({ cloud: out(['something cold', 'something to eat', 'a rest']) });
+    const e = new Fake({ cloud: out(['something sweet', 'a walk', 'a rest']) });
     const i = { ...narrowInput(await make('Would you like tea or coffee?'), SOFAR), offered: true };
     const c = await narrowCard(i, env(e, { allowCloud: true }));
     expect(e.device).toEqual([]);
@@ -138,7 +138,7 @@ describe('what the step is given', () => {
     expect(deviceWords(`${chip.text} ${chip.why}`, 'phone')).toBe("Made online, after your yes · on a laptop with Chrome's AI this runs on that computer");
   });
   it('on a computer with Chrome\'s model: made there, About me in the prompt, nothing sent, and the chip says so', async () => {
-    const e = new Fake({ device: out(['something cold', 'something to eat', 'a rest']), cloud: out(['x', 'y']) });
+    const e = new Fake({ device: out(['something sweet', 'a walk', 'a rest']), cloud: out(['x', 'y']) });
     const i = { ...narrowInput(await make('Would you like tea or coffee?'), SOFAR), offered: true };
     const c = await narrowCard(i, env(e, { deviceReady: true, allowCloud: true }));
     expect(e.cloud).toEqual([]);

@@ -23,7 +23,7 @@ import { P16, type OwnFallbackWhy, type OwnGuardKind } from './copy16';
 import { COPY } from './copy';
 import { guessTopic } from './diary';
 import { makeCard } from './pipeline';
-import { crisisAnswer, healthOf, type HealthKind, type RedPlace } from './redflag';
+import { crisisAnswer, crisisWords, healthOf, type HealthKind, type RedPlace } from './redflag';
 import { careAnswer, DRINK_FOOD_WORDS } from './reliability';
 import { HOW_BAD, WEAK_NUMB, WHERE_HURTS } from './topics';
 import type { Card, Profile, SupportLevel } from './types';
@@ -32,8 +32,7 @@ export type { OwnFallbackWhy, OwnGuardKind };
 
 const lc = (s: string) => s.toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, ' ').trim();
 
-// a crisis said in the carer's words: never to a model, the safety screen's words instead
-const CRISIS_WORDS = /\b(?:can'?t go on|cannot go on|want(?:s|ed)? to die|wish(?:es)? (?:he|she|they|i) (?:was|were) dead|better off dead|kill(?:ing)? (?:him|her|them|my|your)sel(?:f|ves)|suicid\w*|end(?:ing)? (?:it all|(?:his|her|their|my|your) li(?:fe|ves))|harm(?:ing)? (?:him|her|them|my|your)sel(?:f|ves)|hurt(?:ing)? (?:him|her|them|my|your)sel(?:f|ves)|no point (?:in )?(?:living|going on)|give up on life)\b/;
+// a crisis said in the carer's words (core/redflag.ts, crisisWords): never to a model, the safety screen's words instead
 // a warning sign (core/redflag.ts SIGNS, with the words a carer uses for them), never a model's guess
 const RED_WORDS = /\b(?:chest|breath|breathe|breathing|breathless|headache|weak|weakness|numb|numbness|droop|drooped|drooping|slurred|slurring|faint|fainted|fainting|collapse|collapsed|fall|fell|fallen|falls|dizzy|choke|choking|stroke|seizure|fit|fits|bleeding|blood|unconscious|emergency|ambulance|911|999|112)\b/;
 // health matters a model should not word: the doctor, the nurse, medicines (the doctor-visit cards are rules too)
@@ -47,12 +46,12 @@ const HEALTH_WORDS = /\b(?:doctor|doctors|nurse|hospital|medicine|medicines|medi
 export function ownGuard(q: string): OwnGuardKind | null {
   const s = lc(q);
   if (!s) return null;
-  if (CRISIS_WORDS.test(s) || crisisAnswer(s)) return 'crisis';
+  if (crisisWords(s) || crisisAnswer(s)) return 'crisis';
   if (RED_WORDS.test(s.replace(/\bfall(?:s|ing)? asleep\b/g, ''))) return 'red';
   // (phase 17, judge round 12: "Is your smile lopsided?", "Are you OK, you look grey", "check your sugar" reached the AI
   // path or a plain card) the health word lists of core/redflag.ts: a warning sign is 'red', any other health matter 'care'
   const h = healthOf(s);
-  if (h === 'chest' || h === 'stroke' || h === 'fall' || h === 'unwell') return 'red';
+  if (h === 'chest' || h === 'heart' || h === 'stroke' || h === 'fall' || h === 'unwell') return 'red';
   if (h) return 'care';
   const care = DRINK_FOOD_WORDS.test(s) ? s.replace(/\b(?:hot|cold)\b/g, '') : s;
   if (careAnswer(care) || HEALTH_WORDS.test(s)) return 'care';
@@ -74,6 +73,7 @@ function careQuestion(q: string, kind: OwnGuardKind): string {
   // (phase 17) a health matter the rules cannot word: a yes / no of the app's own that keeps the health step after it
   const h = kind === 'crisis' ? null : healthOf(s);
   if (h === 'chest') return CHEST_Q;
+  if (h === 'heart') return HEART_Q;
   if (h === 'stroke') return WEAK_NUMB;
   if (h === 'fall') return FALL_Q;
   if (h === 'unwell' || h === 'sugar') return UNWELL_Q;
@@ -92,11 +92,17 @@ export async function ownGuardCard(q: string, kind: OwnGuardKind, env: OwnEnv): 
   let card = await rulesOnly(q, env);
   if (!usable(card)) card = await rulesOnly(careQuestion(q, kind), env);
   const health = kind === 'crisis' ? null : healthOf(q);
-  return { ...card, own: { asked: q, guard: kind, ...(health ? { matter: health } : {}) } };
+  const own = { asked: q, guard: kind, ...(health ? { matter: health } : {}) };
+  // (phase 18, judge round 13: "I can't go on" typed became the feelings card, and an answer on its second or third page
+  // had lost the guard) every page of the card carries what the carer's words were about
+  const paged = (c: Card | null | undefined): Card | null => (c ? { ...c, own, nextPage: paged(c.nextPage) } : null);
+  return paged(card)!;
 }
 
 /** The app's own yes / no questions for a health matter the rules cannot make a card from (never in the trees). */
 export const CHEST_Q = 'Do you have chest pain or tightness?';
+/** Phase 18: a pain where the heart can be felt (core/redflag.ts, healthOf "heart"), when the rules cannot word the carer's own. */
+export const HEART_Q = 'Do you have pain in your jaw, a shoulder, your upper back or your upper stomach?';
 export const FALL_Q = 'Did you have a fall?';
 export const UNWELL_Q = 'Do you feel unwell?';
 
@@ -125,6 +131,12 @@ export function ownAfter(health: HealthKind, label: string, number: string, name
         ? { next: [HOW_BAD], end: OWN_END.chest, red: 'chest', now: true }
         : { next: [WHERE_HURTS], end: OWN_END.chestNo, red: null };
       break;
+    // (phase 18, judge round 13) the upper stomach, the upper back, the jaw, a shoulder: as the chest, whatever the amount
+    case 'heart':
+      r = yesish(l)
+        ? { next: [HOW_BAD], end: OWN_END.heart, red: 'heart', now: true }
+        : { next: [WHERE_HURTS], end: OWN_END.heartNo, red: null };
+      break;
     case 'stroke':
       r = no || unsure ? { next: [WHERE_HURTS], end: no ? OWN_END.strokeNo : OWN_END.strokeUnsure, red: 'sign-check' } : { next: [], end: OWN_END.stroke, red: 'sign', now: true };
       break;
@@ -152,6 +164,8 @@ export function ownAfter(health: HealthKind, label: string, number: string, name
 export const OWN_END = {
   chest: 'Chest pain or tightness, or trouble breathing: call {number} now, whatever the amount, even if it has happened before. Do not wait to see if it passes. Note the time it started.',
   chestNo: '{They} pointed to no. A yes or no can be wrong after a stroke: watch {their} breathing and colour. Any chest pain or tightness, or trouble breathing: call {number} now, whatever the amount.',
+  heart: 'Upper stomach, upper back, jaw or shoulder pain can come from the heart: call {number} now, whatever the amount, even if it has happened before. Do not wait to see if it passes. Note the time it started.',
+  heartNo: '{They} pointed to no. A yes or no can be wrong after a stroke: watch {their} breathing and colour. Any pain in the chest, the upper stomach, the upper back, the jaw or a shoulder: call {number} now, whatever the amount.',
   stroke: 'This can be a stroke: call {number} now, and note the time it started. Do not wait to see if it passes.',
   strokeNo: '{They} pointed to no. A yes or no can be wrong after a stroke: check it yourself now. Ask {them} to smile and lift both arms. If one side drops, the face droops or the speech is new and slurred, call {number} now.',
   strokeUnsure: '{They} pointed to not sure. Check it yourself now: ask {them} to smile and lift both arms. If one side drops, the face droops or the speech is new and slurred, call {number} now.',
@@ -227,4 +241,27 @@ export async function ownCard(q: string, env: Parameters<typeof makeCard>[1]): P
   if (kind) return ownGuardCard(q, kind, { profile: env.profile, support: env.support });
   const card = await makeCard(q, env);
   return { ...card, own: { asked: q, ...(card.blocked && card.kind !== 'no-quiz' ? { pending: true } : {}) } };
+}
+
+/**
+ * Phase 18 (judge round 13, a health P0: seats 13b and 01): what follows ANY answer to a card the guard made from a
+ * crisis in the carer's own words ("Do you want to die?", "I can't go on" typed, which the rules may turn into "How are
+ * you feeling today?"). Never "A good day. Nothing to fix.", never "None of these", never a next question that changes
+ * the topic: one red box with what to do (the safety screen's own steps, core/copy12.ts), the crisis box with both call
+ * buttons over it (web/src/main.ts), and the safety screen when the phone is given back. A "no" does not end it.
+ * `line` is the crisis line the call buttons use (core/redflag.ts, crisisLineFor); when it is only the emergency number
+ * itself or none, the line names the doctor or nurse, never a made-up number.
+ */
+export interface OwnCrisisStep { next: string[]; end: string; alert: true; crisis: true }
+export function ownCrisisAfter(label: string, number: string, line: string, name = ''): OwnCrisisStep {
+  const l = lc(label);
+  const n = name.trim();
+  const They = n || 'They';
+  const them = n || 'them';
+  const call = `If ${n || 'they'} may harm themselves, or have, call ${number || 'the emergency number'} now; otherwise call ${line && line !== number ? line : `${n ? `${n}'s` : 'their'} doctor or nurse`} now, with ${them} beside you.`;
+  const first = l === 'no' ? `${They} pointed to no. A "no" does not end it: stay near, and still make the call.`
+    : l === 'not sure' ? `Not sure is not a no. Stay with ${them} now.`
+    : l === 'yes' || crisisAnswer(l) ? `Take it seriously. Stay with ${them} now.`
+    : `${They} pointed to "${label.trim()}". After words like these an answer does not end it: stay near, and still make the call.`;
+  return { next: [], end: `${first} ${call} Tell ${n ? `${n}'s` : 'their'} doctor or nurse today.`, alert: true, crisis: true };
 }

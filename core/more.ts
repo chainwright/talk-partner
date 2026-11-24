@@ -136,7 +136,8 @@ export function typedCard(raw: string, asked: string, profile: Profile, support:
   return card;
 }
 
-export type Way = 'more' | 'about' | 'where' | 'needs' | 'letter' | 'show' | 'narrow';
+/** Phase 18: 'which', the AI's "Which one?" after a kind of thing was picked on a card of the AI (core/endstep.ts). */
+export type Way = 'more' | 'about' | 'where' | 'needs' | 'letter' | 'show' | 'narrow' | 'which';
 
 /**
  * What the carer is offered after "something else" on this card, in order. The first is a step the rules make on the

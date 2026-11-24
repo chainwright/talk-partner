@@ -11,6 +11,10 @@ topic) down to the end, where an answer that names a kind of thing shows "Which 
 choices, the first letter and show-or-write, each of those ways followed. Each walk is left with Back one step at a time
 to the first screen. The family's About them is the sample family's (put on the device before the walk).
 
+Phase 18 (judge round 13): six more hidden targets (pancit, church, a hot water bottle, stew, the garden centre,
+snooker), walked letter by letter until the rules have no word, then the ways of a letter card with no word in their
+order, the AI's sheet and its refusal, and "Write it down together" to the target (`target18`).
+
 Usage: python3 scripts/phase17b-walk.py [--url URL] [OUT_DIR]   (default http://localhost:5179/, devlog/evidence_phase17b/walk)
 Exit code 0 when every check passes, 1 otherwise. Prints one line per topic: reached or DEAD END.
 """
@@ -160,6 +164,106 @@ def hidden(page, tag, topic, tq, qtext, target, way_out='something else', pre=()
     leave(page, tag, f'{topic}, {target}')
 
 
+def wait_any(page, sels, ms=30000):
+    """The first of these selectors that shows (the person's card, the carer's ways, the sheet)."""
+    page.wait_for_selector(', '.join(sels), timeout=ms); page.wait_for_timeout(250)
+    for sel in sels:
+        if page.locator(sel).count():
+            return sel
+    return ''
+
+
+def ways_ids(page):
+    return page.evaluate("[...document.querySelectorAll('#letter-ways .ways > li > .btn')].map((b) => b.id)")
+
+
+def leave_any(page, tag, what, most=24):
+    """Back one step at a time to the first screen; the screen of a letter with no word is a step of its own here."""
+    seen = []
+    steps = 0
+    while page.locator('main.simple.home').count() == 0 and steps < most:
+        if page.locator('main.pv').count():
+            page.go_back()
+        else:
+            b = page.locator('#s-top [data-act=back]')
+            if not b.count():
+                break
+            b.first.click()
+        page.wait_for_timeout(350); steps += 1
+        seen.append(page.evaluate("document.querySelector('main')?.dataset.screen || ''"))
+    check(f'{tag}: {what}: Back one step at a time to the first screen ({steps} steps: {" > ".join(seen)})', page.locator('main.simple.home').count() == 1 and noscroll(page), ' > '.join(seen))
+
+
+def target18(page, tag, topic, tq, qtext, target, pre=(), ai=True):
+    """Phase 18 (judge round 13: six hidden targets ended on a letter card with no word). Letter by letter until the
+    rules have no word; then the ways, in their order (the AI for the topic, write it, show me, another letter); the
+    AI's sheet, "Just this once" (App Check is refused here: every other host is cut off), the refusal line with "Try
+    Google's AI again" first; then "Write it down together", the word typed, the person checks it, the carer's screen
+    says what to do with it. Back one step at a time to the first screen."""
+    home(page)
+    page.locator(f'.topic[data-topic={tq}]').click()
+    page.locator('.tq', has_text=qtext).first.click(); page.wait_for_selector('main.simple.card')
+    for label in pre:
+        answer(page, label)
+        page.locator('#next-q').click(); page.wait_for_selector('main.simple.card')
+    show(page)
+    person_pick(page, 'something else'); give(page); page.wait_for_selector('#letter-go')
+    page.locator('#letter-go').first.click(); page.wait_for_selector('main.pv.letters #abc')
+    word = target.replace(' ', '')
+    reached = ''
+    nocard = False
+    for n in range(1, 6):
+        page.locator(f'[data-letter={word[n - 1].upper()}]').click()
+        got = wait_any(page, ['main.pv .pt', '#sheet', '#letter-ways'])
+        if got == 'main.pv .pt':
+            ws = tiles(page)
+            if any(bare(w) == bare(target) for w in ws):
+                person_pick(page, target); give(page); page.wait_for_selector('main.simple.s-answered'); reached = word[:n].upper()
+                break
+            person_pick(page, 'something else'); give(page); page.wait_for_selector('#letter-add')
+            page.locator('#letter-add').click(); page.wait_for_selector('main.pv.letters #abc')
+            continue
+        nocard = True
+        letters = word[:n].upper()
+        break
+    if reached:
+        check(f'{tag}: phase 18, {topic}: "{target}" reached by the rules\' letters ({reached})', target.lower() in e2e.text(page).lower(), e2e.text(page)[:200])
+        report.append(f'{tag} p18 {topic:7s} target {target!r:20s} reached with {reached} (rules)')
+        shot(page, tag, f'p18_{bare(target).replace(" ", "_")}')
+        leave_any(page, tag, f'phase 18, {target}')
+        return
+    check(f'{tag}: phase 18, {topic}: the letters {letters} have no word in the rules: the carer\'s screen, never the person\'s', nocard, e2e.text(page)[:200])
+    if page.locator('#sheet').count():
+        check(f'{tag}: phase 18, {letters}: the sheet asks first, with the exact text', 'Just this once' in e2e.text(page, '#sheet'), e2e.text(page, '#sheet')[:200])
+        page.locator('#sheet [data-act=sheet-no]').click(); page.wait_for_selector('#letter-ways')
+    t = e2e.text(page)
+    ids = ways_ids(page)
+    want = (['letter-ai'] if ai else []) + ['letter-write', 'letter-show', 'letter-go']
+    check(f'{tag}: phase 18, {letters}: never "Nothing else was tried"; the line says what happened; the ways in order ({ids})', 'Nothing else was tried' not in t and ids == want and ('You kept it on this phone.' in t or not ai), t[:300])
+    shot(page, tag, f'p18_{bare(target).replace(" ", "_")}_ways')
+    if ai:
+        page.locator('#letter-ai').click(); page.wait_for_selector('#sheet')
+        page.locator('#sheet [data-act=sheet-yes]').click()
+        page.wait_for_selector('#letter-ways', timeout=40000); page.wait_for_timeout(500)
+        t = e2e.text(page)
+        ids = ways_ids(page)
+        check(f'{tag}: phase 18, {letters}: after "Just this once" with App Check refused, no sheet by itself, the refusal line and "Try Google\'s AI again" first ({ids})', page.locator('#sheet').count() == 0 and 'Google could not check this browser, so nothing was sent.' in t and ids[:2] == ['letter-again', 'letter-write'], t[:300])
+        shot(page, tag, f'p18_{bare(target).replace(" ", "_")}_refused')
+    # "Write it down together": the word they wrote goes to the person's screen, to be checked
+    page.locator('#letter-write').click(); page.wait_for_selector('#understood-word')
+    page.fill('#understood-word', target); page.locator('#understood-go').click()
+    page.wait_for_selector('main.pv .pt')
+    ws = tiles(page)
+    check(f'{tag}: phase 18, "{target}": written down, it is on the person\'s screen to check ({", ".join(ws)})', any(bare(w) == bare(target) for w in ws), str(ws))
+    person_pick(page, target); give(page); page.wait_for_selector('main.simple.s-answered')
+    t = e2e.text(page)
+    ok = target.lower() in t.lower() and (page.locator('#do-now').count() + page.locator('#next-q').count() + page.locator('#another').count()) >= 1
+    check(f'{tag}: phase 18, {topic}: "{target}" reached by "Write it down together" after {letters}, and the carer\'s screen says what to do with it', ok, t[:240])
+    report.append(f'{tag} p18 {topic:7s} target {target!r:20s} ' + (f'reached: no word at {letters}, ways shown, then written down' if ok else 'DEAD END'))
+    shot(page, tag, f'p18_{bare(target).replace(" ", "_")}')
+    leave_any(page, tag, f'phase 18, {target}')
+
+
 def own_yes(page):
     home(page)
     page.fill('#q', 'Would you like something?'); page.locator('#make').click()
@@ -245,6 +349,13 @@ def walk(b, w, h):
     hidden(page, tag, 'feel', 'feel', 'Is something bothering you', 'scared', way_out='not sure')
     hidden(page, tag, 'body', 'body', 'glasses or your hearing aid', 'shower')
     typed(page, tag)
+    # (phase 18, judge round 13: the six hidden targets that ended on a letter card with no word)
+    target18(page, tag, 'food', 'food', 'Are you hungry', 'pancit', pre=('yes',))
+    target18(page, tag, 'plans', 'plans', 'stay in or go out', 'church')
+    target18(page, tag, 'body', 'body', 'glasses or your hearing aid', 'hot water bottle', ai=False)
+    target18(page, tag, 'food', 'food', 'Are you hungry', 'stew', pre=('yes',))
+    target18(page, tag, 'plans', 'plans', 'stay in or go out', 'garden centre')
+    target18(page, tag, 'fun', 'fun', 'the news or a film', 'snooker')
     # (the own-words field starts App Check when it gets the cursor, phase 17 B: only its reCAPTCHA is asked, and refused here)
     check(f'{tag}: no page error; only App Check\'s reCAPTCHA was asked of another host (and refused)', not errs and all('recaptcha' in u for u in outside), str(errs + outside[:4]))
     ctx.close()

@@ -182,7 +182,9 @@ describe('a model adds words only when the rules find fewer than two', () => {
   });
   it('online help fails: the card never says nothing left, and never throws', async () => {
     const card = await letterCard(Q, env(new Fake(true, { cloud: new Error('503') }), MILLER, { allowCloud: true }));
-    expect(card.blocked).toBe(P4.letter.failed);
+    // (phase 18: the line names the letters and what happened, never "Nothing else was tried")
+    expect(card.blocked).toBe(P4.letter.failed(card.letter!.letter));
+    expect(card.blocked).not.toMatch(/Nothing else was tried/);
     expect(card.cloudAttempted).toBeTruthy();
   });
 });

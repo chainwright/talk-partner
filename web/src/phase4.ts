@@ -7,6 +7,7 @@ import { COPY } from '../../core/copy';
 import { P4 } from '../../core/copy4';
 import { P10 } from '../../core/copy10';
 import { LETTERS } from '../../core/letter';
+import type { LetterWay } from '../../core/letterways';
 import { DEFAULT_NUMBER } from '../../core/redflag';
 import type { Photo } from '../../core/photos';
 import type { PhotoQuestion } from '../../core/phototalk';
@@ -35,6 +36,24 @@ export function letterGrid(o: { holdHtml: string; prefix?: string }): string {
 
 /** The carer's button that opens the alphabet (after "something else", and on the "We're stuck" card). */
 export const letterButton = (name: string, again = false) => `<button type="button" class="btn letter-go" id="letter-go" data-act="letter">${ABC}<span><b>${again ? P4.letter.again : P4.letter.go}</b>${again ? '' : `<small>${esc(P4.letter.goSub(name))}</small>`}</span></button>`;
+/**
+ * Phase 18 (judge round 13: six hidden targets ended on a letter card with no word): the ways under it, in the order of
+ * core/letter.ts (letterWays): the AI for the topic and the letters, write it down together, ask them to show you,
+ * another letter. The first is the main button. `writeHtml` is the writing pad, open once "Write it" was pressed.
+ */
+export function letterWaysBlock(m: { ways: LetterWay[]; ai: 'device' | 'cloud' | null; letters: string; name: string; writeHtml: string }): string {
+  const L = P4.letter;
+  const b = (id: string, act: string, first: boolean, title: string, sub: string) => `<button type="button" class="btn way${first ? ' primary' : ''}" id="${id}" data-act="${act}"><span><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span></button>`;
+  const html = m.ways.map((w, i) => {
+    const first = i === 0;
+    if (w === 'ai') return m.ai === 'device' ? b('letter-ai', 'letter-ai', first, L.aiDevice(m.letters), L.aiDeviceSub) : b('letter-ai', 'letter-ai', first, L.aiCloud(m.letters), L.aiCloudSub);
+    if (w === 'again') return b('letter-again', 'letter-again', first, L.aiAgain, L.aiAgainSub);
+    if (w === 'write') return `${b('letter-write', 'letter-write', first, L.write, L.writeSub(m.name))}${m.writeHtml}`;
+    if (w === 'show') return b('letter-show', 'stuck', first, L.show(m.name), L.showSub);
+    return letterButton(m.name, true);
+  });
+  return `<div class="next-steps" id="letter-ways"><p class="steplabel out-lead">${esc(L.ways)}</p><ol class="ways">${html.map((h) => `<li>${h}</li>`).join('')}</ol></div>`;
+}
 /** Phase 17: one more letter after the ones pointed to so far: the guess narrows (core/letter.ts). */
 export const letterAddButton = (letter: string) => `<button type="button" class="btn" id="letter-add" data-act="letter-add">${esc(P4.letter.add(letter))}</button>`;
 export const letterMoreButton = (letter: string) => `<button type="button" class="btn" id="letter-more" data-act="letter-more">${esc(P4.letter.more(letter))}</button>`;

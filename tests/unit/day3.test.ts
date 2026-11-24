@@ -163,9 +163,10 @@ describe('§2.11: "left" is the person\'s own left, so the card says "your left 
     expect(c.choices[0].picture).toEqual({ type: 'builtin', id: 'body:left arm' });
     expect(c.choices[2].picture).toEqual({ type: 'builtin', id: 'body:hands' });
     expect(bodyDetailCard('chest', SAMPLE_PROFILE, 'mild').choices.map((x) => x.label)).toEqual(['your left side', 'middle', 'your right side', 'somewhere else']);
-    // the highlight for the person's left arm sits on the viewer's right of the figure (x > 48)
-    expect(builtinPicto('body:left arm')).toMatch(/M62 30l12 28/);
-    expect(builtinPicto('body:right arm')).toMatch(/M34 30l-12 28/);
+    // (phase 18, judge round 13: the arms are drawn from behind) the highlight for the person's left arm sits on the
+    // viewer's left of the figure (x < 48), as on the person's own body
+    expect(builtinPicto('body:left arm')).toMatch(/M34 30l-12 28" stroke="#d9453c"/);
+    expect(builtinPicto('body:right arm')).toMatch(/M62 30l12 28" stroke="#d9453c"/);
   });
 });
 

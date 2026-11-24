@@ -10,8 +10,9 @@
 // nothing of it is sent. A card whose words were sent says so under it, and the session's privacy line counts it.
 //
 // This file is pure: the text, the request as the sheet shows it, the sound as a WAV file, and a small cache keyed by
-// the text (the same card is not sent twice). It imports types only.
+// the text (the same card is not sent twice). It imports types and the health word lists only (core/redflag.ts, pure).
 
+import { crisisAnswer, healthOf } from './redflag';
 import type { Card } from './types';
 
 /** The stable text-to-speech model (Firebase release notes, 11 Nov 2026). Data, not code: one place to change it. */
@@ -24,7 +25,13 @@ export const SPEAK_MAX = 400;
 export function speakable(c: Card | null | undefined): c is Card {
   // (phase 16: a card the own-words guard made from words about care, a warning sign or a crisis is never spoken by a
   // model: its line says the words went to no AI, core/ownwords.ts)
-  return !!c && !c.blocked && c.kind !== 'no-quiz' && c.choices.length > 0 && !c.visit && !c.own?.guard;
+  // (phase 18, judge round 13, seats 01, 05, 13b: "Where does it hurt?" and "How bad is the pain?" offered Read aloud, so
+  // a pain card's words went to Google's voice model while Home says pain and warning signs never go to an AI) never the
+  // body card, the pain scale, the needs board, a question about a health matter, or a card with a health or crisis
+  // choice on it ("in pain", "I can't go on"): those cards are read out by the carer, and nothing of them is sent
+  if (!c || c.kind === 'body' || c.kind === 'pain' || c.kind === 'needs' || c.own?.matter || healthOf(c.asked)) return false;
+  for (let p: Card | null | undefined = c; p; p = p.nextPage) if (p.choices.some((x) => healthOf(x.label) || crisisAnswer(x.label))) return false;
+  return !c.blocked && c.kind !== 'no-quiz' && c.choices.length > 0 && !c.visit && !c.own?.guard;
 }
 
 /** What is spoken: the question as the card shows it, then each choice as its own short sentence, the way out last. */

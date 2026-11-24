@@ -12,6 +12,8 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 
 export interface WaysModel {
   ways: Way[];
+  /** Phase 18: the question of the way "Which one?" ("Which meat would you like?"). */
+  which?: string;
   /** The first choices the card of more choices will offer ("water, juice, milk"). */
   moreFirst: string[];
   /** The first-letter button, as it was (web/src/phase4.ts). Empty when it does not fit this card. */
@@ -38,6 +40,7 @@ export function waysBlock(m: WaysModel): string {
   const ways = second ? [m.ways[0], 'narrow' as Way, ...m.ways.slice(1).filter((w) => w !== 'narrow')] : m.ways;
   const html = ways.map((w, i) => {
     const first = i === 0;
+    if (w === 'which') return m.which ? way('which', first, `data-act="which-one" data-which="${esc(m.which)}"`, O.which(m.which), O.whichSub) : '';
     if (w === 'more') return way('more', first, 'data-act="more-like"', O.more, O.moreSub(m.moreFirst));
     if (w === 'about') return way('about', first, 'data-act="about-what"', O.about, O.aboutSub);
     if (w === 'where') return way('where', first, `data-q="${esc(WHERE_HURTS)}" data-next="1"`, O.where, O.whereSub).replace('class="btn way', 'class="btn ask-next way');

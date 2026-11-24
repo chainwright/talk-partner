@@ -65,7 +65,10 @@ describe('the web client', () => {
   it('with online help off, the letter step reaches it only through the sheet: the yes on it asks the step again', () => {
     expect(main).toContain("if (c.letter) return `${screen.replace('<main class=\"simple', '<main inert aria-hidden=\"true\" class=\"simple')}${letterSheet({");
     expect(main).toContain('if (state.card?.letter && state.p4.letterPending) void runLetter(state.p4.letterPending);');
-    expect(main.match(/runLetter\(/g)!.length).toBe(4); // its definition, the tap on a letter, "more words", the yes on the sheet
+    // its definition, the tap on a letter, "more words", the yes on the sheet; (phase 18) the ways under a card with no
+    // word: the AI with online help on or Chrome's own AI, the AI with no request yet (it brings up the sheet), "Try again"
+    expect(main.match(/runLetter\(/g)!.length).toBe(7);
+    expect(main).toContain("if (c.unsentPayload) { state.sheet = true; render(); } else void runLetter(i);");
   });
   it('the doctor-visit questions and the person\'s start call no engine', () => {
     const p4 = main.slice(main.indexOf('// ---------------------------------------------------------------- phase 4:'), main.indexOf('// ---------------------------------------------------------------- render'));

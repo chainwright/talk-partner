@@ -32,6 +32,8 @@ const handover = (diary: DiaryEntry[], o: Partial<Parameters<typeof handoverText
 
 const STAMP = "Shared from Talk Partner on Sun 22 Nov, 12:00. Counted by the app's rules from what was entered here; not a medical record.";
 const CALL = 'Call 911 now if this is new or sudden';
+/** Phase 18: the top line when a line below is the head or the chest. */
+const CALL_NOW = 'Call 911 now, whatever the amount';
 /** Nothing in a shared text may suggest more to drink, name a medicine or a dose, or play a line down. */
 const MORE_DRINK = /drink more|more to drink|more drinks?\b|offer (?:him|her|them|a|more)|encourage|should drink|needs? to drink|more fluid|more water|give (?:him|her|them)/i;
 const ADVICE = /\bdiagnos|\bdose\b|\bmg\b|\bmedicine\b|\bprescri|you should\b|\bmust\b/i;
@@ -79,18 +81,20 @@ describe('worst cases: nothing in the text helps anyone dismiss pain, a need or 
   it('a chest pain day: the call sentence at the top, and on the line its "whom to tell" sentence and the call sentence', () => {
     const d = [...days(0, 1, 2), ans('w', 'Where does it hurt?', 'chest', 2, '09:01'), ans('b', 'How bad is the pain?', 'very bad', 2, '09:03')];
     const t = family(d);
-    expect(t.split('\n')[1]).toBe('Call 911 now if this is new or sudden: see "What stands out" below.');
-    expect(t).toContain('1. Call now if it is new or sudden, and tell the doctor or nurse: Strong pain was chosen on Wed 18 Nov: very bad. Pain in the head or the chest was chosen on Wed 18 Nov: chest.\n   Pain in the head or the chest: call 911 now, whatever the amount. Do not wait to see if it passes.\n   How it was counted:');
+    // (phase 18, judge round 13, the hound's H1: a chest line never stands under "if it is new or sudden")
+    expect(t.split('\n')[1]).toBe('Call 911 now, whatever the amount: see "What stands out" below.');
+    expect(t).toContain('1. Call now, whatever the amount, and tell the doctor or nurse: Strong pain was chosen on Wed 18 Nov: very bad. Pain in the head or the chest was chosen on Wed 18 Nov: chest.\n   Pain in the head or the chest: call 911 now, whatever the amount. Do not wait to see if it passes.\n   How it was counted:');
     expect(t).toContain('  09:01  Where does it hurt? chest');
     safe(t, 'chest pain');
     // the family's own number is the one named
-    expect(family(d, { number: '999' })).toContain('Call 999 now if this is new or sudden: see');
+    expect(family(d, { number: '999' })).toContain('Call 999 now, whatever the amount: see');
     expect(family(d, { number: '999' })).not.toContain('911');
   });
   it('a chest pain yesterday, shared from the Today tab: this week\'s lines are in the text, with the call sentence', () => {
     const d = [...days(4, 5), ans('w', 'Where does it hurt?', 'chest', 5, '21:00'), log('k', 'drank', 6, '08:00')];
     const t = family(d, { span: 'today' });
-    expect(t.split('\n')[1]).toContain(CALL);
+    // (phase 18: a chest line at the top says "whatever the amount", never "if it is new or sudden")
+    expect(t.split('\n')[1]).toContain(CALL_NOW);
     expect(t).toContain("Frank's diary, today (Sun 22 Nov).");
     expect(t).toContain('WHAT STANDS OUT (the last 7 days)');
     expect(t).toContain('Pain in the head or the chest was chosen on Sat 21 Nov: chest.');
@@ -144,7 +148,7 @@ describe('worst cases: nothing in the text helps anyone dismiss pain, a need or 
     for (const span of ['today', 'week', 'month'] as const) for (const health of [null, all, H({ fluidLimit: true }), H({ reminders: true })]) {
       const t = family(d, { span, health });
       safe(t, `${span} ${JSON.stringify(health)}`);
-      expect(t.split('\n')[1], span).toContain(CALL);
+      expect(t.split('\n')[1], span).toContain(CALL_NOW);
       expect(t.split('\n')[0]).toBe(STAMP);
     }
     for (const health of [null, all]) safe(handover(d, { health }), 'handover');
@@ -232,7 +236,7 @@ describe('"For the next carer": the last 24 hours', () => {
   it('worst case, chest pain: the answers as given, whom to tell and when to call, and the call sentence at the top', () => {
     const d = [...plain(6), ans('y', 'Are you in pain?', 'yes', 6, '09:00'), ans('w', 'Where does it hurt?', 'chest', 6, '09:01'), ans('b', 'How bad is the pain?', 'very bad', 6, '09:02')];
     const t = handover(d);
-    expect(t.split('\n')[1]).toBe('Call 911 now if this is new or sudden: see the lines on pain and falls below.');
+    expect(t.split('\n')[1]).toBe('Call 911 now, whatever the amount: see the lines on pain and falls below.');
     expect(t).toContain('Pain: Sun 09:00 Are you in pain? yes; Sun 09:01 Where does it hurt? chest; Sun 09:02 How bad is the pain? very bad. Pain in the head or the chest: call 911 now, whatever the amount. Do not wait to see if it passes.');
   });
   it('a pain that is not strong and not in the head or chest: the answers, and "ask again"; none entered is never "no pain"', () => {

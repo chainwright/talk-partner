@@ -229,7 +229,8 @@ describe('7. The nurse\'s and the SLP\'s sets (P1 19, 20)', () => {
   it('a line with the call box has its own label and comes first, above three days of pain', () => {
     const d = [...day(0), ...day(1), ...day(2), ans('Are you in pain?', 'yes', 0, '10:00', 'body'), ans('Are you in pain?', 'yes', 1, '10:00', 'body'), ans('Are you in pain?', 'yes', 2, '10:00', 'body'), ans('Where does it hurt?', 'chest', 3, '21:01', 'body')];
     const xs = insights(d, NO_HEALTH, 'week', NOW, '911');
-    expect(xs[0]).toMatchObject({ id: 'pain-day', level: 'call', urgent: true });
+    // (phase 18: a chest line's heading says "whatever the amount", level 'now')
+    expect(xs[0]).toMatchObject({ id: 'pain-day', level: 'now', urgent: true });
     expect(xs.find((x) => x.id === 'pain')!.level).toBe('tell');
   });
   it('a dry day under a fluid limit is never excused', () => {

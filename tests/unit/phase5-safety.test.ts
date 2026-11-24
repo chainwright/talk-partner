@@ -42,10 +42,12 @@ describe('2a. "Something new or sudden?": a fixed card with a call button', () =
     const t = text(html);
     for (const k of ['Face', 'Arm', 'Speech', 'Time']) expect(t).toContain(k);
     expect(P5.sudden.fast).toHaveLength(4);
-    expect(P5.sudden.also).toHaveLength(5);
+    // (phase 18, judge round 13, the hound's H1: chest pain left the "new or sudden" list for its own line above it)
+    expect(P5.sudden.also).toHaveLength(4);
     // (phase 8: BE-FAST's balance and sight)
     expect(t).toContain('Sudden loss of balance, or sudden loss of sight in one or both eyes.');
-    expect(t).toContain('Chest pain, or trouble breathing.');
+    expect(t).toContain('Chest pain, tightness or trouble breathing: call 911 now, even if it has happened before.');
+    expect(t).not.toContain('Chest pain, or trouble breathing.');
     expect(html.match(/href="tel:911"/g)).toHaveLength(2);
     expect(t).toContain('Call emergency services: 911');
     expect(t).toContain('911 in the US and Canada, 999 in the UK, 112 in the EU and India, 000 in Australia and 111 in New Zealand');
@@ -92,9 +94,10 @@ describe('2b. the boxed line: head, chest, breathing, a sudden weakness, pain ra
       const c = bodyDetailCard(region, EMPTY_PROFILE);
       for (let p: Card | null | undefined = c; p; p = p.nextPage) for (const ch of p.choices.filter((x) => x.role === 'answer')) expect(urgentAnswer(p.asked, ch.label), `${p.asked} ${ch.label}`).toBe(true);
     }
+    // (phase 18, judge round 13: the upper stomach and the upper back can be the heart: they keep the box too)
     for (const region of BODY_REGIONS.filter((r) => r !== 'head' && r !== 'chest')) {
       const c = bodyDetailCard(region, EMPTY_PROFILE);
-      for (const ch of c.choices.filter((x) => x.role === 'answer')) expect(urgentAnswer(c.asked, ch.label), `${c.asked} ${ch.label}`).toBe(false);
+      for (const ch of c.choices.filter((x) => x.role === 'answer')) expect(urgentAnswer(c.asked, ch.label), `${c.asked} ${ch.label}`).toBe(/^upper (?:stomach|back)$/.test(ch.label));
     }
   });
   it('"quite bad" and "very bad", wherever the pain is; "a little" and "not sure" keep the flow that was there', () => {
@@ -124,8 +127,8 @@ describe('2b. the boxed line: head, chest, breathing, a sudden weakness, pain ra
     const main = read('web/src/main.ts');
     expect(main).toContain('if (state.picked && urgentAnswer(c.asked, state.picked.label)) p5.urgent = true;');
     // (phase 17: one call box only: an alert line with its own call button stands in for the box)
-    expect(main).toContain("leadHtml: `${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), crisisLineNow(), callNumber()) : ''}${turnHtml()}`,");
-    expect(main).toContain("topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow) : ''}${ownTop(c)}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,");
+    expect(main).toContain("${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(callNumber(), 'urgent', numberGuess(), chestLike(redPlace(c.asked, p.label)) ? 'chest' : boxMode(c) !== 'new' ? boxMode(c) : signNow(c.asked, p.label) ? 'now' : 'new') : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), crisisLineNow(), callNumber()) : ''}${turnHtml()}`,");
+    expect(main).toContain("topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess(), boxMode(c)) : ''}${ownTop(c)}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,");
     // the visit page of the nurse's walk: head, quite bad, at night
     const record = { startedAt: NOW, done: true, answers: [{ id: 'pain' as const, q: 'Are you in pain?', label: 'yes', at: NOW }, { id: 'where' as const, q: 'Where in the head?', label: 'top of head', at: NOW }, { id: 'bad' as const, q: 'How bad is the pain?', label: 'quite bad', at: NOW }] };
     const page = visitScreen({ name: 'Frank', record, copied: false, urgentHtml: urgentAny(record.answers) ? urgentBox('911', 'visit-urgent') : '' });
@@ -299,7 +302,10 @@ describe('3. Read aloud: Gemini text-to-speech through Firebase AI Logic, after 
   });
   it('never a doctor-visit card (that page says nothing of it is sent), never a card with no choices', async () => {
     for (const v of VISIT.filter((x) => x.pages)) expect(speakable(await visitCard(v, EMPTY_PROFILE, 'more'))).toBe(false);
-    expect(speakable(card)).toBe(true);
+    // (phase 18, judge round 13: the needs board holds "pain" and "something's wrong": a health card, never spoken by a model)
+    expect(speakable(card)).toBe(false);
+    const tea = { ...card, kind: 'choice', asked: 'Would you like tea or coffee?', choices: [{ label: 'tea', spoken: 'tea', role: 'answer', picture: null }, { label: 'coffee', spoken: 'coffee', role: 'answer', picture: null }, { label: 'something else', spoken: 'something else', role: 'escape', picture: null }] } as unknown as Card;
+    expect(speakable(tea)).toBe(true);
     expect(speakable(null)).toBe(false);
     expect(speakable({ ...card, blocked: 'no card' } as Card)).toBe(false);
   });

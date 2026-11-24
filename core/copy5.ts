@@ -33,6 +33,12 @@ export const P5 = {
     firstGuess: 'Not your number?',
     heading: 'Something new or sudden?',
     lead: (number: string) => `If you see any one of these, and it is new or sudden, call ${number} now. Do not wait to see if it passes.`,
+    /**
+     * Phase 18 (judge round 13, the hound's H1, a health P0): chest pain stood in the list under "if it is new or sudden",
+     * and "not sudden: call the doctor today" under it. It has its own line above the list: always call, even if it has
+     * happened before.
+     */
+    chest: (number: string) => `Chest pain, tightness or trouble breathing: call ${number} now, even if it has happened before. Do not wait to see if it passes.`,
     fastHeading: 'FAST',
     fast: [
       ['Face', 'One side of the face has dropped, or the smile is uneven.'],
@@ -42,10 +48,10 @@ export const P5 = {
     ] as [string, string][],
     alsoHeading: 'Call for these as well',
     // (phase 8, judge round 7: BE-FAST adds balance and sight; FAST alone misses some strokes)
-    also: ['Sudden loss of balance, or sudden loss of sight in one or both eyes.', 'A sudden, very bad headache.', 'Chest pain, or trouble breathing.', 'A fall with a blow to the head, or a fall and cannot get up.', 'Suddenly very drowsy or confused, or cannot be woken.'],
+    also: ['Sudden loss of balance, or sudden loss of sight in one or both eyes.', 'A sudden, very bad headache.', 'A fall with a blow to the head, or a fall and cannot get up.', 'Suddenly very drowsy or confused, or cannot be woken.'],
     call: (number: string) => `Call emergency services: ${number}`,
     unsure: 'Not on this list, and you are still worried? Call. You know them best.',
-    notSudden: 'Worried, and it is not sudden: call the doctor or nurse today.',
+    notSudden: 'Worried, and it is not sudden, and it is not chest pain or trouble breathing: call the doctor or nurse today.',
     number: (number: string) => `The button calls ${number}. The number is 911 in the US and Canada, 999 in the UK, 112 in the EU and India, 000 in Australia and 111 in New Zealand.`,
     change: 'Change the number (About them, Health notes)',
     source: 'A fixed list: FAST (face, arm, speech, time), the public check for the signs of a stroke, with balance and sight (BE-FAST), and more reasons to call. No AI wrote it, and nothing is sent. The app cannot tell what is wrong. No doctor or nurse has checked this wording.',
@@ -56,6 +62,8 @@ export const P5 = {
     box: (number: string) => `Call ${number} now if this is new or sudden.`,
     /** Phase 12b: the box over a yes to sudden weakness or numbness (core/redflag.ts, signNow): no "if". */
     boxNow: (number: string) => `Call ${number} now. Note the time it started.`,
+    /** Phase 18: the box over a chest question or answer, and the trunk places of the heart: never "if this is new or sudden". */
+    boxChest: (number: string) => `Chest pain, tightness or trouble breathing: call ${number} now, even if it has happened before.`,
     boxCall: (number: string) => `Call ${number}`,
     boxMore: 'What to look for',
     /** In About them, under Health notes. */

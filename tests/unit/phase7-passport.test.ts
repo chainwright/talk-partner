@@ -157,12 +157,15 @@ describe('"If something is wrong": the emergency number and the fixed text of ph
   it('the number, the lead sentence, FAST line for line, the four more reasons, and "call the doctor or nurse today"', () => {
     const w = texts(input(), 'wrong');
     expect(w[0]).toBe('Emergency number: 911.');
-    expect(w[1]).toBe(P5.sudden.lead('911'));
-    expect(w.slice(2, 6)).toEqual(P5.sudden.fast.map(([k, v]) => `${k}: ${v}`));
-    expect(w[2]).toBe('Face: One side of the face has dropped, or the smile is uneven.');
-    expect(w[6]).toBe(`Call for these as well: ${P5.sudden.also.join(' ')}`);
-    expect(w[7]).toBe(P5.sudden.notSudden);
-    expect(w[8]).toBe("This page is about talking. It holds no health notes: ask the family, and go by the doctor's plan.");
+    // (phase 18, judge round 13, the hound's H1: chest pain has its own line, first, never under "if it is new or sudden")
+    expect(w[1]).toBe('Chest pain, tightness or trouble breathing: call 911 now, even if it has happened before. Do not wait to see if it passes.');
+    expect(w[2]).toBe(P5.sudden.lead('911'));
+    expect(w.slice(3, 7)).toEqual(P5.sudden.fast.map(([k, v]) => `${k}: ${v}`));
+    expect(w[3]).toBe('Face: One side of the face has dropped, or the smile is uneven.');
+    expect(w[7]).toBe(`Call for these as well: ${P5.sudden.also.join(' ')}`);
+    expect(w[7]).not.toMatch(/chest/i);
+    expect(w[8]).toBe(P5.sudden.notSudden);
+    expect(w[9]).toBe("This page is about talking. It holds no health notes: ask the family, and go by the doctor's plan.");
   });
   it('the family\'s own number is the one on the page', () => {
     const w = texts(input({ number: '999' }), 'wrong');

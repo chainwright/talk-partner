@@ -99,7 +99,14 @@ export function narrowDeviceAsk(i: NarrowInput): string {
 }
 
 /** The guards: what of a model's proposal may stand on a narrowing card. */
-export function narrowChoices(raw: string[], i: Pick<NarrowInput, 'asked' | 'rejected'>, env: Pick<PipelineEnv, 'profile'>): { kept: string[]; dropped: { label: string; rule: string }[] } {
+/**
+ * Phase 18 (judge round 13, the hound's seat: "Find more choices" on the hosted copy gave exactly "something cold" and
+ * "something to eat", the two kinds the request names as examples): on the card of "Find more choices" a proposal that
+ * is one of the request's own examples is dropped, whatever the card. After the way out they can be real answers ("tea
+ * or coffee?" then "something else": something to eat), so there they stay.
+ */
+export const PROMPT_EXAMPLES = [...FIND_TASK.matchAll(/"([^"]+)"/g)].map((m) => m[1].toLowerCase());
+export function narrowChoices(raw: string[], i: Pick<NarrowInput, 'asked' | 'rejected'> & { offered?: boolean }, env: Pick<PipelineEnv, 'profile'>): { kept: string[]; dropped: { label: string; rule: string }[] } {
   const R = W.rules;
   const dropped: { label: string; rule: string }[] = [];
   const gone = new Set(i.rejected.map(lc));
@@ -111,6 +118,7 @@ export function narrowChoices(raw: string[], i: Pick<NarrowInput, 'asked' | 'rej
     const rule = isEscapeLabel(c) ? R.escapeWord
       : gone.has(lc(c)) ? R.repeat
       : kept.some((k) => lc(k) === lc(c)) ? R.repeat
+      : i.offered && PROMPT_EXAMPLES.includes(lc(c)) ? R.promptExample
       : sameKind(c, subject, i.rejected) ? R.sameKind
       : hasNegative(c) ? R.negative
       : hasPlaceholder(c) || c.split(/\s+/).length > 4 ? R.filler

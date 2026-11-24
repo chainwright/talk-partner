@@ -67,8 +67,8 @@ describe('A2. Chest or head pain, or a breathing / weak / numb yes in the conver
     expect(redPlace('Where does it hurt?', 'a headache')).toBe('head');
     expect(redPlace('Is it suddenly weak or numb, yes or no?', 'yes')).toBe('sign');
     expect(redPlace('Is it hard to breathe?', 'yes')).toBe('sign');
-    // not a red flag
-    expect(redPlace('Where in the chest?', 'somewhere else')).toBeNull();
+    // (phase 18, judge round 13, the SLP's seat: "somewhere else" under the chest dropped the call line) still the chest
+    expect(redPlace('Where in the chest?', 'somewhere else')).toBe('chest');
     // (phase 17, judge round 12: a limb pain owes the stroke check, the weakest flag)
     expect(redPlace('Where in the arms?', 'left arm')).toBe('limb');
     // (phase 15: a "no" or "not sure" to weakness is the check, not a call: core/tree.ts SIGN_CHECK_END)
@@ -106,9 +106,12 @@ describe('A2. Chest or head pain, or a breathing / weak / numb yes in the conver
       expect(s.end, `${region} ${label}`).not.toMatch(/ask how bad it is\.$/);
       expect(s.alert, `${region} ${label}`).toBe(true);
     }
-    // the stomach: unchanged, no alert
+    // (phase 18, judge round 13) the upper stomach can be the heart: its own call line; the lower stomach: unchanged, no alert
     const st = after({ asked: 'Where in the stomach?', kind: 'body', bodyStep: 2 }, 'upper stomach', EMPTY_PROFILE, ['Are you in pain?'], '911');
-    expect(st.alert).toBeFalsy();
+    expect(st.alert).toBe(true);
+    expect(st.end).toMatch(/can come from the heart: call 911 now, whatever the amount/);
+    const low = after({ asked: 'Where in the stomach?', kind: 'body', bodyStep: 2 }, 'lower stomach', EMPTY_PROFILE, ['Are you in pain?'], '911');
+    expect(low.alert).toBeFalsy();
   });
   it('the person\'s screen: the red flag of the conversation is kept and reset with the call box (web/src/main.ts)', async () => {
     const { readFileSync } = await import('node:fs');
@@ -318,7 +321,8 @@ describe('A7. "For the next carer", "What stands out" and the visit page carry e
   it('web/src/main.ts: a "not sure" to a stroke sign is written to the diary too', async () => {
     const { readFileSync } = await import('node:fs');
     const main = readFileSync('web/src/main.ts', 'utf8');
-    expect(main).toContain("} else if (state.picked && state.picked.role === 'escape' && !c.sample && signAnswer(c.asked, state.picked.label)) {");
+    // (phase 18: and the way out of a card of crisis words)
+    expect(main).toContain("} else if (state.picked && state.picked.role === 'escape' && !c.sample && (signAnswer(c.asked, state.picked.label) || c.own?.guard === 'crisis')) {");
   });
 });
 
@@ -421,7 +425,8 @@ describe('B11b. After App Check refused the browser, the consent sheet does not 
     const { readFileSync } = await import('node:fs');
     const main = readFileSync('web/src/main.ts', 'utf8');
     // (phase 16: make()'s own line moved into ownSheet, which the own-words path also uses before its fall-back)
-    const opens = main.match(/(?:state\.sheet =|return) simpleView\(\) && isOnline\(\) &&[^;]*sheetWanted\(card[^;]*;/g) ?? [];
+    // (phase 18: the letter step's own line opens it only before a yes: `!once && `)
+    const opens = main.match(/(?:state\.sheet =|return) (?:!once && )?simpleView\(\) && isOnline\(\) &&[^;]*sheetWanted\(card[^;]*;/g) ?? [];
     expect(opens.length).toBe(3);
     expect(main).toContain('state.sheet = ownSheet(card);');
     for (const o of opens) expect(o).toContain('card.blocked !== C.notes.cloudCheckBlocked');

@@ -51,14 +51,15 @@ import { SIGN as SIMPLE_SIGN, aboutSimple, answeredScreen, cardScreen, chipBlock
 import { kvClear, kvGet, kvSet, setSampleScope } from './store';
 import { P4 } from '../../core/copy4';
 import { LETTER_CLOUD_TASK, letterCard, type LetterInput } from '../../core/letter';
+import { letterWays } from '../../core/letterways';
 import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
 import { BODY_FIRST, FEEL_QUESTION, aboutCard, laterQuestion, menuTopic, starterOf, talkLead, talkMenu, talkPick, turnCard, turnLead, type Starter, type TalkPick } from '../../core/turn';
 import { nextVisit, visitAlert, visitCard, visitLabel, visitStops, visitText, type VisitRecord } from '../../core/visit';
-import { letterAddButton, letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
+import { letterAddButton, letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, letterWaysBlock, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
 import { P5 } from '../../core/copy5';
 import { FALL_HEAD } from '../../core/diary';
 import { GUARD_TOPICS } from '../../core/reliability';
-import { DEFAULT_NUMBER, WRONG_TILE, crisisAnswer, crisisLineFor, emergencyNumber, localeNumber, healthOf, numberSet, redPlace, redRank, signNow, urgentAnswer, urgentAny, type RedPlace } from '../../core/redflag';
+import { DEFAULT_NUMBER, WRONG_TILE, chestLike, crisisAnswer, crisisLineFor, emergencyNumber, localeNumber, healthOf, numberSet, redPlace, redRank, signNow, urgentAnswer, urgentAny, type RedPlace } from '../../core/redflag';
 import { fromIsoDay, pickedQuestions, sinceLines, sinceText, toggleQuestion } from '../../core/since';
 import { SpeakCache, isPcm, pcmRate, pcmToWav, speakText, speakable } from '../../core/speak';
 import { P6 } from '../../core/copy6';
@@ -67,7 +68,7 @@ import { ABOUT_LEADS, aboutWhatCard, moreCard, moreChoices, moreSubject, outWays
 import { understoodBlock } from './phase7';
 import { aboutLearned, familyText, handoverText, riskyNotes } from '../../core/share';
 import { handoverLink, shareSheet } from './phase6';
-import { crisisBox, crisisScreen, fallBlock, ownCrisisBox, hearButton, laterPainHtml, lowHelpLine, nowAlert, visitStopBox, numberField, sinceBlock, sinceControls, speakOffer, speakSheet, speakSwitch, readAloudLine, suddenFirst, suddenLink, suddenScreen, urgentBox } from './phase5';
+import { crisisBox, crisisScreen, fallBlock, ownCrisisBox, hearButton, laterPainHtml, lowHelpLine, nowAlert, visitStopBox, numberField, sinceBlock, sinceControls, speakOffer, speakSheet, speakSwitch, readAloudLine, suddenFirst, suddenLink, suddenScreen, urgentBox, type BoxMode } from './phase5';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
@@ -75,7 +76,8 @@ import { P8 } from '../../core/copy8';
 import { guessTopic, lowMood, signAnswer, timeText } from '../../core/diary';
 /** Phase 8: a low answer to a question about how the person feels (not a photo): the helpline line follows on the carer's side. Phase 12: the diary's own rule (worried, scared, lonely, something bothering them). */
 const lowMoodAnswer = lowMood;
-import { addLater, agoText, answeredLater, askAgainLater, cleanLater, doneLater, laterOf, noLastTime, repairLine, shownLater, type Later } from '../../core/later';
+import { addLater, agoText, answeredLater, askAgainLater, cleanLater, doneLater, laterNode, laterOf, noLastTime, repairLine, shownLater, type Later, type LaterNode } from '../../core/later';
+import { laterCard } from '../../core/laterask';
 import { NO_PASSPORT, OFF_UNTIL_TICKED, cleanPassport, passport, passportText, toggleLine, OWN_MAX, type PassportInput, type PassportPrefs } from '../../core/passport';
 import { addEvent, cleanLog, lessSureCount, newLog, pickedPractice, practiceFlag, practiceReport, practiceText, practiceUrgent, togglePractice, type AskedBy, type PracticeEvent, type PracticeInput, type PracticeLog, type PracticeSpan, type Via } from '../../core/practice';
 import { passportLink, passportScreen, practiceScreen, type PassPicture } from './care7';
@@ -732,12 +734,32 @@ const saveLater = () => { if (!state.demo) void kvSet('later', p8later.list); };
  * own "Not now"). A care question is pinned on Home and written to the diary, so the visit page names it. Never for
  * the sample family.
  */
-function leaveForLater(q: string, topic: string | null) {
+function leaveForLater(q: string, topic: string | null, node: LaterNode | null = null) {
   if (state.demo) return;
   const at = Date.now();
   // (phase 15) the conversation's red flag goes with it (a weakness "no" or "not sure" is a check, not a call)
-  p8later.list = addLater(p8later.list, q, at, topic, p5.red && p5.red !== 'sign-check' && p5.red !== 'limb' ? p5.red : null); saveLater();
+  // (phase 18) and the card it was left on, so that "Ask it again" builds that card again (core/laterask.ts)
+  p8later.list = addLater(p8later.list, q, at, topic, p5.red && p5.red !== 'sign-check' && p5.red !== 'limb' ? p5.red : null, node); saveLater();
   if (p8later.list.find((x) => x.q === q)?.care) { state.diary = addEntry(state.diary, laterEntry(q, at, (topic as DiaryTopic | null) ?? null)); saveDiary(); }
+}
+/**
+ * Phase 18 (judge round 13, seats 02n and 13b, a regression): "Ask it again" builds the card the question was left on
+ * (core/laterask.ts: the body card with its region, or the guard's card), with the call box of its conversation; only a
+ * question with no such card is asked again as it was. A health sub-question never reaches the consent sheet.
+ */
+async function askLaterAgain(x: Later) {
+  askBy = 'none';
+  const red = x.red ?? null;
+  const card = await laterCard(x, { profile: state.profile, support: state.settings.support, engine: state.engine, allowCloud: false, deviceReady: false });
+  if (!card) await make(x.q);
+  else {
+    if (step === 'waiting') step = 'cancelled';
+    makeSeq++; clearP4(); state.busy = false; state.error = null; state.lastQuestion = x.q; resetCard();
+    state.chain = [card.asked]; p5.urgent = card.own?.guard === 'red' || !!card.own?.matter; p5.signNow = false; p5.red = null; p5.voiceFailed = false;
+    state.made.push(card); setCard(card); state.waitStart = Date.now();
+  }
+  if (red) { p5.urgent = true; p5.red = red; if (red === 'sign') p5.signNow = true; }
+  render(); window.scrollTo(0, 0);
 }
 /** "14:37" today; "Tue 17 Nov, 14:37" for an older one (a care question stays for days). */
 const laterTime = (at: number) => (dayStart(at) === dayStart(Date.now()) ? timeText(at) : `${dayText(at)}, ${timeText(at)}`);
@@ -750,6 +772,12 @@ const voiceFailedHtml = () => (p5.voiceFailed ? `<p class="warn" id="voice-faile
  */
 const callNumber = () => emergencyNumber(state.health.emergency, state.demo ? DEFAULT_NUMBER : localeNumber(navigator.language));
 const numberGuess = () => !state.demo && !numberSet(state.health.emergency);
+/**
+ * Phase 18 (judge round 13, the hound's H1, a health P0: "Is your chest tight again?" carried "Call 911 now if this is
+ * new or sudden" before its answer): the call box of a conversation with a chest or a heart-place pain, or over a card
+ * the guard made from chest words, says call now, even if it has happened before; never "if".
+ */
+const boxMode = (c?: Card | null): BoxMode => (chestLike(p5.red) || chestLike(c?.own?.matter as RedPlace | undefined) ? 'chest' : p5.signNow ? 'now' : 'new');
 /**
  * Phase 12: after "I can't go on", the phone given back opens the safety screen, with the carer's answer screen (its red
  * box) under it, so Back from the safety screen lands there and not on the person's card.
@@ -887,7 +915,8 @@ function showRuleCard(card: Card) {
 }
 /** "Yes: type it": the carer's word on a card on the person's screen; they point to it and the check follows ("So: juice. Right?"). */
 function checkTyped(raw: string) {
-  const asked = state.before && state.before.kind !== 'needs' && state.before.kind !== 'repair' ? state.before.asked : '';
+  // (phase 18: typed under a letter card with no word: the conversation's question, not an older card's)
+  const asked = state.card?.letter ? state.p4.letterPending?.asked ?? '' : state.before && state.before.kind !== 'needs' && state.before.kind !== 'repair' ? state.before.asked : '';
   const card = typedCard(raw, asked, state.profile, state.settings.support);
   if (!card) { document.querySelector<HTMLInputElement>('#understood-word')?.focus(); return; }
   // (the word goes onto the person's screen as a choice: only their own tap picks it, and only their yes confirms it)
@@ -1892,7 +1921,7 @@ function ownHealthStep(c: Card, label: string): { follow: string[]; end: string;
   const asked = new Set([...state.chain, c.asked].map((q) => q.split('?')[0].trim().toLowerCase()));
   return { follow: s.next.filter((q) => !asked.has(q.split('?')[0].trim().toLowerCase())), end: s.end, alert: true, red: s.red, now: s.now };
 }
-function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: string; alert?: true; open?: OpenEnd } {
+function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: string; alert?: true; open?: OpenEnd; crisis?: true } {
   if (c.kind === 'needs' || c.kind === 'repair') return { follow: [], end: '' };
   // "What is it about?": the body leads to the body card and the first questions of "Body & care", a feeling to the feelings card
   if (c.aboutWhat) return { follow: out ? [] : ABOUT_LEADS[p.label] === 'body' ? [WHERE_HURTS, ...BODY_FIRST.filter((q) => q !== WHERE_HURTS)].slice(0, 3) : ABOUT_LEADS[p.label] === 'feeling' ? [FEEL_QUESTION] : [], end: '' };
@@ -1913,9 +1942,9 @@ function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: st
   // (phase 17b: the rest is core/endstep.ts, answerStep: the same function the dead-end audit walks)
   return stepOf(c, p, out);
 }
-function stepOf(c: Card, p: Choice, out: boolean): { follow: string[]; end: string; alert?: true; open?: OpenEnd } {
-  const st = answerStep(c, p, { profile: state.profile, chain: state.chain, number: callNumber(), red: p5.red ?? redPlace(c.asked, p.label), out });
-  return { follow: st.follow, end: st.end, ...(st.alert ? { alert: st.alert } : {}), ...(st.open ? { open: st.open } : {}) };
+function stepOf(c: Card, p: Choice, out: boolean): { follow: string[]; end: string; alert?: true; open?: OpenEnd; crisis?: true } {
+  const st = answerStep(c, p, { profile: state.profile, chain: state.chain, number: callNumber(), red: p5.red ?? redPlace(c.asked, p.label), out, crisisLine: crisisLineNow() });
+  return { follow: st.follow, end: st.end, ...(st.alert ? { alert: st.alert } : {}), ...(st.open ? { open: st.open } : {}), ...(st.crisis ? { crisis: st.crisis } : {}) };
 }
 /**
  * Phase 17b: the ways to find WHICH one under an answer that names a kind of thing, while it is on the screen (the
@@ -1941,7 +1970,7 @@ function simpleScreen(): string {
     const alertHtml = step0.alert ? nowAlert(step0.end, callNumber(), numberGuess()) : '';
     // (phase 17b) an answer that names a kind of thing, with no question left: the ways to find which one
     p17open = !out && !step0.alert && !step0.follow.length && step0.open ? step0.open : null;
-    const openHtml = p17open ? `<div class="next-steps" id="open-ways"><p class="steplabel out-lead" id="open-lead">${esc(P17.openLead)}</p>${waysBlock({ ways: p17open.ways, moreFirst: p17open.moreFirst, letterHtml: letterButton(name), narrowHtml: '' })}</div>` : '';
+    const openHtml = p17open ? `<div class="next-steps" id="open-ways"><p class="steplabel out-lead" id="open-lead">${esc(P17.openLead)}</p>${waysBlock({ ways: p17open.ways, moreFirst: p17open.moreFirst, letterHtml: letterButton(name), narrowHtml: '', ...(p17open.which ? { which: p17open.which } : {}) })}</div>` : '';
     screen = answeredScreen({
       name, label: p.label, question: c.kind === 'needs' ? '' : c.asked, more: state.more, next, out, hasAnswers: state.answers.length > 0, openHtml,
       afterHtml: `${afterAnswer(c, p, 'btn')}${c.photoTalk ? `<a class="btn" id="pt-back" href="#/phototalk">${P4.photo.questions}</a>` : ''}`,
@@ -1962,7 +1991,8 @@ function simpleScreen(): string {
       // (the red box with the call button stands over the answer, for the whole conversation; a safety-check alert carries its own call above "Next")
       // (phase 17, judge round 12, P1: two stacked call boxes with different words after a chest pain: one, the alert's)
       neutral: neutralAnswer(c, p),
-      leadHtml: `${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), crisisLineNow(), callNumber()) : ''}${turnHtml()}`,
+      // (phase 18, judge round 13, a health P0: any answer to a card of crisis words keeps the crisis box and both call buttons)
+      leadHtml: `${step0.crisis ? ownCrisisBox({ line: P16.crisisBox, number: callNumber(), crisisLine: crisisLineNow(), guess: numberGuess() }) : ''}${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(callNumber(), 'urgent', numberGuess(), chestLike(redPlace(c.asked, p.label)) ? 'chest' : boxMode(c) !== 'new' ? boxMode(c) : signNow(c.asked, p.label) ? 'now' : 'new') : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), crisisLineNow(), callNumber()) : ''}${turnHtml()}`,
       outExtra: !out ? '' : c.letter ? `${c.letter.letter.length < 6 ? letterAddButton(c.letter.letter) : ''}${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
       // after the way out: the ways to find out what it is, in the rules' order; a step the rules make comes first
       ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),
@@ -1978,7 +2008,7 @@ function simpleScreen(): string {
       lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(), tips: state.tips,
       usual: (() => { const u = usualFor(c); return u ? usualHint(u) : ''; })(),
       // (the call box stays over the next questions of a conversation in which an answer can be urgent)
-      topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow) : ''}${ownTop(c)}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,
+      topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess(), boxMode(c)) : ''}${ownTop(c)}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,
       // (phase 14, judge round 10: the second button of a topic card is the AI's; never on pain, the body, feelings, a red flag: core/findmore.ts)
       // (and Read aloud, offered with one button while it is off: the sheet the first time, then one tap)
       // (phase 15: while it works, the button's place says so, with "Stop waiting"; a stopped wait leaves a line on the card)
@@ -1986,7 +2016,7 @@ function simpleScreen(): string {
       // (phase 17, judge round 12, the SLP's seat, ADV-13-3: the guard's line never stands on a card before its answer)
       guardHtml: '',
       // the first-letter helper: its way in from "We're stuck", who found a letter card's words, and another letter when there was no word
-      extraHtml: `${c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterButton(name, true) : letterBy(c.letter.by)) : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && speakOn() ? speakSwitch({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}${p5.spoken.has(c) ? readAloudLine() : ''}`,
+      extraHtml: `${c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterNoWord(c, name) : letterBy(c.letter.by)) : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && speakOn() ? speakSwitch({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}${p5.spoken.has(c) ? readAloudLine() : ''}`,
     });
   } else {
     const p = state.profile;
@@ -2046,6 +2076,19 @@ function leavePerson() {
   state.p4.letter = null;
   go('');
 }
+/** Phase 18: "Write it down together" was pressed on this letter card with no word: the writing pad is open under it. */
+let p18write: Card | null = null;
+/** Phase 18: the topic of the person's own start ("I want to say something > Today & plans"), for the letters. */
+const turnTopic = (): string | null => state.p4.turn?.topic ?? null;
+/**
+ * Phase 18 (judge round 13: six hidden targets ended on "No word … in About them yet" or "Online help did not answer.
+ * Nothing else was tried"): the ways under a letter card with no word (core/letter.ts, letterWays), never a stop.
+ */
+function letterNoWord(c: Card, name: string): string {
+  const i = state.p4.letterPending;
+  const w = letterWays(c, { online: isOnline(), cloudConfigured: state.engine.cloudConfigured !== false, deviceReady: state.device === 'available', topic: i?.topic ?? null, asked: i?.asked ?? '' });
+  return letterWaysBlock({ ways: w.ways, ai: w.ai, letters: c.letter?.letter ?? '', name, writeHtml: p18write === c ? understoodBlock(name) : '' });
+}
 /** The usual answers learned on this device (core/prefs.ts), as plain words: for the rules of the first-letter helper and its ON-DEVICE prompt only. */
 const learnedWords = () => (learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)).flatMap((l) => (l.kind === 'usual' ? [usual(state.history, l.q, state.forgotten)?.label ?? ''] : [])).filter(Boolean) : []);
 /**
@@ -2065,7 +2108,9 @@ async function runLetter(i: LetterInput) {
   state.made.push(card);
   if (seq !== makeSeq) return;
   setCard(card);
-  state.sheet = simpleView() && isOnline() && card.blocked !== C.notes.cloudCheckBlocked && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
+  // (phase 18, judge round 13: after "Just this once" the same sheet came back by itself and nothing seemed to happen) the
+  // sheet comes up by itself only before a yes; after it, the card's line says what happened and the ways follow
+  state.sheet = !once && simpleView() && isOnline() && card.blocked !== C.notes.cloudCheckBlocked && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
   state.busy = false; state.waitStart = Date.now(); useSettings();
   // words were found: they are on the person's screen at once; none: the carer's screen says so (and may ask about online help)
   if (card.blocked && route() === 'person') { lift = true; go(''); } else render();
@@ -2140,7 +2185,7 @@ function visitView(): string {
   const low = has && r.answers.some((a) => (a.id === 'mood' || a.id === 'worry') && lowMood(a.q, a.label));
   // (phase 13) the run stopped on an urgent answer and has not gone on: the box names it, with "Go on with the questions"
   const stopped = has && !!r.stopped && !r.wentOn && !r.done;
-  return visitScreen({ name: m.name, record: r, copied: state.p4.visitCopied, number: m.number, urgentHtml: `${stopped ? visitStopBox(visitAlert(r.answers, m.number), m.number, numberGuess()) : urgent ? urgentBox(m.number, 'visit-urgent') : ''}${low ? lowHelpLine(m.name, crisisLineFor(state.health.helpline ?? '', m.number), m.number) : ''}`, sinceHtml: has ? sinceBlock(m) : '', controlsHtml: has ? sinceControls(m) : '' });
+  return visitScreen({ name: m.name, record: r, copied: state.p4.visitCopied, number: m.number, urgentHtml: `${stopped ? visitStopBox(visitAlert(r.answers, m.number), m.number, numberGuess()) : urgent ? urgentBox(m.number, 'visit-urgent', false, r.answers.some((a) => chestLike(redPlace(a.q ?? '', a.label))) ? 'chest' : 'new') : ''}${low ? lowHelpLine(m.name, crisisLineFor(state.health.helpline ?? '', m.number), m.number) : ''}`, sinceHtml: has ? sinceBlock(m) : '', controlsHtml: has ? sinceControls(m) : '' });
 }
 /** The questions about the picked photo: the rules' three, and one more when the on-device model named things in it. */
 function talkQuestions(): PhotoQuestion[] {
@@ -2582,8 +2627,10 @@ function onPersonTap(t: HTMLElement) {
     stopSound();
     if (c.visit) { state.p4.visitRun = false; resetCard(); lift = true; go('visit'); return; }
     const q = laterQuestion(c.kind === 'repair' ? state.before?.asked ?? state.chain[0] ?? '' : c.asked);
-    if (q.trim() && !c.sample) leaveForLater(q, careTopic(c));
+    if (q.trim() && !c.sample) leaveForLater(q, careTopic(c), laterNode(c.kind === 'repair' ? state.before : c));
     p9notNow = { kept: !!q.trim() && !state.demo && !c.sample };
+    // (phase 18) "Not now" on a card of crisis words: the carer is shown the safety screen, never Home alone
+    if (c.own?.guard === 'crisis') { makeSeq++; state.busy = false; resetCard(); toCrisis(); return; }
     makeSeq++; state.busy = false; resetCard(); lift = true; go(''); window.scrollTo(0, 0);
     return;
   }
@@ -2616,7 +2663,7 @@ function onPersonTap(t: HTMLElement) {
     }
     // (phase 8) "later": the question is kept for Home, to come back to (core/later.ts); never for the sample family
     const left = state.picked ? laterOf({ asked: c.asked, label: state.picked.label, repair: c.kind === 'repair', before: state.before?.asked ?? state.chain[0] ?? null }) : null;
-    if (left) leaveForLater(left, careTopic(c));
+    if (left) leaveForLater(left, careTopic(c), state.picked && c.kind === 'repair' ? laterNode(state.before) : null);
     // (phase 13) a confirmed answer to a question left for later finds it out: it goes off Home
     else if (state.picked && !c.sample && !state.demo) { p8later.list = answeredLater(p8later.list, c.asked, state.picked.role); saveLater(); }
     if (simpleView()) {
@@ -2648,7 +2695,7 @@ function onPersonTap(t: HTMLElement) {
         const started = c.turn === 'talk' || c.turn === 'topics' || c.turn === 'about' ? startedLabel(c, state.picked.label) : null;
         // (phase 15, judge round 11, ADV-05-10: the sample family's diary fills too, in its own store in memory, so its
         // diary, "What stands out" and the visit page show what was pointed to; it goes when the sample family is left)
-        const entry = addEntry(state.diary, started ? startedEntry(state.profile.personName, started.label, at, started.topic) : answerEntry({ q: c.asked, label: state.picked.label, at }, topic));
+        const entry = addEntry(state.diary, started ? startedEntry(state.profile.personName, started.label, at, started.topic) : answerEntry({ q: c.own?.guard === 'crisis' ? c.own.asked : c.asked, label: state.picked.label, at }, topic));
         state.diary = r && !started ? markDiary(entry, r.since, at) : entry;
         saveDiary();
         if (!state.demo) void kvSet('history', state.history);
@@ -2658,9 +2705,10 @@ function onPersonTap(t: HTMLElement) {
         state.diary = addEntry(state.diary, needEntry(state.picked.label, at));
         saveDiary();
       }
-    } else if (state.picked && state.picked.role === 'escape' && !c.sample && signAnswer(c.asked, state.picked.label)) {
+    } else if (state.picked && state.picked.role === 'escape' && !c.sample && (signAnswer(c.asked, state.picked.label) || c.own?.guard === 'crisis')) {
       // (phase 13) a "not sure" to a stroke sign is not a way out: the diary keeps it, for the next carer and the doctor
-      state.diary = addEntry(state.diary, answerEntry({ q: c.asked, label: state.picked.label, at: Date.now() }, topicOf(state.chain[0] ?? c.asked, state.profile)?.id ?? null)); saveDiary();
+      // (phase 18) nor is the way out of a card of crisis words: it is kept under the carer's own words
+      state.diary = addEntry(state.diary, answerEntry({ q: c.own?.guard === 'crisis' ? c.own.asked : c.asked, label: state.picked.label, at: Date.now() }, topicOf(state.chain[0] ?? c.asked, state.profile)?.id ?? null)); saveDiary();
     }
     if (simpleView()) refreshShort();
     render(); return;
@@ -2754,7 +2802,7 @@ function act(el: HTMLElement) {
     case 'how': state.settings.howFolded = !(state.settings.howFolded ?? true); saveSettings(); render(); document.querySelector<HTMLElement>('#how[data-act], #how [data-act=how]')?.focus({ preventScroll: true }); break;
     case 'topic': { const id = el.dataset.topic as TopicId; state.topicOpen = state.topicOpen === id ? null : id; render(); document.querySelector<HTMLElement>(`.topic[data-topic="${id}"]`)?.focus({ preventScroll: true }); break; }
     // the finish screen's button: the phone goes back to the carer, who sees the answer
-    case 'give-back': lift = true; if (state.p4.visitEnd) { state.p4.visitEnd = false; state.p4.visitRun = false; resetCard(); go('visit'); } else if (state.card?.kind === 'needs' && state.confirmed && state.picked?.label === WRONG_TILE) go('sudden'); else if (state.confirmed && crisisAnswer(state.picked?.label ?? '')) toCrisis(); else go(''); break; // (the board's "something's wrong" leads the carer straight to "Something new or sudden?")
+    case 'give-back': lift = true; if (state.p4.visitEnd) { state.p4.visitEnd = false; state.p4.visitRun = false; resetCard(); go('visit'); } else if (state.card?.kind === 'needs' && state.confirmed && state.picked?.label === WRONG_TILE) go('sudden'); else if (state.confirmed && (crisisAnswer(state.picked?.label ?? '') || state.card?.own?.guard === 'crisis')) toCrisis(); else go(''); break; // (the board's "something's wrong" leads the carer straight to "Something new or sudden?")
     // ---- phase 4: the first letter, the person starts, before a doctor visit, talk about a photo
     case 'letter': {
       const c = state.card;
@@ -2763,7 +2811,8 @@ function act(el: HTMLElement) {
       const asked = c?.letter ? state.p4.letterPending?.asked ?? '' : of && of.kind !== 'needs' && !of.turn ? of.asked : '';
       const rejected = c?.letter ? [...c.letter.rejected, ...shown(c)] : [...(of?.narrow?.rejected ?? []), ...shown(of)];
       // (phase 17b) the letters stay inside the topic: of the open answer, else the latest question of this conversation with one
-      const topic = c && c.kind !== 'repair' && state.confirmed && state.picked?.role === 'answer' && p17open ? p17open.topic : chainTopic(asked);
+      // (phase 18, judge round 13, seat 02n: after "I want to say something > Today & plans", C gave coffee, chair, carer)
+      const topic = c && c.kind !== 'repair' && state.confirmed && state.picked?.role === 'answer' && p17open ? p17open.topic : chainTopic(asked) ?? turnTopic();
       state.p4.letter = { asked, rejected: rejected.filter((x, k, all) => all.indexOf(x) === k && !/^(?:yes|no|not sure)$/i.test(x)), topic };
       state.p4.letterNo = false; lift = true; go('person');
       break;
@@ -2777,6 +2826,17 @@ function act(el: HTMLElement) {
       state.p4.letterNo = false; lift = true; go('person');
       break;
     }
+    // (phase 18) the ways under a letter card with no word (core/letter.ts, letterWays)
+    case 'letter-ai': {
+      const c = state.card; const i = state.p4.letterPending;
+      if (!c?.letter || !i) break;
+      if (state.device === 'available' || state.settings.cloudHelp) { void runLetter(i); break; }
+      // (the same consent as before: the sheet with the exact text; never a request without a yes)
+      if (c.unsentPayload) { state.sheet = true; render(); } else void runLetter(i);
+      break;
+    }
+    case 'letter-again': { const i = state.p4.letterPending; if (!state.card?.letter || !i) break; state.engine.retryCloudCheck?.(); p5.once = true; void runLetter(i); break; }
+    case 'letter-write': p18write = state.card; render(); document.querySelector<HTMLInputElement>('#understood-word')?.focus(); break;
     case 'letter-more': {
       const c = state.card; const i = state.p4.letterPending;
       if (c?.letter && i) void runLetter({ ...i, rejected: [...i.rejected, ...c.choices.filter((y) => y.role === 'answer').map((y) => y.spoken)] });
@@ -2817,7 +2877,8 @@ function act(el: HTMLElement) {
       // (phase 13: "Ask it again" keeps it on Home until "Did you find out? Yes" or a confirmed answer to it)
       p8later.list = a === 'later-ask' ? askAgainLater(p8later.list, x) : doneLater(p8later.list, x, true); saveLater();
       // (phase 15: a question left in a conversation with a red flag comes back with the call box over it)
-      if (a === 'later-ask') { askBy = 'none'; const red = x.red ?? null; void make(x.q).then(() => { if (red) { p5.urgent = true; p5.red = red; if (red === 'sign') p5.signNow = true; render(); } }); } else render();
+      // (phase 18: the card it was left on comes back exactly, never the question as a typed one: askLaterAgain)
+      if (a === 'later-ask') { void askLaterAgain(x); } else render();
       break;
     }
     // after the way out: an AI suggests the next, broader choices (two steps at most)
@@ -2832,7 +2893,8 @@ function act(el: HTMLElement) {
     }
     case 'sheet': if (state.card?.unsentPayload) { state.sheet = true; render(); } break;
     // (phase 14: "No, not now" to "Find more choices" goes back to the card it was asked from, not to a screen with no card)
-    case 'sheet-no': if (ownRefused()) break; state.sheet = false; if (state.card?.narrow?.offered && state.card.blocked) stepBack(hashNow()); else render(); break;
+    // (phase 18: "No, keep it here" on the letter sheet: the line says so, and the ways follow, the AI one tap away)
+    case 'sheet-no': if (ownRefused()) break; state.sheet = false; if (state.card?.letter && state.card.blocked) state.card.blocked = P4.letter.kept(state.card.letter.letter); if (state.card?.narrow?.offered && state.card.blocked) stepBack(hashNow()); else render(); break;
     // "Just this once" (the sheet's first button): this one request goes to online help, and online help stays off
     case 'sheet-yes': state.sheet = false; p5.once = true; askAgain(); break;
     // "Yes, every time": the same switch as the consent page's, turned on by one button; the question is then asked again at once
@@ -2981,6 +3043,9 @@ function act(el: HTMLElement) {
     case 'retry': if (state.card?.narrow && state.narrowPending) void runNarrow(state.narrowPending); else if (state.card?.retry) { askBy = 'none'; void make(state.card.retry); } break;
     case 'recap': state.recap = true; state.recapDone = false; if (simpleView() && !state.short) refreshShort(); render(); break;
     // ---- after "something else" (core/more.ts): more choices of the same kind, or "What is it about?". Rules only.
+    // (phase 18) "Which one?" after a kind of thing on a card of the AI: asked as the carer's own question would be (the
+    // guard first, then the AI after the same yes, the rules' card if it cannot)
+    case 'which-one': { const q = el.dataset.which ?? ''; if (!q || state.busy) break; ownQ = q; askBy = 'none'; void make(q).then(() => { if (state.card && !state.busy && !state.sheet) window.scrollTo(0, 0); }); break; }
     case 'more-like': {
       const c = state.card;
       if (!c) break;
@@ -3259,6 +3324,6 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 restoreRacedRoute();
 void Promise.all([load(), loadTrial()]).then(async () => {
   if (location.hash.replace(/^#\/?/, '') === 'demo') await enterDemo();
-  render(); void refreshDevice().then(() => judgeStep());
+  render(); void refreshDevice().then(() => { if (handheld()) warmCloud(); judgeStep(); }); // (phase 18, judge round 13: App Check started only at the field's cursor; on a phone it now starts when the app opens, by warmCloud's own rules)
   askSettings(); // only if cloud help was already on in this browser; otherwise when it is turned on
 });

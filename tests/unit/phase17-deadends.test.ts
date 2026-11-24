@@ -180,7 +180,72 @@ describe('17b. the owner\'s paths, and the screen that draws the ways', () => {
     expect(P17.openLead).toBe('Which one? Find out together:');
     expect(main).toContain('p17open = !out && !step0.alert && !step0.follow.length && step0.open ? step0.open : null;');
     expect(main).toContain("const opened = !lead && state.picked?.role === 'answer' && p17open?.subject ? p17open.subject : null;");
-    expect(main).toContain('? p17open.topic : chainTopic(asked);');
+    expect(main).toContain('? p17open.topic : chainTopic(asked) ?? turnTopic();');
     expect(simple).toContain("${end}${!m.out && !lead && m.openHtml ? m.openHtml : ''}");
+  });
+});
+
+// Phase 18 (judge round 13): the six hidden targets that ended on a letter card with no word, or on a card of the AI
+// with only "Ask another question" (pancit, church, a hot water bottle, stew, the garden centre, snooker; "meat"). Each
+// is walked letter by letter on the rules alone (a phone whose App Check refuses, as the judges' was), the words on the
+// card refused one after the other; a letter card with no word must offer, in this order, the AI for the topic (when
+// the topic allows a model), "Write it down together" and "Show me"; and the word written down must make a card.
+describe('18. letters with no word, and a kind of thing on a card of the AI: never a stop', () => {
+  const P = SAMPLE_PROFILE;
+  const TARGETS: { target: string; topic: string; asked: string; rejected: string[] }[] = [
+    { target: 'pancit', topic: 'food', asked: 'Would you like a hot meal or a cold meal?', rejected: ['hot meal', 'cold meal'] },
+    { target: 'church', topic: 'plans', asked: 'Would you like to stay in or go out?', rejected: ['stay in', 'go out'] },
+    { target: 'hot water bottle', topic: 'body', asked: 'Are you too hot or too cold?', rejected: ['hot', 'cold'] },
+    { target: 'stew', topic: 'food', asked: 'Would you like a hot meal or a cold meal?', rejected: ['hot meal', 'cold meal'] },
+    { target: 'garden centre', topic: 'plans', asked: 'Would you like to go out this morning or this afternoon?', rejected: ['this morning', 'this afternoon'] },
+    { target: 'snooker', topic: 'fun', asked: 'Would you like to watch the news or a film?', rejected: ['news', 'film'] },
+  ];
+  for (const t of TARGETS) {
+    it(`${t.target} (${t.topic}): letter by letter, then the ways; never "Nothing else was tried", never a stop`, async () => {
+      const { letterCard } = await import('../../core/letter');
+      const { letterWays } = await import('../../core/letterways');
+      const { typedCard } = await import('../../core/more');
+      const { P4 } = await import('../../core/copy4');
+      const rejected = [...t.rejected];
+      const word = t.target.replace(/\s+/g, '');
+      let reached = '';
+      let dead = '';
+      for (let n = 1; n <= Math.min(4, word.length) && !reached; n++) {
+        const letters = word.slice(0, n).toUpperCase();
+        const c = await letterCard({ asked: t.asked, letter: letters, rejected, topic: t.topic }, env(P));
+        const words = c.choices.filter((x) => x.role === 'answer').map((x) => x.spoken);
+        if (words.some((w) => w.toLowerCase() === t.target)) { reached = letters; break; }
+        rejected.push(...words);
+        if (c.blocked) {
+          expect(c.blocked).not.toMatch(/Nothing else was tried/);
+          // on a phone online with Google's AI on this copy, and with Chrome's AI on a laptop
+          for (const x of [{ online: true, cloudConfigured: true, deviceReady: false }, { online: true, cloudConfigured: false, deviceReady: true }, { online: false, cloudConfigured: true, deviceReady: false }]) {
+            const w = letterWays(c, { ...x, topic: t.topic, asked: t.asked });
+            const aiOk = !['body', 'feel'].includes(t.topic) && (x.deviceReady || x.online);
+            expect(w.ways, `${t.target} ${letters} ${JSON.stringify(x)}`).toEqual([...(aiOk ? ['ai'] : []), 'write', 'show', 'another']);
+          }
+          // after "No, keep it here" and after a refusal: the line says what happened, the ways stay
+          expect(letterWays({ ...c, blocked: P4.letter.kept(letters) }, { online: true, cloudConfigured: true, deviceReady: false, topic: t.topic, asked: t.asked }).ways).toContain('write');
+          expect(letterWays({ ...c, blocked: P4.letter.refused(letters) }, { online: true, cloudConfigured: true, deviceReady: false, topic: t.topic, asked: t.asked }).ways.slice(0, 2)).toEqual(t.topic === 'body' ? ['write', 'show'] : ['again', 'write']);
+          dead = letters;
+          break;
+        }
+      }
+      if (!reached) {
+        // "Write it down together": the word they wrote is a card the person checks
+        expect(dead, `${t.target}: no letter card without a word, and not reached either`).not.toBe('');
+        const typed = typedCard(t.target, t.asked, P, 'more');
+        expect(typed?.choices.some((x) => x.label.toLowerCase() === t.target)).toBe(true);
+      }
+    });
+  }
+  it('"meat" on a card of the AI: "Which meat would you like?" first, then more choices, the letter, show or write', async () => {
+    const base = await makeCard('Would you like meat or fish?', env(P));
+    const cloud: Card = { ...base, asked: 'What would you like for dinner tonight?', source: 'in-cloud', own: { asked: 'What would you like for dinner tonight?' } };
+    for (const label of ['meat', 'fish']) {
+      const s = answerStep(cloud, { label, role: 'answer' }, { profile: P, chain: [cloud.asked], number: '911', red: null, out: false });
+      expect(s.open?.ways, label).toEqual(['which', 'more', 'letter', 'show']);
+      expect(s.open?.which).toBe(`Which ${label} would you like?`);
+    }
   });
 });
