@@ -214,3 +214,41 @@ describe('A5. "Left for later" goes only with "Did you find out? Yes" or a confi
     expect(main).toContain('p8later.list = answeredLater(p8later.list, c.asked, state.picked.role); saveLater();');
   });
 });
+
+describe('A6. The crisis line: the family\'s own first, else by the emergency number the family set; never "today" after "may harm themselves"', () => {
+  it('core/redflag.ts, crisisLineFor', async () => {
+    const { crisisLineFor } = await import('../../core/redflag');
+    expect(crisisLineFor('0800 123 456', '999')).toBe('0800 123 456');
+    expect(crisisLineFor('', '999')).toBe('116 123');
+    expect(crisisLineFor('', '000')).toBe('13 11 14');
+    expect(crisisLineFor('', '911')).toBe('988');
+    expect(crisisLineFor('', '111')).toBe('1737');
+    // 112 (the EU and others) and a number we do not know: the emergency number itself, no line made up
+    expect(crisisLineFor('', '112')).toBe('112');
+    expect(crisisLineFor('', '119')).toBe('119');
+    expect(crisisLineFor('  ', '+44 7700 900000')).toBe('+44 7700 900000');
+  });
+  it('the line under a low answer: harm means stay and call the emergency number now; "today" is only for very low', async () => {
+    const { P5 } = await import('../../core/copy5');
+    const t = P5.lowHelp('Frank', '116 123', '999');
+    expect(t).toBe('If Frank may harm themselves: stay with Frank and call 999 now. If Frank seems very low: call 116 123 (a crisis line) or the doctor or nurse today.');
+    expect(t).not.toMatch(/harm themselves[^.]*today/);
+    const none = P5.lowHelp('', '', '112');
+    expect(none).toMatch(/^If they may harm themselves: stay with them and call 112 now\./);
+    expect(none).not.toMatch(/harm themselves[^.]*today/);
+    expect(P5.insights.moodAct('999', '116 123')).not.toMatch(/harm themselves[^.]*today/);
+  });
+  it('the line under a low answer carries the two call buttons (the crisis line only when it is not the emergency number)', async () => {
+    const { lowHelpLine } = await import('../../web/src/phase5');
+    expect(lowHelpLine('Frank', '116 123', '999')).toContain('href="tel:999"');
+    expect(lowHelpLine('Frank', '116 123', '999')).toContain('href="tel:116123"');
+    const one = lowHelpLine('', '112', '112');
+    expect(one.match(/href="tel:/g)?.length).toBe(1);
+  });
+  it('web/src/main.ts: the crisis line comes from About them, else the emergency number, never from the browser\'s language', async () => {
+    const { readFileSync } = await import('node:fs');
+    const main = readFileSync('web/src/main.ts', 'utf8');
+    expect(main).toContain("const crisisLineNow = () => crisisLineFor(state.health.helpline ?? '', callNumber());");
+    expect(main).not.toContain('crisisLine(navigator.language)');
+  });
+});

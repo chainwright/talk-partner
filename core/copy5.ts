@@ -10,8 +10,12 @@ const days = (n: number) => `${n} day${n === 1 ? '' : 's'}`;
 /** Phase 8: ", counting Frank's own answer above" when an own answer of the page was counted in. */
 const counted = (own: string) => (own ? `, counting ${their(own.trim())} own answer above` : '');
 
-/** Phase 8: the one line under a "sad" or "low" answer, on the carer's side only: the helpline when one is set, never a number made up. */
-const P5_HELP = (name: string, helpline: string, number: string) => `If ${name ? `${name} seems` : 'they seem'} very low, or may harm themselves: ${helpline ? `call ${helpline}, any time` : 'call the doctor or nurse today, or a mental health helpline (you can put its number in About them, Health notes)'}. If life is at risk, call ${number} now.`;
+/**
+ * Phase 8: the one line under a "sad" or "low" answer, on the carer's side only. Phase 13 (judge round 10, the nurse's
+ * seat, ADV-13b-4): harm means stay and call the emergency number now; "today" is only for "very low". `line` is the
+ * crisis line (core/redflag.ts, crisisLineFor); when it is only the emergency number, no second number is named.
+ */
+const P5_HELP = (name: string, line: string, number: string) => `If ${name || 'they'} may harm themselves: stay with ${name || 'them'} and call ${number} now. If ${name ? `${name} seems` : 'they seem'} very low: ${line && line !== number ? `call ${line} (a crisis line) or the doctor or nurse today` : 'call the doctor or nurse today, or a mental health helpline (you can put its number in About them, Health notes)'}.`;
 
 export const P5 = {
   sudden: {

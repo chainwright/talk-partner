@@ -76,6 +76,28 @@ export function crisisLine(locale: unknown): string {
   return CRISIS_LINES[region.toUpperCase()] ?? '';
 }
 
+/**
+ * Phase 13 (judge round 10, a health P0: the nurse's seat, ADV-13b-3/-10): the crisis line of the safety screen and of
+ * the line under a low answer. The family's own "Helpline for low mood" (About them) first. Otherwise it follows the
+ * emergency number the family set (or the one the app guessed and asks them to check), not the browser's language:
+ * a UK family with 999 set must not be offered the US 988. Only lines we are sure of, each with its official source:
+ *   - 999 (UK): Samaritans 116 123, free, 24 hours (https://www.samaritans.org/how-we-can-help/contact-samaritan/);
+ *     the same number works in the Republic of Ireland;
+ *   - 000 (Australia): Lifeline 13 11 14 (https://www.lifeline.org.au/);
+ *   - 911 (US and Canada): the 988 Suicide & Crisis Lifeline (https://988lifeline.org/; Canada: https://988.ca/);
+ *   - 111 (New Zealand): 1737, "Need to talk?" (https://1737.org.nz/).
+ * 112 and any other number: 116 123 is reserved for emotional support across the EU (Commission Decision
+ * 2007/116/EC), but it is not live in every member state, and a dead number in a crisis is worse than none. So the
+ * crisis line is then the emergency number itself, and the screens ask the family to add their own line.
+ */
+const CRISIS_BY_NUMBER: Record<string, string> = { '999': '116 123', '000': '13 11 14', '911': '988', '111': '1737' };
+export function crisisLineFor(helpline: string, number: string): string {
+  const own = String(helpline ?? '').trim();
+  if (own) return own;
+  const n = String(number ?? '').trim();
+  return CRISIS_BY_NUMBER[n.replace(/[^\d+]/g, '')] ?? n;
+}
+
 /** True when the box belongs over this answer. `asked` is the question as the card showed it; `label` the answer. */
 export function urgentAnswer(asked: string, label: string): boolean {
   const q = lc(asked);

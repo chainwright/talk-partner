@@ -107,7 +107,8 @@ export function fallBlock(m: { number: string; id: string; head: boolean; guess?
 export const numberField = (raw: string, helpline = '') => `<label>${P5.sudden.field} <small>${P5.sudden.fieldHint}</small><input id="emergency-number" class="field" data-health="emergency" inputmode="tel" autocomplete="off" maxlength="16" value="${esc(raw)}"></label>
   <label>${P5.sudden.helplineField} <small>${esc(P5.sudden.helplineHint)}</small><input id="helpline-number" class="field" data-health="helpline" autocomplete="off" maxlength="40" value="${esc(helpline)}"></label>`;
 /** Phase 8: the line under a "sad" or "low" answer, on the carer's side only. */
-export const lowHelpLine = (name: string, helpline: string, number: string) => `<p class="tip low-help" id="low-help" role="note">${esc(P5.lowHelp(name, helpline, number))}</p>`;
+/** Phase 13 (judge round 10, the nurse's seat): with the two call buttons, the crisis line only when it is not the emergency number. */
+export const lowHelpLine = (name: string, line: string, number: string) => `<div class="low-help" id="low-help" role="note"><p class="tip">${esc(P5.lowHelp(name, line, number))}</p><div class="urgent-acts">${callButton(number)}${line && line !== number ? `<a class="btn call" data-call="1" href="${telHref(line)}">${PHONE}<span>${esc(P12.crisis.callLine(line))}</span></a>` : ''}</div></div>`;
 
 // ---------------------------------------------------------------- Read aloud
 export interface SpeakModel { name: string; on: boolean; online: boolean; /** This card may be read aloud (never a doctor-visit question). */ can: boolean }

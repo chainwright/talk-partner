@@ -55,7 +55,7 @@ import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Li
 import { P5 } from '../../core/copy5';
 import { FALL_HEAD } from '../../core/diary';
 import { CARE_TOPICS } from '../../core/reliability';
-import { DEFAULT_NUMBER, WRONG_TILE, crisisAnswer, crisisLine, emergencyNumber, localeNumber, numberSet, redPlace, signNow, urgentAnswer, urgentAny, type RedPlace } from '../../core/redflag';
+import { DEFAULT_NUMBER, WRONG_TILE, crisisAnswer, crisisLineFor, emergencyNumber, localeNumber, numberSet, redPlace, signNow, urgentAnswer, urgentAny, type RedPlace } from '../../core/redflag';
 import { fromIsoDay, pickedQuestions, sinceLines, sinceText, toggleQuestion } from '../../core/since';
 import { SpeakCache, isPcm, pcmRate, pcmToWav, speakText, speakable } from '../../core/speak';
 import { P6 } from '../../core/copy6';
@@ -745,7 +745,9 @@ function toCrisis() {
   go('');
 }
 /** Phase 12: the crisis line of the safety screen: the family's own helpline (About them), else the region's where we know one (the sample family is American: 988). */
-const crisisLineNow = () => (state.health.helpline ?? '').trim() || (state.demo ? '988' : crisisLine(navigator.language));
+const crisisLineNow = () => crisisLineFor(state.health.helpline ?? '', callNumber());
+/** The crisis line as a second button: none when it is only the emergency number itself. */
+const crisisLineButton = () => { const l = crisisLineNow(); return l === callNumber() ? '' : l; };
 /** Read aloud can run here at all: a copy with project settings, and never the sample family. */
 const canSpeak = () => !!state.engine.speak && state.engine.cloudConfigured && !state.demo;
 const speakOn = () => canSpeak() && !!state.settings.speak;
@@ -1498,7 +1500,7 @@ function afterAnswer(c: Card, p: Choice, button: string): string {
   // (after "show me", "write it" or "draw" the screen goes on: the carer types what they understood, or goes back to the ways)
   if (p.role === 'repair') return `<p class="say">${esc(repairLine(p.label, state.before?.asked ?? state.chain[0] ?? null, C.repair))}</p>${([C.repair.tiles.showMe, C.repair.tiles.writeIt, C.repair.tiles.draw] as string[]).includes(p.label) ? understoodBlock(state.profile.personName.trim()) : ''}`;
   // (phase 12) the person chose "I can't go on": the crisis box comes first, in both views
-  if (p.role === 'answer' && crisisAnswer(p.label)) return crisisBox({ name: state.profile.personName.trim(), number: callNumber(), line: crisisLineNow(), guess: numberGuess() });
+  if (p.role === 'answer' && crisisAnswer(p.label)) return crisisBox({ name: state.profile.personName.trim(), number: callNumber(), line: crisisLineButton(), guess: numberGuess() });
   if (c.kind !== 'needs') return '';
   // (phase 12, judge round 9: "Where does it hurt?" is the main button, and the call box carries the number and a real button)
   const where = p.label === 'pain' ? `<p><button class="${button} primary" id="need-where" data-q="${esc(C.needs.painQuestion)}">${esc(C.needs.painQuestion)}</button></p>${urgentBox(callNumber(), 'need-urgent', numberGuess())}` : '';
@@ -1891,7 +1893,7 @@ function simpleScreen(): string {
       made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),
       alertHtml,
       // (the red box with the call button stands over the answer; with a safety-check alert it is that alert's, below)
-      leadHtml: `${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), state.health.helpline ?? '', callNumber()) : ''}${turnHtml()}`,
+      leadHtml: `${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), crisisLineNow(), callNumber()) : ''}${turnHtml()}`,
       outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
       // after the way out: the ways to find out what it is, in the rules' order; a step the rules make comes first
       ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),
@@ -2060,7 +2062,7 @@ function visitView(): string {
   const low = has && r.answers.some((a) => (a.id === 'mood' || a.id === 'worry') && lowMood(a.q, a.label));
   // (phase 13) the run stopped on an urgent answer and has not gone on: the box names it, with "Go on with the questions"
   const stopped = has && !!r.stopped && !r.wentOn && !r.done;
-  return visitScreen({ name: m.name, record: r, copied: state.p4.visitCopied, urgentHtml: `${stopped ? visitStopBox(visitAlert(r.answers, m.number), m.number, numberGuess()) : urgent ? urgentBox(m.number, 'visit-urgent') : ''}${low ? lowHelpLine(m.name, state.health.helpline ?? '', m.number) : ''}`, sinceHtml: has ? sinceBlock(m) : '', controlsHtml: has ? sinceControls(m) : '' });
+  return visitScreen({ name: m.name, record: r, copied: state.p4.visitCopied, urgentHtml: `${stopped ? visitStopBox(visitAlert(r.answers, m.number), m.number, numberGuess()) : urgent ? urgentBox(m.number, 'visit-urgent') : ''}${low ? lowHelpLine(m.name, crisisLineFor(state.health.helpline ?? '', m.number), m.number) : ''}`, sinceHtml: has ? sinceBlock(m) : '', controlsHtml: has ? sinceControls(m) : '' });
 }
 /** The questions about the picked photo: the rules' three, and one more when the on-device model named things in it. */
 function talkQuestions(): PhotoQuestion[] {
@@ -2133,7 +2135,7 @@ function render(lifted = false) {
   const fresh = key !== lastKey;
   if (r !== 'person') stopSound();
   if (key !== lastKey) { lastKey = key; if (!lifted && !(r === 'partner' && state.first)) app.classList.add('enter'); }
-  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone, health: state.backupHealth })}`, numberHtml: numberField(state.health.emergency, state.health.helpline ?? ''), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber(), guess: numberGuess() }) : r === 'crisis' ? crisisScreen({ name: state.profile.personName.trim(), number: callNumber(), line: crisisLineNow(), lineGuess: !state.demo && !(state.health.helpline ?? '').trim(), numberGuess: numberGuess() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
+  app.innerHTML = r === 'partner' ? (simple ? simpleScreen() : partnerScreen()) : r === 'person' ? personScreen() : r === 'about' ? (simple ? aboutSimple({ profile: state.profile, open: state.aboutRow, saved: state.saved, learned: learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)) : [], learnedShort: state.learnedShort, photos: state.photos, photoError: state.photoError, health: state.health, backupHtml: `${passportLink(state.profile.personName.trim(), 'passport-about')}${backupBlock({ error: state.backupError, done: state.backupDone, health: state.backupHealth })}`, numberHtml: numberField(state.health.emergency, state.health.helpline ?? ''), desktopAi: state.device === 'available' && !!state.engine.lookDevice }) : aboutScreen()) : r === 'diary' ? diaryView() : r === 'practice' ? practiceView() : r === 'passport' ? passportView() : r === 'visit' ? visitView() : r === 'sudden' ? suddenScreen({ number: callNumber(), guess: numberGuess() }) : r === 'crisis' ? crisisScreen({ name: state.profile.personName.trim(), number: callNumber(), line: crisisLineButton(), lineGuess: !state.demo && !(state.health.helpline ?? '').trim(), numberGuess: numberGuess() }) : r === 'phototalk' ? photoTalkView() : r === 'cloud' ? cloudScreen() : r === 'how' ? howScreen() : r === 'feedback' ? feedbackScreen() : r === 'trial' ? trialScreen() : welcomeScreen();
   if (timer) { clearInterval(timer); timer = null; }
   keepGuard();
   if (simple && state.updateReady) app.insertAdjacentHTML('afterbegin', `<button type="button" class="update-bar" id="update-bar" data-act="update">${C.simple.update}</button>`);

@@ -252,10 +252,11 @@ describe('7. The nurse\'s and the SLP\'s sets (P1 19, 20)', () => {
   });
   it('under "sad" or "low": the helpline the family set, or none invented; the emergency number when life is at risk', () => {
     const set = lowHelpLine('Frank', 'NHS 111 option 2', '999');
-    expect(set).toContain('If Frank seems very low, or may harm themselves: call NHS 111 option 2, any time. If life is at risk, call 999 now.');
+    // (phase 13, judge round 10: harm means stay and call the emergency number now; "today" only for very low)
+    expect(set).toContain('If Frank may harm themselves: stay with Frank and call 999 now. If Frank seems very low: call NHS 111 option 2 (a crisis line) or the doctor or nurse today.');
     const unset = lowHelpLine('', '', '911').replace(/<[^>]+>/g, '');
     expect(unset).toContain('call the doctor or nurse today, or a mental health helpline (you can put its number in About them, Health notes)');
-    expect(unset.replace('911', '')).not.toMatch(/\d{3}/);
+    expect(unset.replaceAll('911', '')).not.toMatch(/\d{3}/);
     expect(cleanHealth({ helpline: '116 123<script>' }).helpline).toBe('116 123script');
     expect(cleanHealth({ helpline: 'none' })).not.toHaveProperty('helpline');
     expect(cleanHealth({})).not.toHaveProperty('helpline');

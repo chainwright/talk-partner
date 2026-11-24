@@ -25,7 +25,7 @@
 import { COPY } from './copy';
 import { P5 } from './copy5';
 import { P9 } from './copy9';
-import { DEFAULT_NUMBER, WRONG_TILE } from './redflag';
+import { DEFAULT_NUMBER, WRONG_TILE, crisisLineFor } from './redflag';
 import { P12 } from './copy12';
 import { P6 } from './copy6';
 import { byDay, dayStart, dayText, eventGroups, events, inSpan, tags, SPAN_DAYS, type DiaryEntry, type Tag } from './diary';
@@ -204,7 +204,7 @@ function spanInsights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpa
 
   // (phase 12) "I can't go on", chosen by the person: one is enough, first, with the crisis route; never sent to online help
   const crisis = entries.filter((e) => tags(e).includes('crisis'));
-  if (crisis.length) out.push({ id: 'crisis', level: 'tell', text: P12.crisis.insight(names(daysOf(crisis.map((e) => e.at)), 7)), noted: '', base: `${P12.crisis.insightBase} ${I.only}`, act: P12.crisis.insightAct(number, health.helpline ?? ''), urgent: true, local: true, source: src(crisis) });
+  if (crisis.length) out.push({ id: 'crisis', level: 'tell', text: P12.crisis.insight(names(daysOf(crisis.map((e) => e.at)), 7)), noted: '', base: `${P12.crisis.insightBase} ${I.only}`, act: P12.crisis.insightAct(number, ((l) => (l === number ? '' : l))(crisisLineFor(health.helpline ?? '', number))), urgent: true, local: true, source: src(crisis) });
 
   // (phase 9) "something's wrong", pointed to on the needs board or chosen on a card: one is enough, with whom to tell and when to call
   const wrong = entries.filter((e) => (e.kind === 'need' || e.kind === 'answer') && e.label.toLowerCase().trim() === WRONG_TILE);
@@ -241,7 +241,7 @@ function spanInsights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpa
 
   // "sad" or "bad" on three days or more: worth mentioning, with whom to talk to
   const lowDays = daysOf(entries.filter((e) => tags(e).includes('low-mood')).map((e) => e.at));
-  if (lowDays.length >= T.lowMoodDays) out.push({ id: 'mood', level: 'mention', text: I5.mood(lowDays.length, S), noted: '', base: `${I5.moodBase(names(lowDays, 7))} ${I.only}`, act: I5.moodAct(number, health.helpline ?? ''), source: src(tagged(entries, 'low-mood')) });
+  if (lowDays.length >= T.lowMoodDays) out.push({ id: 'mood', level: 'mention', text: I5.mood(lowDays.length, S), noted: '', base: `${I5.moodBase(names(lowDays, 7))} ${I.only}`, act: I5.moodAct(number, crisisLineFor(health.helpline ?? '', number)), source: src(tagged(entries, 'low-mood')) });
 
   // with swallowing difficulty noted: a day with entries and no food among them
   if (T.noFoodDay) {

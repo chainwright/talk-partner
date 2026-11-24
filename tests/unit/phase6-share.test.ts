@@ -135,7 +135,7 @@ describe('worst cases: nothing in the text helps anyone dismiss pain, a need or 
   });
   it('low mood on three days: whom to talk to, and the number', () => {
     const t = family([...days(0, 1, 2), ...[0, 1, 2].map((n) => ans(`m${n}`, 'How are you feeling today?', 'sad', n, '10:00', 'feel'))]);
-    expect(t).toContain('Talk to the GP or nurse about it. If they seem very low, or may harm themselves: call the doctor or nurse today, or a mental health helpline (you can put its number in About them, Health notes). If life is at risk, call 911 now.');
+    expect(t).toContain('Talk to the GP or nurse about it. If they may harm themselves: stay with them and call 911 now. If they seem very low: call 988 (a crisis line) or the doctor or nurse today.');
     safe(t, 'mood');
   });
   it('every worst case at once, for a week and a month, with every health note on and off: nothing suggests more to drink, advises or plays down', () => {
