@@ -91,6 +91,8 @@ export const P4 = {
     start: (name: string) => `Start, and turn the phone to ${them(name)}`,
     again: 'Ask the questions again',
     resume: 'Go on with the questions',
+    /** Phase 13: the box after an answer that can be urgent stopped the run (core/visit.ts, visitAlert). */
+    stop: (what: string, number: string) => `${what}: call ${number} now if it is new or sudden.`,
     pageTitle: (name: string) => (name ? `${name}'s own answers` : 'Their own answers'),
     pageSub: (date: string) => `Answered at home, with a family member's help, on ${date}.`,
     part: (n: number, of: number) => `${n} of ${of} questions were answered.`,

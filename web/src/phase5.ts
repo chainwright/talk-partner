@@ -5,6 +5,7 @@
 // core/copy5.ts (the data-use sentence from core/copy.ts).
 
 import { COPY } from '../../core/copy';
+import { P4 } from '../../core/copy4';
 import { P5 } from '../../core/copy5';
 import { dayText } from '../../core/diary';
 import { telHref } from '../../core/redflag';
@@ -81,6 +82,11 @@ export const laterPainHtml = (number: string, guess = false) => `<div class="lat
 /** The boxed line over an answer that can be urgent (core/redflag.ts): the sentence, the call button, the way to the list. */
 /** `now`: a yes to sudden weakness or numbness was confirmed (phase 12b): "Call … now. Note the time it started." */
 export const urgentBox = (number: string, id = 'urgent', guess = false, now = false) => `<div class="urgent" id="${id}" role="alert">${ALERT}<div><b>${esc(now ? P5.sudden.boxNow(number) : P5.sudden.box(number))}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, `${id}-guess`)}</div></div>`;
+/**
+ * Phase 13 (judge round 10, a health P0: the nurse's seat): the doctor-visit run stopped on an answer that can be
+ * urgent. The carer's box: the line (core/visit.ts, visitAlert), the call button, and "Go on with the questions".
+ */
+export const visitStopBox = (line: string, number: string, guess = false) => `<div class="urgent now-alert" id="visit-stop" role="alert">${ALERT}<div><b>${esc(line)}</b><div class="urgent-acts">${callButton(number)}<button type="button" class="btn quiet small-btn" data-act="visit-resume">${P4.visit.resume}</button></div>${guessLine(guess, 'visit-stop-guess')}</div></div>`;
 /**
  * Phase 13 (judge round 10, a health P0): an end line that is a safety check (core/tree.ts, `alert`), as a red box over
  * the next question: the line, then the call button full width as the main action, then the way to the list.

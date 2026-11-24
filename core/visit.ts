@@ -16,6 +16,7 @@
 
 import { P4 } from './copy4';
 import { NullEngine } from './engine';
+import { urgentAnswer } from './redflag';
 import { finish, makeCard } from './pipeline';
 import type { Card, Profile, SupportLevel } from './types';
 
@@ -53,6 +54,29 @@ export interface VisitRecord {
   /** Phase 5, the carer's part of the page (core/since.ts): the day of the last visit, and up to three questions picked from the fixed list. */
   since?: number;
   carerAsk?: string[];
+  /** Phase 13: an answer that can be urgent stopped the run (`visitStops`); `wentOn`: the carer then chose "Go on with the questions". */
+  stopped?: boolean;
+  wentOn?: boolean;
+}
+
+/**
+ * Phase 13 (judge round 10, a health P0: the nurse's seat, ADV-13b-4): an answer that can be urgent (core/redflag.ts,
+ * urgentAnswer: the head or the chest, pain "quite bad" or "very bad") stops the run at once. The person's screen says
+ * "Thank you. Give the phone back", and the carer reads the call box before any further question, never eight
+ * questions later. Once per run: after "Go on with the questions" the rest is asked without a second stop.
+ */
+export function visitStops(r: VisitRecord): boolean {
+  return !r.wentOn && r.answers.some((a) => !a.out && urgentAnswer(a.q, a.label));
+}
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** The carer's line in the box after a stop: what was answered, in the person's own words, and the number to call. Fixed text. */
+export function visitAlert(answers: VisitAnswer[], number: string): string {
+  const bad = answers.find((a) => a.id === 'bad' && /^(?:quite bad|very bad)$/i.test(a.label.trim()));
+  const where = answers.find((a) => a.id === 'where' && !a.out);
+  const m = where ? /^(head|chest),\s*(.+)$/i.exec(where.label.trim()) : null;
+  const place = m ? ` in the ${m[1].toLowerCase()} (${m[2]})` : where ? ` (${where.label.trim()})` : '';
+  const what = bad ? `${cap(bad.label.trim().toLowerCase())} pain${place}` : m ? `Pain${place}` : 'An answer here can be urgent';
+  return P4.visit.stop(what, number);
 }
 
 /** The question to ask next, or null at the end. The two questions about the pain follow only a yes to the first. */

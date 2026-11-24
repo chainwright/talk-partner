@@ -11,6 +11,7 @@ import type { Photo } from '../../core/photos';
 import type { PhotoQuestion } from '../../core/phototalk';
 import { VISIT_MAX, visitDate, visitElse, visitRows, visitTotal, type VisitRecord } from '../../core/visit';
 import { SIGN, navBar } from './simple';
+export { visitStopBox } from './phase5';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const sign = (body: string) => `<svg class="sg" viewBox="0 0 96 96" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;

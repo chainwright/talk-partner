@@ -50,7 +50,7 @@ import { P4 } from '../../core/copy4';
 import { LETTER_CLOUD_TASK, letterCard, letterEnd, type LetterInput } from '../../core/letter';
 import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
 import { BODY_FIRST, FEEL_QUESTION, aboutCard, laterQuestion, menuTopic, starterOf, talkLead, talkMenu, talkPick, turnCard, turnLead, type Starter, type TalkPick } from '../../core/turn';
-import { nextVisit, visitCard, visitLabel, visitText, type VisitRecord } from '../../core/visit';
+import { nextVisit, visitAlert, visitCard, visitLabel, visitStops, visitText, type VisitRecord } from '../../core/visit';
 import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
 import { P5 } from '../../core/copy5';
 import { FALL_HEAD } from '../../core/diary';
@@ -64,7 +64,7 @@ import { ABOUT_LEADS, aboutWhatCard, moreCard, moreChoices, moreSubject, outWays
 import { understoodBlock } from './phase7';
 import { aboutLearned, familyText, handoverText, riskyNotes } from '../../core/share';
 import { handoverLink, shareSheet } from './phase6';
-import { crisisBox, crisisScreen, fallBlock, hearButton, laterPainHtml, lowHelpLine, nowAlert, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenFirst, suddenLink, suddenScreen, urgentBox } from './phase5';
+import { crisisBox, crisisScreen, fallBlock, hearButton, laterPainHtml, lowHelpLine, nowAlert, visitStopBox, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenFirst, suddenLink, suddenScreen, urgentBox } from './phase5';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
@@ -2000,6 +2000,8 @@ function p4Confirm(c: Card, picked: Choice): boolean {
   if (c.visit && state.p4.visitRun && state.p4.visit) {
     state.p4.visit.answers = [...state.p4.visit.answers.filter((a) => a.id !== c.visit), { id: c.visit as VisitRecord['answers'][number]['id'], q: c.asked, label: visitLabel(c, picked.label), at: Date.now(), ...(picked.role === 'escape' ? { out: true } : {}) }];
     void kvSet('visit', state.p4.visit);
+    // (phase 13) an answer that can be urgent stops the run: the person gives the phone back, the carer reads the call box first
+    if (visitStops(state.p4.visit)) { state.p4.visit.stopped = true; void kvSet('visit', state.p4.visit); state.picked = null; makeSeq++; resetCard(); state.p4.visitRun = false; state.p4.visitEnd = true; render(); return true; }
     state.picked = null; void visitNext(); return true;
   }
   // the person started: the starter leads on, still on this screen (the needs board, the topics, the feelings card)
@@ -2056,7 +2058,9 @@ function visitView(): string {
   const has = !!r && r.answers.length > 0;
   const urgent = has && (urgentAny(r.answers) || m.since.urgent);
   const low = has && r.answers.some((a) => (a.id === 'mood' || a.id === 'worry') && lowMood(a.q, a.label));
-  return visitScreen({ name: m.name, record: r, copied: state.p4.visitCopied, urgentHtml: `${urgent ? urgentBox(m.number, 'visit-urgent') : ''}${low ? lowHelpLine(m.name, state.health.helpline ?? '', m.number) : ''}`, sinceHtml: has ? sinceBlock(m) : '', controlsHtml: has ? sinceControls(m) : '' });
+  // (phase 13) the run stopped on an urgent answer and has not gone on: the box names it, with "Go on with the questions"
+  const stopped = has && !!r.stopped && !r.wentOn && !r.done;
+  return visitScreen({ name: m.name, record: r, copied: state.p4.visitCopied, urgentHtml: `${stopped ? visitStopBox(visitAlert(r.answers, m.number), m.number, numberGuess()) : urgent ? urgentBox(m.number, 'visit-urgent') : ''}${low ? lowHelpLine(m.name, state.health.helpline ?? '', m.number) : ''}`, sinceHtml: has ? sinceBlock(m) : '', controlsHtml: has ? sinceControls(m) : '' });
 }
 /** The questions about the picked photo: the rules' three, and one more when the on-device model named things in it. */
 function talkQuestions(): PhotoQuestion[] {
@@ -2589,7 +2593,7 @@ function act(el: HTMLElement) {
     }
     case 'turn': openTurn(); lift = true; go('person'); break;
     case 'visit-start': state.p4.visit = { startedAt: Date.now(), answers: [], done: false, ...(state.p4.visit?.since ? { since: state.p4.visit.since } : {}), ...(state.p4.visit?.carerAsk ? { carerAsk: state.p4.visit.carerAsk } : {}) }; state.p4.visitCopied = false; void kvSet('visit', state.p4.visit); void visitNext(); break;
-    case 'visit-resume': void visitNext(); break;
+    case 'visit-resume': if (state.p4.visit?.stopped) { state.p4.visit.wentOn = true; void kvSet('visit', state.p4.visit); } void visitNext(); break;
     case 'visit-print': window.print(); break;
     case 'visit-copy': {
       const done = () => { state.p4.visitCopied = true; render(); document.querySelector<HTMLElement>('#visit-copy')?.focus(); };

@@ -123,3 +123,34 @@ describe('A2b. Under the chest line the call is the main button; "Ask another qu
     expect(html.indexOf('id="now-alert"')).toBeLessThan(html.indexOf('id="another"'));
   });
 });
+
+describe('A3. Before a doctor visit: an answer that can be urgent stops the run and shows the call box', () => {
+  const at = Date.UTC(2026, 10, 23, 17, 0);
+  const A = (id: string, q: string, label: string) => ({ id, q, label, at }) as never;
+  it('core/visit.ts: which answer stops the run (the rules of core/redflag.ts, urgentAnswer), once per run', async () => {
+    const { visitStops } = await import('../../core/visit');
+    expect(visitStops({ startedAt: at, done: false, answers: [A('pain', 'Are you in pain?', 'yes'), A('where', 'Where in the head?', 'head, top of head')] })).toBe(true);
+    expect(visitStops({ startedAt: at, done: false, answers: [A('pain', 'Are you in pain?', 'yes'), A('where', 'Where in the legs?', 'legs, left leg'), A('bad', 'How bad is the pain?', 'very bad')] })).toBe(true);
+    expect(visitStops({ startedAt: at, done: false, answers: [A('pain', 'Are you in pain?', 'yes'), A('where', 'Where in the legs?', 'legs, left leg'), A('bad', 'How bad is the pain?', 'a little')] })).toBe(false);
+    expect(visitStops({ startedAt: at, done: false, answers: [A('pain', 'Are you in pain?', 'no'), A('sleep', 'How have you been sleeping?', 'badly')] })).toBe(false);
+    // after "Go on with the questions" the run is not stopped a second time
+    expect(visitStops({ startedAt: at, done: false, wentOn: true, answers: [A('pain', 'Are you in pain?', 'yes'), A('where', 'Where in the head?', 'head, top of head'), A('bad', 'How bad is the pain?', 'very bad')] })).toBe(false);
+  });
+  it('the carer\'s box names what was answered, the number to call, and "Go on with the questions"', async () => {
+    const { visitAlert } = await import('../../core/visit');
+    expect(visitAlert([A('pain', 'Are you in pain?', 'yes'), A('where', 'Where in the head?', 'head, top of head'), A('bad', 'How bad is the pain?', 'very bad')], '999')).toBe('Very bad pain in the head (top of head): call 999 now if it is new or sudden.');
+    expect(visitAlert([A('pain', 'Are you in pain?', 'yes'), A('where', 'Where in the chest?', 'chest, middle')], '911')).toBe('Pain in the chest (middle): call 911 now if it is new or sudden.');
+    expect(visitAlert([A('pain', 'Are you in pain?', 'yes'), A('where', 'Where in the legs?', 'legs, left leg'), A('bad', 'How bad is the pain?', 'quite bad')], '911')).toBe('Quite bad pain (legs, left leg): call 911 now if it is new or sudden.');
+    const { visitStopBox } = await import('../../web/src/phase4');
+    const box = visitStopBox('Very bad pain in the head (top of head): call 999 now if it is new or sudden.', '999');
+    expect(box).toContain('href="tel:999"');
+    expect(box).toContain('data-act="visit-resume"');
+    expect(box).toContain('Go on with the questions');
+    expect(box).toContain('role="alert"');
+  });
+  it('web/src/main.ts: the confirmed answer that stops the run ends the person\'s questions with "Thank you. Give the phone back"', async () => {
+    const { readFileSync } = await import('node:fs');
+    const main = readFileSync('web/src/main.ts', 'utf8');
+    expect(main).toContain('if (visitStops(state.p4.visit)) { state.p4.visit.stopped = true; void kvSet(\'visit\', state.p4.visit); state.picked = null; makeSeq++; resetCard(); state.p4.visitRun = false; state.p4.visitEnd = true; render(); return true; }');
+  });
+});
