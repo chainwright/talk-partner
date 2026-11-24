@@ -563,8 +563,8 @@ export interface PipelineEnv {
   routing?: { moodWords: number; minChoices: number };
   /** The wait before the one retry of a failed cloud call. Only tests pass it (so they need not wait); the app uses a timer. */
   sleep?: (ms: number) => Promise<void>;
-  /** How long the cloud step is waited for (core/engine.ts, CLOUD_WAIT_MS). Only tests pass it. */
-  cloudWaitMs?: number;
+  /** How long the cloud step, and (phase 18c) the on-device letter step, are waited for (core/engine.ts, CLOUD_WAIT_MS). Only tests pass them. */
+  cloudWaitMs?: number; deviceWaitMs?: number;
   /**
    * Phase 9: called the moment the stripped question is handed to the SDK for the cloud step (the app then shows
    * "still working… Stop waiting" after CLOUD_SLOW_MS). It is told nothing: no question, no answer.

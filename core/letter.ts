@@ -21,7 +21,7 @@
 // Dignity: the letter screen is offered, never required; "No, I don't know" is always there; nothing counts a miss.
 
 import { P4 } from './copy4';
-import { checkedCloud, type CloudError } from './engine';
+import { CLOUD_WAIT_MS, checkedCloud, within, type CloudError } from './engine';
 import { placeOf, subjectOf, type Subject } from './kinds';
 import { cloudWasAppCheck, finish, parseModelOutput, type PipelineEnv } from './pipeline';
 import { devicePrompt, letterContext } from './prompt';
@@ -299,11 +299,10 @@ export function letterPairsOf(text: string): { word: string; kind: string | null
   return letterWordsOf(text).map((word, n) => ({ word, kind: typeof kinds[n] === 'string' ? (kinds[n] as string) : null }));
 }
 /** The text the on-device step gets. It holds what did not fit and the learned words: it never goes to the cloud step. */
-export function letterDeviceAsk(i: LetterInput, letterStep = false): string {
+export function letterDeviceAsk(i: LetterInput): string {
   const kind = subjectOf(i.asked, i.rejected);
   const topic = letterTopic(i.topic ?? null, kind);
-  // (phase 18b) on the letter step's own schema (exactly 4 words, each with its kind) the task says 4, as online
-  const task = letterStep ? (i.letter.length > 1 ? LETTER_CLOUD_TASK_MORE : LETTER_CLOUD_TASK) : i.letter.length > 1 ? LETTER_TASK.replace('start with that letter', 'start with those letters') : LETTER_TASK;
+  const task = i.letter.length > 1 ? LETTER_TASK.replace('start with that letter', 'start with those letters') : LETTER_TASK;
   return `${i.asked.trim() ? `${i.asked.trim()} ` : ''}${i.rejected.length ? `They did not want: ${i.rejected.join(', ')}. ` : ''}They cannot say the word. ${startsLine(i.letter)} ${topicLine(topic, kind)}${letterContext(kind)}${onlyLine(topic)} ${task}${i.learned?.length ? ` Usual answers on this device (hints only): ${i.learned.slice(0, 6).join(', ')}.` : ''}`;
 }
 
@@ -394,11 +393,13 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
   };
   if (env.deviceReady) {
     try {
-      // (phase 18b) the letter step's own schema on this device when the engine has it: each word with its kind
-      const step = !!engine.letterDevice;
-      const r = await (engine.letterDevice ? engine.letterDevice(devicePrompt(letterDeviceAsk(i, true), profile)) : engine.runDevice(devicePrompt(letterDeviceAsk(i), profile)));
+      // (phase 18c, the coordinator's live test of 7d7a8fe with Gemini Nano: the letter step on its own schema with a
+      // kind for each word never answered, and the person's screen stayed empty for over 3 minutes) the device keeps
+      // the card's schema, which Nano answers (no kind of each word: inside a known topic only the app's own words of
+      // the topic stay, topicFit), and the call is waited for as long as online help is: then the rules' words stand
+      const r = await within(engine.runDevice(devicePrompt(letterDeviceAsk(i), profile)), env.deviceWaitMs ?? CLOUD_WAIT_MS);
       trace.push(T('private', r.source, 'got the question, the letter, what did not fit and the About me lists', false, r.ms));
-      const pairs = step ? letterPairsOf(r.text) : (parseModelOutput(r.text)?.choices ?? []).map((word) => ({ word, kind: null }));
+      const pairs = (parseModelOutput(r.text)?.choices ?? []).map((word) => ({ word, kind: null }));
       const { kept, dropped } = guard(pairs);
       const words = merge(kept);
       if (kept.length && words.length >= 1) return make(words, 'device', r.source, r.ms, pairs.map((x) => x.word), dropped);

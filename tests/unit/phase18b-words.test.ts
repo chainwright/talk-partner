@@ -121,11 +121,6 @@ class OffTopic extends Basic {
   letterRequest(t: string) { return letterRequest(t); }
   async runLetter(t: string): Promise<ModelResult> { this.cloud.push(t); return { text: JSON.stringify({ kind: 'food', words: this.ws, ...(this.kinds ? { kinds: this.kinds } : {}) }), source: 'in-cloud', ms: 2 }; }
 }
-/** With the letter step on this device too (the engine's `letterDevice`, ONLY_ON_DEVICE). */
-class OffTopicDevice extends OffTopic {
-  async letterDevice(p: string): Promise<ModelResult> { this.device.push(p); return { text: JSON.stringify({ kind: 'food', words: this.ws, kinds: this.kinds }), source: 'on-device', ms: 2 }; }
-}
-
 describe('2. inside a known topic, an AI word stays only when it is of the topic', () => {
   const I = { asked: 'Would you like a snack or a meal?', letter: 'STE', rejected: ['snack', 'meal'], topic: 'food' };
   const env = (e: Engine, o: { device?: boolean; cloud?: boolean }) => ({ profile: EMPTY_PROFILE, support: 'more' as const, engine: e, allowCloud: !!o.cloud, deviceReady: !!o.device });
@@ -153,16 +148,6 @@ describe('2. inside a known topic, an AI word stays only when it is of the topic
     for (const w of ['steam', 'stir', 'steering']) expect(words(c)).not.toContain(w);
     expect(c.why?.dropped.find((d) => d.label === 'steam')?.rule).toMatch(/not a word of the topic/);
     expect(words(c)[0]).toBe('stew');
-  });
-  it('on this device with the letter step: the same kinds decide; nothing is sent', async () => {
-    const e = new OffTopicDevice(['steam', 'stir', 'steamed pudding', 'steering'], ['other', 'other', 'food', 'other']);
-    const c = await letterCard(I, env(e, { device: true }));
-    expect(e.card).toBe(0);
-    expect(e.device).toHaveLength(1);
-    expect(e.cloud).toEqual([]);
-    expect(words(c)).toContain('steamed pudding');
-    for (const w of ['steam', 'stir', 'steering']) expect(words(c)).not.toContain(w);
-    expect(c.letter?.by).toBe('device');
   });
   it('a model that names no kind (an engine without the letter step): only words the app knows for the topic stay', async () => {
     const e = new Basic(['steam', 'stir', 'steak'], null);
@@ -193,4 +178,73 @@ describe('3. a health place found by its letters leads on as the doctor does', (
       expect(letterEnd(w).end).not.toMatch(/yes or no question about it next/);
     });
   }
+});
+
+// Phase 18c (the coordinator's live test of 7d7a8fe in desktop Chrome with Gemini Nano, 24 Nov 2026: Food & drink,
+// "Are you hungry?" yes, "a snack or a meal?", "something else", S, "something else", "Add the next letter", T: the
+// person's screen stayed empty for over 3 minutes; the on-device letter step on its own schema never answered).
+// Written before the fix: every model call on the letter path has the hard wait of the other steps, and when it runs
+// out or fails the rules' words show at once; the device stays on the card's schema, which Nano answers.
+/** A model that never answers, on this device and online. */
+class Never implements Engine {
+  label = 'never'; modes = { device: 'ONLY_ON_DEVICE', cloud: 'PREFER_IN_CLOUD' }; cloudConfigured = true;
+  device = 0; cloud = 0; letterStep = 0;
+  async deviceStatus(): Promise<DeviceStatus> { return 'available'; }
+  async prepareDevice() {}
+  runDevice(): Promise<ModelResult> { this.device++; return new Promise<never>(() => { /* never settles */ }); }
+  cloudRequest(q: string) { return cloudTextRequest(q); }
+  runCloud(): Promise<ModelResult> { this.cloud++; return new Promise<never>(() => { /* never settles */ }); }
+  letterRequest(t: string) { return letterRequest(t); }
+  runLetter(): Promise<ModelResult> { this.cloud++; return new Promise<never>(() => { /* never settles */ }); }
+  /** An engine method the letter path must not use any more (the schema Nano did not answer). */
+  letterDevice(): Promise<ModelResult> { this.letterStep++; return new Promise<never>(() => { /* never settles */ }); }
+}
+/** The walk of the live test, as the screen does it: the first card refused, S, its words refused, then T. */
+async function liveWalk(engine: Engine, o: { device?: boolean; cloud?: boolean; wait?: number } = {}) {
+  const q = 'Would you like a snack or a meal?';
+  const first = await makeCard(q, { profile: P, support: 'more', engine: new NullEngine(), allowCloud: false, deviceReady: false });
+  const refused = ['yes', ...words(first)];
+  const env = { profile: P, support: 'more' as const, engine, allowCloud: !!o.cloud, deviceReady: !!o.device, deviceWaitMs: o.wait ?? 40, cloudWaitMs: o.wait ?? 40 };
+  const s = await letterCard({ asked: q, letter: 'S', rejected: refused, topic: 'food' }, env);
+  const st = await letterCard({ asked: q, letter: 'ST', rejected: [...refused, ...words(s)], topic: 'food' }, env);
+  return { s, st };
+}
+describe('4. the letter path never waits for ever (the live test of 24 Nov)', () => {
+  it('the exact walk with Gemini Nano that never answers: ST shows the rules\' words (stew among them) when the wait runs out', async () => {
+    const e = new Never();
+    const t0 = Date.now();
+    const { s, st } = await liveWalk(e, { device: true, wait: 40 });
+    expect(Date.now() - t0).toBeLessThan(2000);
+    expect(words(s).length).toBeGreaterThanOrEqual(2);
+    expect(words(st)).toContain('stew');
+    expect(st.letter?.by).toBe('rules');
+    for (const w of ['steam', 'stir']) expect(words(st)).not.toContain(w);
+    expect(e.letterStep).toBe(0);
+    expect(e.device).toBeGreaterThanOrEqual(1);
+    expect(st.trace?.find((t) => t.step === 'private')?.ran).toBe('failed');
+  });
+  it('the same walk online after the yes, with an answer that never comes: the rules\' words when the wait runs out', async () => {
+    const e = new Never();
+    const { st } = await liveWalk(e, { cloud: true, wait: 40 });
+    expect(words(st)).toContain('stew');
+    expect(e.cloud).toBeGreaterThanOrEqual(1);
+  });
+  it('no rules word and a model that never answers: a card that says so, with its ways, never an empty wait', async () => {
+    const e = new Never();
+    const c = await letterCard({ asked: 'Would you like a snack or a meal?', letter: 'XQ', rejected: [], topic: 'food' }, { profile: P, support: 'more', engine: e, allowCloud: false, deviceReady: true, deviceWaitMs: 40 });
+    expect(c.choices).toEqual([]);
+    expect(c.blocked).toBeTruthy();
+  });
+  it('the device leg waits as long as online help does, by default (core/engine.ts, CLOUD_WAIT_MS)', async () => {
+    const src = (await import('node:fs')).readFileSync(new URL('../../core/letter.ts', import.meta.url), 'utf8');
+    expect(src).toContain('within(engine.runDevice(devicePrompt(letterDeviceAsk(i), profile)), env.deviceWaitMs ?? CLOUD_WAIT_MS)');
+    expect(src).not.toMatch(/engine\.letterDevice/);
+  });
+  it('the fallback on a real Nano-like answer (the card\'s schema, off-topic words): steam and stir dropped, stew from the rules', async () => {
+    const e = new Basic(['strawberries', 'steam', 'stir'], null);
+    const { st } = await liveWalk(e, { device: true });
+    expect(e.card).toBeGreaterThanOrEqual(1);
+    expect(words(st)).toContain('stew');
+    for (const w of ['steam', 'stir']) expect(words(st)).not.toContain(w);
+  });
 });

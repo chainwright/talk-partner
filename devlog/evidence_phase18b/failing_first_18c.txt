@@ -1,0 +1,8 @@
+ × tests/unit/phase18b-words.test.ts > 4. the letter path never waits for ever (the live test of 24 Nov) > the exact walk with Gemini Nano that never answers: ST shows the rules' words (stew among them) when the wait runs out 5006ms
+ ✓ tests/unit/phase18b-words.test.ts > 4. the letter path never waits for ever (the live test of 24 Nov) > the same walk online after the yes, with an answer that never comes: the rules' words when the wait runs out 147ms
+ × tests/unit/phase18b-words.test.ts > 4. the letter path never waits for ever (the live test of 24 Nov) > no rules word and a model that never answers: a card that says so, with its ways, never an empty wait 5005ms
+ × tests/unit/phase18b-words.test.ts > 4. the letter path never waits for ever (the live test of 24 Nov) > the device leg waits as long as online help does, by default (core/engine.ts, CLOUD_WAIT_MS) 7ms
+ ✓ tests/unit/phase18b-words.test.ts > 4. the letter path never waits for ever (the live test of 24 Nov) > the fallback on a real Nano-like answer (the card's schema, off-topic words): steam and stir dropped, stew from the rules 120ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 40 passed (43)

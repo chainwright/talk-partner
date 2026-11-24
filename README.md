@@ -1373,11 +1373,7 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:366` | `InferenceMode.ONLY_IN_CLOUD` | its mode: the SDK has no on-device speech, so the mode says what happens, and the sheet says it first |
 | `web/src/ai/firebaseEngine.ts:370` | `generateContent(` | Read aloud call: one per card text (the sound is kept, so "Hear it again" sends nothing); never a doctor-visit card |
 | `web/src/ai/firebaseEngine.ts:375` | `inferenceSource === InferenceSource.ON_DEVICE` | where the words were spoken, from the SDK's report |
-| `web/src/ai/firebaseEngine.ts:389` | `getGenerativeModel(` | letter step model on the device (phase 18b, `core/letter.ts`): the letter step's own instructions and schema, each word with its kind, on the same no-App-Check app as the private step |
-| `web/src/ai/firebaseEngine.ts:390` | `InferenceMode.ONLY_ON_DEVICE` | its mode: the prompt holds About me and what did not fit, so there is no cloud fall-back |
-| `web/src/ai/firebaseEngine.ts:394` | `generateContent(` | letter step call on the device; code keeps a word only when it starts with the letters and, inside a known topic, is of the topic |
-| `web/src/ai/firebaseEngine.ts:395` | `inferenceSource !== InferenceSource.ON_DEVICE` | the on-device letter step rejects any answer not from the device |
-| `web/src/ai/firebaseEngine.ts:417` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
+| `web/src/ai/firebaseEngine.ts:397` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
 | `web/src/ai/app.ts:36` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started by the first cloud call (a card, a recording) or the first feedback note, never at page load |
 | `core/pipeline.ts:744` | `ran: r.source` | the private step's trace line is the engine's report |
 | `core/pipeline.ts:869` | `ran: r.source` | the stripped step's trace line is the engine's report |
