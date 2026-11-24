@@ -13,8 +13,9 @@ export const SAMPLE_PROFILE: Profile = {
   ],
   foods: ['pot roast', 'chili', 'ginger biscuits'],
   places: ['the lake', 'church', 'hardware store'],
-  tv: ['Wheel of Fortune', 'Packers games'],
-  music: ['Johnny Cash'],
+  // (phase 19, judge round 14, the contest's rule on third-party marks: a TV show, a team and a singer were named)
+  tv: ['the quiz show', 'football'],
+  music: ['old country songs'],
   // (18 Nov, phase 4: the dog, for the first-letter helper: "B" then offers Bo)
   other: ['Bo (dog)'],
 };

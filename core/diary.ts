@@ -12,7 +12,7 @@
 
 import { P10 } from './copy10';
 import { guardExempt } from './reliability';
-import { crisisAnswer, crisisWords, healthOf, healthWarning } from './redflag';
+import { chestLike, crisisAnswer, crisisWords, healthOf, healthWarning, redPlace } from './redflag';
 import type { TopicId } from './topics';
 
 /** The carer's one-tap log. */
@@ -210,7 +210,10 @@ export function tags(e: DiaryEntry): Tag[] {
   if (/^how bad is the pain\b/.test(q) && /^(?:quite bad|very bad)$/.test(l)) out.push('strong-pain');
   // (the second step of the body card asks "Where in the chest?": a place chosen there is a pain entry too)
   if (/^where in the \w+\b/.test(q) && !/^some(?:where|thing) else$/.test(l) && !out.includes('pain')) out.push('pain');
-  if ((/^where in the (?:head|chest)\b/.test(q) && !/^some(?:where|thing) else$/.test(l)) || (/^where does it hurt\b/.test(q) && /\b(?:head|chest)\b/.test(l))) out.push('place-pain');
+  // (phase 19, judge round 14, a P0 of seats 01 and 13b: "Where in the stomach? upper stomach" then "a little" said call
+  // now on the screen and "Ask again on your shift" in the next carer's note) the heart places too: the upper stomach,
+  // the upper back, the jaw, a shoulder (core/redflag.ts, redPlace 'heart'), so the note says what the screen said
+  if ((/^where in the (?:head|chest)\b/.test(q) && !/^some(?:where|thing) else$/.test(l)) || (/^where does it hurt\b/.test(q) && /\b(?:head|chest)\b/.test(l)) || chestLike(redPlace(q, l))) out.push('place-pain');
   // (phase 8) a low day: "sad", "bad", "low" or "down" to a question about how the person feels (not about a photo);
   // (phase 12) and worried, scared, lonely, a yes to "Is something bothering you?", an answer to "What worries you most?"
   if (lowMood(q, l)) out.push('low-mood');
@@ -225,6 +228,15 @@ export function tags(e: DiaryEntry): Tag[] {
   if (warningAnswer(q, l)) out.push('warning');
   return out;
 }
+
+/**
+ * Phase 19 (judge round 14, a P0): a crisis entry the person chose themselves ("I can't go on" on the feelings card),
+ * or one where the carer's typed crisis question was answered: the second is quoted as asked, never as a choice.
+ */
+export const crisisChosen = (e: DiaryEntry): boolean => crisisAnswer(e.label);
+
+/** Phase 19: "no" to a warning question (the chest, the heart places, a stroke sign, a fall, the blood sugar): kept in the note as asked. */
+export const warningNoAnswer = (q: string, label: string): boolean => lc(label) === 'no' && ['chest', 'heart', 'stroke', 'fall', 'sugar'].includes(healthOf(q) ?? '') && !/^(?:where\b|how bad\b)/.test(lc(q));
 
 /** Phase 17: a warning answer to a health question (core/redflag.ts, healthWarning); a stroke sign is left to `signAnswer`. */
 export const warningAnswer = (q: string, label: string): boolean => healthWarning(q, label) && !signAnswer(q, label);

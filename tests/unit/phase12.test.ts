@@ -429,7 +429,7 @@ describe('D14. A crisis choice for the person: "I can\'t go on" leads the carer 
     const main = readFileSync(new URL('../../web/src/main.ts', import.meta.url), 'utf8');
     expect(main).toContain("if (h === 'crisis') return 'crisis';");
     // (phase 18: and any answer to a card the guard made from crisis words)
-    expect(main).toMatch(/crisisAnswer\(state\.picked\?\.label \?\? ''\) \|\| state\.card\?\.own\?\.guard === 'crisis'\)\) toCrisis\(\)/);
+    expect(main).toMatch(/crisisAnswer\(state\.picked\?\.label \?\? ''\) \|\| state\.card\?\.own\?\.guard === 'crisis'\)\) \{ crisisFrom = crisisAsked\(\); toCrisis\(\); \}/);
     expect(main).toContain("window.addEventListener('hashchange', () => go('crisis'), { once: true });");
     expect(main).toMatch(/if \(p\.role === 'answer' && crisisAnswer\(p\.label\)\) return crisisBox\(/);
   });

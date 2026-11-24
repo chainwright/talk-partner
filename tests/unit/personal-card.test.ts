@@ -29,7 +29,7 @@ const env = (e: Engine, allowCloud = true) => ({ profile: SAMPLE_PROFILE, suppor
 const labels = (c: { choices: { label: string }[] }) => c.choices.map((x) => x.label);
 
 describe('fromAboutMe: which list a label comes from', () => {
-  it.each([['Jenny', 'people'], ['Jen', 'people'], ['tyler', 'people'], ['lake', 'places'], ['the lake', 'places'], ['church', 'places'], ['pot roast', 'foods'], ['Wheel of Fortune', 'TV'], ['Johnny Cash', 'music']])('%s -> %s', (label, list) => {
+  it.each([['Jenny', 'people'], ['Jen', 'people'], ['tyler', 'people'], ['lake', 'places'], ['the lake', 'places'], ['church', 'places'], ['pot roast', 'foods'], ['the quiz show', 'TV'], ['football', 'TV'], ['old country songs', 'music']])('%s -> %s', (label, list) => {
     expect(fromAboutMe(label, SAMPLE_PROFILE)).toBe(list);
   });
   it.each(['family', 'friend', 'Dr Smith', 'stay home', 'go out', ''])('%s is not an About-me entry', (label) => {

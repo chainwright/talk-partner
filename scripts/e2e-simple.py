@@ -1133,7 +1133,7 @@ def phase4(browser, url, live):
     fits(page, 'letter: the words with B')
     tap_yes(page, 'biscuits (ginger)')
     give_back(page)
-    check('letter: the carer reads the word and what to do next; nothing was sent', 'The word is: ginger biscuits. Ask a yes or no question about it next.' in text(page, '#do-now') and page.locator('#left-line').get_attribute('data-left') == 'nothing' and page.locator('#guard').count() == 0, text(page))
+    check('letter: the carer reads the word and what to do next; nothing was sent', 'The word is: ginger biscuits. Bring it, or show it' in text(page, '#do-now') and page.locator('#left-line').get_attribute('data-left') == 'nothing' and page.locator('#guard').count() == 0, text(page))
     screen_checks(page, 'letter: the word')
     # the way out of the letter card: more words, or another letter; "No, I don't know" is fine
     page.locator('[data-act=home]').click()

@@ -14,7 +14,7 @@ import { P6 } from './copy6';
 import { P9 } from './copy9';
 import { P12 } from './copy12';
 import { P17 } from './copy17';
-import { byDay, dayStart, dayText, daysBefore, eventGroups, events, lowMood, tags, type DiaryEntry } from './diary';
+import { byDay, crisisChosen, dayStart, dayText, daysBefore, eventGroups, events, lowMood, tags, type DiaryEntry } from './diary';
 
 export const SINCE_DAYS = 30;
 export const SINCE_MAX_DAYS = 120;
@@ -93,9 +93,11 @@ export function sinceLines(diary: DiaryEntry[], since: number | null | undefined
   // (phase 17) a health question asked in the carer's own words and answered: its own line, after the signs
   const warns = tagged('warning');
   const rows: [string, SinceSource][] = [
-    ...(crisis.length ? [[P12.crisis.since(crisis.map(at).join(', '), number, crisisLine === number ? '' : crisisLine), { ids: ids(crisis), note: '' }] as [string, SinceSource]] : []),
+    ...(crisis.filter(crisisChosen).length ? [[P12.crisis.since(crisis.filter(crisisChosen).map(at).join(', '), number, crisisLine === number ? '' : crisisLine), { ids: ids(crisis.filter(crisisChosen)), note: '' }] as [string, SinceSource]] : []),
+    // (phase 19) a typed crisis question: as asked, with what they pointed to
+    ...(crisis.filter((e) => !crisisChosen(e)).length ? [[P12.crisis.sinceAsked(crisis.filter((e) => !crisisChosen(e)).map((e) => `${P12.crisis.asked(e.q ?? '', e.label)} (${at(e)})`).join('; '), number, crisisLine === number ? '' : crisisLine), { ids: ids(crisis.filter((e) => !crisisChosen(e))), note: '' }] as [string, SinceSource]] : []),
     ...(signs.length ? [[P9.insights.signSince(signs.map((e) => `"${e.label.trim().toLowerCase()}" (${at(e)})`).join(', '), number), { ids: ids(signs), note: '' }] as [string, SinceSource]] : []),
-    ...(warns.length ? [[P17.warning.since(warns.map((e) => `"${(e.q ?? '').trim()}" ${e.label.trim().toLowerCase()} (${at(e)})`).join(', '), number, warns.some((e) => healthOf(e.q ?? '') === 'chest')), { ids: ids(warns), note: '' }] as [string, SinceSource]] : []),
+    ...(warns.length ? [[P17.warning.since(warns.map((e) => `"${(e.q ?? '').trim()}" ${e.label.trim().toLowerCase()} (${at(e)})`).join(', '), number, warns.some((e) => healthOf(e.q ?? '') === 'chest' || healthOf(e.q ?? '') === 'heart')), { ids: ids(warns), note: '' }] as [string, SinceSource]] : []),
     [S.pain(pain.length, named(pain), with_('pain')), { ids: ids(tagged('pain')), note: '' }],
     ...(hard.length ? [[S.strong(named(hard)), { ids: ids(hardEntries), note: '' }] as [string, SinceSource]] : []),
     // (phase 9) a care question left for later is named, so the visit hears of it even when it was never asked again

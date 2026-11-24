@@ -73,7 +73,11 @@ export const P6 = {
     hNoTablets: 'Tablets taken: none logged. That can mean nobody tapped it: check before giving any.',
     /** Phase 12 (judge round 9): the care questions left for later and not yet found out, at the top of the note. */
     hOpen: 'STILL OPEN (care questions left for later, not yet found out)',
-    hOpenItem: (q: string, when: string, ago: string, pain: boolean, number: string) => `- ${q} (left at ${when}, ${ago}). Ask it again first.${pain ? ` If the pain is new or strong, call the nurse or doctor; if it is sudden or severe, call ${number} now.` : ''}`,
+    // (phase 19, judge round 14, the nurse's seat: a chest question left for later read "if it is sudden or severe, call
+    // 999 now") a question left in a conversation with a red flag says what Home says: call now, whatever the amount
+    hOpenItem: (q: string, when: string, ago: string, pain: boolean, number: string, red: 'chest' | 'head' | 'heart' | 'sign' | null = null) => `- ${q} (left at ${when}, ${ago}). Ask it again first.${red ? ` ${red === 'chest' ? 'Chest pain' : red === 'head' ? 'Head pain' : red === 'heart' ? 'Upper stomach, upper back, jaw or shoulder pain' : 'A yes to weakness, numbness or trouble breathing'}: call ${number} now, whatever the amount, if it was not called.` : pain ? ` If the pain is new or strong, call the nurse or doctor; if it is sudden or severe, call ${number} now.` : ''}`,
+    /** Phase 19 (judge round 14, seats 01 and 13b): a warning question answered "no" is still in the note, as asked and answered. */
+    hWarnNo: (items: string, number: string, chest: boolean) => `Warning signs asked about, answered "no": ${items}. A yes or no can be wrong after a stroke: check it yourself now.${chest ? ` Any chest pain or tightness, or trouble breathing: call ${number} now, whatever the amount.` : ` Ask them to smile and lift both arms; if one side drops, call ${number} now.`}`,
     hNothing: 'Nothing was entered in the last 24 hours. That is a gap in the diary, not a report: ask the family how the day went.',
     usual: (name: string) => `USUAL CHOICES (counted from the answers ${name || 'they'} confirmed; a hint for you, and ${name || 'they'} still choose${name ? 's' : ''} every time)`,
     usualNone: 'Nothing learned yet.',

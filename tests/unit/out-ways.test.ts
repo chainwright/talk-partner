@@ -207,7 +207,8 @@ describe('"show me" and "write it" go on: the carer types what they understood, 
 describe('no model, nothing sent', () => {
   it('core/more.ts imports no engine, no prompt and no request; its cards are made by the rules', () => {
     const imports = [...read('core/more.ts').matchAll(/^import [^;]*? from '([^']+)';$/gms)].map((m) => m[1]);
-    expect(imports.sort()).toEqual(['./copy7', './kinds', './pipeline', './reliability', './types']);
+    // (phase 19: './letter' for sameWord, a pure comparison of words)
+    expect(imports.sort()).toEqual(['./copy7', './kinds', './letter', './pipeline', './reliability', './types']);
     expect(read('core/more.ts')).not.toMatch(/fetch\(|runDevice|runCloud|engine\./);
   });
   it('the words: one line that says what to do; nothing that plays down, no exclamation mark', () => {

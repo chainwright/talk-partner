@@ -76,9 +76,10 @@ describe('docs truth (phase 9): the lines judge round 8 found stale', () => {
     // (phase 15, 24 Nov 2026: the newest "Counts" line is the phase 15 section's)
     // (phase 17, 24 Nov 2026: the newest "Counts" line is the phase 17 section's)
     // (phase 18, 24 Nov 2026: the newest "Counts" line is the phase 18 section's)
-    const newest = readme.slice(readme.indexOf('### Phase 18'));
+    // (phase 19, 24 Nov 2026: the newest "Counts" line is the phase 19 section's)
+    const newest = readme.slice(readme.indexOf('### Phase 19'));
     const counted = /(\d{4}) unit tests/.exec(newest)?.[1];
-    expect(counted, 'README "### Phase 18" names a unit-test count').toBeTruthy();
+    expect(counted, 'README "### Phase 19" names a unit-test count').toBeTruthy();
     expect(judges).toBe(counted);
     expect(['2849', '2902']).not.toContain(judges);
   });

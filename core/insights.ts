@@ -29,7 +29,7 @@ import { DEFAULT_NUMBER, WRONG_TILE, crisisLineFor, healthOf } from './redflag';
 import { P17 } from './copy17';
 import { P12 } from './copy12';
 import { P6 } from './copy6';
-import { byDay, dayStart, dayText, eventGroups, events, inSpan, tags, SPAN_DAYS, type DiaryEntry, type Tag } from './diary';
+import { byDay, crisisChosen, dayStart, dayText, eventGroups, events, inSpan, tags, SPAN_DAYS, type DiaryEntry, type Tag } from './diary';
 
 export interface HealthNotes {
   /** The carer's own words. On this device only; in the on-device prompt, never in a cloud request. */
@@ -215,7 +215,11 @@ function spanInsights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpa
 
   // (phase 12) "I can't go on", chosen by the person: one is enough, first, with the crisis route; never sent to online help
   const crisis = entries.filter((e) => tags(e).includes('crisis'));
-  if (crisis.length) out.push({ id: 'crisis', level: 'tell', text: P12.crisis.insight(names(daysOf(crisis.map((e) => e.at)), 7)), noted: '', base: `${P12.crisis.insightBase} ${I.only}`, act: P12.crisis.insightAct(number, ((l) => (l === number ? '' : l))(crisisLineFor(health.helpline ?? '', number))), urgent: true, local: true, source: src(crisis) });
+  // (phase 19) a crisis question the carer typed is quoted as asked, with what they pointed to, never "was chosen"
+  const chosenC = crisis.filter(crisisChosen);
+  const askedC = crisis.filter((e) => !crisisChosen(e));
+  const crisisText = [...(chosenC.length ? [P12.crisis.insight(names(daysOf(chosenC.map((e) => e.at)), 7))] : []), ...(askedC.length ? [P12.crisis.insightAsked(askedC.map((e) => `${P12.crisis.asked(e.q ?? '', e.label)} (${names(daysOf([e.at]), 7)})`).join('; '))] : [])].join(' ');
+  if (crisis.length) out.push({ id: 'crisis', level: 'tell', text: crisisText, noted: '', base: `${P12.crisis.insightBase} ${I.only}`, act: P12.crisis.insightAct(number, ((l) => (l === number ? '' : l))(crisisLineFor(health.helpline ?? '', number))), urgent: true, local: true, source: src(crisis) });
 
   // (phase 9) "something's wrong", pointed to on the needs board or chosen on a card: one is enough, with whom to tell and when to call
   const wrong = entries.filter((e) => (e.kind === 'need' || e.kind === 'answer') && e.label.toLowerCase().trim() === WRONG_TILE);

@@ -21,6 +21,7 @@
 // Dignity: the letter screen is offered, never required; "No, I don't know" is always there; nothing counts a miss.
 
 import { P4 } from './copy4';
+import { P19 } from './copy19';
 import { CLOUD_WAIT_MS, checkedCloud, within, type CloudError } from './engine';
 import { placeOf, subjectOf, type Subject } from './kinds';
 import { cloudWasAppCheck, finish, parseModelOutput, type PipelineEnv } from './pipeline';
@@ -45,6 +46,11 @@ export interface LetterInput {
   topic?: string | null;
   /** Phase 17: the question is about a health matter (the caller reads core/redflag.ts): no model adds a word. */
   rulesOnly?: boolean;
+  /**
+   * Phase 19 (judge round 14, seats 05, 13b, 01: after "something sweet", C gave coffee, cocoa, cola): the kind the person
+   * confirmed last ("something sweet", "a hot meal", "a snack"): its words come first, drinks last after a food kind.
+   */
+  kind?: string | null;
 }
 
 /**
@@ -87,6 +93,39 @@ const lc = (s: string) => s.toLowerCase().trim();
 const bare = (s: string) => lc(s).replace(/^(?:the|a|an|my|your|our|some)\s+/, '');
 /** True when the word starts with the letter (articles left out). */
 export const startsWith = (word: string, letter: string) => bare(word).startsWith(letter.toLowerCase());
+
+/**
+ * Phase 19 (judge round 14, seats 02n, 01, 13, 06v: "yoghurt / yogurt", "shop / shops", "book / books", "mother / mum /
+ * mom", "crossword / crosswords" on one card; "the garden, a walk, a drive" offered again after "go for a walk" had been
+ * passed): one word, whatever its spelling, its plural, its article or its "go for a". For comparing only; a card shows
+ * the word as its list has it.
+ */
+const SPELLING: Record<string, string> = { yoghurt: 'yogurt', yoghurts: 'yogurt', yogurts: 'yogurt', mom: 'mum', mommy: 'mum', mummy: 'mum', mother: 'mum', ma: 'mum', dad: 'dad', daddy: 'dad', father: 'dad', pa: 'dad', donut: 'doughnut', donuts: 'doughnut', telly: 'tv', television: 'tv', grey: 'gray', 'mac and cheese': 'macaroni and cheese', 'mac n cheese': 'macaroni and cheese', 'macaroni cheese': 'macaroni and cheese', granny: 'grandma', gran: 'grandma', nana: 'grandma', nan: 'grandma', grandmother: 'grandma', grandpa: 'grandad', granddad: 'grandad', grandfather: 'grandad', pop: 'grandad', cookie: 'biscuit', cookies: 'biscuit' };
+export function wordKey(w: string): string {
+  let b = lc(w).replace(/[‘’]/g, "'").replace(/^(?:go(?:ing)?\s+(?:out\s+)?(?:for|to)\s+|to\s+)/, '');
+  b = bare(b);
+  if (SPELLING[b]) return SPELLING[b];
+  const ws = b.split(/\s+/);
+  const last = ws[ws.length - 1];
+  const one = SPELLING[last] ?? (last.length > 3 && /ies$/.test(last) ? `${last.slice(0, -3)}y` : last.length > 3 && /(?:sh|ch|x|ss)es$/.test(last) ? last.slice(0, -2) : last.length > 3 && /[^s]s$/.test(last) ? last.slice(0, -1) : last);
+  return [...ws.slice(0, -1), one].join(' ');
+}
+/** True when two words are one word for a card (see `wordKey`). */
+export const sameWord = (a: string, b: string): boolean => wordKey(a) === wordKey(b);
+
+// (a pie and pastry can be savoury, as a pot pie or a pasty: not counted as sweet here)
+const SWEET_W = /\b(?:sweet|sweets|biscuits?|cakes?|chocolates?|ice cream|ice lolly|puddings?|desserts?|candy|cookies?|jam|honey|toffees?|doughnuts?|donuts?|custard|crumble|trifle|tarts?|scones?|muffins?|buns?|brownies?|fudge|jelly|meringues?|cheesecake|cream|crumpets?|flapjacks?|gingerbread|sponge|treacle|caramel|marshmallows?|sorbet|yogh?urt|fruit|apples?|bananas?|grapes|cherries|strawberr\w*|raspberr\w*|blueberr\w*|raisins|sultanas|dates|peach(?:es)?|pears?|plums?|oranges?|melon|pineapple|cupcakes?|eclairs?|danish|waffles?|pancakes?|syrup|mints?|sherbet|lollipops?|sundae|tiramisu|cobbler|shortbread|macaroons?|rock cakes?|teacakes?|bakewell|eton mess|rhubarb)\b/;
+/** Phase 19: how far down a word goes after the kind the person confirmed: 0 the kind's own words, then the rest of the topic, drinks last. */
+function kindRank(w: string, kind: string, drink: (w: string) => boolean): number {
+  const k = lc(kind);
+  const sweet = SWEET_W.test(lc(w));
+  const isDrink = drink(w);
+  if (/\bdrink/.test(k)) return isDrink ? 0 : 1;
+  if (/\bsweet\b/.test(k)) return isDrink ? 2 : sweet ? 0 : 1;
+  if (/\b(?:savoury|savory|meal|lunch|dinner|supper|breakfast)\b/.test(k)) return isDrink ? 2 : sweet ? 1 : 0;
+  if (/\bsnack\b/.test(k)) return isDrink ? 2 : 0;
+  return 0;
+}
 /** True when a later word of it does ("ginger biscuits" under B): offered after the words that start with the letter. */
 const holds = (word: string, letter: string) => bare(word).split(/\s+/).slice(1).some((w) => w.length >= 3 && w.startsWith(letter.toLowerCase()));
 
@@ -135,6 +174,7 @@ function ofKind(word: string, kind: Subject, profile: Profile): boolean {
  */
 export function letterWords(i: LetterInput, profile: Profile): string[] {
   const gone = new Set(i.rejected.map(lc));
+  const goneKeys = new Set(i.rejected.map(wordKey));
   const own = ownWords(profile, i.learned);
   // (phase 17) the topic of the conversation: by the caller's topic, else by what the question is about
   const kind = subjectOf(i.asked, i.rejected);
@@ -149,14 +189,17 @@ export function letterWords(i: LetterInput, profile: Profile): string[] {
   // (a word of another topic is not offered inside a known topic: "the lake" under food was the owner's complaint)
   // (phase 17b: "the lake" and "lake" are one word)
   const ordered = [...starts.filter(inTopic), ...later.filter(inTopic), ...every.filter((w) => startsWith(w, i.letter))]
-    .filter((w, k, xs) => !gone.has(lc(w)) && !gone.has(bare(w)) && xs.findIndex((x) => bare(x) === bare(w)) === k)
+    // (phase 19) a spelling twin, a plural or "go for a" of a word already offered is the same word (`sameWord`)
+    .filter((w, k, xs) => !gone.has(lc(w)) && !gone.has(bare(w)) && !goneKeys.has(wordKey(w)) && xs.findIndex((x) => sameWord(x, w)) === k)
     // a topic word the family's own words already hold ("biscuits" beside "ginger biscuits") is not offered twice
     // (phase 18b: the family's own words only; with the longer lists "pie" stays beside "pot pie", "church" beside "church hall")
     .filter((w, _k, xs) => !(topic && every.includes(w)) || !xs.some((x) => x !== w && !every.includes(x) && bare(x).split(/\s+/).includes(lc(w))));
   if (topic) {
     // inside the topic, the kind the question is about first ("tea or coffee?": a drink before a food)
+    // (phase 19) the kind the person confirmed last comes before the kind of the question ("something sweet": sweet foods, drinks last)
     const first = (w: string) => (topic === 'drink' ? (drinkWord(w) ? 0 : 1) : kind && kind !== 'people' && ofKind(w, kind, profile) ? 0 : 1);
-    return ordered.map((w, k) => ({ w, k })).sort((x, y) => first(x.w) - first(y.w) || x.k - y.k).map((x) => x.w);
+    const byKind = (w: string) => (i.kind && (topic === 'food' || topic === 'drink') ? kindRank(w, i.kind, drinkWord) : 0);
+    return ordered.map((w, k) => ({ w, k })).sort((x, y) => byKind(x.w) - byKind(y.w) || first(x.w) - first(y.w) || x.k - y.k).map((x) => x.w);
   }
   const people = new Set(profile.people.flatMap((p) => [lc(p.name), lc(p.nickname ?? '')]).filter(Boolean));
   const rank = (w: string) => (kind && kind !== 'people' && ofKind(w, kind, profile) ? 0 : people.has(lc(w)) ? 1 : 2);
@@ -238,7 +281,7 @@ export function letterChoices(raw: string[], i: Pick<LetterInput, 'letter' | 're
     if (!c) continue;
     const rule = !startsWith(c, i.letter) ? 'does not start with the letter'
       : isEscapeLabel(c) ? 'a way out is not a word'
-      : gone.has(lc(c)) || kept.some((k) => lc(k) === lc(c)) ? 'already offered'
+      : gone.has(lc(c)) || i.rejected.some((r) => sameWord(r, c)) || kept.some((k) => sameWord(k, c)) ? 'already offered'
       : hasNegative(c) ? 'negative wording'
       : hasPlaceholder(c) || c.split(/\s+/).length > 3 ? 'not a short word'
       : NOT_FROM_A_MODEL.test(c) ? 'alcohol, tobacco or a medicine: only the family adds those'
@@ -310,14 +353,26 @@ export function letterDeviceAsk(i: LetterInput): string {
  * What the carer reads after a word was confirmed on a first-letter card. A word about pain, the toilet, or the doctor
  * or nurse is never left as "a word": it leads on at once (where it hurts; go now; is it pain).
  */
-export function letterEnd(word: string): { follow: string[]; end: string } {
+export function letterEnd(word: string, profile: Profile | null = null): { follow: string[]; end: string; care?: true } {
   const w = lc(word);
-  if (/^(?:pain|in pain)$/.test(w)) return { follow: ['Where does it hurt?'], end: P4.letter.care.pain };
-  if (w === 'toilet') return { follow: [], end: P4.letter.care.toilet };
-  if (w === 'doctor' || w === 'nurse') return { follow: ['Are you in pain?'], end: P4.letter.care.help(w) };
+  if (/^(?:pain|in pain)$/.test(w)) return { follow: ['Where does it hurt?'], end: P4.letter.care.pain, care: true };
+  if (w === 'toilet') return { follow: [], end: P4.letter.care.toilet, care: true };
+  if (w === 'doctor' || w === 'nurse') return { follow: ['Are you in pain?'], end: P4.letter.care.help(w), care: true };
   // (phase 18b) a health place or helper of the longer lists leads on as the doctor does: pain first
-  if (HEALTH_PLACES.test(w)) return { follow: ['Are you in pain?'], end: P4.letter.care.help(word.trim()) };
-  return { follow: [], end: P4.letter.end(word) };
+  if (HEALTH_PLACES.test(w)) return { follow: ['Are you in pain?'], end: P4.letter.care.help(word.trim()), care: true };
+  // (phase 19, judge round 14, seats 05, 13b, 01: "The word is: barber. Ask a yes or no question about it next." with only
+  // "Ask another question") every word found leads on: a place to "Would you like to go to …?", a person to see them,
+  // a thing to bring and check, anything else to one more question about it, as a button
+  const t = word.trim();
+  const p = profile ?? null;
+  const person = !!p && p.people.some((x) => [x.name, x.nickname ?? ''].some((n) => n.trim() && lc(n) === w));
+  if (person) return { follow: [`Would you like to see ${t}?`], end: P19.letter.person(t) };
+  const place = eq(TOPIC_WORDS.plans, t) || placeOf(bare(t))?.subject === 'place' || (!!p && eq(p.places, t));
+  if (place) return { follow: [`Would you like to go to ${/^(?:the|a|an|my|your|our)\s/i.test(t) || /^\p{Lu}/u.test(t) ? t : `the ${t}`}?`], end: P19.letter.place(t) };
+  const parts = [bare(t), ...bare(t).split(/\s+/).filter((x) => x.length >= 3)];
+  const thing = parts.some((x) => eq([...TOPIC_WORDS.food, ...TOPIC_WORDS.drink], x) || ['food', 'drink'].includes(placeOf(x)?.subject ?? '')) || (!!p && eq(p.foods, t));
+  if (thing) return { follow: [`Would you like ${t} now?`], end: P19.letter.thing(t) };
+  return { follow: [`Would you like ${t} now?`], end: P19.letter.other(t) };
 }
 
 /** Phase 18b: the health places and helpers of TOPIC_WORDS (plans, people): never left as "a word". */

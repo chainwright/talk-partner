@@ -51,7 +51,7 @@ const answers = (c: Card) => c.choices.filter((x) => x.role === 'answer');
 const env = (e: MatrixEngine, m: ModelState, c: CloudState) => ({
   profile: SAMPLE_PROFILE, support: 'more' as const, engine: e, allowCloud: c !== 'off', deviceReady: m !== 'absent',
 });
-const PROFILE_WORDS = ['Frank', 'Carol', 'Jenny', 'Tyler', 'pot roast', 'chili', 'the lake', 'hardware store', 'Wheel of Fortune', 'Johnny Cash', 'Beth', 'ginger biscuits'];
+const PROFILE_WORDS = ['Frank', 'Carol', 'Jenny', 'Tyler', 'pot roast', 'chili', 'the lake', 'hardware store', 'the quiz show', 'old country songs', 'Beth', 'ginger biscuits'];
 
 /** Checks that hold for every card in every cell. */
 function invariants(card: Card, e: MatrixEngine, c: CloudState) {

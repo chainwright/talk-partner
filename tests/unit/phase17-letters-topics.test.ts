@@ -65,7 +65,7 @@ const CASES: { topic: string; question: string; target: string }[] = [
   { topic: 'drink', question: 'Would you like water, juice or milk?', target: 'lemonade' },
   { topic: 'people', question: 'Would you like company, or some time alone?', target: 'Tyler' },
   { topic: 'plans', question: 'Would you like to stay in or go out?', target: 'library' },
-  { topic: 'fun', question: 'Would you like to watch the news or a film?', target: 'Wheel of Fortune' },
+  { topic: 'fun', question: 'Would you like to watch the news or a film?', target: 'the quiz show' },
   { topic: 'fun', question: 'Would you like TV or music?', target: 'piano' },
   { topic: 'rest', question: 'Would you like to rest in the bed or the chair?', target: 'sofa' },
   { topic: 'feel', question: 'How are you feeling today?', target: 'scared' },

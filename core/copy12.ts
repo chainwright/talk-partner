@@ -13,6 +13,8 @@ const them = (name: string) => name || 'them';
 const They = (name: string) => name || 'They';
 const their = (name: string) => (name ? `${name}'s` : 'their');
 
+const P12asked = (q: string, label: string) => `Asked "${q.trim()}" and pointed to "${label.trim()}"`;
+
 export const P12 = {
   crisis: {
     /** The choice on the person's feelings card (the third page). A word tile, no cartoon. */
@@ -46,5 +48,15 @@ export const P12 = {
     // (phase 15, judge round 11, the nurse's seat: today, not at the visit, with the call)
     since: (times: string, number: string, line: string) => `Said "I can't go on": ${times} (the safety screen was shown). Take it seriously, every time. If they may harm themselves, call ${number} now; otherwise call ${line ? `${line}, a crisis line,` : 'their doctor or nurse'} now, with them beside you. Tell the doctor or nurse today, not at the visit.`,
     handover: (times: string, number: string, line = '') => `"I can't go on" was chosen (${times}). Take it seriously, every time: do not leave them alone. If they may harm themselves, call ${number} now; otherwise call ${line ? `${line}, a crisis line,` : 'their doctor or nurse'} now, with them beside you. Then tell the doctor or nurse.`,
+    // (phase 19, judge round 14, a P0 of seats 05, 13b and 01: a typed "Do you want to end your life?" answered "no" was
+    // written as 'They chose "I can't go on"' on the safety screen, in the next carer's note, the week and the visit
+    // page: a false record of what the person said) a crisis question the carer typed is quoted as it was asked, with
+    // what they pointed to. The crisis line and the call stay the same: a "no" does not end it.
+    /** "Asked "Do you want to end your life?" and pointed to "no"" (the words as typed and as tapped). */
+    asked: (q: string, label: string) => `Asked "${q.trim()}" and pointed to "${label.trim()}"`,
+    leadAsked: (q: string, label: string) => `${P12asked(q, label)}. Take it seriously, every time, whatever the answer: a "no" does not end it. Do not wait to see if it passes.`,
+    insightAsked: (items: string) => `${items}.`,
+    sinceAsked: (items: string, number: string, line: string) => `${items} (the safety screen was shown). Take it seriously, every time, whatever the answer. If they may harm themselves, call ${number} now; otherwise call ${line ? `${line}, a crisis line,` : 'their doctor or nurse'} now, with them beside you. Tell the doctor or nurse today, not at the visit.`,
+    handoverAsked: (items: string, number: string, line = '') => `${items}. Take it seriously, every time, whatever the answer: a "no" does not end it. Do not leave them alone. If they may harm themselves, call ${number} now; otherwise call ${line ? `${line}, a crisis line,` : 'their doctor or nurse'} now, with them beside you. Then tell the doctor or nurse.`,
   },
 };

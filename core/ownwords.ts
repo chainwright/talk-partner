@@ -23,7 +23,7 @@ import { P16, type OwnFallbackWhy, type OwnGuardKind } from './copy16';
 import { COPY } from './copy';
 import { guessTopic } from './diary';
 import { makeCard } from './pipeline';
-import { crisisAnswer, crisisWords, healthOf, type HealthKind, type RedPlace } from './redflag';
+import { bodyNamed, crisisAnswer, crisisWords, healthOf, healthText, type HealthKind, type RedPlace } from './redflag';
 import { careAnswer, DRINK_FOOD_WORDS } from './reliability';
 import { HOW_BAD, WEAK_NUMB, WHERE_HURTS } from './topics';
 import type { Card, Profile, SupportLevel } from './types';
@@ -72,6 +72,10 @@ function careQuestion(q: string, kind: OwnGuardKind): string {
   const s = lc(q);
   // (phase 17) a health matter the rules cannot word: a yes / no of the app's own that keeps the health step after it
   const h = kind === 'crisis' ? null : healthOf(s);
+  // (phase 19, judge round 14: "hows ur shoulder today" went to the AI sheet) a part of the body named with no pain word:
+  // the rules' own question about it, then the heart-place line or the weakness check after the answer (ownAfter)
+  const part = h === 'heart' || h === 'limb' ? bodyNamed(s) : null;
+  if (part && !/\b(?:pain|pains|painful|hurt|hurts|hurting|sore|ache|aches|aching)\b/.test(healthText(s))) return `Does your ${part} hurt?`;
   if (h === 'chest') return CHEST_Q;
   if (h === 'heart') return HEART_Q;
   if (h === 'stroke') return WEAK_NUMB;
@@ -169,7 +173,8 @@ export const OWN_END = {
   stroke: 'This can be a stroke: call {number} now, and note the time it started. Do not wait to see if it passes.',
   strokeNo: '{They} pointed to no. A yes or no can be wrong after a stroke: check it yourself now. Ask {them} to smile and lift both arms. If one side drops, the face droops or the speech is new and slurred, call {number} now.',
   strokeUnsure: '{They} pointed to not sure. Check it yourself now: ask {them} to smile and lift both arms. If one side drops, the face droops or the speech is new and slurred, call {number} now.',
-  limb: 'A pain in an arm, a leg, a hand or the face: ask first whether it is suddenly weak or numb. Sudden weakness or numbness: call {number} now.',
+  // (phase 19, judge round 14, seat 01: the arm line named a stroke only) an arm pain can be the heart too
+  limb: 'A pain in an arm, a leg, a hand or the face: ask first whether it is suddenly weak or numb. Sudden weakness or numbness: call {number} now. Arm pain with chest pain, sweating, sickness or breathlessness can come from the heart: call {number} now.',
   fall: 'A fall: call {number} now if the head was hit, if getting up is not possible, or if there is new pain. Do not lift {them} if it hurts to move.',
   fallNo: '{They} pointed to no. If you saw or heard a fall, go by what you saw: ask where it hurts, and call {number} if the head was hit.',
   unwell: 'Look for signs of being unwell: grey, pale, sweaty, confused, or not {their} usual self. If it is new or sudden, call {number} now. Check the face and arms: ask {them} to smile and lift both arms.',
@@ -210,11 +215,41 @@ export async function ownFallbackCard(q: string, blocked: Card, why: OwnFallback
   let near = false;
   if (!usable(card)) {
     const topic = guessTopic(q);
-    const nq = kind ? careQuestion(q, kind) : NEAREST[topic] ?? NEAREST.other;
+    const nq = kind ? careQuestion(q, kind) : nearestFor(q, topic);
     card = await rulesOnly(nq, env);
     near = true;
+    // (phase 19) the carer's own words stay the card's headline, over the nearest card's choices, when those fit them
+    if (!kind && topic !== 'other' && usable(card)) return { ...card, own: { asked: q, fallback: { why, left, near, keep: true } } };
   }
   return { ...card, own: { asked: q, fallback: { why, left, near } } };
+}
+
+/**
+ * Phase 19 (judge round 14, seats 01, 13b and 05: "What do you fancy for lunch today?" stood in as "Would you like
+ * something to eat or something to drink?"): the nearest ready question for words of food keeps to what they name. A
+ * meal: hot or cold; a snack or something sweet: sweet or savoury; a drink: hot or cold. Each is a question of the trees.
+ */
+export function nearestFor(q: string, topic: string): string {
+  const s = lc(q);
+  if (topic === 'food') {
+    if (/\b(?:drink|drinks|thirsty|cuppa|tea|coffee|juice|water)\b/.test(s) && !/\b(?:eat|food|meal|lunch|dinner|supper|breakfast)\b/.test(s)) return 'Would you like a hot drink or a cold drink?';
+    if (/\b(?:snack|snacks|sweet|treat|pudding|dessert|nibble)\b/.test(s)) return 'Would you like something sweet or something savoury?';
+    if (/\b(?:lunch|dinner|supper|breakfast|teatime|meal|meals|eat|food|hungry|cook|fancy)\b/.test(s)) return 'Would you like a hot meal or a cold meal?';
+  }
+  return NEAREST[topic] ?? NEAREST.other;
+}
+
+/**
+ * Phase 19: the card as the carer and the person see it. A stand-in that keeps the carer's words (`fallback.keep`)
+ * shows their question as typed over the nearest card's choices, and the line to say starts with it. Everything else
+ * of the card (its question for the trees, its choices) is unchanged.
+ */
+export function shownCard(c: Card): Card {
+  const f = c.own?.fallback;
+  if (!f?.keep || !c.own) return c;
+  const asked = c.own.asked.trim();
+  const tail = c.say.startsWith(c.asked) ? c.say.slice(c.asked.length).trim() : c.say;
+  return { ...c, asked, say: `${asked} ${tail}`.trim() };
 }
 
 /** The one line over a fall-back card: what happened to the question, then what the rules did. */

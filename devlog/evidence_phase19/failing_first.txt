@@ -1,0 +1,52 @@
+Phase 19: tests/unit/phase19.test.ts run before the code (stub exports only, so each test runs), 24 Nov 2026.
+49 of 49 failed.
+
+     × "Do you want to end your life?" answered "no": the safety screen, the handover, the week and the visit page quote it as asked 4ms
+     × "Do you want to end your life?" answered "not sure": the safety screen, the handover, the week and the visit page quote it as asked 0ms
+     × "Do you want to end your life?" answered "good": the safety screen, the handover, the week and the visit page quote it as asked 0ms
+     × "Do you want to end your life?" answered "Not now": the safety screen, the handover, the week and the visit page quote it as asked 0ms
+     × the screen passes what was asked and answered to the safety screen 4ms
+     × Where in the stomach? upper stomach, then "a little": the note leads with call now whatever the amount, never "Ask again on your shift" 1ms
+     × Where in the stomach? upper stomach, then "quite bad": the note leads with call now whatever the amount, never "Ask again on your shift" 1ms
+     × Where in the stomach? upper stomach, then "not sure": the note leads with call now whatever the amount, never "Ask again on your shift" 0ms
+     × Where in the back? upper back, then "a little": the note leads with call now whatever the amount, never "Ask again on your shift" 0ms
+     × Where in the back? upper back, then "quite bad": the note leads with call now whatever the amount, never "Ask again on your shift" 0ms
+     × Where in the back? upper back, then "not sure": the note leads with call now whatever the amount, never "Ask again on your shift" 0ms
+     × Where does it hurt? jaw, then "a little": the note leads with call now whatever the amount, never "Ask again on your shift" 0ms
+     × Where does it hurt? jaw, then "quite bad": the note leads with call now whatever the amount, never "Ask again on your shift" 0ms
+     × Where does it hurt? jaw, then "not sure": the note leads with call now whatever the amount, never "Ask again on your shift" 0ms
+     × Where does it hurt? shoulder, then "a little": the note leads with call now whatever the amount, never "Ask again on your shift" 0ms
+     × Where does it hurt? shoulder, then "quite bad": the note leads with call now whatever the amount, never "Ask again on your shift" 0ms
+     × Where does it hurt? shoulder, then "not sure": the note leads with call now whatever the amount, never "Ask again on your shift" 0ms
+     × typed "Does your jaw hurt?" yes: the warning line of the note is the chest-type line 0ms
+     × a chest question left for later: STILL OPEN says call now whatever the amount, never "if it is sudden or severe" 0ms
+     × the handover is given the red flag of each question left for later 1ms
+     × Home: a red question left for later is drawn at the very top, red, with its call line (never a calm green card lower down) 0ms
+     × "Not now" inside a chest flow: the carer's line is a red box, never "Come back to it later, and say when" 2ms
+     × a warning question answered "no" stays in the note as asked and answered 0ms
+     × "Is ur chesst hurtin?" is guarded as a warning sign, never the AI 1ms
+     × "Can u breth ok?" is guarded as a warning sign, never the AI 0ms
+     × "can u brethe" is guarded as a warning sign, never the AI 0ms
+     × "does ur hart hurt" is guarded as a warning sign, never the AI 1ms
+     × "shortness of breth" is guarded as a warning sign, never the AI 0ms
+     × "ur brething funny" is guarded as a warning sign, never the AI 0ms
+     × "u ok?" is guarded as a warning sign, never the AI 0ms
+     × "r u ok" is guarded as a warning sign, never the AI 0ms
+     × "u ok luv" is guarded as a warning sign, never the AI 0ms
+     × "ur back hurtin?" is kept from the AI 0ms
+     × a body part named alone, with no pain word: the rules' body card with the heart-place line 0ms
+     × ordinary words near the health words are left alone 1ms
+     × "Are you in pain?" yes: no "A yes or no can be wrong… please check", a line that takes the yes as a yes 0ms
+     × "Are you in pain?" no: a line to watch, not the generic check 0ms
+     × the screen prints the row's own line 5ms
+     × a cloud answer that comes after the wait is handed to onLate as a card of the AI 46ms
+     × the screen puts a late card in place of the stand-in only while that card is still shown, labelled 2ms
+     × a carer-started cloud step clears the in-page App Check refusal first 2ms
+     × the stand-in keeps the carer's words: "lunch" is never turned into "eat or drink?" 4ms
+     × the carer's and the person's screens show the kept words 3ms
+     × after "something sweet", C gives sweet foods first and no drink in the first three 2ms
+     × after "a hot meal", no drink and no sweet in the first three 162ms
+     × spelling variants and plurals are one word: yoghurt/yogurt, shop/shops, book/books, mum/mom 0ms
+     × "More choices like these" never offers a word already shown and passed in the conversation 0ms
+     × "The word is: X." always has a next step: a question to tap, and a line that says what to do 0ms
+     × no third-party name in the sample family or anywhere in the app's code 0ms

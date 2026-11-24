@@ -71,7 +71,8 @@ describe('the brief\'s case: "B" with Beth, Bo and biscuits in About them', () =
     expect(card.choices[0].spoken).toBe('ginger biscuits');
     expect(card.say).toBe('It starts with B. Is it ginger biscuits, bread, banana, or something else?');
     expect(card.why?.personal).toEqual(['ginger biscuits']);
-    expect(letterEnd(card.choices[0].spoken).end).toBe('The word is: ginger biscuits. Ask a yes or no question about it next.');
+    // (phase 19, judge round 14: a word found always leads on: a thing to bring and check)
+    expect(letterEnd(card.choices[0].spoken).end).toBe('The word is: ginger biscuits. Bring it, or show it, and check with them: "Is this it?"');
   });
   it('the kind of the conversation first, then people, then the rest: after "tea or coffee?" a drink stands before a person', () => {
     const p: Profile = { ...MILLER, people: [...MILLER.people, { id: 'p4', name: 'Mary', relation: 'sister', household: false }], foods: ['strong tea with milk', 'marmalade', 'porridge'] };
@@ -248,7 +249,7 @@ describe('what a model may not put on a card (worst cases)', () => {
 
 describe('health safety: a word about pain, the toilet or the doctor is never left as "a word"', () => {
   it('"pain" leads on to where it hurts, with the line about the nurse or doctor', () => {
-    expect(letterEnd('pain')).toEqual({ follow: ['Where does it hurt?'], end: P4.letter.care.pain });
+    expect(letterEnd('pain')).toEqual({ follow: ['Where does it hurt?'], end: P4.letter.care.pain, care: true });
     expect(letterEnd('pain').end).toMatch(/call the nurse or doctor/);
   });
   it('"toilet" says go now; "doctor" and "nurse" ask about pain first', () => {
@@ -260,8 +261,9 @@ describe('health safety: a word about pain, the toilet or the doctor is never le
     for (const w of ['pain', 'toilet', 'doctor', 'nurse', 'Bo', 'tea']) expect(letterEnd(w).end).not.toMatch(/later|tired|wait and see|less sure/i);
     expect(JSON.stringify(P4.letter)).not.toMatch(/may be tired|less sure|try again later/i);
   });
-  it('any other word: the word, and a yes or no question next', () => {
-    expect(letterEnd('Bo')).toEqual({ follow: [], end: 'The word is: Bo. Ask a yes or no question about it next.' });
+  // (phase 19, judge round 14, seats 05, 13b, 01: "Ask a yes or no question about it next." with no question to tap)
+  it('any other word: the word, and one more question about it, as a button', () => {
+    expect(letterEnd('Bo')).toEqual({ follow: ['Would you like Bo now?'], end: 'The word is: Bo. Ask one more question about it.' });
   });
 });
 

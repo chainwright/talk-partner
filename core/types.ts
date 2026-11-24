@@ -112,6 +112,8 @@ export interface CardWhy {
 export interface Card {
   /** The question shown on this card (first part if the input was split). */
   asked: string;
+  /** Phase 19: a card of the cloud whose answer came after the 20 s wait (core/pipeline.ts, onLate). */
+  late?: true;
   /** The second part of a split question, for "Next". */
   pending: string | null;
   topic: string;
@@ -196,7 +198,7 @@ export interface Card {
    * help (why, and what left for the original question), so this is the rules' best card. `pending`: the blocked card
    * waits for the consent sheet or the fall-back, and is no step of its own for Back.
    */
-  own?: { asked: string; guard?: 'care' | 'red' | 'crisis'; /** Phase 17: what the carer's words are about (core/redflag.ts): the answer's next step and the notes for others. */ matter?: 'chest' | 'heart' | 'stroke' | 'fall' | 'unwell' | 'sugar' | 'limb' | 'pain'; fallback?: { why: 'no' | 'offline' | 'check' | 'failed' | 'none'; left: 'nothing' | 'maybe' | 'sent'; near: boolean }; pending?: boolean };
+  own?: { asked: string; guard?: 'care' | 'red' | 'crisis'; /** Phase 17: what the carer's words are about (core/redflag.ts): the answer's next step and the notes for others. */ matter?: 'chest' | 'heart' | 'stroke' | 'fall' | 'unwell' | 'sugar' | 'limb' | 'pain'; fallback?: { why: 'no' | 'offline' | 'check' | 'failed' | 'none'; left: 'nothing' | 'maybe' | 'sent'; near: boolean; /** Phase 19: the carer's words are the headline (core/ownwords.ts, shownCard). */ keep?: true }; pending?: boolean };
   /** Paged fixed list (body map at "more"): the escape on this card leads to the next page. */
   nextPage?: Card | null;
   /** Notes for the partner screen (e.g. "cloud not configured: card kept from device"). */

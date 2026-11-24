@@ -135,7 +135,7 @@ export function laterBlock(items: { q: string; time: string; ago?: string; i: nu
   const buttons = (x: (typeof items)[number]) => (x.asking
     ? `<p class="later-found" id="later-found-${x.i}" tabindex="-1"><b>${L.found}</b></p><div class="two-btn"><button type="button" class="btn" data-act="later-found" data-i="${x.i}">${L.foundYes}</button><button type="button" class="btn quiet" data-act="later-notyet" data-i="${x.i}">${L.foundNo}</button></div>`
     : `<div class="two-btn"><button type="button" class="btn" data-act="later-ask" data-i="${x.i}">${L.ask}</button><button type="button" class="btn quiet" data-act="later-done" data-i="${x.i}">${L.done}</button></div>`);
-  const item = (x: (typeof items)[number]) => `<div class="later-item${x.care ? ' care' : ''}" data-later="${x.i}"${x.care ? ' data-care="1"' : ''}><p><b>${esc(L.line(x.q, x.time))}</b></p>${x.ago ? `<p class="tip later-ago">${esc(x.ago)}</p>` : ''}${x.red ? `<p class="warn later-pain later-red" role="alert">${esc(L.redLine(x.red, x.time, number))}</p>${painHtml}` : x.pain ? `<p class="warn later-pain">${esc(L.painLine(number))}</p>${painHtml}` : ''}${buttons(x)}</div>`;
+  const item = (x: (typeof items)[number]) => `<div class="later-item${x.care ? ' care' : ''}${x.red ? ' red' : ''}" data-later="${x.i}"${x.care ? ' data-care="1"' : ''}><p><b>${esc(L.line(x.q, x.time))}</b></p>${x.ago ? `<p class="tip later-ago">${esc(x.ago)}</p>` : ''}${x.red ? `<p class="warn later-pain later-red" role="alert">${esc(L.redLine(x.red, x.time, number))}</p>${painHtml}` : x.pain ? `<p class="warn later-pain">${esc(L.painLine(number))}</p>${painHtml}` : ''}${buttons(x)}</div>`;
   return `<div class="later" id="later">${items.map(item).join('')}<p class="tip">${items.some((x) => x.care) ? L.careNote : L.note}</p></div>`;
 }
 
@@ -194,7 +194,9 @@ export function homeScreen(m: HomeModel): string {
   const S = COPY.simple;
   // (phase 12b, judge round 9b: a pain question left for later stands at the top, so its signs and call button are on
   // the screen at 360 px; phase 16: above "Ask in your own words" too; other questions left for later stay lower down)
-  const painLater = (m.laterHtml ?? '').includes('class="warn later-pain"');
+  // (phase 19, judge round 14, the nurse's seat: a chest question left for later sat 1.5 screens down in a green card: its
+  // class is "warn later-pain later-red", which the old test for 'class="warn later-pain"' did not match)
+  const painLater = (m.laterHtml ?? '').includes('later-pain');
   const status = m.busy ? `<p class="making" role="status"><span class="dot wait"></span>${S.making}</p>` : m.error ? `<p class="warn" role="alert">${esc(m.error)}</p>` : '';
   return `<main class="simple wrap home" data-screen="home">
   ${navBar({ back: false, name: m.name })}
@@ -532,7 +534,8 @@ export function answeredScreen(m: AnsweredModel): string {
   // (phase 13: under a safety-check alert the call button is the main action; "Ask another question" is not primary)
   const another = `<button type="button" class="btn${m.next || lead || m.out || m.alertHtml || m.openHtml ? '' : ' primary'}" id="another" data-act="new">${lead ? S.anotherElse : S.another}</button>`;
   // (phase 17: the alert, with its call button, is the one call box and stands at the top, over the answer)
-  const end = m.alertHtml ? '' : m.end && !lead ? `<p class="do-now" id="do-now">${SIGN.tick}<span><small>${S.doNow}</small>${esc(m.end)}</span></p>` : '';
+  // (phase 19: a word found by its letters keeps its line, what to do with it, over the next question it leads to)
+  const end = m.alertHtml ? '' : m.end && (!lead || m.end.startsWith('The word is: ')) ? `<p class="do-now" id="do-now">${SIGN.tick}<span><small>${S.doNow}</small>${esc(m.end)}</span></p>` : '';
   // the way out was chosen: what to do now, in order of how often it helps (never a dead end)
   const online = m.narrow === 'cloudOn' || m.narrow === 'ask';
   const narrow = m.narrow ? `<button type="button" class="btn narrow" id="narrow" data-act="narrow" ${m.narrow === 'offline' ? 'disabled' : ''}>${SIGN.spark}<span>${online ? S.narrow.goOnline : S.narrow.go}</span></button>

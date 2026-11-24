@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { COPY } from '../../core/copy';
+import { P19 } from '../../core/copy19';
 import { P4 } from '../../core/copy4';
 import { P5 } from '../../core/copy5';
 import { P9 } from '../../core/copy9';
@@ -175,9 +176,10 @@ describe('P0 health: no praise and no "nothing to change" over an urgent day or 
     expect(s.end).toMatch(/A yes can be wrong after a stroke/);
     expect(s.next).toEqual(['Are you in pain?']);
   });
-  it('the doctor page: every yes or no answer says "please check"; the footer says pointed answers', () => {
+  // (phase 19, judge round 14, the SLP's seat: a yes to pain is not doubted; a no to pain gets its own line to watch)
+  it('the doctor page: a "no" to pain says a no can be wrong and to watch; the footer says pointed answers', () => {
     const r = { startedAt: NOW, done: true, answers: [{ id: 'pain' as const, q: 'Are you in pain?', label: 'no', at: NOW }] };
-    expect(visitText(r, 'Frank')).toContain(`Are you in pain? no (12:00) ${P4.visit.check}`);
+    expect(visitText(r, 'Frank')).toContain(`Are you in pain? no (12:00) ${P19.visitNo}`);
     expect(P4.visit.footer('Frank')).toMatch(/^Frank's pointed answers/);
   });
 });

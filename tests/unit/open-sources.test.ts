@@ -56,9 +56,9 @@ describe('§2.6: allowed sources for an open question', () => {
   });
 
   it('watch, listen, eat: the list of the same kind', () => {
-    expect(sourceFill(['the news'], 'What do you want to watch tonight?', SAMPLE_PROFILE, 2)).toEqual({ answers: ['the news', 'Wheel of Fortune'], source: 'TV from About me' });
+    expect(sourceFill(['the news'], 'What do you want to watch tonight?', SAMPLE_PROFILE, 2)).toEqual({ answers: ['the news', 'quiz show'], source: 'TV from About me' });
     // one entry used to be no card; since the simulation of 16.11 the radio stands next to it, and no second artist is made up
-    expect(sourceFill([], 'What shall I put on to listen to?', SAMPLE_PROFILE, 2)).toEqual({ answers: ['Johnny Cash', 'radio'], source: 'music from About me and the radio' });
+    expect(sourceFill([], 'What shall I put on to listen to?', SAMPLE_PROFILE, 2)).toEqual({ answers: ['old country songs', 'radio'], source: 'music from About me and the radio' });
     expect(sourceFill([], 'What shall I put on to listen to?', { ...SAMPLE_PROFILE, music: [] }, 2)).toBeNull(); // no music in About me: no card from code
     expect(sourceFill([], 'What shall I put on to listen to?', { ...SAMPLE_PROFILE, music: ['Johnny Cash', 'the radio'] }, 2)).toEqual({ answers: ['Johnny Cash', 'radio'], source: 'music from About me' });
     expect(sourceFill(['soup'], 'What do you fancy to eat?', SAMPLE_PROFILE, 3)).toEqual({ answers: ['soup', 'pot roast', 'chili'], source: 'foods from About me' });

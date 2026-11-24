@@ -95,7 +95,9 @@ describe('what an entry counts as', () => {
   it('pain, the toilet, tired, a bad night', () => {
     expect(tags(ans('Are you in pain?', 'yes', 1))).toEqual(['pain']);
     expect(tags(ans('Are you in pain?', 'no', 1))).toEqual([]);
-    expect(tags(ans('Where does it hurt?', 'right shoulder', 1))).toEqual(['pain']);
+    expect(tags(ans('Where does it hurt?', 'right knee', 1))).toEqual(['pain']);
+    // (phase 19, judge round 14: a shoulder can be the heart, so the notes say call now, as the screen does)
+    expect(tags(ans('Where does it hurt?', 'right shoulder', 1))).toEqual(['pain', 'place-pain']);
     expect(tags(ans('How are you feeling today?', 'in pain', 1))).toEqual(['pain']);
     expect(tags(ans('How bad is the pain?', 'quite bad', 1))).toEqual(['pain', 'strong-pain']);
     expect(tags(ans('How bad is the pain?', 'a little', 1))).toEqual(['pain']);

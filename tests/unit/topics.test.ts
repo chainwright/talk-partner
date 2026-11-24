@@ -111,8 +111,9 @@ describe('the family\'s own questions are added under the generic one, never in 
   it('places, a show and music from About them each add one question', () => {
     const own = ownQuestions(SAMPLE_PROFILE).map((o) => o.q);
     expect(own).toContain('Where would you like to go? The lake or church?');
-    expect(own).toContain('Would you like to watch Wheel of Fortune?');
-    expect(own).toContain('Would you like to listen to Johnny Cash?');
+    // (phase 19: the sample family names no show, team or singer)
+    expect(own).toContain('Would you like to watch the quiz show?');
+    expect(own).toContain('Would you like to listen to old country songs?');
     expect(ownQuestions({ ...EMPTY_PROFILE, people: [], foods: ['porridge'] }).map((o) => o.q)).toEqual(['Would you like porridge?']);
   });
   it('a card made from the family\'s own foods shows them whole', async () => {

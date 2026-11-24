@@ -96,9 +96,10 @@ describe('1. a crisis: any answer, typed or on a card of the tree, keeps the cri
   it('the screen draws the crisis box over the answer, and the phone given back opens the safety screen', () => {
     const main = read('web/src/main.ts');
     expect(main).toContain("step0.crisis ? ownCrisisBox({ line: P16.crisisBox, number: callNumber(), crisisLine: crisisLineNow(), guess: numberGuess() }) : ''");
-    expect(main).toContain("else if (state.confirmed && (crisisAnswer(state.picked?.label ?? '') || state.card?.own?.guard === 'crisis')) toCrisis();");
+    // (phase 19: and the safety screen is told what was asked and pointed to, crisisAsked)
+    expect(main).toContain("else if (state.confirmed && (crisisAnswer(state.picked?.label ?? '') || state.card?.own?.guard === 'crisis')) { crisisFrom = crisisAsked(); toCrisis(); }");
     // the person's own "Not now" on a crisis card: the safety screen, never Home alone
-    expect(main).toContain("if (c.own?.guard === 'crisis') { makeSeq++; state.busy = false; resetCard(); toCrisis(); return; }");
+    expect(main).toContain("if (c.own?.guard === 'crisis') { makeSeq++; state.busy = false; resetCard(); crisisFrom = { q: c.own.asked, label: C.simple.person.notNow }; toCrisis(); return; }");
   });
   it('the diary keeps a typed crisis: its answer is tagged "crisis", so the week and the next carer read it first', async () => {
     const e = answerEntry({ q: 'Do you want to die?', label: 'no', at: 1 }, 'feelings' as never) as DiaryEntry;

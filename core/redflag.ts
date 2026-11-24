@@ -214,7 +214,7 @@ const H_SPEECH = /\b(?:words?|talk\w*|speak\w*|speech|voice)\b.{0,24}\b(?:worse|
 const H_HEART = /\b(?:upper (?:stomach|tummy|belly|abdomen|back)|top of (?:the |your |his |her )?(?:stomach|tummy)|jaw|jaws|shoulders?|between (?:the |your |his |her |my )?shoulders?|shoulder ?blades?)\b/;
 const H_LIMB_ODD = /\b(?:funny|different|odd|strange|weird|dead|heavy|lower|lift|raise|grip|can'?t move|cannot move|won'?t move|not working|useless|floppy|(?:what'?s|what is) (?:up|wrong) with|wrong with|happened to|ok|okay|alright|all right)\b/;
 const H_FALL = /\b(?:fall|falls|fell|fallen|falling|tripped|trip over|slipped|slip over|did you slip|collapse\w*|on the floor)\b/;
-const H_UNWELL = /\b(?:are you (?:ok|okay|alright|all right)|you (?:look|seem|seems|looks|feel) (?:grey|gray|pale|unwell|ill|poorly|off|strange|odd|clammy|sweaty|hot|flushed|different|funny|rough)|(?:look|looks|looking|seem|seems) (?:grey|gray|pale|unwell|ill|poorly|clammy|sweaty|flushed)|not (?:yourself|himself|herself|themselves|right|well)|(?:something|anything)(?:'s| is)? wrong|grey|gray|pale|clammy|sweat\w*|vomit\w*|sick|throw(?:ing)? up|nause\w*|unwell|poorly|ill|fever\w*|(?:a|your|his|her|their|high) temperature|shiver\w*|faint\w*|dizzy|dizziness|light-?headed|blackout|passed out|pass out|bleed\w*|blood|choke|choking|swallow\w*|cough\w*)\b/;
+const H_UNWELL = /\b(?:(?:are )?you (?:ok|okay|alright|all right)(?! with| for| to| if)|you (?:look|seem|seems|looks|feel) (?:grey|gray|pale|unwell|ill|poorly|off|strange|odd|clammy|sweaty|hot|flushed|different|funny|rough)|(?:look|looks|looking|seem|seems) (?:grey|gray|pale|unwell|ill|poorly|clammy|sweaty|flushed)|not (?:yourself|himself|herself|themselves|right|well)|(?:something|anything)(?:'s| is)? wrong|grey|gray|pale|clammy|sweat\w*|vomit\w*|sick|throw(?:ing)? up|nause\w*|unwell|poorly|ill|fever\w*|(?:a|your|his|her|their|high) temperature|shiver\w*|faint\w*|dizzy|dizziness|light-?headed|blackout|passed out|pass out|bleed\w*|blood|choke|choking|swallow\w*|cough\w*)\b/;
 const H_SUGAR = /\b(?:diabet\w*|blood sugar|sugar levels?|insulin|hypo|hypos|glucose|blood pressure|bp)\b/;
 // "sugar" on its own is a health matter, unless it goes into a drink or a food ("sugar in your tea", "milk and sugar")
 const SUGAR_WORD = /\bsugar\b/;
@@ -222,8 +222,68 @@ const SUGAR_FOOD = /\b(?:sugar in (?:it|that|this|your|his|her|their|the|my)?\s*
 const H_PAIN = /\b(?:pain|pains|painful|hurt|hurts|hurting|sore|soreness|ache|aches|aching|achy|headache|headaches|tummy ache|stomach ache|cramp\w*|throb\w*)\b/;
 const H_HEAD = /\b(?:head|headache|headaches)\b/;
 
+/**
+ * Phase 19 (judge round 14, a P0 of seats 13b and 05: "Is ur chesst hurtin? Yes" and "Can u breth ok? No" ended on a
+ * green tick, "hows ur shoulder today" went to the AI sheet). The carer's words as the word lists read them: text-speak
+ * and the commonest short misspellings mapped by a fixed table, then any longer word one edit away (a letter added,
+ * dropped, changed, or two swapped) from a word of the health lists. Ordinary words one edit away from a health word
+ * ("chess", "heard", "wreath", "hunting") are left as they are. The worst case of a wrong match is a rules card for an
+ * everyday question; of a miss, a health question that reaches the AI, so the table errs on the side of a match.
+ */
+const TEXT_SPEAK: Record<string, string> = {
+  u: 'you', ya: 'you', yu: 'you', ur: 'your', yr: 'your', yer: 'your', r: 'are', cant: "can't", cnt: "can't", dont: "don't", wont: "won't",
+  hows: "how's", whats: "what's", luv: 'love', hed: 'head', haed: 'head', hert: 'hurt', herts: 'hurts', hurtin: 'hurting', hurtn: 'hurting',
+  hertin: 'hurting', achin: 'aching', brethin: 'breathing', breathin: 'breathing', bak: 'back', tumy: 'tummy', hart: 'heart', ches: 'chest', chst: 'chest',
+  brth: 'breath', breth: 'breath', breeth: 'breath', brethe: 'breathe', sholder: 'shoulder', shoulda: 'shoulder', stomache: 'stomach', pian: 'pain', painfull: 'painful',
+};
+const FUZZY_WORDS = ['chest', 'breath', 'breathe', 'breathing', 'breathless', 'shoulder', 'shoulders', 'stomach', 'hurting', 'painful', 'headache', 'tightness', 'numbness', 'weakness', 'heart', 'dizziness', 'swallow', 'swallowing'];
+const NOT_FUZZY = new Set(['chess', 'cheat', 'cheats', 'crest', 'chested', 'breadth', 'wreath', 'breaths', 'heard', 'hears', 'hearth', 'hearty', 'hearts', 'hunting', 'hurling', 'hurtling', 'smoulder', 'shoulders', 'stomachs', 'headaches', 'swallows', 'sallow']);
+/** True when a and b are one edit apart (Damerau: one letter added, dropped, changed, or two neighbours swapped). */
+function oneEdit(a: string, b: string): boolean {
+  if (a === b || Math.abs(a.length - b.length) > 1) return false;
+  if (a.length === b.length) {
+    const d = [...a].map((c, i) => (c === b[i] ? -1 : i)).filter((i) => i >= 0);
+    return d.length === 1 || (d.length === 2 && d[1] === d[0] + 1 && a[d[0]] === b[d[1]] && a[d[1]] === b[d[0]]);
+  }
+  const [s, l] = a.length < b.length ? [a, b] : [b, a];
+  for (let i = 0; i < l.length; i++) if (l.slice(0, i) + l.slice(i + 1) === s) return true;
+  return false;
+}
+/** The carer's words as the health lists read them (lower case, text-speak and misspellings mapped). */
+export function healthText(q: string): string {
+  return H_LC(q).replace(/[a-z']+/g, (w) => {
+    if (TEXT_SPEAK[w]) return TEXT_SPEAK[w];
+    if (w.length < 5 || NOT_FUZZY.has(w) || FUZZY_WORDS.includes(w)) return w;
+    return FUZZY_WORDS.find((t) => t.length >= 5 && oneEdit(w, t)) ?? w;
+  });
+}
+/**
+ * Phase 19 (judge round 14, seats 13b and 01): a part of the body named with no pain word ("shoulder", "hows ur
+ * shoulder today", "my arm"): a body question all the same. Named alone in a short question, or after "your", "my",
+ * "his", "her" or "their"; never "hold your hand", "wash your hands" or "a hand with that".
+ */
+const BARE_HEART = /\b(?:shoulders?|jaw|jaws|upper (?:stomach|tummy|belly|abdomen|back)|between (?:the |your |his |her |my )?shoulders?|shoulder ?blades?)\b/;
+const BARE_LIMB = /\b(?:arms?|legs?|hands?|foot|feet|knees?|hips?|elbows?|wrists?|ankles?|neck)\b/;
+const OWNED = (part: string) => new RegExp(`\\b(?:your|my|his|her|their)\\s+(?:(?:left|right|bad|weak|sore|good)\\s+)?${part}`);
+const NOT_A_BODY_Q = /\b(?:hold|holding|wash|washing|dry|drying|clean|cleaning|warm|warming|cream|lend|give|shake|clap)\b(?:\s+\w+){0,2}\s+(?:your|my|his|her|their)\s+(?:hands?|feet|foot|arms?|legs?)\b|\ba hand\b/;
+function bareBody(s: string): 'heart' | 'limb' | null {
+  if (NOT_A_BODY_Q.test(s)) return null;
+  const short = s.replace(/[^a-z' ]/g, ' ').trim().split(/\s+/).length <= 3;
+  const m = BARE_HEART.exec(s);
+  if (m && (short || OWNED('(?:shoulders?|jaws?|upper|back)').test(s))) return 'heart';
+  const l = BARE_LIMB.exec(s);
+  if (l && (short || OWNED(l[0]).test(s))) return 'limb';
+  return null;
+}
+/** Phase 19: the part of the body a question names alone ("shoulder", "my arm"), for the rules' question "Does your shoulder hurt?". */
+export function bodyNamed(q: string): string | null {
+  const s = healthText(q);
+  if (bareBody(s) === null) return null;
+  return (BARE_HEART.exec(s) ?? BARE_LIMB.exec(s))?.[0] ?? null;
+}
+
 export function healthOf(q: string): HealthKind | null {
-  const s = H_LC(q);
+  const s = healthText(q);
   if (!s) return null;
   const body = s.replace(NOT_BODY_TIGHT, ' ');
   if (H_CHEST.test(body)) return 'chest';
@@ -234,7 +294,7 @@ export function healthOf(q: string): HealthKind | null {
   if (H_SUGAR.test(s) || (SUGAR_WORD.test(s) && !SUGAR_FOOD.test(s))) return 'sugar';
   if (H_LIMB.test(s) && H_PAIN.test(s)) return 'limb';
   if (H_PAIN.test(s) || H_HEAD.test(s)) return 'pain';
-  return null;
+  return bareBody(s);
 }
 
 /**

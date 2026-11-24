@@ -74,12 +74,14 @@ export function ownCrisisBox(m: { line: string; number: string; crisisLine: stri
   return `<div class="urgent crisis" id="own-crisis" role="alert">${ALERT}<div><b>${esc(m.line)}</b><div class="urgent-acts">${callButton(m.number)}${m.crisisLine && m.crisisLine !== m.number ? `<a class="btn call" data-call="1" href="${telHref(m.crisisLine)}">${PHONE}<span>${esc(K.callLine(m.crisisLine))}</span></a>` : ''}<a class="tlink" href="#/crisis">${K.open} →</a></div>${guessLine(!!m.guess, 'own-crisis-guess')}</div></div>`;
 }
 /** The calm safety screen after "I can't go on": fixed steps, two call buttons, what the list is and is not. No AI anywhere in it. */
-export function crisisScreen(m: { name: string; number: string; line: string; lineGuess: boolean; numberGuess: boolean }): string {
+// (phase 19, judge round 14, a P0: after a typed crisis question answered "no", this screen said 'They chose "I can't go
+// on"') `asked`: the carer's typed question and what the person pointed to; the lead then quotes them, as they were
+export function crisisScreen(m: { name: string; number: string; line: string; lineGuess: boolean; numberGuess: boolean; asked?: { q: string; label: string } | null }): string {
   const K = P12.crisis;
   const lineBtn = m.line ? `<a class="btn call big second" data-call="1" href="${telHref(m.line)}">${PHONE}<span>${esc(K.callLine(m.line))}</span></a>` : '';
   const steps = [K.stay(m.name), K.danger(m.name, m.number), m.line ? K.line(m.name, m.line) : K.noLine(m.name), K.ask(m.name), K.no, K.means, K.tell(m.name)];
   return `<main class="simple wrap one sudden crisis-screen" data-screen="crisis">${navBar({ back: true })}
-  <div><h1 id="crisis-h">${esc(K.heading(m.name))}</h1><p class="sub" id="crisis-lead">${esc(K.lead(m.name))}</p></div>
+  <div><h1 id="crisis-h">${esc(K.heading(m.name))}</h1><p class="sub" id="crisis-lead">${esc(m.asked ? K.leadAsked(m.asked.q, m.asked.label) : K.lead(m.name))}</p></div>
   ${callButton(m.number, true)}${guessLine(m.numberGuess, 'crisis-number-guess')}
   ${lineBtn}${m.line && m.lineGuess ? `<p class="tip number-guess" id="crisis-line-guess">${K.lineGuess} <button type="button" class="tlink" data-act="sudden-number">${P9.number.change} →</button></p>` : ''}
   <section class="fast" id="crisis-steps" aria-labelledby="crisis-steps-h"><h2 class="sec" id="crisis-steps-h">${K.open}</h2>

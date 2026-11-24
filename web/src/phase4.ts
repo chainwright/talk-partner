@@ -123,7 +123,7 @@ export function visitScreen(m: VisitModel): string {
   <p class="waitline" id="visit-wait">${SIGN.info}<span>${esc(COPY.simple.wait(m.name))}</span></p>
 </main>`;
   }
-  const rows = visitRows(r).map((x) => `<li data-row="${esc(x.row)}"><span class="vr">${esc(x.row)}</span><b>${esc(x.label)}</b><small>${esc(x.q)} · ${x.time}</small>${x.check ? `<small class="vr-check">${esc(V.check)}</small>` : ''}</li>`).join('');
+  const rows = visitRows(r).map((x) => `<li data-row="${esc(x.row)}"><span class="vr">${esc(x.row)}</span><b>${esc(x.label)}</b><small>${esc(x.q)} · ${x.time}</small>${x.note ? `<small class="vr-check">${esc(x.note)}</small>` : ''}</li>`).join('');
   const pain = r.answers.some((a) => a.id === 'pain' && a.label.toLowerCase() === 'yes');
   return `${head}
   <section class="visit-page" id="visit-page" aria-labelledby="visit-h">

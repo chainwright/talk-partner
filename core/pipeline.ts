@@ -570,6 +570,11 @@ export interface PipelineEnv {
    * "still working… Stop waiting" after CLOUD_SLOW_MS). It is told nothing: no question, no answer.
    */
   onCloud?: () => void;
+  /**
+   * Phase 19: called once with the card of a cloud answer that came after the wait had run out (the card returned then
+   * was the blocked one). The caller decides whether to show it. Never called for an answer within the wait.
+   */
+  onLate?: (card: Card) => void;
 }
 
 /**
@@ -608,7 +613,12 @@ export function cloudWasBusy(e: unknown): boolean {
 /** Full flow for one partner question. */
 export async function makeCard(input: string, env: PipelineEnv): Promise<Card> {
   const trace: StepTrace[] = [];
-  const card = noEscapeOnly(await makeCardInner(input, env, trace));
+  // (phase 19) a late cloud card is finished as any card is, then handed on
+  const inner = env.onLate ? { ...env, onLate: (c: Card) => env.onLate?.(finishCard(noEscapeOnly(c), trace.filter((t) => !(t.step === 'stripped' && t.ran === 'failed')))) } : env;
+  return finishCard(noEscapeOnly(await makeCardInner(input, inner, trace)), trace);
+}
+
+function finishCard(card: Card, trace: StepTrace[]): Card {
   // §2.13: a blocked card is never shown to the person, so it carries no choices (not even an escape)
   // …and the line to say never reads options that are not on the screen (set D, 16 Nov: with no model, a blocked
   // "Where are we right now?" still read "Lake, church, or somewhere else?")
@@ -842,28 +852,8 @@ async function cloudCard(
   let firstTryFailed = false;
   // (phase 9) the latency of the cloud step goes into the trace, answered or not: a number, never any text
   const started = Date.now();
-  try {
-    left = 'maybe';
-    env.onCloud?.();
-    let r: Awaited<ReturnType<Engine['runCloud']>>;
-    try {
-      r = await checkedCloud(env.engine, () => env.engine.runCloud(stripped.text), env.cloudWaitMs);
-    } catch (e) {
-      // Busy (429: too many requests in a minute) or a network error: one more try after a short wait, when
-      // the service allows it within about 3 s. Otherwise the error stands and the partner is told at once.
-      const wait = cloudRetryWait(e);
-      if (wait === null) throw e;
-      // (phase 18, judge round 13, the hound: the first card came about 26 s after "Just this once" while the screen said
-      // "It stops by itself at 20 s") the retry gets what is left of the one wait, never a fresh 20 s: the whole step,
-      // App Check, the first try, the pause and the retry, ends by CLOUD_WAIT_MS from the moment the wait line starts
-      const total = env.cloudWaitMs ?? CLOUD_WAIT_MS;
-      if (total - (Date.now() - started) - wait < Math.min(1500, total * 0.1)) throw e;
-      firstTryFailed = true;
-      await (env.sleep ?? ((ms: number) => new Promise<void>((res) => setTimeout(res, ms))))(wait);
-      const rest = total - (Date.now() - started);
-      if (rest < Math.min(1500, total * 0.1)) throw e;
-      r = await within(env.engine.runCloud(stripped.text), rest);
-    }
+  // (phase 19) the card of a cloud answer: the same whether it came within the wait or after it (onLate)
+  const fromCloud = (r: Awaited<ReturnType<Engine['runCloud']>>, firstTryFailed: boolean): Card => {
     left = r.source === 'in-cloud' ? 'yes' : 'no';
     // the badge and the trace come from inferenceSource: PREFER_IN_CLOUD runs on the device when offline
     trace.push({ step: 'stripped', ran: r.source, why: r.source === 'in-cloud' ? T.cloudGot : T.cloudOffline, ms: r.ms, used: false });
@@ -904,7 +894,46 @@ async function cloudCard(
       ...(firstTryFailed ? { cloudAttempted: preview, cloudAttempts: 1 } : {}),
       ranOffline: !sent, cloudSwaps: swaps(stripped.map), notes: [...notes, ...card.notes, ...cloudNotes],
     };
+  };
+  // (phase 19) the request handed to the SDK: kept, so that an answer after the wait is not thrown away
+  let inflight: Promise<Awaited<ReturnType<Engine['runCloud']>>> | null = null;
+  try {
+    left = 'maybe';
+    env.onCloud?.();
+    let r: Awaited<ReturnType<Engine['runCloud']>>;
+    try {
+      r = await checkedCloud(env.engine, () => (inflight = env.engine.runCloud(stripped.text)), env.cloudWaitMs);
+    } catch (e) {
+      // Busy (429: too many requests in a minute) or a network error: one more try after a short wait, when
+      // the service allows it within about 3 s. Otherwise the error stands and the partner is told at once.
+      const wait = cloudRetryWait(e);
+      if (wait === null) throw e;
+      // (phase 18, judge round 13, the hound: the first card came about 26 s after "Just this once" while the screen said
+      // "It stops by itself at 20 s") the retry gets what is left of the one wait, never a fresh 20 s: the whole step,
+      // App Check, the first try, the pause and the retry, ends by CLOUD_WAIT_MS from the moment the wait line starts
+      const total = env.cloudWaitMs ?? CLOUD_WAIT_MS;
+      if (total - (Date.now() - started) - wait < Math.min(1500, total * 0.1)) throw e;
+      firstTryFailed = true;
+      await (env.sleep ?? ((ms: number) => new Promise<void>((res) => setTimeout(res, ms))))(wait);
+      const rest = total - (Date.now() - started);
+      if (rest < Math.min(1500, total * 0.1)) throw e;
+      inflight = env.engine.runCloud(stripped.text);
+      r = await within(inflight, rest);
+    }
+    return fromCloud(r, firstTryFailed);
   } catch (e) {
+    // (phase 19, judge round 14, seats 02n and 01: a 200 from the cloud came 4 to 5 s after the app had given up, and was
+    // thrown away) the wait ran out with the request still open: its answer, when it comes, is handed to onLate as the
+    // card it would have been (the screen shows it only while the stand-in for the same question is still there)
+    const open = inflight as Promise<Awaited<ReturnType<Engine['runCloud']>>> | null;
+    if (cloudTimedOut(e) && open && env.onLate) {
+      const tried = firstTryFailed;
+      open.then((r) => {
+        let c: Card;
+        try { c = fromCloud(r, tried); } catch { return; }
+        if (!c.blocked && r.source === 'in-cloud' && c.choices.filter((x) => x.role === 'answer').length >= 2) env.onLate?.({ ...c, late: true });
+      }, () => {});
+    }
     const failed: StepTrace = { step: 'stripped', ran: 'failed', why: (e as Error).message, used: false, ms: Date.now() - started };
     if (!trace.some((t) => t.step === 'stripped')) trace.push(failed);
     else trace[trace.findIndex((t) => t.step === 'stripped')] = failed;
@@ -927,7 +956,7 @@ async function cloudCard(
     };
     const out = { ...base, cloudSwaps: swaps(stripped.map), notes: [...notes, note] };
     // the cloud answered and the answer was unusable: the question did leave, and the receipt counts it
-    if (left === 'yes') return { ...out, cloudPayload: preview, unsentPayload: null, ...(firstTryFailed ? { cloudAttempted: preview, cloudAttempts: 1 } : {}) };
+    if ((left as 'no' | 'maybe' | 'yes') === 'yes') return { ...out, cloudPayload: preview, unsentPayload: null, ...(firstTryFailed ? { cloudAttempted: preview, cloudAttempts: 1 } : {}) };
     // handed to the SDK, then an error: it may have left; never shown as "nothing left this computer"
     if (left === 'maybe') return { ...out, cloudPayload: null, cloudAttempted: preview, cloudAttempts: firstTryFailed ? 2 : 1, unsentPayload: null };
     return { ...out, cloudPayload: null, unsentPayload: preview };

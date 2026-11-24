@@ -92,15 +92,17 @@ export function answerStep(c: C, pick: { label: string; spoken?: string; role: s
   const word = pick.spoken || pick.label;
   const asked = (q: string) => [...x.chain, c.asked].some((a) => head(a) === head(q));
   // (phase 17b) a word that was found: a person or a place leads on with one tap, never only a line to read
-  const found = (s: { follow: string[]; end: string }): AnswerStep => {
-    const more = s.follow.length ? s.follow : wordFollow(word, x.profile).filter((q) => !asked(q));
+  // (phase 19) a care word's own next step first; then a person's or a place's (wordFollow); then the word's own (letterEnd)
+  const found = (s: { follow: string[]; end: string; care?: true }): AnswerStep => {
+    const own = s.care ? [] : wordFollow(word, x.profile).filter((q) => !asked(q));
+    const more = s.care ? s.follow : own.length ? own : s.follow.filter((q) => !asked(q));
     return { follow: more, end: s.end };
   };
   // (phase 18, judge round 13, a health P0: a typed "Do you want to die?" answered "no", or a typed "I can't go on" answered
   // "good" on the feelings card the rules made of it, ended on "A good day. Nothing to fix.") ANY answer to a card the
   // guard made from a crisis, the way out included: the crisis line, never a stop, never a next question
   if (c.own?.guard === 'crisis') { const s = ownCrisisAfter(pick.label, x.number, x.crisisLine ?? '', name); return { follow: [], end: s.end, alert: true, crisis: true }; }
-  if (c.typed) return x.out ? { follow: [], end: '' } : found(letterEnd(word));
+  if (c.typed) return x.out ? { follow: [], end: '' } : found(letterEnd(word, x.profile));
   if (c.more) {
     if (x.out) return { follow: [], end: '' };
     const end = P7.more.end(c.more.subject, word, name);
@@ -108,7 +110,7 @@ export function answerStep(c: C, pick: { label: string; spoken?: string; role: s
     if (MORE_KINDS[c.more.subject]?.test(word)) return { follow: [], end, open: openEnd(c.more.subject === 'people' ? 'people' : 'food', c as Card, x.profile) };
     return found({ follow: [], end });
   }
-  if (c.letter) return x.out ? { follow: [], end: '' } : found(letterEnd(word));
+  if (c.letter) return x.out ? { follow: [], end: '' } : found(letterEnd(word, x.profile));
   const h = c.own?.matter;
   if (h && c.kind === 'yesno' && !/^is it suddenly weak or numb\b/i.test(c.asked)) {
     const s = ownAfter(h, pick.label, x.number, name);

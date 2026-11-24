@@ -428,7 +428,7 @@ export function clausePair(q: string): [string, string] | null {
   const left = leftClause(m[1]);
   if (!left) return null;
   const right = m[2].split(/\s*,\s*/)[0];
-  // "Wheel of Fortune on": "on" after a thing says it is switched on; the option is the thing ("turn the TV on" keeps it)
+  // "The Quiz Show on": "on" after a thing says it is switched on; the option is the thing ("turn the TV on" keeps it)
   const offOn = (x: string) => { const w = x.split(/\s+/); return w.length > 1 && /^(?:on|off)$/i.test(w[w.length - 1]) && !w.slice(0, -1).some((v) => PHRASAL.has(lc(v))) ? w.slice(0, -1).join(' ') : x; };
   const a = offOn(clauseOption(left, right));
   const b = offOn(clauseOption(right, left));
@@ -571,7 +571,7 @@ function expandFromQuestion(label: string, q: string): string {
 }
 
 /**
- * A label takes the capitals the question gave it in mid-sentence ("Wheel of Fortune", "Jenny did it"): shortening a
+ * A label takes the capitals the question gave it in mid-sentence ("The Quiz Show", "Jenny did it"): shortening a
  * side lowers its first letter, which is right for the word that only opens the sentence and wrong for a name.
  */
 function questionCase(label: string, q: string): string {
@@ -1849,7 +1849,7 @@ export function yesNoTopic(q: string, profile?: Profile): string {
 
 // ---------------------------------------------------------------- open questions: allowed sources (§2.6)
 const EAT_Q = /\b(?:eat|eating|food|dinner|lunch|breakfast|supper|cook|cooking|meal|hungry|for\s+(?:your\s+|our\s+)?tea)\b/i;
-// (set D, 16 Nov: "What do you feel like watching?" was not read as a TV question, so Johnny Cash stood on its next page)
+// (set D, 16 Nov: "What do you feel like watching?" was not read as a TV question, so a singer of the family stood on its next page)
 const WATCH_Q = /\b(?:watch|watching|telly|tv|television|programme|program|show|film|movie)\b/i;
 /** A food question About me cannot answer: its foods are meals the person likes, not desserts, snacks or what is in the cupboard. */
 const FOOD_OTHER = /\b(?:dessert|pudding|afters|sweet|snack|breakfast|drink|pantry|larder|cupboard|fridge|freezer|grocer\w*|shopping|list|run\s+out|out\s+of|buy|pick\s+up)\b/i;
@@ -1912,7 +1912,7 @@ export function sourceFill(answers: string[], q: string, profile: Profile, cap: 
   return out.length >= 2 ? { answers: out, source } : null;
 }
 
-/** The About-me list a label belongs to, also when it is a name-like part of an entry ("Packers" of "Packers games"). */
+/** The About-me list a label belongs to, also when it is a name-like part of an entry ("Rovers" of "Rovers games"). */
 function aboutList(label: string, profile: Profile): string | null {
   const exact = fromAboutMe(label, profile);
   if (exact) return exact;
@@ -1925,7 +1925,7 @@ function aboutList(label: string, profile: Profile): string | null {
 
 /**
  * An About-me entry of another kind than the question asks for is not an answer: a TV show is not music, a place is
- * not a food (simulation 16.11: "What do you feel like listening to?" offered "Packers" and "Wheel of Fortune").
+ * not a food (simulation 16.11: "What do you feel like listening to?" offered a sports team and a TV show).
  * Since set D of 16 Nov the check is the other way round: an entry stays only where the question invites its list
  * (see aboutFit below). Returns the kept choices and the dropped ones.
  */

@@ -25,7 +25,8 @@ describe('what the new modules can reach', () => {
   const PERSONAL = ['prefs', 'photos', 'diary', 'insights', 'reliability', 'tip', 'backup', 'history', 'visit', 'summary'];
   it('core/letter.ts builds a cloud text: it imports none of the personal stores (learned words come in as plain words, for the device only)', () => {
     for (const i of imports('core/letter.ts')) expect(PERSONAL.some((m) => i.endsWith(`/${m}`)), i).toBe(false);
-    expect(imports('core/letter.ts').sort()).toEqual(['./copy4', './engine', './kinds', './pipeline', './prompt', './rules', './strip', './types']);
+    // (phase 19: './copy19', fixed words only)
+    expect(imports('core/letter.ts').sort()).toEqual(['./copy19', './copy4', './engine', './kinds', './pipeline', './prompt', './rules', './strip', './types']);
   });
   it('the cloud text of the letter step is made from the question and the letter alone: its function takes nothing else', () => {
     const src = read('core/letter.ts');

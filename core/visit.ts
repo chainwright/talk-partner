@@ -16,7 +16,9 @@
 
 import { P4 } from './copy4';
 import { NullEngine } from './engine';
-import { urgentAnswer } from './redflag';
+import { healthOf, urgentAnswer } from './redflag';
+import { careAnswer } from './reliability';
+import { P19 } from './copy19';
 import { finish, makeCard } from './pipeline';
 import type { Card, Profile, SupportLevel } from './types';
 
@@ -133,9 +135,17 @@ export const visitDate = (at: number) => new Date(at).toLocaleDateString('en-GB'
 export const visitTime = (at: number) => { const d = new Date(at); return `${two(d.getHours())}:${two(d.getMinutes())}`; };
 
 /** The rows of the page, in the order of the list: the short name, the question as asked, the answer as given, the time. */
-export function visitRows(r: VisitRecord): { row: string; q: string; label: string; time: string; out: boolean; check: boolean }[] {
+export function visitRows(r: VisitRecord): { row: string; q: string; label: string; time: string; out: boolean; check: boolean; note: string }[] {
   // (phase 15: a yes or a no gets "please check" under it)
-  return VISIT.flatMap((v) => r.answers.filter((a) => a.id === v.id).map((a) => ({ row: v.row, q: a.q, label: a.label, time: visitTime(a.at), out: !!a.out, check: /^(?:yes|no)$/i.test(a.label.trim()) })));
+  // (phase 19, judge round 14, the SLP's seat, ADV-13-3: "A yes or no can be wrong… please check" under "Pain: yes" can make
+  // a doctor discount a reported pain) a yes or a no to a care or health question has its own line: a yes to pain is
+  // taken as a yes; a no is watched. The generic check stays for any other yes or no.
+  return VISIT.flatMap((v) => r.answers.filter((a) => a.id === v.id).map((a) => {
+    const yn = /^(?:yes|no)$/i.test(a.label.trim());
+    const care = yn && (careAnswer(a.q, a.label) || !!healthOf(a.q));
+    const note = !yn ? '' : !care ? P4.visit.check : /^yes$/i.test(a.label.trim()) ? P19.visitYes : P19.visitNo;
+    return { row: v.row, q: a.q, label: a.label, time: visitTime(a.at), out: !!a.out, check: yn && !care, note };
+  }));
 }
 /** True when the way out of the last question was chosen: the page then asks for time for it. */
 export const visitElse = (r: VisitRecord) => r.answers.some((a) => a.id === 'ask' && a.out);
@@ -143,6 +153,6 @@ export const visitElse = (r: VisitRecord) => r.answers.some((a) => a.id === 'ask
 /** The page as plain text, for "Copy as text". */
 export function visitText(r: VisitRecord, name: string): string {
   const V = P4.visit;
-  const rows = visitRows(r).map((x) => `${x.q} ${x.label} (${x.time})${x.check ? ` ${V.check}` : ''}`);
+  const rows = visitRows(r).map((x) => `${x.q} ${x.label} (${x.time})${x.note ? ` ${x.note}` : ''}`);
   return [V.pageTitle(name), V.pageSub(visitDate(r.startedAt)), ...(r.done ? [] : [V.part(r.answers.length, visitTotal(r.answers))]), '', ...rows, ...(visitElse(r) ? ['', V.elseNote] : []), '', V.footer(name)].join('\n');
 }

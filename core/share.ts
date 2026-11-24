@@ -22,7 +22,7 @@
 import { COPY } from './copy';
 import { P5 } from './copy5';
 import { P6 } from './copy6';
-import { dayText, diaryText, eventGroups, guessTopic, inSpan, spanRange, tags, timeText, type DiaryEntry, type LogKind, type Span, type Tag } from './diary';
+import { crisisChosen, warningNoAnswer, dayText, diaryText, eventGroups, guessTopic, inSpan, spanRange, tags, timeText, type DiaryEntry, type LogKind, type Span, type Tag } from './diary';
 import { HEALTH_TOGGLES, NO_HEALTH, hasHealth, insights, type HealthNotes, type Insight } from './insights';
 import type { Learned } from './prefs';
 import { DEFAULT_NUMBER, crisisLineFor, healthOf } from './redflag';
@@ -148,8 +148,11 @@ export interface HandoverShare {
    * Phase 12 (judge round 9, P1): the care questions left for later on Home and not yet found out (core/later.ts:
    * the pinned ones), printed in a "STILL OPEN" block near the top, so the next carer asks them first.
    */
-  open?: { q: string; at: number; pain?: boolean }[];
+  open?: { q: string; at: number; pain?: boolean; red?: 'chest' | 'head' | 'heart' | 'sign' }[];
 }
+
+/** Phase 19: the chest and the heart places (core/redflag.ts, healthOf): the note's line is "whatever the amount". */
+const chestKind = (q: string) => { const k = healthOf(q); return k === 'chest' || k === 'heart'; };
 
 /** The notes `handoverText` prints whatever the box says (`HandoverShare.safety`), by name, for the sheet's lines. */
 export const ALWAYS_NOTES = ['swallowing', 'fluidLimit'] as const;
@@ -182,6 +185,8 @@ export function handoverText(m: HandoverShare): string {
   const wrongs = entries.filter((e) => has(e, 'wrong'));
   // (phase 17) a health question asked in the carer's own words and answered: first of all, with what to do
   const warns = entries.filter((e) => has(e, 'warning'));
+  // (phase 19) and a warning question answered "no": asked, answered, and kept (a "no" can be wrong after a stroke)
+  const warnNo = entries.filter((e) => e.kind === 'answer' && warningNoAnswer(e.q ?? '', e.label));
   // (in a note for the hours after it, every fall carries the call sentence, a blow to the head noted or not)
   const fluid = !!m.health?.fluidLimit || !!m.safety?.fluidLimit;
   const always = [...(m.safety?.swallowing || m.health?.swallowing ? [`- ${K.hSwallow}`] : []), ...(fluid ? [`- ${K.hFluidAlways}`] : [])];
@@ -199,12 +204,18 @@ export function handoverText(m: HandoverShare): string {
   const usual = handoverUsual(m.learned);
   // (phase 12) "I can't go on" in the last 24 hours: at the very top, with whom to call
   const crisis = entries.filter((e) => has(e, 'crisis'));
-  const open = [...(m.open ?? [])].sort((a, b) => a.at - b.at).map((x) => K.hOpenItem(x.q.trim(), shortWhen(x.at), agoWords(x.at, m.now), !!x.pain || laterPain(x.q), number));
+  const chosen = crisis.filter(crisisChosen);
+  const askedC = crisis.filter((e) => !crisisChosen(e));
+  const crisisLine = ((l: string) => (l === number ? '' : l))(crisisLineFor(m.health?.helpline ?? '', number));
+  const open = [...(m.open ?? [])].sort((a, b) => a.at - b.at).map((x) => K.hOpenItem(x.q.trim(), shortWhen(x.at), agoWords(x.at, m.now), !!x.pain || laterPain(x.q), number, x.red ?? null));
   return [
     K.stamp(stampWhen(m.now)),
-    ...(warns.length ? [K.hWarn(listed(warns.map((e) => `"${(e.q ?? '').trim()}" ${e.label.trim().toLowerCase()} (${shortWhen(e.at)})`)), number, warns.some((e) => healthOf(e.q ?? '') === 'chest'))] : []),
+    ...(warns.length ? [K.hWarn(listed(warns.map((e) => `"${(e.q ?? '').trim()}" ${e.label.trim().toLowerCase()} (${shortWhen(e.at)})`)), number, warns.some((e) => chestKind(e.q ?? '')))] : []),
+    ...(warnNo.length ? [K.hWarnNo(listed(warnNo.map((e) => `"${(e.q ?? '').trim()}" no (${shortWhen(e.at)})`)), number, warnNo.some((e) => chestKind(e.q ?? '')))] : []),
     ...(hard.length || falls.length || signs.length || wrongs.length ? [hard.some((e) => has(e, 'place-pain')) ? K.callNow(number, K.whereHandover) : K.call(number, K.whereHandover)] : []),
-    ...(crisis.length ? [P12.crisis.handover(listed(crisis.map((e) => shortWhen(e.at))), number, ((l) => (l === number ? '' : l))(crisisLineFor(m.health?.helpline ?? '', number)))] : []),
+    ...(chosen.length ? [P12.crisis.handover(listed(chosen.map((e) => shortWhen(e.at))), number, crisisLine)] : []),
+    // (phase 19) a crisis question the carer typed: as it was asked, with what they pointed to, never "was chosen"
+    ...(askedC.length ? [P12.crisis.handoverAsked(askedC.map((e) => `${P12.crisis.asked(e.q ?? '', e.label)} (${shortWhen(e.at)})`).join('; '), number, crisisLine)] : []),
     ...(signs.length ? [K.hSign(listed(signs.map((e) => `"${e.label.trim().toLowerCase()}" (${shortWhen(e.at)})`)), number, signs.some((e) => e.label.trim().toLowerCase() === 'not sure'))] : []),
     ...(wrongs.length ? [K.hWrong(listed(wrongs.map((e) => shortWhen(e.at))), number)] : []),
     ...(open.length ? ['', K.hOpen, ...open] : []),

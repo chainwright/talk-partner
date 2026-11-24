@@ -106,7 +106,7 @@ describe('2. P0 health: "Nothing stands out" never stands over a pain, a fall, a
     expect(cloudLines(xs)).toEqual([]);
   });
   it('one pain of each kind: a logged "Pain", "pain" on the needs board, a place on the body card, "a little" pain', () => {
-    for (const e of [logEntry('pain', when(2, '10:00')), needEntry('pain', when(2, '10:00')), answerEntry({ q: 'Where does it hurt?', label: 'right shoulder', at: when(2, '10:00') }, 'body'), answerEntry({ q: 'How bad is the pain?', label: 'a little', at: when(2, '10:00') }, 'body')]) {
+    for (const e of [logEntry('pain', when(2, '10:00')), needEntry('pain', when(2, '10:00')), answerEntry({ q: 'Where does it hurt?', label: 'right knee', at: when(2, '10:00') }, 'body'), answerEntry({ q: 'How bad is the pain?', label: 'a little', at: when(2, '10:00') }, 'body')]) {
       const xs = insights([...calm, e], NO_HEALTH, 'week', NOW);
       expect(ids(xs), e.label).toEqual(['pain-some']);
       expect(xs[0].text).toBe('Pain was chosen or logged on 1 day in the last 7 days.');
@@ -337,7 +337,8 @@ describe('7. P0 the hybrid moment in 10 s: one tap on Home, the sample open ques
   });
   it('the web client: the tap, the empty profile, and no history, diary or count for the sample', () => {
     const main = readFileSync(join(__dirname, '..', '..', 'web', 'src', 'main.ts'), 'utf8');
-    expect(main).toContain("case 'try-ai': if (!state.busy) { p9sample.q = AI_QUESTION; askBy = 'none'; void make(AI_QUESTION); } break;");
+    // (phase 19: the carer's tap first clears an earlier App Check refusal of this page, carerCloud)
+    expect(main).toContain("case 'try-ai': if (!state.busy) { carerCloud(); p9sample.q = AI_QUESTION; askBy = 'none'; void make(AI_QUESTION); } break;");
     expect(main).toContain('const profile = sample ? EMPTY_PROFILE : state.profile;');
     expect(main).toContain('if (c.sample) {');
     expect(main).toContain('if (!(card.blocked && card.unsentPayload) && !sample) {');

@@ -14,6 +14,7 @@
 
 import { P7 } from './copy7';
 import { placeOf, subjectOf } from './kinds';
+import { sameWord, wordKey } from './letter';
 import { finish } from './pipeline';
 import { CARE_TOPICS, careAnswer } from './reliability';
 import type { Card, Profile, SupportLevel } from './types';
@@ -59,8 +60,10 @@ export function moreSubject(asked: string, shown: string[]): MoreSubject | null 
 export function moreChoices(subject: MoreSubject, shown: string[], profile: Profile): string[] {
   const mine = own(subject, profile).map((w) => w.trim()).filter(Boolean);
   const all = subject === 'drink' || subject === 'food' ? [...FIXED[subject], ...mine] : [...mine, ...FIXED[subject]];
-  const gone = new Set(shown.map(bare));
-  return all.filter((w, i) => !gone.has(bare(w)) && all.findIndex((x) => bare(x) === bare(w)) === i).slice(0, MORE_MAX);
+  // (phase 19, judge round 14, seat 01: "the garden, a walk, a drive" offered again after "go for a walk" was passed)
+  // one word whatever its article, plural, spelling or "go for a" (core/letter.ts, sameWord)
+  const gone = new Set(shown.map(wordKey));
+  return all.filter((w, i) => !gone.has(wordKey(w)) && all.findIndex((x) => sameWord(x, w)) === i).slice(0, MORE_MAX);
 }
 
 /** Every choice the person has been shown on this card and on the cards it came from (never offered again). */

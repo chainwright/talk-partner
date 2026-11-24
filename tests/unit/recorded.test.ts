@@ -86,7 +86,8 @@ describe('the recording on screen: labelled, shown only where the step cannot ru
     // (18 Nov, phase 5, judge round 6: the sheet's first button is "Just this once": that one request may use online
     // help and the switch stays off; "Yes, every time" is the only other switch)
     const once = main.split("case 'sheet-yes':")[1]?.split('break;')[0] ?? '';
-    expect(once).toBe(' state.sheet = false; p5.once = true; askAgain(); ');
+    // (phase 19: carerCloud clears an earlier App Check refusal of this page first; it turns nothing on)
+    expect(once).toBe(' state.sheet = false; carerCloud(); p5.once = true; askAgain(); ');
     const yes = main.split("case 'sheet-always':")[1]?.split('break;')[0] ?? '';
     expect(yes).toContain('state.settings.cloudHelp = true; saveSettings(); askSettings(); askAgain();');
     // (18 Nov, phase 4: the first-letter step is the third thing the sheet can be up for; its yes asks that step again)
