@@ -122,6 +122,15 @@ export function speakSwitch(m: SpeakModel): string {
   return `<div class="speak" id="speak" data-on="${m.on ? 1 : 0}">${SOUND}<div><b>${K.title}</b><small id="speak-state">${esc(m.on ? (m.online ? K.on : K.offline) : K.off(m.name))}</small></div>
     <button type="button" class="btn quiet small-btn" id="speak-toggle" data-act="${m.on ? 'speak-off' : 'speak-ask'}" aria-pressed="${m.on}">${m.on ? K.turnOff : esc(K.turnOnFor(m.name))}</button></div>`;
 }
+/**
+ * Phase 14 (judge round 10): Read aloud offered as one button right under "Show them the choices", while it is off. The
+ * same act as the switch's: the first tap opens the sheet (speakSheet, unchanged), and after one yes there it turns
+ * Read aloud on with no sheet. '' when it is on, offline, or the card is never read aloud.
+ */
+export function speakOffer(m: SpeakModel): string {
+  if (m.on || !m.online || !m.can) return '';
+  return `<button type="button" class="btn speak-offer" id="speak-offer" data-act="speak-ask">${SOUND}<span>${esc(P5.speak.offer(m.name))}</span></button>`;
+}
 /** The sheet before Read aloud is turned on: the brief's sentence, the words of this card, what never goes, the data use. */
 export function speakSheet(m: { text: string; request: string; name?: string }): string {
   const K = P5.speak.sheet;

@@ -1885,10 +1885,11 @@ def phase5(browser, url, live):
     check('urgent: a new conversation starts without the box', page.locator('#urgent').count() == 0)
 
     # ---------------------------------------------------------------- consent sheets: "Just this once"; Read aloud
-    sw = text(page, '#speak') if page.locator('#speak').count() else ''
-    check('read aloud: the switch is on the carer\'s screen of an everyday topic card, and it is off', 'Read aloud' in sw and 'Off.' in sw and page.locator('#speak[data-on="0"]').count() == 1, sw)
+    # (phase 14: while it is off, Read aloud is offered as one button right under the main one, not as a switch below the preview)
+    sw = text(page, '#speak-offer') if page.locator('#speak-offer').count() else ''
+    check('read aloud: offered on the carer\'s screen of an everyday topic card with one button, and it is off', sw.startswith('Read it aloud to ') and sw.endswith("(Google's AI, a calm, slow voice)") and page.locator('#speak').count() == 0, sw)
     before = len(outside)
-    page.locator('#speak-toggle').click()
+    page.locator('#speak-offer').click()
     page.wait_for_selector('#speak-sheet')
     sh = text(page, '#speak-sheet')
     check('read aloud: the sheet says "The words on this card, including names on it, go to Google to be spoken. Nothing else." and shows the words of this card', 'The words on this card, including names on it, go to Google to be spoken. Nothing else.' in sh and text(page, '#speak-sheet-text') == 'Would you like tea or coffee? Tea. Coffee. Or something else.', sh[:300])
@@ -1896,7 +1897,7 @@ def phase5(browser, url, live):
     shot(page, '04_read_aloud_sheet_with_the_words_of_this_card')
     page.locator('[data-act=speak-no]').click()
     page.wait_for_selector('#speak-sheet', state='detached')
-    check('read aloud: "No, keep it off" leaves it off', page.locator('#speak[data-on="0"]').count() == 1)
+    check('read aloud: "No, keep it off" leaves it off', page.locator('#speak-offer').count() == 1 and page.locator('#speak[data-on="1"]').count() == 0)
     page.locator('[data-act=show]').click()
     page.wait_for_selector('main.pv .pt')
     check('read aloud off: the person\'s screen has no "Hear it" button, and nothing was sent', page.locator('#hear').count() == 0 and len(outside) == before)
@@ -1905,7 +1906,7 @@ def phase5(browser, url, live):
     if live:
         print('SKIP  read aloud: "Yes" is not pressed on a hosted copy (--live), so no card\'s words are sent')
     else:
-        page.locator('#speak-toggle').click()
+        page.locator('#speak-offer').click()
         page.wait_for_selector('#speak-sheet')
         page.locator('[data-act=speak-yes]').click()
         page.wait_for_selector('#speak[data-on="1"]')
@@ -1928,8 +1929,14 @@ def phase5(browser, url, live):
         check('read aloud on, App Check refused first: the first screen\'s privacy line counts nothing', 'Nothing you asked has left this phone' in text(page, '#s-privacy'), text(page, '#s-privacy'))
         ask_topic(page, 'food', 'Would you like tea or coffee?')
         page.locator('#speak-toggle').click()
-        page.wait_for_selector('#speak[data-on="0"]')
+        page.wait_for_selector('#speak-offer')
         check('read aloud: one tap turns it off again', page.evaluate(KV_GET, 'settings').get('speak') is False)
+        # (phase 14: after one yes, the offer turns it on with one tap and no sheet)
+        page.locator('#speak-offer').click()
+        page.wait_for_selector('#speak[data-on="1"]')
+        check('read aloud: after one yes, the offer turns it on again with one tap, no sheet', page.locator('#speak-sheet').count() == 0 and page.evaluate(KV_GET, 'settings').get('speak') is True)
+        page.locator('#speak-toggle').click()
+        page.wait_for_selector('#speak-offer')
     new_q(page) if page.locator('#another').count() else page.locator('[data-act=home]').click()
     page.wait_for_selector('main.simple.home')
     page.fill('#q', OPEN_Q)

@@ -65,7 +65,7 @@ import { ABOUT_LEADS, aboutWhatCard, moreCard, moreChoices, moreSubject, outWays
 import { understoodBlock } from './phase7';
 import { aboutLearned, familyText, handoverText, riskyNotes } from '../../core/share';
 import { handoverLink, shareSheet } from './phase6';
-import { crisisBox, crisisScreen, fallBlock, hearButton, laterPainHtml, lowHelpLine, nowAlert, visitStopBox, numberField, sinceBlock, sinceControls, speakSheet, speakSwitch, readAloudLine, suddenFirst, suddenLink, suddenScreen, urgentBox } from './phase5';
+import { crisisBox, crisisScreen, fallBlock, hearButton, laterPainHtml, lowHelpLine, nowAlert, visitStopBox, numberField, sinceBlock, sinceControls, speakOffer, speakSheet, speakSwitch, readAloudLine, suddenFirst, suddenLink, suddenScreen, urgentBox } from './phase5';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
@@ -1912,10 +1912,11 @@ function simpleScreen(): string {
       // (the call box stays over the next questions of a conversation in which an answer can be urgent)
       topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,
       // (phase 14, judge round 10: the second button of a topic card is the AI's; never on pain, the body, feelings, a red flag: core/findmore.ts)
-      findHtml: (() => { const o = findMoreOffer(c, { topic: careTopic(c), place: aiPlace(whereInput()), urgent: p5.urgent }); return o ? findMoreBlock(o) : ''; })(),
+      // (and Read aloud, offered with one button while it is off: the sheet the first time, then one tap)
+      findHtml: `${(() => { const o = findMoreOffer(c, { topic: careTopic(c), place: aiPlace(whereInput()), urgent: p5.urgent }); return o ? findMoreBlock(o) : ''; })()}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' ? speakOffer({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}`,
       guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c),
       // the first-letter helper: its way in from "We're stuck", who found a letter card's words, and another letter when there was no word
-      extraHtml: `${c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterButton(name, true) : letterBy(c.letter.by)) : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && (speakable(c) || speakOn()) ? speakSwitch({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}${p5.spoken.has(c) ? readAloudLine() : ''}`,
+      extraHtml: `${c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterButton(name, true) : letterBy(c.letter.by)) : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && speakOn() ? speakSwitch({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}${p5.spoken.has(c) ? readAloudLine() : ''}`,
     });
   } else {
     const p = state.profile;

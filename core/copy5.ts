@@ -72,6 +72,8 @@ export const P5 = {
     turnOn: 'Turn on Read aloud',
     /** Phase 8 (judge round 7): who it is for, on the switch's button and on the sheet. */
     turnOnFor: (name: string) => `Read the cards aloud to ${name || 'them'}`,
+    /** Phase 14 (judge round 10): the one-tap offer right under the main button before handing over, while Read aloud is off. */
+    offer: (name: string) => `Read it aloud to ${name || 'them'} (Google's AI, a calm, slow voice)`,
     forWho: (name: string) => `For ${name || 'the person'}: ${name ? `${name} hears` : 'they hear'} the question and the choices in a calm, slow voice, so you do not have to read them out.`,
     turnOff: 'Turn off',
     offline: 'Read aloud needs the internet. You are offline.',

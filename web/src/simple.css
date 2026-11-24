@@ -239,6 +239,8 @@
 /* phase 14: "Find more choices", the second button before handing over a topic card */
 .simple .btn.find-more { border-color: var(--accent); justify-content: flex-start; text-align: left; margin-top: 8px; }
 .simple .btn.find-more .sg { color: var(--accent); }
+/* phase 14: Read aloud offered with one button while it is off */
+.simple .btn.speak-offer { justify-content: flex-start; text-align: left; margin-top: 8px; }
 .simple .ai-made { display: flex; align-items: flex-start; gap: 8px; font-size: 16px; border: 2px solid var(--accent); background: var(--accent-soft); border-radius: 14px; padding: 8px 12px; }
 .simple .ai-made .sg { color: var(--accent); margin-top: 1px; }
 .simple .short { border: 2px solid var(--field); background: var(--panel); border-radius: 16px; padding: 12px 14px; display: grid; gap: 8px; }

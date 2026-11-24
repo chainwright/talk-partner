@@ -81,7 +81,7 @@ def main():
         log('## 1. A topic card (made by the rules), read aloud')
         e2e.ask_topic(page, 'food', 'Would you like tea or coffee?')
         check('the card is made by the rules and nothing was sent for it', page.locator('#made-where').get_attribute('data-left') == 'nothing' and not hosts, e2e.text(page, '#made-where'))
-        page.locator('#speak-toggle').click()
+        page.locator('#speak-offer').click()
         page.wait_for_selector('#speak-sheet')
         words = e2e.text(page, '#speak-sheet-text')
         log(f'- the sheet: "{e2e.text(page, "#speak-sheet-body")}"; the words it shows: "{words}"')
