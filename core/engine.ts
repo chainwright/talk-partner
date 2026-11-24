@@ -30,6 +30,8 @@ export interface Engine {
   deviceStatus(): Promise<DeviceStatus>;
   /** Must be called from a user gesture if a download is needed. */
   prepareDevice(onProgress?: (p: number) => void): Promise<void>;
+  /** Optional (phase 13): get an App Check token for this browser before a cloud call; rejects when App Check refuses it. */
+  checkCloud?(): Promise<void>;
   /** Optional: load the on-device model into memory before the first question. On this computer only; no profile data. */
   warmDevice?(): Promise<void>;
   /** Private step: the profile is in this prompt, so it runs ONLY on device and throws rather than fall back. */
@@ -113,6 +115,26 @@ export function within<T>(call: Promise<T>, ms: number = CLOUD_WAIT_MS): Promise
     const t = setTimeout(() => reject(new CloudTimeout(`online help gave no answer within ${Math.round(ms / 1000)} seconds`)), ms);
     call.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e as Error); });
   });
+}
+
+/**
+ * Phase 13 (judge round 10, the official seats: a judge's first cloud tap timed out while App Check was still
+ * attesting the browser, and Read aloud got no token): App Check is asked first (`checkCloud`), inside the same wait.
+ * A refusal, or no token in time, fails at once as "App Check gave no token": nothing was sent, and the card says
+ * plainly what to do. The check may use at most three quarters of the wait; the call gets what is left, so the carer
+ * never waits longer than `ms` in all.
+ */
+export async function checkedCloud<T>(engine: { checkCloud?: () => Promise<void> }, call: () => Promise<T>, ms: number = CLOUD_WAIT_MS): Promise<T> {
+  const t0 = Date.now();
+  if (engine.checkCloud) {
+    try {
+      await within(engine.checkCloud(), Math.round(ms * 0.75));
+    } catch (e) {
+      const why = cloudTimedOut(e) ? 'no answer in time' : String((e as Error)?.message ?? e);
+      throw Object.assign(new Error(`App Check gave no token for this browser (${why})`), { notSent: true });
+    }
+  }
+  return within(call(), Math.max(1, ms - (Date.now() - t0)));
 }
 
 /** A picture as it is handed to the SDK's on-device step: base64 of a JPEG or PNG. */

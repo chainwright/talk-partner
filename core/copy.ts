@@ -536,6 +536,9 @@ const COPY = {
     today: 'Today',
     noCard: 'No card for this one',
     askChoice: 'Or ask it as a choice, with both options in the question: "This, or that?"',
+    /** Phase 13: on the no-card screen after online help failed: the rules' card at once, and the topics. */
+    noCardWays: 'Show them the ways to say it (no AI)',
+    noCardTopics: 'Pick a question from a topic',
     useOnline: 'Use online help for this question',
     /** A question that needs online help, asked with no connection: said plainly, and what still works. */
     offline: 'This question needs the internet, and you are offline. The topic questions and "Needs something now?" work without it.',
@@ -1119,7 +1122,8 @@ const COPY = {
     cloudDownBlocked: 'Cloud help did not answer, so there is no card. Try again, or just ask normally and give time.',
     /** Phase 9: the wait ran out (core/engine.ts, CLOUD_WAIT_MS): said plainly, with what works without it. */
     cloudSlowBlocked: 'Cloud help took longer than 20 seconds, so there is no card. Ask it as a choice, with both options in it: "This, or that?" Or pick a question from a topic. You can also try again.',
-    cloudCheckBlocked: 'Cloud help could not confirm this browser, so there is no card. Load the page again and try once more, or just ask normally and give time.',
+    // (phase 13, judge round 10: said plainly, with what to do, and the rules' card one tap away)
+    cloudCheckBlocked: 'Online help could not check this browser, so nothing was sent and there is no card. Ask it as a choice: "This, or that?", or pick a question from a topic. Or show them the ways to say it, made by the app with no AI.',
     moreOnNext: (labels: string, escape: string) => `More on the next page: ${labels}. "${escape}" on the card, or "Next: more choices", shows the next page.`,
     lastPage: 'The rest of the choices for this question.',
     feelingMore: (labels: string, escape: string) => `If none of the three fits: "${escape}" on the card, or "Next: more choices", shows ${labels}.`,

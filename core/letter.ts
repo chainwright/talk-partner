@@ -20,7 +20,7 @@
 // Dignity: the letter screen is offered, never required; "No, I don't know" is always there; nothing counts a miss.
 
 import { P4 } from './copy4';
-import { within, type CloudError } from './engine';
+import { checkedCloud, type CloudError } from './engine';
 import { placeOf, subjectOf, type Subject } from './kinds';
 import { finish, parseModelOutput, type PipelineEnv } from './pipeline';
 import { devicePrompt, letterContext } from './prompt';
@@ -247,7 +247,7 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
   if (findLeaks(stripped.text, profile).length) { trace.push(T('stripped', 'skipped', 'not sent: the question still held an About me word')); return orRules(L.none(profile.personName.trim(), letter)); }
   if (!env.allowCloud) { trace.push(T('stripped', 'skipped', 'cloud help is off')); return orRules(L.none(profile.personName.trim(), letter), { unsentPayload: preview, cloudSwaps: swaps }); }
   try {
-    const r = await within(engine.runLetter ? engine.runLetter(stripped.text) : engine.runCloud(stripped.text), env.cloudWaitMs);
+    const r = await checkedCloud(engine, () => (engine.runLetter ? engine.runLetter(stripped.text) : engine.runCloud(stripped.text)), env.cloudWaitMs);
     trace.push(T('stripped', r.source, 'got the question and the letter, About me words swapped out', false, r.ms));
     const sent = r.source === 'in-cloud';
     const left: Partial<Card> = { cloudPayload: sent ? preview : null, unsentPayload: sent ? null : preview, ranOffline: !sent, cloudSwaps: swaps };

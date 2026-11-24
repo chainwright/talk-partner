@@ -4,7 +4,7 @@
 // "Why this card" (Card.why) is written here, on the values the rules worked on, as they are worked on.
 
 import { COPY } from './copy';
-import { cloudTimedOut, within, type CloudError, type Engine } from './engine';
+import { checkedCloud, cloudTimedOut, within, type CloudError, type Engine } from './engine';
 import { pictureFor } from './pictures';
 import { cloudPrompt, devicePrompt } from './prompt';
 import {
@@ -846,7 +846,7 @@ async function cloudCard(
     env.onCloud?.();
     let r: Awaited<ReturnType<Engine['runCloud']>>;
     try {
-      r = await within(env.engine.runCloud(stripped.text), env.cloudWaitMs);
+      r = await checkedCloud(env.engine, () => env.engine.runCloud(stripped.text), env.cloudWaitMs);
     } catch (e) {
       // Busy (429: too many requests in a minute) or a network error: one more try after a short wait, when
       // the service allows it within about 3 s. Otherwise the error stands and the partner is told at once.

@@ -26,7 +26,7 @@
 // rules made it and that an AI was asked first (`Card.narrow.by === 'rules'`, source 'code').
 
 import { COPY } from './copy';
-import { within, type CloudError } from './engine';
+import { checkedCloud, type CloudError } from './engine';
 import { finish, noEscapeOnly, parseModelOutput, type PipelineEnv } from './pipeline';
 import { devicePrompt } from './prompt';
 import { broader, sameKind, subjectOf } from './kinds';
@@ -175,7 +175,7 @@ export async function narrowCard(i: NarrowInput, env: PipelineEnv): Promise<Card
   if (findLeaks(stripped.text, profile).length) { trace.push({ step: 'stripped', ran: 'skipped', why: T.cloudLeak, used: false }); return stop(N.narrowNone, { notes: [...base.notes, N.leak] }); }
   if (!env.allowCloud) { trace.push({ step: 'stripped', ran: 'skipped', why: T.cloudOff, used: false }); return stop(N.narrowNeedsAi, { unsentPayload: preview, cloudSwaps: swaps }); }
   try {
-    const r = await within(engine.runCloud(stripped.text), env.cloudWaitMs);
+    const r = await checkedCloud(engine, () => engine.runCloud(stripped.text), env.cloudWaitMs);
     trace.push({ step: 'stripped', ran: r.source, why: r.source === 'in-cloud' ? T.narrowCloud : T.cloudOffline, ms: r.ms, used: false });
     const sent = r.source === 'in-cloud';
     const left: Partial<Card> = { cloudPayload: sent ? preview : null, unsentPayload: sent ? null : preview, ranOffline: !sent, cloudSwaps: swaps };

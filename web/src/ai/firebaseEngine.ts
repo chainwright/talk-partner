@@ -58,7 +58,7 @@ import { SUMMARY_SCHEMA, SUMMARY_SYSTEM_PROMPT } from '../../../core/summary';
 import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, LETTER_SCHEMA, LETTER_SYSTEM_PROMPT, SYSTEM_PROMPT, TRANSCRIBE_PROMPT, TRANSCRIBE_SCHEMA, TRANSCRIBE_SYSTEM_PROMPT, cloudPrompt } from '../../../core/prompt';
 import { cloudTextRequest, letterRequest } from '../../../core/requests';
 import { REWORD_SCHEMA, REWORD_SYSTEM_PROMPT, rewordRequest } from '../../../core/reword';
-import { appCheckConfigured, appWithAppCheck, namedAppCheckFailure, type WebConfig } from './app';
+import { appCheckConfigured, appCheckToken, appWithAppCheck, namedAppCheckFailure, type WebConfig } from './app';
 
 export type { WebConfig };
 
@@ -415,4 +415,6 @@ export class LazyFirebaseEngine implements Engine {
   transcribe(clip: AudioClip) { return this.e.transcribe(clip); }
   speakRequest(text: string) { return speakRequest(text); }
   speak(text: string) { return this.e.speak(text); }
+  /** Phase 13 (core/engine.ts, checkedCloud): App Check first, on the app the cloud call uses; rejects when this browser is refused. */
+  async checkCloud(): Promise<void> { if (!this.cloudConfigured) return; appWithAppCheck(this.cfg); await appCheckToken(); }
 }

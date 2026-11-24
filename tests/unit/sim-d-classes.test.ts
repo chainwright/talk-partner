@@ -249,7 +249,8 @@ describe('D-b. a failed cloud call (HTTP 429 on the free tier, a network error) 
     expect(e.calls).toEqual(['cloud']);
     expect(waits).toEqual([]);
     expect(card.blocked).toBe(COPY.notes.cloudCheckBlocked);
-    expect(card.blocked).toMatch(/Load the page again/);
+    // (phase 13: said plainly what to do, at once: a choice question, a topic, or the rules' card with no AI)
+    expect(card.blocked).toMatch(/could not check this browser.*Ask it as a choice.*pick a question from a topic/);
     expect(card.choices).toEqual([]);
     expect(card.retry).toBe('Where do you want the lamp to go?');
     // what the partner reads: no SDK name, no code, no address

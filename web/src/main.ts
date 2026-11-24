@@ -30,7 +30,7 @@ import { framed, loadPhoto, type Loaded } from './photo';
 import { stripQuestion } from '../../core/strip';
 import { BACKUP_MAX_BYTES, addTo, backupText, makeBackup, readBackup, replaceWith, type Backup, type BackupPreview } from '../../core/backup';
 import { addEntry, answerEntry, startedEntry, dayStart, dayText, diaryText, inSpan, laterEntry, logEntry, markDiary, needEntry, removeEntry, type DiaryEntry, type DiaryTopic, type LogKind, type Span } from '../../core/diary';
-import { CLOUD_SLOW_MS, within, type CloudError } from '../../core/engine';
+import { CLOUD_SLOW_MS, checkedCloud, type CloudError } from '../../core/engine';
 import { P9 } from '../../core/copy9';
 import { P10 } from '../../core/copy10';
 import { hasHealth, NO_HEALTH, cleanHealth, cloudLines, insightCloudText, insightDevicePrompt, insights, type HealthNotes, type Insight, type InsightSpan } from '../../core/insights';
@@ -773,7 +773,7 @@ async function hear() {
   p5.hear = 'loading'; patchHear();
   p5.speakSent++; p5.spoken.add(c);
   try {
-    const r = await within(state.engine.speak(text));
+    const r = await checkedCloud(state.engine, () => state.engine.speak!(text));
     const raw = Uint8Array.from(atob(r.base64), (ch) => ch.charCodeAt(0));
     const bytes = isPcm(r.mimeType) ? pcmToWav(raw, pcmRate(r.mimeType)) : raw;
     const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: isPcm(r.mimeType) ? 'audio/wav' : r.mimeType }));
@@ -970,7 +970,7 @@ async function sendInsights() {
   render();
   const done = (next: Partial<typeof state.ins>) => { if (state.ins.key !== sheet.key) return; state.ins = { ...state.ins, busy: false, ...next }; if (route() === 'diary') render(); };
   try {
-    const r = await within(state.engine.rewordCloud(sheet.text));
+    const r = await checkedCloud(state.engine, () => state.engine.rewordCloud!(sheet.text));
     const words = checkReworded(r.text, sheet.sources.map((l) => l.text));
     if (!words) { done({ note: 'refused' }); return; }
     // back onto the lines on screen: a line that did not go keeps the rules' own words
@@ -2332,6 +2332,8 @@ let p9stopped = 0;
 function cloudStarted(seq: number) {
   if (seq !== makeSeq) return;
   p9wait.at = Date.now();
+  // (phase 13, judge round 10: after "Just this once" the waiting line sat below the fold: it is brought into view)
+  document.querySelector('.making')?.scrollIntoView({ block: 'center' });
   if (p9wait.timer) clearInterval(p9wait.timer);
   p9wait.timer = setInterval(() => {
     if (seq !== makeSeq || !state.busy || p9wait.at === null) { cloudDone(); return; }

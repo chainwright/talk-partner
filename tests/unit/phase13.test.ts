@@ -338,3 +338,42 @@ describe('A8. Health wording P0s: the answer check leaves rest and sleep answers
     expect(readFileSync('web/src/simple.ts', 'utf8')).toContain('<p class="tip purpose" id="purpose">${esc(P5.purpose(m.number ?? \'\'))}</p>');
   });
 });
+
+describe('B11. A judge\'s first cloud tap: App Check first, inside the same wait; a refusal says plainly what to do, at once, with the rules\' card', () => {
+  it('core/engine.ts, checkedCloud: a refused App Check fails at once, says "App Check", and the request is never sent', async () => {
+    const { checkedCloud, CLOUD_WAIT_MS } = await import('../../core/engine');
+    let sent = 0;
+    const engine = { checkCloud: async () => { throw new Error('AppCheck: 403 attestation failed'); } };
+    const t0 = Date.now();
+    const e = await checkedCloud(engine, async () => { sent++; return 1; }).catch((x) => x as Error & { notSent?: boolean });
+    expect(Date.now() - t0).toBeLessThan(1000);
+    expect(sent).toBe(0);
+    expect((e as Error).message).toMatch(/App Check/);
+    expect((e as { notSent?: boolean }).notSent).toBe(true);
+    expect(CLOUD_WAIT_MS).toBe(20000);
+  });
+  it('the check and the call share one wait: never longer than the limit, however slow the check', async () => {
+    const { checkedCloud } = await import('../../core/engine');
+    const slowCheck = { checkCloud: () => new Promise<void>((r) => setTimeout(r, 120)) };
+    const t0 = Date.now();
+    const e = await checkedCloud(slowCheck, () => new Promise((r) => setTimeout(() => r(1), 5000)), 300).catch((x) => x as Error);
+    expect(Date.now() - t0).toBeLessThan(450);
+    expect((e as { timedOut?: boolean }).timedOut).toBe(true);
+    // a check that never answers is a refusal of this browser, said as such
+    const stuck = { checkCloud: () => new Promise<void>(() => {}) };
+    const e2 = await checkedCloud(stuck, async () => 1, 300).catch((x) => x as Error);
+    expect((e2 as Error).message).toMatch(/App Check/);
+    expect((e2 as { notSent?: boolean }).notSent).toBe(true);
+    // no check (no App Check here): the call alone
+    expect(await checkedCloud({}, async () => 7, 300)).toBe(7);
+  });
+  it('the no-card screen after a refusal: what to do in plain words, and the rules\' card one tap away (no AI)', async () => {
+    const { COPY } = await import('../../core/copy');
+    expect(COPY.notes.cloudCheckBlocked).toBe('Online help could not check this browser, so nothing was sent and there is no card. Ask it as a choice: "This, or that?", or pick a question from a topic. Or show them the ways to say it, made by the app with no AI.');
+    const { cardScreen } = await import('../../web/src/simple');
+    const c = { asked: 'What would you like to do this weekend?', pending: null, topic: '', kind: 'choice', source: 'code', choices: [], say: '', blocked: COPY.notes.cloudCheckBlocked, retry: 'What would you like to do this weekend?', notes: [], trace: [], route: { to: 'cloud', reasons: [] }, cloudPayload: null, ms: 0 } as never;
+    const html = cardScreen({ name: '', card: c, less: false, recap: false, recapDone: false, recapText: '', actions: [], made: { maker: 'code', left: 'nothing', spoken: false, lines: ['', ''] }, personHtml: '', canAskOnline: false, offline: false, lastTime: '', short: null, tips: false, usual: '' } as never);
+    expect(html).toContain('id="no-card-ways" data-act="stuck"');
+    expect(html).toContain('data-act="new"');
+  });
+});

@@ -289,7 +289,8 @@ describe('3. Read aloud: Gemini text-to-speech through Firebase AI Logic, after 
     expect(main).toContain("case 'speak-yes': p5.speakSheet = false; state.settings.speak = true; state.settings.speakOk = true;");
     expect(main).toContain("case 'speak-ask': if (state.settings.speakOk) { state.settings.speak = true; saveSettings(); } else p5.speakSheet = true;");
     // the one place a card's words are handed to the speech step, behind the switch and the "never a visit card" rule
-    expect(main.match(/engine\.speak\(/g)).toHaveLength(1);
+    // (phase 13: inside checkedCloud, App Check first)
+    expect(main.match(/engine\.speak!?\(/g)).toHaveLength(1);
     expect(main).toContain('if (!speakOn() || !speakable(c) || !state.engine.speak) return;');
     expect(main).toContain("const speakOn = () => canSpeak() && !!state.settings.speak;");
   });

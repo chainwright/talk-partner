@@ -53,3 +53,17 @@ export async function namedAppCheckFailure<E extends Error>(e: E): Promise<E> {
   }
   return e;
 }
+
+/**
+ * Phase 13 (judge round 10): before a cloud call, a token for this browser (core/engine.ts, checkedCloud). Called only
+ * after the carer's yes, on the app that the call itself starts App Check on, so no attestation happens before it.
+ * Rejects in App Check's own words when the browser is refused; resolves at once when a valid token is held.
+ */
+export async function appCheckToken(): Promise<void> {
+  if (!appCheck) return;
+  try {
+    await getToken(appCheck);
+  } catch (why) {
+    throw new Error(`App Check gave no token for this browser (${String((why as Error)?.message ?? why)})`, { cause: why });
+  }
+}

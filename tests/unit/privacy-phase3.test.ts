@@ -79,7 +79,7 @@ describe('the one text that may go to online help', () => {
 describe('the cloud wording step runs only from the yes on that sheet', () => {
   const main = read('web/src/main.ts');
   it('one call site in the page, inside sendInsights, with the sheet\'s own text', () => {
-    const calls = [...main.matchAll(/\.rewordCloud\(([^)]*)\)/g)].map((m) => m[1]);
+    const calls = [...main.matchAll(/\.rewordCloud!?\(([^)]*)\)/g)].map((m) => m[1]);
     expect(calls).toEqual(['sheet.text']);
     const fn = main.slice(main.indexOf('async function sendInsights()'), main.indexOf('async function sendInsights()') + 600);
     expect(fn).toMatch(/const sheet = state\.insSheet;\s+if \(!sheet \|\| !state\.engine\.rewordCloud\) return;/);

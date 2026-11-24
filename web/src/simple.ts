@@ -377,7 +377,8 @@ export function cardScreen(m: CardModel): string {
       ? `<p class="steplabel">${COPY.memory.line}</p><p class="say">${esc(c.say.replace(COPY.notes.tellPrefix, ''))}</p>`
       : `<h1>${S.noCard}</h1>${m.offline ? `<p class="offline" id="offline" role="status">${SIGN.net}<span>${S.offline}</span></p>` : `<p class="why-not">${esc(c.blocked ?? '')}</p>`}<p class="say">${K.justAsk}</p>
          ${m.canAskOnline && !m.offline ? `<button type="button" class="btn" data-act="sheet">${S.useOnline}</button>` : ''}
-         <p class="tip">${S.askChoice}</p>`;
+         <p class="tip">${S.askChoice}</p>
+         ${c.retry ? `<button type="button" class="btn primary" id="no-card-ways" data-act="stuck">${S.noCardWays}</button><button type="button" class="btn" id="no-card-topics" data-act="new">${S.noCardTopics}</button>` : ''}`;
     return `<main class="simple wrap one nocard" data-screen="nocard">${back}
   <div class="col">${coach}${body}${m.extraHtml ?? ''}${primary}${rest}${madeBlock(m.made)}</div>${foot}</main>`;
   }
