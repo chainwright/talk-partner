@@ -196,8 +196,9 @@ recognition on 17 Nov). So the photo keeps its own background, framed by hand; a
 segmentation package appears (`tests/unit/photos.test.ts`).
 
 **Back, Home, and a new version that arrives.** Every carer screen has "Back" (one step back in the flow) and "Talk
-Partner · Home" at the top; the phone's own back button or gesture does what "Back" does and leaves the app only
-from the first screen; the person's full-screen card keeps the carer's press-and-hold. A new deploy reaches an
+Partner · Home" at the top; the phone's own back button or gesture does what "Back" does and leaves the app from
+the first screen, and (judge round 10 found it, still open) from the full view that "How was this made?" opens, where
+the app's own "Simple view" button goes back; the person's full-screen card keeps the carer's press-and-hold. A new deploy reaches an
 installed copy: the service worker asks the network for the page with `no-store` and keeps only its own build, the
 page asks for a newer worker every time it comes back to the front, loads it by itself on the first screen, and in the
 middle of a question shows "A newer version is ready. Tap to update." instead (`scripts/update-check.py` swaps the
@@ -853,6 +854,33 @@ before this phase). The "Live:" lines still name `cb15e70`: phase 12 waits for i
 **Counts** (the production build of `9dc8060` on `npx vite preview`, port 5612): `npm run check` 3001 unit tests; `e2e-simple.py` 1032/1032; `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` 548/548; `contrast-check.mjs` 144 of 144 pairs; `phase8-shots.py` 21/21; `phase9-shots.py` 52/52 (the new cold check included); `phase10-shots.py` 132/132; `phase11-walk.py` 48/48; `phase12-walk.py` 142/142. Outputs:
 `devlog/evidence_phase12/`.
 
+## Added on 23 Nov, phase 13: the fixes of judge round 10
+
+The fixes of judge round 10, one commit each, every new health line tested on its worst case
+(`tests/unit/phase13.test.ts`). All of it is rules and fixed text on the device; no model was called. The "Live:"
+lines still name `39e8f33`: phase 13 waits for its deploy.
+
+- **The stroke check.** After a "no" or "not sure" to "Is it suddenly weak or numb?", the line "A yes or no can be
+  wrong after a stroke: check it yourself now… lift both arms and smile" is a red box with the call button ABOVE
+  "Next: How bad is the pain?" (it was hidden behind it). A yes or "not sure" goes into the diary, the next-carer note,
+  "What stands out" and the visit page.
+- **Chest or head pain.** With a chest or head pain, or a breathing / weak / numb yes, in the conversation, every
+  "How bad is the pain?" answer says "call [number] now, whatever the amount. Do not wait to see if it passes. Note the
+  time it started." (never "Ask again in an hour"), with the call button as the main action.
+- **Before a doctor visit.** An answer that can be urgent stops the questions: "Thank you. Give the phone back", then
+  the call box with "Go on with the questions".
+- **Mood, later, the crisis line.** A confirmed "worry" counts as a low or worried mood. "Left for later" stays through
+  "Ask it again" and "change topic"; only "Did you find out? Yes" or a confirmed answer takes it off. The crisis line
+  is About them's, else the one of the emergency number the family set (999: Samaritans 116 123; 000: Lifeline
+  13 11 14; 911: 988; 111: 1737; any other: the emergency number itself), and "may harm themselves" always means stay
+  and call now. "Something's wrong" is in the next-carer note. Rest and sleep answers are never marked "less sure". One
+  intended-purpose line: not a medical device.
+- **The pain picture** is an older man leaning forward, open hands on his knees, no teeth and no fists. **No claim to
+  a published pain scale**: the three faces are drawn for this app. **Online help** asks App Check first, inside the same
+  20 s, and a refused browser is told at once what to do, with the app's own card one tap away.
+
+**Counts** (phase 13, before its production walks): `npm run check` 3085 unit tests.
+
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104
 to 107; `devlog/evidence_phase6/r1_*.png`, `r2_*.png`; `devlog/DAY17.md`). Both fixes are rules: no AI was added.
@@ -1107,8 +1135,10 @@ a browser reCAPTCHA refuses.** When the attestation fails the SDK still sends th
 (`@firebase/app-check` 0.13.1, `getToken`: "always resolves"). We expected the service to take it while App Check is
 not enforced in the console. Measured on 17 Nov, 20:45 UTC, it does not: the same request got 200 with a valid App
 Check token, and 400 "Firebase AI Logic genai config not found" with no token or with the placeholder. So in such a
-browser there is no cloud card. The card says "Cloud help could not confirm this browser, so there is no card. Load
-the page again and try once more, …"; App Check's message and the service's stand under "Where each step ran"; and
+browser there is no cloud card. The card said "Cloud help could not confirm this browser, so there is no card. Load
+the page again and try once more, …"; since phase 13 (judge round 10) App Check is asked first, inside the same 20 s,
+and the card says "Online help could not check this browser, so nothing was sent and there is no card. Ask it as a
+choice…", with the app's own card one tap away; App Check's message and the service's stand under "Where each step ran"; and
 no second request is made, because after a 403 App Check refuses every try for a day, until the page is loaded again
 (`namedAppCheckFailure` in `web/src/ai/app.ts`, `cloudRetryWait` in `core/pipeline.ts`). What was measured, step by step:
 `devlog/evidence_live/appcheck_probe_2026-11-17_2c5673e.md`. Why reCAPTCHA began to refuse our machine that evening

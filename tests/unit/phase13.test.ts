@@ -387,3 +387,21 @@ describe('B9. No claim to the Faces Pain Scale: the faces are drawn for this app
     expect(readFileSync('DISCLOSURE.md', 'utf8')).toContain('three faces from calm to crying, drawn for this app');
   });
 });
+
+describe('B10. The judge files say what the live app does (the official seats\' FALSE / OVERSTATED lines)', () => {
+  it('JUDGES.md quotes the refusal line the app shows now, and the current test count', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { COPY } = await import('../../core/copy');
+    const j = readFileSync('JUDGES.md', 'utf8').replace(/\s+/g, ' ');
+    expect(j).toContain('"Online help could not check this browser"');
+    expect(COPY.notes.cloudCheckBlocked.startsWith('Online help could not check this browser')).toBe(true);
+    expect(j).not.toContain('2913 unit tests');
+    expect(j).not.toContain('reads "Cloud help could not confirm this browser"');
+  });
+  it('README: the phone\'s back button line names the one place it can leave the app', async () => {
+    const { readFileSync } = await import('node:fs');
+    const r = readFileSync('README.md', 'utf8').replace(/\s+/g, ' ');
+    expect(r).not.toContain('does what "Back" does and leaves the app only from the first screen;');
+    expect(r).toContain('the full view that "How was this made?" opens');
+  });
+});

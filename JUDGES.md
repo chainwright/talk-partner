@@ -22,7 +22,9 @@ Nothing here needs an account. Hosted copy: <https://talk-partner.web.app/#/demo
 cloud help can be turned on there; the on-device step needs Gemini Nano in your own Chrome). **Cloud help there needs
 App Check to accept your browser** (reCAPTCHA). In the check of the live build on 22 Nov, desktop Chrome with a fresh
 profile and no debug token got every cloud card, 28 of 28, in three runs of three; a browser App Check refuses gets
-no cloud card, and the card then reads "Cloud help could not confirm this browser" (`README.md`, "Where the AI runs,
+no cloud card. Since phase 13 the app asks App Check first, inside the same 20 s wait, so a refused browser hears it at
+once: the card reads "Online help could not check this browser", says what to do instead (a choice question, a topic
+question), and offers the app's own card with the ways to say it, made with no AI (`README.md`, "Where the AI runs,
 in detail"). Everything else on this page works without it. Or from a clone:
 
 **Two views of one app (since 17 Nov).** `/#/demo`, the address above, opens the full view in judge mode, and this
@@ -159,7 +161,7 @@ sheet whose first yes is "Just this once". On a phone there is no on-device step
 a phone"). Our run of Read aloud against the real model: `devlog/evidence_phase5/AI_RUN_LOG.md` (localhost, with sound).
 **On the hosted copy every one of these cloud steps is behind App Check, and it refused our headless test browsers in
 four of five runs of the cloud step and in the one run of Read aloud at build `9d141b0`** (README "Deploy"); the
-screen then says "Cloud help could not confirm this browser" or "The voice did not come. Say it out loud yourself.",
+screen then says "Online help could not check this browser" (since phase 13; before it, "Cloud help could not confirm this browser") or "The voice did not come. Say it out loud yourself.",
 and everything made by rules goes on working.
 
 **What happens next depends on your browser, and the status line at the top says which.** In desktop Chrome with
@@ -229,7 +231,7 @@ has the same two questions answered by the cloud alone); the same run against th
 `devlog/ondevice_proof_1/RUN_LOG.md`.
 
 **If you have five minutes more**
-- `npm run check` (lint, types, 2913 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
+- `npm run check` (lint, types, 3085 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
 - `npm run eval`: the labelled set of 60 questions against the rules alone (it writes its report to a new folder under
   `devlog/eval_runs/`): 40 of 42 code-decided questions, 0 of 18 open. What the on-device model adds on the 18 open
   questions: `devlog/evidence_phase5/heldout_at_d198eb0/` (three runs at `d198eb0`); our reading of the cards of the first runs:
