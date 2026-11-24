@@ -1392,7 +1392,12 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-**Live: the build of `ca04bc9`** (phase 13: the safety fixes of judge round 10 and the pain picture leaning forward), deployed
+**Live: the build of `479ce07`** (phase 14: "Find more choices (Google's AI, after your yes)" as the second button of a topic card,
+Read aloud offered before handing over, the measured three-leg table), deployed 24 Nov 2026 about 04:15 UTC. The hosted script
+(`index-B9UtTn6B.js`) is the same file as our `dist/`. Run against the hosted copy: `e2e-simple.py --live` 1024/1024, `pwa-check.py`
+34/34, `e2e-needs.mjs` 13/13, `phase12-walk.py --url` 431/431. Logs: `devlog/evidence_live/479ce07/`.
+
+Before it: **the build of `ca04bc9`** (phase 13: the safety fixes of judge round 10 and the pain picture leaning forward), deployed
 24 Nov 2026 about 02:30 UTC. The hosted script (`index-Byg3lp_t.js`) is the same file as our `dist/`. Run against the hosted copy:
 `e2e-simple.py --live` 1024/1024, `pwa-check.py` 34/34, `e2e-needs.mjs` 13/13, `phase12-walk.py --url` 335/335. Logs: `devlog/evidence_live/ca04bc9/`.
 

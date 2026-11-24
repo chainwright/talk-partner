@@ -17,7 +17,7 @@ sponsor's AI is at taps 3 and 4:
 11. **I want to say something → I feel…**, the way out twice: "worried / lonely / I can't go on"; the last opens the carer's safety screen.
 12. At the foot of Home: **Try it with the Millers, a sample family** (judge mode below), and **How it works inside →**. The measured table of the three legs (rules 0/18, Gemini Nano 16/18, online 12/18 on 18 open questions) is in README, "How we built it".
 
-**Live: the build of `ca04bc9`** (README "Deploy" says what was run against it).
+**Live: the build of `479ce07`** (README "Deploy" says what was run against it).
 
 Nothing here needs an account. Hosted copy: <https://talk-partner.web.app/#/demo> (our project settings are in it, so
 cloud help can be turned on there; the on-device step needs Gemini Nano in your own Chrome). **Cloud help there needs
