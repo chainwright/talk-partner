@@ -230,21 +230,24 @@ describe('11. A pain question left for later stands directly under "Needs someth
   });
 });
 
-describe('6b. Pain made once more (23 Nov 2026): the one of 22 Nov held its stomach and read as a stomach ache', () => {
-  it('the file is pain_d of devlog/quota_probe_2026-11-23/pain_general, the whole upper body in pain; the old one is kept outside the app', async () => {
+describe('6b. Pain made once more (23 Nov 2026): the one of 22 Nov held its stomach; pain_d (fists, teeth) read as angry in judge round 10', () => {
+  it('the file is pain_h of devlog/quota_probe_2026-11-23/pain_general/r3: leaning forward, open hands on the knees, no teeth, no fists; the ones before are kept outside the app', async () => {
     const { readFileSync } = await import('node:fs');
     const root = new URL('../../', import.meta.url);
     const read = (f: string) => readFileSync(new URL(f, root));
     const manifest = JSON.parse(read('devlog/quota_probe_2026-11-20/ASSET_MANIFEST.json').toString('utf8')) as Record<string, { file: string; prompt: string; model: string; date: string; tool: string }>;
     expect(manifest.pain).toMatchObject({ file: 'pictures/pain.webp', model: 'gemini-3.1-flash-image', date: '2026-11-23', tool: 'Google AI Studio, generated offline, bundled; no model call at run time' });
-    expect(manifest.pain.prompt).toMatch(/radiating around the whole body, arms NOT crossed, NOT hugging himself/);
-    expect(read('web/public/pictures/pain.webp').equals(read('devlog/quota_probe_2026-11-23/pain_general/pain_d.webp'))).toBe(true);
+    expect(manifest.pain.prompt).toMatch(/no teeth, NOT angry, NO fists, both open hands resting loosely on his knees/);
+    expect(read('web/public/pictures/pain.webp').equals(read('devlog/quota_probe_2026-11-23/pain_general/r3/pain_h.webp'))).toBe(true);
+    expect(read('devlog/quota_probe_2026-11-23/pain_general/replaced/pain_d_was_live.webp').equals(read('devlog/quota_probe_2026-11-23/pain_general/pain_d.webp'))).toBe(true);
     expect(read('devlog/quota_probe_2026-11-23/pain_general/replaced/pain_old.webp').equals(read('devlog/quota_probe_2026-11-20/r9b_regen/pain.webp'))).toBe(true);
-    const prompts = JSON.parse(read('devlog/quota_probe_2026-11-23/pain_general/prompts.json').toString('utf8')) as Record<string, { prompt: string; used: boolean }>;
-    expect(Object.keys(prompts)).toEqual(['pain_a', 'pain_b', 'pain_c', 'pain_d', 'pain_e', 'pain_f']);
-    expect(prompts.pain_d).toMatchObject({ prompt: manifest.pain.prompt, used: true });
-    expect([prompts.pain_a.used, prompts.pain_b.used, prompts.pain_c.used, prompts.pain_e.used, prompts.pain_f.used]).toEqual([false, false, false, false, false]);
+    const prompts = JSON.parse(read('devlog/quota_probe_2026-11-23/pain_general/prompts.json').toString('utf8')) as Record<string, { prompt: string; used: boolean; why: string }>;
+    expect(Object.keys(prompts)).toEqual(['pain_a', 'pain_b', 'pain_c', 'pain_d', 'pain_e', 'pain_f', 'pain_g', 'pain_h', 'pain_i']);
+    expect(prompts.pain_h).toMatchObject({ prompt: manifest.pain.prompt, used: true });
+    expect(prompts.pain_d).toMatchObject({ used: false, why: 'read as angry at card size: 4 of 5 seats in round r10' });
+    for (const k of ['pain_g', 'pain_i']) expect(prompts[k], k).toMatchObject({ used: false, why: 'points at one body part' });
+    expect(Object.entries(prompts).filter(([, v]) => v.used).map(([k]) => k)).toEqual(['pain_h']);
     const md = read('PICTOGRAMS.md').toString('utf8');
-    expect(md).toMatch(/^\| pain \| an older man from the front, upper body.*\| 23 Nov 2026 /m);
+    expect(md).toMatch(/^\| pain \| an older man from the front, upper body, leaning forward.*open hands.*\| 23 Nov 2026 /m);
   });
 });

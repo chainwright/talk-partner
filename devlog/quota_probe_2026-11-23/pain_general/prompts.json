@@ -26,8 +26,8 @@
   "prompt": "an older adult man from the front, upper body, grimacing in strong pain with eyes squeezed shut and teeth clenched, both arms down at his sides with fists clenched tight, shoulders tense and raised, several short red jagged pain lines radiating around the whole body, arms NOT crossed, NOT hugging himself, no hat, no scarf, indoor shirt",
   "model": "gemini-3.1-flash-image",
   "date": "2026-11-23",
-  "used": true,
-  "why": "used as web/public/pictures/pain.webp: the whole body in pain, arms down, not one body part and not like 'too cold'"
+  "used": false,
+  "why": "read as angry at card size: 4 of 5 seats in round r10"
  },
  "pain_e": {
   "prompt": "an older adult man from the front, upper body, face twisted in pain with eyes squeezed shut, mouth open in a groan, body bent slightly forward, both hands open and raised a little in front of him trembling, red jagged pain lines all around him, arms NOT crossed, NOT hugging himself, indoor shirt",
@@ -42,5 +42,26 @@
   "date": "2026-11-23",
   "used": false,
   "why": "rejected: holding the wrist reads as pain in the arm"
+ },
+ "pain_g": {
+  "prompt": "an older adult man sitting in a chair, from the front, upper body, clearly hurting: eyes squeezed shut, inner eyebrows raised and drawn together, mouth turned down, NO teeth showing, NOT angry, one open hand pressed flat against his lower back, a few small red pain lines near the hand",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-23",
+  "used": false,
+  "why": "points at one body part"
+ },
+ "pain_h": {
+  "prompt": "an older adult man from the front, upper body, clearly hurting: eyes squeezed shut, inner eyebrows raised and drawn together, mouth turned down, no teeth, NOT angry, NO fists, both open hands resting loosely on his knees while he leans forward slightly, soft red pain lines around his shoulders and back",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-23",
+  "used": true,
+  "why": "used as web/public/pictures/pain.webp: pain in general, open hands, no teeth and no fists, so it does not read as angry"
+ },
+ "pain_i": {
+  "prompt": "an older adult woman sitting, from the front, upper body, clearly hurting: eyes squeezed shut, inner eyebrows raised and drawn together, mouth turned down, no teeth, not angry, one open hand pressed flat on her hip side, small red pain lines near the hand",
+  "model": "gemini-3.1-flash-image",
+  "date": "2026-11-23",
+  "used": false,
+  "why": "points at one body part"
  }
 }

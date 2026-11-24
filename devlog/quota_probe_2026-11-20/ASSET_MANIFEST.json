@@ -183,7 +183,7 @@
  },
  "pain": {
   "file": "pictures/pain.webp",
-  "prompt": "an older adult man from the front, upper body, grimacing in strong pain with eyes squeezed shut and teeth clenched, both arms down at his sides with fists clenched tight, shoulders tense and raised, several short red jagged pain lines radiating around the whole body, arms NOT crossed, NOT hugging himself, no hat, no scarf, indoor shirt",
+  "prompt": "an older adult man from the front, upper body, clearly hurting: eyes squeezed shut, inner eyebrows raised and drawn together, mouth turned down, no teeth, NOT angry, NO fists, both open hands resting loosely on his knees while he leans forward slightly, soft red pain lines around his shoulders and back",
   "model": "gemini-3.1-flash-image",
   "date": "2026-11-23",
   "tool": "Google AI Studio, generated offline, bundled; no model call at run time"
