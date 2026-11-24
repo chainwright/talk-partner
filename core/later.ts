@@ -34,6 +34,8 @@ const DEFER_Q = /^(?:do you want to tell me now or later|would you like to talk 
  * "later" to a question that asks whether to talk now or later (that question).
  */
 export function laterOf(o: { asked: string; label: string; repair: boolean; before: string | null }): string | null {
+  // (phase 13, judge round 10: "change topic" over a pain question is not "found out": the question is kept for later)
+  if (o.repair && o.label.trim().toLowerCase() === 'change topic' && o.before && laterPain(o.before)) return o.before.trim();
   if (o.label.trim().toLowerCase() !== 'later') return null;
   if (o.repair) return o.before?.trim() || null;
   return DEFER_Q.test(o.asked.trim()) ? o.asked.trim() : null;
@@ -78,6 +80,24 @@ export function doneLater(xs: Later[], x: Later, foundOut: boolean): Later[] {
   if (x.care && !foundOut) return xs;
   return xs.filter((y) => y !== x);
 }
+/**
+ * Phase 13 (judge round 10, a health P0: the nurse's seat, ADV-13b-3): "Ask it again" opens the question and keeps it
+ * on Home: only "Did you find out? Yes" (`doneLater`) or a confirmed answer to that same question (`answeredLater`)
+ * takes it off. A way out ("something else", "not sure"), a "We're stuck" tile or another question leaves it there.
+ */
+export function askAgainLater(xs: Later[], x: Later): Later[] { return xs.includes(x) ? xs : xs; }
+const qKey = (q: string) => q.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+export function answeredLater(xs: Later[], asked: string, role: string): Later[] {
+  if (role !== 'answer') return xs;
+  const k = qKey(asked);
+  return xs.some((x) => qKey(x.q) === k) ? xs.filter((x) => qKey(x.q) !== k) : xs;
+}
+/** The carer's line after a "We're stuck" tile: under a pain question, "change topic" says the question stays on Home. */
+export function repairLine(label: string, before: string | null, words: { lines: Record<string, string>; painChangeTopic: string }): string {
+  if (label === 'change topic' && before && laterPain(before)) return words.painChangeTopic;
+  return words.lines[label] ?? '';
+}
+
 /** Whatever was stored, as the list: rows without a question or a time are dropped; a care question is known again by its words. */
 export function cleanLater(raw: unknown): Later[] {
   return Array.isArray(raw) ? raw.filter((x): x is Later => !!x && typeof x.q === 'string' && x.q.trim() !== '' && typeof x.at === 'number' && Number.isFinite(x.at)).map((x) => {

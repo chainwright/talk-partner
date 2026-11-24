@@ -112,6 +112,8 @@ const COPY = {
       later: 'Say: "Later, then. We will come back to it." And come back.',
       'change topic': 'Say: "Let\'s leave it." Start a new topic, one idea at a time.',
     } as Record<string, string>,
+    /** Phase 13 (judge round 10, the nurse's seat): "change topic" over a pain question, which stays on Home (core/later.ts). */
+    painChangeTopic: 'Say: "Let\'s leave it for now." The pain is not found out yet: it stays on Home under "Left for later".',
   },
 
   // The quick-needs board: one tap from the partner screen, a fixed board of everyday needs for the person to point

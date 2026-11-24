@@ -72,7 +72,7 @@ import { P8 } from '../../core/copy8';
 import { guessTopic, lowMood, timeText } from '../../core/diary';
 /** Phase 8: a low answer to a question about how the person feels (not a photo): the helpline line follows on the carer's side. Phase 12: the diary's own rule (worried, scared, lonely, something bothering them). */
 const lowMoodAnswer = lowMood;
-import { addLater, agoText, cleanLater, doneLater, laterOf, noLastTime, shownLater, type Later } from '../../core/later';
+import { addLater, agoText, answeredLater, askAgainLater, cleanLater, doneLater, laterOf, noLastTime, repairLine, shownLater, type Later } from '../../core/later';
 import { NO_PASSPORT, OFF_UNTIL_TICKED, cleanPassport, passport, passportText, toggleLine, OWN_MAX, type PassportInput, type PassportPrefs } from '../../core/passport';
 import { addEvent, cleanLog, lessSureCount, newLog, pickedPractice, practiceFlag, practiceReport, practiceText, practiceUrgent, togglePractice, type AskedBy, type PracticeEvent, type PracticeInput, type PracticeLog, type PracticeSpan, type Via } from '../../core/practice';
 import { passportLink, passportScreen, practiceScreen, type PassPicture } from './care7';
@@ -1496,7 +1496,7 @@ function choseLine(c: Card, p: Choice): string {
  */
 function afterAnswer(c: Card, p: Choice, button: string): string {
   // (after "show me", "write it" or "draw" the screen goes on: the carer types what they understood, or goes back to the ways)
-  if (p.role === 'repair') return `<p class="say">${esc(C.repair.lines[p.label] ?? '')}</p>${([C.repair.tiles.showMe, C.repair.tiles.writeIt, C.repair.tiles.draw] as string[]).includes(p.label) ? understoodBlock(state.profile.personName.trim()) : ''}`;
+  if (p.role === 'repair') return `<p class="say">${esc(repairLine(p.label, state.before?.asked ?? state.chain[0] ?? null, C.repair))}</p>${([C.repair.tiles.showMe, C.repair.tiles.writeIt, C.repair.tiles.draw] as string[]).includes(p.label) ? understoodBlock(state.profile.personName.trim()) : ''}`;
   // (phase 12) the person chose "I can't go on": the crisis box comes first, in both views
   if (p.role === 'answer' && crisisAnswer(p.label)) return crisisBox({ name: state.profile.personName.trim(), number: callNumber(), line: crisisLineNow(), guess: numberGuess() });
   if (c.kind !== 'needs') return '';
@@ -2442,6 +2442,8 @@ function onPersonTap(t: HTMLElement) {
     // (phase 8) "later": the question is kept for Home, to come back to (core/later.ts); never for the sample family
     const left = state.picked ? laterOf({ asked: c.asked, label: state.picked.label, repair: c.kind === 'repair', before: state.before?.asked ?? state.chain[0] ?? null }) : null;
     if (left) leaveForLater(left, careTopic(c));
+    // (phase 13) a confirmed answer to a question left for later finds it out: it goes off Home
+    else if (state.picked && !c.sample && !state.demo) { p8later.list = answeredLater(p8later.list, c.asked, state.picked.role); saveLater(); }
     if (simpleView()) {
       // the first confirmed answer folds "How it works" to its one line (remembered), and About them is offered once,
       // on this answer's screen, when it names nobody yet
@@ -2621,7 +2623,8 @@ function act(el: HTMLElement) {
       if (a === 'later-done' && x.care) { p8later.asking = x; render(); document.querySelector<HTMLElement>(`#later-found-${p8later.list.indexOf(x)}`)?.focus(); break; }
       p8later.asking = null;
       if (a === 'later-notyet') { render(); break; }
-      p8later.list = a === 'later-ask' ? p8later.list.filter((y) => y !== x) : doneLater(p8later.list, x, true); saveLater();
+      // (phase 13: "Ask it again" keeps it on Home until "Did you find out? Yes" or a confirmed answer to it)
+      p8later.list = a === 'later-ask' ? askAgainLater(p8later.list, x) : doneLater(p8later.list, x, true); saveLater();
       if (a === 'later-ask') { askBy = 'none'; void make(x.q); } else render();
       break;
     }

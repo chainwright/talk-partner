@@ -184,3 +184,33 @@ describe('A4. A confirmed worried / scared / anxious / lonely, a "worry", or a y
     expect(s.lines.join(' ')).not.toContain('no low or worried answer entered');
   });
 });
+
+describe('A5. "Left for later" goes only with "Did you find out? Yes" or a confirmed answer to that question, never with "Ask it again"', () => {
+  const at = new Date(2026, 10, 23, 17).getTime();
+  it('core/later.ts: a confirmed answer to the question takes it off; a way out, another question, or "Ask it again" does not', async () => {
+    const { addLater, answeredLater, askAgainLater } = await import('../../core/later');
+    const xs = addLater(addLater([], 'Are you in pain?', at), 'Would you like tea or coffee?', at + 1);
+    expect(askAgainLater(xs, xs[0])).toEqual(xs);
+    expect(answeredLater(xs, 'Are you in pain?', 'answer').map((x) => x.q)).toEqual(['Would you like tea or coffee?']);
+    expect(answeredLater(xs, 'are you in pain', 'answer').map((x) => x.q)).toEqual(['Would you like tea or coffee?']);
+    expect(answeredLater(xs, 'Are you in pain?', 'escape')).toEqual(xs);
+    expect(answeredLater(xs, 'Are you in pain?', 'repair')).toEqual(xs);
+    expect(answeredLater(xs, 'Where does it hurt?', 'answer')).toEqual(xs);
+  });
+  it('"change topic" over a pain question keeps it for later, and the carer\'s line says so', async () => {
+    const { laterOf, repairLine: line } = await import('../../core/later');
+    const { COPY } = await import('../../core/copy');
+    const repairLine = (l: string, b: string) => line(l, b, COPY.repair);
+    expect(laterOf({ asked: "Let's try another way.", label: 'change topic', repair: true, before: 'Are you in pain?' })).toBe('Are you in pain?');
+    expect(laterOf({ asked: "Let's try another way.", label: 'change topic', repair: true, before: 'Would you like tea or coffee?' })).toBeNull();
+    expect(repairLine('change topic', 'Are you in pain?')).toBe('Say: "Let\'s leave it for now." The pain is not found out yet: it stays on Home under "Left for later".');
+    expect(repairLine('change topic', 'Would you like tea or coffee?')).toBe('Say: "Let\'s leave it." Start a new topic, one idea at a time.');
+    expect(repairLine('later', 'Are you in pain?')).toBe('Say: "Later, then. We will come back to it." And come back.');
+  });
+  it('web/src/main.ts: "Ask it again" no longer takes the question off Home; a confirmed answer does', async () => {
+    const { readFileSync } = await import('node:fs');
+    const main = readFileSync('web/src/main.ts', 'utf8');
+    expect(main).not.toContain("p8later.list = a === 'later-ask' ? p8later.list.filter((y) => y !== x)");
+    expect(main).toContain('p8later.list = answeredLater(p8later.list, c.asked, state.picked.role); saveLater();');
+  });
+});
