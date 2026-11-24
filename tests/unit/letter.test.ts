@@ -78,7 +78,11 @@ describe('the brief\'s case: "B" with Beth, Bo and biscuits in About them', () =
     // drinks with M: the everyday "milk" and the family's "strong tea with milk"; then Mary; then the rest
     // (phase 17: inside the topic: the drink first, then the foods; Mary only after the topic's words)
     // (phase 17b: a drink question keeps its letters to drinks first: the everyday "milkshake" now stands before the family's marmalade)
-    expect(letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p).slice(0, 3)).toEqual(['strong tea with milk', 'milkshake', 'marmalade']);
+    // (phase 18b: the longer drink list has "mocha" too, also before the family's marmalade, which still comes before Mary)
+    const m = letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p);
+    expect(m.slice(0, 3)).toEqual(['strong tea with milk', 'milkshake', 'mocha']);
+    expect(m.indexOf('marmalade')).toBeGreaterThan(0);
+    expect(m.indexOf('Mary') < 0 || m.indexOf('marmalade') < m.indexOf('Mary')).toBe(true);
     expect(letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p).slice(0, 5)).not.toContain('Mary');
     // with no kind known: people first, then the rest in About-them order
     expect(letterWords({ asked: '', letter: 'M', rejected: [] }, p).slice(0, 3)).toEqual(['Mary', 'marmalade', 'strong tea with milk']);
@@ -137,7 +141,14 @@ describe('the rules\' words', () => {
 });
 
 describe('a model adds words only when the rules find fewer than two', () => {
-  const Q = { asked: 'Would you like tea or coffee?', letter: 'X', rejected: ['tea', 'coffee'] };
+  // (phase 18b: a question of no known topic; inside the drink question "xylophone" is now dropped, the test after these)
+  const Q = { asked: 'What is it?', letter: 'X', rejected: [] as string[] };
+  it('phase 18b: inside the drink question ("tea or coffee?"), the model\'s "xylophone" is not of the topic: dropped', async () => {
+    const e = new Fake(true, { device: ['xylophone', 'x-ray picture', 'tea'] });
+    const card = await letterCard({ asked: 'Would you like tea or coffee?', letter: 'X', rejected: ['tea', 'coffee'] }, env(e, MILLER, { deviceReady: true }));
+    expect(labels(card)).toEqual([]);
+    expect(e.device).toHaveLength(1);
+  });
   it('on this device, where the browser has the model: its prompt holds About them, and nothing is sent', async () => {
     const e = new Fake(true, { device: ['xylophone', 'x-ray picture', 'tea'] });
     const card = await letterCard(Q, env(e, MILLER, { deviceReady: true, allowCloud: true }));
@@ -162,7 +173,7 @@ describe('a model adds words only when the rules find fewer than two', () => {
     const card = await letterCard(Q, env(e, MILLER, { allowCloud: true }));
     // (phase 8: the kind of the conversation and an age band, fixed words: no name, nothing from About them)
     // (phase 9: the cloud is asked for exactly 4 words; code keeps those that start with the letter)
-    expect(e.cloud).toEqual([`Would you like tea or coffee? They cannot say the word. It starts with the letter "X". The conversation is about something to drink. ${LETTER_AGE} ${LETTER_CLOUD_TASK}`]);
+    expect(e.cloud).toEqual([`What is it? They cannot say the word. It starts with the letter "X". ${LETTER_AGE} ${LETTER_CLOUD_TASK}`]);
     expect(labels(card)).toEqual(['xylophone', 'x-ray']);
     expect(card.letter?.by).toBe('cloud');
     expect(card.source).toBe('in-cloud');

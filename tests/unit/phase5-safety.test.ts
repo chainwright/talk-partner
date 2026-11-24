@@ -318,7 +318,8 @@ describe('3. Read aloud: Gemini text-to-speech through Firebase AI Logic, after 
   });
   it('the engine: ONLY_IN_CLOUD on the app with App Check, the SDK\'s own speech config, the source from the SDK\'s report', () => {
     const src = read('web/src/ai/firebaseEngine.ts');
-    const fn = src.slice(src.indexOf('async speak(text: string)'), src.indexOf('/**\n * Lazy wrapper'));
+    // (phase 18b: the on-device letter step follows speak in the class; the slice ends before it)
+    const fn = src.slice(src.indexOf('async speak(text: string)'), src.indexOf('  private letterLocal'));
     expect(fn).toContain('getGenerativeModel(this.ai, {');
     expect(fn).toContain('mode: InferenceMode.ONLY_IN_CLOUD,');
     expect(fn).toContain('responseModalities: [ResponseModality.AUDIO]');

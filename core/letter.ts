@@ -14,7 +14,8 @@
 //      - else online help (PREFER_IN_CLOUD, `engine.runCloud`), only when the carer has said yes: that text holds the
 //        question (About-them words swapped out, then the leak gate) and the letter, and nothing else. Not what was
 //        refused, not a learned word, not a name.
-// The model only proposes. Code keeps a word only if it starts with the letter, was not refused, is no name the family
+// The model only proposes. Code keeps a word only if it starts with the letter, is of the topic when the topic is known
+// (a word of the app's list for it, or one the model named of the topic's kind and no list gives another topic: phase 18b), was not refused, is no name the family
 // did not give (a capitalised word that About them does not hold counts as one, so the request asks for lower case), is not negative, is at most three words, and is not alcohol, tobacco or a medicine (the family can
 // add any word of their own in About them; a model does not bring those in).
 // Dignity: the letter screen is offered, never required; "No, I don't know" is always there; nothing counts a miss.
@@ -50,16 +51,21 @@ export interface LetterInput {
  * Phase 17 (the owner's own test on his phone, 24 Nov 2026: Food & drink, "something else", the first letter P gave
  * "pain, priest, photos", the words of other topics): the words of a topic, for the first letter and for the letters
  * after it. The rules stay inside the topic when it is known; a word of another topic is never offered for it.
+ * Phase 18b (a live walk with Gemini Nano, 24 Nov 2026: "stew" was in no list, so S, ST and STE never offered it, and
+ * the AI's "steam" and "stir" stood under food): many more plain words per topic, the home dishes and foods, drinks,
+ * places, pastimes and family words an older adult in the US or UK uses, so the rules reach a common word in three
+ * letters or fewer. No brands. Each list keeps its first words in their old order (three fit on a card); the new ones
+ * follow. The body and feelings keep their short lists, for the rules only.
  */
 export const TOPIC_WORDS: Record<string, string[]> = {
   // (the commonest words first: three fit on a card)
-  food: ['tea', 'coffee', 'water', 'juice', 'milk', 'sandwich', 'soup', 'toast', 'bread', 'cheese', 'chicken', 'pizza', 'pasta', 'potatoes', 'pie', 'eggs', 'fish', 'rice', 'cake', 'biscuits', 'chocolate', 'ice cream', 'fruit', 'apple', 'banana', 'salad', 'vegetables', 'porridge', 'cereal', 'yoghurt', 'ham', 'bacon', 'beans', 'butter', 'carrots', 'chips', 'crisps', 'custard', 'grapes', 'gravy', 'honey', 'hot chocolate', 'iced tea', 'jam', 'jelly', 'lamb', 'lemonade', 'melon', 'muffin', 'mushrooms', 'noodles', 'nuts', 'oatmeal', 'omelette', 'onions', 'orange juice', 'oranges', 'pancakes', 'peas', 'pears', 'pudding', 'quiche', 'raisins', 'roast beef', 'sausages', 'scone', 'spaghetti', 'strawberries', 'sweets', 'tomatoes', 'tuna', 'waffles', 'cocoa'],
-  plans: ['bakery', 'bank', 'beach', 'cafe', 'church', 'garden', 'hairdresser', 'library', 'lake', 'market', 'park', 'post office', 'river', 'shop', 'town', 'walk', 'drive', 'exercises', 'kitchen', 'bedroom', 'porch'],
-  people: ['family', 'friend', 'neighbour', 'visitor', 'carer', 'priest', 'brother', 'sister', 'son', 'daughter', 'wife', 'husband', 'grandchild', 'grandson', 'granddaughter', 'mother', 'father', 'aunt', 'uncle', 'cousin', 'doctor', 'nurse', 'physio', 'speech therapist'],
-  fun: ['tv', 'music', 'news', 'film', 'radio', 'paper', 'puzzle', 'cards', 'crossword', 'quiz show', 'football', 'golf', 'gardening', 'photos', 'book', 'bingo', 'painting', 'piano'],
-  rest: ['bed', 'chair', 'quiet', 'nap', 'pillow', 'blanket', 'sofa', 'sleep'],
+  food: ['tea', 'coffee', 'water', 'juice', 'milk', 'sandwich', 'soup', 'toast', 'bread', 'cheese', 'chicken', 'pizza', 'pasta', 'potatoes', 'pie', 'eggs', 'fish', 'rice', 'cake', 'biscuits', 'chocolate', 'ice cream', 'fruit', 'apple', 'banana', 'salad', 'vegetables', 'porridge', 'cereal', 'yoghurt', 'ham', 'bacon', 'beans', 'butter', 'carrots', 'chips', 'crisps', 'custard', 'grapes', 'gravy', 'honey', 'hot chocolate', 'iced tea', 'jam', 'jelly', 'lamb', 'lemonade', 'melon', 'muffin', 'mushrooms', 'noodles', 'nuts', 'oatmeal', 'omelette', 'onions', 'orange juice', 'oranges', 'pancakes', 'peas', 'pears', 'pudding', 'quiche', 'raisins', 'roast beef', 'sausages', 'scone', 'spaghetti', 'strawberries', 'sweets', 'tomatoes', 'tuna', 'waffles', 'cocoa', 'stew', 'steak', 'stir fry', 'salmon', "shepherd's pie", 'scrambled eggs', 'beef', 'burger', 'burrito', 'curry', 'chili', 'meatloaf', 'mashed potatoes', 'macaroni and cheese', 'mac and cheese', 'tacos', 'hot dog', 'ribs', 'roast chicken', 'turkey', 'bagel', 'crackers', 'peanut butter', 'pot roast', 'cottage pie', 'fish and chips', 'fish pie', 'fish fingers', 'fish sticks', 'fish cakes', 'corned beef', 'corn', 'corn on the cob', 'cornbread', 'coleslaw', 'baked beans', 'baked potato', 'jacket potato', 'roast potatoes', 'roast dinner', 'roast pork', 'roast lamb', 'roast turkey', 'pork chops', 'pork', 'sausage', 'bangers and mash', 'toad in the hole', 'meatballs', 'spaghetti and meatballs', 'lasagne', 'lasagna', 'ravioli', 'risotto', 'casserole', 'chicken soup', 'tomato soup', 'vegetable soup', 'pea soup', 'lentil soup', 'minestrone', 'broth', 'chowder', 'gumbo', 'grits', 'biscuits and gravy', 'fried chicken', 'chicken pie', 'pot pie', 'chicken nuggets', 'chicken salad', 'chicken wings', 'pulled pork', 'barbecue', 'brisket', 'ham sandwich', 'cheese sandwich', 'egg sandwich', 'tuna sandwich', 'grilled cheese', 'cheese on toast', 'beans on toast', 'boiled egg', 'fried egg', 'poached egg', 'omelet', 'french toast', 'hash browns', 'sausage roll', 'pork pie', 'pasty', 'scotch egg', 'nachos', 'enchiladas', 'quesadilla', 'fajitas', 'tamales', 'rice and beans', 'fried rice', 'chow mein', 'sweet and sour chicken', 'spring rolls', 'dumplings', 'kebab', 'pitta', 'hummus', 'hamburger', 'cheeseburger', 'sloppy joe', 'salami', 'pepperoni', 'liver and onions', 'lamb chops', 'gammon', 'stuffing', 'cranberry sauce', 'apple sauce', 'ketchup', 'mustard', 'mayonnaise', 'pickles', 'olives', 'beetroot', 'broccoli', 'cabbage', 'cauliflower', 'cauliflower cheese', 'celery', 'cucumber', 'lettuce', 'spinach', 'sprouts', 'green beans', 'sweetcorn', 'peppers', 'courgette', 'zucchini', 'sweet potato', 'parsnips', 'leeks', 'asparagus', 'avocado', 'turnip', 'pumpkin', 'apricots', 'blueberries', 'raspberries', 'blackberries', 'cherries', 'plums', 'peaches', 'pineapple', 'kiwi', 'mango', 'grapefruit', 'satsuma', 'tangerine', 'watermelon', 'rhubarb', 'prunes', 'fruit salad', 'apple pie', 'cherry pie', 'pumpkin pie', 'pecan pie', 'peach cobbler', 'crumble', 'apple crumble', 'trifle', 'rice pudding', 'bread pudding', 'sticky toffee pudding', 'sponge cake', 'carrot cake', 'chocolate cake', 'cheesecake', 'fruit cake', 'cupcake', 'brownies', 'cookies', 'doughnut', 'croissant', 'pastry', 'jam tart', 'mince pie', 'flapjack', 'shortbread', 'gingerbread', 'crumpets', 'teacake', 'cinnamon roll', 'banana bread', 'cornflakes', 'muesli', 'granola', 'oats', 'marmalade', 'syrup', 'cream', 'whipped cream', 'ice lolly', 'sorbet', 'mousse', 'yogurt', 'cottage cheese', 'cream cheese', 'bread roll', 'bun', 'popcorn', 'pretzels', 'peanuts', 'almonds', 'walnuts', 'candy', 'toffee', 'fudge', 'mints', 'marshmallows', 'cod', 'haddock', 'prawns', 'shrimp', 'crab', 'sardines', 'mackerel', 'kippers', 'smoked salmon', 'trout', 'catfish', 'bacon and eggs', 'fry up', 'corned beef hash', 'black pudding', 'english muffin', 'breakfast', 'lunch', 'dinner', 'supper', 'leftovers', 'takeaway'],
+  plans: ['bakery', 'bank', 'beach', 'cafe', 'church', 'garden', 'hairdresser', 'library', 'lake', 'market', 'park', 'post office', 'river', 'shop', 'town', 'walk', 'drive', 'exercises', 'kitchen', 'bedroom', 'porch', 'shops', 'supermarket', 'grocery store', 'corner shop', 'garden centre', 'garden center', 'pharmacy', 'chemist', "doctor's", 'dentist', 'hospital', 'optician', 'clinic', 'barber', 'chapel', 'cemetery', 'city', 'high street', 'main street', 'mall', 'shopping centre', 'department store', 'charity shop', 'thrift store', 'farmers market', 'car boot sale', 'butcher', 'coffee shop', 'tea room', 'restaurant', 'diner', 'pub', 'fish and chip shop', 'cinema', 'movie theater', 'theatre', 'museum', 'art gallery', 'zoo', 'aquarium', 'playground', 'seaside', 'coast', 'sea', 'pond', 'canal', 'woods', 'forest', 'countryside', 'mountains', 'hills', 'farm', 'allotment', 'picnic', 'bench', 'pier', 'harbour', 'boat trip', 'bus ride', 'train station', 'airport', 'holiday', 'vacation', 'day trip', 'outing', 'cruise', 'hotel', 'caravan', 'cabin', 'cottage', "friend's house", "daughter's house", "son's house", "neighbour's house", 'home', 'yard', 'back yard', 'patio', 'balcony', 'conservatory', 'greenhouse', 'shed', 'garage', 'living room', 'lounge', 'dining room', 'upstairs', 'downstairs', 'outside', 'stroll', 'gym', 'swimming pool', 'leisure centre', 'community centre', 'senior center', 'day centre', 'club', 'social club', 'bingo hall', 'bowling green', 'golf course', 'stadium', 'church hall', 'village hall', 'gas station', 'petrol station', 'car wash', 'hardware store', 'pet shop', 'vet', 'dog park', 'salon', 'launderette', 'laundromat', 'dry cleaner', 'florist', 'bookshop', 'newsagent', 'shoe shop', 'clothes shop', 'sweet shop', 'visit family', 'visit friends'],
+  people: ['family', 'friend', 'neighbour', 'visitor', 'carer', 'priest', 'brother', 'sister', 'son', 'daughter', 'wife', 'husband', 'grandchild', 'grandson', 'granddaughter', 'mother', 'father', 'aunt', 'uncle', 'cousin', 'doctor', 'nurse', 'physio', 'speech therapist', 'grandma', 'grandpa', 'granny', 'grandad', 'grandmother', 'grandfather', 'mum', 'mom', 'dad', 'niece', 'nephew', 'children', 'kids', 'grandchildren', 'great grandchild', 'stepson', 'stepdaughter', 'son-in-law', 'daughter-in-law', 'brother-in-law', 'sister-in-law', 'in-laws', 'partner', 'baby', 'relatives', 'old friend', 'best friend', 'neighbor', 'colleague', 'minister', 'vicar', 'pastor', 'rabbi', 'volunteer', 'helper', 'cleaner', 'gardener', 'postman', 'mail carrier', 'therapist', 'caregiver', 'gp', 'home help', 'social worker', 'pharmacist', 'dentist', 'church friends'],
+  fun: ['tv', 'music', 'news', 'film', 'radio', 'paper', 'puzzle', 'cards', 'crossword', 'quiz show', 'football', 'golf', 'gardening', 'photos', 'book', 'bingo', 'painting', 'piano', 'snooker', 'darts', 'crosswords', 'word search', 'sudoku', 'jigsaw', 'knitting', 'crochet', 'sewing', 'embroidery', 'quiz shows', 'game shows', 'soaps', 'westerns', 'old films', 'old movies', 'movies', 'comedy', 'sitcoms', 'documentaries', 'nature programmes', 'wildlife', 'cooking shows', 'baking', 'cooking', 'the weather', 'sport', 'sports', 'soccer', 'baseball', 'basketball', 'american football', 'hockey', 'cricket', 'rugby', 'tennis', 'bowls', 'bowling', 'horse racing', 'motor racing', 'boxing', 'wrestling', 'pool', 'billiards', 'chess', 'draughts', 'checkers', 'dominoes', 'card games', 'bridge', 'rummy', 'solitaire', 'board games', 'records', 'old songs', 'singing', 'choir', 'hymns', 'classical music', 'country music', 'jazz', 'rock and roll', 'blues', 'concerts', 'dancing', 'ballroom dancing', 'line dancing', 'guitar', 'organ', 'harmonica', 'drawing', 'colouring', 'crafts', 'woodwork', 'stamp collecting', 'photo albums', 'scrapbook', 'writing', 'reading', 'books', 'magazines', 'newspaper', 'audiobook', 'podcast', 'poetry', 'bible', 'bird watching', 'feeding the birds', 'fishing', 'walking', 'swimming', 'yoga', 'tai chi', 'puzzles', 'games', 'video call', 'television', 'telly', 'talk shows', 'detective shows', 'crime dramas', 'musicals', 'flower arranging', 'home videos', 'karaoke', 'sing along', 'cartoons', 'history programmes', 'travel shows', 'antiques', 'gardening programmes', 'the races', 'racing', 'golf on tv', 'the match', 'ball game', 'pets', 'model trains', 'letters', 'drama'],
+  rest: ['bed', 'chair', 'quiet', 'nap', 'pillow', 'blanket', 'sofa', 'sleep', 'lie down', 'sit down', 'rest', 'recliner', 'armchair', 'couch', 'cushion', 'footstool', 'duvet', 'quilt', 'sheets', 'hot water bottle', 'lights off', 'dark', 'curtains', 'fan', 'heating', 'earplugs', 'eye mask', 'soft music', 'peace and quiet', 'early night', 'lie in', 'bedtime', 'feet up', 'slippers', 'dressing gown', 'pyjamas', 'snooze', 'doze', 'rocking chair', 'bedroom', 'warm blanket', 'nightlight'],
   // (phase 17b: a drink question keeps its letters to drinks: "tea or coffee?", then "something else", then L is lemonade, never lamb)
-  drink: ['tea', 'coffee', 'water', 'juice', 'milk', 'hot chocolate', 'cocoa', 'iced tea', 'lemonade', 'orange juice', 'apple juice', 'squash', 'smoothie', 'milkshake', 'cola', 'ginger ale', 'herbal tea', 'green tea', 'hot milk', 'decaf', 'soda', 'tonic'],
+  drink: ['tea', 'coffee', 'water', 'juice', 'milk', 'hot chocolate', 'cocoa', 'iced tea', 'lemonade', 'orange juice', 'apple juice', 'squash', 'smoothie', 'milkshake', 'cola', 'ginger ale', 'herbal tea', 'green tea', 'hot milk', 'decaf', 'soda', 'tonic', 'lemon tea', 'iced coffee', 'latte', 'cappuccino', 'espresso', 'mocha', 'chai', 'tea with milk', 'peppermint tea', 'camomile tea', 'fruit tea', 'malted milk', 'warm milk', 'chocolate milk', 'soya milk', 'oat milk', 'cold water', 'hot water', 'sparkling water', 'fizzy water', 'ice water', 'mineral water', 'grape juice', 'cranberry juice', 'tomato juice', 'pineapple juice', 'grapefruit juice', 'prune juice', 'lemon water', 'limeade', 'cream soda', 'orange squash', 'lemon squash', 'cordial', 'fizzy drink', 'pop', 'soft drink', 'malt drink', 'coconut water', 'hot lemon', 'lemon and honey', 'decaf coffee', 'instant coffee', 'cuppa', 'fruit juice', 'iced water', 'cold milk', 'hot cocoa'],
   body: ['toilet', 'glasses', 'hearing aid', 'wash', 'pain', 'doctor', 'nurse', 'bath', 'shower', 'teeth', 'blanket'],
   feel: ['tired', 'worried', 'company', 'happy', 'sad', 'lonely', 'bored', 'scared'],
 };
@@ -137,7 +143,7 @@ export function letterWords(i: LetterInput, profile: Profile): string[] {
   const every = topic === 'drink' ? [...TOPIC_WORDS.drink, ...TOPIC_WORDS.food] : topic ? TOPIC_WORDS[topic] : Object.values(EVERYDAY).flat();
   // inside a known topic only its own words: the topic's list, and About them's words of that topic (phase 17b: for
   // EVERY topic). People: the family's names, never their foods or places; the body, feelings and rest: the list only.
-  const inTopic = (w: string) => !topic || TOPIC_WORDS[topic].some((x) => bare(x) === bare(w)) || (OWN_IN[topic]?.(w, profile) ?? false) || (KIND_IN[topic] && kind && KIND_IN[topic].includes(kind) ? ofKind(w, kind, profile) : false);
+  const inTopic = (w: string) => !topic || topicHas(w, topic, kind, profile);
   const starts = own.filter((w) => startsWith(w, i.letter));
   const later = own.filter((w) => !startsWith(w, i.letter) && holds(w, i.letter));
   // (a word of another topic is not offered inside a known topic: "the lake" under food was the owner's complaint)
@@ -145,7 +151,8 @@ export function letterWords(i: LetterInput, profile: Profile): string[] {
   const ordered = [...starts.filter(inTopic), ...later.filter(inTopic), ...every.filter((w) => startsWith(w, i.letter))]
     .filter((w, k, xs) => !gone.has(lc(w)) && !gone.has(bare(w)) && xs.findIndex((x) => bare(x) === bare(w)) === k)
     // a topic word the family's own words already hold ("biscuits" beside "ginger biscuits") is not offered twice
-    .filter((w, _k, xs) => !(topic && every.includes(w)) || !xs.some((x) => x !== w && bare(x).split(/\s+/).includes(lc(w))));
+    // (phase 18b: the family's own words only; with the longer lists "pie" stays beside "pot pie", "church" beside "church hall")
+    .filter((w, _k, xs) => !(topic && every.includes(w)) || !xs.some((x) => x !== w && !every.includes(x) && bare(x).split(/\s+/).includes(lc(w))));
   if (topic) {
     // inside the topic, the kind the question is about first ("tea or coffee?": a drink before a food)
     const first = (w: string) => (topic === 'drink' ? (drinkWord(w) ? 0 : 1) : kind && kind !== 'people' && ofKind(w, kind, profile) ? 0 : 1);
@@ -168,6 +175,46 @@ const OWN_IN: Record<string, (w: string, p: Profile) => boolean> = {
 };
 /** The kinds (core/kinds.ts) whose words a topic takes from About them; none for the body, feelings and rest. */
 const KIND_IN: Record<string, string[]> = { food: ['food', 'drink'], drink: ['drink', 'food'], plans: ['place'], fun: ['activity'] };
+/** True when the word belongs to a known topic: its list (a drink question: the foods too), About them's words of it, or the kind of the conversation. */
+function topicHas(w: string, topic: string, kind: Subject | null, profile: Profile): boolean {
+  return eq(TOPIC_WORDS[topic], w) || (OWN_IN[topic]?.(w, profile) ?? false) || (KIND_IN[topic] && kind && KIND_IN[topic].includes(kind) ? ofKind(w, kind, profile) : false);
+}
+
+/**
+ * Phase 18b: the kinds of the letter step's schema (core/prompt.ts, LETTER_KINDS) a model may name for a word of each
+ * topic. A drink question takes drinks from a model (the rules add the foods of Food & drink after them).
+ */
+export const TOPIC_KINDS: Record<string, string[]> = { food: ['food', 'drink'], drink: ['drink'], plans: ['place'], fun: ['activity'], people: ['people'], rest: ['comfort'] };
+/** The other topics of a topic: Food & drink is one topic on the first screen, so food and drink are not "other". */
+const otherTopics = (topic: string) => Object.keys(TOPIC_WORDS).filter((t) => t !== topic && !(['food', 'drink'].includes(t) && ['food', 'drink'].includes(topic)));
+/** The topic of a kind of thing in core/kinds.ts, by the first-letter topics. */
+const SUBJECT_TOPIC: Record<string, string> = { food: 'food', drink: 'drink', place: 'plans', activity: 'fun', people: 'people', comfort: 'rest', feeling: 'feel' };
+/** True when the app's own lists put the word in another topic ("shower" is the body, "shops" a place): a model's kind does not bring it in. */
+function otherTopicWord(w: string, topic: string): boolean {
+  const others = otherTopics(topic);
+  if (others.some((t) => eq(TOPIC_WORDS[t], w))) return true;
+  const b = bare(w);
+  const at = placeOf(b);
+  return !!at && others.includes(SUBJECT_TOPIC[at.subject] ?? '');
+}
+
+/**
+ * Phase 18b (the live walk: "steam" and "stir" under ST in Food & drink): inside a known topic a model's word stays
+ * only when the app knows it as a word of the topic (its list, About them, the kind of the conversation), or when the
+ * model named it of the topic's kind (the letter step's `kinds`) and no list of the app puts it in another topic. A
+ * word with no kind (an engine on the card's schema) stays only when the app knows it. No topic: no check here.
+ */
+export function topicFit(kept: string[], kindOf: (w: string) => string | null, topic: string | null, kind: Subject | null, profile: Profile): { kept: string[]; dropped: { label: string; rule: string }[] } {
+  if (!topic || !TOPIC_WORDS[topic]) return { kept, dropped: [] };
+  const out: string[] = [];
+  const dropped: { label: string; rule: string }[] = [];
+  for (const w of kept) {
+    const k = kindOf(w);
+    const ok = topicHas(w, topic, kind, profile) || (!!k && (TOPIC_KINDS[topic] ?? []).includes(k) && !otherTopicWord(w, topic));
+    if (ok) out.push(w); else dropped.push({ label: w, rule: `not a word of the topic (${TOPIC_NAMES[topic] ?? topic})${k ? `: the model named it ${k}` : ''}` });
+  }
+  return { kept: out, dropped };
+}
 
 /** Phase 17: the topic of a letter step: the caller's topic, else the kind of thing the question is about (core/kinds.ts). */
 const KIND_TOPIC: Record<string, string> = { food: 'food', drink: 'drink', place: 'plans', activity: 'fun', people: 'people' };
@@ -209,11 +256,24 @@ export const LETTER_CLOUD_TASK = 'Give exactly 4 everyday words that start with 
 /** The text online help gets: the question, About-them words swapped out, and the letter. Nothing else. */
 export function letterCloudText(asked: string, letter: string, profile: Profile, topic: string | null = null): { text: string; map: Record<string, string> } {
   const s = asked.trim() ? stripQuestion(asked, profile) : { text: '', map: {} };
-  return { text: `${s.text ? `${s.text} ` : ''}They cannot say the word. ${startsLine(letter)} ${topicLine(topic, subjectOf(asked, []))}${letterContext(subjectOf(asked, []))} ${letter.length > 1 ? LETTER_CLOUD_TASK_MORE : LETTER_CLOUD_TASK}`, map: s.map };
+  const kind = subjectOf(asked, []);
+  // (phase 18b) the topic, when the caller has none, from what the question is about ("tea or coffee?": drinks)
+  const only = onlyLine(topic ?? letterTopic(null, kind));
+  return { text: `${s.text ? `${s.text} ` : ''}They cannot say the word. ${startsLine(letter)} ${topicLine(topic, kind)}${letterContext(kind)}${only} ${letter.length > 1 ? LETTER_CLOUD_TASK_MORE : LETTER_CLOUD_TASK}`, map: s.map };
 }
 /** Phase 17: one letter, or the letters pointed to so far ("It starts with the letters P, I."). */
 const startsLine = (letter: string) => (letter.length > 1 ? `It starts with the letters "${letter.toUpperCase()}", in this order.` : `It starts with the letter "${letter.toUpperCase()}".`);
 const TOPIC_NAMES: Record<string, string> = { food: 'food and drink', plans: 'places and plans', people: 'people', fun: 'TV, music and hobbies', rest: 'rest and sleep', drink: 'drinks' };
+/** Phase 18b: which words, when the topic is known: the model is told to keep to it (code checks it as well: topicFit). */
+const TOPIC_ONLY: Record<string, string> = {
+  food: 'Only food and drink words (dishes, foods and drinks): no other kind of word.',
+  drink: 'Only drinks: no other kind of word.',
+  plans: 'Only places and outings (shops, places in town, places outdoors, rooms at home): no other kind of word.',
+  fun: 'Only things to watch, listen to or do for fun (TV, music, games, hobbies, sport): no other kind of word.',
+  people: 'Only people by role (family, friends, helpers): no other kind of word.',
+  rest: 'Only words about resting and sleeping (where to rest, bedding, quiet): no other kind of word.',
+};
+const onlyLine = (topic: string | null) => (topic && TOPIC_ONLY[topic] ? ` ${TOPIC_ONLY[topic]}` : '');
 /** Phase 17: the topic of the conversation, when the app knows it and the kind of thing does not already say it. */
 const topicLine = (topic: string | null, kind: string | null | undefined) => (topic && TOPIC_NAMES[topic] && !kind ? `The topic is ${TOPIC_NAMES[topic]}. ` : '');
 /** Phase 17: the cloud step's task for two letters or more. */
@@ -229,10 +289,22 @@ export function letterWordsOf(text: string): string[] {
   } catch { /* not the letter step's JSON: the card's parser below */ }
   return parseModelOutput(text)?.choices ?? [];
 }
+/**
+ * Phase 18b: the words of a letter answer with the kind the model named for each (`{"words", "kinds"}`, in the same
+ * order); a card's `{"choices"}`, or an answer without kinds, gives the words with no kind.
+ */
+export function letterPairsOf(text: string): { word: string; kind: string | null }[] {
+  let kinds: unknown[] = [];
+  try { const o = JSON.parse(text) as { kinds?: unknown }; if (Array.isArray(o?.kinds)) kinds = o.kinds; } catch { /* no kinds */ }
+  return letterWordsOf(text).map((word, n) => ({ word, kind: typeof kinds[n] === 'string' ? (kinds[n] as string) : null }));
+}
 /** The text the on-device step gets. It holds what did not fit and the learned words: it never goes to the cloud step. */
-export function letterDeviceAsk(i: LetterInput): string {
+export function letterDeviceAsk(i: LetterInput, letterStep = false): string {
   const kind = subjectOf(i.asked, i.rejected);
-  return `${i.asked.trim() ? `${i.asked.trim()} ` : ''}${i.rejected.length ? `They did not want: ${i.rejected.join(', ')}. ` : ''}They cannot say the word. ${startsLine(i.letter)} ${topicLine(letterTopic(i.topic ?? null, kind), kind)}${letterContext(kind)} ${i.letter.length > 1 ? LETTER_TASK.replace('start with that letter', 'start with those letters') : LETTER_TASK}${i.learned?.length ? ` Usual answers on this device (hints only): ${i.learned.slice(0, 6).join(', ')}.` : ''}`;
+  const topic = letterTopic(i.topic ?? null, kind);
+  // (phase 18b) on the letter step's own schema (exactly 4 words, each with its kind) the task says 4, as online
+  const task = letterStep ? (i.letter.length > 1 ? LETTER_CLOUD_TASK_MORE : LETTER_CLOUD_TASK) : i.letter.length > 1 ? LETTER_TASK.replace('start with that letter', 'start with those letters') : LETTER_TASK;
+  return `${i.asked.trim() ? `${i.asked.trim()} ` : ''}${i.rejected.length ? `They did not want: ${i.rejected.join(', ')}. ` : ''}They cannot say the word. ${startsLine(i.letter)} ${topicLine(topic, kind)}${letterContext(kind)}${onlyLine(topic)} ${task}${i.learned?.length ? ` Usual answers on this device (hints only): ${i.learned.slice(0, 6).join(', ')}.` : ''}`;
 }
 
 /**
@@ -244,8 +316,13 @@ export function letterEnd(word: string): { follow: string[]; end: string } {
   if (/^(?:pain|in pain)$/.test(w)) return { follow: ['Where does it hurt?'], end: P4.letter.care.pain };
   if (w === 'toilet') return { follow: [], end: P4.letter.care.toilet };
   if (w === 'doctor' || w === 'nurse') return { follow: ['Are you in pain?'], end: P4.letter.care.help(w) };
+  // (phase 18b) a health place or helper of the longer lists leads on as the doctor does: pain first
+  if (HEALTH_PLACES.test(w)) return { follow: ['Are you in pain?'], end: P4.letter.care.help(word.trim()) };
   return { follow: [], end: P4.letter.end(word) };
 }
+
+/** Phase 18b: the health places and helpers of TOPIC_WORDS (plans, people): never left as "a word". */
+const HEALTH_PLACES = /^(?:the\s+)?(?:doctor's|doctors|gp|hospital|pharmacy|pharmacist|chemist|dentist|clinic|optician|surgery|health centre|health center)$/;
 
 const T = (step: StepTrace['step'], ran: StepTrace['ran'], why: string, used = false, ms?: number): StepTrace => ({ step, ran, why, used, ...(ms === undefined ? {} : { ms }) });
 
@@ -307,14 +384,24 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
   if (rules.length >= 2 && (!multi || (!env.deviceReady && !(env.allowCloud && engine.cloudConfigured)))) return make(rules, 'rules', 'code', 0, null, []);
 
   // 2. on this device, where the browser has the model: About them and what did not fit are in this prompt
+  const topic = letterTopic(i.topic ?? null, kind);
+  // (phase 18b) the model's words that start with the letters, then those of the topic when it is known (topicFit)
+  const guard = (pairs: { word: string; kind: string | null }[]) => {
+    const a = letterChoices(pairs.map((x) => x.word), i, profile);
+    const kinds = new Map(pairs.map((x) => [lc(String(x.word).replace(/[.!?]+$/, '')), x.kind]));
+    const b = topicFit(a.kept, (w) => kinds.get(lc(w)) ?? null, topic, kind, profile);
+    return { kept: b.kept, dropped: [...a.dropped, ...b.dropped] };
+  };
   if (env.deviceReady) {
     try {
-      const r = await engine.runDevice(devicePrompt(letterDeviceAsk(i), profile));
+      // (phase 18b) the letter step's own schema on this device when the engine has it: each word with its kind
+      const step = !!engine.letterDevice;
+      const r = await (engine.letterDevice ? engine.letterDevice(devicePrompt(letterDeviceAsk(i, true), profile)) : engine.runDevice(devicePrompt(letterDeviceAsk(i), profile)));
       trace.push(T('private', r.source, 'got the question, the letter, what did not fit and the About me lists', false, r.ms));
-      const o = parseModelOutput(r.text);
-      const { kept, dropped } = letterChoices(o?.choices ?? [], i, profile);
+      const pairs = step ? letterPairsOf(r.text) : (parseModelOutput(r.text)?.choices ?? []).map((word) => ({ word, kind: null }));
+      const { kept, dropped } = guard(pairs);
       const words = merge(kept);
-      if (kept.length && words.length >= 1) return make(words, 'device', r.source, r.ms, o?.choices ?? [], dropped);
+      if (kept.length && words.length >= 1) return make(words, 'device', r.source, r.ms, pairs.map((x) => x.word), dropped);
     } catch (e) {
       trace.push(T('private', 'failed', (e as Error).message));
     }
@@ -324,7 +411,7 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
   trace.push(T('private', 'skipped', 'the private helper is not ready on this computer'));
 
   // 3. online help, only after the carer's yes: the question (About-them words swapped out) and the letter
-  const stripped = letterCloudText(i.asked, letter, profile, letterTopic(i.topic ?? null, kind));
+  const stripped = letterCloudText(i.asked, letter, profile, topic);
   const preview = JSON.stringify(engine.letterRequest ? engine.letterRequest(stripped.text) : engine.cloudRequest(stripped.text), null, 2);
   const swaps = Object.entries(stripped.map).map(([k, v]) => `${v} → ${k}`);
   const orRules = (blocked: string, extra: Partial<Card> = {}) => (rules.length ? make(rules, 'rules', 'code', 0, null, [], extra.cloudAttempted ? extra : {}) : none(blocked, extra));
@@ -337,8 +424,9 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
     const sent = r.source === 'in-cloud';
     const left: Partial<Card> = { cloudPayload: sent ? preview : null, unsentPayload: sent ? null : preview, ranOffline: !sent, cloudSwaps: swaps };
     // (phase 9) the 4 words of the letter step's own schema; code keeps those that start with the letter (letterChoices)
-    const proposed = letterWordsOf(r.text).map((c) => restoreNames(c, stripped.map));
-    const { kept, dropped } = letterChoices(proposed, i, profile);
+    const pairs = letterPairsOf(r.text).map((x) => ({ word: restoreNames(x.word, stripped.map), kind: x.kind }));
+    const proposed = pairs.map((x) => x.word);
+    const { kept, dropped } = guard(pairs);
     const words = merge(kept);
     if (words.length) return make(words, kept.length ? 'cloud' : 'rules', kept.length ? r.source : 'code', r.ms, proposed, dropped, left);
     return none(L.noneAi(letter), left);
