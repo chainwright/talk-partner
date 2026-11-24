@@ -329,6 +329,14 @@ the table.
 | 306 | `70f83c3` | `330c55a` | 2026-11-24 00:46 | Phase 15: the fixes of judge round 11 (sample family, the Find-more wait, health lines for others) |
 | 307 | `cf4aa33` | `5c1d49c` | 2026-11-24 00:46 | Docs for phase 15: judge round 11's FALSE / OVERSTATED lines fixed; CLAIMS rows 157 to 180 |
 | 308 | `20d2b71` | `f3d4ccb` | 2026-11-24 01:03 | Docs: live is cf4aa33 (phase 15); hosted checks and logs |
+| 309 | `1972661` | `24c456d` | 2026-11-24 02:35 | Phase 16: "Ask in your own words" as the first action on the first screen (branch, not approved) |
+| 310 | `6224b58` | `cd2565b` | 2026-11-24 03:16 | Phase 16: Back over the own-words sheet, the crisis box for own words, walks at 360 and 390 |
+| 311 | `fcd2c12` | `87d9bc2` | 2026-11-24 03:16 | Phase 16: measure "Ask in your own words" on rules, on-device and cloud (eval --own) |
+| 312 | `f1267d9` | `e069c09` | 2026-11-24 03:16 | README: phase 16 section, "Ask in your own words" measured on three legs |
+| 313 | `44e7d3f` | `1ad235f` | 2026-11-24 03:25 | JUDGES (phase 16 branch): the phone path starts with "Ask in your own words" |
+| 314 | `23e3ab3` | `ac292be` | 2026-11-24 03:26 | CLAIMS: rows 181 to 188 for phase 16 (branch) |
+| 315 | `21bb1e0` | `1f0a60d` | 2026-11-24 04:00 | README (phase 16 branch): the own-words sheet's no is 'No, not for this question', as on screen |
+| 316 | `b50057a` | `35708e1` | 2026-11-24 04:45 | Docs: live is 21bb1e0 (phase 16); hosted checks and logs |
 Public-only commit after row 295: `9f2d60a` (DISCLOSURE: no claim to a published pain scale, as in phase 13; the public DISCLOSURE is its own file).
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
