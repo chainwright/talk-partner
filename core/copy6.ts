@@ -56,6 +56,8 @@ export const P6 = {
     hPainAsk: 'Ask again on your shift, and take the answer as said.',
     /** Phase 13 (judge round 10, the nurse's and the carer's seats): at the top of the note, above the counts. */
     hSign: (items: string, number: string, unsure: boolean) => `Sudden weakness or numbness: ${items}. If ${number} was not called, call now. Tell the doctor today.${unsure ? ` After a "not sure": check both arms and the smile now; call ${number} if one side drops.` : ''}`,
+    /** Phase 17 (judge round 12, health P0 3): a health question typed in "Ask in your own words", answered: at the top, first. */
+    hWarn: (items: string, number: string, chest: boolean) => `Warning signs asked about: ${items}. ${chest ? `Chest pain or tightness, or trouble breathing: if ${number} was not called, call now, whatever the amount, even if it has happened before.` : `If it is new or sudden and ${number} was not called, call now.`} Tell the doctor or nurse today.`,
     hWrong: (times: string, number: string) => `Something's wrong: they pointed to "something's wrong" (${times}). Find out what, and if it is new or sudden call ${number} now.`,
     hNoPain: 'Pain: none entered. That does not show there was none: ask, and take the answer as said.',
     hFalls: (n: number, times: string) => `Falls: ${n} logged (${times}).`,

@@ -19,7 +19,7 @@ import { P9 } from '../../core/copy9';
 import { P10 } from '../../core/copy10';
 import { P5 } from '../../core/copy5';
 import { DEFAULT_NUMBER } from '../../core/redflag';
-import { urgentBox } from './phase5';
+import { crisisCallBox, urgentBox } from './phase5';
 import { shareButtons, sourceBlock, startedHtml } from './phase6';
 import { practiceLink } from './care7';
 import { SIGN, navBar } from './simple';
@@ -70,7 +70,7 @@ export interface InsightsModel {
 export function insightsBlock(m: InsightsModel | null): string {
   if (!m) return '';
   const I = COPY.simple.insights;
-  const line = (x: Insight, i: number) => `<li class="ins ${x.level}" data-id="${x.id}" data-level="${x.level}">${x.id === 'nothing' ? '' : `<span class="lvl">${x.level === 'note' ? SIGN.info : SIGN.person}${I.level[x.level]}</span>`}<p class="ins-text">${esc(m.words?.[i] ?? x.text)}${x.noted ? ` <span class="noted">${esc(x.noted)}</span>` : ''}</p>${x.act ? `<p class="ins-act">${esc(x.act)}</p>` : ''}<p class="ins-base">${esc(x.base)}</p>${x.urgent ? urgentBox(m.number ?? DEFAULT_NUMBER, `urgent-${x.id}`, !!m.guess) : ''}${sourceBlock({ key: x.id, open: !!m.open?.includes(x.id), ids: x.source.ids, once: x.source.once, note: x.source.note, diary: m.diary ?? [], now: m.now ?? 0 })}</li>`;
+  const line = (x: Insight, i: number) => `<li class="ins ${x.level}" data-id="${x.id}" data-level="${x.level}">${x.id === 'nothing' ? '' : `<span class="lvl">${x.level === 'note' ? SIGN.info : SIGN.person}${I.level[x.level]}</span>`}<p class="ins-text">${esc(m.words?.[i] ?? x.text)}${x.noted ? ` <span class="noted">${esc(x.noted)}</span>` : ''}</p>${x.act ? `<p class="ins-act">${esc(x.act)}</p>` : ''}<p class="ins-base">${esc(x.base)}</p>${x.urgent ? (x.id === 'crisis' ? crisisCallBox(m.number ?? DEFAULT_NUMBER, `urgent-${x.id}`, !!m.guess) : urgentBox(m.number ?? DEFAULT_NUMBER, `urgent-${x.id}`, !!m.guess, /whatever the amount/.test(x.act ?? ''))) : ''}${sourceBlock({ key: x.id, open: !!m.open?.includes(x.id), ids: x.source.ids, once: x.source.once, note: x.source.note, diary: m.diary ?? [], now: m.now ?? 0 })}</li>`;
   const by = m.busy ? I.by.busy : m.note ? I.by[m.note] : m.source === 'on-device' ? I.by.device : m.source === 'in-cloud' ? I.by.cloud : I.by.rules;
   const body = m.lines.length ? `<ul class="ins-list" id="ins-list">${m.lines.map(line).join('')}</ul>
     <p class="by" id="ins-by" data-source="${m.source}">${m.source === 'rules' ? SIGN.lock : m.source === 'in-cloud' ? SIGN.cloud : SIGN.spark}<span>${esc(by)}</span></p>

@@ -167,7 +167,7 @@ describe('never medical advice', () => {
     }
   });
   it('the levels are fixed words, and (phase 8) the strongest is "call now if it is new or sudden": the app never says what the cause is', () => {
-    expect(Object.keys(I.level)).toEqual(['call', 'tell', 'mention', 'note']);
+    expect(Object.keys(I.level)).toEqual(['crisis', 'call', 'tell', 'mention', 'note']);
     expect(Object.values(I.level).join(' ')).not.toMatch(/emergency|urgent|danger|risk/i);
   });
 });

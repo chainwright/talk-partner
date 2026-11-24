@@ -12,7 +12,7 @@
 
 import { P10 } from './copy10';
 import { guardExempt } from './reliability';
-import { crisisAnswer } from './redflag';
+import { crisisAnswer, healthOf, healthWarning } from './redflag';
 import type { TopicId } from './topics';
 
 /** The carer's one-tap log. */
@@ -59,6 +59,8 @@ const newId = (at: number) => `d${at.toString(36)}${(seq++ % 1296).toString(36)}
 /** Which topic a question is about, by its words, for a question that came from no topic (a typed one). */
 export function guessTopic(q: string): DiaryTopic {
   const s = lc(q);
+  // (phase 17, judge round 12: "Is your chest tight again?" was filed under "other") a health matter is about the body
+  if (healthOf(s)) return 'body';
   if (/\b(?:pain|hurt|hurts|toilet|wash|hot|cold|comfortable|glasses|hearing|side|sore)\b/.test(s)) return 'body';
   if (/\b(?:hungry|eat|drink|tea|coffee|water|juice|milk|snack|meal|sweet|savoury|more|thirsty|breakfast|lunch|dinner|supper)\b/.test(s)) return 'food';
   if (/\b(?:tired|sleep|slept|lie down|rest|bed|chair|noisy|curtains|nap)\b/.test(s)) return 'rest';
@@ -153,7 +155,7 @@ export function dayWord(day: number, now: number): '' | 'Today' | 'Yesterday' {
 }
 
 // ---------------------------------------------------------------- what an entry counts as (for the insights)
-export type Tag = 'drink' | 'food' | 'sweet' | 'toilet' | 'sleep' | 'bad-sleep' | 'pain' | 'tired' | 'fall' | 'fall-head' | 'tablets' | 'low-mood' | 'strong-pain' | 'place-pain' | 'crisis' | 'sign' | 'wrong';
+export type Tag = 'drink' | 'food' | 'sweet' | 'toilet' | 'sleep' | 'bad-sleep' | 'pain' | 'tired' | 'fall' | 'fall-head' | 'tablets' | 'low-mood' | 'strong-pain' | 'place-pain' | 'crisis' | 'sign' | 'wrong' | 'warning';
 
 const DRINK = /^(?:tea|coffee|water|juice|milk|a drink|drink|squash|cocoa|hot chocolate|lemonade|a cup of tea|a glass of water)$/;
 const SWEET = /\b(?:sweet|sweets|biscuit|biscuits|cake|chocolate|ice cream|pudding|dessert|candy|cookie|cookies|jam|honey|toffee|doughnut|pastry|pie)\b/;
@@ -217,8 +219,13 @@ export function tags(e: DiaryEntry): Tag[] {
   // (phase 13, judge round 10: a stroke sign, and "something's wrong" on a card, for the handover note and the visit page)
   if (signAnswer(q, l)) out.push('sign');
   if (l === "something's wrong") out.push('wrong');
+  // (phase 17, judge round 12, health P0 3: a confirmed "Is your chest tight again? yes" was missing from the handover)
+  if (warningAnswer(q, l)) out.push('warning');
   return out;
 }
+
+/** Phase 17: a warning answer to a health question (core/redflag.ts, healthWarning); a stroke sign is left to `signAnswer`. */
+export const warningAnswer = (q: string, label: string): boolean => healthWarning(q, label) && !signAnswer(q, label);
 
 /** Phase 13: a yes or a "not sure" to the weakness question (core/topics.ts, WEAK_NUMB): a stroke sign the next carer and the doctor must hear of. */
 export function signAnswer(q: string, label: string): boolean {
@@ -278,7 +285,7 @@ export function diaryText(entries: DiaryEntry[], words: { log: Record<LogKind, s
  * pain in the head or the chest, a strong pain, "I can't go on", a blow to the head, "something's wrong") gets no tip
  * of the day (core/tip.ts, web/src/main.ts tipModel): a second carer opening the diary must not read praise over it.
  */
-export const URGENT_TAGS: readonly Tag[] = ['sign', 'crisis', 'place-pain', 'strong-pain', 'fall-head', 'wrong'];
+export const URGENT_TAGS: readonly Tag[] = ['sign', 'crisis', 'place-pain', 'strong-pain', 'fall-head', 'wrong', 'warning'];
 export function urgentDay(diary: DiaryEntry[], now: number): boolean {
   const from = dayStart(now);
   return diary.some((e) => e.at >= from && e.at <= now && tags(e).some((t) => URGENT_TAGS.includes(t)));

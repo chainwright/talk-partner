@@ -10,6 +10,7 @@ import { P5 } from '../../core/copy5';
 import { dayText } from '../../core/diary';
 import { telHref } from '../../core/redflag';
 import { P12 } from '../../core/copy12';
+import { P16 } from '../../core/copy16';
 import { P9 } from '../../core/copy9';
 import { SINCE_QUESTIONS, isoDay, type Since } from '../../core/since';
 import type { DiaryEntry } from '../../core/diary';
@@ -92,6 +93,8 @@ export const laterPainHtml = (number: string, guess = false) => `<div class="lat
 /** The boxed line over an answer that can be urgent (core/redflag.ts): the sentence, the call button, the way to the list. */
 /** `now`: a yes to sudden weakness or numbness was confirmed (phase 12b): "Call … now. Note the time it started." */
 export const urgentBox = (number: string, id = 'urgent', guess = false, now = false) => `<div class="urgent" id="${id}" role="alert">${ALERT}<div><b>${esc(now ? P5.sudden.boxNow(number) : P5.sudden.box(number))}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/sudden">${P5.sudden.boxMore} →</a></div>${guessLine(guess, `${id}-guess`)}</div></div>`;
+/** Phase 17 (judge round 12, the hound's H3): under "I can't go on" in "What stands out": never "if it is new or sudden". */
+export const crisisCallBox = (number: string, id = 'urgent-crisis', guess = false) => `<div class="urgent crisis" id="${id}" role="alert">${ALERT}<div><b>${esc(P16.crisisBox)}</b><div class="urgent-acts">${callButton(number)}<a class="tlink" href="#/crisis">${P12.crisis.open} →</a></div>${guessLine(guess, `${id}-guess`)}</div></div>`;
 /**
  * Phase 13 (judge round 10, a health P0: the nurse's seat): the doctor-visit run stopped on an answer that can be
  * urgent. The carer's box: the line (core/visit.ts, visitAlert), the call button, and "Go on with the questions".

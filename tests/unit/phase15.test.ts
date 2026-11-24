@@ -136,7 +136,7 @@ describe('P0 health: a weakness "no" or "not sure", then "a little" pain, never 
     expect(after({ asked: 'How bad is the pain?', kind: 'scale' } as never, 'very bad', SAMPLE_PROFILE, [], '999', 'sign-check').end).toMatch(/^Very bad\./);
   });
   it('a later chest pain in the same conversation still takes over from the check (web/src/main.ts)', () => {
-    expect(main).toContain("if (r && (!p5.red || (p5.red === 'sign-check' && r !== 'sign-check'))) p5.red = r;");
+    expect(main).toContain("if (r && redRank(r) > redRank(p5.red)) p5.red = r;");
   });
   it('past the depth limit, a safety check still asks "How bad is the pain?" (ADV-05-17)', () => {
     const s = after({ asked: 'Is it suddenly weak or numb, yes or no?', kind: 'yesno' } as never, 'no', SAMPLE_PROFILE, ['Are you in pain?', 'Where does it hurt?', 'Where in the arms?'], '911');
@@ -158,7 +158,7 @@ describe('P0 health: "Left for later" keeps the chest or head urgency (seat 13, 
   });
   it('"Ask it again" puts the call box back over the card (web/src/main.ts)', () => {
     expect(main).toContain("if (red) { p5.urgent = true; p5.red = red; if (red === 'sign') p5.signNow = true; render(); }");
-    expect(main).toContain("addLater(p8later.list, q, at, topic, p5.red && p5.red !== 'sign-check' ? p5.red : null)");
+    expect(main).toContain("addLater(p8later.list, q, at, topic, p5.red && p5.red !== 'sign-check' && p5.red !== 'limb' ? p5.red : null)");
   });
 });
 

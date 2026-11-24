@@ -23,9 +23,9 @@ import { P16, type OwnFallbackWhy, type OwnGuardKind } from './copy16';
 import { COPY } from './copy';
 import { guessTopic } from './diary';
 import { makeCard } from './pipeline';
-import { crisisAnswer } from './redflag';
+import { crisisAnswer, healthOf, type HealthKind, type RedPlace } from './redflag';
 import { careAnswer, DRINK_FOOD_WORDS } from './reliability';
-import { HOW_BAD, WHERE_HURTS } from './topics';
+import { HOW_BAD, WEAK_NUMB, WHERE_HURTS } from './topics';
 import type { Card, Profile, SupportLevel } from './types';
 
 export type { OwnFallbackWhy, OwnGuardKind };
@@ -49,6 +49,11 @@ export function ownGuard(q: string): OwnGuardKind | null {
   if (!s) return null;
   if (CRISIS_WORDS.test(s) || crisisAnswer(s)) return 'crisis';
   if (RED_WORDS.test(s.replace(/\bfall(?:s|ing)? asleep\b/g, ''))) return 'red';
+  // (phase 17, judge round 12: "Is your smile lopsided?", "Are you OK, you look grey", "check your sugar" reached the AI
+  // path or a plain card) the health word lists of core/redflag.ts: a warning sign is 'red', any other health matter 'care'
+  const h = healthOf(s);
+  if (h === 'chest' || h === 'stroke' || h === 'fall' || h === 'unwell') return 'red';
+  if (h) return 'care';
   const care = DRINK_FOOD_WORDS.test(s) ? s.replace(/\b(?:hot|cold)\b/g, '') : s;
   if (careAnswer(care) || HEALTH_WORDS.test(s)) return 'care';
   return null;
@@ -66,6 +71,13 @@ const usable = (c: Card) => !c.blocked && (c.kind === 'no-quiz' || answers(c) >=
 /** The app's own care card for words the rules have no card for: pain to the body card, feelings to the feelings card. */
 function careQuestion(q: string, kind: OwnGuardKind): string {
   const s = lc(q);
+  // (phase 17) a health matter the rules cannot word: a yes / no of the app's own that keeps the health step after it
+  const h = kind === 'crisis' ? null : healthOf(s);
+  if (h === 'chest') return CHEST_Q;
+  if (h === 'stroke') return WEAK_NUMB;
+  if (h === 'fall') return FALL_Q;
+  if (h === 'unwell' || h === 'sugar') return UNWELL_Q;
+  if (h === 'limb') return WHERE_HURTS;
   if (/\b(?:pain|pains|painful|hurt|hurts|hurting|sore|ache|aches|aching)\b/.test(s)) return /\bhow (?:bad|much)\b/.test(s) ? HOW_BAD : WHERE_HURTS;
   if (kind === 'crisis' || /\b(?:feel|feeling|feelings|sad|upset|worried|worry|afraid|scared|low|down)\b/.test(s)) return 'How are you feeling today?';
   if (/\b(?:toilet|bathroom|loo)\b/.test(s)) return 'Do you need the toilet?';
@@ -79,8 +91,78 @@ function careQuestion(q: string, kind: OwnGuardKind): string {
 export async function ownGuardCard(q: string, kind: OwnGuardKind, env: OwnEnv): Promise<Card> {
   let card = await rulesOnly(q, env);
   if (!usable(card)) card = await rulesOnly(careQuestion(q, kind), env);
-  return { ...card, own: { asked: q, guard: kind } };
+  const health = kind === 'crisis' ? null : healthOf(q);
+  return { ...card, own: { asked: q, guard: kind, ...(health ? { matter: health } : {}) } };
 }
+
+/** The app's own yes / no questions for a health matter the rules cannot make a card from (never in the trees). */
+export const CHEST_Q = 'Do you have chest pain or tightness?';
+export const FALL_Q = 'Did you have a fall?';
+export const UNWELL_Q = 'Do you feel unwell?';
+
+/**
+ * Phase 17 (judge round 12, health P0s 3 and 4: seats 13b, 01, 05, 02n): what follows an answer to a card the guard made
+ * for a health matter. The carer never reads a green tick or a bare "Ask another question" under it: the end line is a
+ * red box (`alert`), the call box stays over it for the rest of the conversation (web/src/main.ts, p5.urgent), and the
+ * next question goes on to where it hurts or how bad. `red` is the conversation's red flag for "How bad is the pain?"
+ * (core/tree.ts): after a chest answer every amount says call now. The worst case of every line is a call not needed.
+ *   - chest: any answer but "no" says call now, whatever the amount, even if it has happened before;
+ *   - stroke: "yes" says call now and note the time; "no" or "not sure" is checked by the carer (arms and smile);
+ *   - limb (a pain in an arm, a leg, a hand, the face): the weakness question first, then how bad;
+ *   - fall, unwell, sugar, pain: what to look for and when to call, then where it hurts.
+ * `{them}`, `{They}`, `{their}` take the name; `{number}` the number the call buttons use.
+ */
+export interface OwnStep { next: string[]; end: string; alert: true; red: RedPlace | null; now: boolean }
+const yesish = (l: string) => l !== 'no';
+export function ownAfter(health: HealthKind, label: string, number: string, name = ''): OwnStep {
+  const l = lc(label);
+  const no = l === 'no';
+  const unsure = l === 'not sure';
+  let r: { next: string[]; end: string; red: RedPlace | null; now?: true };
+  switch (health) {
+    case 'chest':
+      r = yesish(l)
+        ? { next: [HOW_BAD], end: OWN_END.chest, red: 'chest', now: true }
+        : { next: [WHERE_HURTS], end: OWN_END.chestNo, red: null };
+      break;
+    case 'stroke':
+      r = no || unsure ? { next: [WHERE_HURTS], end: no ? OWN_END.strokeNo : OWN_END.strokeUnsure, red: 'sign-check' } : { next: [], end: OWN_END.stroke, red: 'sign', now: true };
+      break;
+    case 'limb':
+      r = no ? { next: [WHERE_HURTS], end: OWN_END.painNo, red: null } : { next: [WEAK_NUMB, HOW_BAD], end: OWN_END.limb, red: 'limb' };
+      break;
+    case 'fall':
+      r = no ? { next: [WHERE_HURTS], end: OWN_END.fallNo, red: null } : { next: [WHERE_HURTS], end: OWN_END.fall, red: null };
+      break;
+    case 'unwell':
+      r = { next: [WHERE_HURTS], end: OWN_END.unwell, red: null };
+      break;
+    case 'sugar':
+      r = { next: [UNWELL_Q], end: OWN_END.sugar, red: null };
+      break;
+    default:
+      r = no ? { next: [], end: OWN_END.painNo, red: null } : { next: [WHERE_HURTS, HOW_BAD], end: OWN_END.pain, red: null };
+  }
+  const n = name.trim();
+  const end = r.end.replace(/\{them\}/g, n || 'them').replace(/\{They\}/g, n || 'They').replace(/\{they\}/g, n || 'they').replace(/\{their\}/g, n ? `${n}'s` : 'their').replace(/\{number\}/g, number || 'the emergency number');
+  return { next: r.next, end, alert: true, red: r.red, now: !!r.now };
+}
+
+/** The end lines of `ownAfter`, word for word (tests/unit/phase17.test.ts reads them). Rules' words, never a model's. */
+export const OWN_END = {
+  chest: 'Chest pain or tightness, or trouble breathing: call {number} now, whatever the amount, even if it has happened before. Do not wait to see if it passes. Note the time it started.',
+  chestNo: '{They} pointed to no. A yes or no can be wrong after a stroke: watch {their} breathing and colour. Any chest pain or tightness, or trouble breathing: call {number} now, whatever the amount.',
+  stroke: 'This can be a stroke: call {number} now, and note the time it started. Do not wait to see if it passes.',
+  strokeNo: '{They} pointed to no. A yes or no can be wrong after a stroke: check it yourself now. Ask {them} to smile and lift both arms. If one side drops, the face droops or the speech is new and slurred, call {number} now.',
+  strokeUnsure: '{They} pointed to not sure. Check it yourself now: ask {them} to smile and lift both arms. If one side drops, the face droops or the speech is new and slurred, call {number} now.',
+  limb: 'A pain in an arm, a leg, a hand or the face: ask first whether it is suddenly weak or numb. Sudden weakness or numbness: call {number} now.',
+  fall: 'A fall: call {number} now if the head was hit, if getting up is not possible, or if there is new pain. Do not lift {them} if it hurts to move.',
+  fallNo: '{They} pointed to no. If you saw or heard a fall, go by what you saw: ask where it hurts, and call {number} if the head was hit.',
+  unwell: 'Look for signs of being unwell: grey, pale, sweaty, confused, or not {their} usual self. If it is new or sudden, call {number} now. Check the face and arms: ask {them} to smile and lift both arms.',
+  sugar: 'Shaking, sweating, confusion or drowsiness: call {number} now. Otherwise go by the plan from {their} doctor or nurse.',
+  pain: 'In pain. Ask where it hurts first, then how bad. A pain that is new, sudden or strong: call {number}.',
+  painNo: 'No pain, {they} pointed. A yes or no can be wrong after a stroke: watch {their} face and movements, and ask again soon. A pain that is new, sudden or strong: call {number}.',
+};
 
 /** The nearest ready question for words of a topic: one the rules make into a choice card (tests/unit/phase16.test.ts). */
 export const NEAREST: Record<string, string> = {

@@ -56,7 +56,7 @@ import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Li
 import { P5 } from '../../core/copy5';
 import { FALL_HEAD } from '../../core/diary';
 import { GUARD_TOPICS } from '../../core/reliability';
-import { DEFAULT_NUMBER, WRONG_TILE, crisisAnswer, crisisLineFor, emergencyNumber, localeNumber, numberSet, redPlace, signNow, urgentAnswer, urgentAny, type RedPlace } from '../../core/redflag';
+import { DEFAULT_NUMBER, WRONG_TILE, crisisAnswer, crisisLineFor, emergencyNumber, localeNumber, healthOf, numberSet, redPlace, redRank, signNow, urgentAnswer, urgentAny, type RedPlace } from '../../core/redflag';
 import { fromIsoDay, pickedQuestions, sinceLines, sinceText, toggleQuestion } from '../../core/since';
 import { SpeakCache, isPcm, pcmRate, pcmToWav, speakText, speakable } from '../../core/speak';
 import { P6 } from '../../core/copy6';
@@ -77,7 +77,7 @@ import { addLater, agoText, answeredLater, askAgainLater, cleanLater, doneLater,
 import { NO_PASSPORT, OFF_UNTIL_TICKED, cleanPassport, passport, passportText, toggleLine, OWN_MAX, type PassportInput, type PassportPrefs } from '../../core/passport';
 import { addEvent, cleanLog, lessSureCount, newLog, pickedPractice, practiceFlag, practiceReport, practiceText, practiceUrgent, togglePractice, type AskedBy, type PracticeEvent, type PracticeInput, type PracticeLog, type PracticeSpan, type Via } from '../../core/practice';
 import { passportLink, passportScreen, practiceScreen, type PassPicture } from './care7';
-import { fallbackLine, fallbackWhy, ownCard, ownFallbackCard, ownWaiting } from '../../core/ownwords';
+import { fallbackLine, fallbackWhy, ownAfter, ownCard, ownFallbackCard, ownWaiting } from '../../core/ownwords';
 import { P16 } from '../../core/copy16';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
@@ -733,7 +733,7 @@ function leaveForLater(q: string, topic: string | null) {
   if (state.demo) return;
   const at = Date.now();
   // (phase 15) the conversation's red flag goes with it (a weakness "no" or "not sure" is a check, not a call)
-  p8later.list = addLater(p8later.list, q, at, topic, p5.red && p5.red !== 'sign-check' ? p5.red : null); saveLater();
+  p8later.list = addLater(p8later.list, q, at, topic, p5.red && p5.red !== 'sign-check' && p5.red !== 'limb' ? p5.red : null); saveLater();
   if (p8later.list.find((x) => x.q === q)?.care) { state.diary = addEntry(state.diary, laterEntry(q, at, (topic as DiaryTopic | null) ?? null)); saveDiary(); }
 }
 /** "14:37" today; "Tue 17 Nov, 14:37" for an older one (a care question stays for days). */
@@ -914,6 +914,11 @@ function askAgain() {
 const guardNow = () => (learns() ? reliability(tapsFrom(state.history), Date.now()) : RELIABLE);
 /** The guard's line, never on a card about pain, the toilet, help or a need: such an answer is taken as said (core/reliability.ts, careAnswer). */
 const careTopic = (c: Card) => topicOf(state.chain[0] ?? c.asked, state.profile)?.id ?? topicOf(c.asked, state.profile)?.id ?? null;
+/**
+ * Phase 17 (judge round 12, the nurse's seat, ADV-13b-4): an answer about pain, the body, a warning sign, a need or a
+ * feeling is shown in a neutral box ("They answered"), never under the green tick that reads as "all clear".
+ */
+const neutralAnswer = (c: Card, p: Choice): boolean => !!c.own?.guard || !!c.own?.matter || ['needs', 'body', 'pain', 'feeling'].includes(c.kind) || careAnswer(c.asked, p.label, careTopic(c)) || !!healthOf(c.asked);
 const guardHtml = (c?: Card, label = '') => (c && (c.kind === 'needs' || c.kind === 'body' || c.kind === 'pain' || c.kind === 'feeling' || guardExempt(c.asked, label, careTopic(c))) ? '' : guardBlock({ name: state.profile.personName.trim(), flags: guardNow().flags }));
 /**
  * While the guard is on, the next either-or shows its answers in a different order (none removed; the line to say
@@ -1876,6 +1881,14 @@ async function runNarrow(i: NarrowInput) {
  * What comes after this answer (core/tree.ts): the next questions and, at the end of a path, the line that says what
  * to do now. For a question the trees do not know (a typed one) the older follow-ups of core/topics.ts stand.
  */
+/** Phase 17: the step after an answer on a health card of "Ask in your own words" (a yes / no the rules made from the carer's words). */
+function ownHealthStep(c: Card, label: string): { follow: string[]; end: string; alert: true; red: RedPlace | null; now: boolean } | null {
+  const h = c.own?.matter;
+  if (!h || c.kind !== 'yesno' || /^is it suddenly weak or numb\b/i.test(c.asked)) return null;
+  const s = ownAfter(h, label, callNumber(), state.profile.personName.trim());
+  const asked = new Set([...state.chain, c.asked].map((q) => q.split('?')[0].trim().toLowerCase()));
+  return { follow: s.next.filter((q) => !asked.has(q.split('?')[0].trim().toLowerCase())), end: s.end, alert: true, red: s.red, now: s.now };
+}
 function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: string; alert?: true } {
   if (c.kind === 'needs' || c.kind === 'repair') return { follow: [], end: '' };
   // "What is it about?": the body leads to the body card and the first questions of "Body & care", a feeling to the feelings card
@@ -1898,6 +1911,10 @@ function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: st
     const viaChoice = after({ asked: sc.of, kind: 'choice' }, sc.label, state.profile, state.chain.length ? state.chain : [sc.of], callNumber());
     return { follow: viaChoice.next, end: viaChoice.end };
   }
+  // (phase 17, judge round 12, health P0 3: a health card the guard made from the carer's own words ends on a red box
+  // with what to do and goes on to where it hurts or how bad, never on a green tick: core/ownwords.ts, ownAfter)
+  const ownStep = ownHealthStep(c, p.label);
+  if (ownStep) return ownStep;
   const step = after(c, p.label, state.profile, state.chain.length ? state.chain : [c.asked], callNumber(), p5.red ?? redPlace(c.asked, p.label));
   if (step.next.length || step.end) return { follow: step.next, end: step.end, ...(step.alert ? { alert: step.alert } : {}) };
   return { follow: out || p.role !== 'answer' ? [] : followUps(c, p.label, state.profile), end: '' };
@@ -1934,7 +1951,9 @@ function simpleScreen(): string {
       made: simpleMade(c), privacy: simplePrivacy(), guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),
       alertHtml,
       // (the red box with the call button stands over the answer, for the whole conversation; a safety-check alert carries its own call above "Next")
-      leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), crisisLineNow(), callNumber()) : ''}${turnHtml()}`,
+      // (phase 17, judge round 12, P1: two stacked call boxes with different words after a chest pain: one, the alert's)
+      neutral: neutralAnswer(c, p),
+      leadHtml: `${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), crisisLineNow(), callNumber()) : ''}${turnHtml()}`,
       outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
       // after the way out: the ways to find out what it is, in the rules' order; a step the rules make comes first
       ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),
@@ -1955,7 +1974,8 @@ function simpleScreen(): string {
       // (and Read aloud, offered with one button while it is off: the sheet the first time, then one tap)
       // (phase 15: while it works, the button's place says so, with "Stop waiting"; a stopped wait leaves a line on the card)
       findHtml: `${findWaiting() ? findWaitLine(aiPlace(whereInput()) === 'device' ? 'device' : 'cloud') : (() => { const o = c.own?.guard ? null : findMoreOffer(c, { topic: careTopic(c), place: aiPlace(whereInput()), urgent: p5.urgent }); return o ? findMoreBlock(o) : ''; })()}${p15find.stopped === c ? findStoppedLine() : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && !c.own?.guard ? speakOffer({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}`,
-      guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c),
+      // (phase 17, judge round 12, the SLP's seat, ADV-13-3: the guard's line never stands on a card before its answer)
+      guardHtml: '',
       // the first-letter helper: its way in from "We're stuck", who found a letter card's words, and another letter when there was no word
       extraHtml: `${c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterButton(name, true) : letterBy(c.letter.by)) : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && speakOn() ? speakSwitch({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}${p5.spoken.has(c) ? readAloudLine() : ''}`,
     });
@@ -2441,7 +2461,8 @@ async function make(q: string) {
     // rules' best card for the words stands in place of "No card", labelled as the rules' (core/ownwords.ts)
     if (own && ownWaiting(card) && !ownSheet(card)) card = await ownFallbackCard(q, card, fallbackWhy(card, { online: isOnline(), cloudConfigured: state.engine.cloudConfigured }), { profile, support: state.settings.support });
     // (a warning sign in the words keeps the call box up for this conversation, as a red-flag answer does)
-    if (own && card.own?.guard === 'red') p5.urgent = true;
+    // (phase 17, judge round 12: "Does your arm hurt?" yes ended on a green tick with no call box) any health matter too
+    if (own && (card.own?.guard === 'red' || card.own?.matter)) p5.urgent = true;
     state.made.push(card);
     if (sample) for (let p: Card | null | undefined = card; p; p = p.nextPage) p.sample = true;
     if (spoken) voiceCards.add(card);
@@ -2490,7 +2511,7 @@ function ownTop(c: Card): string {
   if (!o) return '';
   if (o.guard) {
     const box = o.guard === 'crisis' ? ownCrisisBox({ line: P16.crisisBox, number: callNumber(), crisisLine: crisisLineNow(), guess: numberGuess() })
-      : o.guard === 'care' ? suddenLink('own-sudden', callNumber()) : '';
+      : o.guard === 'care' && !p5.urgent ? suddenLink('own-sudden', callNumber()) : '';
     return `<p class="own-why" id="own-guard" data-guard="${o.guard}" role="note">${SIMPLE_SIGN.lock}<span>${esc(P16.guard[o.guard])}</span></p>${box}`;
   }
   if (o.fallback) return `<p class="own-why" id="own-fallback" data-why="${o.fallback.why}" role="note">${SIMPLE_SIGN.lock}<span><b>${esc(P16.rulesLabel)}</b> ${esc(fallbackLine(o.fallback, o.asked))}</span></p>`;
@@ -2530,7 +2551,14 @@ function onPersonTap(t: HTMLElement) {
     if (state.picked && urgentAnswer(c.asked, state.picked.label)) p5.urgent = true;
     if (state.picked && signNow(c.asked, state.picked.label)) p5.signNow = true;
     // (phase 13) the conversation's red flag: every "how bad" end line after it says to call now (core/tree.ts)
-    if (state.picked) { const r = redPlace(c.asked, state.picked.label); if (r && (!p5.red || (p5.red === 'sign-check' && r !== 'sign-check'))) p5.red = r; }
+    // (phase 17: an own-words health card brings its own flag; a limb pain owes the stroke check: core/redflag.ts, redRank)
+    if (state.picked) {
+      const o = ownHealthStep(c, state.picked.label);
+      const r = o ? o.red : redPlace(c.asked, state.picked.label);
+      if (r && redRank(r) > redRank(p5.red)) p5.red = r;
+      if (o?.now) p5.signNow = true;
+      if (c.own?.matter) p5.urgent = true;
+    }
     // (phase 8) "later": the question is kept for Home, to come back to (core/later.ts); never for the sample family
     const left = state.picked ? laterOf({ asked: c.asked, label: state.picked.label, repair: c.kind === 'repair', before: state.before?.asked ?? state.chain[0] ?? null }) : null;
     if (left) leaveForLater(left, careTopic(c));

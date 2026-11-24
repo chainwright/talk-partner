@@ -25,7 +25,8 @@
 import { COPY } from './copy';
 import { P5 } from './copy5';
 import { P9 } from './copy9';
-import { DEFAULT_NUMBER, WRONG_TILE, crisisLineFor } from './redflag';
+import { DEFAULT_NUMBER, WRONG_TILE, crisisLineFor, healthOf } from './redflag';
+import { P17 } from './copy17';
 import { P12 } from './copy12';
 import { P6 } from './copy6';
 import { byDay, dayStart, dayText, eventGroups, events, inSpan, tags, SPAN_DAYS, type DiaryEntry, type Tag } from './diary';
@@ -75,9 +76,10 @@ export interface Source {
 
 export type InsightSpan = 'week' | 'month';
 /** Phase 8 (judge round 7, the nurse's seat): 'call' is the level of a line with the call box (a strong pain, the head or the chest, a fall with a blow to the head): its own label, and first. */
-export type Level = 'call' | 'tell' | 'mention' | 'note';
+/** Phase 17: 'crisis' is the level of "I can't go on": its own label ("Take it seriously, every time: call now"), first. */
+export type Level = 'crisis' | 'call' | 'tell' | 'mention' | 'note';
 export interface Insight {
-  id: 'sign' | 'crisis' | 'pain' | 'pain-some' | 'wrong' | 'pain-day' | 'no-drink' | 'few-drinks' | 'many-drinks' | 'sweets' | 'no-food' | 'sleep' | 'mood' | 'fall' | 'less-sure' | 'nothing';
+  id: 'sign' | 'warning' | 'crisis' | 'pain' | 'pain-some' | 'wrong' | 'pain-day' | 'no-drink' | 'few-drinks' | 'many-drinks' | 'sweets' | 'no-food' | 'sleep' | 'mood' | 'fall' | 'less-sure' | 'nothing';
   /** 'tell': a red flag. 'mention': worth mentioning to the doctor or nurse. 'note': for the carer to keep in mind. */
   level: Level;
   /** What was counted, in plain words. The only part a model may put into plainer words. */
@@ -145,7 +147,7 @@ export function thresholds(h: HealthNotes, span: InsightSpan): Thresholds {
 
 const I = COPY.simple.insights;
 const I5 = P5.insights;
-const ORDER: Record<Level, number> = { call: -1, tell: 0, mention: 1, note: 2 };
+const ORDER: Record<Level, number> = { crisis: -2, call: -1, tell: 0, mention: 1, note: 2 };
 const daysOf = (ts: number[]) => [...new Set(ts.map(dayStart))].sort((a, b) => a - b);
 const listed = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
 const names = (days: number[], max = 3) => listed(days.slice(-max).map(dayText));
@@ -205,6 +207,10 @@ function spanInsights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpa
   // (phase 13, judge round 10, the nurse's seat: ADV-13b-2) a yes or "not sure" to sudden weakness or numbness: its own line, first
   const signs = entries.filter((e) => tags(e).includes('sign'));
   if (signs.length) { const sd = daysOf(signs.map((e) => e.at)); out.push({ id: 'sign', level: 'tell', text: P9.insights.sign(listed([...new Set(signs.map((e) => `"${e.label.trim().toLowerCase()}"`))]), names(sd, 5)), noted: '', base: `${P9.insights.signBase} ${I.only}`, act: P9.insights.signAct(number), urgent: true, local: true, source: src(signs) }); }
+
+  // (phase 17, judge round 12, health P0 3) a health question asked in the carer's own words and answered: its own line
+  const warns = entries.filter((e) => tags(e).includes('warning'));
+  if (warns.length) { const wd = daysOf(warns.map((e) => e.at)); const chest = warns.some((e) => healthOf(e.q ?? '') === 'chest'); out.push({ id: 'warning', level: 'tell', text: P17.warning.text(listed([...new Set(warns.map((e) => `"${(e.q ?? '').trim()}" ${e.label.trim().toLowerCase()}`))]), names(wd, 5)), noted: '', base: `${P17.warning.base} ${I.only}`, act: chest ? P17.warning.actChest(number) : P17.warning.act(number), urgent: true, local: true, source: src(warns) }); }
 
   // (phase 12) "I can't go on", chosen by the person: one is enough, first, with the crisis route; never sent to online help
   const crisis = entries.filter((e) => tags(e).includes('crisis'));
@@ -280,7 +286,7 @@ export function insights(diary: DiaryEntry[], health: HealthNotes, span: Insight
     if (week.length) out = [...out.filter((x) => x.id !== 'nothing'), ...week];
   }
   // (phase 8: a line with the call box is never labelled softer than three days of mild pain: its own level, first)
-  out = out.map((x) => (x.urgent ? { ...x, level: 'call' as const } : x));
+  out = out.map((x) => (x.id === 'crisis' ? { ...x, level: 'crisis' as const } : x.urgent ? { ...x, level: 'call' as const } : x));
   const rank = (x: Insight) => ORDER[x.level] * 2 - (x.urgent ? 1 : 0);
   return out.map((x, i) => ({ x, i })).sort((a, b) => rank(a.x) - rank(b.x) || a.i - b.i).map((p) => p.x).slice(0, MAX_INSIGHTS);
 }

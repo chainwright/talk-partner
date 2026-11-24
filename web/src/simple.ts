@@ -454,6 +454,8 @@ export function cardScreen(m: CardModel): string {
 // ---------------------------------------------------------------- the carer's screen after an answer
 export interface AnsweredModel {
   name: string;
+  /** Phase 17: an answer about pain, the body, a warning sign, a need or a feeling: a neutral box, never the green tick. */
+  neutral?: boolean;
   /** The label they chose and confirmed. */
   label: string;
   /** The question it answers, shown over the answer ("Are you tired?" then "Yes"): '' for the quick-needs board. */
@@ -556,7 +558,7 @@ export function answeredScreen(m: AnsweredModel): string {
   ${navBar({ back: true })}
   <div class="col">
     ${m.leadHtml ?? ''}
-    <div class="chose${m.alertHtml ? ' alert' : m.out ? ' out' : ''}" id="chose" role="status">${m.alertHtml ? SIGN.alert : m.out ? SIGN.out : SIGN.tick}<div>${m.question ? `<span class="asked" id="chose-q">${esc(m.question)}</span>` : `<span class="muted small">${esc(S.choseNeed(m.name))}</span>`}<b id="chose-a">${esc(big)}</b></div></div>
+    <div class="chose${m.alertHtml ? ' alert' : m.out ? ' out' : m.neutral ? ' neutral' : ''}" id="chose" role="status" data-tone="${m.alertHtml ? 'alert' : m.out ? 'out' : m.neutral ? 'neutral' : 'done'}">${m.alertHtml ? SIGN.alert : m.out ? SIGN.out : m.neutral ? SIGN.info : SIGN.tick}<div>${(m.neutral || m.alertHtml) && m.question ? `<span class="muted small" id="chose-tone">${esc(COPY.simple.answeredNeutral)}</span>` : ''}${m.question ? `<span class="asked" id="chose-q">${esc(m.question)}</span>` : `<span class="muted small">${esc(S.choseNeed(m.name))}</span>`}<b id="chose-a">${esc(big)}</b></div></div>
     ${m.guardHtml ?? ''}
     ${m.afterHtml}
     ${end}

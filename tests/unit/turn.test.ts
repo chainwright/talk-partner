@@ -145,6 +145,7 @@ describe('boundaries', () => {
     const main = readFileSync(join(ROOT, 'web/src/main.ts'), 'utf8');
     expect(main).toContain("!c.scale && !c.letter && !c.turn && !state.p4.turn ?");
     expect(main).toContain("guardHtml: c.kind === 'repair' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c, p.label),");
-    expect(main).toContain("c.kind === 'no-quiz' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c),");
+    // (phase 17: the guard's line never stands on a card before its answer, so none on these cards either)
+    expect(main).toContain("      guardHtml: '',");
   });
 });

@@ -33,8 +33,10 @@ describe('the rules\' own summary: no AI, nothing sent', () => {
     expect(s.length).toBeGreaterThanOrEqual(2);
     expect(s.length).toBeLessThanOrEqual(4);
     expect(s[0]).toBe('Frank answered 5 questions today by pointing, and confirmed each answer.');
-    expect(s[1]).toBe('How they felt: "How are you feeling today": so-so; and "Are you in pain": yes.');
-    expect(s[2]).toBe('What they chose: "Would you like tea or coffee": tea; "Where in the legs": your left leg; and "Would you like to call Jen": yes.');
+    // (phase 17, judge round 12: health answers are filed as health, first, never under "What they chose")
+    expect(s[1]).toBe('Health: "Are you in pain": yes; and "Where in the legs": your left leg.');
+    expect(s[2]).toBe('How they felt: "How are you feeling today": so-so.');
+    expect(s[3]).toBe('What they chose: "Would you like tea or coffee": tea; and "Would you like to call Jen": yes.');
   });
   it('with no name it says "They"; with one answer it is still a sentence; with none it says so', () => {
     expect(rulesSummary(DAY.slice(1, 2))[0]).toBe('They answered 1 question today by pointing, and confirmed each answer.');

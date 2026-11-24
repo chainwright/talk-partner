@@ -332,6 +332,8 @@ const COPY = {
   simple: {
     /** The header of the first screen: the hope, not the mechanism. The person's name when About them has it, else "them". */
     hope: (name: string) => `When the words won't come, let ${name || 'them'} point.`,
+    /** Phase 17: over an answer about pain, the body, a warning sign, a need or a feeling (no green tick there). */
+    answeredNeutral: 'They answered',
     with: (name: string) => `with ${name}`,
     /** The board for needs that cannot wait: at the top of the first screen, above everything else. */
     needs: 'Needs something now?',
@@ -630,7 +632,8 @@ const COPY = {
      * about the moment, not about the person's ability.
      */
     guard: {
-      line: (name: string) => `${name || 'They'} may be tired. Try again later, or check with a different question.`,
+      // (phase 17, judge round 12, the SLP's seat: "may be tired. Try again later" could lead a carer to leave a need)
+      line: (name: string) => `Several "yes" answers in a row. Check the last one the other way round ("Do you want me to go?"), then go by ${name ? `${name}'s` : 'their'} answer.`,
       yes: 'The last few yes / no answers were nearly all "yes".',
       place: 'The last four answers were all in the same place on the screen.',
       marked: 'These answers are marked "less sure" in the diary.',
@@ -680,7 +683,7 @@ const COPY = {
      */
     insights: {
       heading: { week: 'What stands out: the last 7 days', month: 'What stands out: the last 30 days' } as Record<string, string>,
-      level: { call: 'Call now if it is new or sudden, and tell the doctor or nurse', tell: 'Tell the doctor or nurse', mention: 'Worth mentioning to the doctor or nurse', note: 'To keep in mind' } as Record<string, string>,
+      level: { crisis: 'Take it seriously, every time: call now', call: 'Call now if it is new or sudden, and tell the doctor or nurse', tell: 'Tell the doctor or nurse', mention: 'Worth mentioning to the doctor or nurse', note: 'To keep in mind' } as Record<string, string>,
       footer: 'These lines are counts of what was entered in this app, made by fixed rules. They are not medical advice and not a diagnosis. If something worries you, ask the doctor or nurse.',
       only: 'Only what was entered here.',
       span: { week: '7 days', month: '30 days' } as Record<string, string>,

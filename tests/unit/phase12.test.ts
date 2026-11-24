@@ -419,7 +419,7 @@ describe('D14. A crisis choice for the person: "I can\'t go on" leads the carer 
     const e = ans('How are you feeling today?', CRISIS, 5);
     expect(tags(e)).toEqual(expect.arrayContaining(['low-mood', 'crisis']));
     const line = insights([...calm, e], NO_HEALTH, 'week', NOW, '911').find((l) => l.id === 'crisis');
-    expect(line).toMatchObject({ level: 'call', urgent: true, local: true });
+    expect(line).toMatchObject({ level: 'crisis', urgent: true, local: true });
     expect(line?.act).toMatch(/call 911 now/);
     const { COPY } = await import('../../core/copy');
     expect(COPY.simple.person.thanksTold).toBe('Thank you for telling me.');

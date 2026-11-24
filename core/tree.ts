@@ -405,7 +405,7 @@ export function who(verb: 'call' | 'see', names: string[]): string[] {
  * end, and the body card's second step for the chest or the head, then says to call now, whatever the amount: never
  * "Ask again in an hour", never only "the nurse or doctor". The nurse seat's words (ADV-13b-1).
  */
-const RED_END: Record<Exclude<RedPlace, 'sign-check'>, string> = {
+const RED_END: Record<Exclude<RedPlace, 'sign-check' | 'limb'>, string> = {
   chest: 'Pain in the chest: call {number} now, whatever the amount. Do not wait to see if it passes. Note the time it started.',
   head: 'Pain in the head: call {number} now, whatever the amount. Do not wait to see if it passes. Note the time it started.',
   sign: 'There was a yes to trouble breathing, weakness or numbness: call {number} now, whatever the pain. Do not wait to see if it passes. Note the time it started.',
@@ -416,6 +416,12 @@ const RED_END: Record<Exclude<RedPlace, 'sign-check'>, string> = {
  * bad" and "very bad" keep their own call lines.
  */
 const SIGN_CHECK_END = 'The weakness answer was not a clear yes: check it again now. Ask {them} to lift both arms and smile. If one side drops or the face droops, call {number} now. Tell the nurse or doctor about the pain today.';
+/**
+ * Phase 17 (judge round 12, the hound and seat 01: core/tree.ts "a little"): a pain in an arm, a leg, a hand, the feet
+ * or the face, and the weakness question was never answered (the depth limit cut it, or the carer went on to "How bad").
+ * "A little" and "not sure" then end on the stroke check, never on "Ask again in an hour".
+ */
+const LIMB_CHECK_END = 'A pain in an arm, a leg, a hand or the face, and weakness was not asked yet: check it now. Ask {them} to lift both arms and smile. If one side drops or the face droops, call {number} now. Tell the nurse or doctor about the pain today.';
 
 /** The family's own questions that stand for a marker in the tree ("@foods", "@call" …): none when About them has none. */
 function own(marker: string, profile: Profile): string[] {
@@ -496,7 +502,7 @@ export function after(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: st
   if (!found) return { next: [], end: '' };
   // (phase 13) `red`: the conversation holds a chest or head pain, or a breathing, weakness or numbness yes
   const howBad = norm(card.asked) === 'how bad is the pain';
-  const redEnd = !red || !howBad ? null : red === 'sign-check' ? (['a little', 'not sure'].includes(norm(label)) ? SIGN_CHECK_END : null) : RED_END[red];
+  const redEnd = !red || !howBad ? null : red === 'sign-check' || red === 'limb' ? (['a little', 'not sure'].includes(norm(label)) ? (red === 'limb' ? LIMB_CHECK_END : SIGN_CHECK_END) : null) : RED_END[red];
   const raw: Raw = redEnd ? { ...found, end: redEnd, alert: true } : found;
   const name = profile.personName.trim();
   let end = raw.end.replace(/\{name\} says/g, name ? `${name} says` : 'they say').replace(/\{them\}/g, name || 'them').replace(/\{They\}/g, name || 'They').replace(/\{they\}/g, name || 'they').replace(/\{their\}/g, name ? `${name}'s` : 'their').replace(/\{number\}/g, number || 'the emergency number');

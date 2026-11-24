@@ -18,7 +18,9 @@
 // toward a run, is never marked "less sure", and no line stands on its screen. And not in an ordinary fast flow: the
 // guard speaks only when the run took at least 2 minutes, or at least 5 answers fall within those ten minutes.
 // Nothing here is ever shown on the person's screen: no line, no mark, no count (tests/unit/reliability.test.ts).
-// This file imports nothing; no file that builds a prompt or a request imports it.
+// This file imports only core/redflag.ts (which imports nothing); no file that builds a prompt or a request imports it.
+
+import { healthOf } from './redflag';
 
 /** One confirmed answer, as the guard reads it. */
 export interface Tap {
@@ -69,9 +71,16 @@ export const DRINK_FOOD_WORDS = /\b(?:drink|drinks|drinking|thirsty|water|tea|co
  * The guard's list only: `careAnswer` (pinned "left for later", the notes for others) is unchanged.
  */
 export const REST_WORDS = /\b(?:tired|tiring|rest|resting|lie down|lie|lying|sleep|slept|sleeping|asleep|nap|bed|chair|sit|sit down|quiet|noisy|noise|curtains)\b/i;
-export const GUARD_TOPICS = [...CARE_TOPICS, 'rest'];
+/**
+ * Phase 17 (judge round 12, the SLP's seat, ADV-13-3, a P0: "Would you like me to stay with you? Yes" was marked and
+ * told "They may be tired. Try again later": a line that can lead a carer to leave a person who asked for company).
+ * A request for company, a visit, a call or a hug, and every answer of "People & family", is the guard's to leave alone;
+ * and so is any health matter of core/redflag.ts (healthOf: the chest, a stroke sign, a fall, the blood sugar).
+ */
+export const PEOPLE_WORDS = /\b(?:stay|staying|company|alone|lonely|visit|visitor|visitors|call|calling|ring|phone|hug|hold|cuddle|see|with you|with me|come|come over|talk)\b/i;
+export const GUARD_TOPICS = [...CARE_TOPICS, 'rest', 'people'];
 export function guardExempt(q: string, label = '', topic: string | null = null): boolean {
-  return careAnswer(q, label, topic) || DRINK_FOOD_WORDS.test(q) || REST_WORDS.test(q) || (topic !== null && GUARD_TOPICS.includes(topic));
+  return careAnswer(q, label, topic) || DRINK_FOOD_WORDS.test(q) || REST_WORDS.test(q) || PEOPLE_WORDS.test(q) || !!healthOf(q) || (topic !== null && GUARD_TOPICS.includes(topic));
 }
 
 export type Flag = 'yes-run' | 'same-position';

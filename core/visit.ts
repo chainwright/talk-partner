@@ -76,7 +76,7 @@ export function visitAlert(answers: VisitAnswer[], number: string): string {
   const m = where ? /^(head|chest),\s*(.+)$/i.exec(where.label.trim()) : null;
   const place = m ? ` in the ${m[1].toLowerCase()} (${m[2]})` : where ? ` (${where.label.trim()})` : '';
   const what = bad ? `${cap(bad.label.trim().toLowerCase())} pain${place}` : m ? `Pain${place}` : 'An answer here can be urgent';
-  return P4.visit.stop(what, number);
+  return m ? P4.visit.stopNow(what, number) : P4.visit.stop(what, number);
 }
 
 /** The question to ask next, or null at the end. The two questions about the pain follow only a yes to the first. */

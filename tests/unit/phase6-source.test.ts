@@ -246,7 +246,8 @@ describe('the screen only draws them (web/src/phase6.ts)', () => {
       expect(li.indexOf('class="ins-act"')).toBeGreaterThan(0);
       expect(li.indexOf(`id="urgent-${id}"`)).toBeGreaterThan(li.indexOf('class="ins-act"'));
       expect(li.indexOf(`id="src-${id}"`)).toBeGreaterThan(li.indexOf(`id="urgent-${id}"`));
-      expect(text(li)).toContain('Call 911 now if this is new or sudden.');
+      // (phase 17: under a chest-pain line the box says call now; a fall keeps "if this is new or sudden")
+      expect(text(li)).toMatch(id === 'pain-day' ? /Call 911 now\. Note the time it started\./ : /Call 911 now if this is new or sudden\./);
     }
     expect(text(html)).toContain('17:00 Fall Noted: a blow to the head.');
     expect(text(html)).toContain('16:00 Where does it hurt? chest');

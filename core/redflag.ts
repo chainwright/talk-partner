@@ -129,7 +129,14 @@ export function signNow(asked: string, label: string): boolean {
  * numbness, is never followed by "Ask again in an hour": every "how bad" answer then says to call now. Null when the
  * answer holds none of them. The worst case of this rule is a call line that was not needed.
  */
-export type RedPlace = 'chest' | 'head' | 'sign' | 'sign-check';
+export type RedPlace = 'chest' | 'head' | 'sign' | 'sign-check' | 'limb';
+/**
+ * Phase 17 (judge round 12, seat 13b, ADV-02n-2's kin): which red flag of a conversation wins when a later answer brings
+ * another one. 'limb' (a pain in an arm, a leg, a hand, the feet or the face, the weakness question not answered yet) is
+ * the weakest: a later "no" or "not sure" to the weakness question ('sign-check') or any call-now flag replaces it.
+ */
+export const redRank = (r: RedPlace | null): number => (r === null ? 0 : r === 'limb' ? 1 : r === 'sign-check' ? 2 : 3);
+const LIMB_PLACE = /\b(?:arm|arms|hand|hands|leg|legs|foot|feet|face)\b/;
 const RED_SIGN_Q = /\b(?:breath|breathe|breathing|breathless|weak|weakness|numb|numbness)\b/;
 export function redPlace(asked: string, label: string): RedPlace | null {
   const q = lc(asked);
@@ -143,8 +150,73 @@ export function redPlace(asked: string, label: string): RedPlace | null {
   if (/\bchest\b/.test(l) && (PAIN_Q.test(q) || /^where\b/.test(q))) return 'chest';
   if (/\b(?:head|headache)\b/.test(l) && (PAIN_Q.test(q) || /^where\b/.test(q))) return 'head';
   if (l === 'yes' && RED_SIGN_Q.test(q)) return 'sign';
+  // (phase 17) an arm, a leg, a hand, the feet or the face named as the place of a pain: the stroke check is owed, even
+  // when the depth limit cuts the weakness question (core/tree.ts: "a little" then ends on the check, never "in an hour")
+  if (LIMB_PLACE.test(l) && (PAIN_Q.test(q) || /^where\b/.test(q))) return 'limb';
   return null;
 }
 
 /** The same, over the answers of one conversation or one page: one urgent answer is enough. */
 export const urgentAny = (answers: { q?: string; label: string }[]) => answers.some((a) => urgentAnswer(a.q ?? '', a.label));
+
+/**
+ * Phase 17 (judge round 12, a health P0: seats 13b, 01, 05): which health matter the carer's own words are about, so
+ * that the own-words card ("Ask in your own words") never ends a health answer on a green tick or a bare "Ask another
+ * question", and the notes for others lead with it. Pure word lists, no model. The worst case of a wrong null is a
+ * health question treated as an everyday one, so every list errs on the side of a health match: one word is enough.
+ *   - 'chest': the chest, tightness or pressure, breathing, the heart. Any answer but "no" says call now, whatever the
+ *     amount, even if it has happened before ("Is your chest tight again?" must not read "if new or sudden").
+ *   - 'stroke': the face, the smile, speech, sight, sudden weakness or numbness, an arm or a leg that feels wrong, new
+ *     confusion or drowsiness, a fit.
+ *   - 'fall': a fall.
+ *   - 'unwell': "are you OK", "you look grey", pale, sweaty, sick, dizzy, faint, a fever, "not yourself".
+ *   - 'sugar': diabetes, the blood sugar, insulin, a hypo, the blood pressure.
+ *   - 'limb': a pain in an arm, a hand, a leg, a foot or the face: the stroke check is asked first.
+ *   - 'pain': any other pain, hurt, ache or soreness.
+ * Ordered by urgency: the first that matches is the answer.
+ */
+export type HealthKind = 'chest' | 'stroke' | 'fall' | 'unwell' | 'sugar' | 'limb' | 'pain';
+const H_LC = (s: string) => s.toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, ' ').trim();
+// "tight" and "pressure" that are not about the body: shoes, a lid, "no pressure", "sleep tight"
+const NOT_BODY_TIGHT = /\b(?:(?:shoes?|socks?|boots?|slippers?|trousers|jeans|belt|collar|waist(?:band)?|ring|watch(?:strap)?|lid|jar|cap|bandage|sock) (?:is |are |feel |feels |too |a bit |very )*(?:too )?tight|tight (?:shoes?|socks?|trousers|jeans|belt|collar|lid|jar|squeeze)|sleep tight|hold (?:on )?tight|no pressure|under pressure|water pressure|tyre pressure|tire pressure|peer pressure|blood pressure)\b/g;
+const H_CHEST = /\b(?:chest|chests|tight|tighter|tightness|pressure|squeez\w*|crushing|breath|breaths|breathe|breathing|breathless\w*|short of breath|wheez\w*|heart|hearts|heartbeat|palpitation\w*|angina|gasp\w*)\b/;
+// a part of the body that, with an odd feeling, is a stroke sign; with a pain, the stroke check comes first
+const H_LIMB = /\b(?:arm|arms|hand|hands|leg|legs|foot|feet|fingers?|toes?|wrist|wrists|elbow|elbows|knee|knees|ankle|ankles|shoulder|shoulders|face|facial|mouth|lip|lips|cheek|cheeks|eye|eyes|side)\b/;
+const H_STROKE = /\b(?:smile|smiling|lopsided|droop\w*|weak|weaker|weakness|numb|numbness|tingl\w*|pins and needles|slur\w*|speech|talking funny|talk funny|speak (?:properly|clearly)|vision|blurr\w*|double vision|seeing double|blind|can'?t see|confus\w*|muddled|drowsy|won'?t wake|unresponsive|seizure|seizures|a fit|having a fit|fitting|stroke|strokes|paralys\w*)\b/;
+const H_LIMB_ODD = /\b(?:funny|different|odd|strange|weird|dead|heavy|lift|raise|grip|can'?t move|cannot move|won'?t move|not working|useless|floppy|(?:what'?s|what is) (?:up|wrong) with|wrong with|happened to|ok|okay|alright|all right)\b/;
+const H_FALL = /\b(?:fall|falls|fell|fallen|falling|tripped|trip over|slipped|slip over|did you slip|collapse\w*|on the floor)\b/;
+const H_UNWELL = /\b(?:are you (?:ok|okay|alright|all right)|you (?:look|seem|seems|looks|feel) (?:grey|gray|pale|unwell|ill|poorly|off|strange|odd|clammy|sweaty|hot|flushed|different|funny|rough)|(?:look|looks|looking|seem|seems) (?:grey|gray|pale|unwell|ill|poorly|clammy|sweaty|flushed)|not (?:yourself|himself|herself|themselves|right|well)|(?:something|anything)(?:'s| is)? wrong|grey|gray|pale|clammy|sweat\w*|vomit\w*|sick|throw(?:ing)? up|nause\w*|unwell|poorly|ill|fever\w*|(?:a|your|his|her|their|high) temperature|shiver\w*|faint\w*|dizzy|dizziness|light-?headed|blackout|passed out|pass out|bleed\w*|blood|choke|choking|swallow\w*|cough\w*)\b/;
+const H_SUGAR = /\b(?:diabet\w*|blood sugar|sugar levels?|insulin|hypo|hypos|glucose|blood pressure|bp)\b/;
+// "sugar" on its own is a health matter, unless it goes into a drink or a food ("sugar in your tea", "milk and sugar")
+const SUGAR_WORD = /\bsugar\b/;
+const SUGAR_FOOD = /\b(?:sugar in (?:it|that|this|your|his|her|their|the|my)?\s*(?:tea|coffee|drink|cup|porridge|cereal|cake)?|milk and sugar|sugar and milk|sugar or (?:sweetener|honey|not)|any sugar|some sugar|one sugar|two sugars?|no sugar|sugar,? please|brown sugar|icing sugar|sugar on)\b/;
+const H_PAIN = /\b(?:pain|pains|painful|hurt|hurts|hurting|sore|soreness|ache|aches|aching|achy|headache|headaches|tummy ache|stomach ache|cramp\w*|throb\w*)\b/;
+const H_HEAD = /\b(?:head|headache|headaches)\b/;
+
+export function healthOf(q: string): HealthKind | null {
+  const s = H_LC(q);
+  if (!s) return null;
+  const body = s.replace(NOT_BODY_TIGHT, ' ');
+  if (H_CHEST.test(body)) return 'chest';
+  if (H_STROKE.test(s) || (H_LIMB.test(s) && H_LIMB_ODD.test(s))) return 'stroke';
+  if (H_FALL.test(s.replace(/\bfall(?:s|ing)? asleep\b/g, ''))) return 'fall';
+  if (H_UNWELL.test(s)) return 'unwell';
+  if (H_SUGAR.test(s) || (SUGAR_WORD.test(s) && !SUGAR_FOOD.test(s))) return 'sugar';
+  if (H_LIMB.test(s) && H_PAIN.test(s)) return 'limb';
+  if (H_PAIN.test(s) || H_HEAD.test(s)) return 'pain';
+  return null;
+}
+
+/**
+ * Phase 17: an answer to a health question that is a warning the next carer must read first (core/diary.ts, the tag
+ * 'warning'): anything but "no" to a question about the chest or breathing, a stroke sign, a fall or the blood sugar;
+ * any answer to "are you OK / you look grey" (a yes there does not take the look away). A pain keeps its own tags, and
+ * the body card's places and the pain scale theirs ('place-pain', 'strong-pain').
+ */
+export function healthWarning(q: string, label: string): boolean {
+  const h = healthOf(q);
+  if (!h || h === 'pain' || h === 'limb' || /^(?:where\b|how bad\b)/.test(H_LC(q))) return false;
+  const l = H_LC(label);
+  if (/^(?:something else|someone else|somewhere else)$/.test(l)) return false;
+  return h === 'unwell' ? true : l !== 'no';
+}

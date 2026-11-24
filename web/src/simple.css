@@ -224,6 +224,8 @@
 /* (phase 13) an answer whose end line is a safety check: no tick, the alert sign, the red border */
 .simple .chose.alert { border-color: var(--no); background: var(--panel); }
 .simple .chose.alert .sg { color: var(--no); }
+.simple .chose.neutral { border-color: var(--field); background: var(--panel); }
+.simple .chose.neutral .sg { color: var(--muted); }
 .simple .next-steps { display: grid; gap: 10px; }
 .simple .btn.ask-next { justify-content: flex-start; text-align: left; }
 .simple .who-form { display: grid; gap: 6px; font-size: 16px; }

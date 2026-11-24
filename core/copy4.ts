@@ -93,6 +93,8 @@ export const P4 = {
     resume: 'Go on with the questions',
     /** Phase 13: the box after an answer that can be urgent stopped the run (core/visit.ts, visitAlert). */
     stop: (what: string, number: string) => `${what}: call ${number} now if it is new or sudden.`,
+    /** Phase 17 (judge round 12, the hound's H2): a pain in the head or the chest, as the screen and the diary say it. */
+    stopNow: (what: string, number: string) => `${what}: call ${number} now, whatever the amount. Do not wait to see if it passes.`,
     pageTitle: (name: string) => (name ? `${name}'s own answers` : 'Their own answers'),
     pageSub: (date: string) => `Answered at home, with a family member's help, on ${date}.`,
     part: (n: number, of: number) => `${n} of ${of} questions were answered.`,

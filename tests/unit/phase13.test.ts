@@ -69,7 +69,8 @@ describe('A2. Chest or head pain, or a breathing / weak / numb yes in the conver
     expect(redPlace('Is it hard to breathe?', 'yes')).toBe('sign');
     // not a red flag
     expect(redPlace('Where in the chest?', 'somewhere else')).toBeNull();
-    expect(redPlace('Where in the arms?', 'left arm')).toBeNull();
+    // (phase 17, judge round 12: a limb pain owes the stroke check, the weakest flag)
+    expect(redPlace('Where in the arms?', 'left arm')).toBe('limb');
     // (phase 15: a "no" or "not sure" to weakness is the check, not a call: core/tree.ts SIGN_CHECK_END)
     expect(redPlace('Is it suddenly weak or numb, yes or no?', 'no')).toBe('sign-check');
     expect(redPlace('Is it suddenly weak or numb, yes or no?', 'not sure')).toBe('sign-check');
@@ -112,7 +113,9 @@ describe('A2. Chest or head pain, or a breathing / weak / numb yes in the conver
   it('the person\'s screen: the red flag of the conversation is kept and reset with the call box (web/src/main.ts)', async () => {
     const { readFileSync } = await import('node:fs');
     const main = readFileSync('web/src/main.ts', 'utf8');
-    expect(main).toContain("const r = redPlace(c.asked, state.picked.label); if (r && (!p5.red || (p5.red === 'sign-check' && r !== 'sign-check'))) p5.red = r;");
+    // (phase 17: the strongest flag wins by rank, core/redflag.ts redRank; an own-words health card brings its own)
+    expect(main).toContain("const r = o ? o.red : redPlace(c.asked, state.picked.label);");
+    expect(main).toContain("if (r && redRank(r) > redRank(p5.red)) p5.red = r;");
     expect(main.match(/p5\.signNow = false;/g)?.length).toBe(main.match(/p5\.signNow = false; p5\.red = null;/g)?.length);
   });
 });
@@ -140,8 +143,8 @@ describe('A3. Before a doctor visit: an answer that can be urgent stops the run 
   });
   it('the carer\'s box names what was answered, the number to call, and "Go on with the questions"', async () => {
     const { visitAlert } = await import('../../core/visit');
-    expect(visitAlert([A('pain', 'Are you in pain?', 'yes'), A('where', 'Where in the head?', 'head, top of head'), A('bad', 'How bad is the pain?', 'very bad')], '999')).toBe('Very bad pain in the head (top of head): call 999 now if it is new or sudden.');
-    expect(visitAlert([A('pain', 'Are you in pain?', 'yes'), A('where', 'Where in the chest?', 'chest, middle')], '911')).toBe('Pain in the chest (middle): call 911 now if it is new or sudden.');
+    expect(visitAlert([A('pain', 'Are you in pain?', 'yes'), A('where', 'Where in the head?', 'head, top of head'), A('bad', 'How bad is the pain?', 'very bad')], '999')).toBe('Very bad pain in the head (top of head): call 999 now, whatever the amount. Do not wait to see if it passes.');
+    expect(visitAlert([A('pain', 'Are you in pain?', 'yes'), A('where', 'Where in the chest?', 'chest, middle')], '911')).toBe('Pain in the chest (middle): call 911 now, whatever the amount. Do not wait to see if it passes.');
     expect(visitAlert([A('pain', 'Are you in pain?', 'yes'), A('where', 'Where in the legs?', 'legs, left leg'), A('bad', 'How bad is the pain?', 'quite bad')], '911')).toBe('Quite bad pain (legs, left leg): call 911 now if it is new or sudden.');
     const { visitStopBox } = await import('../../web/src/phase4');
     const box = visitStopBox('Very bad pain in the head (top of head): call 999 now if it is new or sudden.', '999');
@@ -304,10 +307,11 @@ describe('A7. "For the next carer", "What stands out" and the visit page carry e
     ];
     const s = sinceLines(diary as never, null, now);
     // (phase 15, judge round 11, the nurse's seat: today, not at the visit, with the call)
-    expect(s.lines[0]).toBe('Said "I can\'t go on": Mon 23 Nov 17:00 (the safety screen was shown). Tell the doctor or nurse today, not at the visit. If life may be at risk, call 911 now.');
+    // (phase 17, judge round 12, the hound's H3: take it seriously and call first, as the safety screen says)
+    expect(s.lines[0]).toBe('Said "I can\'t go on": Mon 23 Nov 17:00 (the safety screen was shown). Take it seriously, every time. If they may harm themselves, call 911 now; otherwise call their doctor or nurse now, with them beside you. Tell the doctor or nurse today, not at the visit.');
     expect(s.lines[1]).toBe('Suddenly weak or numb: "yes" (Mon 23 Nov 16:00). If 911 was not called, call 911 now: do not wait for the visit. Then tell the doctor today.');
     const uk = sinceLines(diary as never, null, now, [], '', '999', '116 123');
-    expect(uk.lines[0]).toMatch(/call 999 now, or 116 123 \(a crisis line\)\.$/);
+    expect(uk.lines[0]).toMatch(/call 999 now; otherwise call 116 123, a crisis line, now, with them beside you\./);
     expect(uk.lines[1]).toMatch(/If 999 was not called, call 999 now/);
     expect(s.urgent).toBe(true);
   });

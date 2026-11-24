@@ -10,6 +10,10 @@
 // hold: no name and no number that is not in them), and falls back to the rules' own sentences otherwise.
 
 import type { Engine } from './engine';
+import { healthOf, healthWarning } from './redflag';
+
+/** Phase 17: an answer about a health matter or the body card's place or amount of pain: filed as health, first. */
+const isHealth = (q: string) => !!healthOf(q) || /^(?:where (?:in|does)|how bad)\b/i.test(q.trim());
 
 export interface DayAnswer { q: string; label: string; at: number }
 export interface DaySummary { sentences: string[]; source: 'on-device' | 'rules' }
@@ -46,13 +50,16 @@ export function rulesSummary(answers: DayAnswer[], name = ''): string[] {
   const last = new Map<string, DayAnswer>();
   for (const a of answers) last.set(bare(a.q).toLowerCase(), a);
   const all = [...last.values()];
-  const feel = all.filter((a) => FEEL_Q.test(a.q));
-  const rest = all.filter((a) => !FEEL_Q.test(a.q));
+  // (phase 17, judge round 12: "Is your chest tight again? yes" was filed under "What they chose") health answers first
+  const health = all.filter((a) => isHealth(a.q));
+  const feel = all.filter((a) => !isHealth(a.q) && FEEL_Q.test(a.q));
+  const rest = all.filter((a) => !isHealth(a.q) && !FEEL_Q.test(a.q));
   const out = [`${who(name)} answered ${all.length} question${all.length === 1 ? '' : 's'} today by pointing, and confirmed each answer.`];
+  if (health.length) out.push(`Health: ${list(health.slice(-5).map(clause))}.`);
   if (feel.length) out.push(`How they felt: ${list(feel.slice(-5).map(clause))}.`);
   if (rest.length) out.push(`What they chose: ${list(rest.slice(-5).map(clause))}.`);
-  const more = all.length - Math.min(5, feel.length) - Math.min(5, rest.length);
-  if (more > 0) out.push(`${more} more answer${more === 1 ? ' is' : 's are'} in the list above.`);
+  const more = all.length - Math.min(5, health.length) - Math.min(5, feel.length) - Math.min(5, rest.length);
+  if (more > 0 && out.length < 4) out.push(`${more} more answer${more === 1 ? ' is' : 's are'} in the list above.`);
   return out;
 }
 
@@ -85,7 +92,9 @@ export function checkSummary(text: string, answers: DayAnswer[], name = ''): str
  */
 export async function daySummary(answers: DayAnswer[], name: string, engine: Pick<Engine, 'summarizeDevice'>, deviceReady: boolean): Promise<DaySummary> {
   const rules: DaySummary = { sentences: rulesSummary(answers, name), source: 'rules' };
-  if (!deviceReady || !engine.summarizeDevice || answers.length < 2) return rules;
+  // (phase 17) a day with a warning answer (chest, a stroke sign, a fall, "are you OK") is written by the rules, word for
+  // word: no model words it more softly
+  if (!deviceReady || !engine.summarizeDevice || answers.length < 2 || answers.some((a) => healthWarning(a.q, a.label))) return rules;
   try {
     const r = await engine.summarizeDevice(summaryPrompt(answers, name));
     // defence in depth: an answer that did not come from this device is not used

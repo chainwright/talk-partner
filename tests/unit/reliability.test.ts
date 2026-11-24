@@ -99,7 +99,7 @@ describe('never about pain, the toilet, help or a need; never in an ordinary fas
   });
   it('the line is the headline and one sentence; the rest is under "More"', () => {
     const html = guardBlock({ name: 'Frank', flags: ['yes-run'] });
-    expect(html).toMatch(/<b>Frank may be tired\. Try again later, or check with a different question\.<\/b><small>These answers are marked &quot;less sure&quot; in the diary\.<\/small><details class="guard-more"><summary>More<\/summary>/);
+    expect(html).toMatch(/<b>Several &quot;yes&quot; answers in a row\. Check the last one the other way round \(&quot;Do you want me to go\?&quot;\), then go by Frank&#39;s answer\.<\/b><small>These answers are marked &quot;less sure&quot; in the diary\.<\/small><details class="guard-more"><summary>More<\/summary>/);
     expect(html.slice(html.indexOf('<details'))).toContain('Answers about pain, the body, feelings, the toilet or a need are never marked: take them as said.');
   });
 });
@@ -128,8 +128,10 @@ describe('never on the person\'s screen, never in a request', () => {
   const G = COPY.simple.guard;
   it('the line is for the carer: gentle, no "wrong", no score', () => {
     const html = guardBlock({ name: 'Frank', flags: ['yes-run', 'same-position'] });
-    expect(html).toContain('Frank may be tired. Try again later, or check with a different question.');
-    expect(guardBlock({ name: '', flags: ['yes-run'] })).toContain('They may be tired.');
+    // (phase 17, judge round 12, the SLP's seat: never "may be tired. Try again later": it can lead a carer to leave a need)
+    expect(html).toContain('Several &quot;yes&quot; answers in a row. Check the last one the other way round (&quot;Do you want me to go?&quot;), then go by Frank&#39;s answer.');
+    expect(guardBlock({ name: '', flags: ['yes-run'] })).toContain('then go by their answer.');
+    expect(`${G.line('x')} ${G.line('')}`).not.toMatch(/tired|try again later/i);
     expect(guardBlock({ name: 'Frank', flags: [] })).toBe('');
     expect(`${G.line('x')} ${G.yes} ${G.place} ${G.marked}`).not.toMatch(/wrong|unreliable|fail|score|\d+ ?%|confus/i);
   });
@@ -151,7 +153,9 @@ describe('never on the person\'s screen, never in a request', () => {
     expect(typeof cardScreen).toBe('function');
     expect(typeof answeredScreen).toBe('function');
   });
-  it('the file imports nothing', () => {
-    expect(readFileSync(join(ROOT, 'core/reliability.ts'), 'utf8')).not.toMatch(/^\s*import\s/m);
+  it('the file imports nothing but core/redflag.ts, which imports nothing (phase 17: the health word lists)', () => {
+    const src = readFileSync(join(ROOT, 'core/reliability.ts'), 'utf8');
+    expect(src.match(/^import\s.*$/gm)).toEqual(["import { healthOf } from './redflag';"]);
+    expect(readFileSync(join(ROOT, 'core/redflag.ts'), 'utf8')).not.toMatch(/^\s*import\s/m);
   });
 });

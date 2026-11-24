@@ -40,10 +40,11 @@ export const P12 = {
     /** The week's line (core/insights.ts) and the handover note. */
     insight: (d: string) => `"I can't go on" was chosen on ${d}.`,
     insightBase: 'Every time it was chosen on the feelings card.',
-    insightAct: (number: string, line: string) => `Talk to the doctor or nurse today. If life may be at risk, call ${number} now${line ? `, or ${line} (a crisis line)` : ''}.`,
+    // (phase 17, judge round 12, the hound's H3: the line for others was softer than the safety screen: call first)
+    insightAct: (number: string, line: string) => `Take it seriously, every time. If they may harm themselves, call ${number} now; otherwise call ${line ? `${line}, a crisis line,` : 'their doctor or nurse'} now, with them beside you. Then tell the doctor or nurse.`,
     /** Phase 13 (judge round 10, the nurse's seat): its own first line on the visit page, never only "Mood: low". */
     // (phase 15, judge round 11, the nurse's seat: today, not at the visit, with the call)
-    since: (times: string, number: string, line: string) => `Said "I can't go on": ${times} (the safety screen was shown). Tell the doctor or nurse today, not at the visit. If life may be at risk, call ${number} now${line ? `, or ${line} (a crisis line)` : ''}.`,
-    handover: (times: string, number: string) => `"I can't go on" was chosen (${times}). Stay near, and ask how they are. If life may be at risk, call ${number} now. Tell the doctor or nurse today.`,
+    since: (times: string, number: string, line: string) => `Said "I can't go on": ${times} (the safety screen was shown). Take it seriously, every time. If they may harm themselves, call ${number} now; otherwise call ${line ? `${line}, a crisis line,` : 'their doctor or nurse'} now, with them beside you. Tell the doctor or nurse today, not at the visit.`,
+    handover: (times: string, number: string, line = '') => `"I can't go on" was chosen (${times}). Take it seriously, every time: do not leave them alone. If they may harm themselves, call ${number} now; otherwise call ${line ? `${line}, a crisis line,` : 'their doctor or nurse'} now, with them beside you. Then tell the doctor or nurse.`,
   },
 };

@@ -1,0 +1,63 @@
+# failing first: tests/unit/phase17.test.ts run against main (4405af8) before the phase 17 code, 2026-11-24T12:45Z
+     × "Is your chest tight again?" is a warning sign: the rules make the card, no engine call 24ms
+     × "Any pressure in your chest?" is a warning sign: the rules make the card, no engine call 8ms
+     × "Does your chest feel heavy?" is a warning sign: the rules make the card, no engine call 1ms
+     × "Is it hard to get your breath?" is a warning sign: the rules make the card, no engine call 1ms
+     × "Are you short of breath?" is a warning sign: the rules make the card, no engine call 1ms
+     × "Is your heart racing?" is a warning sign: the rules make the card, no engine call 1ms
+     × "Does your arm feel funny?" is a warning sign: the rules make the card, no engine call 1ms
+     × "Is your smile lopsided?" is a warning sign: the rules make the card, no engine call 0ms
+     × "you dont seem yourself, whats up with your face" is a warning sign: the rules make the card, no engine call 0ms
+     × "Is your face OK?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Is your hand numb?" is a warning sign: the rules make the card, no engine call 1ms
+     × "Does your leg feel heavy?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Can you lift your arm?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Is your speech slurred?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Are you seeing double?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Are you confused?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Is he more muddled than usual?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Are you OK, you look grey" is a warning sign: the rules make the card, no engine call 0ms
+     × "You look pale, are you alright?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Are you alright?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Are you OK?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Do you feel sick?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Are you sweaty?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Do you feel dizzy?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Did you fall?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Have you had a fall?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Did you slip in the bathroom?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Is something wrong?" is a warning sign: the rules make the card, no engine call 0ms
+     × "You are not yourself today, are you?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Did you choke on that?" is a warning sign: the rules make the card, no engine call 1ms
+     × "Is it hard to swallow?" is a warning sign: the rules make the card, no engine call 0ms
+     × "Shall we check your sugar before tea?" is a health matter: the rules make the card, no engine call 0ms
+     × "Is your blood sugar low?" is a health matter: the rules make the card, no engine call 0ms
+     × "Did you take your insulin?" is a health matter: the rules make the card, no engine call 0ms
+     × "Does your arm hurt?" is a health matter: the rules make the card, no engine call 0ms
+     × "Does your knee ache?" is a health matter: the rules make the card, no engine call 0ms
+     × "Is your back still sore today, love?" is a health matter: the rules make the card, no engine call 0ms
+     × "Have you got a headache?" is a health matter: the rules make the card, no engine call 0ms
+     × "Does your tummy hurt?" is a health matter: the rules make the card, no engine call 0ms
+     × "Is your blood pressure OK?" is a health matter: the rules make the card, no engine call 0ms
+     × "Are you diabetic?" is a health matter: the rules make the card, no engine call 0ms
+     × everyday words are not health words: sugar in a drink, tight shoes, "no pressure", a trip, "fall asleep" 0ms
+     × the chest comes first: any chest, tightness or breathing word is "chest" 0ms
+     × chest: every answer but "no" says call now, whatever the amount, even if it has happened before 0ms
+     × chest "no" is not the end: watch the breathing, call now if there is any chest pain 0ms
+     × a stroke sign: yes calls now; no and not sure are checked by the carer, never left there 0ms
+     × a limb pain: the weakness question first, then how bad 0ms
+     × every answer of every health kind: an alert line with the number, and a next step or a check 0ms
+     × the screen: a health card keeps the call box, the answer box is neutral, and one call box stands when an alert carries its own 6ms
+     × "Where in the arms? your left arm" flags the limb; "a little" then checks the arms and the smile, never "in an hour" 0ms
+     × the diary files it as the body, tags it a warning, and the day gets no tip 0ms
+     × "For the next carer" leads with it: the question, the answer, the time, call now whatever the amount 1ms
+     × "Today in short" files it as health, first, and no model words that day 0ms
+     × "What stands out" names it with the call line 2ms
+     × head or chest pain on the visit page: call now, whatever the amount 0ms
+     × "I can't go on" lines for others: take it seriously, call first; never "tell the doctor today" first 0ms
+     × "Would you like me to stay with you? Yes" and the like are left alone; the line never says "tired, try again later" 0ms
+     × after a chest, head or sign flag, no "how bad" end says "in an hour" 1ms
+     × the guard never hands a health question to makeCard (the model path) 9ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 59 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  59 failed (59)

@@ -9,10 +9,11 @@
 // This file imports the diary and the copy; no file that builds a prompt or a request imports it.
 
 import { P5 } from './copy5';
-import { DEFAULT_NUMBER } from './redflag';
+import { DEFAULT_NUMBER, healthOf } from './redflag';
 import { P6 } from './copy6';
 import { P9 } from './copy9';
 import { P12 } from './copy12';
+import { P17 } from './copy17';
 import { byDay, dayStart, dayText, daysBefore, eventGroups, events, lowMood, tags, type DiaryEntry } from './diary';
 
 export const SINCE_DAYS = 30;
@@ -89,9 +90,12 @@ export function sinceLines(diary: DiaryEntry[], since: number | null | undefined
   const at = (e: DiaryEntry) => `${dayText(e.at)} ${String(new Date(e.at).getHours()).padStart(2, '0')}:${String(new Date(e.at).getMinutes()).padStart(2, '0')}`;
   const crisis = tagged('crisis');
   const signs = tagged('sign');
+  // (phase 17) a health question asked in the carer's own words and answered: its own line, after the signs
+  const warns = tagged('warning');
   const rows: [string, SinceSource][] = [
     ...(crisis.length ? [[P12.crisis.since(crisis.map(at).join(', '), number, crisisLine === number ? '' : crisisLine), { ids: ids(crisis), note: '' }] as [string, SinceSource]] : []),
     ...(signs.length ? [[P9.insights.signSince(signs.map((e) => `"${e.label.trim().toLowerCase()}" (${at(e)})`).join(', '), number), { ids: ids(signs), note: '' }] as [string, SinceSource]] : []),
+    ...(warns.length ? [[P17.warning.since(warns.map((e) => `"${(e.q ?? '').trim()}" ${e.label.trim().toLowerCase()} (${at(e)})`).join(', '), number, warns.some((e) => healthOf(e.q ?? '') === 'chest')), { ids: ids(warns), note: '' }] as [string, SinceSource]] : []),
     [S.pain(pain.length, named(pain), with_('pain')), { ids: ids(tagged('pain')), note: '' }],
     ...(hard.length ? [[S.strong(named(hard)), { ids: ids(hardEntries), note: '' }] as [string, SinceSource]] : []),
     // (phase 9) a care question left for later is named, so the visit hears of it even when it was never asked again
@@ -104,7 +108,7 @@ export function sinceLines(diary: DiaryEntry[], since: number | null | undefined
     [S.mood(low.length, named(low), with_('low')), { ids: ids(tagged('low-mood')), note: '' }],
     [S.sleep(nights.length, named(nights), with_('night')), { ids: ids(tagged('bad-sleep')), note: '' }],
   ];
-  return { from, to: now, lines: rows.map((r) => r[0]), sources: rows.map((r) => r[1]), any: true, urgent: hard.length > 0 || tagged('fall-head').length > 0 || crisis.length > 0 || signs.length > 0 };
+  return { from, to: now, lines: rows.map((r) => r[0]), sources: rows.map((r) => r[1]), any: true, urgent: hard.length > 0 || tagged('fall-head').length > 0 || crisis.length > 0 || signs.length > 0 || warns.length > 0 };
 }
 
 /** The carer's picks, as they may stand on the page: only questions of the fixed list, three at most, in the list's order. */
