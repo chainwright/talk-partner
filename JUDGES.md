@@ -2,19 +2,20 @@ Repository: <https://github.com/chainwright/talk-partner> (public, Apache-2.0)
 
 # For judges: the 60-second path
 
-**On a phone first, in 12 steps** (Chrome on Android; the bare address opens the simple view, made for a carer):
+**On a phone first, in 12 steps** (Chrome on Android; the bare address opens the simple view, made for a carer). The
+sponsor's AI is at taps 3 and 4:
 1. Open <https://talk-partner.web.app/>. The first screen: "Needs something now?", "I want to say something", "Something new or sudden?".
 2. Under them, **See the AI at work**, and two lines: "Phone: Google's AI, online, after your yes" / "Laptop with Chrome's own AI: nothing is sent".
-3. **Food & drink → "Would you like tea or coffee?"**: "1 Say it out loud", "2 Turn the phone to them", and "Wait. Count to ten."
-4. **Show them the choices**: the person's screen, "Point to your answer", tea and coffee with their pictures.
-5. Tap **tea** → "So: tea. Right?" → **Yes** → "Thank you. Tea." → **Give the phone back**.
-6. The carer's screen: what was chosen, "Next: Would you like milk in it?", and "Made by the app's rules on this phone. No AI used."
-7. **Home → See the AI at work**: a sheet shows the exact line that would go to Google; **Just this once** makes the card online.
-8. Its chip says "Made online, after your yes"; on a laptop with Chrome's Gemini Nano the same tap says "Made on this computer".
+3. **Food & drink → "Would you like tea or coffee?"** (taps 1 and 2): "1 Say it out loud", "2 Turn the phone to them", the main button **Show them the choices**, and under it the second button, **Find more choices (Google's AI, after your yes)**, then **Read it aloud to them (Google's AI, a calm, slow voice)**.
+4. **Find more choices** (tap 3): a sheet shows the exact line that would go ("Would you like tea or coffee? On the card already: tea, coffee."); **Just this once** (tap 4) asks Firebase AI Logic (`PREFER_IN_CLOUD`) for other kinds of answer. The card it makes says "AI suggested these other choices with online help, after your yes" and its chip "Made online, after your yes · on a laptop with Chrome's AI this runs on that computer". On a laptop with Gemini Nano the same button reads "Find more choices (Chrome's AI, on this computer)", runs there and sends nothing. If App Check refuses your browser, the screen says nothing was sent and what to do. **Back** (tap 5) returns to tea or coffee.
+5. **Show them the choices**: the person's screen, "Point to your answer", tea and coffee with their pictures.
+6. Tap **tea** → "So: tea. Right?" → **Yes** → "Thank you. Tea." → **Give the phone back**. The carer's screen: what was chosen, "Next: Would you like milk in it?", and "Made by the app's rules on this phone. No AI used."
+7. **Home → See the AI at work**: a sheet shows the exact line that would go to Google; **Just this once** makes an open question's card online, with the same chip.
+8. "Find more choices" is never offered on pain, the body, feelings, a red flag or the crisis line: try **Body & care → "Are you in pain?"** (no such button).
 9. **Needs something now? → pain → Yes**: the carer gets "Where does it hurt?" first and the call box with your region's number.
 10. **Body & care → "Are you in pain?" → yes → arms → your left arm**: the next question is "Is it suddenly weak or numb, yes or no?".
 11. **I want to say something → I feel…**, the way out twice: "worried / lonely / I can't go on"; the last opens the carer's safety screen.
-12. At the foot of Home: **Try it with the Millers, a sample family** (judge mode below), and **How it works inside →**.
+12. At the foot of Home: **Try it with the Millers, a sample family** (judge mode below), and **How it works inside →**. The measured table of the three legs (rules 0/18, Gemini Nano 16/18, online 12/18 on 18 open questions) is in README, "How we built it".
 
 **Live: the build of `ca04bc9`** (README "Deploy" says what was run against it).
 
@@ -231,7 +232,7 @@ has the same two questions answered by the cloud alone); the same run against th
 `devlog/ondevice_proof_1/RUN_LOG.md`.
 
 **If you have five minutes more**
-- `npm run check` (lint, types, 3086 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
+- `npm run check` (lint, types, 3106 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
 - `npm run eval`: the labelled set of 60 questions against the rules alone (it writes its report to a new folder under
   `devlog/eval_runs/`): 40 of 42 code-decided questions, 0 of 18 open. What the on-device model adds on the 18 open
   questions: `devlog/evidence_phase5/heldout_at_d198eb0/` (three runs at `d198eb0`); our reading of the cards of the first runs:

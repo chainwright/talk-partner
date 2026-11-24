@@ -67,7 +67,8 @@ through Firebase AI Logic, each behind a sheet that shows what goes, and the car
 |---|---|---|---|
 | **Read aloud**: the question and the choices of the card, spoken on the person's screen (`core/speak.ts`) | Gemini text-to-speech (`gemini-3.8-flash-tts`), `ONLY_IN_CLOUD`, the words of that one card, the voice and the style | every card the carer shows, the 40 topic questions and the needs board included, once the carer turned it on on a sheet ("The words on this card, including names on it, go to Google to be spoken. Nothing else."); off by default; never a doctor-visit card | yes, on localhost: `leg=speak mode=ONLY_IN_CLOUD inferenceSource=in_cloud`, 4.4 s for about 8 s of sound ("Would you like tea or coffee? Tea. Coffee. Or something else."), "Hear it again" asked nothing, 10 of 10 checks at `de631b1` on the dev server with the App Check debug token (`devlog/evidence_phase5/AI_RUN_LOG.md`); on the hosted copy our headless test browser was refused by App Check (no sound; see Deploy) |
 | A question the carer types that the rules cannot turn into choices | `PREFER_IN_CLOUD`, the question with About-them words swapped out | after "Just this once" or "Yes, every time" on the sheet | yes (`devlog/evidence_live/`, last on the hosted copy at `4d7edee`; see Deploy for this build) |
-| "Narrow it down" after "something else"; words for a first letter the rules have fewer than two for | the same step | after "Just this once" on its sheet | yes, on localhost (`CLAIMS.md` rows 53, 79) |
+| **Find more choices** (phase 14): the second button under "Show them the choices" on a topic card, and the second way after "something else" (`core/findmore.ts`, `core/narrow.ts`) | the same step: `PREFER_IN_CLOUD` with `onDeviceParams`, the question and the choices on the card, About-them words swapped out; on a laptop with Gemini Nano the `ONLY_ON_DEVICE` step instead, About me in it, nothing sent | after "Just this once" on its sheet; never on pain, the body, feelings, a red flag or the crisis line | the narrowing request: yes, on localhost (`CLAIMS.md` rows 53, 79); the new wording ("On the card already") with scripted engines and in the phone walk with App Check refusing; not yet against the real model |
+| Words for a first letter the rules have fewer than two for | the same step | after "Just this once" on its sheet | yes, on localhost (`CLAIMS.md` row 79) |
 | "What stands out" in plainer words | `PREFER_IN_CLOUD`, the counted lines only | after "Just this once", each time; never a line that says whom to tell or when to call | no |
 | The carer's spoken question as text | `ONLY_IN_CLOUD`, one recording | after a yes to its notice | yes, on the hosted copy at `40fedec` |
 
@@ -77,6 +78,33 @@ needs, "Something new or sudden?" and every line about health, the diary, the do
 Logic taken out, those still work; what goes is every voice, every open question and every plainer wording.
 
 
+### How we built it: one AI Logic call, three legs, measured
+**The same AI Logic call; on a laptop it reads your family's names on-device, on a phone it never sees them.** The
+open-question step is built once in `web/src/ai/firebaseEngine.ts` (`PREFER_IN_CLOUD`, with `onDeviceParams` for the
+same schema), next to the private `ONLY_ON_DEVICE` step that alone gets About me. We ran the 18 open questions of our
+labelled set (`eval/heldout_r2.json`; who, where, what: the questions rules cannot answer) through each leg on 23 Nov
+2026 (24 Nov, 03:06 to 03:12 UTC), the same commit of the code (`175e5d2`), the dev server, the sample family:
+
+| On the 18 open questions | Rules alone (no model) | On this computer: Gemini Nano, `ONLY_ON_DEVICE`, online help off | Online: `PREFER_IN_CLOUD`, fresh profile, no Nano |
+|---|---|---|---|
+| a card with two or more answers | 0/18 | 18/18 | 16/18 |
+| the card matched our label | 0/18 (no card is the right answer without a model) | **16/18** | **12/18** |
+| matched, with the family's own entries | 0/18 | 13/18 (read by the model from About me) | 7/18 (put back by code on the device after the answer: the request held "Person A", never a name) |
+| a card that is wrong by our label | 0/18 | 2/18 | 4/18 |
+| no card (the carer is told to ask it as a choice) | 18/18 | 0/18 | 2/18 |
+| SDK report | none | `inferenceSource=on_device` | `inferenceSource=in_cloud` |
+| time from submit to card, median (range) | 0.3 ms (0.1–2), Node, no browser | 3703 ms (3497–4315) | 1072 ms (869–2484) |
+| hosts other than the app's own | none | none | the AI Logic host, App Check, reCAPTCHA |
+| the 42 questions the rules decide | 40/42 | 40/42 | 40/42 |
+
+Commands: `node scripts/eval-heldout.mjs`, `--port 9335` (Chrome 157 on this Mac, the profile that has Gemini Nano),
+`--cloud` (Chrome 158, a throwaway profile the script starts, headless). Reports: `devlog/evidence_phase14/eval/`.
+**Limits.** One run per leg; the model's answers vary by one or two between runs (the on-device leg gave 15 to 16 in
+earlier runs). The labels are ours and the rules have been changed around this set since it was written, so it is a
+regression set, not a held-out test, and not a trial with people. The cloud leg ran on the dev server, which uses the
+App Check debug provider registered for development; on the hosted copy App Check needs reCAPTCHA in a normal Chrome.
+The "Find more choices" request was not part of this run (it is the narrowing request; see the table above).
+
 The same question through the two steps, in our recorded run: "What do you want to do this weekend?" gives
 *lake / church* on this computer (the family's own places, read from About me by Gemini Nano; nothing sent) and
 *stay home / go out* from the cloud, which gets the question only. The details are under
@@ -84,6 +112,7 @@ The same question through the two steps, in our recorded run: "What do you want 
 
 Built for #BuildHybridAI 2026. Status on 18 Nov 2026, in three lines:
 - **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo> (the full view, in judge mode; the bare address opens the simple view for families, added 17 Nov and rebuilt the same evening around topics, the person's own screens and a how-to block: [Screens](#screens)). It can be installed to the home screen and opens with no connection. It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI), a microphone for the partner's question (through Firebase AI Logic, in the cloud) and a feedback form (Cloud Firestore), all untried by anyone they are for.
+- **The three legs, measured on 23 Nov (phase 14):** rules 0/18, Gemini Nano on this computer 16/18, online 12/18 on the 18 open questions ([the table](#how-we-built-it-one-ai-logic-call-three-legs-measured)). Before that:
 - **One number, at commit `d198eb0`:** on the 18 open questions of our own labelled set, rules alone make no card (0 of 18); the on-device model made a card matching our label for 15, 16 and 16 of 18 in three runs at commit `d198eb0` (18 Nov, the code of phase 5), 12, 13 and 13 of them with the family's own people, places or foods (`devlog/evidence_phase5/heldout_at_d198eb0/`). Earlier runs, at `7dd16a1` on 17 Nov, before the topic, tree, card-rule and phase 3 to 5 commits: 15, 16 and 15 of 18. Three runs an hour earlier, at `2aeb1d0`, gave 16 each time, and so did the three before that day's rule changes, at `c346d3d`: the model's answers vary, so the number is 15 to 16. Our labels and a set the rules have since been changed around: not a held-out test, not a trial with people.
 - **Every claim with its status:** `CLAIMS.md` (and `JUDGES.md` for the 60-second path, `EVIDENCE.md` for claim → file, command, saved output). No video yet, no trial with people yet. How it got here, day by day: `devlog/` (the long form of this paragraph is kept in `devlog/DAY12.md`).
 
@@ -880,6 +909,39 @@ lines still name `39e8f33`: phase 13 waits for its deploy.
   20 s, and a refused browser is told at once what to do, with the app's own card one tap away.
 
 **Counts** (the production build of phase 13 on `npx vite preview`, port 5179): `npm run check` 3086 unit tests; `e2e-simple.py` 1035/1035; `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` (360 and 390 px) 290/290; `contrast-check.mjs` 144 of 144 pairs; `phase11-walk.py` 48/48; `phase12-walk.py` 335/335 (with the phase 13 screens, Back one step at a time, every way out followed; shots in `devlog/evidence_phase13/`).
+
+## Added on 23 Nov, phase 14: the sponsor's AI in the phone's everyday loop
+
+Judge round 10's four official seats named one P0: on a phone the first cards are made by rules, so Firebase AI Logic
+did not carry weight in a judge's first minute. Each logic change has a test that failed first
+(`tests/unit/find-more.test.ts`, `tests/unit/speak-offer.test.ts`). The "Live:" lines still name `ca04bc9`: phase 14
+waits for its deploy.
+
+- **Find more choices (Google's AI, after your yes).** The second button under "Show them the choices" on a topic
+  card (`core/findmore.ts`). It is the narrowing step of `core/narrow.ts`, given the choices on the card ("On the card
+  already: tea, coffee."): `PREFER_IN_CLOUD` with `onDeviceParams` after the consent sheet's yes, or, on a laptop with
+  Gemini Nano, the `ONLY_ON_DEVICE` step with About me, "Find more choices (Chrome's AI, on this computer)", nothing
+  sent. The card says "AI suggested these other choices with online help, after your yes"; its chip "Made online,
+  after your yes · on a laptop with Chrome's AI this runs on that computer". The same label is the second way after
+  "something else". **Never offered** on a "Body & care" or "Feelings" question, a question or choice with a word about
+  pain, the body, a feeling, the toilet, help or a need, a red-flag answer, the crisis line, or while the call box is
+  up; nor on a yes / no card, the needs board, or a card the AI made (the worst case of the gate: fewer offers; a
+  test walks every topic and tree question). In a judge's path on a phone it is tap 3, and "Just this once" tap 4.
+- **Read aloud offered before handing over.** "Read it aloud to Frank (Google's AI, a calm, slow voice)", one button
+  under the main one while Read aloud is off: the first tap opens the same sheet as before; after one yes the tap
+  turns it on with no sheet. Off by default.
+- **Back and refusals.** A card waiting for the sheet's yes is no step of its own: Back from the card made after the
+  yes lands on the card it was asked from, and "No, not now" goes there too. Where App Check refuses the browser, the
+  screen says "Online help could not check this browser, so nothing was sent" and what to do; the sheet no longer comes
+  back by itself (it did, after "something else", before). A tapped question now opens its card at the top (it kept
+  the first screen's scroll: 580 px down at 360 px).
+- **The measured table** of the three legs is in [How we built it](#how-we-built-it-one-ai-logic-call-three-legs-measured)
+  (`node scripts/eval-heldout.mjs --cloud` is new).
+
+**Not done in this phase:** the "Find more choices" wording against the real model (scripted engines and the phone
+walk with App Check refusing only); a hosted run of the cloud leg; any trial with people.
+
+**Counts** (the production build of phase 14 at `4b38b80` on `npx vite preview`, port 5179): `npm run check` 3106 unit tests; `e2e-simple.py` 1035/1036 (the one miss, "A, handover, worst cases", depends on the time of day: its fixture's pain entry is at 09:10 yesterday and falls out of the last 24 hours when the run is after 09:10; it is not touched by this phase); `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` (360 and 390 px) 290/290; `contrast-check.mjs` 144 of 144 pairs; `phase11-walk.py` 48/48; `phase12-walk.py` 431/431 (with the phase 14 screens at 360 and 390 px, light and dark: Back and the phone's back one step at a time, every way out followed; shots in `devlog/evidence_phase14/walk/`).
 
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104

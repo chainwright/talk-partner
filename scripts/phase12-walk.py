@@ -27,6 +27,12 @@ the main action); a head pain before a doctor visit stopping the questions (the 
 the crisis line by the number set (999: 116 123); a pain question left for later kept through "Ask it again"; the
 intended-purpose line on Home. Each with Back one step at a time to the first screen, each way out followed.
 
+23 Nov 2026, phase 14 (judge round 10, the sponsor's AI in the phone's everyday loop) adds: on "Would you like tea or
+coffee?" the second button "Find more choices (Google's AI, after your yes)" and Read aloud offered under it; its sheet
+with the exact line; "No, not now" back to the card; "Just this once" where App Check refuses this browser (every other
+host is refused here): the screen says so and the sheet does not come back; Back and the phone's back one step at a
+time; no AI button on pain, the body, a hot-or-cold question or the needs board; the card then shown, answered and left.
+
 Usage: python3 scripts/phase12-walk.py [--url URL] [OUT_DIR]   (default http://localhost:5179/, devlog/evidence_phase12/walk)
 Exit code 0 when every check passes, 1 otherwise.
 """
@@ -212,6 +218,72 @@ def phase13(page, tag, h):
     shot(page, tag, '13d_crisis_999')
     page.evaluate(e2e.KV_PUT, {'health': {'text': '', 'diabetes': False, 'swallowing': False, 'fluidLimit': False, 'reminders': False, 'emergency': ''}, 'later': []})
     home(page)
+
+
+def phase14(page, tag, h, outside):
+    # ---- 14.1 Food & drink, "Would you like tea or coffee?": the AI's step is the second button (taps 1 and 2 so far)
+    home(page)
+    page.locator('.topic[data-topic=food]').click()
+    page.locator('.tq', has_text='tea or coffee').first.click()
+    page.wait_for_selector('main.simple.card')
+    acts = page.evaluate("[...document.querySelectorAll('.c-go button')].map((b) => b.dataset.act)")
+    fm = e2e.text(page, '#find-more') if page.locator('#find-more').count() else ''
+    check(f'{tag}: tea or coffee: the second button is "Find more choices (Google\'s AI, after your yes)", Read aloud offered under it', acts[:3] == ['show', 'find-more', 'speak-ask'] and fm == "Find more choices (Google's AI, after your yes)" and e2e.text(page, '#speak-offer').endswith("(Google's AI, a calm, slow voice)"), f'{acts} / {fm}')
+    pos = page.evaluate("(() => { const r = document.querySelector('#find-more').getBoundingClientRect(); return { y: Math.round(scrollY), bottom: Math.round(r.bottom + scrollY) }; })()")
+    check(f'{tag}: the card opens at its top, and "Find more choices" is on its first screen ({pos["bottom"]} px of {h}, scrollY {pos["y"]})', pos['y'] == 0 and pos['bottom'] <= h, json.dumps(pos))
+    check(f'{tag}: the line under it says what goes', 'choices on the card' in e2e.text(page, '#find-more-where') and noscroll(page), e2e.text(page, '#find-more-where'))
+    shot(page, tag, '14_1_find_more')
+    # ---- 14.2 its sheet (tap 3): the exact line; "No, not now" goes back to the card
+    page.locator('#find-more').click(); page.wait_for_selector('#sheet')
+    sh = e2e.text(page, '#sheet')
+    check(f'{tag}: the sheet shows the exact line ("On the card already: tea, coffee."), never "None of those fitted", and "Just this once" first', e2e.text(page, '#sheet-line') == 'Would you like tea or coffee? On the card already: tea, coffee.' and 'None of those fitted' not in sh and page.locator('#sheet .choice button').first.inner_text().strip() == 'Just this once', sh[:200])
+    shot(page, tag, '14_2_find_more_sheet')
+    page.locator('[data-act=sheet-no]').click(); page.wait_for_timeout(500)
+    check(f'{tag}: "No, not now" goes back to the card it was asked from', page.locator('main.simple.card [data-act=show]').count() == 1 and page.locator('#find-more').count() == 1 and page.locator('#sheet').count() == 0, e2e.text(page)[:200])
+    # ---- 14.3 "Just this once" (tap 4): every other host is refused here, so App Check refuses this browser
+    page.locator('#find-more').click(); page.wait_for_selector('#sheet')
+    n0 = len(outside)
+    page.locator('[data-act=sheet-yes]').click()
+    page.wait_for_selector('main.simple.nocard', timeout=30000); page.wait_for_timeout(600)
+    # (after the yes, App Check's reCAPTCHA script is asked for, and refused here: the one request to another host on purpose)
+    asked = outside[n0:]; del outside[n0:]
+    check(f'{tag}: after the yes, only App Check\'s reCAPTCHA script was asked for (and refused); no AI request', asked and all('recaptcha' in u for u in asked), str(asked))
+    nc = e2e.text(page)
+    check(f'{tag}: App Check refused: the screen says nothing was sent and what to do; the sheet does not come back by itself', page.locator('#sheet').count() == 0 and 'could not check this browser, so nothing was sent' in nc and 'Go back to the card and show it' in nc, nc[:300])
+    shot(page, tag, '14_3_refused')
+    page.locator('#s-top [data-act=back]').click(); page.wait_for_timeout(500)
+    check(f'{tag}: Back from it lands on the card it was asked from (one step, not "No card")', page.locator('main.simple.card [data-act=show]').count() == 1 and page.locator('#find-more').count() == 1, e2e.text(page)[:200])
+    # ---- 14.4 the phone's back: with the sheet open it closes the sheet; once more, the card
+    page.locator('#find-more').click(); page.wait_for_selector('#sheet')
+    page.go_back(); page.wait_for_timeout(500)
+    check(f'{tag}: the phone\'s back closes the sheet first', page.locator('#sheet').count() == 0, e2e.text(page)[:120])
+    if page.locator('main.simple.nocard').count():
+        page.go_back(); page.wait_for_timeout(500)
+    check(f'{tag}: then the card it was asked from', page.locator('main.simple.card [data-act=show]').count() == 1 and page.locator('#find-more').count() == 1, e2e.text(page)[:200])
+    # ---- 14.5 Read aloud offered: the sheet first; "No, keep it off" leaves it offered and off
+    page.locator('#speak-offer').click(); page.wait_for_selector('#speak-sheet')
+    check(f'{tag}: Read aloud: the first tap opens the sheet with the words of this card', e2e.text(page, '#speak-sheet-text') == 'Would you like tea or coffee? Tea. Coffee. Or something else.', e2e.text(page, '#speak-sheet-text'))
+    page.locator('[data-act=speak-no]').click(); page.wait_for_selector('#speak-sheet', state='detached')
+    check(f'{tag}: Read aloud: "No, keep it off" leaves it offered and off', page.locator('#speak-offer').count() == 1 and page.locator('#speak[data-on="1"]').count() == 0)
+    # ---- 14.6 the card itself, then: shown, answered, handed back, and left one step at a time
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    person_pick(page, 'tea'); give(page); page.wait_for_selector('main.simple.s-answered')
+    check(f'{tag}: then shown and answered as before: "Next: Would you like milk in it?"', 'Would you like milk in it?' in e2e.text(page, '#next-q'), e2e.text(page)[:200])
+    back_home(page, tag, 'after "Find more choices"')
+    # ---- 14.7 never on pain, the body, a hot-or-cold question or the needs board
+    for topic, q in (('body', 'in pain'), ('body', 'comfortable'), ('food', 'hot drink or a cold drink'), ('feel', 'How are you feeling')):
+        home(page)
+        page.locator(f'.topic[data-topic={topic}]').click()
+        page.locator('.tq', has_text=q).first.click()
+        page.wait_for_selector('main.simple.card')
+        check(f'{tag}: no AI button on "{q}"', page.locator('#find-more').count() == 0 and page.locator('[data-act=show]').count() == 1)
+        back_home(page, tag, f'"{q}"')
+    home(page)
+    page.locator('.btn[data-act=needs]').first.click(); page.wait_for_selector('main.pv .p-tiles.board')
+    person_pick(page, 'pain'); give(page); page.wait_for_selector('#need-where')
+    page.locator('#need-where').click(); page.wait_for_selector('main.simple.card')
+    check(f'{tag}: no AI button on "Where does it hurt?" after pain on the needs board', page.locator('#find-more').count() == 0)
+    back_home(page, tag, 'needs: pain, where')
 
 
 def walk(b, w, h, scheme):
@@ -432,6 +504,8 @@ def walk(b, w, h, scheme):
 
     # ---- 13. the fixes of judge round 10
     phase13(page, tag, h)
+    # ---- 14. the sponsor's AI in the everyday loop (phase 14)
+    phase14(page, tag, h, outside)
 
     check(f'{tag}: no page error, nothing asked of another host', not errs and not outside, str(errs + outside))
     ctx.close()

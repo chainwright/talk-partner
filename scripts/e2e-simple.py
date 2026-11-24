@@ -326,7 +326,7 @@ def phone(browser, url, live):
           and ys(page, '#wait-line')[0][1] > ys(page, '[data-act=show]')[0][1])
     check('before handing over: the carer sees what they will see (the question and three choices), and how to come back', 'What they will see:' in card and page.locator('#person.mini .pt').count() == 3)
     go = text(page, '.c-go')
-    check('before handing over: two short lines of advice at most (the "wait" line and one tip), the rest behind "More tips"', go == "2 Turn the phone to them Show them the choices Wait. Count to ten. Don't answer for them. Point to each choice as you say it. More tips" and page.locator('#tips').count() == 0, go)
+    check('before handing over: two short lines of advice at most (the "wait" line and one tip), the rest behind "More tips"', go.replace(" Find more choices (Google's AI, after your yes) Google's AI gets the question and the choices on the card, with any names you listed swapped out. Never the answers they chose.", '').replace(" Read it aloud to them (Google's AI, a calm, slow voice)", '') == "2 Turn the phone to them Show them the choices Wait. Count to ten. Don't answer for them. Point to each choice as you say it. More tips" and page.locator('#tips').count() == 0, go)
     page.locator('#more-tips').click()
     tips = text(page, '#tips')
     check('"More tips": how to come back, the weak hand, "Hide the choices"; and it folds again', '"Give the phone back"' in tips and '"Carer: hold here to go back"' in tips and 'If their hand is weak' in tips and 'Hide the choices' in tips and page.locator('#more-tips').inner_text().strip() == 'Fewer tips', tips)
