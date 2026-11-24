@@ -203,3 +203,21 @@ describe('Back, one step at a time', () => {
     expect(main).toMatch(/if \(at >= 0\) \{ entry = trail\.stack\[at\]\.entry; trail\.stack\.length = at; \} else if \(!waiting\(cur\)\) trail\.stack\.push\(cur\);/);
   });
 });
+
+describe('a browser App Check refuses (the failure path)', () => {
+  class Refused extends Fake {
+    async checkCloud(): Promise<void> { throw new Error('appCheck/recaptcha-error'); }
+  }
+  it('no card, nothing sent, the screen says why and what to do; the consent sheet does not come back by itself', async () => {
+    const e = new Refused({ cloud: out(['a', 'b']) });
+    const i = { ...narrowInput(await make('Would you like tea or coffee?'), SOFAR), offered: true };
+    const c = await narrowCard(i, { ...env(e, { allowCloud: true }), cloudWaitMs: 200 });
+    expect(e.cloud).toEqual([]);
+    expect(c.blocked).toBe(COPY.notes.narrowCheckBlocked);
+    expect(c.cloudPayload).toBeNull();
+    expect(c.cloudAttempted ?? null).toBeNull();
+    expect(COPY.notes.narrowCheckBlocked).toMatch(/could not check this browser, so nothing was sent/);
+    const main = readFileSync(join(__dirname, '..', '..', 'web/src/main.ts'), 'utf8');
+    expect(main).toContain('card.blocked !== C.notes.cloudCheckBlocked && card.blocked !== C.notes.narrowCheckBlocked && sheetWanted(card');
+  });
+});

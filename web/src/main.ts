@@ -1829,7 +1829,7 @@ async function runNarrow(i: NarrowInput) {
   if (!card.blocked) noteAsk(card);
   if (seq !== makeSeq) return;
   setCard(card);
-  state.sheet = simpleView() && isOnline() && card.blocked !== C.notes.cloudCheckBlocked && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
+  state.sheet = simpleView() && isOnline() && card.blocked !== C.notes.cloudCheckBlocked && card.blocked !== C.notes.narrowCheckBlocked && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
   state.busy = false; state.waitStart = Date.now(); useSettings(); render();
 }
 

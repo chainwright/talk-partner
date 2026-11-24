@@ -1125,6 +1125,8 @@ const COPY = {
     narrowNone: 'No good next choices came out, so there is no narrowing card. Ask them to show you, or to write or draw it.',
     narrowNeedsAi: 'Narrowing needs an AI: the one built into Chrome on a computer, or online help.',
     narrowFailed: 'Online help did not answer, so there is no narrowing card. Try again, or ask them to show you.',
+    /** Phase 14: App Check refused this browser before anything was sent; the sheet does not come back by itself. */
+    narrowCheckBlocked: 'Online help could not check this browser, so nothing was sent and there is no card. Go back to the card and show it, or ask them to show you or to write it.',
     narrowSay: 'Something else, then:',
     cloudOptionsUnfit: "The cloud's options didn't fit; the card made on this computer is kept.",
     holdUpTwo: 'The real options are not known: hold up two and point to each as you ask.',

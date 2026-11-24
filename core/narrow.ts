@@ -27,7 +27,7 @@
 
 import { COPY } from './copy';
 import { checkedCloud, type CloudError } from './engine';
-import { finish, noEscapeOnly, parseModelOutput, type PipelineEnv } from './pipeline';
+import { cloudWasAppCheck, finish, noEscapeOnly, parseModelOutput, type PipelineEnv } from './pipeline';
 import { devicePrompt } from './prompt';
 import { broader, sameKind, subjectOf } from './kinds';
 import { hasNegative, inventedNameFilter, isEscapeLabel, snapToProfile, validTopic } from './rules';
@@ -198,6 +198,8 @@ export async function narrowCard(i: NarrowInput, env: PipelineEnv): Promise<Card
     return card.blocked ? { ...card, ...left, choices: [] } : card;
   } catch (e) {
     trace.push({ step: 'stripped', ran: 'failed', why: (e as Error).message, used: false });
+    // (phase 14) App Check refused this browser first: nothing left, and the screen says so (no sheet again by itself)
+    if (cloudWasAppCheck(e) && (e as CloudError).notSent) return none(N.narrowCheckBlocked, { unsentPayload: preview, cloudSwaps: swaps });
     // handed to the SDK, then an error: it may have left, unless the engine knows it did not
     return none(N.narrowFailed, (e as CloudError).notSent ? { unsentPayload: preview, cloudSwaps: swaps } : { cloudAttempted: preview, cloudAttempts: 1, cloudSwaps: swaps, retry: i.asked });
   }
