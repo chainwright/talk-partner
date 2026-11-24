@@ -1,0 +1,439 @@
+{
+  "dev": "available",
+  "out": [
+    {
+      "leg": "rules",
+      "id": 1,
+      "letters": "PI",
+      "want": "pizza",
+      "words": [
+        "pie",
+        "pizza"
+      ],
+      "by": "rules",
+      "blocked": null,
+      "ms": 5,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "rules",
+      "id": 2,
+      "letters": "LA",
+      "want": "lasagne",
+      "words": [
+        "lamb"
+      ],
+      "by": "rules",
+      "blocked": null,
+      "ms": 8,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "rules",
+      "id": 3,
+      "letters": "SH",
+      "want": "shepherd's pie",
+      "words": [],
+      "by": "rules",
+      "blocked": "Frank pointed to SH. No word that starts with SH is in About them yet.",
+      "ms": 1,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "rules",
+      "id": 4,
+      "letters": "TR",
+      "want": "trifle",
+      "words": [],
+      "by": "rules",
+      "blocked": "Frank pointed to TR. No word that starts with TR is in About them yet.",
+      "ms": 0,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "rules",
+      "id": 5,
+      "letters": "LEM",
+      "want": "lemonade",
+      "words": [
+        "lemonade"
+      ],
+      "by": "rules",
+      "blocked": null,
+      "ms": 0,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "rules",
+      "id": 6,
+      "letters": "GI",
+      "want": "ginger ale",
+      "words": [
+        "ginger biscuits"
+      ],
+      "by": "rules",
+      "blocked": null,
+      "ms": 1,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "rules",
+      "id": 7,
+      "letters": "LI",
+      "want": "library",
+      "words": [
+        "library"
+      ],
+      "by": "rules",
+      "blocked": null,
+      "ms": 0,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "rules",
+      "id": 8,
+      "letters": "SU",
+      "want": "supermarket",
+      "words": [],
+      "by": "rules",
+      "blocked": "Frank pointed to SU. No word that starts with SU is in About them yet.",
+      "ms": 0,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "rules",
+      "id": 9,
+      "letters": "NE",
+      "want": "neighbour",
+      "words": [
+        "neighbour"
+      ],
+      "by": "rules",
+      "blocked": null,
+      "ms": 0,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "rules",
+      "id": 10,
+      "letters": "GRA",
+      "want": "granddaughter",
+      "words": [
+        "grandchild",
+        "grandson",
+        "granddaughter"
+      ],
+      "by": "rules",
+      "blocked": null,
+      "ms": 0,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "device",
+      "id": 1,
+      "letters": "PI",
+      "want": "pizza",
+      "words": [
+        "pie",
+        "pizza"
+      ],
+      "by": "device",
+      "blocked": null,
+      "ms": 3879,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "device",
+      "id": 2,
+      "letters": "LA",
+      "want": "lasagne",
+      "words": [
+        "lamb"
+      ],
+      "by": "rules",
+      "blocked": null,
+      "ms": 3714,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "device",
+      "id": 3,
+      "letters": "SH",
+      "want": "shepherd's pie",
+      "words": [],
+      "by": "rules",
+      "blocked": "No more words that start with SH were found. Ask them to show you, or write it down together.",
+      "ms": 3571,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "device",
+      "id": 4,
+      "letters": "TR",
+      "want": "trifle",
+      "words": [
+        "treat"
+      ],
+      "by": "device",
+      "blocked": null,
+      "ms": 3949,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "device",
+      "id": 5,
+      "letters": "LEM",
+      "want": "lemonade",
+      "words": [
+        "lemonade",
+        "lemon tea"
+      ],
+      "by": "device",
+      "blocked": null,
+      "ms": 3733,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "device",
+      "id": 6,
+      "letters": "GI",
+      "want": "ginger ale",
+      "words": [
+        "ginger biscuits"
+      ],
+      "by": "device",
+      "blocked": null,
+      "ms": 3609,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "device",
+      "id": 7,
+      "letters": "LI",
+      "want": "library",
+      "words": [
+        "library"
+      ],
+      "by": "rules",
+      "blocked": null,
+      "ms": 3959,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "device",
+      "id": 8,
+      "letters": "SU",
+      "want": "supermarket",
+      "words": [],
+      "by": "rules",
+      "blocked": "No more words that start with SU were found. Ask them to show you, or write it down together.",
+      "ms": 3999,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "device",
+      "id": 9,
+      "letters": "NE",
+      "want": "neighbour",
+      "words": [
+        "neighbour"
+      ],
+      "by": "rules",
+      "blocked": null,
+      "ms": 3593,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "device",
+      "id": 10,
+      "letters": "GRA",
+      "want": "granddaughter",
+      "words": [
+        "grandchild",
+        "grandma",
+        "grandson"
+      ],
+      "by": "device",
+      "blocked": null,
+      "ms": 3830,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "cloud",
+      "id": 1,
+      "letters": "PI",
+      "want": "pizza",
+      "words": [
+        "pie",
+        "pita",
+        "pizza"
+      ],
+      "by": "cloud",
+      "blocked": null,
+      "ms": 1419,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "cloud",
+      "id": 2,
+      "letters": "LA",
+      "want": "lasagne",
+      "words": [
+        "lamb",
+        "lamb chop",
+        "lasagna"
+      ],
+      "by": "cloud",
+      "blocked": null,
+      "ms": 1402,
+      "hit": false,
+      "hitAlso": true
+    },
+    {
+      "leg": "cloud",
+      "id": 3,
+      "letters": "SH",
+      "want": "shepherd's pie",
+      "words": [
+        "shellfish",
+        "shortbread",
+        "sherbet"
+      ],
+      "by": "cloud",
+      "blocked": null,
+      "ms": 1272,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "cloud",
+      "id": 4,
+      "letters": "TR",
+      "want": "trifle",
+      "words": [
+        "tray bake",
+        "treat"
+      ],
+      "by": "cloud",
+      "blocked": null,
+      "ms": 1299,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "cloud",
+      "id": 5,
+      "letters": "LEM",
+      "want": "lemonade",
+      "words": [
+        "lemonade",
+        "lemon tea",
+        "lemon water"
+      ],
+      "by": "cloud",
+      "blocked": null,
+      "ms": 1156,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "cloud",
+      "id": 6,
+      "letters": "GI",
+      "want": "ginger ale",
+      "words": [
+        "ginger biscuits",
+        "ginger tea"
+      ],
+      "by": "cloud",
+      "blocked": null,
+      "ms": 1200,
+      "hit": false,
+      "hitAlso": false
+    },
+    {
+      "leg": "cloud",
+      "id": 7,
+      "letters": "LI",
+      "want": "library",
+      "words": [
+        "library",
+        "living room"
+      ],
+      "by": "cloud",
+      "blocked": null,
+      "ms": 992,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "cloud",
+      "id": 8,
+      "letters": "SU",
+      "want": "supermarket",
+      "words": [
+        "supermarket",
+        "subway",
+        "suburb"
+      ],
+      "by": "cloud",
+      "blocked": null,
+      "ms": 965,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "cloud",
+      "id": 9,
+      "letters": "NE",
+      "want": "neighbour",
+      "words": [
+        "neighbour",
+        "nephew",
+        "neighbor"
+      ],
+      "by": "cloud",
+      "blocked": null,
+      "ms": 1273,
+      "hit": true,
+      "hitAlso": true
+    },
+    {
+      "leg": "cloud",
+      "id": 10,
+      "letters": "GRA",
+      "want": "granddaughter",
+      "words": [
+        "grandchild",
+        "grandma",
+        "grandson"
+      ],
+      "by": "cloud",
+      "blocked": null,
+      "ms": 1064,
+      "hit": false,
+      "hitAlso": false
+    }
+  ]
+}
