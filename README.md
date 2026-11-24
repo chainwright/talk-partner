@@ -13,8 +13,8 @@ the Institute's words).
 
 | Criterion | Section | Proof |
 |---|---|---|
-| Technological implementation | [Where the AI runs](#where-the-ai-runs-firebase-ai-logic-hybrid-inference), [How we built it](#how-we-built-it-one-ai-logic-call-three-legs-measured) | the data classes routed in code (`web/src/ai/firebaseEngine.ts`); the phase-16 table ("Ask in your own words": rules 0/18, Gemini Nano 15/18, online 13/18; our labels, dev server); the AI step at taps 2 and 3 on a phone; the phase-17 letter-by-letter table (10 cases) |
-| Design | [For judges: 60 seconds](#for-judges-60-seconds), [Screens](#screens) | the person's screen (big pictures, "So: tea. Right?"); Back one step at a time in the simple view (`scripts/phase12-walk.py`; the phone's Back does nothing in the full view) |
+| Technological implementation | [Where the AI runs](#where-the-ai-runs-firebase-ai-logic-hybrid-inference), [How we built it](#how-we-built-it-one-ai-logic-call-three-legs-measured) | the data classes routed in code (`web/src/ai/firebaseEngine.ts`); the phase-16 table (the typed field, then named "Ask in your own words": rules 0/18, Gemini Nano 15/18, online 13/18; our labels, dev server); the AI step at taps 2 and 3 on a phone; the phase-17 letter-by-letter table (10 cases) |
+| Design | [For judges: 60 seconds](#for-judges-60-seconds), [Screens](#screens) | the person's screen (big pictures, "So: tea. Right?"); Back one step at a time on the paths `scripts/phase12-walk.py` and `phase17b-walk.py` walk (judge round 13 found the phone's Back skipping a step on letter screens; the phone's Back does nothing in the full view) |
 | Potential impact | the first lines, [Sources](#sources-for-the-first-lines) | NIDCD, Haley and Hardy 2025, the Aphasia Institute; every safety line rules-made; the health lines judge rounds found have a test on their worst case (`tests/unit/phase13.test.ts`, `phase15.test.ts`, `phase17.test.ts`); no clinician has read them; no trial with people yet |
 | Quality of the idea | the paragraph below, [Look-alikes, named](#look-alikes-named) | it coaches the partner, not the person; the AI is split by data class, not by device |
 
@@ -44,7 +44,7 @@ Based on Supported Conversation for Adults with Aphasia (SCA) principles. Not a 
 
 ## Where the AI runs (Firebase AI Logic hybrid inference)
 **Family data → `ONLY_ON_DEVICE`; the stripped question → `PREFER_IN_CLOUD`, which falls back to Gemini Nano when
-offline on a desktop Chrome that has it (on a phone, offline or refused, "Ask in your own words" shows the rules' nearest card, labelled "Made by the app's rules (no AI)"); `inferenceSource` drives every badge.** Every model call goes through Firebase AI Logic, the
+offline on a desktop Chrome that has it (on a phone, offline or refused, "Type your question. We make picture answers." shows the rules' nearest card, labelled "Made by the app's rules (no AI)"); `inferenceSource` drives every badge.** Every model call goes through Firebase AI Logic, the
 optional microphone included (it sends the partner's recorded question to Gemini, `ONLY_IN_CLOUD`, for its words). The
 code is in **`web/src/ai/firebaseEngine.ts`**. See [Added on 17 Nov](#added-on-17-nov-quick-needs-voice-input-feedback).
 
@@ -114,7 +114,7 @@ regression set, not a held-out test, and not a trial with people. The cloud leg 
 App Check debug provider registered for development; on the hosted copy App Check needs reCAPTCHA in a normal Chrome.
 The "Find more choices" request was not part of this run (it is the narrowing request; see the table above).
 
-### Phase 16 (live since 24 Nov, build `21bb1e0`): "Ask in your own words", measured
+### Phase 16 (live on 24 Nov as `21bb1e0`, now inside `0852ce8`): "Ask in your own words", measured
 **The first action on the first screen is now a field: the carer types the question as they would say it.** The
 words go through the same step as every typed question (`core/pipeline.ts`): Gemini Nano on a laptop that has it
 (`ONLY_ON_DEVICE`, About them in the prompt, nothing sent), else the cloud (`PREFER_IN_CLOUD` with `onDeviceParams`)
@@ -155,7 +155,7 @@ The same question through the two steps, in our recorded run: "What do you want 
 *stay home / go out* from the cloud, which gets the question only. The details are under
 [Where the AI runs, in detail](#where-the-ai-runs-in-detail).
 
-### Phase 17 (the branch `phase17-r12`, waiting for the deploy; the live build is still `21bb1e0`): the fixes of judge round 12
+### Phase 17 (live since 24 Nov 2026 about 16:01 UTC as `0852ce8`): the fixes of judge round 12
 Judge round 12 (nine seats) found typed health questions that ended on a green tick, App Check's cold start eating the
 20 s wait on phones, a first screen that did not say who it is for, and stale lines in these texts. The owner's own
 test on his phone added three: a yes to "I would like to something?" ended there, the first letter left the topic
@@ -178,8 +178,8 @@ test on his phone added three: a yes to "I would like to something?" ended there
   field gets the cursor (reCAPTCHA checks the browser; no word of the question goes), never with Chrome's own AI and
   never offline. Cloud requests keep the App Check session token: limited-use tokens (`LIMITED_USE_TOKENS` in
   `web/src/ai/firebaseEngine.ts`) were tried in phase 17 and left off before deploy, because on 17 Nov they meant a
-  new attestation per request and a 403 with no card, while the session token is what gave a real phone its cloud card
-  on 21bb1e0. After a refusal the rules' card stays and **Try Google's AI again** asks once more, with the same yes.
+  new attestation per request and a 403 with no card, while the session token is what gave the owner's Android phone a cloud card
+  on 21bb1e0 (by hand, no saved log). After a refusal the rules' card stays and **Try Google's AI again** asks once more, with the same yes.
 - **The first screen**: "For you and someone with aphasia: you ask, hand them the phone, they point.", the block
   "Type your question. We make picture answers." and the button "Make picture answers".
 - **Pictures and checks**: the back drawn from behind; one, two and three filled bars under the pain faces; "Change
@@ -190,7 +190,7 @@ test on his phone added three: a yes to "I would like to something?" ended there
   "tea or coffee?" B gives the family's ginger biscuits, bread and banana (no longer Beth and Bo, who come for a
   question about people or with no topic); **Add the next letter (P…)** narrows letter by letter, and for two
   letters or more the AI is asked with the topic and the letters (on a laptop with Gemini Nano `ONLY_ON_DEVICE`; on a
-  phone online after the yes, names swapped), its words and the rules' in turn on the card. Never on the body,
+  phone online after the yes, names swapped, when the rules have no word), its words and the rules' in turn on the card. Never on the body,
   feelings or a health question.
 
 Measured on 24 Nov 2026 (`devlog/evidence_phase17/eval/letters_run3.md`, commit `febbc8a`): ten letter cases in food,
@@ -214,7 +214,7 @@ phase:** the AI's short question for the person's screen (item C of the round's 
 leg on the hosted copy; a headed live log at `21bb1e0` or later; the phone's Back in the full view; generic TV and
 music in the sample family; any trial with people or a clinician's read-through.
 
-### Phase 17b (the branch `phase17b-deadends`, waiting for the deploy): no dead end, in any topic
+### Phase 17b (live in `0852ce8`): no dead end, in any topic
 The owner's rule after his phone test (24 Nov): "this principle works for ANY topic". So the class was fixed, not the
 food case. `tests/unit/phase17-deadends.test.ts` walks what the carer's screen does after a confirmed answer
 (`core/endstep.ts` `answerStep`, the function the screen now calls): every question of the seven topics on the first
@@ -249,6 +249,61 @@ its topic, Back one step at a time to the first screen. The typed path "Would yo
 or drink", "Are you hungry?", yes ends on "Bring Frank something to eat." with the three ways, each followed; then
 "pancakes" by PA. **Limits:** the classes are our own reading of each line; a model's letter words are checked for
 the letter, not for the topic; not tried on a real phone or with carers.
+
+### Phase 18 (the branch `phase18-r13`, waiting for the deploy; the live build is `0852ce8`): the fixes of judge round 13
+Judge round 13 (nine seats on the live build `0852ce8`) found a typed crisis question that lost its crisis box on a
+"no" or a "good", chest pain that "somewhere else" or "if it is new or sudden" could talk down, "Are your words
+worse?" ending on a green tick, "Ask it again" that sent a body card's question to the consent sheet, six hidden
+targets ending on a letter card with no word, arm pictures with the person's left on the viewer's right, "Find more"
+returning its own prompt's examples, and Read aloud offered on pain cards. Every change has a test that failed first
+(`tests/unit/phase18.test.ts`, 68 tests: 58 failed at the start, `devlog/evidence_phase18/failing_first.txt`; and
+section 18 of `tests/unit/phase17-deadends.test.ts`). The worst case of every line is a call that was not needed.
+- **A crisis** (`core/redflag.ts` `crisisWords`, `core/ownwords.ts` `ownCrisisAfter`, `core/endstep.ts`). Any answer on
+  any page of a card made from crisis words ("Do you want to die?", "I can't go on" typed: 17 wordings), "no", "good",
+  "not sure" and the way out included, keeps the crisis box with both call buttons and one red line that does not end
+  it ("A \"no\" does not end it: stay near, and still make the call."); giving the phone back, or the person's "Not
+  now", opens the safety screen; the diary keeps the answer under the carer's words, tagged a crisis. Never "A good
+  day. Nothing to fix."
+- **The chest and the trunk** (`core/redflag.ts` `redPlace`, `core/tree.ts`, `core/copy5.ts`). "Where in the chest?"
+  keeps the call line on every answer, "somewhere else" included. A pain in the upper stomach, the upper back, the jaw
+  or a shoulder says "call [number] now, whatever the amount" on every amount, typed or on the body card, never "Ask
+  again in an hour". Chest pain left the "new or sudden" list of the red page and the passport for its own line,
+  "Chest pain, tightness or trouble breathing: call [number] now, even if it has happened before."; the box over a
+  chest question says the same; the diary heads such a line "Call now, whatever the amount, and tell the doctor or
+  nurse", and the shared texts open with "Call [number] now, whatever the amount".
+- **Speech, face and arm**: 23 wordings ("Are your words worse?", "Is your mouth crooked?", "Do you feel woozy?") are
+  guarded and end on the stroke check.
+- **"Ask it again"** (`core/later.ts` `laterNode`, `core/laterask.ts`). The card a question was left on comes back:
+  the body card with its region, or the guard's card from the carer's words; never a typed question at the consent
+  sheet.
+- **A letter with no word** (`core/letterways.ts`, `web/src/phase4.ts` `letterWaysBlock`). In this order: the AI for
+  the topic and the letters (Chrome's own AI on a laptop, Google's AI online after the same yes; never for the body,
+  feelings or a health question), **Write it down together**, **Ask them to show you**, another letter. The lines say
+  what happened ("You kept it on this phone.", "Google could not check this browser, so nothing was sent.", with
+  **Try Google's AI again** first); "Online help did not answer. Nothing else was tried." is gone, and after "Just
+  this once" the sheet no longer comes back by itself. The letters of the person's own start follow its topic (C is
+  church in "Today & plans"). After a kind of thing on a card of the AI ("meat"), **Which meat would you like?** comes
+  first, asked as the carer's own question would be, then more choices, the letter, show or write.
+- **App Check and the wait**: on a phone App Check starts when the app opens, by `warmCloud`'s rules. A retry after a
+  failed first try gets what is left of the 20 s (`core/pipeline.ts`), so "It stops by itself at 20 s" holds from the
+  moment that line starts (judge round 13 saw a first card at about 26 s).
+- **Pictures**: the arm, hand, leg and foot cards are drawn from behind, so "your left arm" is on the viewer's left;
+  the three pain faces stay three pictures.
+- **"Find more" and Read aloud**: a proposal equal to an example of the request ("something cold", "something to
+  eat") is dropped; Read aloud is never offered on the body card, the pain scale, the needs board, a health question
+  or a card with a health or crisis choice, so "Pain and warning signs: fixed rules, never an AI." holds on screen.
+
+**Counts** (the production build of phase 18 on `npx vite preview`, port 5179): `npm run check` 3336 unit tests; `e2e-simple.py` 1039/1039; `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` 552/552; `contrast-check.mjs` 144 of 144 pairs; `phase11-walk.py` 48/48; `phase12-walk.py` 695/695 (631 before) (with the phase 18 screens at 360 and 390 px, light and dark: a typed crisis answered "no" and "good", the chest box, chest then "somewhere else", the red page, the arm card from behind, "Ask it again"; Back one step at a time); `phase17b-walk.py` 178/178 (108 before, with the six targets below at 390 and 360 px). Logs in `devlog/evidence_phase18/`. Not run: `e2e:noconfig`, `update-check.py`, any hosted or headed run.
+
+**Hidden targets of round 13, walked on the rules alone** (`scripts/phase17b-walk.py`, `target18`, App Check cut
+off as on the judges' phones): at 390 and 360 px, church by C (the rules); pancit (no word at PAN), a hot water bottle (HO), stew (STE), the garden centre (GA) and snooker (S) by the ways: the AI's sheet first (for a hot water bottle, a Body & care word, no AI), "No, keep it here" ("You kept it on this phone."), the AI again and "Just this once" ("Google could not check this browser, so nothing was sent.", "Try Google's AI again" first, no sheet by itself), then "Write it down together", the word typed, the person's yes, and what to do with it; Back one step at a time to the first screen. **Limits:** the AI leg of the letters was refused in the walk, so what
+Google's AI or Gemini Nano would offer for those letters is not measured; no clinician has read the new lines; nothing
+was run on the hosted copy or a real phone. **Not done in this phase:** limited-use App Check tokens; pictures on
+cloud cards; the phone's Back on letter screens (it can skip a step); generic sample-family TV and music; a video; any
+trial with people.
+
+Status on 24 Nov 2026: live `0852ce8` (phases 17 and 17b); phase 18 on the branch `phase18-r13`, waiting for the deploy. The
+three lines below were written on 18 Nov and are kept as they were.
 
 Built for #BuildHybridAI 2026. Status on 18 Nov 2026, in three lines:
 - **What runs:** the hosted copy is at <https://talk-partner.web.app/#/demo> (the full view, in judge mode; the bare address opens the simple view for families, added 17 Nov and rebuilt the same evening around topics, the person's own screens and a how-to block: [Screens](#screens)). It can be installed to the home screen and opens with no connection. It turns the partner's question into a choice card, corrects the partner where a rule can tell, and never picks the answer; open questions are answered on this computer by Gemini Nano from About me, or by the cloud from the question alone. Since 17 Nov also a quick-needs board (no AI), a microphone for the partner's question (through Firebase AI Logic, in the cloud) and a feedback form (Cloud Firestore), all untried by anyone they are for.
@@ -1071,7 +1126,7 @@ did not carry weight in a judge's first minute. Each logic change has a test tha
 - **Back and refusals.** A card waiting for the sheet's yes is no step of its own: Back from the "Find more choices" card made after the
   yes lands on the card it was asked from (phone Back on the "See the AI at work" sheet still lands on "No card for this one": judge rounds 11 and 12; not fixed), and "No, not now" goes there too. Where App Check refuses the browser, the
   screen says "Online help could not check this browser, so nothing was sent" and what to do; the sheet no longer comes
-  back by itself (it did, after "something else", before). A tapped question now opens its card at the top (it kept
+  back by itself (it did, after "something else", before; on the letter step it still did until phase 18). A tapped question now opens its card at the top (it kept
   the first screen's scroll: 580 px down at 360 px).
 - **The measured table** of the three legs is in [How we built it](#how-we-built-it-one-ai-logic-call-three-legs-measured)
   (`node scripts/eval-heldout.mjs --cloud` is new).
@@ -1086,12 +1141,13 @@ walk with App Check refusing only); a hosted run of the cloud leg; any trial wit
 Judge round 11 (seven seats, one of them the honesty hound) found the sample family short of what the texts and the
 planned video show, and health lines in the notes for others softer than the screen. Each change has a test that
 failed on the round's build (`tests/unit/phase15.test.ts`, 25 tests). All of it is rules, fixed text and the screen;
-no model was called. Phase 15 is live (first as `cf4aa33`, now inside `21bb1e0`).
+no model was called. Phase 15 is live (first as `cf4aa33`, now inside `0852ce8`).
 
 - **The sample family as the texts say.** Its diary fills from confirmed answers, needs and a stroke-sign "not sure",
   in its own store in memory (nothing reaches the device, the 23 Nov separation holds): "What stands out", the visit
-  page and the therapist page read it. Read aloud is offered there too, with its own yes kept in memory. "B" gives
-  Beth, Bo and biscuits: Beth (his sister) and ginger biscuits joined `core/sample.ts`.
+  page and the therapist page read it. Read aloud is offered there too, with its own yes kept in memory. "B" gave
+  Beth, Bo and biscuits in phase 15 (Beth, his sister, and ginger biscuits joined `core/sample.ts`); since phase 17 the
+  letter stays in the topic (README phase 17).
 - **The wait for "Find more choices".** After "Just this once" the card stays on screen with "Asking Google's AI…
   Stop waiting" where the button was (the first screen showed for up to 20 s before). "Stop waiting" keeps the card,
   with a line; any other tap or a step back calls the wait off first. The refusal screen and Back to the card are as
@@ -1319,10 +1375,10 @@ Checked by `tests/unit/judge-path.test.ts` (each line must still contain the sni
 | `web/src/ai/firebaseEngine.ts:375` | `inferenceSource === InferenceSource.ON_DEVICE` | where the words were spoken, from the SDK's report |
 | `web/src/ai/firebaseEngine.ts:397` | `new FirebaseEngine(` | lazy start: Firebase is initialised on the first AI call, so loading the app with cloud help off contacts no Google host (with cloud help on, Remote Config is asked at load: see "Firebase Remote Config" below) |
 | `web/src/ai/app.ts:36` | `initializeAppCheck(` | App Check, required by AI Logic for cloud requests; started by the first cloud call (a card, a recording) or the first feedback note, never at page load |
-| `core/pipeline.ts:743` | `ran: r.source` | the private step's trace line is the engine's report |
-| `core/pipeline.ts:861` | `ran: r.source` | the stripped step's trace line is the engine's report |
-| `core/pipeline.ts:891` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
-| `web/src/main.ts:1150` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
+| `core/pipeline.ts:744` | `ran: r.source` | the private step's trace line is the engine's report |
+| `core/pipeline.ts:869` | `ran: r.source` | the stripped step's trace line is the engine's report |
+| `core/pipeline.ts:899` | `const sent = r.source === 'in-cloud'` | "sent" is claimed only when the SDK said the cloud answered |
+| `web/src/main.ts:1179` | `function badge(` | the badge is drawn from `card.source` and the card's step trace only (`badgeKind` in `core/receipt.ts`) |
 
 ## One documented cut
 The model used to write more of the card than it does now, and we took that away on evidence, not taste. In the 9–10 Nov prototype (pre-period, disclosed in `DISCLOSURE.md`; its numbers are not results of this build) the on-device model wrote the spoken line and the choices. A blind rater applying four strict checks to 50 questions passed **16 of 50** cards: in 19 the spoken line was choppy or still named a choice code had removed, and 12 four-choice cards had no way out (run 3 of our pre-period validation notes, which are not in this repository). So the model lost the spoken line, the escape and the right to decide the card: code builds the line from the final choices, adds exactly one way out, and keeps the model to a topic, a kind and at most three candidate words. The same rater passed 39 of 50 three runs later, with the same model. The cut carried into this build and grew: on the first real end-to-end run against Firebase AI Logic (day 1), the cloud's answer to a weekend question was "stay home / go out", a pair that answers nothing, so on a *where* question with places in About me a generic pair is now dropped and the card is completed from About me (`dropGenericWhere`, `sourceFill`; `tests/unit/open-sources.test.ts`); on a "what do you want to do" question that pair can still appear, and the way-out tile covers it. And an either-or card never trusts the model's copied options alone: in the 35 injected engine states of `tests/unit/engine-matrix.test.ts` (7 scripted model behaviours × 5 cloud states; these are stand-ins, not observed model output) "Do you want coffee or tea?" reads coffee / tea / something else under the headline "drink" in all 35. Since 16 Nov a plain either-or like that one runs no model at all, and since 17 Nov neither does any either-or whose two options the code reads whole. Every cut is visible per card in "Why this card".

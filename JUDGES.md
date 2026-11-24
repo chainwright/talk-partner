@@ -3,34 +3,36 @@ Repository: <https://github.com/chainwright/talk-partner> (public, Apache-2.0)
 # For judges: the 60-second path
 
 **On a phone first, in 12 steps** (Chrome on Android; the bare address opens the simple view, made for a carer). These
-are the screens of phase 17, on the branch `phase17-r12` (the live build is `21bb1e0`, phase 16; the "Live:" line below
-names the build the hosted copy runs). The sponsor's AI is at taps 2 and 3:
-1. Open <https://talk-partner.web.app/>. Under the hope line ("When the words won't come, let them point.") one line says who it is for: "For you and someone with aphasia: you ask, hand them the phone, they point." The first block is **Type your question. We make picture answers.**: a field with "What would you like for lunch?" in grey, the button **Make picture answers**, and two lines: "Google's AI, online, after your yes. Google checks this browser first." / "Pain and warning signs: fixed rules, never an AI." When the field gets the cursor on a phone, App Check (reCAPTCHA) checks the browser; no word of the question goes with it. Under it: "Needs something now?", the red "Something new or sudden?", "I want to say something", then **See the AI at work** with its two lines, "Phone: Google's AI, online, after your yes" / "Laptop with Chrome's own AI: nothing is sent".
+are the screens of the live build `0852ce8` (phases 17 and 17b; the "Live:" line below names the build the hosted copy
+runs), with what phase 18 (the branch `phase18-r13`, waiting for the deploy) changes on them marked "Phase 18:". The
+sponsor's AI is at taps 2 and 3:
+1. Open <https://talk-partner.web.app/>. Under the hope line ("When the words won't come, let them point.") one line says who it is for: "For you and someone with aphasia: you ask, hand them the phone, they point." The first block is **Type your question. We make picture answers.**: a field with "What would you like for lunch?" in grey, the button **Make picture answers**, and two lines: "Google's AI, online, after your yes. Google checks this browser first." / "Pain and warning signs: fixed rules, never an AI." When the field gets the cursor on a phone, App Check (reCAPTCHA) checks the browser; no word of the question goes with it. Phase 18: on a phone App Check starts when the app opens, by the same rules (never with Chrome's own AI, never offline). Under it: "Needs something now?", the red "Something new or sudden?", "I want to say something", then **See the AI at work** with its two lines, "Phone: Google's AI, online, after your yes" / "Laptop with Chrome's own AI: nothing is sent".
 2. Tap the field (tap 1) and type the question as you would say it: "What do you fancy for lunch today?". There is no microphone on this form: a recording reaches a model before any rule could read it. **Make picture answers** (tap 2): a sheet, "This question needs online help", "This is the line that would go:" and "Partner asks: What do you fancy for lunch today?", then "Sent to Google:", "Never sent:" and three buttons: **Just this once**, **Yes, every time**, **No, not for this question**.
 3. **Just this once** (tap 3) asks Firebase AI Logic (`PREFER_IN_CLOUD` with `onDeviceParams`) for one card; it carries the chip "Made online, after your yes". In our recorded run (dev server, `devlog/evidence_phase16/eval/phase16_everyday_own_cloud.md`) the card was *sandwich / soup / something else*; the words vary. If App Check refuses your browser, the card reads "Made by the app's rules (no AI)" and "Online help could not check this browser, so nothing was sent.", with the rules' nearest ready question, and the button **Try Google's AI again** (one tap, the same yes; the rules' card stays until a card of the AI's replaces it).
 4. **Show them the choices**: the person's screen, "Point to your answer"; a tap gives "So: … Right?" with **Yes**, then **Give the phone back**.
 5. Home, type the same question, **Make picture answers**, then **No, not for this question**: "Made by the app's rules (no AI) You said no to online help, so nothing was sent. For "What do you fancy for lunch today?" the app's rules picked the nearest ready question instead." The card under it: "Would you like something to eat or something to drink?". In this form, never a blank "No card".
-6. Home, type "Is your chest tight again?", **Make picture answers**: no sheet. The red box "Call 911 now if this is new or sudden." with **Call 911** (the number is guessed from the phone's language), the line "This may be a warning sign, so the app's rules made this card. Your words did not go to any AI." and the card "Is your chest tight again? Yes, no, or not sure?". After **yes** (or anything but "no") the carer's screen has one red box: "Chest pain or tightness, or trouble breathing: call 911 now, whatever the amount, even if it has happened before. Do not wait to see if it passes. Note the time it started.", the answer in a neutral box (no green tick), and "Next: How bad is the pain?". The same guard takes "Is your smile lopsided?", "Are you OK, you look grey", "Shall we check your sugar before tea?" and "Does your arm hurt?" (then "Is it suddenly weak or numb?").
+6. Home, type "Is your chest tight again?", **Make picture answers**: no sheet. The red box "Call 911 now if this is new or sudden." (phase 18: "Chest pain, tightness or trouble breathing: call 911 now, even if it has happened before.") with **Call 911** (the number is guessed from the phone's language), the line "This may be a warning sign, so the app's rules made this card. Your words did not go to any AI." and the card "Is your chest tight again? Yes, no, or not sure?". After **yes** (or anything but "no") the carer's screen has one red box: "Chest pain or tightness, or trouble breathing: call 911 now, whatever the amount, even if it has happened before. Do not wait to see if it passes. Note the time it started.", the answer in a neutral box (no green tick), and "Next: How bad is the pain?". The same guard takes "Is your smile lopsided?", "Are you OK, you look grey", "Shall we check your sugar before tea?" and "Does your arm hurt?" (then "Is it suddenly weak or numb?"). Phase 18: also "Are your words worse?" and other speech, face and arm wordings (the stroke check), "Does your jaw hurt?" and pain in the upper stomach, the upper back or a shoulder (call now, whatever the amount), and a typed crisis ("Do you want to die?", "I can't go on"): every answer, "no" and "good" included, keeps the crisis box with both call buttons, and giving the phone back opens the safety screen.
 7. On a laptop with Chrome's Gemini Nano the line under the field reads "Chrome's own AI on this computer makes them. Nothing is sent." and the card is made on that computer (`ONLY_ON_DEVICE`, About them in the prompt). We measured this leg on our Mac (README, phase 16).
-8. **Or pick a topic** is the second path: **Food & drink → "Would you like tea or coffee?"**: "1 Say it out loud", "2 Turn the phone to them", **Show them the choices**, and under it **Find more choices (Google's AI, after your yes)**, then **Read it aloud to them (Google's AI, a calm, slow voice)** (in the sample family: "to Frank"). **Find more choices** opens a sheet with the exact line ("Would you like tea or coffee? On the card already: tea, coffee."); after **Just this once** the card stays on screen with "Asking Google's AI… Stop waiting", and the card it makes says "AI suggested these other choices with online help, after your yes". On a laptop with Gemini Nano this button is built to run on that computer and send nothing (not yet run against the real Nano). **Back** returns to tea or coffee.
+8. **Or pick a topic** is the second path: **Food & drink → "Would you like tea or coffee?"**: "1 Say it out loud", "2 Turn the phone to them", **Show them the choices**, and under it **Find more choices (Google's AI, after your yes)**, then **Read it aloud to them (Google's AI, a calm, slow voice)** (in the sample family: "to Frank"). **Find more choices** opens a sheet with the exact line ("Would you like tea or coffee? On the card already: tea, coffee."); after **Just this once** the card stays on screen with "Asking Google's AI… Stop waiting", and the card it makes says "AI suggested these other choices with online help, after your yes". If App Check refuses your browser, the screen says "No card for this one" and Back returns to the card. On a laptop with Gemini Nano this button is built to run on that computer and send nothing (not yet run against the real Nano). **Back** returns to tea or coffee.
 9. Tap **tea** on the person's screen → "So: tea. Right?" → **Yes** → "Thank you. Tea." → **Give the phone back**. The carer's screen: "Next: Would you like milk in it?" and "Nothing was sent."
-10. "Find more choices" is never offered on pain, the body, feelings, a red flag or the crisis line: **Body & care → "Are you in pain?"** has no such button. **Needs something now? → pain → Yes**: the carer gets "Where does it hurt?" first and the call box with your region's number. **Body & care → "Are you in pain?" → yes → somewhere else → somewhere else → arms → your left arm**: the next question is "Is it suddenly weak or numb, yes or no?".
+10. "Find more choices" is never offered on pain, the body, feelings, a red flag or the crisis line: **Body & care → "Are you in pain?"** has no such button. **Needs something now? → pain → Yes**: the carer gets "Where does it hurt?" first and the call box with your region's number. Phase 18: Read aloud is not offered on the body card, the pain scale or a health question; chest, then "somewhere else", keeps the call line; the arm and leg cards are drawn from behind, so "your left arm" is on the viewer's left. **Body & care → "Are you in pain?" → yes → somewhere else → somewhere else → arms → your left arm**: the next question is "Is it suddenly weak or numb, yes or no?".
 11. **I want to say something → I feel…**, the way out twice: "worried / lonely / I can't go on"; the last opens the carer's safety screen.
 12. At the foot of Home: **Try it with the Millers, a sample family** (judge mode below), and **How it works inside →**. The measured tables (phase 14: rules 0/18, Gemini Nano 16/18, online 12/18 on the 18 open questions; phase 16, "Ask in your own words": rules 0/18, Gemini Nano 15/18, online 13/18, and on 10 everyday questions 2/10, 8/10, 10/10) are in README.
 
-**Live: the build of `21bb1e0`** (README "Deploy" says what was run against it).
+**Live: the build of `0852ce8`** (phases 17 and 17b, deployed 24 Nov 2026 about 16:01 UTC; README "Deploy" says what was run against it). Phase 18 is on the branch `phase18-r13`, waiting for the deploy.
 
 Nothing here needs an account. Hosted copy: <https://talk-partner.web.app/#/demo> (our project settings are in it, so
 cloud help can be turned on there; the on-device step needs Gemini Nano in your own Chrome). **Cloud help there needs
 App Check to accept your browser** (reCAPTCHA). A browser App Check refuses gets no cloud card; headless test browsers were refused in
-some of our runs and accepted in others. Since phase 13 the app asks App Check first, inside the same 20 s wait; a refused browser is told so
-within that wait: the screen reads "Online help could not check this browser", says what to do instead (a choice question, a topic
+some of our runs and accepted in others. Since phase 13 the app asks App Check first, inside the same 20 s wait (phase 18: a retry after a failed first try
+gets what is left of the 20 s, never a fresh wait); a refused browser is told so within that wait (the letter step
+since phase 18; on `0852ce8` its sheet stays open): the screen reads "Online help could not check this browser", says what to do instead (a choice question, a topic
 question), and Back returns to the app's own card, made with no AI (`README.md`, "Where the AI runs,
 in detail"). Everything else on this page works without it. Or from a clone:
 
 **Two views of one app (since 17 Nov).** `/#/demo`, the address above, opens the full view in judge mode, and this
-page is about it. The bare address `/` opens the **simple view**, made for a carer on a phone. Its first screen (phase 16): the
-hope line, "Ask in your own words" (the field, "Make the choices" and its two lines), "Needs something now?" (the quick-needs board), "I want to say something", "Something new or sudden?",
+page is about it. The bare address `/` opens the **simple view**, made for a carer on a phone. Its first screen (phase 17): the
+hope line, who it is for, "Type your question. We make picture answers." (the field, "Make picture answers" and two lines), "Needs something now?", "Something new or sudden?", "I want to say something",
 "See the AI at work", "How it works: 4 steps", then "Or pick a topic" with seven topics and their one-tap questions. A question leads to "1 Say it out loud", "2 Turn the phone to them" and the line
 "Wait. Count to ten. Don't answer for them."; the person then sees "Point to your answer", the question and the
 choices, "So: tea. Right?" with "Yes" / "No, something else", and "Thank you. Tea." with "Give the phone back". It
@@ -44,7 +46,7 @@ it is the same switch as the tick box below.
 
 **Where the AI is in the simple view, and where it is not.** The 40 topic questions the rules can make, quick needs,
 the person's screens and every line about health use no AI. AI is used in these places, all through Firebase AI
-Logic (`web/src/ai/firebaseEngine.ts`; README, "Where the sponsor runs on a phone"): **Ask in your own words**, for a question the
+Logic (`web/src/ai/firebaseEngine.ts`; README, "Where the sponsor runs on a phone"): **Type your question. We make picture answers.**, for a question the
 rules cannot turn into choices and that has no word about pain, the body, a need, feelings, a warning sign or a crisis (`core/ownwords.ts`; those get the rules' card), and **See the AI at work**, its sample; **Find more choices** on a topic card; **Narrow it down** after the person points
 to "something else" (`core/narrow.ts`: on the device first, else online help when it is on; two levels at most; the
 screen says an AI made the follow-up), and words for a first letter; **Today in short** on the answers screen
@@ -93,9 +95,13 @@ something, then Week.
 
 **Added on 18 Nov, phase 4** (`CLAIMS.md` rows 77 to 85; README "Added on 18 Nov, phase 4"; `devlog/DAY15.md`).
 *The first letter:* after "something else" the person points to the letter their word starts with on a big alphabet,
-and a card offers up to three words that start with it, the family's own first (in the sample family, "B" gives Beth, Bo,
-biscuits: rules, no model). A model adds words only when the rules find fewer than two: Gemini Nano on the device, or the cloud
-after a yes on a sheet, and that request holds the question and the letter only. *The person starts:* "Frank: I want to
+and a card offers up to three words that start with it, the family's own first (in the sample family, after "tea or
+coffee?", "B" gives ginger biscuits, bread and banana; after a question about people, Beth and brother: rules, no
+model). For one letter a model adds words only when the rules find fewer than two; for two letters or more Gemini Nano
+is asked on a laptop, and on a phone the sheet comes up when the rules have no word; the cloud request holds the question
+and the letters only. Phase 18: a letter with no word never ends there: the screen offers the AI for the topic and the
+letters (Chrome's own AI on a laptop, Google's AI online after the same yes; never for the body, feelings or a health
+question), then **Write it down together**, **Ask them to show you** and another letter. *The person starts:* "Frank: I want to
 say something" opens his screen with three starters; the carer then reads "Frank wants to talk about …". *Before a doctor
 visit:* eight questions at most from a fixed list, no model anywhere in it, and one page of his own answers, as
 given, "Not a medical record". *Talk about a photo:* three rule-made questions about a family photo, never "Who is
@@ -119,7 +125,7 @@ line says "none entered" under them. Back is one step in every view we walked, t
 person's own screens. The passport's two lines about understanding are off until ticked, it says a tired yes may not
 mean yes, and with no number set it names none. Every card an AI made says where the SDK ran it:
 "Made on this computer", "Made online, after your yes" or "Made with online help…", with why. To see the chip on a phone: type "What do you want
-to do this weekend?" under "Ask in your own words", press "Make the choices", then "Just this once" on the sheet.
+to do this weekend?" under "Type your question. We make picture answers.", press "Make picture answers", then "Just this once" on the sheet.
 
 **Added on 18 Nov, phase 7: for the speech therapist, and "How to talk with Frank"** (`CLAIMS.md` rows 108 to 113;
 README "Added on 18 Nov, phase 7"; `devlog/evidence_phase7/`). **No AI is in this phase**: rules and fixed text on the
@@ -143,7 +149,7 @@ the entries by day), says "This text leaves the phone through the app you pick (
 no copy and has no server." (No server of ours holds the family's data; feedback notes, if sent, are kept in our Firebase project.), and has Share (`navigator.share({ text })`), Copy and Cancel. The health notes go in
 only when the box on the sheet is ticked (off every time); photos never. **"For the next carer"** is a note of the
 last 24 hours with the usual choices. A line that carries the call box puts "Call 911 now if this is new or sudden"
-at the top of the text. The diary's privacy line was changed to stay true: the app never sends the diary; it leaves
+at the top of the text (phase 18: for a pain in the head or the chest, "Call 911 now, whatever the amount"). The diary's privacy line was changed to stay true: the app never sends the diary; it leaves
 only when the carer shares it, as a text seen first. Nobody it is for has used it; Share was pressed against a stub
 in a test browser, on no real phone.
 
@@ -155,7 +161,8 @@ if this is new or sudden."** and keeps it for that conversation. All of that is 
 read it. **Where the sponsor runs on a phone:** on the screen before handing over, turn on **Read aloud** (a sheet
 first: "The words on this card, including names on it, go to Google to be spoken. Nothing else."), then show the card:
 a Gemini text-to-speech model, through Firebase AI Logic (`ONLY_IN_CLOUD`), reads the question and the choices, on
-every card, the topic questions included, until it is turned off. With "Find more choices" (phase 14) it is one of two AI steps in the phone's everyday loop, in the sample family too since phase 15; the others on a phone
+the topic questions, until it is turned off (phase 18: never on the body card, the pain scale, the needs board, a
+health question or a card with a health or crisis choice; on `0852ce8` it was offered on pain cards). With "Find more choices" (phase 14) it is one of two AI steps in the phone's everyday loop, in the sample family too since phase 15; the others on a phone
 are the typed open question, "Narrow it down", first-letter words and plainer wording, each a cloud call behind a
 sheet whose first yes is "Just this once". On a phone there is no on-device step (README, "Where the sponsor runs on
 a phone"). Our run of Read aloud against the real model: `devlog/evidence_phase5/AI_RUN_LOG.md` (localhost, with sound).
@@ -232,12 +239,12 @@ has the same two questions answered by the cloud alone); the same run against th
 `devlog/ondevice_proof_1/RUN_LOG.md`.
 
 **If you have five minutes more**
-- `npm run check` (lint, types, 3237 unit tests) on the branch `phase17-r12` (3159 at the live tree `c121183`, the organiser's run of 24 Nov). `npm run e2e:noconfig` (a real browser on a copy with no settings, the quick-needs board with the network switched off among them) was last run at phase 8.
+- `npm run check` (lint, types, 3336 unit tests) on the branch `phase18-r13` (3261 at the live build `0852ce8`, the organiser's run of 24 Nov). `npm run e2e:noconfig` (a real browser on a copy with no settings, the quick-needs board with the network switched off among them) was last run at phase 8.
 - `npm run eval`: the labelled set of 60 questions against the rules alone (it writes its report to a new folder under
   `devlog/eval_runs/`): 40 of 42 code-decided questions, 0 of 18 open. What the on-device model adds on the 18 open
   questions: `devlog/evidence_phase5/heldout_at_d198eb0/` (three runs at `d198eb0`); our reading of the cards of the first runs:
   `devlog/evidence_r2/heldout_r2_NOTES.md`.
-- `CLAIMS.md`: every claim we make, with its status (rows 157 to 180: phases 13 to 15; rows 181 to 188: phase 16, the live build `21bb1e0`; rows 189 to 196: phase 17, on the branch `phase17-r12`). `EVIDENCE.md`: where each one is proved.
+- `CLAIMS.md`: every claim we make, with its status (rows 157 to 180: phases 13 to 15; rows 181 to 188: phase 16; rows 189 to 199: phases 17 and 17b, the live build `0852ce8`; rows 200 to 208: phase 18, on the branch `phase18-r13`). `EVIDENCE.md`: where each one is proved.
 - `DISCLOSURE.md`: what existed before the contest period.
 
 **What is not here yet:** a video, and any trial with people.
