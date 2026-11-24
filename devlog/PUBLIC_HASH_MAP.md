@@ -325,6 +325,10 @@ the table.
 | 302 | `da0f6a5` | `e6288a5` | 2026-11-23 21:49 | Docs and walks for phase 14: the three legs measured, the AI step at taps 3 and 4 on a phone |
 | 303 | `479ce07` | `dab35e7` | 2026-11-23 22:14 | e2e-simple: the handover worst cases sit 23 h ago, not at fixed clock times, so the check holds after 21:00 |
 | 304 | `e9e898a` | `f7e9a27` | 2026-11-23 22:29 | Docs: live is 479ce07 (phase 14); hosted checks and logs |
+| 305 | `7bc3a05` | `c6c15bf` | 2026-11-24 00:07 | Sample family: Beth (sister) and ginger biscuits, so "B" gives Beth, Bo, biscuits as the docs and the video s… |
+| 306 | `70f83c3` | `330c55a` | 2026-11-24 00:46 | Phase 15: the fixes of judge round 11 (sample family, the Find-more wait, health lines for others) |
+| 307 | `cf4aa33` | `5c1d49c` | 2026-11-24 00:46 | Docs for phase 15: judge round 11's FALSE / OVERSTATED lines fixed; CLAIMS rows 157 to 180 |
+| 308 | `20d2b71` | `f3d4ccb` | 2026-11-24 01:03 | Docs: live is cf4aa33 (phase 15); hosted checks and logs |
 Public-only commit after row 295: `9f2d60a` (DISCLOSURE: no claim to a published pain scale, as in phase 13; the public DISCLOSURE is its own file).
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
