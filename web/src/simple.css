@@ -762,3 +762,16 @@
 /* phase 12: the sample family, under the footer links */
 .simple .foot .sample-link { flex-direction: column; gap: 2px; }
 .simple .foot .sample-link small { font-size: 14px; }
+
+/* phase 16: "Ask in your own words", the first action on the first screen; the rules' line over its cards */
+.simple #ask.own { background: var(--cloud-soft); border: 2px solid var(--cloud); border-radius: 16px; padding: 10px 12px; gap: 8px; }
+.simple #ask.own input { min-height: 58px; }
+.simple .own-h { display: flex; align-items: center; gap: 8px; }
+.simple .own-h .sg { width: 26px; height: 26px; flex: none; color: var(--cloud); }
+.simple #ask.own .ai-line { font-size: 14.5px; line-height: 1.3; margin: 0; }
+.simple #ask.own .ai-line .sg { width: 20px; height: 20px; flex: none; color: var(--cloud); }
+.simple #ask.own .own-never .sg { color: var(--accent); }
+.simple #ask.own #result:empty { display: none; }
+.simple .own-why { display: flex; align-items: flex-start; gap: 10px; font-size: 16px; color: var(--ink); border: 2px solid var(--accent); background: var(--accent-soft); border-radius: 14px; padding: 10px 12px; }
+.simple .own-why .sg { width: 22px; height: 22px; flex: none; color: var(--accent); margin-top: 1px; }
+.simple .own-why b { display: block; }

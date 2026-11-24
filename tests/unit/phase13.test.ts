@@ -416,8 +416,10 @@ describe('B11b. After App Check refused the browser, the consent sheet does not 
   it('web/src/main.ts: every place that opens the sheet after a card leaves out the refusal card', async () => {
     const { readFileSync } = await import('node:fs');
     const main = readFileSync('web/src/main.ts', 'utf8');
-    const opens = main.match(/state\.sheet = simpleView\(\) && isOnline\(\) &&[^;]*sheetWanted\(card[^;]*;/g) ?? [];
+    // (phase 16: make()'s own line moved into ownSheet, which the own-words path also uses before its fall-back)
+    const opens = main.match(/(?:state\.sheet =|return) simpleView\(\) && isOnline\(\) &&[^;]*sheetWanted\(card[^;]*;/g) ?? [];
     expect(opens.length).toBe(3);
+    expect(main).toContain('state.sheet = ownSheet(card);');
     for (const o of opens) expect(o).toContain('card.blocked !== C.notes.cloudCheckBlocked');
   });
 });

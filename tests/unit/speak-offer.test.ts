@@ -49,6 +49,7 @@ describe('Read aloud, offered before handing over', () => {
     expect(main).toContain("settings: { cloudHelp: false, support: 'more', welcomed: false }");
     // the offer is drawn from the same switch state as the old switch, and only where Read aloud can run here at all
     expect(main).toContain('speakOffer({ name, on: speakOn(), online: isOnline(), can: speakable(c) })');
-    expect(main).toMatch(/canSpeak\(\) && !c\.blocked && c\.kind !== 'no-quiz' \? speakOffer\(/);
+    // (phase 16: never on a card the own-words guard made, core/speak.ts speakable)
+    expect(main).toMatch(/canSpeak\(\) && !c\.blocked && c\.kind !== 'no-quiz' && !c\.own\?\.guard \? speakOffer\(/);
   });
 });

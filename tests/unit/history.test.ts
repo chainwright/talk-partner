@@ -96,11 +96,12 @@ describe('an answer never reaches a cloud model, and no card is made from an ear
   it('the web client hands the pipeline the profile and settings only', () => {
     const main = readFileSync(join(ROOT, 'web/src/main.ts'), 'utf8');
     // every call of the pipeline in the client (a typed question, and the card judge mode opens with): from the call to its closing "});"
-    const calls = [...main.matchAll(/await makeCard\([\s\S]*?\}\);/g)].map((m) => m[0]);
+    // (phase 16: the typed question goes through `ownCard` when it came from "Ask in your own words": the same object)
+    const calls = [...main.matchAll(/await (?:makeCard|\(own \? ownCard : makeCard\))\([\s\S]*?\}\);/g)].map((m) => m[0]);
     expect(calls).toHaveLength(2);
     expect(calls[0]).toContain('profile: SAMPLE_PROFILE');
     // (phase 9: Home's sample open question is made with an empty profile: the question is all any step gets)
-    expect(calls[1]).toMatch(/^await makeCard\(q, \{\n\s+profile, /);
+    expect(calls[1]).toMatch(/^await \(own \? ownCard : makeCard\)\(q, \{\n\s+profile, /);
     expect(main).toContain('const profile = sample ? EMPTY_PROFILE : state.profile;');
     for (const call of calls) expect(call).not.toMatch(/history/);
   });

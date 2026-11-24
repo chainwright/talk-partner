@@ -22,7 +22,9 @@ export const SPEAK_MAX = 400;
 
 /** A card that may be read aloud: one with choices on the person's screen, and never a doctor-visit question. */
 export function speakable(c: Card | null | undefined): c is Card {
-  return !!c && !c.blocked && c.kind !== 'no-quiz' && c.choices.length > 0 && !c.visit;
+  // (phase 16: a card the own-words guard made from words about care, a warning sign or a crisis is never spoken by a
+  // model: its line says the words went to no AI, core/ownwords.ts)
+  return !!c && !c.blocked && c.kind !== 'no-quiz' && c.choices.length > 0 && !c.visit && !c.own?.guard;
 }
 
 /** What is spoken: the question as the card shows it, then each choice as its own short sentence, the way out last. */

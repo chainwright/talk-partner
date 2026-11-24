@@ -74,7 +74,7 @@ describe('no project settings (a bare clone): rules-only cards still work', () =
   it('the partner screen no longer refuses to make a card when there are no settings', () => {
     const main = readFileSync(join(__dirname, '..', '..', 'web/src/main.ts'), 'utf8');
     const make = main.slice(main.indexOf('async function make('), main.indexOf('function onPersonTap('));
-    expect(make).toContain('makeCard(');
+    expect(make).toContain('(own ? ownCard : makeCard)(');
     expect(make).not.toMatch(/!state\.engine|!cfg/);
     expect(main).toContain('engine: pickEngine(cfg)');
   });

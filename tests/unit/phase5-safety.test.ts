@@ -123,7 +123,7 @@ describe('2b. the boxed line: head, chest, breathing, a sudden weakness, pain ra
     const main = read('web/src/main.ts');
     expect(main).toContain('if (state.picked && urgentAnswer(c.asked, state.picked.label)) p5.urgent = true;');
     expect(main).toContain("leadHtml: `${p5.urgent || urgentAnswer(c.asked, p.label) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), crisisLineNow(), callNumber()) : ''}${turnHtml()}`,");
-    expect(main).toContain("topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,");
+    expect(main).toContain("topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow) : ''}${ownTop(c)}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,");
     // the visit page of the nurse's walk: head, quite bad, at night
     const record = { startedAt: NOW, done: true, answers: [{ id: 'pain' as const, q: 'Are you in pain?', label: 'yes', at: NOW }, { id: 'where' as const, q: 'Where in the head?', label: 'top of head', at: NOW }, { id: 'bad' as const, q: 'How bad is the pain?', label: 'quite bad', at: NOW }] };
     const page = visitScreen({ name: 'Frank', record, copied: false, urgentHtml: urgentAny(record.answers) ? urgentBox('911', 'visit-urgent') : '' });

@@ -190,6 +190,13 @@ export interface Card {
   aboutWhat?: boolean;
   /** The one answer is a word the carer typed after "show me" or "write it" (core/more.ts): the person confirms it. */
   typed?: boolean;
+  /**
+   * Phase 16 (core/ownwords.ts): a question the carer typed in "Ask in your own words". `guard`: the words were about
+   * care, a warning sign or a crisis, so the rules made the card and no model saw them. `fallback`: the AI could not
+   * help (why, and what left for the original question), so this is the rules' best card. `pending`: the blocked card
+   * waits for the consent sheet or the fall-back, and is no step of its own for Back.
+   */
+  own?: { asked: string; guard?: 'care' | 'red' | 'crisis'; fallback?: { why: 'no' | 'offline' | 'check' | 'failed' | 'none'; left: 'nothing' | 'maybe' | 'sent'; near: boolean }; pending?: boolean };
   /** Paged fixed list (body map at "more"): the escape on this card leads to the next page. */
   nextPage?: Card | null;
   /** Notes for the partner screen (e.g. "cloud not configured: card kept from device"). */

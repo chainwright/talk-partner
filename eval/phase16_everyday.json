@@ -1,0 +1,19 @@
+{
+ "about": {
+  "what": "Phase 16: ten everyday questions written the way a carer says them (loose, chatty, sometimes two thoughts in one), for \"Ask in your own words\". Written by the project authors on 24 Nov 2026, before the first run of the own-words path, with the card we expect for each, in the format of eval/heldout_r2.json. The labels are ours. This is not a user trial and says nothing about people living with aphasia.",
+  "family": "The made-up sample family in core/sample.ts as it is since phase 15 (Frank; Carol asking; Jenny \"Jen\", Tyler, Beth; pot roast, chili, ginger biscuits; the lake, church, hardware store; Wheel of Fortune, Packers games; Johnny Cash). Two choices at a time (the default).",
+  "scoring": "As eval/heldout_r2.json. Question 110 is about pain on purpose: the own-words guard must keep it from every model, and the rules' yes / no card is the label."
+ },
+ "questions": [
+  {"id": 101, "type": "what", "q": "What do you fancy for lunch today?", "expect": {"kind": "choice", "open": true, "escape": ["something else"]}},
+  {"id": 102, "type": "either-or", "q": "Do you want to go out later or stay in?", "expect": {"kind": "choice", "answers": [["go out", "go out later", "out"], ["stay in", "in"]], "escape": ["something else", "someone else"]}},
+  {"id": 103, "type": "what", "q": "Shall we do something this afternoon, or would you rather have a quiet one?", "expect": {"kind": "choice", "open": true, "escape": ["something else", "not sure"]}},
+  {"id": 104, "type": "who", "q": "Who do you want to see this weekend?", "expect": {"kind": "choice", "open": true, "escape": ["someone else"], "personal": ["Jenny", "Jen", "Tyler", "Beth"], "personalMin": 2, "forbid": ["Frank", "you", "me"]}},
+  {"id": 105, "type": "where", "q": "Where shall we go for a drive tomorrow?", "expect": {"kind": "choice", "open": true, "escape": ["somewhere else"], "personal": ["lake", "the lake", "church", "hardware store"], "personalMin": 1}},
+  {"id": 106, "type": "what", "q": "What shall I pick up for you from the shop?", "expect": {"kind": "choice", "open": true, "escape": ["something else"], "forbid": ["beer", "wine", "cigarettes", "tobacco", "whisky"]}},
+  {"id": 107, "type": "what", "q": "What do you want to do after your nap?", "expect": {"kind": "choice", "open": true, "escape": ["something else"]}},
+  {"id": 108, "type": "what", "q": "Which game do you want to watch on Saturday?", "expect": {"kind": "choice", "open": true, "escape": ["something else"]}},
+  {"id": 109, "type": "what", "q": "What should we cook when Beth comes over?", "expect": {"kind": "choice", "open": true, "escape": ["something else"], "forbid": ["Beth", "Frank", "Carol", "Jenny", "Jen", "Tyler"]}},
+  {"id": 110, "type": "yes-no", "q": "Is your back still sore today, love?", "expect": {"kind": "yesno", "answers": [["yes"], ["no"]], "escape": ["not sure"]}}
+ ]
+}

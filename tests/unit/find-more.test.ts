@@ -199,7 +199,7 @@ describe('on the screen', () => {
 describe('Back, one step at a time', () => {
   it('a card waiting for the consent sheet\'s yes is no step of its own: Back from the card the AI made lands on the card it was asked from', () => {
     const main = readFileSync(join(__dirname, '..', '..', 'web/src/main.ts'), 'utf8');
-    expect(main).toContain('const waiting = (s: Snap) => !!s.view.card?.narrow && !!s.view.card.blocked && !!s.view.card.unsentPayload;');
+    expect(main).toContain('const waiting = (s: Snap) => (!!s.view.card?.narrow && !!s.view.card.blocked && !!s.view.card.unsentPayload) || ownWaiting(s.view.card);');
     expect(main).toMatch(/if \(at >= 0\) \{ entry = trail\.stack\[at\]\.entry; trail\.stack\.length = at; \} else if \(!waiting\(cur\)\) trail\.stack\.push\(cur\);/);
   });
 });

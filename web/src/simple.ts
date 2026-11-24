@@ -22,6 +22,7 @@ import type { Topic, TopicId } from '../../core/topics';
 import type { Card, Choice, Profile } from '../../core/types';
 import { decoPicto } from './pictos';
 import { DEFAULT_NUMBER, crisisAnswer } from '../../core/redflag';
+import { P16 } from '../../core/copy16';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
@@ -93,6 +94,12 @@ export interface HomeModel {
   tryHtml?: string;
   /** The way to "Something new or sudden?" at the top of "Body & care" (web/src/phase5.ts), drawn by main.ts. */
   bodyHtml?: string;
+  /**
+   * Phase 16: the line under "Ask in your own words": where its AI runs here (core/copy16.ts, `own.where`, by
+   * core/simple.ts aiPlace). The microphone of the full view is not on this form: a recording cannot be screened by the
+   * guard before it reaches a model (core/ownwords.ts), so the own-words field is typed only.
+   */
+  ownWhere?: string;
 }
 
 /**
@@ -163,8 +170,24 @@ export function topicGrid(m: Pick<HomeModel, 'name' | 'topics' | 'topicOpen' | '
 }
 
 /**
- * The first screen, top to bottom: the hope line, quick needs, how it works, topics, your own question, the plain AI
- * line, one small privacy line. No empty video slot, no walkthrough, no About-them form before the first card.
+ * Phase 16: "Ask in your own words", the first action on the first screen: the field, the main button, where its AI
+ * runs here in one line, and what never goes to an AI in a second. Typed only (no microphone: see HomeModel.ownWhere).
+ * The ids are the ones every script and the full view's code use (#ask, #q, #make, #result, #ai-line).
+ */
+export function ownBlock(m: Pick<HomeModel, 'name' | 'question' | 'busy' | 'ai' | 'ownWhere'>, status: string): string {
+  const O = P16.own;
+  return `<form id="ask" class="s-ask own" aria-labelledby="own-h"><h2 class="sec own-h" id="own-h">${SIGN.spark}<span>${esc(O.heading)}</span></h2>
+      <input id="q" class="field" autocomplete="off" enterkeyhint="go" placeholder="${esc(O.field)}" aria-label="${esc(O.label)}" value="${esc(m.question)}">
+      <button id="make" class="btn primary" type="submit" ${m.busy ? 'disabled' : ''}>${esc(O.make)}</button>
+      <div id="result" aria-live="polite">${status}</div>
+      <p class="ai-line" id="ai-line">${SIGN.cloud}<span>${esc(m.ownWhere ?? m.ai.join(' '))}</span></p>
+      <p class="ai-line own-never" id="own-never">${SIGN.lock}<span>${esc(O.never)}</span></p>
+    </form>`;
+}
+
+/**
+ * The first screen, top to bottom: the hope line, "Ask in your own words" (phase 16), quick needs, how it works,
+ * "Or pick a topic", one small privacy line. No empty video slot, no walkthrough, no About-them form before the first card.
  */
 export function homeScreen(m: HomeModel): string {
   const S = COPY.simple;
@@ -176,6 +199,7 @@ export function homeScreen(m: HomeModel): string {
   ${navBar({ back: false, name: m.name })}
   <div class="col">
     <h1 id="hope">${esc(S.hope(m.name))}</h1>
+    ${ownBlock(m, status)}
     <button type="button" class="btn needs" data-act="needs">${SIGN.grid}<span><b>${S.needs}</b><small>${esc(S.needsSub(m.name))}</small></span></button>
     ${painLater ? m.laterHtml : ''}
     ${m.turnHtml ?? ''}
@@ -184,14 +208,7 @@ export function homeScreen(m: HomeModel): string {
     ${painLater ? '' : m.laterHtml ?? ''}
   </div>
   <div class="col">
-    <div class="stack"><h2 class="sec">${S.topicsHeading}</h2>${topicGrid(m)}</div>
-    <form id="ask" class="s-ask"><h2 class="sec">${S.ownHeading}</h2>
-      <div class="row"><input id="q" class="field" autocomplete="off" placeholder="${S.field}" aria-label="${S.ownHeading}" value="${esc(m.question)}">${m.micHtml}</div>
-      ${m.voiceHtml}
-      <button id="make" class="btn primary" type="submit" ${m.busy ? 'disabled' : ''}>${esc(S.make(m.name))}</button>
-      <div id="result" aria-live="polite">${status}</div>
-      <p class="ai-line" id="ai-line">${SIGN.spark}<span>${m.ai.map(esc).join(' ')}</span></p>
-    </form>
+    <div class="stack"><h2 class="sec" id="topics-h">${esc(P16.own.topicsHeading)}</h2>${topicGrid(m)}</div>
     ${m.diaryHtml ?? ''}
   </div>
   <footer class="foot">

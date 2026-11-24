@@ -45,7 +45,7 @@ import { webConfig } from './ai/config';
 import { pickEngine } from './ai/pick';
 import { fetchSettings } from './ai/remoteConfig';
 import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile, pictoFallback } from './pictos';
-import { aboutSimple, answeredScreen, cardScreen, chipBlock, consentSheet, findMoreBlock, findStoppedLine, findWaitLine, frameStyle, homeScreen, laterBlock, personSimple, photoSheet, shortBlock, tryAiBlock, type AboutRow } from './simple';
+import { SIGN as SIMPLE_SIGN, aboutSimple, answeredScreen, cardScreen, chipBlock, consentSheet, findMoreBlock, findStoppedLine, findWaitLine, frameStyle, homeScreen, laterBlock, personSimple, photoSheet, shortBlock, tryAiBlock, type AboutRow } from './simple';
 import { kvClear, kvGet, kvSet, setSampleScope } from './store';
 import { P4 } from '../../core/copy4';
 import { LETTER_CLOUD_TASK, letterCard, letterEnd, type LetterInput } from '../../core/letter';
@@ -77,6 +77,8 @@ import { addLater, agoText, answeredLater, askAgainLater, cleanLater, doneLater,
 import { NO_PASSPORT, OFF_UNTIL_TICKED, cleanPassport, passport, passportText, toggleLine, OWN_MAX, type PassportInput, type PassportPrefs } from '../../core/passport';
 import { addEvent, cleanLog, lessSureCount, newLog, pickedPractice, practiceFlag, practiceReport, practiceText, practiceUrgent, togglePractice, type AskedBy, type PracticeEvent, type PracticeInput, type PracticeLog, type PracticeSpan, type Via } from '../../core/practice';
 import { passportLink, passportScreen, practiceScreen, type PassPicture } from './care7';
+import { fallbackLine, fallbackWhy, ownCard, ownFallbackCard, ownWaiting } from '../../core/ownwords';
+import { P16 } from '../../core/copy16';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -438,7 +440,9 @@ function takeSnap(key: string, entry: boolean): Snap {
  * Phase 14: a narrowing card that waits for the consent sheet's yes ("Find more choices", or after "something else")
  * is no step of its own: the card made after the yes goes back to the screen it was asked from, not to "No card".
  */
-const waiting = (s: Snap) => !!s.view.card?.narrow && !!s.view.card.blocked && !!s.view.card.unsentPayload;
+// (phase 16: so is the blocked card of an own-words question while the sheet is up or its fall-back is being made: Back
+// from the card after it goes to the screen before the question, never to "No card", core/ownwords.ts ownWaiting)
+const waiting = (s: Snap) => (!!s.view.card?.narrow && !!s.view.card.blocked && !!s.view.card.unsentPayload) || ownWaiting(s.view.card);
 /** Called at every draw: a new screen puts the one before it on the stack; a screen that is already on the stack cuts the stack back to it. */
 function trackScreen(r: Route) {
   const key = screenKey(r);
@@ -1943,11 +1947,11 @@ function simpleScreen(): string {
       lastTime: prev ? C.card.lastTime(whenText(prev.at, Date.now()), prev.label) : '', short: shortModel(), tips: state.tips,
       usual: (() => { const u = usualFor(c); return u ? usualHint(u) : ''; })(),
       // (the call box stays over the next questions of a conversation in which an answer can be urgent)
-      topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,
+      topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow) : ''}${ownTop(c)}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,
       // (phase 14, judge round 10: the second button of a topic card is the AI's; never on pain, the body, feelings, a red flag: core/findmore.ts)
       // (and Read aloud, offered with one button while it is off: the sheet the first time, then one tap)
       // (phase 15: while it works, the button's place says so, with "Stop waiting"; a stopped wait leaves a line on the card)
-      findHtml: `${findWaiting() ? findWaitLine(aiPlace(whereInput()) === 'device' ? 'device' : 'cloud') : (() => { const o = findMoreOffer(c, { topic: careTopic(c), place: aiPlace(whereInput()), urgent: p5.urgent }); return o ? findMoreBlock(o) : ''; })()}${p15find.stopped === c ? findStoppedLine() : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' ? speakOffer({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}`,
+      findHtml: `${findWaiting() ? findWaitLine(aiPlace(whereInput()) === 'device' ? 'device' : 'cloud') : (() => { const o = c.own?.guard ? null : findMoreOffer(c, { topic: careTopic(c), place: aiPlace(whereInput()), urgent: p5.urgent }); return o ? findMoreBlock(o) : ''; })()}${p15find.stopped === c ? findStoppedLine() : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && !c.own?.guard ? speakOffer({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}`,
       guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c),
       // the first-letter helper: its way in from "We're stuck", who found a letter card's words, and another letter when there was no word
       extraHtml: `${c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterButton(name, true) : letterBy(c.letter.by)) : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && speakOn() ? speakSwitch({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}${p5.spoken.has(c) ? readAloudLine() : ''}`,
@@ -1961,7 +1965,7 @@ function simpleScreen(): string {
       // (phase 9, judge round 8: folded on the first visit too, to its one line with "Write the key word big.", so the
       // topics' first row is above the fold; open only once the carer opened it)
       howOpen: state.settings.howFolded === false, topics: topics(p), topicOpen: state.topicOpen, aiTag: aiTag(whereInput()), ai: aiLines(whereInput()),
-      privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), diaryHtml: `${diaryLink()}${!state.demo && state.diary.length ? handoverLink() : ''}${p4Links(name)}${passportLink(name)}`,
+      privacy: simplePrivacy(), micHtml: voiceButton(), voiceHtml: voiceLine(), ownWhere: P16.own.where[aiPlace(whereInput())], diaryHtml: `${diaryLink()}${!state.demo && state.diary.length ? handoverLink() : ''}${p4Links(name)}${passportLink(name)}`,
       bodyHtml: suddenLink('sudden-body', callNumber()),
       tryHtml: tryAiBlock({ q: AI_QUESTION, tag: tryAiTag(whereInput()), busy: state.busy && p9sample.q !== null && state.lastQuestion === p9sample.q }),
       laterHtml: (p9notNow ? `<p class="tip" id="not-now" role="status">${esc(P9.later.notNow(name, p9notNow.kept))}</p>` : '') + laterBlock(shownLater(p8later.list, Date.now()).map((x) => ({ q: x.q, time: laterTime(x.at), ago: agoText(x.at, Date.now()), i: p8later.list.indexOf(x), care: !!x.care, pain: !!x.pain, asking: p8later.asking === x, ...(x.red ? { red: x.red } : {}) })), laterPainHtml(callNumber(), numberGuess()), callNumber()),
@@ -1975,7 +1979,8 @@ function simpleScreen(): string {
 }
 /** The simple view's lines that depend on the device check or the connection, updated in place (no redraw). */
 function patchSimple() {
-  const a = document.querySelector('#ai-line span'); if (a) a.textContent = aiLines(whereInput()).join(' ');
+  // (phase 16: in the simple view this line is the one under "Ask in your own words": where its AI runs here)
+  const a = document.querySelector('#ai-line span'); if (a) a.textContent = simpleView() ? P16.own.where[aiPlace(whereInput())] : aiLines(whereInput()).join(' ');
   const t = document.querySelector('#ai-tag'); if (t) t.textContent = aiTag(whereInput());
   const tt = document.querySelector('#try-ai-tag'); const tag = tryAiTag(whereInput()); if (tt && tag) tt.textContent = tag;
 }
@@ -2395,6 +2400,9 @@ async function make(q: string) {
   // (phase 7) where this question came from, as the caller said; taken here so that it never stays for a later question
   const from = askBy; const second = askSecond; askBy = null; askSecond = false;
   if (!q.trim()) return;
+  // (phase 16) typed in "Ask in your own words" on the first screen (or asked again after its sheet): the guard first
+  const own = simpleView() && ownQ !== null && ownQ === q;
+  if (!own) ownQ = null;
   if (step === 'waiting') step = 'cancelled'; // the judge asked something first: the automatic step stands down
   const seq = ++makeSeq;
   useSettings();
@@ -2421,11 +2429,16 @@ async function make(q: string) {
   // computer could not run the private step
   if (state.device === 'checking') await refreshDevice().catch(() => { state.device = 'unavailable'; });
   try {
-    const card = await makeCard(q, {
+    let card = await (own ? ownCard : makeCard)(q, {
       profile, support: state.settings.support, engine: state.engine,
       allowCloud: state.settings.cloudHelp || once, deviceReady: state.device === 'available', routing: routing(),
       onCloud: () => cloudStarted(seq),
     });
+    // (phase 16) no card from the AI path, and no consent sheet to come up for it (offline, refused, no AI here): the
+    // rules' best card for the words stands in place of "No card", labelled as the rules' (core/ownwords.ts)
+    if (own && ownWaiting(card) && !ownSheet(card)) card = await ownFallbackCard(q, card, fallbackWhy(card, { online: isOnline(), cloudConfigured: state.engine.cloudConfigured }), { profile, support: state.settings.support });
+    // (a warning sign in the words keeps the call box up for this conversation, as a red-flag answer does)
+    if (own && card.own?.guard === 'red') p5.urgent = true;
     state.made.push(card);
     if (sample) for (let p: Card | null | undefined = card; p; p = p.nextPage) p.sample = true;
     if (spoken) voiceCards.add(card);
@@ -2439,12 +2452,46 @@ async function make(q: string) {
     setCard(simpleView() ? guardOrder(usualOrder(card)) : card);
     // simple view: a question that needs online help, with cloud help off, brings up the consent sheet (never a page)
     // (with no connection the sheet could send nothing: the screen then says the question needs the internet)
-    state.sheet = simpleView() && isOnline() && card.blocked !== C.notes.cloudCheckBlocked && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
+    state.sheet = ownSheet(card);
   } catch (e) {
     if (seq !== makeSeq) return;
     state.card = null; state.error = (e as Error).message;
   }
   cloudDone(); state.busy = false; state.waitStart = Date.now(); useSettings(); render();
+}
+
+/** Phase 16: the question typed in "Ask in your own words" (set by the form; null for every other question). */
+let ownQ: string | null = null;
+/** The consent sheet comes up for this card (the simple view, online, not refused by App Check, the sheet's own rule). */
+function ownSheet(card: Card): boolean {
+  return simpleView() && isOnline() && card.blocked !== C.notes.cloudCheckBlocked && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
+}
+/**
+ * "No, not now" on the sheet of an own-words question: the rules' best card for the words, at once, never "No card".
+ * False for any other sheet (it then does what it always did).
+ */
+function ownRefused(): boolean {
+  const c = state.card;
+  if (!c || !ownWaiting(c)) return false;
+  state.sheet = false;
+  const seq = ++makeSeq;
+  void ownFallbackCard(c.own!.asked, c, 'no', { profile: state.profile, support: state.settings.support }).then((f) => {
+    if (seq !== makeSeq) return;
+    setCard(f); state.made.push(f); state.waitStart = Date.now(); render(); window.scrollTo(0, 0);
+  });
+  return true;
+}
+/** Phase 16: over a card of the own-words path, the one line that says why the rules made it, and the call box for it. */
+function ownTop(c: Card): string {
+  const o = c.own;
+  if (!o) return '';
+  if (o.guard) {
+    const box = o.guard === 'crisis' ? crisisBox({ name: state.profile.personName.trim(), number: callNumber(), line: crisisLineNow(), guess: numberGuess() })
+      : o.guard === 'care' ? suddenLink('own-sudden', callNumber()) : '';
+    return `<p class="own-why" id="own-guard" data-guard="${o.guard}" role="note">${SIMPLE_SIGN.lock}<span>${esc(P16.guard[o.guard])}</span></p>${box}`;
+  }
+  if (o.fallback) return `<p class="own-why" id="own-fallback" data-why="${o.fallback.why}" role="note">${SIMPLE_SIGN.lock}<span><b>${esc(P16.rulesLabel)}</b> ${esc(fallbackLine(o.fallback, o.asked))}</span></p>`;
+  return '';
 }
 
 function onPersonTap(t: HTMLElement) {
@@ -2688,7 +2735,7 @@ function act(el: HTMLElement) {
     }
     case 'sheet': if (state.card?.unsentPayload) { state.sheet = true; render(); } break;
     // (phase 14: "No, not now" to "Find more choices" goes back to the card it was asked from, not to a screen with no card)
-    case 'sheet-no': state.sheet = false; if (state.card?.narrow?.offered && state.card.blocked) stepBack(hashNow()); else render(); break;
+    case 'sheet-no': if (ownRefused()) break; state.sheet = false; if (state.card?.narrow?.offered && state.card.blocked) stepBack(hashNow()); else render(); break;
     // "Just this once" (the sheet's first button): this one request goes to online help, and online help stays off
     case 'sheet-yes': state.sheet = false; p5.once = true; askAgain(); break;
     // "Yes, every time": the same switch as the consent page's, turned on by one button; the question is then asked again at once
@@ -2954,7 +3001,7 @@ app.addEventListener('click', (ev) => {
   if (t.closest('#person')) onPersonTap(t);
 });
 app.addEventListener('submit', (ev) => {
-  if ((ev.target as HTMLElement).id === 'ask') { ev.preventDefault(); askBy = dictated ? 'spoken' : 'typed'; void make(($('#q') as HTMLInputElement).value); }
+  if ((ev.target as HTMLElement).id === 'ask') { ev.preventDefault(); askBy = dictated ? 'spoken' : 'typed'; const q = ($('#q') as HTMLInputElement).value; ownQ = simpleView() ? q : null; void make(q).then(() => { if (simpleView() && state.card && !state.busy && !state.sheet) window.scrollTo(0, 0); }); }
   else if ((ev.target as HTMLElement).id === 'fb') { ev.preventDefault(); void submitFeedback(); }
   else if ((ev.target as HTMLElement).id === 'photo-form') { ev.preventDefault(); savePhoto(); }
   // "Who? Type one name": one yes / no question about that one person, made by the rules

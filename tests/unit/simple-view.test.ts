@@ -42,9 +42,10 @@ describe('simple view: the first screen', () => {
     expect(homeScreen(home({ name: 'Frank' }))).toContain('let Frank point.');
     expect(text(out)).not.toMatch(/\b(?:him|his|he|her|she)\b/i);
   });
-  it('the order: hope, quick needs, how it works, topics, your own question, the AI line, the privacy line', () => {
+  // (phase 16, design/PHASE16_AI_FIRST_BRIEF.md: "Ask in your own words" is the first action, the topics the second path)
+  it('the order: hope, your own words (the field, the button, the AI line), quick needs, how it works, "Or pick a topic", the privacy line', () => {
     const at = (needle: string) => { const i = out.indexOf(needle); expect(i, needle).toBeGreaterThan(-1); return i; };
-    const order = [at('id="hope"'), at('data-act="needs"'), at('id="how"'), at('id="topics"'), at(S.ownHeading), at('id="q"'), at('id="make"'), at('id="ai-line"'), at('id="s-privacy"'), at('data-act="inside"')];
+    const order = [at('id="hope"'), at('id="own-h"'), at('id="q"'), at('id="make"'), at('id="ai-line"'), at('data-act="needs"'), at('id="how"'), at('id="topics-h"'), at('id="topics"'), at('id="s-privacy"'), at('data-act="inside"')];
     expect(order).toEqual([...order].sort((a, b) => a - b));
   });
   it('quick needs is at the top, above the how-to block and the topics', () => {
@@ -52,11 +53,10 @@ describe('simple view: the first screen', () => {
     expect(out.indexOf('data-act="needs"')).toBeLessThan(out.indexOf('id="how"'));
     expect(out.indexOf('data-act="needs"')).toBeLessThan(out.indexOf('class="topic'));
   });
-  it('one main button, "Show them the choices"; the own question comes second, after the topics', () => {
+  it('one main button, "Make the choices"; the own words come first, the topics after them', () => {
     expect(count(out, 'class="btn primary"')).toBe(1);
-    expect(out).toContain('>Show them the choices</button>');
-    expect(homeScreen(home({ name: 'Frank' }))).toContain('>Show Frank the choices</button>');
-    expect(out.indexOf('class="topic')).toBeLessThan(out.indexOf('id="q"'));
+    expect(out).toContain('>Make the choices</button>');
+    expect(out.indexOf('id="q"')).toBeLessThan(out.indexOf('class="topic'));
   });
   it('no empty video slot, no walkthrough, no About-them form and no ready-made example rows', () => {
     expect(out).not.toMatch(/video|Watch how|walkthrough|Skip|class="walk|class="dim|role="dialog"/i);
