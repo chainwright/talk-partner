@@ -132,12 +132,13 @@ describe('what an entry counts as', () => {
 describe('"less sure"', () => {
   it('answers of the run are marked; a log the carer tapped never is', () => {
     const t = when(4, '19:00');
-    const d = [logEntry('drank', t - 1000), ans('Are you tired?', 'yes', t), logEntry('ate', t + 1000), ans('Are you hungry?', 'yes', t + 2000)];
+    // (phase 13: a rest answer such as "Are you tired?" is left alone by the guard too, so the run's answer here is the TV)
+    const d = [logEntry('drank', t - 1000), ans('Would you like the TV on?', 'yes', t), logEntry('ate', t + 1000), ans('Are you hungry?', 'yes', t + 2000)];
     const m = markDiary(d, t, t + 5000);
     // (phase 8: a yes to "Are you hungry?" is a need and is taken as said: the guard leaves drink and food questions alone)
     expect(m.map((e) => !!e.lessSure)).toEqual([false, true, false, false]);
     // an answer about pain or the toilet is never marked, wherever it stands in the run
-    const care = [ans('Are you in pain?', 'yes', t + 100), ans('Do you need the toilet?', 'yes', t + 200), ans('How are you feeling today?', 'in pain', t + 300), ans('Are you tired?', 'yes', t + 400)];
+    const care = [ans('Are you in pain?', 'yes', t + 100), ans('Do you need the toilet?', 'yes', t + 200), ans('How are you feeling today?', 'in pain', t + 300), ans('Would you like the TV on?', 'yes', t + 400)];
     expect(markDiary(care, t, t + 5000).map((e) => !!e.lessSure)).toEqual([false, false, false, true]);
     expect(markDiary(d, null, t)).toBe(d);
   });
@@ -145,7 +146,9 @@ describe('"less sure"', () => {
     const W = { log: COPY.simple.diary.log as Record<LogKind, string>, lessSure: COPY.simple.guard.lessSure, need: COPY.simple.diary.need };
     const text = diaryText(inSpan(weekDiary(), 'week', NOW), W);
     expect(text.startsWith('Mon 16 Nov\n  07:40  Would you like tea or coffee? tea')).toBe(true);
-    expect(text).toContain('  19:00  Are you tired? yes (less sure)');
+    // (phase 13: a rest answer is never marked; the next answer of Friday's run is)
+    expect(text).toContain('  19:00  Are you tired? yes\n');
+    expect(text).toContain('  19:01  Would you like some music on? yes (less sure)');
     expect(text).toContain('  10:30  Drank');
     expect(text).not.toMatch(/\bshould\b|worth|doctor/i);
   });

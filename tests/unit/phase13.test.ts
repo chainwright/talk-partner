@@ -311,3 +311,30 @@ describe('A7. "For the next carer", "What stands out" and the visit page carry e
     expect(main).toContain("} else if (state.picked && state.picked.role === 'escape' && learns() && !c.sample && signAnswer(c.asked, state.picked.label)) {");
   });
 });
+
+describe('A8. Health wording P0s: the answer check leaves rest and sleep answers alone; one intended-purpose line', () => {
+  it('core/reliability.ts: "Are you tired? yes", "lie down", the bed or the chair are never marked "less sure"', async () => {
+    const { guardExempt, GUARD_TOPICS } = await import('../../core/reliability');
+    const { TOPIC_BASE } = await import('../../core/topics');
+    for (const q of TOPIC_BASE.find((t) => t.id === 'rest')!.questions) expect(guardExempt(q, 'yes'), q).toBe(true);
+    for (const q of ['Are you tired?', 'Would you like to lie down?', 'Would you like to rest in the bed or the chair?', 'Did you sleep well?', 'Would you like to sit down?']) expect(guardExempt(q, 'yes'), q).toBe(true);
+    expect(GUARD_TOPICS).toContain('rest');
+    // an ordinary offer is still read by the guard
+    expect(guardExempt('Would you like to go for a drive?', 'yes')).toBe(false);
+  });
+  it('the guard never marks a run of rest answers (the SLP\'s walk: tired, lie down, yes, yes)', async () => {
+    const { tapsFrom } = await import('../../core/reliability');
+    const t0 = Date.UTC(2026, 10, 23, 14);
+    const h = ['Are you tired?', 'Would you like to lie down?', 'Would you like to rest in the bed or the chair?', 'Is it too noisy in here?'].map((q, i) => ({ q, label: 'yes', at: t0 + i * 60000, pos: 0, of: 3, yn: true }));
+    expect(tapsFrom(h)).toEqual([]);
+  });
+  it('the intended purpose, in plain words, on Home, the "Something new or sudden?" page and the safety screen', async () => {
+    const { P5 } = await import('../../core/copy5');
+    expect(P5.purpose('999')).toBe('What it is for: helping a family talk with someone who has aphasia. It is not a medical device. It does not check symptoms or say what is wrong. In an emergency, call 999.');
+    const { suddenScreen, crisisScreen } = await import('../../web/src/phase5');
+    expect(suddenScreen({ number: '999' })).toContain(P5.purpose('999'));
+    expect(crisisScreen({ name: '', number: '999', line: '116 123', lineGuess: false, numberGuess: false })).toContain(P5.purpose('999'));
+    const { readFileSync } = await import('node:fs');
+    expect(readFileSync('web/src/simple.ts', 'utf8')).toContain('<p class="tip purpose" id="purpose">${esc(P5.purpose(m.number ?? \'\'))}</p>');
+  });
+});

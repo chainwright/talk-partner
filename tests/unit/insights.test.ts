@@ -200,7 +200,7 @@ describe('what a model may be handed: the rules\' lines, for their wording only'
     expect(insightDevicePrompt(lines.filter((l) => !l.act), NO_HEALTH)).toBe(insightCloudText(lines));
   });
   it('the counts of the span, for the base of a screen', () => {
-    expect(spanCounts(weekDiary(), 'week', NOW)).toMatchObject({ days: 7, daysWithEntries: 7, sweet: 3, lessSure: 5 });
+    expect(spanCounts(weekDiary(), 'week', NOW)).toMatchObject({ days: 7, daysWithEntries: 7, sweet: 3, lessSure: 4 });
     expect(addEntry([], logEntry('ate', 1)).length).toBe(1);
   });
 });

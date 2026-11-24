@@ -54,7 +54,7 @@ import { nextVisit, visitAlert, visitCard, visitLabel, visitStops, visitText, ty
 import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
 import { P5 } from '../../core/copy5';
 import { FALL_HEAD } from '../../core/diary';
-import { CARE_TOPICS } from '../../core/reliability';
+import { GUARD_TOPICS } from '../../core/reliability';
 import { DEFAULT_NUMBER, WRONG_TILE, crisisAnswer, crisisLineFor, emergencyNumber, localeNumber, numberSet, redPlace, signNow, urgentAnswer, urgentAny, type RedPlace } from '../../core/redflag';
 import { fromIsoDay, pickedQuestions, sinceLines, sinceText, toggleQuestion } from '../../core/since';
 import { SpeakCache, isPcm, pcmRate, pcmToWav, speakText, speakable } from '../../core/speak';
@@ -1917,7 +1917,7 @@ function simpleScreen(): string {
   } else {
     const p = state.profile;
     screen = homeScreen({
-      name, sampleHref: handheld() ? '#/sample' : '#/demo', sampleOn: state.demo,
+      name, number: callNumber(), sampleHref: handheld() ? '#/sample' : '#/demo', sampleOn: state.demo,
       aboutLink: !!state.settings.firstCard || !!(name || p.people.length || p.foods.length || p.places.length || p.tv.length || p.music.length),
       busy: state.busy, error: state.error, question: state.lastQuestion,
       // (phase 9, judge round 8: folded on the first visit too, to its one line with "Write the key word big.", so the
@@ -2465,7 +2465,7 @@ function onPersonTap(t: HTMLElement) {
         const placed = ['choice', 'yesno', 'feeling'].includes(c.kind) && !c.scale && !c.letter && !c.turn && !state.p4.turn ? { pos: shown.indexOf(state.picked), of: shown.length, yn: c.kind === 'yesno' } : {};
         // (an answer about the body or a feeling, by its topic, is never counted or marked by the answer check)
         const careId = careTopic(c);
-        state.history = addAnswer(state.history, { q: c.asked, topic: c.topic, label: state.picked.label, at, ...placed, ...(careId && CARE_TOPICS.includes(careId) ? { care: true } : {}) });
+        state.history = addAnswer(state.history, { q: c.asked, topic: c.topic, label: state.picked.label, at, ...placed, ...(careId && GUARD_TOPICS.includes(careId) ? { care: true } : {}) });
         if (learns()) {
           // the guard (core/reliability.ts, rules): a run of "yes" or of one place on the screen is marked "less sure",
           // in the answers and in the diary. It shows on the carer's side only.

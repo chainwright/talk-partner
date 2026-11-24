@@ -12,6 +12,7 @@ import type { Way } from '../../core/more';
 import { waysBlock } from './phase7';
 import type { PartnerAction } from '../../core/actions';
 import { COPY } from '../../core/copy';
+import { P5 } from '../../core/copy5';
 import { HEALTH_TEXT_MAX, HEALTH_TOGGLES, NO_HEALTH, hasHealth, type HealthNotes } from '../../core/insights';
 import { NARROW_LEVELS } from '../../core/narrow';
 import { cropRect, PHOTO_CAP, WORD_MAX, type Frame, type Photo } from '../../core/photos';
@@ -56,6 +57,8 @@ const TOPIC_SIGN = Object.fromEntries(Object.entries(TOPIC_PICTURES).map(([k, id
 export interface HomeModel {
   /** The person's name, or '' when About them has none yet (then the words say "them", never "him" or "her"). */
   name: string;
+  /** Phase 13: the emergency number of the call buttons, for the intended-purpose line at the foot. */
+  number?: string;
   /**
    * Phase 12b (judge round 9b): where "Try it with the Millers" goes: "#/sample" on a phone or a tablet (this simple
    * view, with the sample family), "#/demo" on a computer (judge mode). `sampleOn`: the sample family is open here now.
@@ -193,6 +196,7 @@ export function homeScreen(m: HomeModel): string {
   </div>
   <footer class="foot">
     ${privacyBlock(m.privacy)}
+    <p class="tip purpose" id="purpose">${esc(P5.purpose(m.number ?? ''))}</p>
     <p class="links">${insideLink('inside', S.inside)}${m.aboutLink ? `<a class="tlink" href="#/about">${esc(S.aboutLink(m.name))} →</a>` : ''}</p>
     ${m.sampleOn ? `<p class="links sample-link" id="sample-on">${esc(S.sampleOn)} <button type="button" class="tlink" data-act="leave-demo">${esc(S.sampleLeave)} →</button></p>`
       : `<p class="links sample-link"><a class="tlink" id="try-sample" href="${m.sampleHref ?? '#/demo'}">${esc(S.sample)} →</a><small class="muted">${esc(S.sampleSub)}</small></p>`}

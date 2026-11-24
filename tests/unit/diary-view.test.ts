@@ -45,8 +45,9 @@ describe('the diary screen', () => {
     expect(html.indexOf('Sat 21 Nov')).toBeLessThan(html.indexOf('Mon 16 Nov'));
     expect(html).toContain('<time>07:40</time><span class="what"><span class="q">Would you like tea or coffee?</span> <b>tea</b></span>');
     expect(html).toContain('<time>10:30</time><span class="what"><b>Drank</b></span>');
-    expect(count(html, 'data-less-sure="1"')).toBe(5);
-    expect(count(html, `class="tag unsure">${S.guard.lessSure}<`)).toBe(5);
+    // (phase 13: Friday's "Are you tired? yes" is a rest answer and is not marked: four of the run are)
+    expect(count(html, 'data-less-sure="1"')).toBe(4);
+    expect(count(html, `class="tag unsure">${S.guard.lessSure}<`)).toBe(4);
   });
   it('what stands out: the level, the line, its base, who worded it, the fixed footer', () => {
     // (phase 9: Tuesday's pain, the sweets, Wednesday's drinks, Friday's "less sure")

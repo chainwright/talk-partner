@@ -51,6 +51,7 @@ export function suddenScreen(m: { number: string; guess?: boolean }): string {
   <p class="tip" id="sudden-not">${S.notSudden}</p>
   <p class="tip" id="sudden-number">${esc(S.number(m.number))} <button type="button" class="tlink" data-act="sudden-number">${S.change} →</button></p>
   <p class="lock" id="sudden-source">${SIGN.lock}<span>${S.source}</span></p>
+  <p class="tip purpose" id="purpose">${esc(P5.purpose(m.number))}</p>
 </main>`;
 }
 
@@ -74,6 +75,7 @@ export function crisisScreen(m: { name: string; number: string; line: string; li
   <section class="fast" id="crisis-steps" aria-labelledby="crisis-steps-h"><h2 class="sec" id="crisis-steps-h">${K.open}</h2>
     <ol class="fast-list">${steps.map((x, i) => `<li><b>${i + 1}</b><span>${esc(x)}</span></li>`).join('')}</ol></section>
   <p class="lock" id="crisis-source">${SIGN.lock}<span>${K.source}</span></p>
+  <p class="tip purpose" id="purpose">${esc(P5.purpose(m.number))}</p>
 </main>`;
 }
 

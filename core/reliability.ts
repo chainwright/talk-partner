@@ -62,8 +62,16 @@ export function careAnswer(q: string, label = '', topic: string | null = null): 
  * `careAnswer` itself is unchanged.
  */
 export const DRINK_FOOD_WORDS = /\b(?:drink|drinks|drinking|thirsty|water|tea|coffee|juice|milk|squash|eat|eating|hungry|food|snack|meal|breakfast|lunch|dinner|supper)\b/i;
+/**
+ * Phase 13 (judge round 10, a health P0: the SLP's seat, ADV-13-1): "Are you tired? yes" and "Would you like to lie
+ * down? yes" were marked "less sure" with "They may be tired" under them: a line that tells a carer to doubt a stated
+ * rest need. Rest and sleep answers are the guard's to leave alone too, by their words and by the topic "Rest & sleep".
+ * The guard's list only: `careAnswer` (pinned "left for later", the notes for others) is unchanged.
+ */
+export const REST_WORDS = /\b(?:tired|tiring|rest|resting|lie down|lie|lying|sleep|slept|sleeping|asleep|nap|bed|chair|sit|sit down|quiet|noisy|noise|curtains)\b/i;
+export const GUARD_TOPICS = [...CARE_TOPICS, 'rest'];
 export function guardExempt(q: string, label = '', topic: string | null = null): boolean {
-  return careAnswer(q, label, topic) || DRINK_FOOD_WORDS.test(q);
+  return careAnswer(q, label, topic) || DRINK_FOOD_WORDS.test(q) || REST_WORDS.test(q) || (topic !== null && GUARD_TOPICS.includes(topic));
 }
 
 export type Flag = 'yes-run' | 'same-position';

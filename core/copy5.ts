@@ -18,6 +18,11 @@ const counted = (own: string) => (own ? `, counting ${their(own.trim())} own ans
 const P5_HELP = (name: string, line: string, number: string) => `If ${name || 'they'} may harm themselves: stay with ${name || 'them'} and call ${number} now. If ${name ? `${name} seems` : 'they seem'} very low: ${line && line !== number ? `call ${line} (a crisis line) or the doctor or nurse today` : 'call the doctor or nurse today, or a mental health helpline (you can put its number in About them, Health notes)'}.`;
 
 export const P5 = {
+  /**
+   * Phase 13 (judge round 10, the nurse's seat, ADV-13b-6/-12): the intended purpose, in plain words, on Home, the
+   * "Something new or sudden?" page and the safety screen. Fixed text, never a model's.
+   */
+  purpose: (number: string) => `What it is for: helping a family talk with someone who has aphasia. It is not a medical device. It does not check symptoms or say what is wrong. In an emergency, call ${number || 'your emergency number'}.`,
   sudden: {
     link: 'Something new or sudden?',
     /** Phase 8 (judge round 7): what it is for, in the words a frightened relative would look for. */

@@ -78,7 +78,8 @@ describe('never about pain, the toilet, help or a need; never in an ordinary fas
     expect(markLessSure(h, { flags: ['yes-run'], since: min(0) } as Reliability, min(5)).some((x) => (x as { lessSure?: boolean }).lessSure)).toBe(false);
   });
   it('a "yes" to pain or the toilet does not count toward a run, and is never marked', () => {
-    const h = [['Are you tired?', 0], ['Are you in pain?', 1], ['Do you need the toilet?', 2], ['Would you like the TV on?', 3], ['Would you like some music on?', 4]].map(([q, n]) => ({ q: q as string, label: 'yes', at: min(n as number), pos: 0, of: 2, yn: true }));
+    // (phase 13: "Are you tired?" is a rest answer, left alone by the guard too; the first offer is the paper)
+    const h = [['Would you like to look at the paper?', 0], ['Are you in pain?', 1], ['Do you need the toilet?', 2], ['Would you like the TV on?', 3], ['Would you like some music on?', 4]].map(([q, n]) => ({ q: q as string, label: 'yes', at: min(n as number), pos: 0, of: 2, yn: true }));
     // five "yes" in a row, two of them about pain and the toilet: three count, and that is not a run
     expect(tapsFrom(h).length).toBe(3);
     expect(reliability(tapsFrom(h), min(4))).toBe(RELIABLE);
