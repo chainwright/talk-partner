@@ -1330,7 +1330,11 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-**Live: the build of `39e8f33`** (after phase 12b: the general pain picture made again on 23 Nov 2026 with the arms
+**Live: the build of `ca04bc9`** (phase 13: the safety fixes of judge round 10 and the pain picture leaning forward), deployed
+24 Nov 2026 about 02:30 UTC. The hosted script (`index-Byg3lp_t.js`) is the same file as our `dist/`. Run against the hosted copy:
+`e2e-simple.py --live` 1024/1024, `pwa-check.py` 34/34, `e2e-needs.mjs` 13/13, `phase12-walk.py --url` (see log). Logs: `devlog/evidence_live/ca04bc9/`.
+
+Before it: **the build of `39e8f33`** (after phase 12b: the general pain picture made again on 23 Nov 2026 with the arms
 down, so it reads as pain all over and not as a stomach ache or as "too cold"; the sample family kept apart from the
 family's own data on a phone and a desktop), deployed 23 Nov 2026 about 21:40 UTC. The hosted script
 (`index-zcpxbGxV.js`) has the same SHA-256 as our `dist/`, and so does `pictures/pain.webp`. Run against the hosted
