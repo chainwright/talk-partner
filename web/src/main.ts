@@ -18,8 +18,9 @@ import { badgeKind, countSwaps, sentLine, sessionReceipt, sessionTally } from '.
 import { BODY_REGIONS } from '../../core/rules';
 import { SAMPLE_FIRST, SAMPLE_PROFILE, SAMPLE_QUESTIONS, SAMPLE_STEP } from '../../core/sample';
 import { aiLines, aiTag, madeWhere, needsInternet, privacyLines, routeChip, sheetWanted, tryAiTag } from '../../core/simple';
-import { NARROW_TASK, canNarrow, narrowCard, narrowInput, type NarrowInput } from '../../core/narrow';
+import { canNarrow, narrowCard, narrowInput, narrowLine, type NarrowInput } from '../../core/narrow';
 import { aiPlace } from '../../core/simple';
+import { findMoreOffer } from '../../core/findmore';
 import { daySummary, rulesSummary, todays, type DaySummary } from '../../core/summary';
 import { asksWho, awayNames, callQuestion, followUps, nextInTopic, topics, type TopicId } from '../../core/topics';
 import { after } from '../../core/tree';
@@ -44,7 +45,7 @@ import { webConfig } from './ai/config';
 import { pickEngine } from './ai/pick';
 import { fetchSettings } from './ai/remoteConfig';
 import { CROSS, MIC, MIC_STOP, TICK, builtinPicto, monogram, photoTile, pictoFallback } from './pictos';
-import { aboutSimple, answeredScreen, cardScreen, chipBlock, consentSheet, frameStyle, homeScreen, laterBlock, personSimple, photoSheet, shortBlock, tryAiBlock, type AboutRow } from './simple';
+import { aboutSimple, answeredScreen, cardScreen, chipBlock, consentSheet, findMoreBlock, frameStyle, homeScreen, laterBlock, personSimple, photoSheet, shortBlock, tryAiBlock, type AboutRow } from './simple';
 import { kvClear, kvGet, kvSet, setSampleScope } from './store';
 import { P4 } from '../../core/copy4';
 import { LETTER_CLOUD_TASK, letterCard, letterEnd, type LetterInput } from '../../core/letter';
@@ -1910,6 +1911,8 @@ function simpleScreen(): string {
       usual: (() => { const u = usualFor(c); return u ? usualHint(u) : ''; })(),
       // (the call box stays over the next questions of a conversation in which an answer can be urgent)
       topHtml: `${p5.urgent && !c.blocked ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}`,
+      // (phase 14, judge round 10: the second button of a topic card is the AI's; never on pain, the body, feelings, a red flag: core/findmore.ts)
+      findHtml: (() => { const o = findMoreOffer(c, { topic: careTopic(c), place: aiPlace(whereInput()), urgent: p5.urgent }); return o ? findMoreBlock(o) : ''; })(),
       guardHtml: c.blocked || c.kind === 'repair' || c.kind === 'no-quiz' || c.letter || c.turn || c.visit || state.p4.turn ? '' : guardHtml(c),
       // the first-letter helper: its way in from "We're stuck", who found a letter card's words, and another letter when there was no word
       extraHtml: `${c.kind === 'repair' ? letterButton(name) : c.letter ? (c.blocked ? letterButton(name, true) : letterBy(c.letter.by)) : ''}${canSpeak() && !c.blocked && c.kind !== 'no-quiz' && (speakable(c) || speakOn()) ? speakSwitch({ name, on: speakOn(), online: isOnline(), can: speakable(c) }) : ''}${p5.spoken.has(c) ? readAloudLine() : ''}`,
@@ -1933,7 +1936,7 @@ function simpleScreen(): string {
   if (!state.sheet || !c?.unsentPayload) return screen;
   // the first-letter step: the sheet shows the one line that comes from the conversation (the question and the letter), then the whole request
   if (c.letter) return `${screen.replace('<main class="simple', '<main inert aria-hidden="true" class="simple')}${letterSheet({ line: sentLine(c.unsentPayload).text.split(` ${LETTER_CLOUD_TASK}`)[0].split(' Give two or three')[0].replace(/^Partner asks:\s*/, ''), request: c.unsentPayload })}`;
-  return `${screen.replace('<main class="simple', '<main inert aria-hidden="true" class="simple')}${consentSheet({ about: aboutName(), line: c.narrow ? sentLine(c.unsentPayload).text.split(` ${NARROW_TASK}`)[0].replace(/^Partner asks:\s*/, '') : sentLine(c.unsentPayload).text, deviceThere: state.device === 'available', ...(c.narrow ? { narrow: { request: c.unsentPayload } } : {}) })}`;
+  return `${screen.replace('<main class="simple', '<main inert aria-hidden="true" class="simple')}${consentSheet({ about: aboutName(), line: c.narrow ? narrowLine(sentLine(c.unsentPayload).text) : sentLine(c.unsentPayload).text, deviceThere: state.device === 'available', ...(c.narrow ? { narrow: { request: c.unsentPayload, offered: !!c.narrow.offered } } : {}) })}`;
 }
 /** The simple view's lines that depend on the device check or the connection, updated in place (no redraw). */
 function patchSimple() {
@@ -2636,6 +2639,8 @@ function act(el: HTMLElement) {
       break;
     }
     // after the way out: an AI suggests the next, broader choices (two steps at most)
+    // (phase 14) before handing over a topic card: the same step, given the choices on the card (core/findmore.ts decides where it is offered)
+    case 'find-more': if (state.card && !state.picked && !state.busy) void runNarrow({ ...narrowInput(state.card, todayAnswers()), offered: true, learned: learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)).slice(0, 6).map((l) => l.text) : [] }); break;
     case 'narrow': if (state.card && state.picked) void runNarrow({ ...narrowInput(state.card, todayAnswers()), learned: learns() ? aboutLearned(learned(state.history, state.needsLog, state.forgotten)).slice(0, 6).map((l) => l.text) : [] }); break;
     case 'copy-short': {
       const text = state.short?.sentences.join(' ') ?? '';
@@ -2644,7 +2649,8 @@ function act(el: HTMLElement) {
       break;
     }
     case 'sheet': if (state.card?.unsentPayload) { state.sheet = true; render(); } break;
-    case 'sheet-no': state.sheet = false; render(); break;
+    // (phase 14: "No, not now" to "Find more choices" goes back to the card it was asked from, not to a screen with no card)
+    case 'sheet-no': state.sheet = false; if (state.card?.narrow?.offered && state.card.blocked) stepBack(hashNow()); else render(); break;
     // "Just this once" (the sheet's first button): this one request goes to online help, and online help stays off
     case 'sheet-yes': state.sheet = false; p5.once = true; askAgain(); break;
     // "Yes, every time": the same switch as the consent page's, turned on by one button; the question is then asked again at once

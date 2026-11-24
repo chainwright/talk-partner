@@ -29,7 +29,7 @@ export function madeWhere(c: Card, o: { spoken?: boolean; about: string }): Made
   const maker = badgeKind(c);
   const left = c.cloudPayload ? 'sent' : c.cloudAttempted ? 'maybe' : 'nothing';
   const who = maker === 'device' && c.why?.personal?.length ? S.made.devicePersonal(o.about) : S.made[maker];
-  const what = left === 'sent' ? (c.narrow ? S.left.sentNarrow(o.about) : S.left.sent(o.about)) : left === 'maybe' ? S.left.maybe : S.left.nothing;
+  const what = left === 'sent' ? (c.narrow?.offered ? S.left.sentFound(o.about) : c.narrow ? S.left.sentNarrow(o.about) : S.left.sent(o.about)) : left === 'maybe' ? S.left.maybe : S.left.nothing;
   const lines = [who, what];
   if (o.spoken) lines.push(S.left.voice);
   return { maker, left, spoken: !!o.spoken, lines };
@@ -45,6 +45,7 @@ export function routeChip(c: Card | null | undefined, about: string): RouteChip 
   if (k === 'offline') return { where: 'device', text: R.device, why: R.whyOffline };
   if (k === 'cloud') {
     const priv = c.trace?.find((t) => t.step === 'private');
+    if (c.narrow?.offered) return { where: 'cloud', text: R.cloud, why: R.whyFindMore };
     return { where: 'cloud', text: R.cloud, why: priv && (priv.ran === 'on-device' || priv.ran === 'failed') ? R.whyNoCard : R.whyNoDevice };
   }
   return null;

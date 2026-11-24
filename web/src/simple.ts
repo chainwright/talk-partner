@@ -330,6 +330,21 @@ export interface CardModel {
   extraHtml?: string;
   /** Over everything else on this screen (web/src/phase5.ts): the boxed call line, while an answer of this conversation can be urgent. */
   topHtml?: string;
+  /**
+   * Phase 14: right under the main button, the second one: "Find more choices" (findMoreBlock, core/findmore.ts
+   * decides where it is offered) and the one-tap offer of Read aloud (web/src/phase5.ts, speakOffer). '' for none.
+   */
+  findHtml?: string;
+}
+
+/**
+ * Phase 14 (judge round 10): "Find more choices" on the screen before handing over a topic card, and where its AI runs
+ * here, in one line under it. `where` comes from core/findmore.ts (findMoreOffer).
+ */
+export function findMoreBlock(where: 'device' | 'cloud'): string {
+  const F = COPY.simple.findMore;
+  return `<button type="button" class="btn find-more" id="find-more" data-act="find-more">${SIGN.spark}<span>${esc(where === 'device' ? F.device : F.cloud)}</span></button>
+    <p class="tip" id="find-more-where">${esc(where === 'device' ? F.deviceWhere : F.cloudWhere)}</p>`;
 }
 
 /** Where this card was made: on the screen itself, under the card, never only behind a link. */
@@ -388,11 +403,13 @@ export function cardScreen(m: CardModel): string {
   const tip = c.kind === 'repair' ? COPY.repair.tip : c.kind === 'needs' ? COPY.needs.tip : S.tip;
   const canHide = m.actions.some((a) => a.act === 'less');
   // a narrowing card says in plain words that an AI made this follow-up, and where
-  const ai = c.narrow ? `<p class="ai-made" id="ai-made" data-by="${c.narrow.by ?? 'ai'}">${c.narrow.by === 'rules' ? SIGN.lock : SIGN.spark}<span>${esc(c.narrow.by === 'rules' ? S.narrow.labelRules(c.narrow.level, NARROW_LEVELS) : S.narrow.label(c.narrow.level, NARROW_LEVELS, c.source === 'in-cloud' ? 'cloud' : 'device'))}</span></p>` : '';
+  const where = c.source === 'in-cloud' ? 'cloud' : 'device';
+  const ai = c.narrow ? `<p class="ai-made" id="ai-made" data-by="${c.narrow.by ?? 'ai'}">${c.narrow.by === 'rules' ? SIGN.lock : SIGN.spark}<span>${esc(c.narrow.by === 'rules' ? S.narrow.labelRules(c.narrow.level, NARROW_LEVELS) : c.narrow.offered ? S.narrow.labelFound(where) : S.narrow.label(c.narrow.level, NARROW_LEVELS, where))}</span></p>` : '';
   return `<main class="simple wrap card" data-screen="card">${back}
   <div class="c-say">${m.topHtml ?? ''}${m.guardHtml ?? ''}${ai}${coach}<div class="stack">${step(1, sayLabel)}<p class="say">${esc(say)}</p></div>${m.usual ? `<p class="usual" id="usual">${SIGN.person}<span>${esc(m.usual)}</span></p>` : m.lastTime ? `<p class="last">${esc(m.lastTime)}</p>` : ''}</div>
   <div class="c-go">${step(2, S.step2(m.name))}
     ${primary}
+    ${primary ? m.findHtml ?? '' : ''}
     ${primary ? waitLine(m.name) : ''}
     ${primary ? `<p class="tip" id="tip">${esc(tip)}</p>
     <button type="button" class="tlink more-tips" id="more-tips" data-act="tips" aria-expanded="${!!m.tips}" aria-controls="tips">${m.tips ? S.tipsLess : S.tipsMore}</button>
@@ -541,7 +558,7 @@ export interface SheetModel {
    * The sheet is for a narrowing step (after "something else"): `line` is then the part of the request that comes from
    * the conversation, word for word (the question and the choices that did not fit), and `request` the whole request.
    */
-  narrow?: { request: string };
+  narrow?: { request: string; /** Phase 14: "Find more choices" before handing over: nothing was turned down yet, so the sheet does not say "None of those fitted". */ offered?: boolean };
 }
 
 /**
@@ -557,7 +574,7 @@ export function consentSheet(m: SheetModel): string {
     return `<div class="dim"></div>
 <div class="sheet narrow-sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-h">
   <h2 id="sheet-h" tabindex="-1">${N.heading}</h2>
-  <p>${N.body}</p>
+  <p>${m.narrow.offered ? N.bodyFound : N.body}</p>
   <div class="goes"><p class="q" id="sheet-line">${esc(m.line)}</p><p class="small muted">${N.plus}</p></div>
   <ul class="facts">
     <li class="n">${SIGN.lock}<span><b>${K.neverLabel}</b> ${esc(N.never(m.about))}</span></li>

@@ -48,6 +48,11 @@ export interface NarrowInput {
   sofar: { q: string; label: string }[];
   /** What was learned about the person on this device (core/prefs.ts), as short lines: for the on-device step only, never the cloud text. */
   learned?: string[];
+  /**
+   * Phase 14: asked from the screen before handing over ("Find more choices", core/findmore.ts), not after the way out:
+   * `rejected` holds the choices on the card, and the request says so in those words (FIND_TASK).
+   */
+  offered?: boolean;
 }
 
 const N = COPY.notes;
@@ -72,13 +77,20 @@ export function canNarrow(card: Card, label: string): boolean {
 }
 
 /** The text both steps get: the question, and the choices that did not fit. Nothing the person chose. */
-export function narrowAsk(i: Pick<NarrowInput, 'asked' | 'rejected'>): string {
-  return `${narrowFacts(i)} ${NARROW_TASK}`;
+export function narrowAsk(i: Pick<NarrowInput, 'asked' | 'rejected' | 'offered'>): string {
+  return `${narrowFacts(i)} ${i.offered ? FIND_TASK : NARROW_TASK}`;
 }
 /** The part that comes from the conversation (and is stripped of About-me words before the cloud step). */
-const narrowFacts = (i: Pick<NarrowInput, 'asked' | 'rejected'>) => `${i.asked}${i.rejected.length ? ` They did not want: ${i.rejected.join(', ')}.` : ''}`;
+const narrowFacts = (i: Pick<NarrowInput, 'asked' | 'rejected' | 'offered'>) => `${i.asked}${i.rejected.length ? ` ${i.offered ? 'On the card already' : 'They did not want'}: ${i.rejected.join(', ')}.` : ''}`;
 /** The part that is the app's own fixed wording: the same for every question, so it is not put through the name guesser. */
 export const NARROW_TASK = 'What else could it be? Do not give more of the same kind as the ones they did not want, and none of those again. Give two or three broader, different kinds of answer: a kind such as "something cold" or "something to eat", not one more single thing.';
+/**
+ * Phase 14: the fixed task for "Find more choices" on the screen before handing over, where nothing was turned down
+ * yet: the choices are only "on the card already". The same guards decide afterwards (narrowChoices).
+ */
+export const FIND_TASK = 'What else could they want? Do not give more of the same kind as the ones on the card already, and none of those again. Give two or three broader, different kinds of answer: a kind such as "something cold" or "something to eat", not one more single thing.';
+/** The part of a narrowing request that comes from the conversation, for the consent sheet: the fixed task cut off. */
+export const narrowLine = (text: string) => text.split(` ${NARROW_TASK}`)[0].split(` ${FIND_TASK}`)[0].replace(/^Partner asks:\s*/, '');
 /** The on-device step also gets the answers confirmed so far today. This text never goes to the cloud step. */
 export function narrowDeviceAsk(i: NarrowInput): string {
   const so = i.sofar.slice(-6).map((a) => `"${a.q}" -> ${a.label}`).join('; ');
@@ -117,7 +129,7 @@ export async function narrowCard(i: NarrowInput, env: PipelineEnv): Promise<Card
   const level = Math.min(i.level, NARROW_LEVELS);
   const base = {
     asked: i.asked, pending: null, topic: '', kind: 'choice' as const, source: 'code' as Source, ms: 0, cloudPayload: null,
-    notes: [N.narrow(level, NARROW_LEVELS)], route: { to: 'device' as const, reasons: ['narrowing after the way out'] }, narrow: { level, rejected: i.rejected },
+    notes: [N.narrow(level, NARROW_LEVELS)], route: { to: 'device' as const, reasons: [i.offered ? 'more choices asked before handing over' : 'narrowing after the way out'] }, narrow: { level, rejected: i.rejected, ...(i.offered ? { offered: true as const } : {}) },
   };
   const none = (blocked: string, extra: Partial<Card> = {}): Card => ({
     ...base, choices: [], say: N.justAsk(i.asked), blocked, trace: done(trace, null),
@@ -168,7 +180,7 @@ export async function narrowCard(i: NarrowInput, env: PipelineEnv): Promise<Card
 
   // 2. online help, only when it is on: the question and what did not fit, About-me words swapped out
   const facts = stripQuestion(narrowFacts(i), profile);
-  const stripped = { ...facts, text: `${facts.text} ${NARROW_TASK}` };
+  const stripped = { ...facts, text: `${facts.text} ${i.offered ? FIND_TASK : NARROW_TASK}` };
   const preview = JSON.stringify(engine.cloudRequest(stripped.text), null, 2);
   const swaps = Object.entries(stripped.map).map(([k, v]) => `${v} → ${k}`);
   if (!engine.cloudConfigured) { trace.push({ step: 'stripped', ran: 'skipped', why: T.cloudUnconfigured, used: false }); return stop(N.narrowNeedsAi); }

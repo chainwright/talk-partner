@@ -14,7 +14,7 @@ Phase 12b (judge round 9b) adds: the pain scale's three pictures (each loaded be
 calling now; one "no" to the weakness question (check the arms and the smile); a confirmed yes ("Call 911 now. Note
 the time it started."); "stop for now" beside "I can't go on"; "Try it with the Millers" on a phone (the simple view,
 no download); the number in the first screen's red box with "Change it"; a pain question left for later right under
-"Needs something now?" and on screen at 360 px; "Find more choices (online, after your yes)" as the second way after
+"Needs something now?" and on screen at 360 px; "Find more choices (Google's AI, after your yes)" as the second way after
 "something else"; the new pictures for pain, wait and show me loaded; About them after three "no" to a drink.
 
 23 Nov 2026 adds: "Try it with the Millers" with the family's own diary, health notes and lists on the device, as a
@@ -386,12 +386,12 @@ def walk(b, w, h, scheme):
     back_home(page, tag, 'pain left for later')
     page.evaluate(e2e.KV_PUT, {'later': []})
 
-    # ---- 5b. (phase 12b) after "something else": "Find more choices (online, after your yes)" is the second way
+    # ---- 5b. (phase 12b) after "something else": "Find more choices (Google's AI, after your yes)" is the second way
     home(page)
     topic_q(page, 'food', 'tea or coffee')
     person_pick(page, 'something else'); give(page); page.wait_for_selector('#after-out')
     order = page.evaluate("[...document.querySelectorAll('#ways > li')].map((li) => (li.querySelector('button') || {}).id || '')")
-    check(f'{tag}: after "something else": the AI step is the second way, "Find more choices (online, after your yes)"', len(order) >= 3 and order[1] == 'narrow' and e2e.text(page, '#narrow') == 'Find more choices (online, after your yes)', str(order))
+    check(f'{tag}: after "something else": the AI step is the second way, "Find more choices (Google\'s AI, after your yes)"', len(order) >= 3 and order[1] == 'narrow' and e2e.text(page, '#narrow') == "Find more choices (Google's AI, after your yes)", str(order))
     shot(page, tag, '12b_ways')
     back_home(page, tag, 'after "something else"')
 

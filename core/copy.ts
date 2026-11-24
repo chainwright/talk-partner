@@ -504,7 +504,8 @@ const COPY = {
     narrow: {
       go: 'Narrow it down: AI suggests the next choices',
       /** Phase 12b (judge round 9b): the same step where it would go online (a phone), as the second way after "something else". */
-      goOnline: 'Find more choices (online, after your yes)',
+      // (phase 14, judge round 10: who answers, in the label itself; the same words as "Find more choices" before handing over)
+      goOnline: "Find more choices (Google's AI, after your yes)",
       device: 'The AI built into Chrome does this on this computer. Nothing is sent.',
       cloudOn: "Google's online AI does this. It gets the question and the choices that did not fit, with any names you listed swapped out, and the app's fixed instructions. Never the answers they chose.",
       ask: 'This uses online help: the app asks you first, and shows the line that would go.',
@@ -513,6 +514,18 @@ const COPY = {
       label: (level: number, max: number, where: 'device' | 'cloud') => `AI suggested these next choices${where === 'device' ? ' on this computer' : ' with online help'}, because none of the first ones fitted (step ${level} of ${max}).`,
       labelRules: (level: number, max: number) => `The app's rules made these broader choices, because none of the first ones fitted and the AI only offered more of the same (step ${level} of ${max}).`,
       last: 'That was the last narrowing step.',
+      /** Phase 14: a card made by "Find more choices" before handing over. */
+      labelFound: (where: 'device' | 'cloud') => `AI suggested these other choices${where === 'device' ? ' on this computer' : ' with online help, after your yes'}.`,
+    },
+    /**
+     * Phase 14 (judge round 10, the official seats' P0): the second button on the screen before handing over a topic
+     * card (core/findmore.ts). The narrowing step, asked before the person has seen the card.
+     */
+    findMore: {
+      cloud: "Find more choices (Google's AI, after your yes)",
+      device: "Find more choices (Chrome's AI, on this computer)",
+      cloudWhere: "Google's AI gets the question and the choices on the card, with any names you listed swapped out. Never the answers they chose.",
+      deviceWhere: 'The AI built into Chrome does this on this computer. Nothing is sent.',
     },
     /** "Today in short": two to four plain sentences for the family or the therapist (core/summary.ts). */
     short: {
@@ -556,6 +569,8 @@ const COPY = {
       whyOffline: 'Why here: the connection was down, so the same request ran on the AI of this computer.',
       whyNoDevice: 'Why online: this computer has no AI of its own for a question like this.',
       whyNoCard: 'Why online: the AI on this computer made no card for it.',
+      /** Phase 14: after "Find more choices" on a phone (core/findmore.ts); "that computer", so no device word replaces it. */
+      whyFindMore: "· on a laptop with Chrome's AI this runs on that computer",
     },
     made: {
       code: "Made by the app's rules on this computer. No AI used.",
@@ -571,6 +586,8 @@ const COPY = {
       sent: (about: string) => `Sent to Google: your question, with any names you listed swapped out, and the app's fixed instructions. Nothing from ${about}.`,
       /** A narrowing step (core/narrow.ts): what went is the question and the choices that did not fit. */
       sentNarrow: (about: string) => `Sent to Google: the question and the choices that did not fit, with any names you listed swapped out, and the app's fixed instructions. Nothing from ${about}, and never the answers they chose.`,
+      /** Phase 14: "Find more choices" before handing over: what went is the question and the choices on the card. */
+      sentFound: (about: string) => `Sent to Google: the question and the choices on the card, with any names you listed swapped out, and the app's fixed instructions. Nothing from ${about}, and never the answers they chose.`,
       maybe: 'Online help was asked and did not answer: your question may have left this computer.',
       voice: 'You spoke this question: its recording went to Google to be typed out.',
     },
@@ -794,6 +811,8 @@ const COPY = {
       narrow: {
         heading: 'Ask online help for other ideas?',
         body: "None of those fitted. Online help is Google's AI: it can suggest other kinds of answer. It sees only this:",
+        /** Phase 14: the same sheet for "Find more choices" before handing over, where nothing was turned down yet. */
+        bodyFound: "Online help is Google's AI: it can suggest other kinds of answer than the ones on the card. It sees only this:",
         plus: 'and the app\'s fixed instructions. Names you listed are swapped first ("Person A").',
         never: (about: string) => `your ${about} lists, photos, the answers they chose.`,
         yes: 'Just this once',

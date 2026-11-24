@@ -455,7 +455,7 @@ describe('simple view: after an answer', () => {
     const cloud = answeredScreen(model({ label: 'something else', out: true, narrow: 'cloudOn', ...W }));
     expect(cloud).toContain('id="narrow" data-act="narrow"');
     // (phase 12b, judge round 9b: online, a phone, it is the second way, after the step the rules make)
-    expect(text(cloud)).toContain('Find more choices (online, after your yes)');
+    expect(text(cloud)).toContain("Find more choices (Google's AI, after your yes)");
     expect(text(cloud)).toContain(S.narrow.cloudOn);
     expect(text(cloud)).not.toContain('The last way, when the others did not find it:');
     expect(cloud.indexOf('id="way-more"')).toBeLessThan(cloud.indexOf('id="narrow"'));

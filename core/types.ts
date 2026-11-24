@@ -157,7 +157,7 @@ export interface Card {
    * from the question and what did not fit. `level` is 1 or 2 (there is no third); `rejected` is every choice that
    * was offered and not taken so far, so the next level does not offer it again.
    */
-  narrow?: { level: number; rejected: string[]; /** 'rules' when the model's choices were more of the same kind and the rules made the card (core/kinds.ts). */ by?: 'rules' };
+  narrow?: { level: number; rejected: string[]; /** 'rules' when the model's choices were more of the same kind and the rules made the card (core/kinds.ts). */ by?: 'rules'; /** Phase 14: asked from the screen before handing over ("Find more choices", core/findmore.ts): `rejected` are the choices that were on the card, not ones the person turned down. */ offered?: true };
   /**
    * A first-letter card (core/letter.ts): the person pointed to the letter their word starts with, and the card offers
    * words that start with it. `by` says who found the words: the rules alone, or a model that added some.
