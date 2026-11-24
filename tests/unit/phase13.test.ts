@@ -154,3 +154,33 @@ describe('A3. Before a doctor visit: an answer that can be urgent stops the run 
     expect(main).toContain('if (visitStops(state.p4.visit)) { state.p4.visit.stopped = true; void kvSet(\'visit\', state.p4.visit); state.picked = null; makeSeq++; resetCard(); state.p4.visitRun = false; state.p4.visitEnd = true; render(); return true; }');
   });
 });
+
+describe('A4. A confirmed worried / scared / anxious / lonely, a "worry", or a yes to "something bothering you" counts as a low or worried mood', () => {
+  it('core/diary.ts, lowMood: every one of them, on the questions where they are given', async () => {
+    const { lowMood } = await import('../../core/diary');
+    for (const [q, l] of [
+      ['Is it good news, or a worry?', 'worry'],
+      ['Is it good news, or a worry?', 'a worry'],
+      ['How are you feeling today?', 'worried'],
+      ['How are you feeling today?', 'scared'],
+      ['How are you feeling today?', 'anxious'],
+      ['How are you feeling today?', 'lonely'],
+      ['How do you feel?', 'worried'],
+      ['Is something bothering you?', 'yes'],
+      ['Is anything worrying you?', 'yes'],
+      ['What worries you most?', 'my body'],
+    ]) expect(lowMood(q, l), `${q} ${l}`).toBe(true);
+    expect(lowMood('Is it good news, or a worry?', 'good news')).toBe(false);
+    expect(lowMood('Is something bothering you?', 'no')).toBe(false);
+  });
+  it('the visit page: never "no low or worried answer entered" after a confirmed "worry"', async () => {
+    const { sinceLines } = await import('../../core/since');
+    const { answerEntry } = await import('../../core/diary');
+    const now = new Date(2026, 10, 23, 18).getTime();
+    const diary = [{ ...answerEntry({ q: 'Is it good news, or a worry?', label: 'worry', at: now - 3600000 }, 'other'), id: 'w1' }];
+    const s = sinceLines(diary as never, null, now);
+    const mood = s.lines.find((l) => l.startsWith('Mood:'))!;
+    expect(mood).toMatch(/^Mood: low or worried on 1 day/);
+    expect(s.lines.join(' ')).not.toContain('no low or worried answer entered');
+  });
+});

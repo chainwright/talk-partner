@@ -159,9 +159,11 @@ const DRINK = /^(?:tea|coffee|water|juice|milk|a drink|drink|squash|cocoa|hot ch
 const SWEET = /\b(?:sweet|sweets|biscuit|biscuits|cake|chocolate|ice cream|pudding|dessert|candy|cookie|cookies|jam|honey|toffee|doughnut|pastry|pie)\b/;
 /** Phase 8 (judge round 7): every feelings question counts, not only "How are you feeling today?"; and "low" counts. */
 export const LOW_MOOD_Q = /^how (?:are you|have you been|do you) feel(?:ing)?\b/;
-export const LOW_MOOD = /^(?:sad|bad|low|down|very low|worried|scared|afraid|frightened|anxious|nervous|lonely|upset|fed up|hopeless|missing someone|i can't go on)$/;
+// (phase 13, judge round 10: a confirmed "worry" to "Is it good news, or a worry?" left the visit page saying "no low or
+// worried answer entered"; "a worry", "worry" and "worrying" now count, on that question too)
+export const LOW_MOOD = /^(?:sad|bad|low|down|very low|worried|worry|a worry|worrying|scared|afraid|frightened|anxious|nervous|lonely|upset|fed up|hopeless|missing someone|i can't go on)$/;
 /** Phase 12 (judge round 9, a health P0): a question that asks what is wrong in the person's mind, not how they feel. */
-const BOTHER_Q = /\b(?:bothering|worried|worrying|worries|upset|the matter|on your mind)\b/;
+const BOTHER_Q = /\b(?:bothering|worried|worry|worrying|worries|upset|the matter|on your mind)\b/;
 const NOT_A_WORRY = /^(?:no|nothing|nothing much|not sure|something else|someone else|somewhere else)$/;
 /**
  * A low-mood answer (phase 12, judge round 9, a health P0: until now only "sad", "bad", "low" and "down" to a "how do
