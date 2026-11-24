@@ -37,10 +37,12 @@ const env = (engine: Engine, profile: Profile, o: { allowCloud?: boolean; device
 const labels = (c: { choices: { label: string; role: string }[] }) => c.choices.filter((x) => x.role === 'answer').map((x) => x.label);
 
 describe('the brief\'s case: "B" with Beth, Bo and biscuits in About them', () => {
+  // (phase 17, the owner's phone test: the first letter stays inside the topic. After "tea or coffee?" B gives the
+  // family's biscuits first, then food and drink words; Beth and Bo come for a question about people, or with no topic.)
   it('gives those three, in that order, by rules alone: no model is called, on any device', async () => {
     for (const o of [{}, { deviceReady: true }, { allowCloud: true }, { deviceReady: true, allowCloud: true }]) {
       const e = new Fake(true, { device: ['banana', 'bread'], cloud: ['banana', 'bread'] });
-      const card = await letterCard({ asked: 'Would you like tea or coffee?', letter: 'B', rejected: ['tea', 'coffee'] }, env(e, MILLER, o));
+      const card = await letterCard({ asked: '', letter: 'B', rejected: [] }, env(e, MILLER, o));
       expect(labels(card)).toEqual(['Beth', 'Bo', 'biscuits']);
       expect(card.choices.at(-1)).toMatchObject({ label: 'something else', role: 'escape' });
       expect(e.device).toEqual([]);
@@ -64,17 +66,19 @@ describe('the brief\'s case: "B" with Beth, Bo and biscuits in About them', () =
     // the role-play's About them (18 Nov): foods "strong tea with milk, porridge, ginger biscuits", no dog
     const carol: Profile = { ...MILLER, foods: ['strong tea with milk', 'porridge', 'ginger biscuits'], other: [] };
     const card = await letterCard({ asked: 'Would you like tea or coffee?', letter: 'B', rejected: ['tea', 'coffee'] }, env(new Fake(false), carol));
-    expect(labels(card)).toEqual(['Beth', 'biscuits (ginger)', 'bed']);
+    expect(labels(card)).toEqual(['biscuits (ginger)', 'bread', 'banana']);
     for (const l of labels(card)) expect(l.toLowerCase().startsWith('b'), l).toBe(true);
-    expect(card.choices[1].spoken).toBe('ginger biscuits');
-    expect(card.say).toBe('It starts with B. Is it Beth, ginger biscuits, bed, or something else?');
-    expect(card.why?.personal).toEqual(['Beth', 'ginger biscuits']);
-    expect(letterEnd(card.choices[1].spoken).end).toBe('The word is: ginger biscuits. Ask a yes or no question about it next.');
+    expect(card.choices[0].spoken).toBe('ginger biscuits');
+    expect(card.say).toBe('It starts with B. Is it ginger biscuits, bread, banana, or something else?');
+    expect(card.why?.personal).toEqual(['ginger biscuits']);
+    expect(letterEnd(card.choices[0].spoken).end).toBe('The word is: ginger biscuits. Ask a yes or no question about it next.');
   });
   it('the kind of the conversation first, then people, then the rest: after "tea or coffee?" a drink stands before a person', () => {
     const p: Profile = { ...MILLER, people: [...MILLER.people, { id: 'p4', name: 'Mary', relation: 'sister', household: false }], foods: ['strong tea with milk', 'marmalade', 'porridge'] };
     // drinks with M: the everyday "milk" and the family's "strong tea with milk"; then Mary; then the rest
-    expect(letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p).slice(0, 4)).toEqual(['strong tea with milk', 'milk', 'Mary', 'marmalade']);
+    // (phase 17: inside the topic: the drink first, then the foods; Mary only after the topic's words)
+    expect(letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p).slice(0, 2)).toEqual(['strong tea with milk', 'marmalade']);
+    expect(letterWords({ asked: 'Would you like tea or coffee?', letter: 'M', rejected: ['tea', 'coffee'] }, p).slice(0, 5)).not.toContain('Mary');
     // with no kind known: people first, then the rest in About-them order
     expect(letterWords({ asked: '', letter: 'M', rejected: [] }, p).slice(0, 3)).toEqual(['Mary', 'marmalade', 'strong tea with milk']);
     // a question about food ranks the family's foods before a person

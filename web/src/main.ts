@@ -23,7 +23,7 @@ import { aiPlace } from '../../core/simple';
 import { findMoreOffer } from '../../core/findmore';
 import { daySummary, rulesSummary, todays, type DaySummary } from '../../core/summary';
 import { asksWho, awayNames, callQuestion, followUps, nextInTopic, topics, type TopicId } from '../../core/topics';
-import { after } from '../../core/tree';
+import { after, typedStep } from '../../core/tree';
 import { NOTHING_FORGOTTEN, checkedSummary, forgetAll, forgetOne, keepOne, learned, learnedPrompt, shortcut, usual, usualFirst, usualHint, type Forgotten, type Need } from '../../core/prefs';
 import { spokenLine } from '../../core/rules';
 import { START_FRAME, addPhoto as addOwnPhoto, clampFrame, cleanWord, photoFor, removePhoto, type Frame, type Photo } from '../../core/photos';
@@ -52,7 +52,7 @@ import { LETTER_CLOUD_TASK, letterCard, letterEnd, type LetterInput } from '../.
 import { checkedThings, photoEnd, photoQuestions, photoTalkCard, thingsQuestion, type PhotoQuestion } from '../../core/phototalk';
 import { BODY_FIRST, FEEL_QUESTION, aboutCard, laterQuestion, menuTopic, starterOf, talkLead, talkMenu, talkPick, turnCard, turnLead, type Starter, type TalkPick } from '../../core/turn';
 import { nextVisit, visitAlert, visitCard, visitLabel, visitStops, visitText, type VisitRecord } from '../../core/visit';
-import { letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
+import { letterAddButton, letterBy, letterButton, letterGrid, letterMoreButton, letterSheet, p4Links, photoTalkScreen, turnButton, turnLine, visitDone, visitScreen } from './phase4';
 import { P5 } from '../../core/copy5';
 import { FALL_HEAD } from '../../core/diary';
 import { GUARD_TOPICS } from '../../core/reliability';
@@ -231,7 +231,7 @@ interface State {
 }
 interface P4State {
   /** The alphabet is on the person's screen: the question it is for, what was refused so far, the question's topic. */
-  letter: { asked: string; rejected: string[]; topic: string | null } | null;
+  letter: { asked: string; rejected: string[]; topic: string | null; /** Phase 17: the letters pointed to so far; the next one is added to them. */ prefix?: string } | null;
   /** "No, I don't know" was pointed to: one line on the carer's screen says that is fine. Nothing is counted. */
   letterNo: boolean;
   /** The letter step being made, or waiting for a yes on the sheet. */
@@ -1617,7 +1617,7 @@ function personScreen(): string {
   const P = C.simple.person;
   const hold = `<button type="button" id="exit" class="hold" title="${P.holdTitle}"><i aria-hidden="true"></i>${P.hold}</button>`;
   // the alphabet of the first-letter helper, and the end of the doctor-visit questions (web/src/phase4.ts)
-  if (simpleView() && state.p4.letter) return `<main class="person full pv letters" id="person" aria-label="For the person" data-kind="letters">${letterGrid({ holdHtml: hold })}</main>`;
+  if (simpleView() && state.p4.letter) return `<main class="person full pv letters" id="person" aria-label="For the person" data-kind="letters">${letterGrid({ holdHtml: hold, prefix: state.p4.letter.prefix ?? '' })}</main>`;
   if (simpleView() && state.p4.visitEnd) return `<main class="person full pv" id="person" aria-label="For the person" data-kind="visit-end">${visitDone()}</main>`;
   // a question about a family photo shows that photo over the question (on this device only; it is in no request)
   const talkPhoto = state.card?.photoTalk && !state.picked ? state.photos.find((x) => x.id === state.p4.talk?.id) : null;
@@ -1918,7 +1918,11 @@ function treeStep(c: Card, p: Choice, out: boolean): { follow: string[]; end: st
   if (ownStep) return ownStep;
   const step = after(c, p.label, state.profile, state.chain.length ? state.chain : [c.asked], callNumber(), p5.red ?? redPlace(c.asked, p.label));
   if (step.next.length || step.end) return { follow: step.next, end: step.end, ...(step.alert ? { alert: step.alert } : {}) };
-  return { follow: out || p.role !== 'answer' ? [] : followUps(c, p.label, state.profile), end: '' };
+  const fu = out || p.role !== 'answer' ? [] : followUps(c, p.label, state.profile);
+  // (phase 17, the owner's phone test: a yes to a typed "want something?" ended on "Ask another question")
+  const typed = !out && !fu.length && c.kind === 'yesno' ? typedStep(c.asked, p.label, state.profile) : null;
+  if (typed) return { follow: typed.next.filter((q) => !state.chain.includes(q)), end: typed.end };
+  return { follow: fu, end: '' };
 }
 
 function simpleScreen(): string {
@@ -1955,7 +1959,7 @@ function simpleScreen(): string {
       // (phase 17, judge round 12, P1: two stacked call boxes with different words after a chest pain: one, the alert's)
       neutral: neutralAnswer(c, p),
       leadHtml: `${!alertHtml && (p5.urgent || urgentAnswer(c.asked, p.label)) ? urgentBox(callNumber(), 'urgent', numberGuess(), p5.signNow || signNow(c.asked, p.label)) : ''}${voiceFailedHtml()}${chipBlock(routeChip(c, aboutName()))}${lowMoodAnswer(c.asked, p.label) && !crisisAnswer(p.label) ? lowHelpLine(state.profile.personName.trim(), crisisLineNow(), callNumber()) : ''}${turnHtml()}`,
-      outExtra: !out ? '' : c.letter ? `${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
+      outExtra: !out ? '' : c.letter ? `${c.letter.letter.length < 6 ? letterAddButton(c.letter.letter) : ''}${letterMoreButton(c.letter.letter)}${letterButton(name, true)}` : letterButton(name),
       // after the way out: the ways to find out what it is, in the rules' order; a step the rules make comes first
       ...(out ? (() => { const ways = outWays(c, state.profile, careTopic(c)); const subject = c.more?.subject ?? moreSubject(c.asked, shownOn(c)); return { ways, moreFirst: subject && ways[0] === 'more' ? moreChoices(subject, shownOn(c), state.profile).slice(0, 3) : [], keepLead: !!c.turn }; })() : {}),
     });
@@ -2050,6 +2054,8 @@ async function runLetter(i: LetterInput) {
   const once = p5.once; p5.once = false;
   state.busy = true; state.error = null; resetCard(); render();
   if (state.device === 'checking') await refreshDevice().catch(() => { state.device = 'unavailable'; });
+  // (phase 17) a question about a health matter: the rules' words only, never a model's (the guard of core/ownwords.ts)
+  if (healthOf(i.asked)) i = { ...i, rulesOnly: true };
   const card = await letterCard(i, { profile: state.profile, support: state.settings.support, engine: state.engine, allowCloud: state.settings.cloudHelp || once, deviceReady: state.device === 'available', routing: routing() });
   state.made.push(card);
   if (seq !== makeSeq) return;
@@ -2577,7 +2583,7 @@ function onPersonTap(t: HTMLElement) {
     return;
   }
   // the alphabet: a letter leads to its words; "No, I don't know" goes back to the carer, and nothing is counted
-  if (t.dataset.letter && state.p4.letter) { const l = state.p4.letter; t.classList.add('pressed'); setTimeout(() => { void runLetter({ asked: l.asked, letter: t.dataset.letter!, rejected: l.rejected, topic: l.topic, learned: learnedWords() }); }, 180); return; }
+  if (t.dataset.letter && state.p4.letter) { const l = state.p4.letter; t.classList.add('pressed'); setTimeout(() => { void runLetter({ asked: l.asked, letter: `${l.prefix ?? ''}${t.dataset.letter!}`, rejected: l.rejected, topic: l.topic, learned: learnedWords() }); }, 180); return; }
   if (t.dataset.letterNo && state.p4.letter) { state.p4.letter = null; state.p4.letterNo = true; makeSeq++; state.busy = false; resetCard(); lift = true; go(''); return; }
   const c = state.card;
   if (t.dataset.confirm === 'recap-yes') { state.recap = false; state.recapDone = true; render(); return; }
@@ -2752,6 +2758,15 @@ function act(el: HTMLElement) {
       const asked = c?.letter ? state.p4.letterPending?.asked ?? '' : of && of.kind !== 'needs' && !of.turn ? of.asked : '';
       const rejected = c?.letter ? [...c.letter.rejected, ...shown(c)] : [...(of?.narrow?.rejected ?? []), ...shown(of)];
       state.p4.letter = { asked, rejected: rejected.filter((x, k, all) => all.indexOf(x) === k), topic: topicOf(state.chain[0] ?? asked, state.profile)?.id ?? null };
+      state.p4.letterNo = false; lift = true; go('person');
+      break;
+    }
+    // (phase 17) the next letter: the same question, topic and refused words; the letters so far stay on the screen
+    case 'letter-add': {
+      const c = state.card; const i = state.p4.letterPending;
+      if (!c?.letter || !i) break;
+      const shownL = c.choices.filter((y) => y.role === 'answer').map((y) => y.spoken);
+      state.p4.letter = { asked: i.asked, rejected: [...i.rejected, ...shownL].filter((x, k, all) => all.indexOf(x) === k), topic: i.topic ?? null, prefix: c.letter.letter };
       state.p4.letterNo = false; lift = true; go('person');
       break;
     }

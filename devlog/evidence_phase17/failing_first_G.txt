@@ -1,0 +1,13 @@
+# failing first: tests/unit/phase17g.test.ts run against main (4405af8) before the phase 17 code, 2026-11-24T12:56Z
+     × "I would like to something?" yes, and "Do you want anything?" not sure: next "Is it about food or drink, people, or plans?" 13ms
+     × Food & drink, P: pizza, pasta, potatoes, pie; never pain, priest or photos 5ms
+     × the topic also comes from the question when the caller has none ("tea or coffee?" then P: no pain) 3ms
+     × the same flow with I keeps the topic as well: ice cream, iced tea 1ms
+     × the rules filter the topic's words by the letters so far: P, PI, PIZ 0ms
+     × two letters or more: the AI is asked with the topic and the letters (on this device), its words first, every word starts with the letters 5ms
+     × online after the yes: the cloud text holds the question with names swapped, the letters and the topic, nothing else 7ms
+     × without an AI the rules alone give the card; on the body or a health question no model is ever asked 1ms
+     × the screens: "Add the next letter" on the letter card's way out; the alphabet shows the letters so far 90ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  9 failed (9)

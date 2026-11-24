@@ -26,14 +26,17 @@ const CLIP = sign('<rect x="20" y="16" width="56" height="70" rx="8"/><rect x="3
  * target; the way out ("No, I don't know") is the wide button at the end of the last row. The one screen with more
  * than three choices beside the quick-needs board; it fits a 390 x 844 phone without scrolling (styles: .abc).
  */
-export function letterGrid(o: { holdHtml: string }): string {
+export function letterGrid(o: { holdHtml: string; prefix?: string }): string {
   const L = P4.letter;
-  return `${o.holdHtml}<p class="p-do" id="abc-ask">${L.ask}</p><p class="p-ask">${L.point}</p>
+  const pre = (o.prefix ?? '').toUpperCase();
+  return `${o.holdHtml}<p class="p-do" id="abc-ask"${pre ? ` data-prefix="${esc(pre)}"` : ''}>${esc(pre ? L.askMore(pre) : L.ask)}</p><p class="p-ask">${pre ? L.pointMore : L.point}</p>
   <div class="abc" id="abc" role="group" aria-labelledby="abc-ask">${LETTERS.map((x) => `<button type="button" class="ab" data-letter="${x}">${x}</button>`).join('')}<button type="button" class="ab ab-no" id="abc-no" data-letter-no="1">${L.no}</button></div>`;
 }
 
 /** The carer's button that opens the alphabet (after "something else", and on the "We're stuck" card). */
 export const letterButton = (name: string, again = false) => `<button type="button" class="btn letter-go" id="letter-go" data-act="letter">${ABC}<span><b>${again ? P4.letter.again : P4.letter.go}</b>${again ? '' : `<small>${esc(P4.letter.goSub(name))}</small>`}</span></button>`;
+/** Phase 17: one more letter after the ones pointed to so far: the guess narrows (core/letter.ts). */
+export const letterAddButton = (letter: string) => `<button type="button" class="btn" id="letter-add" data-act="letter-add">${esc(P4.letter.add(letter))}</button>`;
 export const letterMoreButton = (letter: string) => `<button type="button" class="btn" id="letter-more" data-act="letter-more">${esc(P4.letter.more(letter))}</button>`;
 /** Who found the words of a first-letter card, under the card on the carer's screen. */
 export const letterBy = (by: 'rules' | 'device' | 'cloud') => `<p class="ai-made" id="letter-by" data-by="${by}">${by === 'rules' ? SIGN.lock : SIGN.spark}<span>${by === 'rules' ? P4.letter.byRules : by === 'device' ? P4.letter.byDevice : P4.letter.byCloud}</span></p>`;

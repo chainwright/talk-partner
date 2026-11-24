@@ -21,6 +21,10 @@ export const P4 = {
     goSub: (name: string) => `${They(name)} can point to the letter the word starts with.`,
     again: 'Try another letter',
     more: (letter: string) => `More words that start with ${letter}`,
+    /** Phase 17 (the owner's test, 24 Nov): one more letter narrows the guess, letter by letter. */
+    add: (letter: string) => `Add the next letter (${letter}…)`,
+    askMore: (letters: string) => `It starts with ${letters}. Do you know the next letter?`,
+    pointMore: 'Point to the next letter',
     noLetter: (name: string) => `No first letter this time. That is fine: many people cannot tell the first letter. Ask ${them(name)} to show you instead.`,
     end: (word: string) => `The word is: ${word}. Ask a yes or no question about it next.`,
     care: {

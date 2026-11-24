@@ -42,7 +42,27 @@ export interface LetterInput {
   learned?: string[];
   /** The topic of the question ('food', 'people' …), when it is one of the app's own: its everyday words come first. */
   topic?: string | null;
+  /** Phase 17: the question is about a health matter (the caller reads core/redflag.ts): no model adds a word. */
+  rulesOnly?: boolean;
 }
+
+/**
+ * Phase 17 (the owner's own test on his phone, 24 Nov 2026: Food & drink, "something else", the first letter P gave
+ * "pain, priest, photos", the words of other topics): the words of a topic, for the first letter and for the letters
+ * after it. The rules stay inside the topic when it is known; a word of another topic is never offered for it.
+ */
+export const TOPIC_WORDS: Record<string, string[]> = {
+  // (the commonest words first: three fit on a card)
+  food: ['tea', 'coffee', 'water', 'juice', 'milk', 'sandwich', 'soup', 'toast', 'bread', 'cheese', 'chicken', 'pizza', 'pasta', 'potatoes', 'pie', 'eggs', 'fish', 'rice', 'cake', 'biscuits', 'chocolate', 'ice cream', 'fruit', 'apple', 'banana', 'salad', 'vegetables', 'porridge', 'cereal', 'yoghurt', 'ham', 'bacon', 'beans', 'butter', 'carrots', 'chips', 'crisps', 'custard', 'grapes', 'gravy', 'honey', 'hot chocolate', 'iced tea', 'jam', 'jelly', 'lamb', 'lemonade', 'melon', 'muffin', 'mushrooms', 'noodles', 'nuts', 'oatmeal', 'omelette', 'onions', 'orange juice', 'oranges', 'pancakes', 'peas', 'pears', 'pudding', 'quiche', 'raisins', 'roast beef', 'sausages', 'scone', 'spaghetti', 'strawberries', 'sweets', 'tomatoes', 'tuna', 'waffles', 'cocoa'],
+  plans: ['bakery', 'bank', 'beach', 'cafe', 'church', 'garden', 'hairdresser', 'library', 'lake', 'market', 'park', 'post office', 'river', 'shop', 'town', 'walk', 'drive', 'exercises', 'kitchen', 'bedroom', 'porch'],
+  people: ['family', 'friend', 'neighbour', 'visitor', 'carer', 'priest', 'brother', 'sister', 'son', 'daughter', 'wife', 'husband', 'grandchild', 'grandson', 'granddaughter', 'mother', 'father', 'aunt', 'uncle', 'cousin', 'doctor', 'nurse', 'physio', 'speech therapist'],
+  fun: ['tv', 'music', 'news', 'film', 'radio', 'paper', 'puzzle', 'cards', 'crossword', 'quiz show', 'football', 'golf', 'gardening', 'photos', 'book', 'bingo', 'painting', 'piano'],
+  rest: ['bed', 'chair', 'quiet', 'nap', 'pillow', 'blanket', 'sofa', 'sleep'],
+  body: ['toilet', 'glasses', 'hearing aid', 'wash', 'pain', 'doctor', 'nurse', 'bath', 'shower', 'teeth', 'blanket'],
+  feel: ['tired', 'worried', 'company', 'happy', 'sad', 'lonely', 'bored', 'scared'],
+};
+/** Phase 17: topics whose words are about the body or feelings: a model never adds a word there (the health guard). */
+export const NO_MODEL_TOPICS = ['body', 'feel'];
 
 /** The everyday words this app has a drawing for, by topic. */
 export const EVERYDAY: Record<string, string[]> = {
@@ -108,13 +128,33 @@ function ofKind(word: string, kind: Subject, profile: Profile): boolean {
 export function letterWords(i: LetterInput, profile: Profile): string[] {
   const gone = new Set(i.rejected.map(lc));
   const own = ownWords(profile, i.learned);
-  const every = [...(i.topic && EVERYDAY[i.topic] ? EVERYDAY[i.topic] : []), ...Object.values(EVERYDAY).flat()];
-  const ordered = [...own.filter((w) => startsWith(w, i.letter)), ...own.filter((w) => !startsWith(w, i.letter) && holds(w, i.letter)), ...every.filter((w) => startsWith(w, i.letter))]
-    .filter((w, k, xs) => !gone.has(lc(w)) && xs.findIndex((x) => lc(x) === lc(w)) === k);
+  // (phase 17) the topic of the conversation: by the caller's topic, else by what the question is about
   const kind = subjectOf(i.asked, i.rejected);
+  const topic = letterTopic(i.topic ?? null, kind);
+  const every = topic ? TOPIC_WORDS[topic] : Object.values(EVERYDAY).flat();
+  // inside a known topic, About them's words of another kind come after the topic's own (never before them)
+  const inTopic = (w: string) => !topic || topic === 'people' || (kind && kind !== 'people' ? ofKind(w, kind, profile) : false) || TOPIC_WORDS[topic].some((x) => lc(x) === lc(w)) || (topic === 'food' && profile.foods.some((x) => lc(x) === lc(w))) || (topic === 'plans' && profile.places.some((x) => lc(x) === lc(w))) || (topic === 'fun' && [...profile.tv, ...profile.music].some((x) => lc(x) === lc(w)));
+  const starts = own.filter((w) => startsWith(w, i.letter));
+  const later = own.filter((w) => !startsWith(w, i.letter) && holds(w, i.letter));
+  const ordered = [...starts.filter(inTopic), ...later.filter(inTopic), ...every.filter((w) => startsWith(w, i.letter)), ...(topic ? [...starts, ...later].filter((w) => !inTopic(w)) : [])]
+    .filter((w, k, xs) => !gone.has(lc(w)) && xs.findIndex((x) => lc(x) === lc(w)) === k)
+    // a topic word the family's own words already hold ("biscuits" beside "ginger biscuits") is not offered twice
+    .filter((w, _k, xs) => !TOPIC_WORDS[topic ?? '']?.includes(w) || !xs.some((x) => x !== w && bare(x).split(/\s+/).includes(lc(w))));
+  if (topic) {
+    // inside the topic, the kind the question is about first ("tea or coffee?": a drink before a food)
+    const first = (w: string) => (kind && kind !== 'people' && ofKind(w, kind, profile) ? 0 : 1);
+    return ordered.map((w, k) => ({ w, k })).sort((x, y) => first(x.w) - first(y.w) || x.k - y.k).map((x) => x.w);
+  }
   const people = new Set(profile.people.flatMap((p) => [lc(p.name), lc(p.nickname ?? '')]).filter(Boolean));
   const rank = (w: string) => (kind && kind !== 'people' && ofKind(w, kind, profile) ? 0 : people.has(lc(w)) ? 1 : 2);
   return ordered.map((w, k) => ({ w, k, r: rank(w) })).sort((x, y) => x.r - y.r || x.k - y.k).map((x) => x.w);
+}
+
+/** Phase 17: the topic of a letter step: the caller's topic, else the kind of thing the question is about (core/kinds.ts). */
+const KIND_TOPIC: Record<string, string> = { food: 'food', drink: 'food', place: 'plans', activity: 'fun', people: 'people' };
+export function letterTopic(topic: string | null, kind: string | null | undefined): string | null {
+  if (topic && TOPIC_WORDS[topic]) return topic;
+  return kind && KIND_TOPIC[kind] ? KIND_TOPIC[kind] : null;
 }
 
 /** What a model may not bring onto a card by itself. */
@@ -146,10 +186,17 @@ export const LETTER_TASK = 'Give two or three everyday things, people by role, o
 /** Phase 9: the cloud step's own task: exactly 4 words (its schema holds 4); code keeps those that start with the letter. */
 export const LETTER_CLOUD_TASK = 'Give exactly 4 everyday words that start with that letter and could be the answer. One or two words each, in lower case. No names of people.';
 /** The text online help gets: the question, About-them words swapped out, and the letter. Nothing else. */
-export function letterCloudText(asked: string, letter: string, profile: Profile): { text: string; map: Record<string, string> } {
+export function letterCloudText(asked: string, letter: string, profile: Profile, topic: string | null = null): { text: string; map: Record<string, string> } {
   const s = asked.trim() ? stripQuestion(asked, profile) : { text: '', map: {} };
-  return { text: `${s.text ? `${s.text} ` : ''}They cannot say the word. It starts with the letter "${letter.toUpperCase()}". ${letterContext(subjectOf(asked, []))} ${LETTER_CLOUD_TASK}`, map: s.map };
+  return { text: `${s.text ? `${s.text} ` : ''}They cannot say the word. ${startsLine(letter)} ${topicLine(topic, subjectOf(asked, []))}${letterContext(subjectOf(asked, []))} ${letter.length > 1 ? LETTER_CLOUD_TASK_MORE : LETTER_CLOUD_TASK}`, map: s.map };
 }
+/** Phase 17: one letter, or the letters pointed to so far ("It starts with the letters P, I."). */
+const startsLine = (letter: string) => (letter.length > 1 ? `It starts with the letters "${letter.toUpperCase()}", in this order.` : `It starts with the letter "${letter.toUpperCase()}".`);
+const TOPIC_NAMES: Record<string, string> = { food: 'food and drink', plans: 'places and plans', people: 'people', fun: 'TV, music and hobbies', rest: 'rest and sleep' };
+/** Phase 17: the topic of the conversation, when the app knows it and the kind of thing does not already say it. */
+const topicLine = (topic: string | null, kind: string | null | undefined) => (topic && TOPIC_NAMES[topic] && !kind ? `The topic is ${TOPIC_NAMES[topic]}. ` : '');
+/** Phase 17: the cloud step's task for two letters or more. */
+export const LETTER_CLOUD_TASK_MORE = 'Give exactly 4 everyday words that start with those letters and could be the answer. One or two words each, in lower case. No names of people.';
 /**
  * Phase 9: the words of a letter answer: `{"kind", "words"}` from the letter step's own schema, or a card's
  * `{"choices"}` from an engine without it. Anything else gives none.
@@ -163,7 +210,8 @@ export function letterWordsOf(text: string): string[] {
 }
 /** The text the on-device step gets. It holds what did not fit and the learned words: it never goes to the cloud step. */
 export function letterDeviceAsk(i: LetterInput): string {
-  return `${i.asked.trim() ? `${i.asked.trim()} ` : ''}${i.rejected.length ? `They did not want: ${i.rejected.join(', ')}. ` : ''}They cannot say the word. It starts with the letter "${i.letter.toUpperCase()}". ${letterContext(subjectOf(i.asked, i.rejected))} ${LETTER_TASK}${i.learned?.length ? ` Usual answers on this device (hints only): ${i.learned.slice(0, 6).join(', ')}.` : ''}`;
+  const kind = subjectOf(i.asked, i.rejected);
+  return `${i.asked.trim() ? `${i.asked.trim()} ` : ''}${i.rejected.length ? `They did not want: ${i.rejected.join(', ')}. ` : ''}They cannot say the word. ${startsLine(i.letter)} ${topicLine(letterTopic(i.topic ?? null, kind), kind)}${letterContext(kind)} ${i.letter.length > 1 ? LETTER_TASK.replace('start with that letter', 'start with those letters') : LETTER_TASK}${i.learned?.length ? ` Usual answers on this device (hints only): ${i.learned.slice(0, 6).join(', ')}.` : ''}`;
 }
 
 /**
@@ -218,8 +266,16 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
     why: { proposed: null, decided: L.why, kept: [], added: [], dropped: [], headline: 'the question' }, ...extra,
   });
 
-  // 1. the rules alone, when they find two words or more
-  if (rules.length >= 2) return make(rules, 'rules', 'code', 0, null, []);
+  // (phase 17) two letters or more: the letters narrow the guess, and the AI is asked for it (on this device, or online
+  // after the carer's yes); its words come first, the rules' fill up. Never on the body or feelings, never for a
+  // question about health (the guard of core/ownwords.ts): the rules only, there.
+  const multi = letter.length > 1;
+  const kind = subjectOf(i.asked, i.rejected);
+  const noModel = NO_MODEL_TOPICS.includes(letterTopic(i.topic ?? null, kind) ?? '') || kind === 'feeling' || kind === 'comfort' || !!i.rulesOnly;
+  const merge = (kept: string[]) => (multi ? [...kept, ...rules.filter((x) => !kept.some((k) => lc(k) === lc(x)))] : [...rules, ...kept.filter((k) => !rules.some((x) => lc(x) === lc(k)))]);
+  if (noModel) return rules.length ? make(rules, 'rules', 'code', 0, null, []) : none(L.noneAi(letter));
+  // 1. the rules alone, when they find two words or more (one letter), or when no AI can be asked (two letters or more)
+  if (rules.length >= 2 && (!multi || (!env.deviceReady && !(env.allowCloud && engine.cloudConfigured)))) return make(rules, 'rules', 'code', 0, null, []);
 
   // 2. on this device, where the browser has the model: About them and what did not fit are in this prompt
   if (env.deviceReady) {
@@ -228,7 +284,7 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
       trace.push(T('private', r.source, 'got the question, the letter, what did not fit and the About me lists', false, r.ms));
       const o = parseModelOutput(r.text);
       const { kept, dropped } = letterChoices(o?.choices ?? [], i, profile);
-      const words = [...rules, ...kept.filter((k) => !rules.some((x) => lc(x) === lc(k)))];
+      const words = merge(kept);
       if (kept.length && words.length >= 1) return make(words, 'device', r.source, r.ms, o?.choices ?? [], dropped);
     } catch (e) {
       trace.push(T('private', 'failed', (e as Error).message));
@@ -239,7 +295,7 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
   trace.push(T('private', 'skipped', 'the private helper is not ready on this computer'));
 
   // 3. online help, only after the carer's yes: the question (About-them words swapped out) and the letter
-  const stripped = letterCloudText(i.asked, letter, profile);
+  const stripped = letterCloudText(i.asked, letter, profile, letterTopic(i.topic ?? null, kind));
   const preview = JSON.stringify(engine.letterRequest ? engine.letterRequest(stripped.text) : engine.cloudRequest(stripped.text), null, 2);
   const swaps = Object.entries(stripped.map).map(([k, v]) => `${v} → ${k}`);
   const orRules = (blocked: string, extra: Partial<Card> = {}) => (rules.length ? make(rules, 'rules', 'code', 0, null, [], extra.cloudAttempted ? extra : {}) : none(blocked, extra));
@@ -254,7 +310,7 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
     // (phase 9) the 4 words of the letter step's own schema; code keeps those that start with the letter (letterChoices)
     const proposed = letterWordsOf(r.text).map((c) => restoreNames(c, stripped.map));
     const { kept, dropped } = letterChoices(proposed, i, profile);
-    const words = [...rules, ...kept.filter((k) => !rules.some((x) => lc(x) === lc(k)))];
+    const words = merge(kept);
     if (words.length) return make(words, kept.length ? 'cloud' : 'rules', kept.length ? r.source : 'code', r.ms, proposed, dropped, left);
     return none(L.noneAi(letter), left);
   } catch (e) {

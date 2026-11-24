@@ -523,3 +523,19 @@ export const treeEnds = (name: string) => Object.entries(TREE).flatMap(([q, node
 export const TREE_QUESTIONS = Object.keys(TREE);
 /** The size of the table: questions, and answers with a step. */
 export const treeSize = () => ({ questions: Object.keys(TREE).length, answers: Object.values(TREE).reduce((n, node) => n + Object.keys(node).length, 0) });
+
+/**
+ * Phase 17 (the owner's own test on his phone, 24 Nov 2026: "I would like to something?" typed in "Ask in your own
+ * words", then Yes, ended on a green tick and "Ask another question"). A yes or a "not sure" to a typed question about
+ * wanting, needing or liking something is not an end: it goes on to what it is, one topic at a time ("Is it about food
+ * or drink, people, or plans?", a card the rules make), and the end line says so. Null for any other answer or question.
+ */
+export const WHAT_TOPIC = 'Is it about food or drink, people, or plans?';
+const WANTS = /\b(?:want|wants|wanted|like|would like|need|needs|wish|fancy|fancies|after|looking for|something|anything)\b/i;
+export function typedStep(asked: string, label: string, profile: Profile = EMPTY_PROFILE): Step | null {
+  const l = key(label);
+  if (l !== 'yes' && l !== 'not sure') return null;
+  if (!WANTS.test(asked) || /\bor\b/i.test(asked)) return null;
+  const name = profile.personName.trim();
+  return { next: [WHAT_TOPIC], end: `${name || 'They'} ${l === 'yes' ? 'said yes' : 'are not sure'}: find out what it is. Ask one topic at a time, and let ${name || 'them'} point.` };
+}

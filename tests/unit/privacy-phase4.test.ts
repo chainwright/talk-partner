@@ -29,7 +29,9 @@ describe('what the new modules can reach', () => {
   });
   it('the cloud text of the letter step is made from the question and the letter alone: its function takes nothing else', () => {
     const src = read('core/letter.ts');
-    expect(src).toContain('export function letterCloudText(asked: string, letter: string, profile: Profile)');
+    // (phase 17: and the app's own topic name, a fixed word such as "food and drink": nothing of the family)
+    expect(src).toContain('export function letterCloudText(asked: string, letter: string, profile: Profile, topic: string | null = null)');
+    expect(src).toMatch(/const TOPIC_NAMES: Record<string, string> = \{ food: 'food and drink'/);
     const fn = src.slice(src.indexOf('export function letterCloudText('), src.indexOf('/** The text the on-device step gets.'));
     expect(fn).not.toMatch(/rejected|learned|ownWords|EVERYDAY/);
     expect(fn).toContain('stripQuestion(asked, profile)');
