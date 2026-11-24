@@ -288,7 +288,7 @@ try {
     const f = join(OUT, `${stem}_${kind}.md`);
     const rep = report(`Labelled set (first run 16 Nov 2026; ${HELD}), the real app ${CLOUD ? 'with online help on, in a fresh profile with no on-device model (PREFER_IN_CLOUD)' : 'with the on-device model (cloud help off)'}`, rows, true, [`- browser: ${version}, ${CLOUD ? `started by this script with a throwaway profile (${process.env.HEADED === '1' ? 'a normal window' : 'headless'})` : `attached on port ${PORT}`}; status line: "${status}"`, `- app: ${URL_} (${/^https?:\/\/(?:localhost|127\.0\.0\.1)[:/]/.test(URL_) ? 'the dev server of this commit' : 'a hosted copy, not a dev server: the commit above is this checkout\'s; which build the host serves is in the README'}), judge mode`]);
     writeFileSync(f, rep.text);
-    writeFileSync(join(OUT, `${stem}_${kind}.json`), `${JSON.stringify(rows.map((r) => ({ id: r.item.id, q: r.item.q, type: r.item.type, ok: r.ok, okWithSealedLabel: r.sealedOk, why: r.why, ...r.obs })), null, 1)}\n`);
+    writeFileSync(join(OUT, `${stem}_${kind}.json`), `${JSON.stringify(rows.map((r) => ({ id: r.item.id, q: r.item.q, type: r.item.type, ok: r.ok, okWithSealedLabel: r.sealedOk, why: r.why, ...r.obs, outside: undefined, outsideHosts: r.obs.outside.length })), null, 1)}\n`); // (the host names are in the .md: a .json file of the repo may not name an AI host, tests/unit/no-direct-model-calls.test.ts)
     console.log(`\nopen questions: ${rep.o.matched}/${rep.o.n} cards matched the label, ${rep.o.personal}/${rep.o.n} personal; rules-decided: ${rep.closedOk}/${rep.closedN} -> ${f.replace(`${ROOT}/`, '')}`);
   } else {
     const rows = await rulesPass();

@@ -4,6 +4,8 @@
 // after the consent sheet), given the choices already on the card. Pinned here: where it is offered and where never
 // (pain, the body, feelings, a red flag, the crisis line, an urgent conversation), what each step is given, the words
 // on the card it makes and on its routing chip, and that the same label stands after "something else".
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { partnerActions } from '../../core/actions';
 import { COPY, deviceWords } from '../../core/copy';
@@ -191,5 +193,13 @@ describe('on the screen', () => {
       const ids = [...html.matchAll(/id="([^"]+)"/g)].map((m) => m[1]).filter((x) => x !== 'ways');
       expect(ids[1], q).not.toBe('narrow');
     }
+  });
+});
+
+describe('Back, one step at a time', () => {
+  it('a card waiting for the consent sheet\'s yes is no step of its own: Back from the card the AI made lands on the card it was asked from', () => {
+    const main = readFileSync(join(__dirname, '..', '..', 'web/src/main.ts'), 'utf8');
+    expect(main).toContain('const waiting = (s: Snap) => !!s.view.card?.narrow && !!s.view.card.blocked && !!s.view.card.unsentPayload;');
+    expect(main).toMatch(/if \(at >= 0\) \{ entry = trail\.stack\[at\]\.entry; trail\.stack\.length = at; \} else if \(!waiting\(cur\)\) trail\.stack\.push\(cur\);/);
   });
 });

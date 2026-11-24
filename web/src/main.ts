@@ -434,6 +434,11 @@ function takeSnap(key: string, entry: boolean): Snap {
     person, sub: person && /:(?:check|done|recap|recap-done)$/.test(key), entry: person && entry,
   };
 }
+/**
+ * Phase 14: a narrowing card that waits for the consent sheet's yes ("Find more choices", or after "something else")
+ * is no step of its own: the card made after the yes goes back to the screen it was asked from, not to "No card".
+ */
+const waiting = (s: Snap) => !!s.view.card?.narrow && !!s.view.card.blocked && !!s.view.card.unsentPayload;
 /** Called at every draw: a new screen puts the one before it on the stack; a screen that is already on the stack cuts the stack back to it. */
 function trackScreen(r: Route) {
   const key = screenKey(r);
@@ -442,7 +447,7 @@ function trackScreen(r: Route) {
   let entry = key.startsWith('person') && !cur?.person;
   if (cur && cur.key !== key) {
     const at = trail.stack.findIndex((x) => x.key === key);
-    if (at >= 0) { entry = trail.stack[at].entry; trail.stack.length = at; } else trail.stack.push(cur);
+    if (at >= 0) { entry = trail.stack[at].entry; trail.stack.length = at; } else if (!waiting(cur)) trail.stack.push(cur);
   } else if (cur) entry = cur.entry;
   if (key === 'home') trail.stack = [];
   trail.current = takeSnap(key, entry);
