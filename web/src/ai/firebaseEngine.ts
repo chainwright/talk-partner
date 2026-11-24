@@ -58,7 +58,10 @@ import { SUMMARY_SCHEMA, SUMMARY_SYSTEM_PROMPT } from '../../../core/summary';
 import { CARD_SCHEMA, CLOUD_SYSTEM_PROMPT, LETTER_SCHEMA, LETTER_SYSTEM_PROMPT, SYSTEM_PROMPT, TRANSCRIBE_PROMPT, TRANSCRIBE_SCHEMA, TRANSCRIBE_SYSTEM_PROMPT, cloudPrompt } from '../../../core/prompt';
 import { cloudTextRequest, letterRequest } from '../../../core/requests';
 import { REWORD_SCHEMA, REWORD_SYSTEM_PROMPT, rewordRequest } from '../../../core/reword';
-import { appCheckConfigured, appCheckToken, appWithAppCheck, namedAppCheckFailure, type WebConfig } from './app';
+import { appCheckConfigured, appCheckToken, appWithAppCheck, forgetAppCheckRefusal, namedAppCheckFailure, type WebConfig } from './app';
+
+/** Phase 17: every cloud request with an App Check token of its own (AIOptions.useLimitedUseAppCheckTokens). */
+export const LIMITED_USE_TOKENS = true;
 
 export type { WebConfig };
 
@@ -117,10 +120,12 @@ export class FirebaseEngine implements Engine {
   private get ai(): ReturnType<typeof getAI> {
     // the app, App Check (ai/app.ts) and the AI Logic instance are started once; only the models are built again
     // when Remote Config names another cloud model (setCloudModel).
-    // The App Check session token, not a limited-use token per request (tried 17 Nov, taken out the same day): with
-    // limited-use tokens every cloud request needs a new reCAPTCHA attestation; a session token is fetched once and
-    // serves about an hour of requests. Either way a browser the attestation refuses gets no cloud card (ai/app.ts).
-    return (this.cloudAi ??= getAI(appWithAppCheck(this.cfg), { backend: new GoogleAIBackend() }));
+    // Phase 17 (judge round 12, P0 2): limited-use App Check tokens (`useLimitedUseAppCheckTokens`, firebase 13.3.0),
+    // so a token taken from one request cannot be replayed for another once replay protection is enforced in the
+    // console. Each request then asks App Check for a token of its own; the session check before it (checkCloud) and
+    // the warm start on the question field (main.ts, warmCloud) still tell a refused browser at once. Tried on 17 Nov
+    // without the warm start and taken out: every request then waited for a cold attestation.
+    return (this.cloudAi ??= getAI(appWithAppCheck(this.cfg), { backend: new GoogleAIBackend(), useLimitedUseAppCheckTokens: LIMITED_USE_TOKENS }));
   }
 
   private get cloud(): GenerativeModel {
@@ -417,4 +422,6 @@ export class LazyFirebaseEngine implements Engine {
   speak(text: string) { return this.e.speak(text); }
   /** Phase 13 (core/engine.ts, checkedCloud): App Check first, on the app the cloud call uses; rejects when this browser is refused. */
   async checkCloud(): Promise<void> { if (!this.cloudConfigured) return; appWithAppCheck(this.cfg); await appCheckToken(); }
+  /** Phase 17: "Try Google's AI again": one new attestation, asked for by the carer (ai/app.ts, forgetAppCheckRefusal). */
+  retryCloudCheck(): void { forgetAppCheckRefusal(); }
 }

@@ -24,6 +24,8 @@ export const P17 = {
   /** Phase 17 (judge round 12, App Check refused the browser): one tap, the same consent, the rules' card stays. */
   tryAgain: "Try Google's AI again",
   tryAgainLine: "Your yes still stands for this question. The app's card stays until a new one comes.",
+  retryWait: "Asking Google's AI again. The app's card stays meanwhile.",
+  retryNo: "Online help could not check this browser again, so nothing was sent. The app's card stays. On another phone or in Chrome it may work.",
   /** The AI's short question for the person's screen (core/short.ts): what the carer sees under the card. */
   shortBy: "Google's AI wrote the short question on their screen. Say yours out loud as well.",
   shortByDevice: "Chrome's own AI wrote the short question on their screen. Say yours out loud as well.",

@@ -32,6 +32,8 @@ export interface Engine {
   prepareDevice(onProgress?: (p: number) => void): Promise<void>;
   /** Optional (phase 13): get an App Check token for this browser before a cloud call; rejects when App Check refuses it. */
   checkCloud?(): Promise<void>;
+  /** Optional (phase 17): after a refusal, let the next `checkCloud` attest the browser again (one tap of the carer). */
+  retryCloudCheck?(): void;
   /** Optional: load the on-device model into memory before the first question. On this computer only; no profile data. */
   warmDevice?(): Promise<void>;
   /** Private step: the profile is in this prompt, so it runs ONLY on device and throws rather than fall back. */

@@ -2,6 +2,10 @@
 // (remoteConfig.ts) and by the feedback form (../feedback.ts): one app, started by whichever needs it first.
 // Starting it contacts no host. App Check is started on that app once, by the first thing that sends something to
 // Google (a cloud model call, or a feedback note); it loads a script from Google, so nothing starts it at page load.
+// Phase 17 (judge round 12, P0 2: App Check's cold start of 12 to 20 s ate the 20 s wait, so most judges' phones got
+// the rules' card): on a phone, where the own-words card can only be made online, App Check is also started when the
+// carer puts the cursor in the question field (web/src/main.ts, warmCloud). That contacts Google's reCAPTCHA to check
+// this browser; no word of the question goes with it, and the question still waits for the carer's yes.
 import { getApps, initializeApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
 import { getToken, initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from 'firebase/app-check';
 
@@ -29,11 +33,22 @@ export function appWithAppCheck(cfg: WebConfig): FirebaseApp {
   const app = defaultApp(cfg.firebase);
   if (cfg.appCheckDebugToken) (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = cfg.appCheckDebugToken;
   const siteKey = cfg.recaptchaEnterpriseSiteKey || (cfg.appCheckDebugToken ? 'debug-provider-in-use' : '');
-  if (siteKey) appCheck = initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(siteKey), isTokenAutoRefreshEnabled: true });
+  if (siteKey) { const p = new ReCaptchaEnterpriseProvider(siteKey); appCheck = initializeAppCheck(app, { provider: p, isTokenAutoRefreshEnabled: true }); provider ??= p; }
   return app;
 }
 
 let appCheck: AppCheck | null = null;
+let provider: ReCaptchaEnterpriseProvider | null = null;
+
+/**
+ * Phase 17: "Try Google's AI again" after App Check refused this browser. After an HTTP 403 or 404 from the token
+ * exchange the SDK's provider refuses every new try for 24 hours, in this page only (its `_throttleData`, held in
+ * memory). The carer's tap is a new, single try they asked for, so that memory is cleared once per tap; the next
+ * `getToken` then attests the browser again. A refusal sets it again at once. Nothing else is reset.
+ */
+export function forgetAppCheckRefusal(): void {
+  if (provider) (provider as unknown as { _throttleData: unknown })._throttleData = null;
+}
 
 /**
  * After a cloud call has failed: if App Check has no valid token for this browser, the error says so first, in App

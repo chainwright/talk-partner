@@ -1,0 +1,7 @@
+# failing first: tests/unit/phase17b.test.ts run against main (4405af8) before the phase 17 code, 2026-11-24T12:48Z
+     × the installed Firebase AI Logic SDK has the limited-use option, and the cloud AI instance turns it on 5ms
+     × App Check starts when the question field gets the cursor, on a phone only (never with Chrome's own AI, never offline) 6ms
+     × a refusal keeps the rules' card and offers "Try Google's AI again": one tap, the same yes, the card stays meanwhile 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)

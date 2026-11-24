@@ -79,6 +79,7 @@ import { addEvent, cleanLog, lessSureCount, newLog, pickedPractice, practiceFlag
 import { passportLink, passportScreen, practiceScreen, type PassPicture } from './care7';
 import { fallbackLine, fallbackWhy, ownAfter, ownCard, ownFallbackCard, ownWaiting } from '../../core/ownwords';
 import { P16 } from '../../core/copy16';
+import { P17 } from '../../core/copy17';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -2486,6 +2487,43 @@ async function make(q: string) {
 
 /** Phase 16: the question typed in "Ask in your own words" (set by the form; null for every other question). */
 let ownQ: string | null = null;
+/**
+ * Phase 17 (judge round 12, P0 2: App Check's cold start took 12 to 20 s of the 20 s wait). On a phone (no AI in the
+ * browser, online help the only AI), App Check is started when the carer puts the cursor in the question field, so the
+ * browser is checked while they type. Never on a laptop with Chrome's own AI (that card contacts no host), never
+ * offline, never twice. No word of the question goes with it; the question still waits for the sheet's yes.
+ */
+const p17 = { warm: 'idle' as 'idle' | 'warming' | 'ok' | 'refused', retrying: null as Card | null, retryFailed: null as Card | null };
+function warmCloud() {
+  if (p17.warm !== 'idle' || !simpleView() || state.engine.checkCloud === undefined || state.engine.cloudConfigured === false) return;
+  const place = aiPlace(whereInput());
+  if (place !== 'ask' && place !== 'cloudOn') return;
+  p17.warm = 'warming';
+  state.engine.checkCloud().then(() => { p17.warm = 'ok'; }, () => { p17.warm = 'refused'; });
+}
+/**
+ * Phase 17: "Try Google's AI again" on the rules' card that stood in after App Check refused this browser (or online
+ * help gave no card): one tap, the same yes as before (for this question only), and the rules' card stays on the
+ * screen until a card of the AI's replaces it. Guarded words never get here (their card has no fall-back).
+ */
+async function retryOwn() {
+  const c = state.card;
+  if (!c?.own?.fallback || !isOnline() || p17.retrying) return;
+  const q = c.own.asked;
+  p17.retrying = c; p17.retryFailed = null; render();
+  state.engine.retryCloudCheck?.();
+  const seq = ++makeSeq;
+  let card: Card | null;
+  try {
+    card = await ownCard(q, { profile: state.profile, support: state.settings.support, engine: state.engine, allowCloud: true, deviceReady: state.device === 'available', routing: routing(), onCloud: () => cloudStarted(seq) });
+  } catch { card = null; }
+  cloudDone();
+  p17.retrying = null;
+  if (seq !== makeSeq || state.card !== c) { render(); return; }
+  if (card && !card.blocked && !card.own?.guard && card.source !== 'code') { state.made.push(card); setCard(card); state.waitStart = Date.now(); }
+  else p17.retryFailed = c;
+  render();
+}
 /** The consent sheet comes up for this card (the simple view, online, not refused by App Check, the sheet's own rule). */
 function ownSheet(card: Card): boolean {
   return simpleView() && isOnline() && card.blocked !== C.notes.cloudCheckBlocked && sheetWanted(card, { cloudOn: state.settings.cloudHelp, cloudConfigured: state.engine.cloudConfigured });
@@ -2514,7 +2552,13 @@ function ownTop(c: Card): string {
       : o.guard === 'care' && !p5.urgent ? suddenLink('own-sudden', callNumber()) : '';
     return `<p class="own-why" id="own-guard" data-guard="${o.guard}" role="note">${SIMPLE_SIGN.lock}<span>${esc(P16.guard[o.guard])}</span></p>${box}`;
   }
-  if (o.fallback) return `<p class="own-why" id="own-fallback" data-why="${o.fallback.why}" role="note">${SIMPLE_SIGN.lock}<span><b>${esc(P16.rulesLabel)}</b> ${esc(fallbackLine(o.fallback, o.asked))}</span></p>`;
+  if (o.fallback) {
+    // (phase 17) after a refusal or no card: one tap tries Google's AI again, with the same yes; the card stays meanwhile
+    const again = (o.fallback.why === 'check' || o.fallback.why === 'failed') && isOnline() && state.engine.cloudConfigured;
+    const retry = !again ? '' : p17.retrying === c ? `<p class="waitline" id="own-retry-wait" role="status">${SIMPLE_SIGN.info}<span>${esc(P17.retryWait)}</span></p>`
+      : `<p class="own-retry"><button type="button" class="btn" id="own-retry" data-act="own-retry">${esc(P17.tryAgain)}</button></p><p class="tip" id="own-retry-line">${esc(p17.retryFailed === c ? P17.retryNo : P17.tryAgainLine)}</p>`;
+    return `<p class="own-why" id="own-fallback" data-why="${o.fallback.why}" role="note">${SIMPLE_SIGN.lock}<span><b>${esc(P16.rulesLabel)}</b> ${esc(fallbackLine(o.fallback, o.asked))}</span></p>${retry}`;
+  }
   return '';
 }
 
@@ -2966,6 +3010,7 @@ function act(el: HTMLElement) {
     // the recording of the on-device step: shown or hidden in place; no card, no engine call, no setting changed
     case 'recorded': state.recorded = !state.recorded; patchRecorded(); break;
     case 'leave-demo': void leaveDemo(); break;
+    case 'own-retry': void retryOwn(); break;
     // the first-run screen belongs to the full view (the simple view has none): setting up from it stays in the full view
     case 'welcome-setup': state.settings.welcomed = true; state.settings.view = 'full'; saveSettings(); go('about'); break;
     case 'welcome-sample': state.settings.welcomed = true; saveSettings(); go('demo'); break;
@@ -3105,6 +3150,9 @@ app.addEventListener('keydown', (ev) => {
   const step = 0.04 / d.frame.zoom;
   setFrame({ ...d.frame, dx: d.frame.dx + (k === 'ArrowRight' ? step : k === 'ArrowLeft' ? -step : 0), dy: d.frame.dy + (k === 'ArrowDown' ? step : k === 'ArrowUp' ? -step : 0) });
 });
+
+// (phase 17) the question field gets the cursor: App Check starts on a phone (warmCloud)
+app.addEventListener('focusin', (ev) => { if ((ev.target as HTMLElement).id === 'q') warmCloud(); });
 
 app.addEventListener('input', (ev) => {
   const t = ev.target as HTMLInputElement | HTMLTextAreaElement;
