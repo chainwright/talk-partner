@@ -34,6 +34,8 @@ export const P16 = {
     red: "This may be a warning sign, so the app's rules made this card. Your words did not go to any AI.",
     crisis: "This may be a crisis, so the app's rules answer it. Your words did not go to any AI.",
   } as Record<OwnGuardKind, string>,
+  /** Over the rules' card for crisis words: the call buttons and "What to do now" stand under it (web/src/phase5.ts, ownCrisisBox). */
+  crisisBox: 'If they may harm themselves, or have: stay with them and call now. Take it seriously, every time.',
   /** The label of the rules' best card when the AI could not help. Kept word for word (the brief, tests/unit/phase16.test.ts). */
   rulesLabel: "Made by the app's rules (no AI)",
   fallback: {

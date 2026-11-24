@@ -39,6 +39,14 @@ Google's AI… Stop waiting" while App Check is asked (held open here), "Stop wa
 the first screen is never drawn in between; "B" gives Beth, Bo, biscuits; a pain pointed to on the needs board fills
 the sample family's diary and "What stands out"; each left with Back one step at a time to the first screen.
 
+24 Nov 2026, phase 16 (judge round 11: the sponsor's AI as the first action) adds, at 360 and 390 px in both themes:
+"Ask in your own words" first on Home (its field, button and two lines above the fold, then quick needs, the red box
+still above the fold, "Or pick a topic"); a warning sign, a crisis and a need typed in their own words (the rules'
+card, one line why, the call box; no AI button, no Read aloud, no request to any host); an open question's sheet with
+"No, not now", with "Just this once" where App Check refuses this browser, and offline (each time the rules' best
+card, "Made by the app's rules (no AI)", never "No card"); the phone's back over the sheet (the first screen, the words
+still in the field); every card shown, answered and left with Back one step at a time to the first screen.
+
 Usage: python3 scripts/phase12-walk.py [--url URL] [OUT_DIR]   (default http://localhost:5179/, devlog/evidence_phase12/walk)
 Exit code 0 when every check passes, 1 otherwise.
 """
@@ -292,6 +300,106 @@ def phase14(page, tag, h, outside):
     back_home(page, tag, 'needs: pain, where')
 
 
+def own_ask(page, q, load=True):
+    if load:
+        home(page)
+    page.fill('#q', q); page.locator('#make').click()
+    page.wait_for_function("(() => { const m = document.querySelector('main'); return !!document.querySelector('#sheet') || (!!m && ['card', 'nocard'].includes(m.dataset.screen)); })()", timeout=30000)
+    page.wait_for_timeout(400)
+
+
+def answer_and_leave(page, tag, what, label=None):
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    first = label or page.locator('main.pv .pt:not(.esc) span').first.inner_text().strip()
+    person_pick(page, first); give(page); page.wait_for_selector('main.simple.s-answered')
+    seen = []
+    steps = 0
+    while page.locator('main.simple.home').count() == 0 and steps < 9:
+        if page.locator('main.pv').count():
+            page.go_back()
+        else:
+            page.locator('#s-top [data-act=back]').first.click()
+        page.wait_for_timeout(350); steps += 1
+        seen.append(page.evaluate("document.querySelector('main')?.dataset.screen || ''"))
+    check(f'{tag}: {what}: shown, answered, then Back one step at a time to the first screen, never through "No card" ({" > ".join(seen)})', page.locator('main.simple.home').count() == 1 and 'nocard' not in seen and noscroll(page), ' > '.join(seen))
+
+
+def phase16(page, tag, h, outside):
+    # ---- 16.1 the first screen: "Ask in your own words" first, then quick needs, the red box, "Or pick a topic"
+    home(page)
+    r = page.evaluate("(() => { const b = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().bottom) : 9999; }; const t = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().top + scrollY) : 9999; }; return { own: t('#own-h'), field: b('#q'), make: b('#make'), lines: b('#own-never'), needs: t('.btn[data-act=needs]'), sudden: b('#sudden-link'), topics: t('#topics-h') }; })()")
+    check(f'{tag}: "Ask in your own words" is the first action: its field, button and two lines end above the fold ({r["lines"]} px of {h})', r['own'] < r['needs'] < r['topics'] and r['lines'] <= h and e2e.text(page, '#own-h') == 'Ask in your own words', json.dumps(r))
+    check(f'{tag}: the red "Something new or sudden?" box is still on the first screen ({r["sudden"]} px of {h})', r['sudden'] <= h, json.dumps(r))
+    check(f'{tag}: the topics are the second path, "Or pick a topic"', e2e.text(page, '#topics-h') == 'Or pick a topic' and page.locator('.topic').count() == 7)
+    line = e2e.text(page, '#ai-line')
+    check(f'{tag}: the line under it says where its AI runs on this phone, and what never goes to an AI', "Google's AI makes the choices, online, after your yes." in line and 'never to an AI' in e2e.text(page, '#own-never'), line)
+    check(f'{tag}: typed only: no microphone on the own-words form', page.locator('#ask #mic, #ask .mic').count() == 0)
+    shot(page, tag, '16_1_home')
+    # ---- 16.2 a warning sign in the carer's own words: the rules' card, one line why, the call box; nothing asked of any host
+    n0 = len(outside)
+    own_ask(page, 'Is your chest tight again?')
+    g = e2e.text(page, '#own-guard') if page.locator('#own-guard').count() else ''
+    check(f'{tag}: a warning sign typed in own words: the rules\' card, the line "Your words did not go to any AI", the call box', page.locator('main.simple.card #own-guard[data-guard=red]').count() == 1 and 'did not go to any AI' in g and page.locator('#urgent a[href^="tel:"]').count() == 1 and page.locator('#sheet').count() == 0, g)
+    check(f'{tag}: no AI button and no Read aloud on it; no request to any other host', page.locator('#find-more').count() == 0 and page.locator('#speak-offer').count() == 0 and len(outside) == n0, str(outside[n0:]))
+    check(f'{tag}: it says it was made by the rules and nothing was sent', page.locator('#made-where[data-maker=code][data-left=nothing]').count() == 1)
+    shot(page, tag, '16_2_guard_red')
+    answer_and_leave(page, tag, 'the warning-sign card', 'yes')
+    # ---- 16.3 a crisis in own words: the feelings card, the crisis box with the call buttons and "What to do now"
+    own_ask(page, "He says he can't go on, what do I ask?")
+    c = e2e.text(page, '#own-crisis') if page.locator('#own-crisis').count() else ''
+    check(f'{tag}: crisis words: the feelings card of the rules and the crisis box (it does not say the person chose anything)', page.locator('#own-guard[data-guard=crisis]').count() == 1 and 'How are you feeling today?' in e2e.text(page, '.say') and 'stay with them' in c and 'chose' not in c and page.locator('#own-crisis a[href^="tel:"]').count() >= 1, c)
+    shot(page, tag, '16_3_guard_crisis')
+    page.locator('#own-crisis a[href="#/crisis"]').click(); page.wait_for_timeout(600)
+    check(f'{tag}: its way out, "What to do now", opens the safety screen', page.locator('main[data-screen=crisis], main.crisis').count() == 1 or 'Stay with' in e2e.text(page), e2e.text(page)[:160])
+    page.locator('#s-top [data-act=back]').first.click(); page.wait_for_timeout(500)
+    check(f'{tag}: Back from it lands on the card again', page.locator('main.simple.card #own-guard[data-guard=crisis]').count() == 1, e2e.text(page)[:160])
+    answer_and_leave(page, tag, 'the crisis card')
+    # ---- 16.4 a need in own words: the rules' card, the line, the way to "Something new or sudden?"
+    own_ask(page, 'Do you need the loo before we go?')
+    check(f'{tag}: a need typed in own words: the rules\' card with the care line and the red way to "Something new or sudden?"', page.locator('#own-guard[data-guard=care]').count() == 1 and page.locator('#own-sudden').count() == 1 and page.locator('#find-more').count() == 0)
+    page.locator('#own-sudden').click(); page.wait_for_timeout(600)
+    check(f'{tag}: its way out opens "Something new or sudden?" with the call button', page.locator('main[data-screen=sudden] a[href^="tel:"]').count() >= 1, e2e.text(page)[:160])
+    page.locator('#s-top [data-act=back]').first.click(); page.wait_for_timeout(500)
+    check(f'{tag}: Back from it lands on the card again', page.locator('main.simple.card #own-guard[data-guard=care]').count() == 1, e2e.text(page)[:160])
+    answer_and_leave(page, tag, 'the need card')
+    # ---- 16.5 an open question: the consent sheet with the exact line; "No, not now" gives the rules' best card
+    own_ask(page, 'What do you fancy for lunch today?')
+    check(f'{tag}: an open question in own words brings up the consent sheet with its exact line', page.locator('#sheet').count() == 1 and 'What do you fancy for lunch today?' in e2e.text(page, '#sheet-line'), e2e.text(page, '#sheet-line'))
+    shot(page, tag, '16_5_sheet')
+    page.locator('[data-act=sheet-no]').click(); page.wait_for_selector('#own-fallback'); page.wait_for_timeout(400)
+    f = e2e.text(page, '#own-fallback')
+    check(f'{tag}: "No, not now": the rules\' best card, "Made by the app\'s rules (no AI)", nothing was sent, never "No card"', f.startswith("Made by the app's rules (no AI)") and 'nothing was sent' in f and page.locator('main.simple.card [data-act=show]').count() == 1 and page.locator('main.simple.nocard').count() == 0, f)
+    shot(page, tag, '16_5_fallback_no')
+    answer_and_leave(page, tag, 'the rules\' best card after "No, not now"')
+    # ---- 16.6 "Just this once": every other host is refused here, so App Check refuses this browser
+    own_ask(page, 'What shall I pick up for you from the shop?')
+    n0 = len(outside)
+    page.locator('[data-act=sheet-yes]').click(); page.wait_for_selector('#own-fallback', timeout=30000); page.wait_for_timeout(400)
+    asked = outside[n0:]; del outside[n0:]
+    f = e2e.text(page, '#own-fallback')
+    check(f'{tag}: "Just this once" refused by App Check: the rules\' best card, it says nothing was sent; only reCAPTCHA was asked for', 'could not check this browser, so nothing was sent' in f and page.locator('main.simple.nocard').count() == 0 and all('recaptcha' in u for u in asked), f + ' / ' + str(asked))
+    shot(page, tag, '16_6_fallback_check')
+    page.locator('#s-top [data-act=back]').first.click(); page.wait_for_timeout(500)
+    check(f'{tag}: Back from it is one step to the first screen (not "No card")', page.locator('main.simple.home').count() == 1, e2e.text(page)[:160])
+    # ---- 16.7 the phone's back over the sheet: the first screen, the words still in the field
+    own_ask(page, 'What do you want to do after your nap?')
+    page.go_back(); page.wait_for_timeout(500)
+    check(f'{tag}: the phone\'s back over the sheet: the first screen, the words still in the field', page.locator('main.simple.home').count() == 1 and page.locator('#sheet').count() == 0 and page.input_value('#q') == 'What do you want to do after your nap?', e2e.text(page)[:160])
+    # ---- 16.8 offline: the rules' best card, it says so
+    home(page)
+    page.context.set_offline(True)
+    page.wait_for_timeout(400)
+    own_ask(page, 'Where shall we go for a drive tomorrow?', load=False)
+    f = e2e.text(page, '#own-fallback') if page.locator('#own-fallback').count() else e2e.text(page)[:200]
+    check(f'{tag}: offline: the rules\' best card, "You are offline, so nothing was sent."', 'You are offline, so nothing was sent.' in f and page.locator('#sheet').count() == 0, f)
+    page.context.set_offline(False)
+    answer_and_leave(page, tag, 'the offline card')
+    # ---- 16.9 an either-or as carers say it: the rules make it from the words, no line over it
+    own_ask(page, 'Do you want to go out later or stay in?')
+    check(f'{tag}: an either-or in own words: the rules\' card of those words, no guard or fall-back line', page.locator('#own-guard, #own-fallback').count() == 0 and 'go out later' in e2e.text(page, '#person'), e2e.text(page)[:160])
+    answer_and_leave(page, tag, 'the either-or card')
+
+
 def walk(b, w, h, scheme):
     tag = f'{w}_{scheme}'
     ctx = b.new_context(viewport={'width': w, 'height': h}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=e2e.PHONE_UA, color_scheme=scheme, service_workers='block', locale='en-US')
@@ -305,17 +413,15 @@ def walk(b, w, h, scheme):
     home(page)
 
     # ---- 1. the first screen (item 10, item 16)
-    r = page.evaluate("(() => { const b = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().bottom) : 9999; }; return { ai: b('#try-ai [data-act=try-ai]'), strip: b('#ai-strip'), row: Math.max(...[...document.querySelectorAll('.topic')].slice(0, 2).map((e) => Math.round(e.getBoundingClientRect().bottom))) }; })()")
+    # (phase 16: "Ask in your own words" is the first action now and holds the fold; "See the AI at work" and the topics
+    # follow it, under the fold: phase16() checks the new first screen)
     strip = page.locator('#ai-strip').inner_text().strip()
-    if w == 390:
-        check(f'{tag}: "See the AI at work" and its two lines end above the fold ({r["strip"]} px of {h})', r['strip'] <= h, json.dumps(r))
-    check(f'{tag}: the first row of topics ends above the fold ({r["row"]} px of {h})', r['row'] <= h, json.dumps(r))
     if w == 390:
         check(f'{tag}: the strip says where the AI runs on a phone and on a laptop', "Phone: Google's AI, online, after your yes" in strip and "Laptop with Chrome's own AI: nothing is sent" in strip, strip)
     else:
         # (at 360 px the strip folds, so the first row of topics stays above the fold; the button's tag says where its AI runs)
         check(f'{tag}: at 360 px the strip folds; the button\'s tag says where its AI runs, and the lines stay its description', page.evaluate("getComputedStyle(document.querySelector('#ai-strip')).display") == 'none' and "uses Google's AI, after your yes" in e2e.text(page, '#try-ai-tag') and page.locator('#try-ai [aria-describedby=ai-strip]').count() == 1, strip)
-    check(f'{tag}: "See the AI at work" comes before "How it works" and the topics', page.evaluate("(() => { const a = document.querySelector('#try-ai'), h = document.querySelector('#how'), t = document.querySelector('#topics'); return !!a && !!(a.compareDocumentPosition(h) & 4) && !!(a.compareDocumentPosition(t) & 4); })()"))
+    check(f'{tag}: "See the AI at work" comes after "Ask in your own words", before "How it works" and the topics', page.evaluate("(() => { const o = document.querySelector('#ask'), a = document.querySelector('#try-ai'), h = document.querySelector('#how'), t = document.querySelector('#topics'); return !!a && !!(o.compareDocumentPosition(a) & 4) && !!(a.compareDocumentPosition(h) & 4) && !!(a.compareDocumentPosition(t) & 4); })()"))
     # (phase 12b: on a phone the sample family opens in this simple view, not in judge mode)
     check(f'{tag}: "Try it with the Millers, a sample family" at the foot of Home, to the simple view on a phone', page.locator('#try-sample[href="#/sample"]').count() == 1 and 'Try it with the Millers, a sample family' in e2e.text(page, '#try-sample'))
     # (phase 12b: the red box names the number, and "Change it" is under it)
@@ -456,8 +562,8 @@ def walk(b, w, h, scheme):
     check(f'{tag}: Home, pain left for later: how long ago, the signs that do not wait, a call button, the list', 'Left 3 hours ago.' in lt and 'Call 911 now if there is sudden weakness or numbness' in lt and page.locator('#later a[href="tel:911"]').count() == 1 and page.locator('#later a[href="#/sudden"]').count() == 1, lt)
     check(f'{tag}: pain left for later: no sideways scroll', noscroll(page))
     # (phase 12b: directly under "Needs something now?", its call button on the screen)
-    pos = page.evaluate("""(() => { const n = document.querySelector('.btn[data-act=needs]'), l = document.querySelector('#later'), t = document.querySelector('#turn-go'), a = document.querySelector('#try-ai'), c = document.querySelector('#later a[href^="tel:"]'); return { next: n.nextElementSibling === l, beforeTurn: !!(l.compareDocumentPosition(t) & 4), beforeAi: !a || !!(l.compareDocumentPosition(a) & 4), call: Math.round(c.getBoundingClientRect().bottom) }; })()""")
-    check(f'{tag}: pain left for later stands directly under "Needs something now?", above "I want to say something" and the AI box, its call button on screen ({pos["call"]} px of {h})', pos['next'] and pos['beforeTurn'] and pos['beforeAi'] and pos['call'] <= h, json.dumps(pos))
+    pos = page.evaluate("""(() => { const o = document.querySelector('#ask'), l = document.querySelector('#later'), t = document.querySelector('#turn-go'), a = document.querySelector('#try-ai'), c = document.querySelector('#later a[href^="tel:"]'); return { next: l.nextElementSibling === o, beforeTurn: !!(l.compareDocumentPosition(t) & 4), beforeAi: !a || !!(l.compareDocumentPosition(a) & 4), call: Math.round(c.getBoundingClientRect().bottom) }; })()""")
+    check(f'{tag}: pain left for later stands at the top, directly above "Ask in your own words" (phase 16), above "I want to say something" and the AI box, its call button on screen ({pos["call"]} px of {h})', pos['next'] and pos['beforeTurn'] and pos['beforeAi'] and pos['call'] <= h, json.dumps(pos))
     shot(page, tag, '12_later_pain')
     page.locator('#later a[href="#/sudden"]').click(); page.wait_for_selector('main.sudden')
     check(f'{tag}: "What to look for" opens "Something new or sudden?" (FAST)', 'FAST' in e2e.text(page))
@@ -512,6 +618,8 @@ def walk(b, w, h, scheme):
     phase13(page, tag, h)
     # ---- 14. the sponsor's AI in the everyday loop (phase 14)
     phase14(page, tag, h, outside)
+    # ---- 16. "Ask in your own words" as the first action (phase 16)
+    phase16(page, tag, h, outside)
 
     check(f'{tag}: no page error, nothing asked of another host', not errs and not outside, str(errs + outside))
     ctx.close()

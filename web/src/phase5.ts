@@ -63,6 +63,14 @@ export function crisisBox(m: { name: string; number: string; line: string; guess
   const K = P12.crisis;
   return `<div class="urgent crisis" id="crisis-box" role="alert">${ALERT}<div><b>${esc(K.box(m.name))}</b><div class="urgent-acts">${callButton(m.number)}${m.line ? `<a class="btn call" data-call="1" href="${telHref(m.line)}">${PHONE}<span>${esc(K.callLine(m.line))}</span></a>` : ''}<a class="tlink" href="#/crisis">${K.open} →</a></div>${guessLine(!!m.guess, 'crisis-guess')}</div></div>`;
 }
+/**
+ * Phase 16: the box over the rules' card when the carer's OWN words were about a crisis (core/ownwords.ts): the same
+ * call buttons and "What to do now" as crisisBox, with a line that does not say the person chose anything.
+ */
+export function ownCrisisBox(m: { line: string; number: string; crisisLine: string; guess?: boolean }): string {
+  const K = P12.crisis;
+  return `<div class="urgent crisis" id="own-crisis" role="alert">${ALERT}<div><b>${esc(m.line)}</b><div class="urgent-acts">${callButton(m.number)}${m.crisisLine && m.crisisLine !== m.number ? `<a class="btn call" data-call="1" href="${telHref(m.crisisLine)}">${PHONE}<span>${esc(K.callLine(m.crisisLine))}</span></a>` : ''}<a class="tlink" href="#/crisis">${K.open} →</a></div>${guessLine(!!m.guess, 'own-crisis-guess')}</div></div>`;
+}
 /** The calm safety screen after "I can't go on": fixed steps, two call buttons, what the list is and is not. No AI anywhere in it. */
 export function crisisScreen(m: { name: string; number: string; line: string; lineGuess: boolean; numberGuess: boolean }): string {
   const K = P12.crisis;

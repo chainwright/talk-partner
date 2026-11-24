@@ -181,5 +181,7 @@ describe('phase 16: the first screen and the web client', () => {
     expect(main).toMatch(/ownWaiting\(/);
     // "No, not now" on the sheet of an own-words question brings the rules' best card, never "No card"
     expect(main).toMatch(/case 'sheet-no':[^\n]*ownRefused\(/);
+    // the phone's back over that sheet: the screen the words were typed on (with them still in the field), never "No card"
+    expect(main).toMatch(/if \(state\.sheet && ownWaiting\(state\.card\)\) \{ state\.sheet = false; makeSeq\+\+; state\.busy = false; state\.error = null; resetCard\(\); return ''; \}/);
   });
 });

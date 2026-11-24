@@ -65,7 +65,7 @@ import { ABOUT_LEADS, aboutWhatCard, moreCard, moreChoices, moreSubject, outWays
 import { understoodBlock } from './phase7';
 import { aboutLearned, familyText, handoverText, riskyNotes } from '../../core/share';
 import { handoverLink, shareSheet } from './phase6';
-import { crisisBox, crisisScreen, fallBlock, hearButton, laterPainHtml, lowHelpLine, nowAlert, visitStopBox, numberField, sinceBlock, sinceControls, speakOffer, speakSheet, speakSwitch, readAloudLine, suddenFirst, suddenLink, suddenScreen, urgentBox } from './phase5';
+import { crisisBox, crisisScreen, fallBlock, ownCrisisBox, hearButton, laterPainHtml, lowHelpLine, nowAlert, visitStopBox, numberField, sinceBlock, sinceControls, speakOffer, speakSheet, speakSwitch, readAloudLine, suddenFirst, suddenLink, suddenScreen, urgentBox } from './phase5';
 import { loadTrial, trialAct, trialClock, trialInput, trialScreen } from './trial';
 import { micDeps } from './mic';
 import { createVoice, transcriptFrom, type VoiceView } from './voice';
@@ -474,6 +474,9 @@ function putSnap(x: Snap) {
  * null when there was no step to take: from the first screen the browser's back leaves the app, as it should.
  */
 function backStep(from: string): string | null {
+  // (phase 16) the sheet of an own-words question: its blocked card is no step of its own, so one step back is the
+  // screen the question was typed on, with the words still in the field to change (never "No card")
+  if (state.sheet && ownWaiting(state.card)) { state.sheet = false; makeSeq++; state.busy = false; state.error = null; resetCard(); return ''; }
   if (state.sheet) { state.sheet = false; return from; }
   if (p5.speakSheet) { p5.speakSheet = false; return from; }
   if (state.photoDraft) { state.photoDraft = null; return from; }
@@ -2486,7 +2489,7 @@ function ownTop(c: Card): string {
   const o = c.own;
   if (!o) return '';
   if (o.guard) {
-    const box = o.guard === 'crisis' ? crisisBox({ name: state.profile.personName.trim(), number: callNumber(), line: crisisLineNow(), guess: numberGuess() })
+    const box = o.guard === 'crisis' ? ownCrisisBox({ line: P16.crisisBox, number: callNumber(), crisisLine: crisisLineNow(), guess: numberGuess() })
       : o.guard === 'care' ? suddenLink('own-sudden', callNumber()) : '';
     return `<p class="own-why" id="own-guard" data-guard="${o.guard}" role="note">${SIMPLE_SIGN.lock}<span>${esc(P16.guard[o.guard])}</span></p>${box}`;
   }

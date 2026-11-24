@@ -215,13 +215,15 @@ describe('10. The first screen\'s red box names the number, with "Change it"', (
 
 describe('11. A pain question left for later stands directly under "Needs something now?"', () => {
   const base = { name: '', aboutLink: false, busy: false, error: null, question: '', howOpen: false, topics: [], topicOpen: null, aiTag: '', ai: [], privacy: [], micHtml: '', voiceHtml: '', turnHtml: '<a id="turn"></a>', tryHtml: '<div id="try-ai"></div>' };
-  it('pain: right after the needs button, above "I want to say something" and the AI box; anything else: lower down', async () => {
+  // (phase 16: "Ask in your own words" is the first action; a pain left for later stands above it, so its call button stays on screen at 360 px)
+  it('pain: at the top, above "Ask in your own words", the needs button, "I want to say something" and the AI box; anything else: lower down', async () => {
     const { homeScreen, laterBlock } = await import('../../web/src/simple');
     const pain = laterBlock([{ q: 'Are you in pain?', time: '14:00', ago: 'Left 3 hours ago.', i: 0, care: true, pain: true }], '<div class="later-signs"></div>');
     const h = homeScreen({ ...base, laterHtml: pain } as unknown as Parameters<typeof homeScreen>[0]);
     const needs = h.indexOf('data-act="needs"');
     expect(needs).toBeGreaterThan(0);
-    expect(h.indexOf('id="later"')).toBeGreaterThan(needs);
+    expect(h.indexOf('id="later"')).toBeLessThan(h.indexOf('id="ask"'));
+    expect(h.indexOf('id="later"')).toBeLessThan(needs);
     expect(h.indexOf('id="later"')).toBeLessThan(h.indexOf('id="turn"'));
     expect(h.indexOf('id="later"')).toBeLessThan(h.indexOf('id="try-ai"'));
     const tv = laterBlock([{ q: 'Would you like the TV on?', time: '14:00', i: 0 }]);

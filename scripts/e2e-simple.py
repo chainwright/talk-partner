@@ -217,18 +217,22 @@ def navigation(page, url):
         check(f'navigation, {name}: from About them back to the first screen', screen() == 'home' and not page.url.endswith('#/about'), f'{screen()} {page.url}')
         page.fill('#q', OPEN_Q)
         page.locator('#make').click()
-        page.wait_for_selector('#sheet, main.simple.nocard')
+        page.wait_for_selector('#sheet, main.simple.nocard, #own-fallback')
+        # (phase 16: the field is "Ask in your own words"; its sheet's "No" gives the rules' best card, never "No card",
+        # and the browser's back over the sheet is one step back: the first screen, the words still in the field)
+        if page.locator('#sheet').count() and how == 'browser':
+            page.go_back()
+            page.wait_for_timeout(350)
+            check("navigation, the browser's back button on the consent sheet: the first screen, the words still in the field", screen() == 'home' and page.input_value('#q') == OPEN_Q, screen())
+            page.locator('#make').click()
+            page.wait_for_selector('#sheet')
         if page.locator('#sheet').count():
-            if how == 'browser':
-                page.go_back()
-                page.wait_for_timeout(350)
-                check("navigation, the browser's back button on the consent sheet: the sheet closes (it is its \"No\")", screen() == 'nocard', screen())
-            else:
-                page.locator('[data-act=sheet-no]').click()
-        page.wait_for_selector('main.simple.nocard')
+            page.locator('[data-act=sheet-no]').click()
+        page.wait_for_selector('#own-fallback')
+        check(f'navigation, {name}: "No, not now" gives the rules\' best card, "Made by the app\'s rules (no AI)", not "No card"', screen() == 'card' and text(page, '#own-fallback').startswith("Made by the app's rules (no AI)"), screen())
         seen.append(bar())
         back(how)
-        check(f'navigation, {name}: from "No card for this one" back to the first screen', screen() == 'home', screen())
+        check(f'navigation, {name}: from the rules\' best card back to the first screen', screen() == 'home', screen())
         check(f'navigation: "Back" and "Home" are at the top of every carer screen (hand-over, answer, About them, no card)', all(seen), str(seen))
     # the needs board (the person's screen): the browser's back goes to the first screen
     page.locator('.btn.needs').click()
@@ -284,9 +288,10 @@ def phone(browser, url, live):
     page.wait_for_timeout(7000)  # the device check is asked again after 2 s and 6 s
     home = text(page)
     check('first visit: the header is the hope line, with "them" and no default "him"', page.locator('h1#hope').inner_text().strip() == "When the words won't come, let them point." and not any(w in home.split() for w in ('him', 'his', 'He', 'he', 'her', 'she')), page.locator('h1#hope').inner_text())
-    top = {k: ys(page, sel)[0][1] for k, sel in (('needs', '.btn.needs'), ('how', '#how'), ('topics', '#topics'), ('own', '#q'), ('ai', '#ai-line'), ('privacy', '#s-privacy'))}
-    check('first visit, top to bottom: "Needs it now?", how it works, topics, your own question, the AI line, the privacy line', list(top.values()) == sorted(top.values()), str(top))
-    check('first visit: "Needs it now?" is at the top, on the first screenful', top['needs'] < 300 and 'Needs something now?' in home, str(top['needs']))
+    # (phase 16: "Ask in your own words" is the first action; quick needs follow it, then how it works and the topics)
+    top = {k: ys(page, sel)[0][1] for k, sel in (('own', '#q'), ('ai', '#ai-line'), ('needs', '.btn.needs'), ('how', '#how'), ('topics', '#topics'), ('privacy', '#s-privacy'))}
+    check('first visit, top to bottom: your own words, the AI line, "Needs it now?", how it works, topics, the privacy line', list(top.values()) == sorted(top.values()), str(top))
+    check('first visit: "Needs it now?" is right under "Ask in your own words", on the first screenful', top['needs'] < 600 and 'Needs something now?' in home, str(top['needs']))
     # (phase 9, judge round 8: folded on the first visit too, to the one line with "Write the key word big.")
     check('first visit: "How it works: 4 steps" is one highlighted line with "Write the key word big."', page.locator('button.how-line').count() == 1 and page.locator('section.how').count() == 0 and text(page, '.how-line') == 'How it works: 4 steps Write the key word big. Show', text(page, '#how'))
     page.locator('.how-line').click()
@@ -296,9 +301,9 @@ def phone(browser, url, live):
     page.wait_for_selector('button.how-line')
     check('first visit: no empty video slot and no walkthrough over the screen', page.locator('video, .g-vid, .walk, .dim, [role=dialog]').count() == 0 and 'video' not in home.lower() and 'Watch how' not in home)
     check('first visit: About them is not offered before the first card', page.locator('a[href="#/about"], .offer').count() == 0)
-    check('first visit: seven topics, closed; "Or ask your own question" comes after them', page.locator('.topic').count() == 7 and page.locator('.tq').count() == 0 and 'Or ask your own question' in home)
+    check('first visit: seven topics, closed, under "Or pick a topic"', page.locator('.topic').count() == 7 and page.locator('.tq').count() == 0 and text(page, '#topics-h') == 'Or pick a topic')
     ai = text(page, '#ai-line')
-    check('first visit: one plain AI line: what the AI is for, and that on this phone it is online and the app asks first', ai == "For a question you type, AI suggests the answers they can point to. The topic questions above do not need it. On this phone that AI is online (Google's): the app asks you first, and shows the line that would go.", ai)
+    check('first visit: one plain AI line under the field: on this phone the AI is online and asks first; what never goes to an AI', ai == "Google's AI makes the choices, online, after your yes. Names you listed are swapped out." and 'never to an AI' in text(page, '#own-never'), ai)
     check('first visit: one small privacy line, "Nothing you asked has left this phone."; never "this computer"', page.locator('.foot .lock').count() == 1 and text(page, '#s-privacy') == 'Nothing you asked has left this phone since the app was opened.' and 'this computer' not in home and 'the computer' not in home, text(page, '.foot'))
     check('first visit: "How it works inside" is on it', page.locator('[data-act=inside]').is_visible())
     check('first visit: nothing technical (no status box, badge, byte count or judge mode), and the word "card" is not used', page.locator('#status, .badge, #bytes, .judge').count() == 0 and ' card' not in home.lower())
@@ -621,7 +626,7 @@ def phone(browser, url, live):
     page.locator('a.btn.primary').click()
     page.wait_for_selector('main.simple.home')
     home = text(page)
-    check('the first screen now names the person: "let Frank point", "with Frank", "Show Frank the choices", "About Frank"', "When the words won't come, let Frank point." in home and 'with Frank' in home and 'Show Frank the choices' in home and 'About Frank →' in home, home[:200])
+    check('the first screen now names the person: "let Frank point", "with Frank", "About Frank"', "When the words won't come, let Frank point." in home and 'with Frank' in home and 'About Frank →' in home, home[:200])
     if not page.locator('.tq', has_text='tea or coffee').count():
         page.locator('.topic[data-topic=food]').click()
     food = page.locator('.tq > span:first-child').all_inner_texts()
@@ -714,7 +719,7 @@ def offline(browser, url):
     page.wait_for_selector('main.simple.home', timeout=15000)
     check('offline: the first screen opens with no connection (first visit: how-to folded, seven topics)', page.locator('button.how-line').count() == 1 and page.locator('.topic').count() == 7)
     page.wait_for_timeout(1200)
-    check('offline: the AI line says that AI needs the internet', 'You are offline, and that AI needs the internet.' in text(page, '#ai-line'), text(page, '#ai-line'))
+    check('offline: the line under "Ask in your own words" says the rules make what they can', "You are offline: the app's rules make what they can from your words." in text(page, '#ai-line'), text(page, '#ai-line'))
     screen_checks(page, 'offline, first screen')
     ask_topic(page, 'food', 'tea or coffee')
     check('offline: a topic question makes its choices by the rules', page.locator('#made-where').get_attribute('data-maker') == 'code' and page.locator('#person .pt').count() == 3)
@@ -742,9 +747,10 @@ def offline(browser, url):
     page.wait_for_selector('main.simple.home')
     page.fill('#q', OPEN_Q)
     page.locator('#make').click()
-    page.wait_for_selector('main.simple.nocard')
-    check('offline: a question that needs online help gets a clear "needs the internet" state, and no sheet', page.locator('#offline').is_visible() and 'This question needs the internet, and you are offline.' in text(page) and page.locator('#sheet, [data-act=sheet]').count() == 0, text(page)[:200])
-    screen_checks(page, 'offline, needs the internet', primary=False)
+    # (phase 16: offline, the own-words question gets the rules' best card, saying so; never a sheet, never "No card")
+    page.wait_for_selector('#own-fallback')
+    check('offline: a question that needs online help gets the rules\' best card, "You are offline, so nothing was sent.", and no sheet', 'You are offline, so nothing was sent.' in text(page, '#own-fallback') and page.locator('#sheet, [data-act=sheet]').count() == 0, text(page)[:200])
+    screen_checks(page, 'offline, the rules\' best card', primary=True)
     # phase 3 with the connection off: the diary, the one-tap log, the week's lines (rules, on this phone), health notes
     page.locator('[data-act=home]').click()
     page.wait_for_selector('main.simple.home')
@@ -1953,7 +1959,8 @@ def phase5(browser, url, live):
         # (phase 13: App Check is asked first; every request to another host is refused here, so no token comes, the
         # question never leaves, and the no-card screen says so at once with what to do and the rules' card)
         page.wait_for_selector('#made-where[data-left]', timeout=40000)
-        check('phase 13, sheet: App Check refused first: the no-card screen says what to do and offers the rules\' card at once', 'Online help could not check this browser' in text(page) and page.locator('#no-card-ways[data-act=stuck]').count() == 1, text(page)[:300])
+        # (phase 16: the field is "Ask in your own words": instead of the no-card screen, the rules' best card at once)
+        check('phase 13/16, sheet: App Check refused first: the rules\' best card at once, saying nothing was sent', 'Online help could not check this browser, so nothing was sent' in text(page, '#own-fallback') and text(page, '#own-fallback').startswith("Made by the app's rules (no AI)") and page.locator('[data-act=show]').count() == 1, text(page)[:300])
         check('sheet: "Just this once" hands this one question to online help (the card says it was sent, may have left, or, refused by App Check first, that nothing was sent) and leaves online help off', page.locator('#made-where').get_attribute('data-left') in ('maybe', 'sent', 'nothing') and page.evaluate(KV_GET, 'settings').get('cloudHelp') is False, f"{page.locator('#made-where').get_attribute('data-left')} {outside[n0:]}"[:300])
     else:
         page.locator('[data-act=sheet-no]').click()
