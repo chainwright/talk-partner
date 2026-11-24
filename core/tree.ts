@@ -270,6 +270,13 @@ const TREE: Record<string, Node> = {
     plans: { next: [IN_OUT], end: 'It is about plans. Go through today, one thing at a time.' },
     'something else': { end: '{They} cannot say it this way. ' + SHOW },
   },
+  // (phase 17 H, a live walk 24 Nov: the topic card after a typed "want something?" ended on the topic; it goes on)
+  'is it about food or drink people or plans': {
+    'about food or drink': { next: ['Are you hungry?', 'Would you like something to drink?'], end: 'It is about food or drink. Ask if {they} are hungry, or would like a drink.' },
+    people: { next: [COMPANY], end: 'It is about people. Say one name at a time, and wait for a yes.' },
+    plans: { next: [IN_OUT], end: 'It is about plans. Go through today, one thing at a time.' },
+    'something else': { end: '{They} cannot say it this way. ' + SHOW },
+  },
   'would you like to talk about how you feel now or later': {
     now: { next: [BOTHERING], end: 'Sit down with {them}, and ask one small question at a time.' },
     later: { end: 'Later. Come back to it this evening.' },
