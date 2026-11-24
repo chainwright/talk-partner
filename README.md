@@ -9,13 +9,22 @@ are competent and have more understanding and social skills than may be apparent
 the person, or tests them, is the everyday way that competence stays hidden (the last sentence is our reading, not
 the Institute's words).
 
+**For judges: criterion → section → proof**
+
+| Criterion | Section | Proof |
+|---|---|---|
+| Technological implementation | [Where the AI runs](#where-the-ai-runs-firebase-ai-logic-hybrid-inference), [How we built it](#how-we-built-it-one-ai-logic-call-three-legs-measured) | the data classes routed in code (`web/src/ai/firebaseEngine.ts`); the three-leg table (rules 0/18, Gemini Nano 16/18, online 12/18; our labels, dev server); "Find more choices" at taps 3 and 4 on a phone |
+| Design | [For judges: 60 seconds](#for-judges-60-seconds), [Screens](#screens) | the person's screen (big pictures, "So: tea. Right?"); Back one step at a time (`scripts/phase12-walk.py`) |
+| Potential impact | the first lines, [Sources](#sources-for-the-first-lines) | NIDCD, Haley and Hardy 2025, the Aphasia Institute; every safety line rules-made and tested on its worst case (`tests/unit/phase13.test.ts`, `tests/unit/phase15.test.ts`); no trial with people yet |
+| Quality of the idea | the paragraph below, [Look-alikes, named](#look-alikes-named) | it coaches the partner, not the person; the AI is split by data class, not by device |
+
 After a stroke, many adults with aphasia understand what is said but can't find the words to answer.
 **Talk Partner coaches the partner, not the person.** It helps the partner ask in the way Supported Conversation
 materials describe (our reading; no speech therapist has reviewed it): it says when the question itself is the
 problem (two things in one, a memory test), and it turns the partner's own question into a
 written-choice card (a keyword, two choices, pictured where we have drawn a picture, an escape every time, a
-tick/cross check) and gives the partner the exact line to say. It never picks or confirms the person's answer: only
-their tap does. Pictures (131 and the monogram since 22 Nov: 91 colour pictures made with Gemini and our own colour drawings for the rest; the source of each in `PICTOGRAMS.md`): yes / no, feelings, the body
+tick/cross check) and gives the partner the exact line to say. It never picks the answer; a tap on the card confirms it, and the app asks the carer to hand the phone over for that
+tap. Pictures (131 and the monogram since 22 Nov: 91 colour pictures made with Gemini and our own colour drawings for the rest; the source of each in `PICTOGRAMS.md`): yes / no, feelings, the body
 map, people, drinks and food, rest, TV and music, going out, the ways out, the needs of the quick-needs board. The
 family's own places and foods ("lake", "pot roast") show the family's own photo where one was added, and the word
 alone otherwise.
@@ -54,8 +63,8 @@ code is in **`web/src/ai/firebaseEngine.ts`**. See [Added on 17 Nov](#added-on-1
 Android or iOS, and a carer mostly holds a phone. So on a phone the topic questions, quick needs, the person's screens,
 About them and "Today in short" are made by the app's rules with no AI, and a question the carer types that the rules
 cannot turn into choices (an open question) uses online help, asked for at that moment on a sheet that shows the exact
-line that would go. The first screen says this in one line ("On this phone that AI is online (Google's): the app asks
-you first…"). Neither the narrowing step nor "Today in short" has been run against the real Gemini Nano yet: on the device both
+line that would go. Home says this in one line under "See the AI at work" ("Phone: Google's AI, online, after your yes"), and the line
+under the question box says it again ("On this phone that AI is online (Google's): the app asks you first…"). Neither the narrowing step nor "Today in short" has been run against the real Gemini Nano yet: on the device both
 are tested with scripted engines only. The narrowing step has two recorded runs through the real cloud model on
 localhost and none on the hosted copy (`CLAIMS.md`, rows 53 and 54).
 
@@ -66,8 +75,8 @@ through Firebase AI Logic, each behind a sheet that shows what goes, and the car
 | On a phone | Firebase AI Logic call | When | Run against the real model |
 |---|---|---|---|
 | **Read aloud**: the question and the choices of the card, spoken on the person's screen (`core/speak.ts`) | Gemini text-to-speech (`gemini-3.8-flash-tts`), `ONLY_IN_CLOUD`, the words of that one card, the voice and the style | every card the carer shows, the 40 topic questions and the needs board included, once the carer turned it on on a sheet ("The words on this card, including names on it, go to Google to be spoken. Nothing else."); off by default; never a doctor-visit card | yes, on localhost: `leg=speak mode=ONLY_IN_CLOUD inferenceSource=in_cloud`, 4.4 s for about 8 s of sound ("Would you like tea or coffee? Tea. Coffee. Or something else."), "Hear it again" asked nothing, 10 of 10 checks at `de631b1` on the dev server with the App Check debug token (`devlog/evidence_phase5/AI_RUN_LOG.md`); on the hosted copy our headless test browser was refused by App Check (no sound; see Deploy) |
-| A question the carer types that the rules cannot turn into choices | `PREFER_IN_CLOUD`, the question with About-them words swapped out | after "Just this once" or "Yes, every time" on the sheet | yes (`devlog/evidence_live/`, last on the hosted copy at `4d7edee`; see Deploy for this build) |
-| **Find more choices** (phase 14): the second button under "Show them the choices" on a topic card, and the second way after "something else" (`core/findmore.ts`, `core/narrow.ts`) | the same step: `PREFER_IN_CLOUD` with `onDeviceParams`, the question and the choices on the card, About-them words swapped out; on a laptop with Gemini Nano the `ONLY_ON_DEVICE` step instead, About me in it, nothing sent | after "Just this once" on its sheet; never on pain, the body, feelings, a red flag or the crisis line | the narrowing request: yes, on localhost (`CLAIMS.md` rows 53, 79); the new wording ("On the card already") with scripted engines and in the phone walk with App Check refusing; not yet against the real model |
+| A question the carer types that the rules cannot turn into choices | `PREFER_IN_CLOUD`, the question with About-them words swapped out | after "Just this once" or "Yes, every time" on the sheet | yes (`devlog/evidence_live/`, on the hosted copy at `4d7edee`; on `479ce07` a judge's headless phone browser got it once, judge round 11, seat 05) |
+| **Find more choices** (phase 14): the second button under "Show them the choices" on a topic card, and the second way after "something else" (`core/findmore.ts`, `core/narrow.ts`) | the same step: `PREFER_IN_CLOUD` with `onDeviceParams`, the question and the choices on the card, About-them words swapped out; on a laptop with Gemini Nano the `ONLY_ON_DEVICE` step instead, About me in it, nothing sent | after "Just this once" on its sheet; never on pain, the body, feelings, a red flag or the crisis line | the narrowing request: yes, on localhost (`CLAIMS.md` rows 53, 79); the new wording ("On the card already"): the cloud half ran on the hosted copy at `479ce07` in a judge's run (judge round 11, seat 05: a card "something cold / something to eat"); the on-device half not yet against the real Nano |
 | Words for a first letter the rules have fewer than two for | the same step | after "Just this once" on its sheet | yes, on localhost (`CLAIMS.md` row 79) |
 | "What stands out" in plainer words | `PREFER_IN_CLOUD`, the counted lines only | after "Just this once", each time; never a line that says whom to tell or when to call | no |
 | The carer's spoken question as text | `ONLY_IN_CLOUD`, one recording | after a yes to its notice | yes, on the hosted copy at `40fedec` |
@@ -79,11 +88,11 @@ Logic taken out, those still work; what goes is every voice, every open question
 
 
 ### How we built it: one AI Logic call, three legs, measured
-**The same AI Logic call; on a laptop it reads your family's names on-device, on a phone it never sees them.** The
+**The same button: on a laptop, Gemini Nano reads your family's names on the device; on a phone, the cloud gets the question with the names you listed swapped out (other names are guessed).** The
 open-question step is built once in `web/src/ai/firebaseEngine.ts` (`PREFER_IN_CLOUD`, with `onDeviceParams` for the
 same schema), next to the private `ONLY_ON_DEVICE` step that alone gets About me. We ran the 18 open questions of our
 labelled set (`eval/heldout_r2.json`; who, where, what: the questions rules cannot answer) through each leg on 23 Nov
-2026 (24 Nov, 03:06 to 03:12 UTC), the same commit of the code (`175e5d2`), the dev server, the sample family:
+2026 (24 Nov, 03:06 to 03:12 UTC), on a working copy of `175e5d2` with 132 uncommitted files (the reports say so), the dev server, the sample family as it was then (before Beth joined it in phase 15):
 
 | On the 18 open questions | Rules alone (no model) | On this computer: Gemini Nano, `ONLY_ON_DEVICE`, online help off | Online: `PREFER_IN_CLOUD`, fresh profile, no Nano |
 |---|---|---|---|
@@ -886,12 +895,11 @@ before this phase). The "Live:" lines still name `cb15e70`: phase 12 waits for i
 ## Added on 23 Nov, phase 13: the fixes of judge round 10
 
 The fixes of judge round 10, one commit each, every new health line tested on its worst case
-(`tests/unit/phase13.test.ts`). All of it is rules and fixed text on the device; no model was called. The "Live:"
-lines still name `39e8f33`: phase 13 waits for its deploy.
+(`tests/unit/phase13.test.ts`). All of it is rules and fixed text on the device; no model was called.
 
 - **The stroke check.** After a "no" or "not sure" to "Is it suddenly weak or numb?", the line "A yes or no can be
   wrong after a stroke: check it yourself now… lift both arms and smile" is a red box with the call button ABOVE
-  "Next: How bad is the pain?" (it was hidden behind it). A yes or "not sure" goes into the diary, the next-carer note,
+  "Next: How bad is the pain?" (it was hidden behind it; since phase 15 also past the depth limit). A yes or "not sure" goes into the diary, the next-carer note,
   "What stands out" and the visit page.
 - **Chest or head pain.** With a chest or head pain, or a breathing / weak / numb yes, in the conversation, every
   "How bad is the pain?" answer says "call [number] now, whatever the amount. Do not wait to see if it passes. Note the
@@ -906,7 +914,7 @@ lines still name `39e8f33`: phase 13 waits for its deploy.
   intended-purpose line: not a medical device.
 - **The pain picture** is an older man leaning forward, open hands on his knees, no teeth and no fists. **No claim to
   a published pain scale**: the three faces are drawn for this app. **Online help** asks App Check first, inside the same
-  20 s, and a refused browser is told at once what to do, with the app's own card one tap away.
+  20 s; a refused browser is told so within that wait, and Back returns to the app's own card.
 
 **Counts** (the production build of phase 13 on `npx vite preview`, port 5179): `npm run check` 3086 unit tests; `e2e-simple.py` 1035/1035; `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` (360 and 390 px) 290/290; `contrast-check.mjs` 144 of 144 pairs; `phase11-walk.py` 48/48; `phase12-walk.py` 335/335 (with the phase 13 screens, Back one step at a time, every way out followed; shots in `devlog/evidence_phase13/`).
 
@@ -914,8 +922,7 @@ lines still name `39e8f33`: phase 13 waits for its deploy.
 
 Judge round 10's four official seats named one P0: on a phone the first cards are made by rules, so Firebase AI Logic
 did not carry weight in a judge's first minute. Each logic change has a test that failed first
-(`tests/unit/find-more.test.ts`, `tests/unit/speak-offer.test.ts`). The "Live:" lines still name `ca04bc9`: phase 14
-waits for its deploy.
+(`tests/unit/find-more.test.ts`, `tests/unit/speak-offer.test.ts`).
 
 - **Find more choices (Google's AI, after your yes).** The second button under "Show them the choices" on a topic
   card (`core/findmore.ts`). It is the narrowing step of `core/narrow.ts`, given the choices on the card ("On the card
@@ -927,11 +934,11 @@ waits for its deploy.
   pain, the body, a feeling, the toilet, help or a need, a red-flag answer, the crisis line, or while the call box is
   up; nor on a yes / no card, the needs board, or a card the AI made (the worst case of the gate: fewer offers; a
   test walks every topic and tree question). In a judge's path on a phone it is tap 3, and "Just this once" tap 4.
-- **Read aloud offered before handing over.** "Read it aloud to Frank (Google's AI, a calm, slow voice)", one button
+- **Read aloud offered before handing over.** "Read it aloud to [name] (Google's AI, a calm, slow voice)" (not in the sample family until phase 15), one button
   under the main one while Read aloud is off: the first tap opens the same sheet as before; after one yes the tap
   turns it on with no sheet. Off by default.
-- **Back and refusals.** A card waiting for the sheet's yes is no step of its own: Back from the card made after the
-  yes lands on the card it was asked from, and "No, not now" goes there too. Where App Check refuses the browser, the
+- **Back and refusals.** A card waiting for the sheet's yes is no step of its own: Back from the "Find more choices" card made after the
+  yes lands on the card it was asked from (from the "See the AI at work" card it showed a leftover "No card" screen once in judge round 11), and "No, not now" goes there too. Where App Check refuses the browser, the
   screen says "Online help could not check this browser, so nothing was sent" and what to do; the sheet no longer comes
   back by itself (it did, after "something else", before). A tapped question now opens its card at the top (it kept
   the first screen's scroll: 580 px down at 360 px).
@@ -942,6 +949,41 @@ waits for its deploy.
 walk with App Check refusing only); a hosted run of the cloud leg; any trial with people.
 
 **Counts** (the production build of phase 14 at `4b38b80` on `npx vite preview`, port 5179): `npm run check` 3106 unit tests; `e2e-simple.py` 1035/1036 (the one miss, "A, handover, worst cases", depends on the time of day: its fixture's pain entry is at 09:10 yesterday and falls out of the last 24 hours when the run is after 09:10; it is not touched by this phase); `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` (360 and 390 px) 290/290; `contrast-check.mjs` 144 of 144 pairs; `phase11-walk.py` 48/48; `phase12-walk.py` 431/431 (with the phase 14 screens at 360 and 390 px, light and dark: Back and the phone's back one step at a time, every way out followed; shots in `devlog/evidence_phase14/walk/`).
+
+## Added on 24 Nov, phase 15: the fixes of judge round 11
+
+Judge round 11 (seven seats, one of them the honesty hound) found the sample family short of what the texts and the
+planned video show, and health lines in the notes for others softer than the screen. Each change has a test that
+failed on the round's build (`tests/unit/phase15.test.ts`, 25 tests). All of it is rules, fixed text and the screen;
+no model was called. Phase 15 waits for its deploy: the "Live:" lines name `479ce07`.
+
+- **The sample family as the texts say.** Its diary fills from confirmed answers, needs and a stroke-sign "not sure",
+  in its own store in memory (nothing reaches the device, the 23 Nov separation holds): "What stands out", the visit
+  page and the therapist page read it. Read aloud is offered there too, with its own yes kept in memory. "B" gives
+  Beth, Bo and biscuits: Beth (his sister) and ginger biscuits joined `core/sample.ts`.
+- **The wait for "Find more choices".** After "Just this once" the card stays on screen with "Asking Google's AI…
+  Stop waiting" where the button was (the first screen showed for up to 20 s before). "Stop waiting" keeps the card,
+  with a line; any other tap or a step back calls the wait off first. The refusal screen and Back to the card are as
+  in phase 14.
+- **Health lines for others.** For a chest or head pain the next-carer note, the family text, the therapist warning
+  and "What stands out" say "call [number] now, whatever the amount. Do not wait to see if it passes.", like the
+  screen. A logged pain with no place says call now first if it is new, sudden, chest or head. The visit page under a
+  stroke sign or "I can't go on" says call now, not at the visit. A weakness "no" or "not sure" then "a little" pain
+  ends on the arms-and-smile check, never "Ask again in an hour", and "How bad is the pain?" follows that check also
+  past the depth limit. "Left for later" keeps the chest, head or stroke flag: Home shows the call line, "Ask it
+  again" puts the call box back. No tip of the day over a day with an urgent entry. "Are you comfortable? yes" asks
+  to check it the other way; the doctor page marks each yes or no "please check".
+- **Words.** On a phone, "This phone has no AI of its own for this one" replaces "The private helper isn't ready on
+  this phone"; the Body & care card names the number.
+
+**Not done in this phase:** limited-use App Check tokens (tried on 17 Nov and taken out: every cloud request then
+needs a new reCAPTCHA attestation, which would make refusals of judges' browsers more likely); the TTS model under
+Remote Config (Remote Config is fetched only after "Yes, every time", so Read aloud would still start on the
+in-code name); generic TV and music for the sample family (the labelled set's expected cards name them; it needs a new
+eval run); new pain and arm pictures; the AI as the phone's main mechanic; the Today view's own red boxes; any trial
+with people.
+
+**Counts** (the production build of phase 15 on `npx vite preview`, port 5179): `npm run check` 3131 unit tests; `e2e-simple.py` 1036/1036; `pwa-check.py` 34/34; `e2e-needs.mjs` 13/13; `overflow-check.py` (320 to 412 px) 552/552; `contrast-check.mjs` 144 of 144 pairs; `phase11-walk.py` 48/48; `phase12-walk.py` 457/457 (with the phase 15 screens in the sample family at 360 and 390 px, App Check held open to see the wait: Back one step at a time, every way out followed; shots and the log in `devlog/evidence_phase15/`).
 
 ## Changed on 18 Nov after the owner's walk on his phone: Back, and "something else"
 Two things the owner found with the phone in his hand, 11:20 to 11:32 UTC, on the hosted copy (`CLAIMS.md` rows 104

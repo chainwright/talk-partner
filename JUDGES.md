@@ -6,11 +6,11 @@ Repository: <https://github.com/chainwright/talk-partner> (public, Apache-2.0)
 sponsor's AI is at taps 3 and 4:
 1. Open <https://talk-partner.web.app/>. The first screen: "Needs something now?", "I want to say something", "Something new or sudden?".
 2. Under them, **See the AI at work**, and two lines: "Phone: Google's AI, online, after your yes" / "Laptop with Chrome's own AI: nothing is sent".
-3. **Food & drink → "Would you like tea or coffee?"** (taps 1 and 2): "1 Say it out loud", "2 Turn the phone to them", the main button **Show them the choices**, and under it the second button, **Find more choices (Google's AI, after your yes)**, then **Read it aloud to them (Google's AI, a calm, slow voice)**.
-4. **Find more choices** (tap 3): a sheet shows the exact line that would go ("Would you like tea or coffee? On the card already: tea, coffee."); **Just this once** (tap 4) asks Firebase AI Logic (`PREFER_IN_CLOUD`) for other kinds of answer. The card it makes says "AI suggested these other choices with online help, after your yes" and its chip "Made online, after your yes · on a laptop with Chrome's AI this runs on that computer". On a laptop with Gemini Nano the same button reads "Find more choices (Chrome's AI, on this computer)", runs there and sends nothing. If App Check refuses your browser, the screen says nothing was sent and what to do. **Back** (tap 5) returns to tea or coffee.
+3. **Food & drink → "Would you like tea or coffee?"** (taps 1 and 2): "1 Say it out loud", "2 Turn the phone to them", the main button **Show them the choices**, and under it the second button, **Find more choices (Google's AI, after your yes)**, then **Read it aloud to them (Google's AI, a calm, slow voice)** (in the sample family: "to Frank", since phase 15).
+4. **Find more choices** (tap 3): a sheet shows the exact line that would go ("Would you like tea or coffee? On the card already: tea, coffee."); **Just this once** (tap 4) asks Firebase AI Logic (`PREFER_IN_CLOUD`) for other kinds of answer; while it works, the card stays on screen with "Asking Google's AI… Stop waiting" (phase 15). The card it makes says "AI suggested these other choices with online help, after your yes" and its chip "Made online, after your yes · on a laptop with Chrome's AI this runs on that computer". On a laptop with Gemini Nano the same button reads "Find more choices (Chrome's AI, on this computer)" and is built to run there and send nothing (not yet run against the real Nano). If App Check refuses your browser, the screen says nothing was sent and what to do. **Back** (tap 5) returns to tea or coffee.
 5. **Show them the choices**: the person's screen, "Point to your answer", tea and coffee with their pictures.
 6. Tap **tea** → "So: tea. Right?" → **Yes** → "Thank you. Tea." → **Give the phone back**. The carer's screen: what was chosen, "Next: Would you like milk in it?", and "Made by the app's rules on this phone. No AI used."
-7. **Home → See the AI at work**: a sheet shows the exact line that would go to Google; **Just this once** makes an open question's card online, with the same chip.
+7. **Home → See the AI at work**: a sheet shows the exact line that would go to Google; **Just this once** makes an open question's card online; the card says "Made with online help".
 8. "Find more choices" is never offered on pain, the body, feelings, a red flag or the crisis line: try **Body & care → "Are you in pain?"** (no such button).
 9. **Needs something now? → pain → Yes**: the carer gets "Where does it hurt?" first and the call box with your region's number.
 10. **Body & care → "Are you in pain?" → yes → arms → your left arm**: the next question is "Is it suddenly weak or numb, yes or no?".
@@ -21,17 +21,16 @@ sponsor's AI is at taps 3 and 4:
 
 Nothing here needs an account. Hosted copy: <https://talk-partner.web.app/#/demo> (our project settings are in it, so
 cloud help can be turned on there; the on-device step needs Gemini Nano in your own Chrome). **Cloud help there needs
-App Check to accept your browser** (reCAPTCHA). In the check of the live build on 22 Nov, desktop Chrome with a fresh
-profile and no debug token got every cloud card, 28 of 28, in three runs of three; a browser App Check refuses gets
-no cloud card. Since phase 13 the app asks App Check first, inside the same 20 s wait, so a refused browser hears it at
-once: the card reads "Online help could not check this browser", says what to do instead (a choice question, a topic
-question), and offers the app's own card with the ways to say it, made with no AI (`README.md`, "Where the AI runs,
+App Check to accept your browser** (reCAPTCHA). A browser App Check refuses gets no cloud card; headless test browsers were refused in
+some of our runs and accepted in others. Since phase 13 the app asks App Check first, inside the same 20 s wait; a refused browser is told so
+within that wait: the screen reads "Online help could not check this browser", says what to do instead (a choice question, a topic
+question), and Back returns to the app's own card, made with no AI (`README.md`, "Where the AI runs,
 in detail"). Everything else on this page works without it. Or from a clone:
 
 **Two views of one app (since 17 Nov).** `/#/demo`, the address above, opens the full view in judge mode, and this
 page is about it. The bare address `/` opens the **simple view**, made for a carer on a phone. Its first screen: the
-hope line, "Needs it now?" (the quick-needs board), "How it works: 4 steps", seven topics with one-tap questions,
-then "Or ask your own question". A question leads to "1 Say it out loud", "2 Turn the phone to them" and the line
+hope line, "Needs something now?" (the quick-needs board), "I want to say something", "Something new or sudden?",
+"See the AI at work", "How it works: 4 steps", seven topics with one-tap questions, then "Or ask your own question". A question leads to "1 Say it out loud", "2 Turn the phone to them" and the line
 "Wait. Count to ten. Don't answer for them."; the person then sees "Point to your answer", the question and the
 choices, "So: tea. Right?" with "Yes" / "No, something else", and "Thank you. Tea." with "Give the phone back". It
 draws less and computes nothing about a card: the same pipeline makes every card. On the carer's screens it says in
@@ -40,7 +39,7 @@ plain words where the choices were made ("Made by the app's rules on this phone.
 any names you listed swapped out, and the app's fixed instructions"), read from the same `inferenceSource` report as
 the badges here. **How it works inside →** at the foot of the simple screens opens the full view (kept for that
 browser), and **Simple view**, first among the links at the top, goes back. In the simple view an open question
-that needs cloud help brings up a sheet with the exact line that would go; **Yes, send open questions to Google** on
+that needs cloud help brings up a sheet with the exact line that would go; **Yes, every time** on
 it is the same switch as the tick box below.
 
 **Where the AI is in the simple view, and where it is not.** The 40 topic questions the rules can make, quick needs,
@@ -77,7 +76,7 @@ the AI is where it was, in a typed open question, the narrowing step (which now 
 "Today in short".
 
 **Added on 18 Nov, phase 3, the carer's side only** (`CLAIMS.md` rows 63 to 72; README "Added on 18 Nov, phase 3").
-A *diary* (one tap logs a drink, a meal, the toilet, sleep or pain; the answers and the needs go in by themselves;
+A *diary* (one tap logs a drink, a meal, the toilet, sleep or pain; the answers and the needs go in by themselves, in the sample family too since phase 15, in memory only;
 today, week, month, by topic; kept on the device only) and, for a week or a month, *what stands out*: at most six lines,
 each with what it was counted from ("Chosen or logged 2 times that day. Only what was entered here."), red flags
 marked "Tell the doctor or nurse", never medical advice. **Counting, thresholds and red flags are rules; the AI only
@@ -94,10 +93,10 @@ something, then Week.
 
 **Added on 18 Nov, phase 4** (`CLAIMS.md` rows 77 to 85; README "Added on 18 Nov, phase 4"; `devlog/DAY15.md`).
 *The first letter:* after "something else" the person points to the letter their word starts with on a big alphabet,
-and a card offers up to three words that start with it, the family's own first (Beth, Bo, ginger biscuits for "B":
-rules, no model). A model adds words only when the rules find fewer than two: Gemini Nano on the device, or the cloud
-after a yes on a sheet, and that request holds the question and the letter only. *The person starts:* "Frank wants to
-say something" opens his screen with three starters; the carer then reads "Frank started this: …". *Before a doctor
+and a card offers up to three words that start with it, the family's own first (in the sample family, "B" gives Beth, Bo,
+biscuits: rules, no model). A model adds words only when the rules find fewer than two: Gemini Nano on the device, or the cloud
+after a yes on a sheet, and that request holds the question and the letter only. *The person starts:* "Frank: I want to
+say something" opens his screen with three starters; the carer then reads "Frank wants to talk about …". *Before a doctor
 visit:* eight questions at most from a fixed list, no model anywhere in it, and one page of his own answers, as
 given, "Not a medical record". *Talk about a photo:* three rule-made questions about a family photo, never "Who is
 this?". **The new hybrid step:** in desktop Chrome with Gemini Nano the carer can ask the model on the device to look
@@ -116,10 +115,10 @@ or, for the body and feelings, "Show me where" and the needs board. The AI's nar
 
 **Added on 18 Nov, phase 8: the fixes of judge round 7** (`CLAIMS.md` rows 114 to 124; README "Added on 18
 to 19 Nov, phase 8"; `devlog/evidence_phase8/`). The visit page counts the person's own "low" and yes to pain, so no
-line says "none entered" under them. Back is one step in every view, the sample family's included, and through the
+line says "none entered" under them. Back is one step in every view we walked, the sample family's included, and through the
 person's own screens. The passport's two lines about understanding are off until ticked, it says a tired yes may not
-mean yes, and with no number set it names none. Every card an AI made carries a chip from where the SDK ran it:
-"Made on this computer" or "Made online, after your yes", with why. To see the chip on a phone: type "What do you want
+mean yes, and with no number set it names none. Every card an AI made says where the SDK ran it:
+"Made on this computer", "Made online, after your yes" or "Made with online help…", with why. To see the chip on a phone: type "What do you want
 to do this weekend?" under "Or ask your own question" and press "Just this once" on the sheet.
 
 **Added on 18 Nov, phase 7: for the speech therapist, and "How to talk with Frank"** (`CLAIMS.md` rows 108 to 113;
@@ -141,7 +140,7 @@ device. Open the diary, tab Week: under every line of "What stands out" is **"Se
 place the diary entries the rule counted (the rules return the ids with the line; the count is read from the same
 list). Then **"Share with family"**: a sheet shows the exact text (the span, the lines with how each was counted,
 the entries by day), says "This text leaves the phone through the app you pick (message, email). Talk Partner keeps
-no copy and has no server.", and has Share (`navigator.share({ text })`), Copy and Cancel. The health notes go in
+no copy and has no server." (No server of ours holds the family's data; feedback notes, if sent, are kept in our Firebase project.), and has Share (`navigator.share({ text })`), Copy and Cancel. The health notes go in
 only when the box on the sheet is ticked (off every time); photos never. **"For the next carer"** is a note of the
 last 24 hours with the usual choices. A line that carries the call box puts "Call 911 now if this is new or sudden"
 at the top of the text. The diary's privacy line was changed to stay true: the app never sends the diary; it leaves
@@ -149,14 +148,14 @@ only when the carer shares it, as a text seen first. Nobody it is for has used i
 in a test browser, on no real phone.
 
 **Added on 18 Nov, phase 5, after judge round 6** (`CLAIMS.md` rows 86 to 97; README "Added on 18 Nov, phase 5").
-On the bare address, as a phone: the first screen has **"Something new or sudden?"** (FAST, four more reasons to
-call, a call button that is a `tel:` link; the number is set in About them, 911 by default). Ask "Are you in pain?"
+On the bare address, as a phone: the first screen has **"Something new or sudden?"** (a red card that opens FAST, four more reasons to
+call and a call button that is a `tel:` link; the number is guessed from the phone's language and set in About them). Ask "Are you in pain?"
 from "Body & care", answer yes, then head, top of head: the carer's screen opens with the boxed line **"Call 911 now
 if this is new or sudden."** and keeps it for that conversation. All of that is rules and fixed text; no clinician has
 read it. **Where the sponsor runs on a phone:** on the screen before handing over, turn on **Read aloud** (a sheet
 first: "The words on this card, including names on it, go to Google to be spoken. Nothing else."), then show the card:
 a Gemini text-to-speech model, through Firebase AI Logic (`ONLY_IN_CLOUD`), reads the question and the choices, on
-every card, the topic questions included. It is the one AI step in the phone's everyday loop; the others on a phone
+every card, the topic questions included, until it is turned off. With "Find more choices" (phase 14) it is one of two AI steps in the phone's everyday loop, in the sample family too since phase 15; the others on a phone
 are the typed open question, "Narrow it down", first-letter words and plainer wording, each a cloud call behind a
 sheet whose first yes is "Just this once". On a phone there is no on-device step (README, "Where the sponsor runs on
 a phone"). Our run of Read aloud against the real model: `devlog/evidence_phase5/AI_RUN_LOG.md` (localhost, with sound).
@@ -177,6 +176,7 @@ the SDK's `inferenceSource`. Nothing is sent, and this step is made with cloud h
 |---|---|
 | desktop Chrome that could run Gemini Nano but has not downloaded it (the usual case) | "Gemini Nano is not downloaded in this browser, so the on-device step can't run yet. The card shown is made in code. Download (several GB, once)" |
 | any other browser, or a computer that cannot run the model | "No Gemini Nano in this browser, so the on-device step can't run here. The card shown is made in code." |
+| a phone | "Open questions need cloud help." |
 
 In both cases the line under it ("Sample family: …") ends with **See what the on-device step makes →**. It opens a
 recording of that step from our machine, in a dashed frame tagged "Recording": the weekend question answered
@@ -232,12 +232,12 @@ has the same two questions answered by the cloud alone); the same run against th
 `devlog/ondevice_proof_1/RUN_LOG.md`.
 
 **If you have five minutes more**
-- `npm run check` (lint, types, 3106 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
+- `npm run check` (lint, types, 3131 unit tests) and `npm run e2e:noconfig` (a real browser on a copy with no settings; 25 checks, the quick-needs board with the network switched off among them).
 - `npm run eval`: the labelled set of 60 questions against the rules alone (it writes its report to a new folder under
   `devlog/eval_runs/`): 40 of 42 code-decided questions, 0 of 18 open. What the on-device model adds on the 18 open
   questions: `devlog/evidence_phase5/heldout_at_d198eb0/` (three runs at `d198eb0`); our reading of the cards of the first runs:
   `devlog/evidence_r2/heldout_r2_NOTES.md`.
-- `CLAIMS.md`: every claim we make, with its status. `EVIDENCE.md`: where each one is proved.
+- `CLAIMS.md`: every claim we make, with its status (rows 157 to 180: phases 13 to 15). `EVIDENCE.md`: where each one is proved.
 - `DISCLOSURE.md`: what existed before the contest period.
 
 **What is not here yet:** a video, and any trial with people.
