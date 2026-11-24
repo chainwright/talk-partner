@@ -37,8 +37,8 @@ describe('a "who to call" card made with cloud help offers the people About me n
     expect(answers(c)).toEqual(['Jenny', 'Tyler']);
     expect(c.choices.at(-1)!.label).toBe('someone else');
     expect(c.source).toBe('in-cloud');
-    expect(c.why!.dropped).toEqual([{ label: 'family', rule: R.genericWho }, { label: 'friend', rule: R.genericWho }]);
-    expect(c.why!.added).toEqual([{ label: 'Jenny', from: 'people from About me' }, { label: 'Tyler', from: 'people from About me' }]);
+    expect(c.why!.dropped).toEqual([{ label: 'family', rule: R.genericWho }, { label: 'friend', rule: R.genericWho }, { label: 'Beth', rule: R.overCap }]);
+    expect(c.why!.added).toEqual([{ label: 'Jenny', from: 'people from About me' }, { label: 'Tyler', from: 'people from About me' }, { label: 'Beth', from: 'people from About me' }]);
     expect(c.why!.kept).toEqual([]);
     expect(c.notes).toContain(COPY.notes.completedFrom('people from About me'));
   });
@@ -55,7 +55,7 @@ describe('a "who to call" card made with cloud help offers the people About me n
     const e = new CloudOnly({ topic: 'call', kind: 'choice', choices: ['the doctor', 'a friend'] });
     const c = await makeCard('Who should we ring about the tablets?', env(e));
     expect(answers(c)).toEqual(['Jenny', 'Tyler']);
-    expect(c.nextPage?.choices.filter((x) => x.role === 'answer').map((x) => x.label)).toEqual(['the doctor']);
+    expect(c.nextPage?.choices.filter((x) => x.role === 'answer').map((x) => x.label)).toEqual(['Beth', 'the doctor']);
   });
   it('a bare relation word of someone listed counts as general', () => {
     expect(dropGenericWho(['daughter', 'Grace', 'the nurse'], 'Who shall we invite on Sunday?', PROFILE)).toEqual(['Grace', 'the nurse']);

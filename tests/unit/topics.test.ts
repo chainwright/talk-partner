@@ -92,10 +92,10 @@ describe('the family\'s own questions are added under the generic one, never in 
     }
   });
   it('one yes / no "call <name>?" row per person who does not live there, by the name the family uses; nobody who lives there', () => {
-    expect(awayNames(SAMPLE_PROFILE)).toEqual(['Jen', 'Tyler']);
+    expect(awayNames(SAMPLE_PROFILE)).toEqual(['Jen', 'Tyler', 'Beth']);
     const people = topics(SAMPLE_PROFILE).find((t) => t.id === 'people')!.questions;
     expect(people.map((x) => x.q)).toEqual([
-      'Would you like a visitor today?', 'Would you like to see Jen?', 'Do you want to call someone?', 'Would you like to call Jen?', 'Would you like to call Tyler?',
+      'Would you like a visitor today?', 'Would you like to see Jen?', 'Do you want to call someone?', 'Would you like to call Jen?', 'Would you like to call Tyler?', 'Would you like to call Beth?',
       'Would you like to look at some photos?', 'Would you like company, or some time alone?', 'Would you like me to stay with you?',
     ]);
     expect(people.map((x) => x.q).join(' ')).not.toContain('Carol');
@@ -182,7 +182,7 @@ describe('after an answer there is a next step where a "yes" would lead nowhere'
     expect(followUps({ asked: 'How are you feeling today?', kind: 'feeling' }, 'in pain', EMPTY_PROFILE)).toEqual([WHERE_HURTS]);
   });
   it('"call someone": yes leads to one name at a time; with nobody listed the carer types a name', () => {
-    expect(followUps(card('Do you want to call someone?'), 'yes', SAMPLE_PROFILE)).toEqual(['Would you like to call Jen?', 'Would you like to call Tyler?']);
+    expect(followUps(card('Do you want to call someone?'), 'yes', SAMPLE_PROFILE)).toEqual(['Would you like to call Jen?', 'Would you like to call Tyler?', 'Would you like to call Beth?']);
     expect(asksWho(card('Do you want to call someone?'), 'yes', SAMPLE_PROFILE)).toBe(false);
     expect(followUps(card('Do you want to call someone?'), 'yes', EMPTY_PROFILE)).toEqual([]);
     expect(asksWho(card('Do you want to call someone?'), 'yes', EMPTY_PROFILE)).toBe(true);

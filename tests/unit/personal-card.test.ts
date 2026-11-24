@@ -52,8 +52,10 @@ describe('a card of About-me answers from the private step stays on this compute
     expect(c.cloudPayload).toBeNull();
     expect(c.unsentPayload ?? null).toBeNull();
     expect(c.why!.personal).toEqual(['Jenny', 'Tyler']);
-    expect(c.why!.dropped).toEqual([{ label: 'Dr Smith', rule: COPY.how.why.rules.inventedName }]);
-    expect(c.notes).toContain(COPY.notes.personalKept);
+    expect(c.why!.dropped).toEqual([{ label: 'Dr Smith', rule: COPY.how.why.rules.inventedName }, { label: 'Beth', rule: COPY.how.why.rules.overCap }]);
+    // (phase 15: with a third person away from home, Beth, the rules complete the card from About me first, so that note
+    // is the one that keeps it on this computer; the cloud is still never asked, above)
+    expect(c.notes).toContain(COPY.notes.completedFrom('people from About me'));
     expect(c.trace!.find((t) => t.step === 'private')).toMatchObject({ ran: 'on-device', used: true });
     expect(c.trace!.find((t) => t.step === 'stripped')).toMatchObject({ ran: 'skipped', why: COPY.notes.trace.cloudNotNeeded });
   });

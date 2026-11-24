@@ -43,7 +43,7 @@ describe('§2.6: allowed sources for an open question', () => {
   it('who (contact): the household is left out and the list is completed from the people who do not live here', async () => {
     const c = await makeCard('Who do you want me to phone tonight?', env(new Fake(choice(['Carol', 'someone'], 'phone'))));
     expect(labels(c)).toEqual(['Jenny', 'Tyler', 'someone else']);
-    expect(sourceFill([], 'Who shall we invite on Sunday?', SAMPLE_PROFILE, 3)).toEqual({ answers: ['Jenny', 'Tyler'], source: 'people from About me' });
+    expect(sourceFill([], 'Who shall we invite on Sunday?', SAMPLE_PROFILE, 3)).toEqual({ answers: ['Jenny', 'Tyler', 'Beth'], source: 'people from About me' });
   });
 
   it('who (not a contact question) is not filled with the family', async () => {

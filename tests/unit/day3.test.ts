@@ -130,7 +130,7 @@ describe('§2.10 override: a recognition card from About me only, or just ask no
     const c = quizOverrideCard('Who came to the wedding, do you remember?', SAMPLE_PROFILE, 'more');
     expect(c.blocked ?? null).toBeNull();
     expect(c.choices.map((x) => x.label)).toEqual(['you', 'Jenny', 'someone else']); // the partner shows as "you"
-    expect(c.nextPage!.choices.map((x) => x.label)).toEqual(['Tyler', 'someone else']);
+    expect(c.nextPage!.choices.map((x) => x.label)).toEqual(['Tyler', 'Beth', 'someone else']); // (phase 15: Beth joined the sample family)
     expect(c.notes).toContain('Only things from About me are on this card; nothing is made up.');
     expect(c.source).toBe('code');
     expect(c.trace!.every((t) => t.step === 'code' ? t.used : t.ran === 'skipped')).toBe(true);

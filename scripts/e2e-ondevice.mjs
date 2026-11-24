@@ -132,7 +132,7 @@ async function attach(port) {
   return { send, js, waitFor, shot, ask, setCloud, offline, mark, outside, aiLines, s, settings: () => settings, close: () => ws.close() };
 }
 
-const ABOUT = { people: ['Jenny', 'Jen', 'Tyler'], places: ['lake', 'the lake', 'church', 'hardware store'], foods: ['pot roast', 'chili'] };
+const ABOUT = { people: ['Jenny', 'Jen', 'Tyler', 'Beth'], places: ['lake', 'the lake', 'church', 'hardware store'], foods: ['pot roast', 'chili', 'ginger biscuits'] };
 const fromAbout = (tiles) => tiles.filter((t) => Object.values(ABOUT).flat().includes(t));
 const ON_DEVICE = /leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device/;
 
@@ -144,7 +144,7 @@ try {
   log(`\n- date: ${new Date().toISOString()}`);
   log(`- commit: \`${git('rev-parse HEAD')}\` (${git('describe --tags --always')}); working tree ${git('status --porcelain') ? 'has uncommitted changes' : 'clean'}`);
   log(`- browser: ${version.Browser}, ${version['User-Agent'].includes('Headless') ? 'headless' : 'with a window'}, attached on port ${PORT}`);
-  log(`- app: ${URL_} (${/^https?:\/\/(?:localhost|127\.0\.0\.1)[:/]/.test(URL_) ? 'the dev server of this commit' : 'a hosted copy, not a dev server: the commit above is this checkout\'s; which build the host serves is in the README'}), judge mode, the made-up sample family (Frank; Carol asking; Jenny "Jen", Tyler; the lake, church, hardware store; pot roast, chili)`);
+  log(`- app: ${URL_} (${/^https?:\/\/(?:localhost|127\.0\.0\.1)[:/]/.test(URL_) ? 'the dev server of this commit' : 'a hosted copy, not a dev server: the commit above is this checkout\'s; which build the host serves is in the README'}), judge mode, the made-up sample family (Frank; Carol asking; Jenny "Jen", Tyler, Beth; the lake, church, hardware store; pot roast, chili, ginger biscuits)`);
   log(`- SDK: firebase ${JSON.parse(execSync('cat node_modules/firebase/package.json').toString()).version}, @firebase/ai ${JSON.parse(execSync('cat node_modules/@firebase/ai/package.json').toString()).version}`);
 
   const c = await attach(PORT);
@@ -264,7 +264,7 @@ try {
   await d.setCloud(true);
   for (const q of ['What do you want to do this weekend?', 'What would you like for dinner?', 'Who should we call tonight?']) {
     const r = await d.ask(q);
-    check(`without the model, "${q}" is answered by the cloud step, which has no About me`, r.badge === 'Cloud help (question only)' && r.ai.every((l) => /inferenceSource=in_cloud/.test(l)) && !/Jenny|Tyler|pot roast|chili|lake/.test(r.sentQuestion), `${r.badge}; sent: ${r.sentQuestion}`);
+    check(`without the model, "${q}" is answered by the cloud step, which has no About me`, r.badge === 'Cloud help (question only)' && r.ai.every((l) => /inferenceSource=in_cloud/.test(l)) && !/Jenny|Tyler|Beth|pot roast|chili|ginger biscuits|lake/.test(r.sentQuestion), `${r.badge}; sent: ${r.sentQuestion}`);
     if (q.startsWith('Who')) await d.shot('06-no-model-cloud-who-to-call');
     else {
       // the open questions the judge path opens on: the cloud step has never seen About me, the step on this computer has

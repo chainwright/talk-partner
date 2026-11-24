@@ -8,8 +8,10 @@ export const SAMPLE_PROFILE: Profile = {
     { id: 's1', name: 'Carol', relation: 'wife', household: true },
     { id: 's2', name: 'Jenny', relation: 'daughter', household: false, nickname: 'Jen' },
     { id: 's3', name: 'Tyler', relation: 'grandson', household: false },
+    // (phase 15, judge round 11: "B" gives Beth, Bo, biscuits, as the docs and the video say)
+    { id: 's4', name: 'Beth', relation: 'sister', household: false },
   ],
-  foods: ['pot roast', 'chili'],
+  foods: ['pot roast', 'chili', 'ginger biscuits'],
   places: ['the lake', 'church', 'hardware store'],
   tv: ['Wheel of Fortune', 'Packers games'],
   music: ['Johnny Cash'],

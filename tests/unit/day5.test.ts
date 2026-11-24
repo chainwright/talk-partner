@@ -66,8 +66,10 @@ describe('"why this card" is written from the values the rules worked on', () =>
   function consistent(c: Card, dev: ModelOutput | null) {
     const w = c.why!;
     const on = answers(c).map((x) => x.toLowerCase());
+    // (an added label may stand on the card's next page: phase 15, a third person in the sample family)
+    const onAll = [...on, ...(c.nextPage ? answers(c.nextPage).map((x) => x.toLowerCase()) : [])];
     for (const k of w.kept) expect(on, `kept "${k}" is on the card`).toContain(k.toLowerCase());
-    for (const a of w.added) { expect(on, `added "${a.label}" is on the card`).toContain(a.label.toLowerCase()); expect(a.from.length).toBeGreaterThan(0); }
+    for (const a of w.added) { expect(onAll, `added "${a.label}" is on the card`).toContain(a.label.toLowerCase()); expect(a.from.length).toBeGreaterThan(0); }
     for (const d of w.dropped) { expect(on, `dropped "${d.label}" is not on the card`).not.toContain(d.label.toLowerCase()); expect(d.rule.length).toBeGreaterThan(0); }
     if (w.proposed && dev && w.proposed.step === 'private') expect(w.proposed.choices).toEqual(dev.choices);
     expect(w.decided.length).toBeGreaterThan(0);
@@ -101,7 +103,7 @@ describe('"why this card" is written from the values the rules worked on', () =>
     consistent(c, dev);
     expect(answers(c)).toEqual(['Jenny', 'Tyler']);
     expect(c.why!.dropped).toEqual(expect.arrayContaining([{ label: "don't know", rule: W.rules.negative }, { label: 'Carol', rule: W.rules.household }]));
-    expect(c.why!.added).toEqual([{ label: 'Tyler', from: 'people from About me' }]);
+    expect(c.why!.added).toEqual([{ label: 'Tyler', from: 'people from About me' }, { label: 'Beth', from: 'people from About me' }]);
     expect(c.why!.kept).toEqual(['Jenny']);
   });
   it('a generic place is dropped by name and the About-me places are added', async () => {

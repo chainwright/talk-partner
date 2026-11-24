@@ -86,9 +86,10 @@ describe('the brief\'s case: "B" with Beth, Bo and biscuits in About them', () =
     const carol: Profile = { ...MILLER, foods: ['ginger biscuits'], other: [] };
     expect(letterWords({ asked: '', letter: 'B', rejected: ['ginger biscuits'] }, carol)).not.toContain('ginger biscuits');
   });
-  it('the sample family of judge mode has Bo', () => {
+  it('the sample family of judge mode: "B" gives Beth, Bo, biscuits, as the docs and the video say (phase 15)', () => {
     expect(SAMPLE_PROFILE.other).toContain('Bo (dog)');
-    expect(letterWords({ asked: '', letter: 'B', rejected: [] }, SAMPLE_PROFILE)[0]).toBe('Bo');
+    expect(letterWords({ asked: '', letter: 'B', rejected: [] }, SAMPLE_PROFILE).slice(0, 3)).toEqual(['Beth', 'Bo', 'ginger biscuits']);
+    expect(letterWords({ asked: '', letter: 'B', rejected: [] }, SAMPLE_PROFILE).slice(0, 3).map((w) => letterLabel(w, 'B'))).toEqual(['Beth', 'Bo', 'biscuits (ginger)']);
   });
   it('the line the carer says, and the question on the card', async () => {
     const card = await letterCard({ asked: '', letter: 'b', rejected: [] }, env(new Fake(false), MILLER));

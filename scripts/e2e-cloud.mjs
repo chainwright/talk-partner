@@ -161,7 +161,7 @@ try {
   check('Remote Config answered: "How this works" shows the cloud model and both routing thresholds as "from Remote Config"', fetched?.status === 'fetched' && allFrom(fetched, 'remote'), JSON.stringify(fetched));
   const body = settingsBodies.join(' ');
   check('the settings request went to Firebase Remote Config and holds no question and no About-me word',
-    settingsBodies.some((b) => /firebaseremoteconfig\.googleapis\.com/.test(b)) && !/Partner asks|Jenny|Tyler|Carol|Frank|lake|church|pot roast|chili|Wheel|Packers|Johnny/i.test(body), `${settingsBodies.length} requests, ${body.length} characters`);
+    settingsBodies.some((b) => /firebaseremoteconfig\.googleapis\.com/.test(b)) && !/Partner asks|Jenny|Tyler|Beth|Carol|Frank|lake|church|pot roast|chili|Wheel|Packers|Johnny/i.test(body), `${settingsBodies.length} requests, ${body.length} characters`);
   await js(`location.hash = '#/demo'`); await sleep(800);
   await waitFor(`!!document.querySelector('.chip')`);
   const cloudNav = await js(`[...document.querySelectorAll('header nav a')].map((a) => a.innerText).find((t) => t.startsWith('Cloud help'))`);
@@ -235,7 +235,7 @@ try {
   // place, a general word may not, and at least one person from About me is on the card
   check('"who to call" with cloud help only: no general word, at least one person About me names, "someone else" as the way out',
     (tiles3 ?? []).some((t) => ['Jenny', 'Tyler'].includes(t)) && !(tiles3 ?? []).some((t) => /^(?:family|friends?|someone|relatives?)$/i.test(t)) && !(tiles3 ?? []).includes('Carol') && tiles3?.at(-1) === 'someone else', JSON.stringify(tiles3));
-  check('the cloud answered it (inferenceSource=in_cloud) and got the bare question: no name in the request', report3.length === 1 && /inferenceSource=in_cloud/.test(report3[0]) && /Partner asks: Who should we call tonight\?/.test(payload3) && !/Jenny|Tyler|Carol|Frank/.test(payload3), payload3.match(/Partner asks:[^"]*/)?.[0] ?? '');
+  check('the cloud answered it (inferenceSource=in_cloud) and got the bare question: no name in the request', report3.length === 1 && /inferenceSource=in_cloud/.test(report3[0]) && /Partner asks: Who should we call tonight\?/.test(payload3) && !/Jenny|Tyler|Beth|Carol|Frank/.test(payload3), payload3.match(/Partner asks:[^"]*/)?.[0] ?? '');
   await shot('03-cloud-who-to-call');
 
   console.log(`hosts contacted during the cloud card: ${[...hosts.entries()].map(([h, n]) => `${h}×${n}`).join(', ')}`);
