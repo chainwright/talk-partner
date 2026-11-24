@@ -9,23 +9,25 @@ export type OwnFallbackWhy = 'no' | 'offline' | 'check' | 'failed' | 'none';
 
 export const P16 = {
   own: {
-    heading: 'Ask in your own words',
+    // (phase 17, judge round 12, the cold 10-second test 3/5: "Make the choices: who chooses?")
+    heading: 'Type your question. We make picture answers.',
     /** The field's example: an open question, the kind the rules cannot turn into choices and the AI can. */
     field: 'What would you like for lunch?',
     label: 'Your question, as you would say it',
     /** One line at 360 px (the name would wrap it): the card screen's button says whom they are for. */
-    make: 'Make the choices',
+    make: 'Make picture answers',
     /** One line under the button: what happens to the words, by where the AI runs here (core/simple.ts, aiPlace). */
     where: {
-      device: "Chrome's own AI on this computer makes the choices. Nothing is sent.",
-      ask: "Google's AI makes the choices, online, after your yes. Names you listed are swapped out.",
-      cloudOn: "Google's AI makes the choices, online (online help is on). Names you listed are swapped out.",
+      device: "Chrome's own AI on this computer makes them. Nothing is sent.",
+      // (phase 17: App Check starts when the field gets the cursor, so the line says so; no word of the question goes)
+      ask: "Google's AI makes them, online, after your yes. Google checks this browser first; your words wait for the yes.",
+      cloudOn: "Google's AI makes them, online (online help is on). Google checks this browser first.",
       offline: "You are offline: the app's rules make what they can from your words.",
       none: "This copy has no AI set up: the app's rules make what they can from your words.",
       checking: 'The app is checking where its AI can run here.',
     } as Record<string, string>,
     /** Under the "where" line, always: what never goes to an AI. */
-    never: "Pain, the body, feelings, warning signs: never to an AI, only the app's rules.",
+    never: "Pain, the body, warning signs: the app's fixed rules answer, never an AI.",
     topicsHeading: 'Or pick a topic',
   },
   /** The line over a card the rules made because the words were about care, a warning sign or a crisis. */

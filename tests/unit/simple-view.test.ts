@@ -53,9 +53,9 @@ describe('simple view: the first screen', () => {
     expect(out.indexOf('data-act="needs"')).toBeLessThan(out.indexOf('id="how"'));
     expect(out.indexOf('data-act="needs"')).toBeLessThan(out.indexOf('class="topic'));
   });
-  it('one main button, "Make the choices"; the own words come first, the topics after them', () => {
+  it('one main button, "Make picture answers" (phase 17); the own words come first, the topics after them', () => {
     expect(count(out, 'class="btn primary"')).toBe(1);
-    expect(out).toContain('>Make the choices</button>');
+    expect(out).toContain('>Make picture answers</button>');
     expect(out.indexOf('id="q"')).toBeLessThan(out.indexOf('class="topic'));
   });
   it('no empty video slot, no walkthrough, no About-them form and no ready-made example rows', () => {

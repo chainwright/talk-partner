@@ -79,7 +79,7 @@ import { addEvent, cleanLog, lessSureCount, newLog, pickedPractice, practiceFlag
 import { passportLink, passportScreen, practiceScreen, type PassPicture } from './care7';
 import { fallbackLine, fallbackWhy, ownAfter, ownCard, ownFallbackCard, ownWaiting } from '../../core/ownwords';
 import { P16 } from '../../core/copy16';
-import { P17 } from '../../core/copy17';
+import { P17, soCheck } from '../../core/copy17';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -1574,7 +1574,7 @@ function personView(full: boolean): string {
   }
   if (state.picked) {
     // a "no" or "not sure" sits in a neutral frame: never a giant cross above yes / change (§2.14)
-    return `${exit}<h2 class="headline">${esc(C.person.so(state.picked.label))}</h2>
+    return `${exit}<h2 class="headline">${esc(soCheck(state.picked.label, state.card?.kind === 'yesno' ? state.card.asked : ''))}</h2>
       <div class="confirm-pic ${state.picked.label === 'no' || state.picked.label === 'not sure' ? 'neutral' : ''}">${picture(state.picked)}<p>${esc(state.picked.label)}</p></div>
       <div class="tiles two"><button class="tile yes" data-confirm="yes">${TICK}<span>${C.person.yes}</span></button>
       <button class="tile" data-confirm="change">${CROSS}<span>${C.person.change}</span></button></div>`;
@@ -2914,7 +2914,13 @@ function act(el: HTMLElement) {
     case 'speak-yes': p5.speakSheet = false; if (state.demo) { p15speak.on = true; p15speak.ok = true; } else { state.settings.speak = true; state.settings.speakOk = true; saveSettings(); } render(); break;
     case 'speak-no': p5.speakSheet = false; render(); break;
     case 'speak-off': if (state.demo) p15speak.on = false; else { state.settings.speak = false; saveSettings(); } stopSound(); render(); break;
-    case 'sudden-number': state.aboutRow = 'health'; go('about'); window.scrollTo(0, 0); break;
+    // (phase 17, judge round 12, R11-P1-3 still open: "Change it" landed at the top of About them) the number field, open and focused
+    case 'sudden-number': {
+      state.aboutRow = 'health'; go('about');
+      const focusNumber = () => { const f = document.querySelector<HTMLInputElement>('#emergency-number'); if (!f) return false; f.scrollIntoView({ block: 'center' }); f.focus({ preventScroll: true }); return true; };
+      if (!focusNumber()) requestAnimationFrame(() => { if (!focusNumber()) window.scrollTo(0, 0); });
+      break;
+    }
     case 'log-undo': state.diary = removeEntry(state.diary, el.dataset.id ?? ''); saveDiary(); state.logged = null; render(); document.querySelector<HTMLElement>('#log-row button')?.focus({ preventScroll: true }); break;
     case 'diary-tab': state.diaryTab = el.dataset.tab as Span; state.logged = null; state.diaryCopied = false; render(); document.querySelector<HTMLElement>(`#tab-${state.diaryTab}`)?.focus({ preventScroll: true }); break;
     case 'diary-copy': {

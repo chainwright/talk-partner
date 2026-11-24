@@ -22,6 +22,7 @@ import type { Topic, TopicId } from '../../core/topics';
 import type { Card, Choice, Profile } from '../../core/types';
 import { decoPicto } from './pictos';
 import { DEFAULT_NUMBER, crisisAnswer } from '../../core/redflag';
+import { P17, soCheck } from '../../core/copy17';
 import { P16 } from '../../core/copy16';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -199,6 +200,7 @@ export function homeScreen(m: HomeModel): string {
   ${navBar({ back: false, name: m.name })}
   <div class="col">
     <h1 id="hope">${esc(S.hope(m.name))}</h1>
+    <p class="who-line" id="who-line">${esc(P17.who(m.name))}</p>
     ${painLater ? m.laterHtml : ''}
     ${ownBlock(m, status)}
     <button type="button" class="btn needs" data-act="needs">${SIGN.grid}<span><b>${S.needs}</b><small>${esc(S.needsSub(m.name))}</small></span></button>
@@ -271,7 +273,7 @@ export function personSimple(m: PersonModel): string {
       ${m.full ? `<button type="button" class="p-give" data-act="give-back">${P.give}</button>` : ''}`;
   }
   if (m.picked) {
-    return `${hold}<p class="p-do" id="p-so">${esc(P.so(m.picked.label))}</p>
+    return `${hold}<p class="p-do" id="p-so">${esc(soCheck(m.picked.label, m.card?.kind === 'yesno' ? m.card.asked : ''))}</p>
       <div class="p-pick">${m.pic(m.picked)}<p class="p-big">${esc(m.picked.label)}</p></div>${yesNo('yes', 'change')}`;
   }
   const headLines = `<p class="p-do">${P.point}</p><p class="p-ask">${esc(c.asked)}</p>`;

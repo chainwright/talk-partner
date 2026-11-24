@@ -30,3 +30,31 @@ export const P17 = {
   shortBy: "Google's AI wrote the short question on their screen. Say yours out loud as well.",
   shortByDevice: "Chrome's own AI wrote the short question on their screen. Say yours out loud as well.",
 };
+
+/**
+ * Phase 17 (judge round 12, seats 02n and 13: "So: your left arm. Right?" puts "Right?" beside a side, and "So: yes.
+ * Right?" after "Are you in pain?" says nothing of what was answered): the check on the person's screen. A side is
+ * checked with "Is that it?"; a yes or a no to a short yes / no question is said back in its own words ("So: yes, you
+ * are in pain. Right?"). Anything else stays "So: tea. Right?".
+ */
+const SIDE = /\b(?:left|right)\b/i;
+function restate(asked: string, yes: boolean): string | null {
+  const q = asked.trim().replace(/\?+$/, '').replace(/,?\s*yes or no$/i, '').replace(/\s+/g, ' ');
+  const not = yes ? '' : 'not ';
+  let m: RegExpMatchArray | null;
+  if ((m = q.match(/^are you (.+)$/i))) return `you are ${not}${m[1]}`;
+  if ((m = q.match(/^is (it|that|this|your \w+) (.+)$/i))) return `${m[1].toLowerCase()} is ${not}${m[2]}`;
+  if ((m = q.match(/^do you (want|need|have|feel|like) (.+)$/i))) return yes ? `you ${m[1].toLowerCase()} ${m[2]}` : `you do not ${m[1].toLowerCase()} ${m[2]}`;
+  if ((m = q.match(/^would you like (.+)$/i))) return yes ? `you would like ${m[1]}` : `you would not like ${m[1]}`;
+  return null;
+}
+export function soCheck(label: string, asked = ''): string {
+  const l = label.trim();
+  if (SIDE.test(l)) return `So: ${l}. Is that it?`;
+  const yn = l.toLowerCase();
+  if ((yn === 'yes' || yn === 'no') && asked) {
+    const r = restate(asked, yn === 'yes');
+    if (r && r.length <= 48 && !SIDE.test(r)) return `So: ${yn}, ${r}. Right?`;
+  }
+  return `So: ${l}. Right?`;
+}

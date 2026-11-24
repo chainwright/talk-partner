@@ -777,3 +777,6 @@
 .simple .own-why { display: flex; align-items: flex-start; gap: 10px; font-size: 16px; color: var(--ink); border: 2px solid var(--accent); background: var(--accent-soft); border-radius: 14px; padding: 10px 12px; }
 .simple .own-why .sg { width: 22px; height: 22px; flex: none; color: var(--accent); margin-top: 1px; }
 .simple .own-why b { display: block; }
+
+/* phase 17: who it is for, under the hope line (the cold 10-second test) */
+.simple .who-line { margin: -6px 0 2px; font-size: 17px; line-height: 1.35; color: var(--ink); }

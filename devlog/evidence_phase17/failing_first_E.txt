@@ -1,0 +1,8 @@
+# failing first: tests/unit/phase17e.test.ts run against main (4405af8) before the phase 17 code, 2026-11-24T12:58Z
+     × the back is drawn from behind: hair over the head and the spine, not the front figure 4ms
+     × "a little", "quite bad" and "very bad" carry 1, 2 and 3 filled bars (the pictures differ at a glance) 2ms
+     × "Change it" opens About them at the emergency number, focused 6ms
+     × the check never puts "Right?" beside a side, and says a yes or no back in its own words 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed (4)

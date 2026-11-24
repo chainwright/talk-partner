@@ -91,7 +91,7 @@ describe('the quick-needs board: the tick / cross check, and whose side says wha
     const main = read('web/src/main.ts');
     const view = main.slice(main.indexOf('function personView('), main.indexOf('function personScreen('));
     // the check and the confirmed answer come before the board in personView, so a tapped need is checked like any choice
-    const check = view.indexOf('C.person.so(state.picked.label)');
+    const check = view.indexOf('soCheck(state.picked.label') // (phase 17: core/copy17.ts, soCheck);
     const board = view.indexOf("if (c.kind === 'needs')");
     expect(check).toBeGreaterThan(0);
     expect(board).toBeGreaterThan(check);

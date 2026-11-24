@@ -104,3 +104,17 @@ describe('G3. letter by letter: the guess narrows', () => {
     expect(main).toContain('letter: `${l.prefix ?? \'\'}${t.dataset.letter!}`');
   });
 });
+
+describe('D. the cold 10 seconds: who it is for, and that they point after you hand over', () => {
+  it('one line under the hope line; the first block says what it does in at most 8 words', async () => {
+    const { homeScreen } = await import('../../web/src/simple');
+    const { P16 } = await import('../../core/copy16');
+    const html = homeScreen({ name: '', number: '911', topics: [], topicOpen: null, aiTag: null, ai: [], privacy: [], question: '', busy: false, error: null, howOpen: false, ownWhere: P16.own.where.ask } as never);
+    expect(html).toContain('For you and someone with aphasia: you ask, hand them the phone, they point.');
+    expect(html.indexOf('id="who-line"')).toBeLessThan(html.indexOf('id="own-h"'));
+    expect(P16.own.heading).toBe('Type your question. We make picture answers.');
+    expect(P16.own.heading.replace(/[.]/g, '').split(/\s+/).length).toBeLessThanOrEqual(8);
+    expect(P16.own.make).toBe('Make picture answers');
+    expect(P16.own.where.ask).toMatch(/Google checks this browser first; your words wait for the yes\./);
+  });
+});

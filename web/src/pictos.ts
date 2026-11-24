@@ -58,6 +58,9 @@ const note = (x: number, y: number, fill: string) => `<path d="M${x + 10} ${y + 
 // The body figure faces the viewer, so the person's LEFT is on the viewer's right (x > 48). Labels say "your left arm".
 const HI = C.red;
 const BODY_OUTLINE = `<path d="M34 30l-12 28M62 30l12 28" stroke="${C.skinShade}" stroke-width="7"/><path d="M38 64l-4 26M58 64l4 26" stroke="${C.navy}" stroke-width="8"/><path d="M34 28h28l4 36H30z" fill="${C.sky}"/><circle cx="48" cy="14" r="9" fill="${C.skin}"/>`;
+/** Phase 17: the same figure seen from behind: the back of the head (hair, no face), the spine, a turn-round arrow. */
+const BODY_BEHIND = `<path d="M34 30l-12 28M62 30l12 28" stroke="${C.skinShade}" stroke-width="7"/><path d="M38 64l-4 26M58 64l4 26" stroke="${C.navy}" stroke-width="8"/><path d="M34 28h28l4 36H30z" fill="${C.sky}"/><circle cx="48" cy="14" r="9" fill="${C.hair}"/><path d="M41 9c4-3 10-3 14 0" stroke="${C.black}" stroke-width="2"/><path d="M48 31v31" stroke="${C.navy}" stroke-width="2"/><path d="M45 36h6M45 44h6M45 52h6" stroke="${C.navy}" stroke-width="2"/><path d="M76 10a9 9 0 11-9-6" stroke="${OUTLINE}" stroke-width="3"/><path d="M64 1l4 4-5 3" stroke="${OUTLINE}" stroke-width="3"/>`;
+const BACK_PARTS = ['back', 'upper back', 'lower back'];
 const BODY_HIGHLIGHT: Record<string, string> = {
   head: `<circle cx="48" cy="14" r="9" fill="${HI}"/>`,
   face: `<circle cx="48" cy="15" r="6.5" fill="${HI}" stroke="none"/>`,
@@ -244,7 +247,9 @@ export const imageFile = (id: string) => `pictures/${id.replace(/[^a-z0-9]+/g, '
 export function svgPicto(id: string): string {
   if (id.startsWith('body:')) {
     const part = id.slice(5);
-    return svg(BODY_OUTLINE + (BODY_HIGHLIGHT[part] ?? ''), part);
+    // (phase 17, judge round 12, seat 02n, ADV-02n-4: "back" read as the chest) the back is drawn from behind: hair over the
+    // whole head, no face, the spine down the middle, and a small arrow that turns round
+    return svg((BACK_PARTS.includes(part) ? BODY_BEHIND : BODY_OUTLINE) + (BODY_HIGHLIGHT[part] ?? ''), part);
   }
   return svg(P[id] ?? P['something else'], id);
 }
