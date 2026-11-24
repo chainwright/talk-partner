@@ -32,7 +32,7 @@ describe('1. P0 health: a care question left for later (pain, the body, the toil
     expect(shown.map((x) => x.q)).toEqual(['Are you in pain?', 'Would you like tea or coffee?', 'Shall we go out?']);
     expect(shown[0]).toMatchObject({ care: true, pain: true });
     const html = un(laterBlock(shown.map((x, i) => ({ q: x.q, time: '14:37', i, care: !!x.care, pain: !!x.pain }))));
-    expect(html).toContain("If the pain is new or strong, don't wait: call the nurse or doctor.");
+    expect(html).toContain('If the pain is in the chest or the head, or new or strong, do not wait: call 911 now. Otherwise tell the nurse or doctor today.');
     expect((html.match(/later-pain/g) ?? []).length).toBe(1);
     expect(html).toContain(COPY.simple.later.careNote);
     // a week on, still there; an ordinary question of the same age is gone
@@ -51,7 +51,7 @@ describe('1. P0 health: a care question left for later (pain, the body, the toil
     expect(asking).toContain('data-act="later-found"');
     expect(asking).toContain('data-act="later-notyet"');
     expect(asking).not.toContain('data-act="later-done"');
-    expect(asking).toContain("don't wait");
+    expect(asking).toContain('do not wait');
   });
   it('other questions keep the phase 8 behaviour: the newest two of a day, "Done" at once', () => {
     let xs = addLater([], 'Would you like tea or coffee?', NOW - 3 * H);
@@ -62,7 +62,7 @@ describe('1. P0 health: a care question left for later (pain, the body, the toil
     expect(doneLater(xs, xs[xs.length - 1], false)).toHaveLength(xs.length - 1);
     const html = un(laterBlock([{ q: 'Shall we go out?', time: '14:37', i: 0 }]));
     expect(html).toContain(COPY.simple.later.note);
-    expect(html).not.toContain("don't wait");
+    expect(html).not.toContain('do not wait');
   });
   it('care questions are never pushed out by many ordinary ones, and survive a reload (by their words)', () => {
     let xs = addLater([], 'Are you in pain?', NOW - 50 * H);
@@ -100,8 +100,8 @@ describe('2. P0 health: "Nothing stands out" never stands over a pain, a fall, a
     const pain = (d: number) => answerEntry({ q: 'Are you in pain?', label: 'yes', at: when(d, '09:00') }, 'body');
     const xs = insights([...calm, pain(1), pain(3)], NO_HEALTH, 'week', NOW);
     expect(ids(xs)).toEqual(['pain-some']);
-    expect(xs[0]).toMatchObject({ level: 'mention', text: 'Pain was chosen or logged on 2 days in the last 7 days.', act: 'Ask again today, and tell the doctor or nurse if it is new or still there.' });
-    expect(`${xs[0].text} ${xs[0].act}`).toBe('Pain was chosen or logged on 2 days in the last 7 days. Ask again today, and tell the doctor or nurse if it is new or still there.');
+    expect(xs[0]).toMatchObject({ level: 'mention', text: 'Pain was chosen or logged on 2 days in the last 7 days.', act: 'If the pain is new or sudden, or in the chest or the head: call 911 now. Otherwise ask again today, and tell the doctor or nurse if it is still there.' });
+    expect(`${xs[0].text} ${xs[0].act}`).toBe('Pain was chosen or logged on 2 days in the last 7 days. If the pain is new or sudden, or in the chest or the head: call 911 now. Otherwise ask again today, and tell the doctor or nurse if it is still there.');
     // a line with a fixed sentence is never handed to a model to reword
     expect(cloudLines(xs)).toEqual([]);
   });
@@ -288,7 +288,7 @@ describe('6. P0 the cloud wait: 3 s to "Stop waiting", 20 s to the plain line; s
     const main = readFileSync(join(__dirname, '..', '..', 'web', 'src', 'main.ts'), 'utf8');
     expect(main).toContain('onCloud: () => cloudStarted(seq),');
     // (phase 12: the stopped wait is counted first, for the footer)
-    expect(main).toContain("case 'stop-wait': if (state.busy) { if (p9wait.at !== null) p9stopped++; makeSeq++; cloudDone(); state.busy = false; state.error = P9.wait.stopped;");
+    expect(main).toContain("else if (state.busy) { if (p9wait.at !== null) p9stopped++; makeSeq++; cloudDone(); state.busy = false; state.error = P9.wait.stopped;");
     expect(main).toContain('if (ms < CLOUD_SLOW_MS) return;');
     expect(main).toMatch(/void fetchSettings\(cfg\.firebase\)\.then/);
     expect(main).not.toMatch(/await fetchSettings|await askSettings/);

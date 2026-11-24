@@ -22,7 +22,14 @@ export interface Later {
   care?: true;
   /** Phase 9: a question about pain (`laterPain`): the "don't wait" line stands under it. */
   pain?: true;
+  /**
+   * Phase 15 (judge round 11, the SLP's seat, ADV-13-3): the conversation it was left in held a pain in the chest or
+   * the head, or a yes to weakness, numbness or trouble breathing: Home shows the call line first, and "Ask it again"
+   * puts the call box back over the card.
+   */
+  red?: 'chest' | 'head' | 'sign';
 }
+export type LaterRed = NonNullable<Later['red']>;
 export const LATER_MAX = 2;
 export const LATER_MS = 24 * 60 * 60 * 1000;
 
@@ -57,10 +64,12 @@ const flagged = (q: string, at: number, topic: string | null): Later => ({ q, at
  * One more left for later: the same question is kept once, with the newest time. Every care question is kept (they
  * never expire); of the others, the newest few.
  */
-export function addLater(xs: Later[], q: string, at: number, topic: string | null = null): Later[] {
+export function addLater(xs: Later[], q: string, at: number, topic: string | null = null, red: LaterRed | null = null): Later[] {
   const before = xs.find((x) => x.q === q);
   const x = flagged(q, at, topic);
   if (before?.care) x.care = true;
+  const r = red ?? before?.red;
+  if (r) { x.red = r; x.care = true; }
   const all = [...xs.filter((y) => y.q !== q), x].sort((a, b) => a.at - b.at);
   const others = all.filter((y) => !y.care).slice(-LATER_MAX * 3);
   return all.filter((y) => y.care || others.includes(y));
@@ -103,6 +112,7 @@ export function cleanLater(raw: unknown): Later[] {
   return Array.isArray(raw) ? raw.filter((x): x is Later => !!x && typeof x.q === 'string' && x.q.trim() !== '' && typeof x.at === 'number' && Number.isFinite(x.at)).map((x) => {
     const y = flagged(x.q.slice(0, 300), x.at, null);
     if (x.care === true) y.care = true;
+    if (x.red === 'chest' || x.red === 'head' || x.red === 'sign') { y.red = x.red; y.care = true; }
     return y;
   }) : [];
 }

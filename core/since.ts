@@ -9,6 +9,7 @@
 // This file imports the diary and the copy; no file that builds a prompt or a request imports it.
 
 import { P5 } from './copy5';
+import { DEFAULT_NUMBER } from './redflag';
 import { P6 } from './copy6';
 import { P9 } from './copy9';
 import { P12 } from './copy12';
@@ -60,7 +61,7 @@ const ownTags = (a: OwnAnswer): string[] => {
   return out;
 };
 
-export function sinceLines(diary: DiaryEntry[], since: number | null | undefined, now: number, own: OwnAnswer[] = [], name = ''): Since {
+export function sinceLines(diary: DiaryEntry[], since: number | null | undefined, now: number, own: OwnAnswer[] = [], name = '', number = DEFAULT_NUMBER, crisisLine = ''): Since {
   const S = P5.since;
   const from = sinceFrom(since, now);
   const entries = diary.filter((e) => e.at >= from && e.at <= now).sort((a, b) => a.at - b.at);
@@ -89,8 +90,8 @@ export function sinceLines(diary: DiaryEntry[], since: number | null | undefined
   const crisis = tagged('crisis');
   const signs = tagged('sign');
   const rows: [string, SinceSource][] = [
-    ...(crisis.length ? [[P12.crisis.since(crisis.map(at).join(', ')), { ids: ids(crisis), note: '' }] as [string, SinceSource]] : []),
-    ...(signs.length ? [[P9.insights.signSince(signs.map((e) => `"${e.label.trim().toLowerCase()}" (${at(e)})`).join(', ')), { ids: ids(signs), note: '' }] as [string, SinceSource]] : []),
+    ...(crisis.length ? [[P12.crisis.since(crisis.map(at).join(', '), number, crisisLine === number ? '' : crisisLine), { ids: ids(crisis), note: '' }] as [string, SinceSource]] : []),
+    ...(signs.length ? [[P9.insights.signSince(signs.map((e) => `"${e.label.trim().toLowerCase()}" (${at(e)})`).join(', '), number), { ids: ids(signs), note: '' }] as [string, SinceSource]] : []),
     [S.pain(pain.length, named(pain), with_('pain')), { ids: ids(tagged('pain')), note: '' }],
     ...(hard.length ? [[S.strong(named(hard)), { ids: ids(hardEntries), note: '' }] as [string, SinceSource]] : []),
     // (phase 9) a care question left for later is named, so the visit hears of it even when it was never asked again

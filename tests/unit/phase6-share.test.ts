@@ -47,7 +47,7 @@ describe('"Share with family": the text', () => {
     expect(lines[1]).toBe('');
     expect(lines[2]).toBe("Frank's diary, the last 7 days (Mon 16 Nov to Sun 22 Nov).");
     // (phase 9: Tuesday's pain is a line of its own, with its fixed sentence)
-    expect(t).toContain('WHAT STANDS OUT (the last 7 days)\n1. Worth mentioning to the doctor or nurse: Pain was chosen or logged on 1 day in the last 7 days.\n   Ask again today, and tell the doctor or nurse if it is new or still there.\n   How it was counted: Days with pain: Tue 17 Nov. Only what was entered here.\n2. Worth mentioning to the doctor or nurse: Few drinks were entered on Wed 18 Nov: 2.\n   If that is right, and not a gap in the diary, tell the doctor or nurse today.\n   How it was counted: Counted that day: 2. Every "Drank" tap counts');
+    expect(t).toContain('WHAT STANDS OUT (the last 7 days)\n1. Worth mentioning to the doctor or nurse: Pain was chosen or logged on 1 day in the last 7 days.\n   If the pain is new or sudden, or in the chest or the head: call 911 now. Otherwise ask again today, and tell the doctor or nurse if it is still there.\n   How it was counted: Days with pain: Tue 17 Nov. Only what was entered here.\n2. Worth mentioning to the doctor or nurse: Few drinks were entered on Wed 18 Nov: 2.\n   If that is right, and not a gap in the diary, tell the doctor or nurse today.\n   How it was counted: Counted that day: 2. Every "Drank" tap counts');
     expect(t).toContain(COPY.simple.insights.footer);
     expect(t).toContain('ENTRIES BY DAY\nMon 16 Nov\n  07:40  Would you like tea or coffee? tea\n');
     expect(t.endsWith(`${P6.share.gap}\n${P6.share.noAdvice}`)).toBe(true);
@@ -80,7 +80,7 @@ describe('worst cases: nothing in the text helps anyone dismiss pain, a need or 
     const d = [...days(0, 1, 2), ans('w', 'Where does it hurt?', 'chest', 2, '09:01'), ans('b', 'How bad is the pain?', 'very bad', 2, '09:03')];
     const t = family(d);
     expect(t.split('\n')[1]).toBe('Call 911 now if this is new or sudden: see "What stands out" below.');
-    expect(t).toContain('1. Call now if it is new or sudden, and tell the doctor or nurse: Strong pain was chosen on Wed 18 Nov: very bad. Pain in the head or the chest was chosen on Wed 18 Nov: chest.\n   Tell the doctor or nurse. If it is new or sudden, call 911 now.\n   Call 911 now if this is new or sudden.\n   How it was counted:');
+    expect(t).toContain('1. Call now if it is new or sudden, and tell the doctor or nurse: Strong pain was chosen on Wed 18 Nov: very bad. Pain in the head or the chest was chosen on Wed 18 Nov: chest.\n   Pain in the head or the chest: call 911 now, whatever the amount. Do not wait to see if it passes.\n   How it was counted:');
     expect(t).toContain('  09:01  Where does it hurt? chest');
     safe(t, 'chest pain');
     // the family's own number is the one named
@@ -233,7 +233,7 @@ describe('"For the next carer": the last 24 hours', () => {
     const d = [...plain(6), ans('y', 'Are you in pain?', 'yes', 6, '09:00'), ans('w', 'Where does it hurt?', 'chest', 6, '09:01'), ans('b', 'How bad is the pain?', 'very bad', 6, '09:02')];
     const t = handover(d);
     expect(t.split('\n')[1]).toBe('Call 911 now if this is new or sudden: see the lines on pain and falls below.');
-    expect(t).toContain('Pain: Sun 09:00 Are you in pain? yes; Sun 09:01 Where does it hurt? chest; Sun 09:02 How bad is the pain? very bad. Tell the doctor or nurse. If it is new or sudden, call 911 now.');
+    expect(t).toContain('Pain: Sun 09:00 Are you in pain? yes; Sun 09:01 Where does it hurt? chest; Sun 09:02 How bad is the pain? very bad. Pain in the head or the chest: call 911 now, whatever the amount. Do not wait to see if it passes.');
   });
   it('a pain that is not strong and not in the head or chest: the answers, and "ask again"; none entered is never "no pain"', () => {
     const t = handover([...plain(6), log('p', 'pain', 6, '09:00')]);

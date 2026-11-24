@@ -1,7 +1,7 @@
 // Phase 14 (judge round 10, seat 01 fwd a2 ADV-01-2, rev b ADV-01-1): Read aloud is offered on the carer's screen
 // before handing over, as one button right under "Show them the choices", while it is off. The first tap opens the
 // sheet that says what goes (unchanged); once the carer said yes there, the same tap turns it on with no sheet. Off by
-// default. Never a doctor-visit card, never offline, never the sample family (canSpeak in main.ts).
+// default. Never a doctor-visit card, never offline. Phase 15: in the sample family too, with its own yes in memory (canSpeak, p15speak in main.ts).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -45,7 +45,7 @@ describe('Read aloud, offered before handing over', () => {
   });
   it('the first tap opens the sheet; after one yes the tap turns it on; it stays off until then', () => {
     const main = readFileSync(join(ROOT, 'web/src/main.ts'), 'utf8');
-    expect(main).toContain("case 'speak-ask': if (state.settings.speakOk) { state.settings.speak = true; saveSettings(); } else p5.speakSheet = true;");
+    expect(main).toContain("case 'speak-ask': if (state.demo ? p15speak.ok : state.settings.speakOk) { if (state.demo) p15speak.on = true; else { state.settings.speak = true; saveSettings(); } } else p5.speakSheet = true;");
     expect(main).toContain("settings: { cloudHelp: false, support: 'more', welcomed: false }");
     // the offer is drawn from the same switch state as the old switch, and only where Read aloud can run here at all
     expect(main).toContain('speakOffer({ name, on: speakOn(), online: isOnline(), can: speakable(c) })');

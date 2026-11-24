@@ -31,7 +31,7 @@ describe('the rules', () => {
     const pain = (d: number) => answerEntry({ q: 'Are you in pain?', label: 'yes', at: when(d, '09:00') }, 'body');
     const two = insights([...days(0, 1, 2), pain(0), pain(1)], NO_HEALTH, 'week', NOW);
     expect(ids(two)).toEqual(['pain-some']);
-    expect(two[0]).toMatchObject({ level: 'mention', text: 'Pain was chosen or logged on 2 days in the last 7 days.', act: 'Ask again today, and tell the doctor or nurse if it is new or still there.' });
+    expect(two[0]).toMatchObject({ level: 'mention', text: 'Pain was chosen or logged on 2 days in the last 7 days.', act: 'If the pain is new or sudden, or in the chest or the head: call 911 now. Otherwise ask again today, and tell the doctor or nurse if it is still there.' });
     const xs = insights([...days(0, 1, 2), pain(0), pain(1), logEntry('pain', when(2, '10:00'))], NO_HEALTH, 'week', NOW);
     expect(xs[0]).toMatchObject({ id: 'pain', level: 'tell', text: 'Pain was chosen or logged on 3 days in the last 7 days.' });
     expect(xs[0].base).toBe('Days with pain: Mon 16 Nov, Tue 17 Nov and Wed 18 Nov. Only what was entered here.');

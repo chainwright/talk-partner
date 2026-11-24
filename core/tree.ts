@@ -166,7 +166,7 @@ const TREE: Record<string, Node> = {
   'are you too hot or too cold': {
     hot: { end: 'Too hot. Open a window, or take a layer off.' },
     cold: { end: 'Too cold. Bring a blanket or a jumper.' },
-    'just right': { end: 'Just right. Nothing to change.' },
+    'just right': { end: 'Just right, {name} says. Feel {their} hands, and ask again later.' },
     'something else': { next: [COMFORTABLE], end: 'Not the temperature. ' + SHOW },
   },
   'would you like a wash now or later': {
@@ -175,7 +175,8 @@ const TREE: Record<string, Node> = {
     'something else': { end: 'Maybe no wash today. Ask again tomorrow.' },
   },
   'are you comfortable': {
-    yes: { end: 'Comfortable. Nothing to change.' },
+    // (phase 15, judge round 11, the SLP's seat: a tired yes must not end the check)
+    yes: { next: [IN_PAIN], end: 'Comfortable, {name} says. A yes can be wrong after a stroke: ask "Do you want to move?" and watch {their} face.' },
     no: { next: [IN_PAIN, HOT_COLD_ROOM], end: 'Help {them} change position, then ask again.' },
     'not sure': { next: [HOT_COLD_ROOM], end: 'Help {them} change position, and see if it is better.' },
   },
@@ -404,11 +405,17 @@ export function who(verb: 'call' | 'see', names: string[]): string[] {
  * end, and the body card's second step for the chest or the head, then says to call now, whatever the amount: never
  * "Ask again in an hour", never only "the nurse or doctor". The nurse seat's words (ADV-13b-1).
  */
-const RED_END: Record<RedPlace, string> = {
+const RED_END: Record<Exclude<RedPlace, 'sign-check'>, string> = {
   chest: 'Pain in the chest: call {number} now, whatever the amount. Do not wait to see if it passes. Note the time it started.',
   head: 'Pain in the head: call {number} now, whatever the amount. Do not wait to see if it passes. Note the time it started.',
   sign: 'There was a yes to trouble breathing, weakness or numbness: call {number} now, whatever the pain. Do not wait to see if it passes. Note the time it started.',
 };
+/**
+ * Phase 15 (judge round 11, ADV-02n-2): a "no" or "not sure" to sudden weakness or numbness earlier in the conversation.
+ * "A little" and "not sure" to "How bad is the pain?" then end on the check, never on "Ask again in an hour"; "quite
+ * bad" and "very bad" keep their own call lines.
+ */
+const SIGN_CHECK_END = 'The weakness answer was not a clear yes: check it again now. Ask {them} to lift both arms and smile. If one side drops or the face droops, call {number} now. Tell the nurse or doctor about the pain today.';
 
 /** The family's own questions that stand for a marker in the tree ("@foods", "@call" …): none when About them has none. */
 function own(marker: string, profile: Profile): string[] {
@@ -488,7 +495,9 @@ export function after(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: st
   const found = rawStep(card, label, profile);
   if (!found) return { next: [], end: '' };
   // (phase 13) `red`: the conversation holds a chest or head pain, or a breathing, weakness or numbness yes
-  const raw: Raw = red && norm(card.asked) === 'how bad is the pain' ? { ...found, end: RED_END[red], alert: true } : found;
+  const howBad = norm(card.asked) === 'how bad is the pain';
+  const redEnd = !red || !howBad ? null : red === 'sign-check' ? (['a little', 'not sure'].includes(norm(label)) ? SIGN_CHECK_END : null) : RED_END[red];
+  const raw: Raw = redEnd ? { ...found, end: redEnd, alert: true } : found;
   const name = profile.personName.trim();
   let end = raw.end.replace(/\{name\} says/g, name ? `${name} says` : 'they say').replace(/\{them\}/g, name || 'them').replace(/\{They\}/g, name || 'They').replace(/\{they\}/g, name || 'they').replace(/\{their\}/g, name ? `${name}'s` : 'their').replace(/\{number\}/g, number || 'the emergency number');
   // with a name the verb is singular: "Frank has had enough", "Frank does not want", "Frank wants to go on"
@@ -497,7 +506,8 @@ export function after(card: Pick<Card, 'asked' | 'kind' | 'bodyStep'>, label: st
   const head = (q: string) => norm(q.split('?')[0]);
   const asked = new Set([...chain, card.asked].map(head));
   const deep = chain.length >= TREE_DEPTH;
-  const next = deep ? [] : (raw.next ?? []).flatMap((q) => (q.startsWith('@') ? own(q, profile) : [q])).filter((q, i, all) => !asked.has(head(q)) && all.indexOf(q) === i).slice(0, 3);
+  // (phase 15, judge round 11, ADV-05-17: past the depth limit a safety check's "How bad is the pain?" still follows, so the amount is asked)
+  const next = (raw.next ?? []).flatMap((q) => (q.startsWith('@') ? own(q, profile) : [q])).filter((q, i, all) => !asked.has(head(q)) && all.indexOf(q) === i && (!deep || (!!raw.alert && q === HOW_BAD))).slice(0, 3);
   return { next, end, ...(raw.alert ? { alert: true as const } : {}) };
 }
 

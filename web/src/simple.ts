@@ -21,7 +21,7 @@ import type { MadeWhere } from '../../core/simple';
 import type { Topic, TopicId } from '../../core/topics';
 import type { Card, Choice, Profile } from '../../core/types';
 import { decoPicto } from './pictos';
-import { crisisAnswer } from '../../core/redflag';
+import { DEFAULT_NUMBER, crisisAnswer } from '../../core/redflag';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
@@ -121,13 +121,13 @@ export function howBlock(name: string, open: boolean): string {
  * question (pain, the body, the toilet, a drink, feelings) is pinned first; its "Done" first asks "Did you find out?"
  * (`asking`), and under a pain question stands the line that new or strong pain does not wait.
  */
-export function laterBlock(items: { q: string; time: string; ago?: string; i: number; care?: boolean; pain?: boolean; asking?: boolean }[], painHtml = ''): string {
+export function laterBlock(items: { q: string; time: string; ago?: string; i: number; care?: boolean; pain?: boolean; asking?: boolean; red?: 'chest' | 'head' | 'sign' }[], painHtml = '', number = DEFAULT_NUMBER): string {
   const L = COPY.simple.later;
   if (!items.length) return '';
   const buttons = (x: (typeof items)[number]) => (x.asking
     ? `<p class="later-found" id="later-found-${x.i}" tabindex="-1"><b>${L.found}</b></p><div class="two-btn"><button type="button" class="btn" data-act="later-found" data-i="${x.i}">${L.foundYes}</button><button type="button" class="btn quiet" data-act="later-notyet" data-i="${x.i}">${L.foundNo}</button></div>`
     : `<div class="two-btn"><button type="button" class="btn" data-act="later-ask" data-i="${x.i}">${L.ask}</button><button type="button" class="btn quiet" data-act="later-done" data-i="${x.i}">${L.done}</button></div>`);
-  const item = (x: (typeof items)[number]) => `<div class="later-item${x.care ? ' care' : ''}" data-later="${x.i}"${x.care ? ' data-care="1"' : ''}><p><b>${esc(L.line(x.q, x.time))}</b></p>${x.ago ? `<p class="tip later-ago">${esc(x.ago)}</p>` : ''}${x.pain ? `<p class="warn later-pain">${esc(L.painLine)}</p>${painHtml}` : ''}${buttons(x)}</div>`;
+  const item = (x: (typeof items)[number]) => `<div class="later-item${x.care ? ' care' : ''}" data-later="${x.i}"${x.care ? ' data-care="1"' : ''}><p><b>${esc(L.line(x.q, x.time))}</b></p>${x.ago ? `<p class="tip later-ago">${esc(x.ago)}</p>` : ''}${x.red ? `<p class="warn later-pain later-red" role="alert">${esc(L.redLine(x.red, x.time, number))}</p>${painHtml}` : x.pain ? `<p class="warn later-pain">${esc(L.painLine(number))}</p>${painHtml}` : ''}${buttons(x)}</div>`;
   return `<div class="later" id="later">${items.map(item).join('')}<p class="tip">${items.some((x) => x.care) ? L.careNote : L.note}</p></div>`;
 }
 
@@ -347,6 +347,15 @@ export function findMoreBlock(where: 'device' | 'cloud'): string {
     <p class="tip" id="find-more-where">${esc(where === 'device' ? F.deviceWhere : F.cloudWhere)}</p>`;
 }
 
+/** Phase 15: "Find more choices" at work, where its button was; the card stays on screen. `.making` is the line the 3 s timer fills in. */
+export function findWaitLine(where: 'device' | 'cloud'): string {
+  const F = COPY.simple.findMore;
+  return `<p class="making find-wait" id="find-wait" role="status"><span class="slow-wait" id="slow-wait"><span class="slow-s">${esc(where === 'device' ? F.waitDevice : F.waitCloud)}</span> <button type="button" class="btn quiet small-btn" data-act="stop-wait">${esc(F.stop)}</button></span></p>`;
+}
+/** Phase 15: the wait was stopped; the card is the one it was asked from. */
+export function findStoppedLine(): string {
+  return `<p class="tip" id="find-stopped" role="status" tabindex="-1">${esc(COPY.simple.findMore.stopped)}</p>`;
+}
 /** Where this card was made: on the screen itself, under the card, never only behind a link. */
 /** Phase 8: the routing chip over a card an AI made: where it ran, and why, in one line. */
 export function chipBlock(r: { where: 'device' | 'cloud'; text: string; why: string } | null): string {

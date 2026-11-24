@@ -24,7 +24,7 @@ export const P8 = {
     healthOff: 'Off: nothing about needs, pain or health is on the page.',
     healthOn: 'On: the needs pointed to and the pain answers of this time are on the page, as they were entered.',
     /** On the screen only, while the box is off and the diary of this time holds a strong pain, a pain in the head or the chest, or "something's wrong". */
-    healthWarn: (number: string) => `The diary of this time holds a strong pain, a pain in the head or the chest, or "something's wrong". It is not on this page unless you tick the box. Tell the doctor or nurse. If it is new or sudden, call ${number} now.`,
+    healthWarn: (number: string) => `The diary of this time holds a strong pain, a pain in the head or the chest, or "something's wrong". It is not on this page unless you tick the box. A pain in the head or the chest: call ${number} now, whatever the amount. Otherwise tell the doctor or nurse; if it is new or sudden, call ${number} now.`,
     qHeading: 'Questions for the therapist',
     qLead: 'Pick up to three. They are printed at the end of the page.',
     print: 'Print this page',

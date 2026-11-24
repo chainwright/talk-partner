@@ -7,6 +7,7 @@ import { COPY } from '../../core/copy';
 import { P4 } from '../../core/copy4';
 import { P10 } from '../../core/copy10';
 import { LETTERS } from '../../core/letter';
+import { DEFAULT_NUMBER } from '../../core/redflag';
 import type { Photo } from '../../core/photos';
 import type { PhotoQuestion } from '../../core/phototalk';
 import { VISIT_MAX, visitDate, visitElse, visitRows, visitTotal, type VisitRecord } from '../../core/visit';
@@ -79,6 +80,8 @@ export interface VisitModel {
   name: string; record: VisitRecord | null; copied: boolean;
   /** Phase 5 (web/src/phase5.ts), drawn by main.ts: the call box when an answer can be urgent; "Since the last visit"; the carer's controls for it. */
   urgentHtml?: string; sinceHtml?: string; controlsHtml?: string;
+  /** Phase 15: the emergency number, for the pain line under the page. */
+  number?: string;
 }
 /**
  * The carer's screen: before the first answer, what this is and the button that starts it; after, the one page of the
@@ -98,7 +101,7 @@ export function visitScreen(m: VisitModel): string {
   <p class="waitline" id="visit-wait">${SIGN.info}<span>${esc(COPY.simple.wait(m.name))}</span></p>
 </main>`;
   }
-  const rows = visitRows(r).map((x) => `<li data-row="${esc(x.row)}"><span class="vr">${esc(x.row)}</span><b>${esc(x.label)}</b><small>${esc(x.q)} · ${x.time}</small></li>`).join('');
+  const rows = visitRows(r).map((x) => `<li data-row="${esc(x.row)}"><span class="vr">${esc(x.row)}</span><b>${esc(x.label)}</b><small>${esc(x.q)} · ${x.time}</small>${x.check ? `<small class="vr-check">${esc(V.check)}</small>` : ''}</li>`).join('');
   const pain = r.answers.some((a) => a.id === 'pain' && a.label.toLowerCase() === 'yes');
   return `${head}
   <section class="visit-page" id="visit-page" aria-labelledby="visit-h">
@@ -113,7 +116,7 @@ export function visitScreen(m: VisitModel): string {
     ${m.sinceHtml ?? ''}
   </section>
   <div class="no-print stack">
-    ${pain ? `<p class="safety" id="visit-safety">${V.safety}</p>` : ''}
+    ${pain ? `<p class="safety" id="visit-safety">${esc(V.safety(m.number ?? DEFAULT_NUMBER))}</p>` : ''}
     ${m.controlsHtml ?? ''}
     ${r.done ? '' : `<button type="button" class="btn primary" id="visit-resume" data-act="visit-resume">${V.resume}</button>`}
     <button type="button" class="btn${r.done ? ' primary' : ''}" id="visit-print" data-act="visit-print">${V.print}</button>

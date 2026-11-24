@@ -374,7 +374,10 @@ const COPY = {
       note: 'Kept on this computer for a day. Nothing is sent.',
       /** Phase 9 (judge round 8, a health P0): a care question stays pinned until the carer has found out. */
       careNote: 'A question about pain, the body, the toilet, a drink or feelings stays here until you have found out. Kept on this computer. Nothing is sent.',
-      painLine: "If the pain is new or strong, don't wait: call the nurse or doctor.",
+      // (phase 15, judge round 11, the SLP's seat: after a chest or head pain this line sent the carer to the nurse)
+      painLine: (number: string) => `If the pain is in the chest or the head, or new or strong, do not wait: call ${number} now. Otherwise tell the nurse or doctor today.`,
+      /** Phase 15: over a question left in a conversation with a red flag, first, with the time. */
+      redLine: (red: 'chest' | 'head' | 'sign', time: string, number: string) => `${red === 'chest' ? 'Chest pain was pointed to' : red === 'head' ? 'Head pain was pointed to' : 'There was a yes to weakness, numbness or trouble breathing'} (${time}): call ${number} now, whatever the amount. Do not wait to see if it passes.`,
       /** Phase 12 (judge round 9): the signs that do not wait, and the emergency route, under a pain question left for later. */
       painSigns: (number: string) => `Call ${number} now if there is sudden weakness or numbness, a drooping face, chest pain, trouble breathing, a sudden very bad headache, or very bad pain.`,
       found: 'Did you find out?',
@@ -526,6 +529,11 @@ const COPY = {
       device: "Find more choices (Chrome's AI, on this computer)",
       cloudWhere: "Google's AI gets the question and the choices on the card, with any names you listed swapped out. Never the answers they chose.",
       deviceWhere: 'The AI built into Chrome does this on this computer. Nothing is sent.',
+      /** Phase 15: while it works, the card stays, with this line where the button was. */
+      waitCloud: "Asking Google's AI…",
+      waitDevice: "Asking Chrome's AI on this computer…",
+      stop: 'Stop waiting',
+      stopped: "You stopped waiting: the card is still here. The question may already have gone to Google's AI.",
     },
     /** "Today in short": two to four plain sentences for the family or the therapist (core/summary.ts). */
     short: {
@@ -1219,6 +1227,9 @@ const NOT_THIS_DEVICE: [string, string][] = [
   ["that AI reads today's answers on this computer, to write", "that AI reads today's answers on that computer itself (on a phone no AI reads them), to write"],
   // (the photo line for a browser with the on-device model is shown on a desktop only; on any other device it must not say "this phone" either)
   ['looks at that one photo on this computer itself', 'looks at that one photo on that computer itself'],
+  // (phase 15, judge round 11, seats 01 and 05: "isn't ready on this phone" promised an AI that no phone browser has)
+  ["The private helper isn't ready on this computer, so there are no choices for this one.", 'This computer has no AI of its own for this one, so there are no choices from it. Online help can try, after your yes.'],
+  ["The private helper isn't ready on this computer and cloud help is not configured on this copy. Just ask normally.", 'This computer has no AI of its own for this one, and online help is not set up on this copy. Just ask normally.'],
 ];
 
 /** "this computer" → "this phone" / "this tablet" (and "the computer" → "the phone") in one string. */

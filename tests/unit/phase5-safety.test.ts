@@ -77,7 +77,7 @@ describe('2a. "Something new or sudden?": a fixed card with a call button', () =
   });
   it('it is reachable from the first screen and from "Body & care", and no model or request is in it', () => {
     const main = read('web/src/main.ts');
-    expect(main).toContain("bodyHtml: suddenLink('sudden-body'),");
+    expect(main).toContain("bodyHtml: suddenLink('sudden-body', callNumber()),");
     // (phase 12b: on the first screen with the number in it, and "Change it")
     expect(main).toContain('turnHtml: `${turnButton(name)}${suddenFirst(callNumber(), numberGuess())}');
     for (const f of ['core/redflag.ts', 'web/src/phase5.ts']) expect(read(f)).not.toMatch(/from '.*(?:engine|pipeline|prompt|requests|firebase)/);
@@ -130,7 +130,7 @@ describe('2b. the boxed line: head, chest, breathing, a sudden weakness, pain ra
     expect(page.indexOf('id="visit-urgent"')).toBeGreaterThan(-1);
     expect(page.indexOf('id="visit-urgent"')).toBeLessThan(page.indexOf('id="visit-rows"'));
     expect(page.indexOf('id="visit-urgent"')).toBeGreaterThan(page.indexOf('id="visit-page"')); // inside the part that is printed
-    expect(text(page)).toContain(P4.visit.safety);
+    expect(text(page)).toContain(P4.visit.safety('911'));
   });
 });
 
@@ -285,13 +285,13 @@ describe('3. Read aloud: Gemini text-to-speech through Firebase AI Logic, after 
     expect(speakSwitch({ name: '', on: false, online: false, can: true })).toBe('');
     const main = read('web/src/main.ts');
     expect(main).toContain("settings: { cloudHelp: false, support: 'more', welcomed: false }");
-    expect(main).toContain("case 'speak-yes': p5.speakSheet = false; state.settings.speak = true; state.settings.speakOk = true;");
-    expect(main).toContain("case 'speak-ask': if (state.settings.speakOk) { state.settings.speak = true; saveSettings(); } else p5.speakSheet = true;");
+    expect(main).toContain("case 'speak-yes': p5.speakSheet = false; if (state.demo) { p15speak.on = true; p15speak.ok = true; } else { state.settings.speak = true; state.settings.speakOk = true;");
+    expect(main).toContain("case 'speak-ask': if (state.demo ? p15speak.ok : state.settings.speakOk) { if (state.demo) p15speak.on = true; else { state.settings.speak = true; saveSettings(); } } else p5.speakSheet = true;");
     // the one place a card's words are handed to the speech step, behind the switch and the "never a visit card" rule
     // (phase 13: inside checkedCloud, App Check first)
     expect(main.match(/engine\.speak!?\(/g)).toHaveLength(1);
     expect(main).toContain('if (!speakOn() || !speakable(c) || !state.engine.speak) return;');
-    expect(main).toContain("const speakOn = () => canSpeak() && !!state.settings.speak;");
+    expect(main).toContain("const speakOn = () => canSpeak() && (state.demo ? p15speak.on : !!state.settings.speak);");
   });
   it('never a doctor-visit card (that page says nothing of it is sent), never a card with no choices', async () => {
     for (const v of VISIT.filter((x) => x.pages)) expect(speakable(await visitCard(v, EMPTY_PROFILE, 'more'))).toBe(false);

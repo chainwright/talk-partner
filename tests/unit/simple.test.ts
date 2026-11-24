@@ -102,7 +102,8 @@ describe('this phone / this tablet / this computer', () => {
   it('the card pipeline\'s own lines follow the device (a phone with no on-device model)', async () => {
     setCopyDevice('phone');
     const c = await make(OPEN, new Fake(), false, false);
-    expect(c.blocked).toBe("The private helper isn't ready on this phone, so there are no choices for this one.");
+    // (phase 15, judge round 11: no phone browser has an AI of its own, so "isn't ready" promised one)
+    expect(c.blocked).toBe('This phone has no AI of its own for this one, so there are no choices from it. Online help can try, after your yes.');
   });
 });
 

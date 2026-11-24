@@ -35,7 +35,7 @@ describe('Frank\'s week', () => {
     const all = insights(weekDiary(), WEEK.health, 'week', NOW);
     expect(all.map((x) => x.id)).toEqual(WEEK.expect.week);
     // (phase 9, judge round 8: a yes to pain on one day is its own line, never "Nothing stands out")
-    expect(all[0]).toMatchObject({ id: 'pain-some', level: 'mention', text: 'Pain was chosen or logged on 1 day in the last 7 days.', act: 'Ask again today, and tell the doctor or nurse if it is new or still there.' });
+    expect(all[0]).toMatchObject({ id: 'pain-some', level: 'mention', text: 'Pain was chosen or logged on 1 day in the last 7 days.', act: 'If the pain is new or sudden, or in the chest or the head: call 911 now. Otherwise ask again today, and tell the doctor or nurse if it is still there.' });
     const xs = all.slice(1);
     expect(xs[0]).toMatchObject({ id: 'sweets', level: 'mention', text: 'Something sweet was chosen 3 times in the last 7 days.', noted: 'Diabetes is noted here.', base: 'Chosen 3 times in 7 days. Only what was entered here.' });
     expect(COPY.simple.insights.level[xs[0].level]).toBe('Worth mentioning to the doctor or nurse');

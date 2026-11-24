@@ -173,7 +173,7 @@ describe('the person\'s own data stays out unless the box is ticked', () => {
     expect(practiceUrgent([ans('old', 'Where does it hurt?', 'head', -20, '10:00')], 'week', NOW)).toBe(false);
     const html = unesc(practiceScreen({ name: 'Frank', device: 'phone', span: 'week', report: practiceReport(input(FULL)), health: false, warn: K.healthWarn('911'), picked: [], any: true }));
     expect(html).toContain('id="practice-warn"');
-    expect(html).toContain('Tell the doctor or nurse. If it is new or sudden, call 911 now.');
+    expect(html).toContain('A pain in the head or the chest: call 911 now, whatever the amount. Otherwise tell the doctor or nurse; if it is new or sudden, call 911 now.');
     expect(html.slice(html.indexOf('id="practice-page"'))).not.toContain('chest');
   });
   it('ticked: the needs pointed to with their counts, the pain entered, the answers as given; a card answer and a tap within 20 minutes count once', () => {

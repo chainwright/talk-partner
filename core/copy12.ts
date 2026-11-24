@@ -42,7 +42,8 @@ export const P12 = {
     insightBase: 'Every time it was chosen on the feelings card.',
     insightAct: (number: string, line: string) => `Talk to the doctor or nurse today. If life may be at risk, call ${number} now${line ? `, or ${line} (a crisis line)` : ''}.`,
     /** Phase 13 (judge round 10, the nurse's seat): its own first line on the visit page, never only "Mood: low". */
-    since: (times: string) => `Said "I can't go on": ${times} (the safety screen was shown). Tell the doctor.`,
+    // (phase 15, judge round 11, the nurse's seat: today, not at the visit, with the call)
+    since: (times: string, number: string, line: string) => `Said "I can't go on": ${times} (the safety screen was shown). Tell the doctor or nurse today, not at the visit. If life may be at risk, call ${number} now${line ? `, or ${line} (a crisis line)` : ''}.`,
     handover: (times: string, number: string) => `"I can't go on" was chosen (${times}). Stay near, and ask how they are. If life may be at risk, call ${number} now. Tell the doctor or nurse today.`,
   },
 };

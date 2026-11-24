@@ -272,3 +272,14 @@ export function markDiary(diary: DiaryEntry[], since: number | null, now: number
 export function diaryText(entries: DiaryEntry[], words: { log: Record<LogKind, string>; lessSure: string; need: string }): string {
   return byDay(entries).reverse().map((d) => `${dayText(d.day)}\n${d.entries.map((e) => `  ${timeText(e.at)}  ${e.kind === 'log' ? words.log[e.log!] : e.kind === 'need' ? `${words.need} ${e.label}` : e.kind === 'later' ? `Left for later: ${e.q}` : e.kind === 'started' ? startedText(e) : `${e.q} ${e.label}`}${e.lessSure ? ` (${words.lessSure})` : ''}`).join('\n')}`).join('\n');
 }
+
+/**
+ * Phase 15 (judge round 11, the nurse's seat, ADV-13b-4): a day whose diary holds an urgent entry (a stroke sign, a
+ * pain in the head or the chest, a strong pain, "I can't go on", a blow to the head, "something's wrong") gets no tip
+ * of the day (core/tip.ts, web/src/main.ts tipModel): a second carer opening the diary must not read praise over it.
+ */
+export const URGENT_TAGS: readonly Tag[] = ['sign', 'crisis', 'place-pain', 'strong-pain', 'fall-head', 'wrong'];
+export function urgentDay(diary: DiaryEntry[], now: number): boolean {
+  const from = dayStart(now);
+  return diary.some((e) => e.at >= from && e.at <= now && tags(e).some((t) => URGENT_TAGS.includes(t)));
+}

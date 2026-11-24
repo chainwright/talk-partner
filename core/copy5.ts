@@ -117,6 +117,8 @@ export const P5 = {
     placePainBase: 'The place chosen on the body card, as it was given.',
     /** Fixed, after a pain line of one day: never a model's words, never sent. */
     painAct: (number: string) => `Tell the doctor or nurse. If it is new or sudden, call ${number} now.`,
+    /** Phase 15 (judge round 11, seats 01 and 13b): a pain in the head or the chest, in the notes and pages for others: the live screen's own line, never "tell the doctor" first. */
+    placeAct: (number: string) => `Pain in the head or the chest: call ${number} now, whatever the amount. Do not wait to see if it passes.`,
     noDrink: (d: string) => `No drink was chosen or logged on ${d}. If that is right, and not a gap in the diary, tell the doctor or nurse today.`,
     fewDrinksFluid: (d: string, n: number, several: boolean) => `Few drinks were entered on ${d}: ${n}${several ? ' each' : ''}. A fluid limit from the doctor is noted here: check the day against the doctor's plan.`,
     // (phase 12, judge round 9: the line names what counts, so "worried" or "lonely" is not read as "not low")

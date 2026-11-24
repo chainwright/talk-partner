@@ -24,7 +24,7 @@ const SOUND = sign('<path d="M12 38h16l22-18v56L28 58H12z"/><path d="M64 34a20 2
 
 // ---------------------------------------------------------------- "Something new or sudden?"
 /** The way in: on the first screen, and at the top of "Body & care". */
-export const suddenLink = (id = 'sudden-link') => `<a class="btn sudden-link" id="${id}" href="#/sudden">${ALERT}<span><b>${P5.sudden.link}</b><small>${P5.sudden.linkSub}</small></span></a>`;
+export const suddenLink = (id = 'sudden-link', number = '') => `<a class="btn sudden-link" id="${id}" href="#/sudden">${ALERT}<span><b>${P5.sudden.link}</b><small>${number ? esc(P5.sudden.linkSubNumber(number)) : P5.sudden.linkSub}</small></span></a>`;
 /**
  * Phase 12b (judge round 9b): the same box on the first screen, with the number in it, and under it "Change it" (with
  * "Not your number?" while the number is a guess), which opens About them at the number. One short line, pulled into

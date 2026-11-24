@@ -9,13 +9,15 @@ export const P9 = {
     /** Phase 9 (judge round 8, a health P0): pain on fewer than three days is a line of its own, never "Nothing stands out". */
     painSome: (n: number, span: string) => `Pain was chosen or logged on ${days(n)} in the last ${span}.`,
     /** Fixed, under that line: never a model's words, never sent. */
-    painSomeAct: 'Ask again today, and tell the doctor or nurse if it is new or still there.',
+    // (phase 15, judge round 11, seat 01: a logged pain has no place or amount, so the call line comes first)
+    painSomeAct: (number: string) => `If the pain is new or sudden, or in the chest or the head: call ${number} now. Otherwise ask again today, and tell the doctor or nurse if it is still there.`,
     wrong: (n: number, d: string) => `"Something's wrong" was pointed to on ${days(n)}: ${d}. Ask what it was.`,
     /** Phase 13: a yes or "not sure" to the weakness question, its own line, first (core/insights.ts, 'sign'). */
     sign: (answers: string, d: string) => `Sudden weakness or numbness: ${answers} on ${d}.`,
     signBase: 'Every "yes" or "not sure" to "Is it suddenly weak or numb?" counts.',
     signAct: (number: string) => `If ${number} was not called, call now. Tell the doctor today.`,
-    signSince: (answers: string) => `Suddenly weak or numb: ${answers}. Tell the doctor.`,
+    // (phase 15, judge round 11, the nurse's seat: the visit page must not put off a stroke call to the visit)
+    signSince: (answers: string, number: string) => `Suddenly weak or numb: ${answers}. If ${number} was not called, call ${number} now: do not wait for the visit. Then tell the doctor today.`,
     wrongBase: 'Every "something\'s wrong", on the needs board or on a card, counts.',
   },
   later: {

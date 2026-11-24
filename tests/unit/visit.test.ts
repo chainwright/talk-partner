@@ -76,8 +76,9 @@ describe('the page: the person\'s own answers, as given', () => {
   it('whose answers, when and how; the fixed footer; "something else" asks for time', () => {
     expect(html).toContain("Frank&#39;s own answers");
     expect(html).toContain('Answered at home, with a family member&#39;s help, on Sun, 22 Nov 2026.');
-    expect(P4.visit.footer('Frank')).toBe("Frank's answers, in Frank's own words where possible. Not a medical record.");
-    expect(P4.visit.footer('')).toBe('Their answers, in their own words where possible. Not a medical record.');
+    // (phase 15, judge round 11, the SLP's seat: pointed answers, not his own words; a yes or no says "please check")
+    expect(P4.visit.footer('Frank')).toBe("Frank's pointed answers, with a family member's help: not Frank's own words. Not a medical record.");
+    expect(P4.visit.footer('')).toBe("Their pointed answers, with a family member's help: not their own words. Not a medical record.");
     expect(html).toContain('Not a medical record.');
     expect(visitElse(r)).toBe(true);
     expect(html).toContain(P4.visit.elseNote);
@@ -87,8 +88,9 @@ describe('the page: the person\'s own answers, as given', () => {
     expect(page).not.toMatch(/less sure|may be tired|try again later|probably|means|normal|nothing to worry|fine\b/i);
     expect(visitText(r, 'Frank')).not.toMatch(/less sure|may be tired|try again later/i);
     // outside the printed page the carer is told not to wait with strong or new pain
-    expect(html.slice(html.indexOf('</section>'))).toContain(P4.visit.safety);
-    expect(P4.visit.safety).toMatch(/do not wait for the visit: call the nurse or doctor/);
+    expect(html.slice(html.indexOf('</section>'))).toContain(P4.visit.safety('911'));
+    // (phase 15, judge round 11, seat 05: a chest or head pain first, with the number; other strong pain not at the visit)
+    expect(P4.visit.safety('999')).toMatch(/^Pain in the chest or the head: call 999 now, whatever the amount\. Other new or strong pain: do not wait for the visit, call the nurse or doctor today\.$/);
   });
   it('with no pain the safety line is not shown; a run that was stopped says how far it got', () => {
     const part: VisitRecord = { startedAt: AT, done: false, answers: [ans('pain', 'no'), ans('sleep', 'well')] };

@@ -26,11 +26,13 @@ function labels(c: Card): string[] {
 interface Walk { paths: number; ends: number; steps: number; deepest: number; problems: string[]; questions: Set<string>; pairs: Set<string> }
 async function walk(profile: Profile): Promise<Walk> {
   const w: Walk = { paths: 0, ends: 0, steps: 0, deepest: 0, problems: [], questions: new Set(), pairs: new Set() };
-  const visit = async (q: string, chain: string[]): Promise<void> => {
+  // (phase 15, judge round 11, ADV-05-17: past the depth limit only "How bad is the pain?" may follow, after a safety check's red box)
+  const visit = async (q: string, chain: string[], safety = false): Promise<void> => {
     const here = [...chain, q];
-    w.deepest = Math.max(w.deepest, here.length);
+    const extra = safety && here.length === TREE_DEPTH + 1 && q === 'How bad is the pain?';
+    if (!extra) w.deepest = Math.max(w.deepest, here.length);
     w.questions.add(q);
-    if (here.length > TREE_DEPTH) { w.problems.push(`deeper than ${TREE_DEPTH}: ${here.join(' > ')}`); return; }
+    if (here.length > TREE_DEPTH && !extra) { w.problems.push(`deeper than ${TREE_DEPTH}: ${here.join(' > ')}`); return; }
     const c = await card(q, profile);
     if (c.blocked || c.choices.length < 2) { w.problems.push(`the rules make no card for "${q}" (${here.join(' > ')})`); return; }
     // the body map: its first step leads to the second by itself, so the answers that count are the second step's
@@ -50,7 +52,7 @@ async function walk(profile: Profile): Promise<Walk> {
         for (const n of step.next) if (here.includes(n)) w.problems.push(`asked twice: ${n} in ${where}`);
         if (!step.next.length) { w.paths++; w.ends++; continue; }
         // the carer may also stop here: the end line of this answer is the fallback at the depth limit
-        for (const n of step.next) await visit(n, here);
+        for (const n of step.next) await visit(n, here, !!step.alert);
       }
     }
   };

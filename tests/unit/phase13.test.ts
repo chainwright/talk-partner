@@ -21,9 +21,9 @@ describe('A1. After a "no" or "not sure" to the weakness question, the check lin
       // the pain questions still follow
       expect(s.next, label).toEqual(['How bad is the pain?']);
     });
-    it(`"${label}": at the depth limit (no next question) it is still an alert`, () => {
+    it(`"${label}": at the depth limit it is still an alert (phase 15: and "How bad is the pain?" still follows)`, () => {
       const s = after(card(WEAK_NUMB), label, EMPTY_PROFILE, ['Are you in pain?', 'Where in the arms?', WEAK_NUMB], '911');
-      expect(s.next).toEqual([]);
+      expect(s.next).toEqual(['How bad is the pain?']);
       expect(s.alert).toBe(true);
     });
   }
@@ -70,7 +70,9 @@ describe('A2. Chest or head pain, or a breathing / weak / numb yes in the conver
     // not a red flag
     expect(redPlace('Where in the chest?', 'somewhere else')).toBeNull();
     expect(redPlace('Where in the arms?', 'left arm')).toBeNull();
-    expect(redPlace('Is it suddenly weak or numb, yes or no?', 'no')).toBeNull();
+    // (phase 15: a "no" or "not sure" to weakness is the check, not a call: core/tree.ts SIGN_CHECK_END)
+    expect(redPlace('Is it suddenly weak or numb, yes or no?', 'no')).toBe('sign-check');
+    expect(redPlace('Is it suddenly weak or numb, yes or no?', 'not sure')).toBe('sign-check');
     expect(redPlace('Is it hard to breathe?', 'no')).toBeNull();
     expect(redPlace('Would you like tea or coffee?', 'tea')).toBeNull();
   });
@@ -110,7 +112,7 @@ describe('A2. Chest or head pain, or a breathing / weak / numb yes in the conver
   it('the person\'s screen: the red flag of the conversation is kept and reset with the call box (web/src/main.ts)', async () => {
     const { readFileSync } = await import('node:fs');
     const main = readFileSync('web/src/main.ts', 'utf8');
-    expect(main).toContain('const r = redPlace(c.asked, state.picked.label); if (r && !p5.red) p5.red = r;');
+    expect(main).toContain("const r = redPlace(c.asked, state.picked.label); if (r && (!p5.red || (p5.red === 'sign-check' && r !== 'sign-check'))) p5.red = r;");
     expect(main.match(/p5\.signNow = false;/g)?.length).toBe(main.match(/p5\.signNow = false; p5\.red = null;/g)?.length);
   });
 });
@@ -301,14 +303,18 @@ describe('A7. "For the next carer", "What stands out" and the visit page carry e
       { ...answerEntry({ q: W, label: 'yes', at: now - 7200000 }), id: 's1' },
     ];
     const s = sinceLines(diary as never, null, now);
-    expect(s.lines[0]).toBe('Said "I can\'t go on": Mon 23 Nov 17:00 (the safety screen was shown). Tell the doctor.');
-    expect(s.lines[1]).toBe('Suddenly weak or numb: "yes" (Mon 23 Nov 16:00). Tell the doctor.');
+    // (phase 15, judge round 11, the nurse's seat: today, not at the visit, with the call)
+    expect(s.lines[0]).toBe('Said "I can\'t go on": Mon 23 Nov 17:00 (the safety screen was shown). Tell the doctor or nurse today, not at the visit. If life may be at risk, call 911 now.');
+    expect(s.lines[1]).toBe('Suddenly weak or numb: "yes" (Mon 23 Nov 16:00). If 911 was not called, call 911 now: do not wait for the visit. Then tell the doctor today.');
+    const uk = sinceLines(diary as never, null, now, [], '', '999', '116 123');
+    expect(uk.lines[0]).toMatch(/call 999 now, or 116 123 \(a crisis line\)\.$/);
+    expect(uk.lines[1]).toMatch(/If 999 was not called, call 999 now/);
     expect(s.urgent).toBe(true);
   });
   it('web/src/main.ts: a "not sure" to a stroke sign is written to the diary too', async () => {
     const { readFileSync } = await import('node:fs');
     const main = readFileSync('web/src/main.ts', 'utf8');
-    expect(main).toContain("} else if (state.picked && state.picked.role === 'escape' && learns() && !c.sample && signAnswer(c.asked, state.picked.label)) {");
+    expect(main).toContain("} else if (state.picked && state.picked.role === 'escape' && !c.sample && signAnswer(c.asked, state.picked.label)) {");
   });
 });
 

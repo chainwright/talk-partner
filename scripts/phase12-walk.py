@@ -33,6 +33,12 @@ with the exact line; "No, not now" back to the card; "Just this once" where App 
 host is refused here): the screen says so and the sheet does not come back; Back and the phone's back one step at a
 time; no AI button on pain, the body, a hot-or-cold question or the needs board; the card then shown, answered and left.
 
+24 Nov 2026, phase 15 (judge round 11) adds, in the sample family on a phone at 360 and 390 px: Read aloud offered on
+"Would you like tea or coffee?"; "Find more choices" after "Just this once" keeps the card on screen with "Asking
+Google's AI… Stop waiting" while App Check is asked (held open here), "Stop waiting" leaves the card with its line, and
+the first screen is never drawn in between; "B" gives Beth, Bo, biscuits; a pain pointed to on the needs board fills
+the sample family's diary and "What stands out"; each left with Back one step at a time to the first screen.
+
 Usage: python3 scripts/phase12-walk.py [--url URL] [OUT_DIR]   (default http://localhost:5179/, devlog/evidence_phase12/walk)
 Exit code 0 when every check passes, 1 otherwise.
 """
@@ -529,7 +535,8 @@ def sample_apart(b, w, h, phone):
     page.evaluate(e2e.KV_PUT, {
         'settings': {'cloudHelp': False, 'support': 'more', 'welcomed': True, 'firstCard': True, 'howFolded': True},
         'profile': {'personName': 'Walter', 'partnerName': 'Edith', 'people': [], 'foods': ['pea soup'], 'places': [], 'tv': [], 'music': [], 'other': []},
-        'diary': [{'id': 'real1', 'at': now - 3600000, 'kind': 'answer', 'q': 'Do you want pea soup?', 'label': 'pea soup', 'topic': 'food'},
+        'diary': [{'id': 'real1', 'at': now - 60000,  # (phase 15: a minute ago, so the Today view shows it after midnight too)
+                  'kind': 'answer', 'q': 'Do you want pea soup?', 'label': 'pea soup', 'topic': 'food'},
                   {'id': 'real2', 'at': now - 7200000, 'kind': 'log', 'log': 'drank', 'label': 'Drank', 'topic': 'food'}],
         'history': [{'q': 'Do you want pea soup?', 'topic': '', 'label': 'pea soup', 'at': now - d * 86400000} for d in (1, 2, 3)],
         'needs': [{'label': 'toilet', 'at': now - 600000}],
@@ -565,11 +572,94 @@ def sample_apart(b, w, h, phone):
     ctx.close()
 
 
+def phase15(b, w, h):
+    """24 Nov 2026, phase 15: the sample family on a phone matches what the docs and the video show."""
+    tag = f'{w}_p15_sample'
+    ctx = b.new_context(viewport={'width': w, 'height': h}, device_scale_factor=2, is_mobile=True, has_touch=True, user_agent=e2e.PHONE_UA, service_workers='block', locale='en-US')
+    outside = []; hold = {'on': False}; held = []
+    def route(r):
+        u = r.request.url
+        if u.startswith(URL):
+            return r.continue_()
+        outside.append(u)
+        # (App Check's reCAPTCHA script, held open while `hold` is on: the wait on screen can be seen and stopped)
+        if hold['on'] and 'recaptcha' in u:
+            held.append(r); return
+        r.abort()
+    ctx.route('**/*', route)
+    page = ctx.new_page(); errs = []
+    page.on('pageerror', lambda e: errs.append(str(e)))
+    page.goto(URL); page.wait_for_selector('main.simple.home')
+    page.evaluate(e2e.KV_PUT, {'settings': {'cloudHelp': False, 'support': 'more', 'welcomed': True, 'firstCard': True, 'howFolded': True}})
+    home(page)
+    page.locator('#try-sample').click(); page.wait_for_timeout(1200)
+    check(f'{tag}: the sample family is open on the simple view', page.locator('main.simple.home').count() == 1 and 'Frank' in e2e.text(page), e2e.text(page)[:200])
+    # ---- 15.1 Read aloud is offered in the sample family too (its yes would be its own)
+    page.locator('.topic[data-topic=food]').click()
+    page.locator('.tq', has_text='tea or coffee').first.click()
+    page.wait_for_selector('main.simple.card')
+    acts = page.evaluate("[...document.querySelectorAll('.c-go button')].map((b) => b.dataset.act)")
+    check(f'{tag}: tea or coffee: "Find more choices" and "Read it aloud to Frank" are offered', acts[:3] == ['show', 'find-more', 'speak-ask'] and e2e.text(page, '#speak-offer').startswith('Read it aloud to Frank'), str(acts))
+    page.locator('#speak-offer').click(); page.wait_for_selector('#speak-sheet')
+    page.locator('[data-act=speak-no]').click(); page.wait_for_selector('#speak-sheet', state='detached')
+    # ---- 15.2 "Just this once": the card stays, with the waiting line; the first screen is never drawn meanwhile
+    page.evaluate("""() => { window.__p15 = { wait: false, home: false }; new MutationObserver(() => { if (document.querySelector('#find-wait') && document.querySelector('main.simple.card [data-act=show]')) window.__p15.wait = true; if (document.querySelector('main.simple.home')) window.__p15.home = true; }).observe(document.body, { childList: true, subtree: true }); }""")
+    page.locator('#find-more').click(); page.wait_for_selector('#sheet')
+    hold['on'] = True
+    page.locator('[data-act=sheet-yes]').click()
+    page.wait_for_selector('#find-wait', timeout=5000)
+    fw = e2e.text(page, '#find-wait')
+    check(f'{tag}: after the yes the card stays on screen, with "Asking Google\'s AI… Stop waiting" where the button was', page.locator('main.simple.card [data-act=show]').count() == 1 and fw.startswith("Asking Google's AI") and 'Stop waiting' in fw and noscroll(page), fw)
+    shot(page, tag, '15_2_find_wait')
+    page.locator('#find-wait [data-act=stop-wait]').click(); page.wait_for_timeout(500)
+    check(f'{tag}: "Stop waiting": the card is still there, with its line, and "Find more choices" back', page.locator('main.simple.card [data-act=show]').count() == 1 and 'the card is still here' in e2e.text(page, '#find-stopped') and page.locator('#find-more').count() == 1, e2e.text(page)[:300])
+    check(f'{tag}: the first screen was never drawn while it waited', page.evaluate('window.__p15.wait && !window.__p15.home'), str(page.evaluate('window.__p15')))
+    shot(page, tag, '15_2_find_stopped')
+    hold['on'] = False
+    for r in held:
+        try: r.abort()
+        except Exception: pass
+    del held[:]
+    # ---- 15.3 once more, refused at once: the refusal screen, and Back to the card it was asked from
+    page.locator('#find-more').click(); page.wait_for_selector('#sheet')
+    page.locator('[data-act=sheet-yes]').click()
+    page.wait_for_selector('main.simple.nocard', timeout=30000); page.wait_for_timeout(400)
+    check(f'{tag}: refused: the screen says nothing was sent', 'could not check this browser, so nothing was sent' in e2e.text(page), e2e.text(page)[:200])
+    page.locator('#s-top [data-act=back]').click(); page.wait_for_timeout(500)
+    check(f'{tag}: Back from it lands on the card it was asked from', page.locator('main.simple.card [data-act=show]').count() == 1 and page.locator('#find-more').count() == 1, e2e.text(page)[:200])
+    # ---- 15.4 "B" gives Beth, Bo, biscuits
+    page.locator('[data-act=show]').click(); page.wait_for_selector('main.pv .pt')
+    person_pick(page, 'something else'); give(page); page.wait_for_selector('#letter-go')
+    page.locator('#letter-go').click(); page.wait_for_selector('main.pv.letters #abc')
+    page.locator('[data-letter=B]').click(); page.wait_for_selector('main.pv .pt')
+    words = [x.strip().split('\n')[-1].strip() for x in page.locator('main.pv .pt').all_inner_texts()]  # (a person with no photo has a monogram letter above the name)
+    check(f'{tag}: "B" gives Beth, Bo, biscuits (ginger), then "something else"', words == ['Beth', 'Bo', 'biscuits (ginger)', 'something else'], str(words))
+    shot(page, tag, '15_4_letter_b')
+    back_home(page, tag, 'the first letter, in the sample family', most=12)
+    # ---- 15.5 a pain on the needs board fills the sample family's diary and "What stands out"
+    page.locator('.btn[data-act=needs]').first.click(); page.wait_for_selector('main.pv .p-tiles.board')
+    person_pick(page, 'pain'); give(page); page.wait_for_selector('#need-where')
+    page.evaluate("location.hash = '#/diary'"); page.wait_for_timeout(900)
+    dt = e2e.text(page)
+    check(f'{tag}: the sample family\'s diary holds the pain pointed to, and "Nothing entered today" is gone', 'pain' in dt.lower() and 'Nothing entered today' not in dt, dt[:300])
+    wk = page.locator('#tab-week')
+    if wk.count():
+        wk.first.click(); page.wait_for_timeout(600)
+    st = e2e.text(page)
+    check(f'{tag}: "What stands out" names the pain, never "Nothing stands out"', 'Nothing stands out' not in st and 'Pain was chosen or logged' in st, st[:400])
+    shot(page, tag, '15_5_diary_pain')
+    back_home(page, tag, 'the sample family\'s diary', most=12)
+    check(f'{tag}: no page error; only App Check\'s reCAPTCHA was asked of another host (and refused)', not errs and all('recaptcha' in u for u in outside), str(errs + outside[:4]))
+    ctx.close()
+
+
 with sync_playwright() as p:
     b = p.chromium.launch()
     for w, h in ((360, 740), (390, 844)):
         sample_apart(b, w, h, True)
     sample_apart(b, 1280, 900, False)
+    for w, h in ((360, 740), (390, 844)):
+        phase15(b, w, h)
     for w, h in ((360, 740), (390, 844)):
         for scheme in ('light', 'dark'):
             walk(b, w, h, scheme)

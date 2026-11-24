@@ -185,7 +185,7 @@ function spanInsights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpa
   // line below already names is not counted twice, so with only such days this line is not there)
   else if (painDays.length) {
     const hardDays = new Set(entries.filter((e) => tags(e).some((t) => t === 'strong-pain' || t === 'place-pain')).map((e) => dayStart(e.at)));
-    if (painDays.some((d) => !hardDays.has(d))) out.push({ id: 'pain-some', level: 'mention', text: P9.insights.painSome(painDays.length, S), noted: '', base: `${I.painBase(names(painDays, 7))} ${I.only}`, act: P9.insights.painSomeAct, source: src(tagged(entries, 'pain')) });
+    if (painDays.some((d) => !hardDays.has(d))) out.push({ id: 'pain-some', level: 'mention', text: P9.insights.painSome(painDays.length, S), noted: '', base: `${I.painBase(names(painDays, 7))} ${I.only}`, act: P9.insights.painSomeAct(number), source: src(tagged(entries, 'pain')) });
   }
 
   // one day is enough for a strong pain ("quite bad", "very bad") or a pain in the head or the chest: the latest such
@@ -199,7 +199,7 @@ function spanInsights(diary: DiaryEntry[], health: HealthNotes, span: InsightSpa
     const places = [...new Set(that.filter((e) => tags(e).includes('place-pain')).map((e) => { const m = (e.q ?? '').match(/^Where in the (\w+)/i); const l = e.label.replace(/^your\s+/i, ''); return m ? `${m[1].toLowerCase()} (${l})` : l; }))];
     const text = [strong.length ? I5.strongPain(listed(strong), dayText(last)) : '', places.length ? I5.placePain(listed(places), dayText(last)) : ''].filter(Boolean).join(' ');
     const others = hardDays.slice(0, -1);
-    out.push({ id: 'pain-day', level: 'mention', text, noted: '', base: `${[strong.length ? I5.strongPainBase : '', places.length ? I5.placePainBase : ''].filter(Boolean).join(' ')}${others.length ? ` Also on: ${names(others, 5)}.` : ''} ${I.only}`, act: I5.painAct(number), urgent: true, source: src(hard) });
+    out.push({ id: 'pain-day', level: 'mention', text, noted: '', base: `${[strong.length ? I5.strongPainBase : '', places.length ? I5.placePainBase : ''].filter(Boolean).join(' ')}${others.length ? ` Also on: ${names(others, 5)}.` : ''} ${I.only}`, act: places.length ? I5.placeAct(number) : I5.painAct(number), urgent: true, source: src(hard) });
   }
 
   // (phase 13, judge round 10, the nurse's seat: ADV-13b-2) a yes or "not sure" to sudden weakness or numbness: its own line, first

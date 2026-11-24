@@ -133,8 +133,9 @@ export const visitDate = (at: number) => new Date(at).toLocaleDateString('en-GB'
 export const visitTime = (at: number) => { const d = new Date(at); return `${two(d.getHours())}:${two(d.getMinutes())}`; };
 
 /** The rows of the page, in the order of the list: the short name, the question as asked, the answer as given, the time. */
-export function visitRows(r: VisitRecord): { row: string; q: string; label: string; time: string; out: boolean }[] {
-  return VISIT.flatMap((v) => r.answers.filter((a) => a.id === v.id).map((a) => ({ row: v.row, q: a.q, label: a.label, time: visitTime(a.at), out: !!a.out })));
+export function visitRows(r: VisitRecord): { row: string; q: string; label: string; time: string; out: boolean; check: boolean }[] {
+  // (phase 15: a yes or a no gets "please check" under it)
+  return VISIT.flatMap((v) => r.answers.filter((a) => a.id === v.id).map((a) => ({ row: v.row, q: a.q, label: a.label, time: visitTime(a.at), out: !!a.out, check: /^(?:yes|no)$/i.test(a.label.trim()) })));
 }
 /** True when the way out of the last question was chosen: the page then asks for time for it. */
 export const visitElse = (r: VisitRecord) => r.answers.some((a) => a.id === 'ask' && a.out);
@@ -142,6 +143,6 @@ export const visitElse = (r: VisitRecord) => r.answers.some((a) => a.id === 'ask
 /** The page as plain text, for "Copy as text". */
 export function visitText(r: VisitRecord, name: string): string {
   const V = P4.visit;
-  const rows = visitRows(r).map((x) => `${x.q} ${x.label} (${x.time})`);
+  const rows = visitRows(r).map((x) => `${x.q} ${x.label} (${x.time})${x.check ? ` ${V.check}` : ''}`);
   return [V.pageTitle(name), V.pageSub(visitDate(r.startedAt)), ...(r.done ? [] : [V.part(r.answers.length, visitTotal(r.answers))]), '', ...rows, ...(visitElse(r) ? ['', V.elseNote] : []), '', V.footer(name)].join('\n');
 }

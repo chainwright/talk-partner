@@ -45,7 +45,7 @@ export function healthLines(h: HealthNotes): string[] {
 /** One line of "What stands out" as text: the level, the line, the fixed sentence, the call sentence, what it was counted from. */
 function insightText(x: Insight, i: number, number: string): string {
   if (x.id === 'nothing') return `${x.text}\n   ${K.from} ${x.base}`;
-  return [`${i + 1}. ${I.level[x.level]}: ${x.text}${x.noted ? ` ${x.noted}` : ''}`, ...(x.act ? [`   ${x.act}`] : []), ...(x.urgent ? [`   ${K.callLine(number)}`] : []), `   ${K.from} ${x.base}`].join('\n');
+  return [`${i + 1}. ${I.level[x.level]}: ${x.text}${x.noted ? ` ${x.noted}` : ''}`, ...(x.act ? [`   ${x.act}`] : []), ...(x.urgent && !/whatever the amount/.test(x.act ?? '') ? [`   ${K.callLine(number)}`] : [])  /* (phase 15: under the chest or head line, "if new or sudden" would soften it) */, `   ${K.from} ${x.base}`].join('\n');
 }
 
 export interface FamilyShare {
@@ -191,7 +191,7 @@ export function handoverText(m: HandoverShare): string {
     drinks.length ? `${K.hCount(K.hDrinks, drinks.length, listed(drinks.map((g) => shortWhen(g.at))))}${fluid ? ` ${K.hFluid}` : drinks.length < 3 ? ` ${K.hFewDrinks}` : ''}` : `${K.hNoDrink}${fluid ? ` ${K.hFluid}` : ''}`,
     food.length ? K.hCount(K.hFood, food.length, listed(food.map((g) => shortWhen(g.at)))) : K.hNoFood,
     toilet.length ? K.hCount(K.hToilet, toilet.length, listed(toilet.map((g) => shortWhen(g.at)))) : K.hNoToilet,
-    pain.length ? `${K.hPain(pain.map(painItem).join('; '))} ${hard.length ? P5.insights.painAct(number) : K.hPainAsk}` : K.hNoPain,
+    pain.length ? `${K.hPain(pain.map(painItem).join('; '))} ${hard.some((e) => has(e, 'place-pain')) ? P5.insights.placeAct(number) : hard.length ? P5.insights.painAct(number) : K.hPainAsk}` : K.hNoPain,
     falls.length ? `${K.hFalls(falls.length, listed(falls.map((e) => shortWhen(e.at))))}${heads.length ? ` ${K.hFallHead(listed(heads.map((e) => shortWhen(e.at))))}` : ''} ${P5.insights.fallAct} ${P5.insights.fallHeadAct(number)}` : K.hNoFalls,
     tablets.length ? K.hTablets(listed(tablets.map((e) => shortWhen(e.at)))) : K.hNoTablets,
   ];

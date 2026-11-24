@@ -159,8 +159,9 @@ describe('A5. Pain left for later: the signs to watch for, the emergency route, 
   it('a pain question on Home: the line, the signs that do not wait, a call button with the number, the list, and the time', async () => {
     const { laterBlock } = await import('../../web/src/simple');
     const { laterPainHtml } = await import('../../web/src/phase5');
-    const html = laterBlock([{ q: 'Are you in pain?', time: '09:10', ago: 'Left 3 hours ago.', i: 0, care: true, pain: true }], laterPainHtml('999'));
-    expect(html).toContain('If the pain is new or strong, don&#39;t wait: call the nurse or doctor.');
+    const html = laterBlock([{ q: 'Are you in pain?', time: '09:10', ago: 'Left 3 hours ago.', i: 0, care: true, pain: true }], laterPainHtml('999'), '999');
+    // (phase 15: the chest or the head first, with the number, never only the nurse)
+    expect(html).toContain('If the pain is in the chest or the head, or new or strong, do not wait: call 999 now. Otherwise tell the nurse or doctor today.');
     expect(html).toMatch(/Call 999 now if/);
     expect(html).toMatch(/weakness or numbness/);
     expect(html).toMatch(/chest pain/);
@@ -354,7 +355,8 @@ describe('D13. "Stop waiting": the footer agrees with the line above it', () => 
   it('the web client counts a stopped wait while online help was asked', async () => {
     const { readFileSync } = await import('node:fs');
     const main = readFileSync(new URL('../../web/src/main.ts', import.meta.url), 'utf8');
-    expect(main).toMatch(/case 'stop-wait': if \(state\.busy\) \{ if \(p9wait\.at !== null\) p9stopped\+\+;/);
+    expect(main).toMatch(/case 'stop-wait': if \(findWaiting\(\)\) \{ if \(p9wait\.at !== null\) p9stopped\+\+;/);
+    expect(main).toMatch(/else if \(state\.busy\) \{ if \(p9wait\.at !== null\) p9stopped\+\+;/);
     expect(main).toContain('stopped: p9stopped');
   });
 });

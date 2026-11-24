@@ -129,11 +129,14 @@ export function signNow(asked: string, label: string): boolean {
  * numbness, is never followed by "Ask again in an hour": every "how bad" answer then says to call now. Null when the
  * answer holds none of them. The worst case of this rule is a call line that was not needed.
  */
-export type RedPlace = 'chest' | 'head' | 'sign';
+export type RedPlace = 'chest' | 'head' | 'sign' | 'sign-check';
 const RED_SIGN_Q = /\b(?:breath|breathe|breathing|breathless|weak|weakness|numb|numbness)\b/;
 export function redPlace(asked: string, label: string): RedPlace | null {
   const q = lc(asked);
   const l = lc(label);
+  // (phase 15, judge round 11, the novice carer's seat: a "no" or "not sure" to sudden weakness or numbness is not a
+  // clear no: a later "a little" pain must not end on "Ask again in an hour", it says to check the arms and the smile)
+  if ((l === 'no' || l === 'not sure') && /\b(?:weak|weakness|numb|numbness)\b/.test(q)) return 'sign-check';
   if (/^(?:somewhere else|something else|not sure|no)$/.test(l)) return null;
   if (/^where in the chest\b/.test(q)) return 'chest';
   if (/^where in the head\b/.test(q)) return 'head';
