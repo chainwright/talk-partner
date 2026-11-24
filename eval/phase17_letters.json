@@ -1,0 +1,82 @@
+{
+  "what": "Phase 17: letter by letter. Ten cases written on 24 Nov 2026 before the first run: the question the person left through 'something else', the topic, the letters pointed to so far, and the word they mean (our label). A case is a hit when that word is one of the three words on the card.",
+  "cases": [
+    {
+      "id": 1,
+      "topic": "food",
+      "asked": "Would you like a snack or a meal?",
+      "letters": "PI",
+      "want": "pizza"
+    },
+    {
+      "id": 2,
+      "topic": "food",
+      "asked": "Would you like a snack or a meal?",
+      "letters": "LA",
+      "want": "lasagne",
+      "also": [
+        "lasagna"
+      ]
+    },
+    {
+      "id": 3,
+      "topic": "food",
+      "asked": "Would you like a hot meal or a cold meal?",
+      "letters": "SH",
+      "want": "shepherd's pie"
+    },
+    {
+      "id": 4,
+      "topic": "food",
+      "asked": "Would you like something sweet or something savoury?",
+      "letters": "TR",
+      "want": "trifle"
+    },
+    {
+      "id": 5,
+      "topic": "food",
+      "asked": "Would you like a hot drink or a cold drink?",
+      "letters": "LEM",
+      "want": "lemonade"
+    },
+    {
+      "id": 6,
+      "topic": "food",
+      "asked": "Would you like a hot drink or a cold drink?",
+      "letters": "GI",
+      "want": "ginger ale"
+    },
+    {
+      "id": 7,
+      "topic": "plans",
+      "asked": "Would you like to stay in or go out?",
+      "letters": "LI",
+      "want": "library"
+    },
+    {
+      "id": 8,
+      "topic": "plans",
+      "asked": "Would you like to stay in or go out?",
+      "letters": "SU",
+      "want": "supermarket"
+    },
+    {
+      "id": 9,
+      "topic": "people",
+      "asked": "Do you want to call someone?",
+      "letters": "NE",
+      "want": "neighbour",
+      "also": [
+        "neighbor"
+      ]
+    },
+    {
+      "id": 10,
+      "topic": "people",
+      "asked": "Do you want to call someone?",
+      "letters": "GRA",
+      "want": "granddaughter"
+    }
+  ],
+  "spelling": "'also' lists the other spelling of the same word (US or UK), added after the first run, on 24 Nov 2026: the tables give the strict count and the count with the other spelling."
+}

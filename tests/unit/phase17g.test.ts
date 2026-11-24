@@ -118,3 +118,13 @@ describe('D. the cold 10 seconds: who it is for, and that they point after you h
     expect(P16.own.where.ask).toMatch(/Google checks this browser first; your words wait for the yes\./);
   });
 });
+
+describe('G3 after the first measured run: no word of another topic, no plural twice, both sources on the card', () => {
+  it('food LA: never "the lake" from About them; two letters: the rules\' and the AI\'s words in turn', async () => {
+    expect(letterWords({ asked: 'Would you like a snack or a meal?', letter: 'LA', rejected: [], topic: 'food' }, SAMPLE_PROFILE)).not.toContain('the lake');
+    const e = new Fake(['ginger biscuit', 'ginger tea']);
+    const c = await letterCard({ asked: 'Would you like a hot drink or a cold drink?', letter: 'GI', rejected: [], topic: 'food' }, env(e, { device: true }, SAMPLE_PROFILE));
+    expect(labels(c).filter((w) => w.startsWith('ginger biscuit'))).toHaveLength(1);
+    expect(labels(c)).toContain('ginger tea');
+  });
+});

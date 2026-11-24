@@ -136,7 +136,8 @@ export function letterWords(i: LetterInput, profile: Profile): string[] {
   const inTopic = (w: string) => !topic || topic === 'people' || (kind && kind !== 'people' ? ofKind(w, kind, profile) : false) || TOPIC_WORDS[topic].some((x) => lc(x) === lc(w)) || (topic === 'food' && profile.foods.some((x) => lc(x) === lc(w))) || (topic === 'plans' && profile.places.some((x) => lc(x) === lc(w))) || (topic === 'fun' && [...profile.tv, ...profile.music].some((x) => lc(x) === lc(w)));
   const starts = own.filter((w) => startsWith(w, i.letter));
   const later = own.filter((w) => !startsWith(w, i.letter) && holds(w, i.letter));
-  const ordered = [...starts.filter(inTopic), ...later.filter(inTopic), ...every.filter((w) => startsWith(w, i.letter)), ...(topic ? [...starts, ...later].filter((w) => !inTopic(w)) : [])]
+  // (a word of another topic is not offered inside a known topic: "the lake" under food was the owner's complaint)
+  const ordered = [...starts.filter(inTopic), ...later.filter(inTopic), ...every.filter((w) => startsWith(w, i.letter))]
     .filter((w, k, xs) => !gone.has(lc(w)) && xs.findIndex((x) => lc(x) === lc(w)) === k)
     // a topic word the family's own words already hold ("biscuits" beside "ginger biscuits") is not offered twice
     .filter((w, _k, xs) => !TOPIC_WORDS[topic ?? '']?.includes(w) || !xs.some((x) => x !== w && bare(x).split(/\s+/).includes(lc(w))));
@@ -272,7 +273,15 @@ export async function letterCard(i: LetterInput, env: PipelineEnv): Promise<Card
   const multi = letter.length > 1;
   const kind = subjectOf(i.asked, i.rejected);
   const noModel = NO_MODEL_TOPICS.includes(letterTopic(i.topic ?? null, kind) ?? '') || kind === 'feeling' || kind === 'comfort' || !!i.rulesOnly;
-  const merge = (kept: string[]) => (multi ? [...kept, ...rules.filter((x) => !kept.some((k) => lc(k) === lc(x)))] : [...rules, ...kept.filter((k) => !rules.some((x) => lc(x) === lc(k)))]);
+  // (two letters or more: the rules' and the AI's words in turn, so the card holds both; a plural of a word is the word)
+  const one = (w: string) => lc(w).replace(/(?:es|s)$/, '');
+  const merge = (kept: string[]) => {
+    const fresh = kept.filter((k) => !rules.some((x) => one(x) === one(k))).filter((k, n, xs) => xs.findIndex((x) => one(x) === one(k)) === n);
+    if (!multi) return [...rules, ...fresh];
+    const out: string[] = [];
+    for (let n = 0; n < Math.max(rules.length, fresh.length); n++) { if (rules[n]) out.push(rules[n]); if (fresh[n]) out.push(fresh[n]); }
+    return out;
+  };
   if (noModel) return rules.length ? make(rules, 'rules', 'code', 0, null, []) : none(L.noneAi(letter));
   // 1. the rules alone, when they find two words or more (one letter), or when no AI can be asked (two letters or more)
   if (rules.length >= 2 && (!multi || (!env.deviceReady && !(env.allowCloud && engine.cloudConfigured)))) return make(rules, 'rules', 'code', 0, null, []);
