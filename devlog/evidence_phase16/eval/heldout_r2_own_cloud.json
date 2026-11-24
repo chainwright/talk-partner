@@ -1,0 +1,475 @@
+[
+ {
+  "id": 43,
+  "q": "Who do you want to ring this afternoon?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Who do you want to ring this afternoon?",
+  "fallbackWhy": "",
+  "ms": 2158,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 4
+ },
+ {
+  "id": 44,
+  "q": "Who should we invite for Sunday dinner?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Who should we invite for Sunday dinner?",
+  "fallbackWhy": "",
+  "ms": 1324,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 45,
+  "q": "Who would you like to visit this week?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Who would you like to visit this week?",
+  "fallbackWhy": "",
+  "ms": 1325,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 46,
+  "q": "Who shall I text about the appointment?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Who shall I text about the appointment?",
+  "fallbackWhy": "",
+  "ms": 1324,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 47,
+  "q": "Who do you want to sit with at the wedding?",
+  "type": "who",
+  "ok": false,
+  "why": "the rules' best card instead: \"Is it about food or drink, people, or plans?\"",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "about food or drink",
+   "people",
+   "plans"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "fallback",
+  "left": "nothing",
+  "asked": "Is it about food or drink, people, or plans?",
+  "fallbackWhy": "failed",
+  "ms": 1324,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 48,
+  "q": "Who should drive us on Friday?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "family",
+   "friend"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Who should drive us on Friday?",
+  "fallbackWhy": "",
+  "ms": 1529,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 49,
+  "q": "Where do you want to go this afternoon?",
+  "type": "where",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "church",
+   "hardware store"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Where do you want to go this afternoon?",
+  "fallbackWhy": "",
+  "ms": 1332,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 50,
+  "q": "Where shall we go on Saturday?",
+  "type": "where",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "church",
+   "hardware store"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Where shall we go on Saturday?",
+  "fallbackWhy": "",
+  "ms": 1322,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 51,
+  "q": "Where would you like to sit?",
+  "type": "where",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "chair",
+   "sofa"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Where would you like to sit?",
+  "fallbackWhy": "",
+  "ms": 1132,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 52,
+  "q": "Where do you want to eat your dinner?",
+  "type": "where",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "at the table",
+   "in the living room"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Where do you want to eat your dinner?",
+  "fallbackWhy": "",
+  "ms": 1535,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 53,
+  "q": "Where should we go for a walk?",
+  "type": "where",
+  "ok": false,
+  "why": "an answer that should not be offered: hardware store",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "church",
+   "hardware store"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Where should we go for a walk?",
+  "fallbackWhy": "",
+  "ms": 1328,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 54,
+  "q": "Where would you like to go for your birthday?",
+  "type": "where",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "church",
+   "hardware store"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Where would you like to go for your birthday?",
+  "fallbackWhy": "",
+  "ms": 1340,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 55,
+  "q": "What would you like for supper?",
+  "type": "what",
+  "ok": false,
+  "why": "0 of the expected About-me answers (need 2): hot food / cold food",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "hot food",
+   "cold food"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "What would you like for supper?",
+  "fallbackWhy": "",
+  "ms": 1338,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 56,
+  "q": "What do you want to watch tonight?",
+  "type": "what",
+  "ok": false,
+  "why": "0 of the expected About-me answers (need 2): film / sport",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "film",
+   "sport"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "What do you want to watch tonight?",
+  "fallbackWhy": "",
+  "ms": 1328,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 57,
+  "q": "What music shall I put on?",
+  "type": "what",
+  "ok": false,
+  "why": "0 of the expected About-me answers (need 1): classical / jazz",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "classical",
+   "jazz"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "What music shall I put on?",
+  "fallbackWhy": "",
+  "ms": 1330,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 58,
+  "q": "What do you want to do tomorrow morning?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "stay home",
+   "go out"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "What do you want to do tomorrow morning?",
+  "fallbackWhy": "",
+  "ms": 1530,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 59,
+  "q": "What should we get Tyler for his birthday?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "book",
+   "clothes"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "What should we get Tyler for his birthday?",
+  "fallbackWhy": "",
+  "ms": 1747,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 60,
+  "q": "What do you fancy for breakfast?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "toast",
+   "cereal"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "What do you fancy for breakfast?",
+  "fallbackWhy": "",
+  "ms": 1540,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ }
+]

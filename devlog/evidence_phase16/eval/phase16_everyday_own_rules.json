@@ -1,0 +1,214 @@
+[
+ {
+  "id": 101,
+  "q": "What do you fancy for lunch today?",
+  "type": "what",
+  "ok": false,
+  "why": "the rules' best card instead: \"Would you like something to eat or something to drink?\"",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "something to eat",
+   "something to drink"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "source": "code",
+  "made": "fallback",
+  "asked": "Would you like something to eat or something to drink?",
+  "ms": 36.5,
+  "sdk": [],
+  "outsideHosts": 0
+ },
+ {
+  "id": 102,
+  "q": "Do you want to go out later or stay in?",
+  "type": "either-or",
+  "ok": true,
+  "why": "",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "go out later",
+   "stay in"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "source": "code",
+  "made": "rules",
+  "asked": "Do you want to go out later or stay in?",
+  "ms": 4.1,
+  "sdk": [],
+  "outsideHosts": 0
+ },
+ {
+  "id": 103,
+  "q": "Shall we do something this afternoon, or would you rather have a quiet one?",
+  "type": "what",
+  "ok": false,
+  "why": "the rules' best card instead: \"Would you like to stay in or go out?\"",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "stay in",
+   "go out"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "source": "code",
+  "made": "fallback",
+  "asked": "Would you like to stay in or go out?",
+  "ms": 2.5,
+  "sdk": [],
+  "outsideHosts": 0
+ },
+ {
+  "id": 104,
+  "q": "Who do you want to see this weekend?",
+  "type": "who",
+  "ok": false,
+  "why": "the rules' best card instead: \"Would you like company, or some time alone?\"",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "company",
+   "some time alone"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "source": "code",
+  "made": "fallback",
+  "asked": "Would you like company, or some time alone?",
+  "ms": 2.9,
+  "sdk": [],
+  "outsideHosts": 0
+ },
+ {
+  "id": 105,
+  "q": "Where shall we go for a drive tomorrow?",
+  "type": "where",
+  "ok": false,
+  "why": "the rules' best card instead: \"Would you like to stay in or go out?\"",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "stay in",
+   "go out"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "source": "code",
+  "made": "fallback",
+  "asked": "Would you like to stay in or go out?",
+  "ms": 1.7,
+  "sdk": [],
+  "outsideHosts": 0
+ },
+ {
+  "id": 106,
+  "q": "What shall I pick up for you from the shop?",
+  "type": "what",
+  "ok": false,
+  "why": "the rules' best card instead: \"Is it about food or drink, people, or plans?\"",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "about food or drink",
+   "people",
+   "plans"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "source": "code",
+  "made": "fallback",
+  "asked": "Is it about food or drink, people, or plans?",
+  "ms": 3,
+  "sdk": [],
+  "outsideHosts": 0
+ },
+ {
+  "id": 107,
+  "q": "What do you want to do after your nap?",
+  "type": "what",
+  "ok": false,
+  "why": "the rules' best card instead: \"Would you like to rest in the bed or the chair?\"",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "bed",
+   "chair"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "source": "code",
+  "made": "fallback",
+  "asked": "Would you like to rest in the bed or the chair?",
+  "ms": 3.3,
+  "sdk": [],
+  "outsideHosts": 0
+ },
+ {
+  "id": 108,
+  "q": "Which game do you want to watch on Saturday?",
+  "type": "what",
+  "ok": false,
+  "why": "the rules' best card instead: \"Would you like TV or music?\"",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "TV",
+   "music"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "source": "code",
+  "made": "fallback",
+  "asked": "Would you like TV or music?",
+  "ms": 1.7,
+  "sdk": [],
+  "outsideHosts": 0
+ },
+ {
+  "id": 109,
+  "q": "What should we cook when Beth comes over?",
+  "type": "what",
+  "ok": false,
+  "why": "the rules' best card instead: \"Is it about food or drink, people, or plans?\"",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "about food or drink",
+   "people",
+   "plans"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "source": "code",
+  "made": "fallback",
+  "asked": "Is it about food or drink, people, or plans?",
+  "ms": 6.6,
+  "sdk": [],
+  "outsideHosts": 0
+ },
+ {
+  "id": 110,
+  "q": "Is your back still sore today, love?",
+  "type": "yes-no",
+  "ok": true,
+  "why": "",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "source": "code",
+  "made": "guard",
+  "asked": "Is your back still sore today, love?",
+  "ms": 1.2,
+  "sdk": [],
+  "outsideHosts": 0
+ }
+]

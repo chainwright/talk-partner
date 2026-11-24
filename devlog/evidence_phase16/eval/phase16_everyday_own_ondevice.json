@@ -1,0 +1,262 @@
+[
+ {
+  "id": 101,
+  "q": "What do you fancy for lunch today?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "pot roast",
+   "chili",
+   "ginger biscuits"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "What do you fancy for lunch today?",
+  "fallbackWhy": "",
+  "ms": 5941,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 102,
+  "q": "Do you want to go out later or stay in?",
+  "type": "either-or",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "go out later",
+   "stay in"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "code",
+  "left": "nothing",
+  "asked": "Do you want to go out later or stay in?",
+  "fallbackWhy": "",
+  "ms": 263,
+  "sheet": false,
+  "sdk": [],
+  "outsideHosts": 0
+ },
+ {
+  "id": 103,
+  "q": "Shall we do something this afternoon, or would you rather have a quiet one?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "do something",
+   "quiet one"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Shall we do something this afternoon, or would you rather have a quiet one?",
+  "fallbackWhy": "",
+  "ms": 4110,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 104,
+  "q": "Who do you want to see this weekend?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Who do you want to see this weekend?",
+  "fallbackWhy": "",
+  "ms": 3500,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 105,
+  "q": "Where shall we go for a drive tomorrow?",
+  "type": "where",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "hardware store",
+   "church"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Where shall we go for a drive tomorrow?",
+  "fallbackWhy": "",
+  "ms": 3703,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 106,
+  "q": "What shall I pick up for you from the shop?",
+  "type": "what",
+  "ok": false,
+  "why": "the rules' best card instead: \"Is it about food or drink, people, or plans?\"",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "about food or drink",
+   "people",
+   "plans"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "fallback",
+  "left": "nothing",
+  "asked": "Is it about food or drink, people, or plans?",
+  "fallbackWhy": "no",
+  "ms": 4374,
+  "sheet": true,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 107,
+  "q": "What do you want to do after your nap?",
+  "type": "what",
+  "ok": false,
+  "why": "the rules' best card instead: \"Would you like to rest in the bed or the chair?\"",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "bed",
+   "chair"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "fallback",
+  "left": "nothing",
+  "asked": "Would you like to rest in the bed or the chair?",
+  "fallbackWhy": "no",
+  "ms": 3958,
+  "sheet": true,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 108,
+  "q": "Which game do you want to watch on Saturday?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Wheel of Fortune",
+   "Packers"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Which game do you want to watch on Saturday?",
+  "fallbackWhy": "",
+  "ms": 4314,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 109,
+  "q": "What should we cook when Beth comes over?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "pot roast",
+   "chili",
+   "ginger biscuits"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "What should we cook when Beth comes over?",
+  "fallbackWhy": "",
+  "ms": 3916,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 110,
+  "q": "Is your back still sore today, love?",
+  "type": "yes-no",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "made": "guard",
+  "left": "nothing",
+  "asked": "Is your back still sore today, love?",
+  "fallbackWhy": "",
+  "ms": 267,
+  "sheet": false,
+  "sdk": [],
+  "outsideHosts": 0
+ }
+]

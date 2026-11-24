@@ -1,0 +1,476 @@
+[
+ {
+  "id": 43,
+  "q": "Who do you want to ring this afternoon?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Who do you want to ring this afternoon?",
+  "fallbackWhy": "",
+  "ms": 34303,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 44,
+  "q": "Who should we invite for Sunday dinner?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Who should we invite for Sunday dinner?",
+  "fallbackWhy": "",
+  "ms": 4125,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 45,
+  "q": "Who would you like to visit this week?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Who would you like to visit this week?",
+  "fallbackWhy": "",
+  "ms": 3504,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 46,
+  "q": "Who shall I text about the appointment?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Who shall I text about the appointment?",
+  "fallbackWhy": "",
+  "ms": 3908,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 47,
+  "q": "Who do you want to sit with at the wedding?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Who do you want to sit with at the wedding?",
+  "fallbackWhy": "",
+  "ms": 3504,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 48,
+  "q": "Who should drive us on Friday?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "you",
+   "Jenny"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Who should drive us on Friday?",
+  "fallbackWhy": "",
+  "ms": 3910,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 49,
+  "q": "Where do you want to go this afternoon?",
+  "type": "where",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "the lake",
+   "church",
+   "hardware store"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Where do you want to go this afternoon?",
+  "fallbackWhy": "",
+  "ms": 3906,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 50,
+  "q": "Where shall we go on Saturday?",
+  "type": "where",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "the lake",
+   "church",
+   "hardware store"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Where shall we go on Saturday?",
+  "fallbackWhy": "",
+  "ms": 3917,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 51,
+  "q": "Where would you like to sit?",
+  "type": "where",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "chair",
+   "sofa"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Where would you like to sit?",
+  "fallbackWhy": "",
+  "ms": 3696,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 52,
+  "q": "Where do you want to eat your dinner?",
+  "type": "where",
+  "ok": false,
+  "why": "an answer that should not be offered: lake, church",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "church"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Where do you want to eat your dinner?",
+  "fallbackWhy": "",
+  "ms": 3705,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 53,
+  "q": "Where should we go for a walk?",
+  "type": "where",
+  "ok": false,
+  "why": "an answer that should not be offered: hardware store",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "hardware store",
+   "church"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Where should we go for a walk?",
+  "fallbackWhy": "",
+  "ms": 3723,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 54,
+  "q": "Where would you like to go for your birthday?",
+  "type": "where",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "church",
+   "hardware store"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "Where would you like to go for your birthday?",
+  "fallbackWhy": "",
+  "ms": 3707,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 55,
+  "q": "What would you like for supper?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "pot roast",
+   "chili",
+   "ginger biscuits"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "What would you like for supper?",
+  "fallbackWhy": "",
+  "ms": 4317,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 56,
+  "q": "What do you want to watch tonight?",
+  "type": "what",
+  "ok": false,
+  "why": "1 of the expected About-me answers (need 2): Wheel of Fortune / Packers",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Wheel of Fortune",
+   "Packers"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "What do you want to watch tonight?",
+  "fallbackWhy": "",
+  "ms": 3702,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 57,
+  "q": "What music shall I put on?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Johnny Cash",
+   "radio"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "What music shall I put on?",
+  "fallbackWhy": "",
+  "ms": 3912,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 58,
+  "q": "What do you want to do tomorrow morning?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "church",
+   "hardware store"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "What do you want to do tomorrow morning?",
+  "fallbackWhy": "",
+  "ms": 3710,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 59,
+  "q": "What should we get Tyler for his birthday?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "book",
+   "game"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "What should we get Tyler for his birthday?",
+  "fallbackWhy": "",
+  "ms": 3503,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ },
+ {
+  "id": 60,
+  "q": "What do you fancy for breakfast?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "cereal",
+   "toast"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "device",
+  "left": "nothing",
+  "asked": "What do you fancy for breakfast?",
+  "fallbackWhy": "",
+  "ms": 3706,
+  "sheet": false,
+  "sdk": [
+   "leg=private mode=ONLY_ON_DEVICE inferenceSource=on_device"
+  ],
+  "outsideHosts": 0
+ }
+]

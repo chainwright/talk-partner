@@ -9,6 +9,14 @@
 //                                                      Logic, PREFER_IN_CLOUD) answers the open questions. Needs
 //                                                      `npm run dev`; HEADED=1 opens a normal window (App Check's
 //                                                      reCAPTCHA refuses a headless browser on a copy with no debug token).
+//   node scripts/eval-heldout.mjs --own [--open] [--port 9335 | --cloud]
+//                                                      (phase 16) the same three legs through "Ask in your own words":
+//                                                      without --port / --cloud the shared core's own-words step with no
+//                                                      model (core/ownwords.ts: the guard, then the rules' best card);
+//                                                      with them the real simple view, the sample family (#/sample), the
+//                                                      form at the top of Home, cloud help off: the consent sheet's "Just
+//                                                      this once" is pressed on the cloud leg and "No, not now" on the
+//                                                      device leg. --open keeps the open questions of the set only.
 //   options: --set FILE  --out DIR (default: a new folder devlog/eval_runs/<time>, so no saved run is overwritten)
 //            --url http://localhost:5179/
 //
@@ -39,6 +47,8 @@ const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? proces
 const SET = resolve(ROOT, arg('--set', 'eval/heldout_r2.json'));
 const OUT = resolve(ROOT, arg('--out', `devlog/eval_runs/${new Date().toISOString().replace(/[-:]/g, '').replace(/\..*/, '').replace('T', '-')}`));
 const CLOUD = process.argv.includes('--cloud');
+const OWN = process.argv.includes('--own');
+const OPEN_ONLY = process.argv.includes('--open');
 const PORT = CLOUD ? 9343 : Number(arg('--port', '0'));
 const URL_ = arg('--url', 'http://localhost:5179/');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -50,6 +60,8 @@ const inList = (label, list) => (list ?? []).map(fold).includes(fold(label));
 
 const raw = readFileSync(SET, 'utf8');
 const set = JSON.parse(raw);
+const CODE0 = ['either-or', 'yes-no', 'feeling', 'pain', 'body', 'memory'];
+if (OPEN_ONLY) set.questions = set.questions.filter((q) => !CODE0.includes(q.type));
 const sha = createHash('sha256').update(raw).digest('hex');
 // label amendments written after the first runs (stricter only); the sealed set itself is never edited
 const AMEND_FILE = SET.replace(/\.json$/, '_amendments.json');
@@ -105,6 +117,118 @@ function score(item, obs, withModel, e = amended(item)) {
   return { ok: true, why: '' };
 }
 
+/**
+ * (phase 16) The own-words path is scored by the same label, with one rule more: the rules' best card after a refusal
+ * answers the nearest ready question, not the one asked, so it never counts as a match (it counts as "a card, not
+ * blank"). A card the guard made is scored like any card (question 110 of the everyday set is labelled for it).
+ */
+function ownScore(item, obs) {
+  if (obs.made === 'fallback') return { ok: false, why: `the rules' best card instead: "${obs.asked}"` };
+  return score(item, obs, true);
+}
+
+async function ownDevicePass() {
+  let wsUrl;
+  try { wsUrl = (await (await fetch(`http://127.0.0.1:${PORT}/json`)).json()).find((t) => t.type === 'page')?.webSocketDebuggerUrl; } catch { /* below */ }
+  if (!wsUrl) throw new Error(`no Chrome page on port ${PORT}`);
+  const ws = new WebSocket(wsUrl);
+  await new Promise((r) => ws.addEventListener('open', r, { once: true }));
+  let id = 0;
+  const pending = new Map();
+  const consoleLines = [];
+  const outside = [];
+  const appHost = new URL(URL_).host;
+  ws.addEventListener('message', (ev) => {
+    const m = JSON.parse(ev.data);
+    if (m.id && pending.has(m.id)) { pending.get(m.id)(m); pending.delete(m.id); return; }
+    if (m.method === 'Runtime.consoleAPICalled') consoleLines.push(m.params.args.map((a) => a.value ?? a.description).join(' '));
+    if (m.method === 'Network.requestWillBeSent' && /^https?:/.test(m.params.request.url) && new URL(m.params.request.url).host !== appHost) outside.push(new URL(m.params.request.url).host);
+  });
+  const send = (method, params = {}) => new Promise((r) => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
+  const js = async (expr) => (await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true, userGesture: true })).result?.result?.value;
+  const waitFor = async (expr, ms = 60000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await js(expr)) return true; await sleep(200); } return false; };
+  await send('Network.enable'); await send('Runtime.enable'); await send('Page.enable');
+  // a phone-sized window: the simple view, where the form is the first action
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+  // cloud help off in the settings of this profile: every cloud call goes through the consent sheet, as on a phone
+  await send('Page.navigate', { url: `${URL_}#/cloud` });
+  await waitFor(`!!document.querySelector('main')`); await sleep(500);
+  await js(`document.querySelector('[data-act="cloud-off"]')?.click()`); await sleep(300);
+  await send('Page.navigate', { url: `${URL_}#/sample` }); await sleep(300);
+  await js(`window.__before = true`); await send('Page.reload');
+  await waitFor(`!window.__before && document.readyState === 'complete' && !!document.querySelector('#ask.own') && !!document.querySelector('#sample-on')`);
+  // the capability check has answered: the line under the form says where the AI runs here
+  await waitFor(`!/checking/.test(document.querySelector('#ai-line')?.innerText ?? 'checking')`, 20000);
+  const where = await js(`document.querySelector('#ai-line').innerText`);
+  if (CLOUD ? !/Google's AI/.test(where) : !/Chrome's own AI/.test(where)) throw new Error(`${CLOUD ? 'the cloud leg needs a browser with no on-device model' : 'the on-device model is not ready in this Chrome'}: "${where}"`);
+  const done = `(() => { const m = document.querySelector('main'); return !!document.querySelector('#sheet') || (!!m && ['card', 'nocard', 'answered'].includes(m.dataset.screen) && !document.querySelector('main .making')); })()`;
+  const rows = [];
+  let sheets = 0;
+  for (const item of set.questions) {
+    consoleLines.length = 0; outside.length = 0;
+    await js(`document.querySelector('[data-act="home"]')?.click()`); await sleep(250);
+    await waitFor(`!!document.querySelector('#ask.own')`, 10000);
+    const t0 = Date.now();
+    await js(`(() => { const q = document.querySelector('#q'); q.value = ${JSON.stringify(item.q)}; document.querySelector('#ask').requestSubmit(); })()`);
+    await sleep(250);
+    await waitFor(done, 120000);
+    let sheet = false;
+    if (await js(`!!document.querySelector('#sheet')`)) {
+      sheet = true; sheets++;
+      await js(`document.querySelector('#sheet [data-act="${CLOUD ? 'sheet-yes' : 'sheet-no'}"]').click()`);
+      await sleep(250);
+      await waitFor(`!document.querySelector('#sheet') && ${done}`, 120000);
+    }
+    const ms = Date.now() - t0;
+    await sleep(300);
+    const obs = await js(`(() => { const m = document.querySelector('main'); const p = document.querySelector('#person'); const t = p ? [...p.querySelectorAll('.pt')] : [];
+      return { screen: m.dataset.screen, kind: p?.dataset.kind ?? 'none', blocked: m.dataset.screen === 'nocard', answers: t.filter((x) => !x.classList.contains('esc')).map((x) => x.querySelector('span').innerText.trim()),
+        escape: t.find((x) => x.classList.contains('esc'))?.querySelector('span').innerText.trim() ?? null, coach: document.querySelector('.coach')?.innerText ?? '',
+        made: document.querySelector('#own-guard') ? 'guard' : document.querySelector('#own-fallback') ? 'fallback' : document.querySelector('#made-where')?.dataset.maker ?? 'none',
+        left: document.querySelector('#made-where')?.dataset.left ?? '', asked: document.querySelector('#person .p-ask')?.innerText ?? '', fallbackWhy: document.querySelector('#own-fallback')?.dataset.why ?? '' }; })()`);
+    obs.ms = ms; obs.sheet = sheet;
+    obs.sdk = consoleLines.filter((l) => l.startsWith('[ai-logic]')).map((l) => (l.match(/leg=\w+ mode=\w+ inferenceSource=\w+/) ?? [l])[0]);
+    obs.outside = [...new Set(outside)];
+    rows.push({ item, obs, ...ownScore(item, obs) });
+    console.log(`${rows.at(-1).ok ? 'ok  ' : 'MISS'} ${item.id}. ${item.q} -> [${obs.made}] ${obs.blocked ? 'no card' : `${obs.answers.join(' / ')} / [${obs.escape}]`} (${ms} ms${sheet ? ', sheet' : ''})`);
+  }
+  const version = (await (await fetch(`http://127.0.0.1:${PORT}/json/version`)).json()).Browser;
+  ws.close();
+  return { rows, status: where, version, sheets };
+}
+
+/** (phase 16) The own-words report: who made each card, and the label's verdict, on the questions of this set. */
+function ownReport(title, rows, leg, extra = []) {
+  const n = (f) => rows.filter(f).length;
+  const N = rows.length;
+  const card = (r) => !r.obs.blocked && (r.obs.answers.length >= 2 || ['body', 'needs', 'repair'].includes(r.obs.kind)) || r.obs.kind === 'no-quiz';
+  const ai = (r) => r.obs.made === 'device' || r.obs.made === 'cloud' || r.obs.made === 'offline';
+  const ms = rows.map((r) => r.obs.ms).sort((a, b) => a - b);
+  const L = [];
+  L.push(`# ${title}`, '');
+  L.push(`- date: ${new Date().toISOString()}`);
+  L.push(`- commit: \`${git('rev-parse HEAD')}\`${TREE ? ` (uncommitted changes in ${TREE.split('\n').length} file(s) when the run started)` : ' (clean working tree when the run started)'}`);
+  L.push(`- set: \`${SET.replace(`${ROOT}/`, '')}\`${OPEN_ONLY ? ' (open questions only)' : ''}, ${N} questions, sha256 \`${sha}\``);
+  L.push(`- command: \`node scripts/eval-heldout.mjs --own${OPEN_ONLY ? ' --open' : ''}${SET.endsWith('heldout_r2.json') ? '' : ` --set ${SET.replace(`${ROOT}/`, '')}`}${CLOUD ? ' --cloud' : PORT ? ` --port ${PORT}` : ''}\``, ...extra, '');
+  L.push(`**What this is.** The phase 16 path, "Ask in your own words", leg: **${leg}**. The labels are the authors' own; not a user trial. A card the rules made after a refusal answers the nearest ready question, so it is never counted as a match.`, '');
+  L.push(`| On the ${N} questions | ${leg} |`, '|---|---|');
+  L.push(`| a card (never a blank "No card") | ${n(card)}/${N} |`);
+  L.push(`| the card matched our label | **${n((r) => r.ok)}/${N}** |`);
+  L.push(`| made by an AI (the SDK's report) | ${n(ai)}/${N} |`);
+  L.push(`| made by the rules from the words | ${n((r) => r.obs.made === 'code' || r.obs.made === 'rules')}/${N} |`);
+  L.push(`| kept from every model by the guard (care, warning sign, crisis) | ${n((r) => r.obs.made === 'guard')}/${N} |`);
+  L.push(`| the rules' best card after a refusal ("Made by the app's rules (no AI)") | ${n((r) => r.obs.made === 'fallback')}/${N} |`);
+  L.push(`| time from submit to card, median (range), sheet taps included | ${ms[Math.floor(ms.length / 2)]} ms (${ms[0]}–${ms.at(-1)}) |`);
+  L.push(`| hosts other than the app's own | ${rows.some((r) => r.obs.outside.length) ? [...new Set(rows.flatMap((r) => r.obs.outside))].join(', ') : 'none'} |`, '');
+  L.push('## Every question', '', '| # | Question | Made by | Card | SDK | Matched |', '|---|---|---|---|---|---|');
+  for (const r of rows) {
+    const c = r.obs.blocked ? 'no card' : `${r.obs.kind}: ${r.obs.answers.join(' / ')}${r.obs.escape ? ` / [${r.obs.escape}]` : ''}${r.obs.made === 'fallback' ? ` (for "${r.obs.asked}")` : ''}`;
+    L.push(`| ${r.item.id} | ${r.item.q} | ${r.obs.made} | ${c} | ${r.obs.sdk.length ? r.obs.sdk.map((l) => l.replace(/^leg=(\w+) mode=\w+ inferenceSource=(\w+)$/, '$1: $2')).join(', ') : 'no model'} | ${r.ok ? 'yes' : `no: ${r.why}`} |`);
+  }
+  L.push('', '## Limits', '', '- One run per leg; the model\'s answers vary between runs.', '- The labels are ours; the everyday set was written by the authors, not by carers.', '- "Matched" means the card matches the label, not that a person with aphasia could answer with it.');
+  return { text: `${L.join('\n')}\n`, matched: n((r) => r.ok), cards: n(card), ai: n(ai), guard: n((r) => r.obs.made === 'guard'), fallback: n((r) => r.obs.made === 'fallback'), N };
+}
+
 async function rulesPass() {
   // the shared core is TypeScript: load it through Vite (already a dev dependency), no browser, no network
   const { createServer } = await import('vite');
@@ -114,6 +238,19 @@ async function rulesPass() {
     const { NullEngine } = await server.ssrLoadModule('/core/engine.ts');
     const { SAMPLE_PROFILE } = await server.ssrLoadModule('/core/sample.ts');
     const rows = [];
+    if (OWN) {
+      // (phase 16) the own-words step with no model: the guard, the rules, and the rules' best card where they have none
+      const { ownCard, ownFallbackCard } = await server.ssrLoadModule('/core/ownwords.ts');
+      for (const item of set.questions) {
+        const t0 = performance.now();
+        const env = { profile: SAMPLE_PROFILE, support: 'more', engine: new NullEngine(), allowCloud: false, deviceReady: false };
+        const first = await ownCard(item.q, env);
+        const c = first.blocked && first.kind !== 'no-quiz' ? await ownFallbackCard(item.q, first, 'none', env) : first;
+        const obs = { kind: c.kind, blocked: !!c.blocked, answers: c.choices.filter((x) => x.role === 'answer').map((x) => x.label), escape: c.choices.find((x) => x.role === 'escape')?.label ?? null, coach: c.coach ?? '', source: c.source, made: c.own?.guard ? 'guard' : c.own?.fallback ? 'fallback' : 'rules', asked: c.asked, ms: Math.round((performance.now() - t0) * 10) / 10, sdk: [], outside: [] };
+        rows.push({ item, obs, ...ownScore(item, obs) });
+      }
+      return rows;
+    }
     for (const item of set.questions) {
       const t0 = performance.now();
       const c = await makeCard(item.q, { profile: SAMPLE_PROFILE, support: 'more', engine: new NullEngine(), allowCloud: false, deviceReady: false });
@@ -273,7 +410,22 @@ function report(title, rows, withModel, extra = []) {
 mkdirSync(OUT, { recursive: true });
 const stem = SET.split('/').pop().replace(/\.json$/, '');
 try {
-  if (PORT) {
+  if (OWN) {
+    let chrome = null; let profile = null; let pass;
+    if (CLOUD) {
+      profile = mkdtempSync(join(tmpdir(), 'tp-eval-own-'));
+      chrome = spawn(process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [...(process.env.HEADED === '1' ? [] : ['--headless=new']), `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check', '--window-size=420,900', 'about:blank'], { stdio: 'ignore' });
+      for (let i = 0; i < 50; i++) { try { await fetch(`http://127.0.0.1:${PORT}/json/version`); break; } catch { await sleep(200); } }
+    }
+    try { pass = PORT ? await ownDevicePass() : { rows: await rulesPass(), status: '', version: 'none (Node)', sheets: 0 }; } finally { if (chrome) { chrome.kill(); await sleep(500); rmSync(profile, { recursive: true, force: true }); } }
+    const leg = CLOUD ? 'online, PREFER_IN_CLOUD after "Just this once"' : PORT ? 'on this computer, Gemini Nano ONLY_ON_DEVICE (online help off)' : 'rules alone (no model)';
+    const kind = CLOUD ? 'cloud' : PORT ? 'ondevice' : 'rules';
+    const f = join(OUT, `${stem}_own_${kind}.md`);
+    const rep = ownReport(`Phase 16, "Ask in your own words": ${leg}`, pass.rows, leg, PORT ? [`- browser: ${pass.version}; the line under the form: "${pass.status}"; consent sheets: ${pass.sheets}`, `- app: ${URL_}#/sample (the simple view with the sample family, 390 x 844)`] : []);
+    writeFileSync(f, rep.text);
+    writeFileSync(join(OUT, `${stem}_own_${kind}.json`), `${JSON.stringify(pass.rows.map((r) => ({ id: r.item.id, q: r.item.q, type: r.item.type, ok: r.ok, why: r.why, ...r.obs, outside: undefined, outsideHosts: r.obs.outside.length })), null, 1)}\n`);
+    console.log(`own words, ${kind}: ${rep.matched}/${rep.N} matched, ${rep.cards}/${rep.N} cards, ${rep.ai} by AI, ${rep.guard} guarded, ${rep.fallback} fall-backs -> ${f.replace(`${ROOT}/`, '')}`);
+  } else if (PORT) {
     // (phase 14) the cloud pass starts its own Chrome with a throwaway profile, so the browser has no on-device model
     let chrome = null; let profile = null;
     if (CLOUD) {

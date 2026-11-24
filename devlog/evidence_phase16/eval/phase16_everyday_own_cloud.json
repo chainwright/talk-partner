@@ -1,0 +1,259 @@
+[
+ {
+  "id": 101,
+  "q": "What do you fancy for lunch today?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "sandwich",
+   "soup"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "What do you fancy for lunch today?",
+  "fallbackWhy": "",
+  "ms": 1955,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 4
+ },
+ {
+  "id": 102,
+  "q": "Do you want to go out later or stay in?",
+  "type": "either-or",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "go out later",
+   "stay in"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "code",
+  "left": "nothing",
+  "asked": "Do you want to go out later or stay in?",
+  "fallbackWhy": "",
+  "ms": 271,
+  "sheet": false,
+  "sdk": [],
+  "outsideHosts": 0
+ },
+ {
+  "id": 103,
+  "q": "Shall we do something this afternoon, or would you rather have a quiet one?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "do something",
+   "have a quiet one"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Shall we do something this afternoon, or would you rather have a quiet one?",
+  "fallbackWhy": "",
+  "ms": 1330,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 104,
+  "q": "Who do you want to see this weekend?",
+  "type": "who",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "Jenny",
+   "Tyler"
+  ],
+  "escape": "someone else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Who do you want to see this weekend?",
+  "fallbackWhy": "",
+  "ms": 1142,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 105,
+  "q": "Where shall we go for a drive tomorrow?",
+  "type": "where",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "lake",
+   "church",
+   "hardware store"
+  ],
+  "escape": "somewhere else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Where shall we go for a drive tomorrow?",
+  "fallbackWhy": "",
+  "ms": 1327,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 106,
+  "q": "What shall I pick up for you from the shop?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "fruit",
+   "bread"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "What shall I pick up for you from the shop?",
+  "fallbackWhy": "",
+  "ms": 1529,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 107,
+  "q": "What do you want to do after your nap?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "rest",
+   "read"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "What do you want to do after your nap?",
+  "fallbackWhy": "",
+  "ms": 1122,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 108,
+  "q": "Which game do you want to watch on Saturday?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "match on TV",
+   "live game"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "Which game do you want to watch on Saturday?",
+  "fallbackWhy": "",
+  "ms": 1123,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 109,
+  "q": "What should we cook when Beth comes over?",
+  "type": "what",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "choice",
+  "blocked": false,
+  "answers": [
+   "pot roast",
+   "pasta"
+  ],
+  "escape": "something else",
+  "coach": "",
+  "made": "cloud",
+  "left": "sent",
+  "asked": "What should we cook when Beth comes over?",
+  "fallbackWhy": "",
+  "ms": 1340,
+  "sheet": true,
+  "sdk": [
+   "leg=stripped mode=PREFER_IN_CLOUD inferenceSource=in_cloud"
+  ],
+  "outsideHosts": 1
+ },
+ {
+  "id": 110,
+  "q": "Is your back still sore today, love?",
+  "type": "yes-no",
+  "ok": true,
+  "why": "",
+  "screen": "card",
+  "kind": "yesno",
+  "blocked": false,
+  "answers": [
+   "yes",
+   "no"
+  ],
+  "escape": "not sure",
+  "coach": "",
+  "made": "guard",
+  "left": "nothing",
+  "asked": "Is your back still sore today, love?",
+  "fallbackWhy": "",
+  "ms": 259,
+  "sheet": false,
+  "sdk": [],
+  "outsideHosts": 0
+ }
+]
