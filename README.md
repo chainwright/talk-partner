@@ -302,7 +302,7 @@ was run on the hosted copy or a real phone. **Not done in this phase:** limited-
 cloud cards; the phone's Back on letter screens (it can skip a step); generic sample-family TV and music; a video; any
 trial with people.
 
-### Phase 19 (the branch `phase19-r14`, waiting for the deploy; the live build is `cb54ec0`): the fixes of judge round 14
+### Phase 19 (live: `8ef9d21`, deployed 24 Nov 2026): the fixes of judge round 14
 Judge round 14 (ten seats on the live build `cb54ec0`) found a typed crisis question answered "no" recorded as 'They
 chose "I can't go on"' on the safety screen and in the next carer's note; a note softer than the screen for a pain in
 the upper stomach or a shoulder ("Ask again on your shift"); misspelt chest and breathing questions ("Is ur chesst
@@ -337,7 +337,7 @@ on a real phone; no clinician has read the new lines; a word list and one edit c
 pain is called like the chest on purpose. **Not done in this phase:** the phone's Back on letter screens; pictures on
 cloud cards; the pain picture; limited-use App Check tokens; a video; any trial with people.
 
-Status on 24 Nov 2026: live `cb54ec0` (phases 16 to 18c, deployed 20:08 UTC); phase 19 on the branch `phase19-r14`, waiting for the deploy. The
+Status on 24 Nov 2026: live `8ef9d21` (phases 16 to 19, deployed that evening). The
 three lines below were written on 18 Nov and are kept as they were.
 
 Built for #BuildHybridAI 2026. Status on 18 Nov 2026, in three lines:
@@ -1656,7 +1656,9 @@ node scripts/shots.mjs       # with the dev server running: screenshots of every
 node scripts/fonts-check.mjs # with the dev server running: no request leaves the app host; the three self-hosted families load from /fonts/
 ```
 ### Deploy (Firebase Hosting)
-**Live: the build of `cb54ec0`** (phase 18 and 18b/c: the crisis box stays after any answer, chest, trunk and speech guards, "Ask it again" restores the card, letters with the AI for the topic plus "Write it down together" and "Ask them to show you", topic word lists, letter calls never wait for ever), deployed 24 Nov 2026. The hosted script is the same file as our `dist/`. Run against the hosted copy: `e2e-simple.py --live` 1027/1027, `pwa-check.py` 34/34, `e2e-needs.mjs` 13/13, `phase17b-walk.py --url` 148/148, `phase12-walk.py --url` 695/695. On desktop Chrome with Gemini Nano, ST under food gave stew in 3 s (a hand check). Logs: `devlog/evidence_live/cb54ec0/`.
+**Live: the build of `8ef9d21`** (phase 19: crisis answers recorded as asked and pointed to, the handover matching the screen for heart places, misspellings and a body part alone kept by the rules, the visit page without "please check" under a pain yes, a late cloud answer kept, letters without repeats), deployed 24 Nov 2026. The hosted script is the same file as our `dist/`. Run against the hosted copy: `e2e-simple.py --live` 1027/1027, `pwa-check.py` 34/34, `e2e-needs.mjs` 13/13, `phase17b-walk.py --url` 148/148, `phase12-walk.py --url` 695/695. On desktop Chrome with Gemini Nano (a hand check): ST under food gave stew in 2 s; "Is your chesst tight?" gave the red box and "Your words did not go to any AI." Logs: `devlog/evidence_live/8ef9d21/`.
+
+Before it: **the build of `cb54ec0`** (phase 18 and 18b/c: the crisis box stays after any answer, chest, trunk and speech guards, "Ask it again" restores the card, letters with the AI for the topic plus "Write it down together" and "Ask them to show you", topic word lists, letter calls never wait for ever), deployed 24 Nov 2026. The hosted script is the same file as our `dist/`. Run against the hosted copy: `e2e-simple.py --live` 1027/1027, `pwa-check.py` 34/34, `e2e-needs.mjs` 13/13, `phase17b-walk.py --url` 148/148, `phase12-walk.py --url` 695/695. On desktop Chrome with Gemini Nano, ST under food gave stew in 3 s (a hand check). Logs: `devlog/evidence_live/cb54ec0/`.
 
 Before it: **the build of `0852ce8`** (phases 17 and 17b: the health guard for typed questions, App Check started on the field, letters inside every topic, no dead end in the audit; its app code is the same as `c749bb0`, a later change was reverted), deployed 24 Nov 2026. The hosted script is the same file as our `dist/`. Run against the hosted copy: `e2e-simple.py --live` 1027/1027 and `phase12-walk.py --url` 631/631 on `0852ce8`; `pwa-check.py` 34/34, `e2e-needs.mjs` 13/13 and `phase17b-walk.py --url` 108/108 on `c749bb0` (same app code). Logs: `devlog/evidence_live/0852ce8/`.
 

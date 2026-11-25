@@ -3,8 +3,8 @@ Repository: <https://github.com/chainwright/talk-partner> (public, Apache-2.0)
 # For judges: the 60-second path
 
 **On a phone first, in 12 steps** (Chrome on Android; the bare address opens the simple view, made for a carer). These
-are the screens of the live build `cb54ec0` (phases 16 to 18c, deployed 24 Nov 2026 20:08 UTC; the "Live:" line below
-names the build the hosted copy runs), with what phase 19 (the branch `phase19-r14`, waiting for the deploy) changes on them
+are the screens of the live build `8ef9d21` (phases 16 to 19, deployed 24 Nov 2026; the "Live:" line below
+names the build the hosted copy runs); what phase 19 changed is
 marked "Phase 19:". The sponsor's AI is at taps 2 and 3:
 1. Open <https://talk-partner.web.app/>. Under the hope line ("When the words won't come, let them point.") one line says who it is for: "For you and someone with aphasia: you ask, hand them the phone, they point." The first block is **Type your question. We make picture answers.**: a field with "What would you like for lunch?" in grey, the button **Make picture answers**, and two lines: "Google's AI, online, after your yes. Google checks this browser first." / "Pain and warning signs: fixed rules, never an AI." On a phone App Check (reCAPTCHA) checks the browser when the app opens; no word of a question goes with it (never with Chrome's own AI, never offline). Phase 19: a carer's tap that starts a cloud step (a yes on the sheet, **See the AI at work**, **Find more choices**, **Try Google's AI again**) first clears an earlier refusal of this page, so the browser is checked again. Under it: "Needs something now?", the red "Something new or sudden?", "I want to say something", then **See the AI at work** with its two lines, "Phone: Google's AI, online, after your yes" / "Laptop with Chrome's own AI: nothing is sent".
 2. Tap the field (tap 1) and type the question as you would say it: "What do you fancy for lunch today?". There is no microphone on this form: a recording reaches a model before any rule could read it. **Make picture answers** (tap 2): a sheet, "This question needs online help", "This is the line that would go:" and "Partner asks: What do you fancy for lunch today?", then "Sent to Google:", "Never sent:" and three buttons: **Just this once**, **Yes, every time**, **No, not for this question**.
@@ -19,7 +19,7 @@ marked "Phase 19:". The sponsor's AI is at taps 2 and 3:
 11. **I want to say something → I feel…**, the way out twice: "worried / lonely / I can't go on"; the last opens the carer's safety screen.
 12. At the foot of Home: **Try it with the Millers, a sample family** (judge mode below), and **How it works inside →**. The measured tables (phase 14: rules 0/18, Gemini Nano 16/18, online 12/18 on the 18 open questions; phase 16, "Ask in your own words": rules 0/18, Gemini Nano 15/18, online 13/18, and on 10 everyday questions 2/10, 8/10, 10/10) are in README.
 
-**Live: the build of `cb54ec0`** (phases 16 to 18c, deployed 24 Nov 2026 20:08 UTC; README "Deploy" says what was run against it). Phase 19 is on the branch `phase19-r14`, waiting for the deploy.
+**Live: the build of `8ef9d21`** (phases 16 to 19, deployed 24 Nov 2026; README "Deploy" says what was run against it).
 
 Nothing here needs an account. Hosted copy: <https://talk-partner.web.app/#/demo> (our project settings are in it, so
 cloud help can be turned on there; the on-device step needs Gemini Nano in your own Chrome). **Cloud help there needs
