@@ -358,6 +358,9 @@ the table.
 | 335 | `31aeb05` | `59a683a` | 2026-11-24 13:26 | Phase 18b: topic words for the first letter (food 73 to 313, drinks 22 to 70, places 21 to 144, TV and hobbie… |
 | 336 | `cb54ec0` | `5f39644` | 2026-11-24 14:06 | Phase 18c: the letter path never waits for ever; the device letter step back on the card's schema |
 | 337 | `1858b19` | `6cc6ce1` | 2026-11-24 14:44 | Docs: live is cb54ec0 (phase 18, 18b, 18c); hosted checks and logs |
+| 338 | `93580e3` | `b77b340` | 2026-11-24 17:25 | Phase 19: the fixes of judge round 14 (a typed crisis question quoted as asked and pointed to, never "chose I… |
+| 339 | `8ef9d21` | `5d1deb8` | 2026-11-24 17:25 | Docs for phase 19: JUDGES, README and CLAIMS name the live build cb54ec0 (phases 16 to 18c) and phase 19 on i… |
+| 340 | `817170b` | `909c520` | 2026-11-24 18:17 | Docs: live is 8ef9d21 (phase 19); hosted checks and logs |
 Public-only commit after row 295: `9f2d60a` (DISCLOSURE: no claim to a published pain scale, as in phase 13; the public DISCLOSURE is its own file).
 
 Rows 100–106, 107–111, 112, 113–119, 120–127, 128–136, 137–145, 146–152, 153–159, 160–165, 166–171, 172, 173–183, 184–196, 197–198 and 199–216 were added on 17–18 Nov, when those commits reached the public history (the public-only commits 6fa68a2 and e18f518 are not working commits, so they have no row; rows 118 and 119: the working file firebase-debug.log, a local CLI log, was left out of the public copy).
